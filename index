@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Ghép Xe</title>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6dac8f1c/images/vfast/Hinh-anh-xe-SUV-VinFast-President-gia-xe-thong-so-bang-mau-dong-co-v8.jpg') no-repeat center center/cover;
+            color: white;
+        }
+        .container {
+            display: flex;
+            width: 800px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        .left-panel, .right-panel {
+            flex: 1;
+            padding: 50px;
+        }
+        .left-panel {
+            background: rgba(255, 255, 255, 0.2);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .right-panel h2 {
+            font-size: 26px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2>Showroom VF Minh Đạo Thuận An</h2>
+            <p>Đăng nhập để quản lý đơn hàng của bạn dễ dàng và hiệu quả.</p>
+        </div>
+        <div class="right-panel">
+            <h2>Đăng Nhập</h2>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Tên đăng nhập">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Nhập mật khẩu">
+            </div>
+            <button class="btn" onclick="login()">Đăng Nhập</button>
+            <p id="error-message" style="color:#ff4c4c; display: none;">Sai tên đăng nhập hoặc mật khẩu</p>
+        </div>
+    </div>
+
+    <script>
+    function login() {
+        var username = document.getElementById("username").value.trim();
+        var password = document.getElementById("password").value.trim();
+
+        var users = {
+            "SRTHUANAN": "HeyVF123"
+        };
+
+        if (users[username] && users[username] === password) {
+            sessionStorage.setItem('loggedIn', 'true'); // <-- thêm dòng này
+
+            Toastify({
+                text: "Đăng nhập thành công!",
+                duration: 1500,
+                close: true,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "green",
+            }).showToast();
+
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1500);
+        } else {
+            var errorMessage = document.getElementById("error-message");
+            errorMessage.style.display = "block";
+        }
+    }
+    </script>
+</body>
+</html>
