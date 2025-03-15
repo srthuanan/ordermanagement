@@ -23,67 +23,62 @@
             font-family: 'Poppins', sans-serif;
             display: flex;
             height: 100vh;
-            background: url('https://vinfast-vn.vn/wp-content/uploads/2023/10/vinfast-vf8-1-1.png') no-repeat center center/cover;
-            backdrop-filter: blur(5px);
+            background: linear-gradient(to right, #141e30, #243b55);
+            color: white;
         }
         .sidebar {
-            width: 240px;
+            width: 260px;
             background: #1a1a1a;
-            color: white;
             padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 5px 0px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 5px 0px 15px rgba(0, 0, 0, 0.3);
         }
         .content {
             flex-grow: 1;
-            padding: 15px;
+            padding: 20px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 10px;
-            margin: 15px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            margin: 20px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
             text-align: center;
+            color: #333;
         }
         .dashboard-header {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        .news-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            justify-content: center;
-            margin-top: 8px;
-        }
-        .news-item {
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.1);
-            text-align: left;
-            font-size: 12px;
-        }
-        .news-item img {
-            width: 100%;
-            border-radius: 6px;
-        }
-        .news-item h3 {
-            font-size: 14px;
-            margin: 8px 0;
+            margin-bottom: 10px;
             color: #1a1a1a;
         }
-        .news-item p {
-            font-size: 11px;
-            color: #555;
+        .car-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
-        .news-item a {
-            color: #1abc9c;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 11px;
+        .car-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-size: 14px;
+        }
+        .car-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .car-item h3 {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #1a1a1a;
+        }
+        .car-item p {
+            font-size: 13px;
+            color: #555;
         }
     </style>
 </head>
@@ -98,25 +93,37 @@
         <div class="logout-btn" onclick="logout()">🚪 Đăng Xuất</div>
     </div>
     <div class="content">
-        <div class="dashboard-header">🚀 Tin tức mới nhất về VinFast</div>
-        <div class="news-list">
-            <div class="news-item">
-                <img src="https://tse1.mm.bing.net/th?id=OIP.Dj8Xp1aC72-Aoz58AlOkiwHaEK&pid=Api" alt="VinFast mở rộng thị trường">
-                <h3>VinFast mở rộng thị trường quốc tế</h3>
-                <p>VinFast đang lên kế hoạch mở rộng thị trường tại Mỹ, Canada và châu Âu.</p>
-                <a href="https://vinfast.com" target="_blank">Đọc thêm</a>
+        <div class="dashboard-header">🚀 Thông tin các dòng xe VinFast</div>
+        <div class="car-list">
+            <div class="car-item">
+                <img src="https://tse3.mm.bing.net/th?id=OIP.1iOkRZ0fX3-FOELR2UCJpQHaEK&pid=Api" alt="VinFast VF3">
+                <h3>VinFast VF3</h3>
+                <p>Mini SUV - Giá từ 299 triệu VNĐ</p>
             </div>
-            <div class="news-item">
-                <img src="https://tse3.mm.bing.net/th?id=OIP.E4IzVOb5d1Vagq9MhqUHGAHaE0&pid=Api" alt="VinFast ra mắt mẫu xe mới">
-                <h3>VinFast ra mắt mẫu xe điện mới</h3>
-                <p>Hãng xe Việt Nam VinFast vừa ra mắt mẫu xe điện mới với nhiều cải tiến công nghệ.</p>
-                <a href="https://vinfast.com" target="_blank">Đọc thêm</a>
+            <div class="car-item">
+                <img src="https://tse3.mm.bing.net/th?id=OIP.Wwv2jLcoiXO9YXN4QTNY4gHaFR&pid=Api" alt="VinFast VF5">
+                <h3>VinFast VF5</h3>
+                <p>SUV hạng A - Giá từ 529 triệu VNĐ</p>
             </div>
-            <div class="news-item">
-                <img src="https://tse2.mm.bing.net/th?id=OIP.IJhmqtob2cnVJeEcnMlXBgHaFj&pid=Api" alt="Trạm sạc VinFast">
-                <h3>VinFast phát triển hệ thống trạm sạc nhanh</h3>
-                <p>VinFast đang triển khai mạng lưới trạm sạc xe điện trên toàn quốc.</p>
-                <a href="https://vinfast.com" target="_blank">Đọc thêm</a>
+            <div class="car-item">
+                <img src="https://tse3.mm.bing.net/th?id=OIP.af5woatjkBRLeVuXDIcxEwHaE8&pid=Api" alt="VinFast VF6">
+                <h3>VinFast VF6</h3>
+                <p>SUV hạng B - Giá từ 689 triệu VNĐ</p>
+            </div>
+            <div class="car-item">
+                <img src="https://tse2.mm.bing.net/th?id=OIP.2aEXap9VXbxQ-ayQaaobIwHaE7&pid=Api" alt="VinFast VF7">
+                <h3>VinFast VF7</h3>
+                <p>SUV hạng C - Giá từ 799 triệu VNĐ</p>
+            </div>
+            <div class="car-item">
+                <img src="https://tse3.mm.bing.net/th?id=OIP.BStQlftV7GW0sc1FY1s1LQHaEK&pid=Api" alt="VinFast VF8">
+                <h3>VinFast VF8</h3>
+                <p>SUV hạng D - Giá từ 1,019 tỷ VNĐ</p>
+            </div>
+            <div class="car-item">
+                <img src="https://tse1.mm.bing.net/th?id=OIP.E4IzVOb5d1Vagq9MhqUHGAHaE0&pid=Api" alt="VinFast VF9">
+                <h3>VinFast VF9</h3>
+                <p>SUV hạng E - Giá từ 1,499 tỷ VNĐ</p>
             </div>
         </div>
     </div>
