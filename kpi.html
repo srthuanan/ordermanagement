@@ -16,9 +16,15 @@
             font-size: 28px;
             margin-bottom: 20px;
         }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            max-height: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         table {
-            width: 95%;
-            margin: auto;
+            width: 100%;
             border-collapse: collapse;
             background: white;
             border-radius: 10px;
@@ -35,6 +41,9 @@
             background-color: #34495e;
             color: white;
             font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
         tfoot {
             background-color: #2c3e50;
@@ -49,28 +58,55 @@
             background-color: #e67e22 !important;
             color: white;
         }
-        .table-container {
-            max-height: 600px;
-            overflow-y: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .button-container {
+            margin-bottom: 15px;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            margin: 5px;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
         }
     </style>
 </head>
-         <script>
-        
+    <script>
+        // Kiểm tra nếu chưa đăng nhập, chuyển hướng về trang index.html
         if (sessionStorage.getItem('loggedIn') !== 'true') {
             window.location.href = "index.html";
         }
 
-
+        // Hàm đăng xuất
         function logout() {
             sessionStorage.removeItem('loggedIn');
             window.location.href = 'index.html';
         }
+
+        // Hàm quay lại trang Dashboard
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
     </script>
+
 <body>
     <h2>KPIs Tháng 3</h2>
+        <div class="button-container">
+        <button class="btn logout-btn" onclick="logout()">Đăng Xuất</button>
+        <button class="btn" onclick="goToDashboard()">Quay lại </button>
+    </div>
     <div class="table-container">
     <table>
         <thead>
