@@ -7,13 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script>
-         document.addEventListener("DOMContentLoaded", function () {
-            if (sessionStorage.getItem('loggedIn') !== 'true') {
-                window.location.href = "index.html";
-            }
-
-            document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
-        });
+document.addEventListener("DOMContentLoaded", function () {
+    if (!sessionStorage.getItem('loggedIn')) {
+        window.location.href = "index.html";
+    }
+    document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
+});
 
         function logout() {
             sessionStorage.removeItem('loggedIn');
