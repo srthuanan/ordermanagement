@@ -29,6 +29,18 @@
         }
     </style>
 </head>
+       <script>
+        
+        if (sessionStorage.getItem('loggedIn') !== 'true') {
+            window.location.href = "index.html";
+        }
+
+
+        function logout() {
+            sessionStorage.removeItem('loggedIn');
+            window.location.href = 'index.html';
+        }
+    </script>
 <body>
     <h2>KPIs Tháng 3</h2>
     <table>
