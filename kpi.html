@@ -18,7 +18,6 @@
         }
         .table-container {
             width: 100%;
-            overflow-x: auto;
             max-height: 600px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -43,7 +42,7 @@
             color: white;
             font-weight: bold;
             position: sticky;
-            top: 0;
+            top: 0; /* Cố định tiêu đề ở phía trên */
             z-index: 2; /* Đảm bảo tiêu đề luôn ở trên */
         }
         tfoot {
@@ -71,14 +70,6 @@
         }
         .btn:hover {
             background-color: #2980b9;
-        }
-
-        /* Cố định cho các tiêu đề cột trong bảng */
-        thead tr th {
-            position: sticky;
-            top: 0;
-            background-color: #34495e;
-            z-index: 3;
         }
     </style>
 </head>
@@ -609,7 +600,7 @@
             </tr>
         </tfoot>
         </table>
- ble>
+ 
     </div>
 </body>
 </html>
