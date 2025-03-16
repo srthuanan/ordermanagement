@@ -545,12 +545,12 @@ function fetchData() {
     axios.get(apiURL)
         .then(response => {
             let data = response.data;
-            if (data.daghep) {
-                tableData.table1 = data.daghep.map(row => Object.values(row));
+            if (data.Sheet1) {
+                tableData.table1 = data.Sheet1.map(row => Object.values(row));
                 renderTable(tableData.table1, "table1");
             }
-            if (data.chuaghep) {
-                tableData.table2 = data.chuaghep.map(row => Object.values(row));
+            if (data.Sheet2) {
+                tableData.table2 = data.Sheet2.map(row => Object.values(row));
                 renderTable(tableData.table2, "table2");
             }
         })
@@ -812,13 +812,13 @@ document.addEventListener("DOMContentLoaded", function () {
         axios.get(apiURL)
             .then(response => {
                 let data = response.data;
-                if (data.daghep) {
-                    tableData.table1 = data.daghep.map(row => Object.values(row));
+                if (data.Sheet1) {
+                    tableData.table1 = data.Sheet1.map(row => Object.values(row));
                     renderTable(tableData.table1, "table1");
                     highlightVinNumbers(); // Gọi ngay sau khi bảng hiển thị
                 }
-                if (data.chuaghep) {
-                    tableData.table2 = data.chuaghep.map(row => Object.values(row));
+                if (data.Sheet2) {
+                    tableData.table2 = data.Sheet2.map(row => Object.values(row));
                     renderTable(tableData.table2, "table2");
                 }
             })
