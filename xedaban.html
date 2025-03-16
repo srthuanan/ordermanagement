@@ -151,9 +151,9 @@
 
         .export-btn {
             padding: 6px 12px;
-            background: linear-gradient(135deg, #3498db, #2ecc71);
-            color: white;
-            border: none;
+            color: #006400; /* Màu chữ xanh giống Excel */
+            border: 2px solid #3498db; /* Viền nút */
+            background-color: transparent; /* Bỏ màu nền */
             border-radius: 5px;
             font-weight: bold;
             cursor: pointer;
@@ -162,12 +162,9 @@
         }
 
         .export-btn:hover {
-            background: linear-gradient(135deg, #2ecc71, #3498db);
-            transform: scale(1.05);
-        }
-
-        .export-btn i {
-            font-size: 20px;
+            background-color: transparent;
+            color: #2ecc71; /* Màu chữ thay đổi khi hover */
+            border-color: #2ecc71; /* Thay đổi viền khi hover */
         }
 
         /* Responsive Styles */
@@ -177,8 +174,8 @@
             }
 
             .navbar a {
-                font-size: 9px; /* Giảm kích thước font cho các liên kết */
-                padding: 5px;   /* Giảm padding để tiết kiệm không gian */
+                font-size: 9px; 
+                padding: 5px;   
                 text-align: center;
             }
 
@@ -219,8 +216,8 @@
 
         @media (max-width: 480px) {
             .navbar a {
-                font-size: 8px; /* Giảm thêm kích thước font trên các màn hình nhỏ hơn */
-                padding: 4px;  /* Giảm padding để thêm không gian cho các liên kết */
+                font-size: 8px; 
+                padding: 4px;
             }
 
             .sidebar {
@@ -252,6 +249,27 @@
                 padding: 3px;
             }
         }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 1000;
+        }
+
+        .loading-spinner i {
+            font-size: 25px; /* Kích thước nhỏ hơn */
+            color: #7f8c8d; /* Màu xám nhạt */
+            animation: spin 2s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -273,6 +291,7 @@
                 <a href="#" onclick="fetchSheetData('October', this)">October</a>
                 <a href="#" onclick="fetchSheetData('November', this)">November</a>
                 <a href="#" onclick="fetchSheetData('December', this)">December</a>
+                <a href="#" onclick="fetchSheetData('Total', this)">Total</a> <!-- New "Total" tab -->
             </div>
         </div>
         
@@ -283,29 +302,22 @@
             </div>
             <div class="table-container">
                 <table id="data-table">
-                    <thead>
+                    <thead id="table-head">
                         <tr>
-                            <th>STT</th>
-                            <th>Tên KH</th>
-                            <th>Ngày DMS</th>
-                            <th>VSO</th>
-                            <th>Dòng xe</th>
-                            <th>Phiên bản</th>
-                            <th>Ngoại thất</th>
-                            <th>Nội thất</th>
-                            <th>TVBH</th>
-                            <th>Vin</th>
-                            <th>Số máy</th>
-                            <th>Chính sách</th>
-                            <th>Note</th>
+                            <th>Model</th>
+                            <th>Count</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                        <tr><td colspan="13">📌 Click a month to load data.</td></tr>
-                    </tbody>
+                         </tbody>
                 </table>
             </div>
         </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
     </div>
 
 <script>
@@ -314,70 +326,98 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = "index.html";
     }
     document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
+
+    // Tự động chọn và tải dữ liệu cho tab "Total" khi trang được tải
+    fetchSheetData('Total', document.querySelector('.navbar a:last-child'));
 });
 
-        function logout() {
-            sessionStorage.removeItem('loggedIn');
-            window.location.href = 'index.html';
-        }
+let cachedData = {};
 
-    let cachedData = {};
+async function fetchSheetData(sheetName, element) {
+    document.querySelectorAll('.navbar a').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
 
-    // Lấy dữ liệu của tab đầu tiên khi trang tải
-    window.onload = function() {
-        fetchSheetData('January', document.querySelector('.navbar a:first-child'));
-    };
+    // Hiển thị loading spinner
+    document.querySelector('.loading-spinner').style.display = 'block';
 
-    async function fetchSheetData(sheetName, element) {
-        document.querySelectorAll('.navbar a').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        document.getElementById("table-body").innerHTML = `<tr><td colspan="13" class="loading">⏳ Loading data...</td></tr>`;
-
-        if (cachedData[sheetName]) {
-            renderTable(cachedData[sheetName]);
-            return;
-        }
-
-        try {
-            let response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            let data = await response.json();
-            cachedData[sheetName] = data;
-            renderTable(data);
-        } catch (error) {
-            document.getElementById("table-body").innerHTML = `<tr><td colspan="13" style="color: red;">⚠️ Error loading data: ${error.message}</td></tr>`;
-            console.error("Error fetching data:", error);
-        }
+    if (sheetName === "Total") {
+        document.getElementById("table-head").innerHTML = `
+            <tr>
+                <th>Model</th>
+                <th>Count</th>
+            </tr>
+        `;
+    } else {
+        document.getElementById("table-head").innerHTML = `
+            <tr>
+                <th>STT</th>
+                <th>Tên KH</th>
+                <th>Ngày DMS</th>
+                <th>VSO</th>
+                <th>Dòng xe</th>
+                <th>Phiên bản</th>
+                <th>Ngoại thất</th>
+                <th>Nội thất</th>
+                <th>TVBH</th>
+                <th>Vin</th>
+                <th>Số máy</th>
+                <th>Chính sách</th>
+                <th>Note</th>
+            </tr>
+        `;
     }
 
-    function renderTable(data) {
-        let content = data.map((row, index) => `<tr><td>${index + 1}</td>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
-        document.getElementById("table-body").innerHTML = content;
-        document.getElementById("total-count").textContent = data.length;
+    if (cachedData[sheetName]) {
+        renderTable(cachedData[sheetName]);
+        return;
     }
 
-    function exportToExcel() {
-        let table = document.getElementById("data-table");
-        let tableHTML = table.outerHTML.replace(/ /g, '%20');
-        let dataType = 'application/vnd.ms-excel';
-        let downloadLink = document.createElement("a");
-        document.body.appendChild(downloadLink);
-
-        let filename = 'data_export.xls';
-
-        if (navigator.msSaveOrOpenBlob) {
-            let blob = new Blob(['\ufeff', tableHTML], { type: dataType });
-            navigator.msSaveOrOpenBlob(blob, filename);
-        } else {
-            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-            downloadLink.download = filename;
-            downloadLink.click();
-        }
-
-        document.body.removeChild(downloadLink);
+    try {
+        let response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`);
+        let data = await response.json();
+        cachedData[sheetName] = data;
+        renderTable(data);
+    } catch (error) {
+        document.getElementById("table-body").innerHTML = `<tr><td colspan="13" style="color: red;">⚠️ Error loading data: ${error.message}</td></tr>`;
+        console.error("Error fetching data:", error);
     }
+
+    // Ẩn loading spinner khi tải xong
+    document.querySelector('.loading-spinner').style.display = 'none';
+}
+
+function renderTable(data) {
+    let content = "";
+    if (data[0] && data[0].length === 2) {
+        content = data.map(row => `<tr><td>${row[0]}</td><td>${row[1]}</td></tr>`).join("");
+    } else {
+        content = data.map((row, index) => `<tr><td>${index + 1}</td>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
+    }
+
+    document.getElementById("table-body").innerHTML = content;
+    document.getElementById("total-count").textContent = data.length;
+}
+
+function exportToExcel() {
+    let table = document.getElementById("data-table");
+    let tableHTML = table.outerHTML.replace(/ /g, '%20');
+    let dataType = 'application/vnd.ms-excel';
+    let downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+
+    let filename = 'data_export.xls';
+
+    if (navigator.msSaveOrOpenBlob) {
+        let blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+        navigator.msSaveOrOpenBlob(blob, filename);
+    } else {
+        downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+
+    document.body.removeChild(downloadLink);
+}
 </script>
 
 </body>
