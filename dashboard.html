@@ -7,18 +7,17 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    if (!sessionStorage.getItem('loggedIn')) {
-        window.location.href = "index.html";
-    }
-    document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
-});
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!sessionStorage.getItem('loggedIn')) {
+                window.location.href = "index.html";
+            }
+            document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
+        });
 
         function logout() {
             sessionStorage.removeItem('loggedIn');
             window.location.href = 'index.html';
         }
-
     </script>
     <style>
         body {
@@ -129,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <a href="kpi.html">Kết Quả Kinh Doanh</a>
         <a href="yeucaughepxe.html">Yêu Cầu Ghép Xe</a>
         <a href="danhsach.html">Danh Sách Đơn Hàng</a>
-        <a href="xedaban.html">Danh Sách Xe Đã Bán</a>
+        <a href="xedaban.html">Danh Sách Xe Đã Bán</a> <!-- Chuyển hướng đến xedaban.html -->
         <a href="#settings">⚙Cài Đặt</a>
         <div class="logout-btn" onclick="logout()">Log Out</div>
     </div>
