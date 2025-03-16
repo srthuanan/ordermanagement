@@ -54,10 +54,6 @@
             background-color: #ecf0f1;
             transition: 0.3s;
         }
-        .highlight {
-            background-color: #e67e22 !important;
-            color: white;
-        }
         .button-container {
             margin-bottom: 15px;
         }
@@ -75,36 +71,38 @@
         .btn:hover {
             background-color: #2980b9;
         }
-        .logout-btn {
-            background-color: #e74c3c;
-        }
-        .logout-btn:hover {
-            background-color: #c0392b;
-        }
     </style>
 </head>
-    <script>
-        // Kiểm tra nếu chưa đăng nhập, chuyển hướng về trang index.html
-        if (sessionStorage.getItem('loggedIn') !== 'true') {
-            window.location.href = "index.html";
-        }
 
+<script>
+    if (sessionStorage.getItem('loggedIn') !== 'true') {
+        window.location.href = "index.html";
+    }
 
-        // Hàm quay lại trang Dashboard
-        function goToDashboard() {
-            window.location.href = 'dashboard.html';
+    function goToDashboard() {
+        window.location.href = 'dashboard.html';
+    }
+
+    window.onload = function() {
+        var username = sessionStorage.getItem('username');
+        var isAdmin = username === "admin";
+        
+        if (isAdmin()) {
+            document.querySelectorAll('td').forEach(function(td) {
+                td.contentEditable = true;
+            });
         }
-    </script>
+    }
+</script>
 
 <body>
     <h2>KPIs Tháng 3</h2>
-        <div class="button-container">
-   
-        <button class="btn" onclick="goToDashboard()">Quay lại </button>
+    <div class="button-container">
+        <button class="btn" onclick="goToDashboard()">Quay lại</button>
     </div>
     <div class="table-container">
-    <table>
-        <thead>
+        <table>
+              <thead>
             <tr>
                 <th rowspan="2">STT</th>
                 <th rowspan="2">TVBH</th>
@@ -594,7 +592,8 @@
                 <td>11%</td>
             </tr>
         </tfoot>
-    </table>
+        </table>
     </div>
+
 </body>
 </html>
