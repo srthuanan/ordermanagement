@@ -309,7 +309,7 @@
                         </tr>
                     </thead>
                     <tbody id="table-body">
-                         </tbody>
+                     </tbody>
                 </table>
             </div>
         </div>
@@ -338,7 +338,9 @@ async function fetchSheetData(sheetName, element) {
     element.classList.add('active');
 
     // Hiển thị loading spinner
-    document.querySelector('.loading-spinner').style.display = 'block';
+    if (!cachedData[sheetName]) { // Hiển thị Spinner chỉ khi chưa tải dữ liệu
+        document.querySelector('.loading-spinner').style.display = 'block';
+    }
 
     if (sheetName === "Total") {
         document.getElementById("table-head").innerHTML = `
