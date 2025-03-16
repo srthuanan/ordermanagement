@@ -72,6 +72,14 @@
         .btn:hover {
             background-color: #2980b9;
         }
+
+        /* Cố định cho các tiêu đề cột trong bảng */
+        thead tr th {
+            position: sticky;
+            top: 0;
+            background-color: #34495e;
+            z-index: 3;
+        }
     </style>
 </head>
 
@@ -110,32 +118,32 @@
     </div>
     <div class="table-container">
         <table>
-              <thead>
-            <tr>
-                <th rowspan="2">STT</th>
-                <th rowspan="2">TVBH</th>
-                <th rowspan="2">Chỉ Tiêu XHĐ</th>
-                <th colspan="6">Số Lượng Cọc</th>
-                <th colspan="6">Số Lượng XHĐ</th>
-                <th rowspan="2">Tổng Cọc</th>
-                <th rowspan="2">Tổng XHĐ</th>
-                <th rowspan="2">% Đạt XHĐ</th>
-            </tr>
-            <tr>
-                <th>VF 3</th>
-                <th>VF 5</th>
-                <th>VF 6</th>
-                <th>VF 7</th>
-                <th>VF 8</th>
-                <th>VF 9</th>
-                <th>VF 3</th>
-                <th>VF 5</th>
-                <th>VF 6</th>
-                <th>VF 7</th>
-                <th>VF 8</th>
-                <th>VF 9</th>
-            </tr>
-        </thead>
+            <thead>
+                <tr>
+                    <th rowspan="2">STT</th>
+                    <th rowspan="2">TVBH</th>
+                    <th rowspan="2">Chỉ Tiêu XHĐ</th>
+                    <th colspan="6">Số Lượng Cọc</th>
+                    <th colspan="6">Số Lượng XHĐ</th>
+                    <th rowspan="2">Tổng Cọc</th>
+                    <th rowspan="2">Tổng XHĐ</th>
+                    <th rowspan="2">% Đạt XHĐ</th>
+                </tr>
+                <tr>
+                    <th>VF 3</th>
+                    <th>VF 5</th>
+                    <th>VF 6</th>
+                    <th>VF 7</th>
+                    <th>VF 8</th>
+                    <th>VF 9</th>
+                    <th>VF 3</th>
+                    <th>VF 5</th>
+                    <th>VF 6</th>
+                    <th>VF 7</th>
+                    <th>VF 8</th>
+                    <th>VF 9</th>
+                </tr>
+            </thead>
         <tbody>
             <tr>
 
@@ -601,7 +609,7 @@
             </tr>
         </tfoot>
         </table>
+ ble>
     </div>
-
 </body>
 </html>
