@@ -14,6 +14,14 @@
             padding: 20px;
             margin: 0;
         }
+.sidebar h3 {
+    color: #2980b9;          /* Màu chữ xanh */
+    font-size: 15px;         /* Kích thước chữ lớn hơn */
+    font-weight: bold;       /* Đậm hơn */
+    margin-bottom: 20px;     /* Tăng khoảng cách dưới */
+    text-align: center;      /* Căn giữa chữ */
+    letter-spacing: 1px;     /* Tăng khoảng cách giữa các chữ */
+}
 
         h2 {
             font-size: 36px;
@@ -41,19 +49,13 @@
             max-width: 100px;
         }
 
-        .sidebar h3 {
-            color: #2980b9;
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
         .navbar, .filter-bar {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .navbar a, .filter-bar button {
+        .navbar a {
             padding: 6px;
             text-decoration: none;
             color: white;
@@ -67,7 +69,7 @@
             text-align: center;
         }
 
-        .navbar a:hover, .filter-bar button:hover {
+        .navbar a:hover {
             background: linear-gradient(135deg, #2ecc71, #3498db);
             transform: scale(1.05);
         }
@@ -127,15 +129,6 @@
             font-size: 12px;
         }
 
-        tr:nth-child(even) {
-            background: #f2f4f8;
-        }
-
-        tr:hover {
-            background: #d5e5f4;
-            transition: 0.3s ease;
-        }
-
         .export-btn-container {
             display: flex;
             justify-content: flex-end;
@@ -151,9 +144,9 @@
 
         .export-btn {
             padding: 6px 12px;
-            color: #006400; /* Màu chữ xanh giống Excel */
-            border: 2px solid #3498db; /* Viền nút */
-            background-color: transparent; /* Bỏ màu nền */
+            background: transparent;
+            color: #2ecc71;
+            border: 2px solid #2ecc71;
             border-radius: 5px;
             font-weight: bold;
             cursor: pointer;
@@ -162,9 +155,33 @@
         }
 
         .export-btn:hover {
-            background-color: transparent;
-            color: #2ecc71; /* Màu chữ thay đổi khi hover */
-            border-color: #2ecc71; /* Thay đổi viền khi hover */
+            background: #2ecc71;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            color: #2ecc71;
+        }
+
+        .loading-spinner .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2ecc71;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Responsive Styles */
@@ -206,69 +223,6 @@
             th, td {
                 padding: 4px;
             }
-
-            .navbar a {
-                font-size: 9px;
-                padding: 5px;
-                text-align: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .navbar a {
-                font-size: 8px; 
-                padding: 4px;
-            }
-
-            .sidebar {
-                min-width: 180px;
-            }
-
-            h2 {
-                font-size: 28px;
-            }
-
-            .export-btn-container {
-                gap: 8px;
-            }
-
-            .navbar a {
-                font-size: 8px;
-            }
-
-            .export-btn {
-                padding: 5px 10px;
-                font-size: 16px;
-            }
-
-            table {
-                font-size: 8px;
-            }
-
-            th, td {
-                padding: 3px;
-            }
-        }
-
-        /* Loading Spinner */
-        .loading-spinner {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 1000;
-        }
-
-        .loading-spinner i {
-            font-size: 25px; /* Kích thước nhỏ hơn */
-            color: #7f8c8d; /* Màu xám nhạt */
-            animation: spin 2s infinite linear;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -277,7 +231,7 @@
     <h2>📊 Danh Sách Xe Đã Xuất Hóa Đơn 2025</h2>    
     <div class="dashboard-container">
         <div class="sidebar">
-            <h3>Chọn tháng</h3>
+            <h3>Chọn Tháng</h3>
             <div class="navbar">
                 <a href="#" onclick="fetchSheetData('January', this)">January</a>
                 <a href="#" onclick="fetchSheetData('February', this)">February</a>
@@ -369,15 +323,23 @@ async function fetchSheetData(sheetName, element) {
         `;
     }
 
-    if (cachedData[sheetName]) {
-        renderTable(cachedData[sheetName]);
+    // Kiểm tra nếu dữ liệu đã lưu trong sessionStorage
+    let storedData = sessionStorage.getItem(sheetName);
+    if (storedData) {
+        // Dữ liệu đã có trong sessionStorage, sử dụng nó ngay lập tức
+        let data = JSON.parse(storedData);
+        renderTable(data);
+        document.querySelector('.loading-spinner').style.display = 'none';
         return;
     }
 
     try {
         let response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`);
         let data = await response.json();
-        cachedData[sheetName] = data;
+
+        // Lưu dữ liệu vào sessionStorage sau khi tải xong
+        sessionStorage.setItem(sheetName, JSON.stringify(data));
+        
         renderTable(data);
     } catch (error) {
         document.getElementById("table-body").innerHTML = `<tr><td colspan="13" style="color: red;">⚠️ Error loading data: ${error.message}</td></tr>`;
