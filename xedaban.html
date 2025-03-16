@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Xe Đã Xuất Hóa Đơn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: #2c3e50;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1800px;
+            margin: auto;
+        }
+
+        .sidebar {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 100px;
+            max-width: 100px;
+        }
+
+        .sidebar h3 {
+            color: #2980b9;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .navbar, .filter-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .navbar a, .filter-bar button {
+            padding: 6px;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 10px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .navbar a:hover, .filter-bar button:hover {
+            background: linear-gradient(135deg, #2ecc71, #3498db);
+            transform: scale(1.05);
+        }
+
+        .navbar a.active {
+            background: linear-gradient(135deg, #ff9800, #e65100);
+            color: white;
+            font-weight: bold;
+            border-radius: 6px;
+            transform: scale(1.1);
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            flex: 3;
+            max-height: 600px;
+            position: relative;
+        }
+
+        .table-container {
+            max-height: 550px;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            color: #2c3e50;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: white;
+            font-size: 10px;
+            z-index: 100;
+            box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f4f8;
+        }
+
+        tr:hover {
+            background: #d5e5f4;
+            transition: 0.3s ease;
+        }
+
+        .export-btn-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .export-btn-container span {
+            font-weight: bold;
+        }
+
+        .export-btn {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .export-btn:hover {
+            background: linear-gradient(135deg, #2ecc71, #3498db);
+            transform: scale(1.05);
+        }
+
+        .export-btn i {
+            font-size: 20px;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-width: 200px;
+            }
+
+            .navbar a {
+                font-size: 9px; /* Giảm kích thước font cho các liên kết */
+                padding: 5px;   /* Giảm padding để tiết kiệm không gian */
+                text-align: center;
+            }
+
+            .dashboard-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .table-wrapper {
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .export-btn-container {
+                flex-direction: column;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .export-btn-container span {
+                margin-bottom: 10px;
+            }
+
+            table {
+                font-size: 9px;
+            }
+
+            th, td {
+                padding: 4px;
+            }
+
+            .navbar a {
+                font-size: 9px;
+                padding: 5px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar a {
+                font-size: 8px; /* Giảm thêm kích thước font trên các màn hình nhỏ hơn */
+                padding: 4px;  /* Giảm padding để thêm không gian cho các liên kết */
+            }
+
+            .sidebar {
+                min-width: 180px;
+            }
+
+            h2 {
+                font-size: 28px;
+            }
+
+            .export-btn-container {
+                gap: 8px;
+            }
+
+            .navbar a {
+                font-size: 8px;
+            }
+
+            .export-btn {
+                padding: 5px 10px;
+                font-size: 16px;
+            }
+
+            table {
+                font-size: 8px;
+            }
+
+            th, td {
+                padding: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📊 Danh Sách Xe Đã Xuất Hóa Đơn</h2>    
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h3>Chọn tháng</h3>
+            <div class="navbar">
+                <a href="#" onclick="fetchSheetData('January', this)">January</a>
+                <a href="#" onclick="fetchSheetData('February', this)">February</a>
+                <a href="#" onclick="fetchSheetData('March', this)">March</a>
+                <a href="#" onclick="fetchSheetData('April', this)">April</a>
+                <a href="#" onclick="fetchSheetData('May', this)">May</a>
+                <a href="#" onclick="fetchSheetData('June', this)">June</a>
+                <a href="#" onclick="fetchSheetData('July', this)">July</a>
+                <a href="#" onclick="fetchSheetData('August', this)">August</a>
+                <a href="#" onclick="fetchSheetData('September', this)">September</a>
+                <a href="#" onclick="fetchSheetData('October', this)">October</a>
+                <a href="#" onclick="fetchSheetData('November', this)">November</a>
+                <a href="#" onclick="fetchSheetData('December', this)">December</a>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <div class="export-btn-container">
+                <span>Tổng số lượng: <span id="total-count">0</span></span>
+                <button class="export-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i></button>
+            </div>
+            <div class="table-container">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên KH</th>
+                            <th>Ngày DMS</th>
+                            <th>VSO</th>
+                            <th>Dòng xe</th>
+                            <th>Phiên bản</th>
+                            <th>Ngoại thất</th>
+                            <th>Nội thất</th>
+                            <th>TVBH</th>
+                            <th>Vin</th>
+                            <th>Số máy</th>
+                            <th>Chính sách</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr><td colspan="13">📌 Click a month to load data.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    if (!sessionStorage.getItem('loggedIn')) {
+        window.location.href = "index.html";
+    }
+    document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
+});
+
+        function logout() {
+            sessionStorage.removeItem('loggedIn');
+            window.location.href = 'index.html';
+        }
+
+    let cachedData = {};
+
+    // Lấy dữ liệu của tab đầu tiên khi trang tải
+    window.onload = function() {
+        fetchSheetData('January', document.querySelector('.navbar a:first-child'));
+    };
+
+    async function fetchSheetData(sheetName, element) {
+        document.querySelectorAll('.navbar a').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById("table-body").innerHTML = `<tr><td colspan="13" class="loading">⏳ Loading data...</td></tr>`;
+
+        if (cachedData[sheetName]) {
+            renderTable(cachedData[sheetName]);
+            return;
+        }
+
+        try {
+            let response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            let data = await response.json();
+            cachedData[sheetName] = data;
+            renderTable(data);
+        } catch (error) {
+            document.getElementById("table-body").innerHTML = `<tr><td colspan="13" style="color: red;">⚠️ Error loading data: ${error.message}</td></tr>`;
+            console.error("Error fetching data:", error);
+        }
+    }
+
+    function renderTable(data) {
+        let content = data.map((row, index) => `<tr><td>${index + 1}</td>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
+        document.getElementById("table-body").innerHTML = content;
+        document.getElementById("total-count").textContent = data.length;
+    }
+
+    function exportToExcel() {
+        let table = document.getElementById("data-table");
+        let tableHTML = table.outerHTML.replace(/ /g, '%20');
+        let dataType = 'application/vnd.ms-excel';
+        let downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+
+        let filename = 'data_export.xls';
+
+        if (navigator.msSaveOrOpenBlob) {
+            let blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+            navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+            downloadLink.download = filename;
+            downloadLink.click();
+        }
+
+        document.body.removeChild(downloadLink);
+    }
+</script>
+
+</body>
+</html>
