@@ -99,7 +99,7 @@ function login() {
     };
 
     if (users[username] && users[username] === password) {
-        sessionStorage.setItem('loggedIn', 'true');
+        sessionStorage.setItem('loggedIn', 'SRTHUANAN');
         sessionStorage.setItem('username', username);  // Lưu username vào sessionStorage
 
         var message = username === "admin" ? "Chào mừng Admin, bạn đang được chuyển hướng đến trang KPI!" : "Đăng nhập thành công!";
