@@ -74,32 +74,33 @@
     </style>
 </head>
 
-<script>
-    if (sessionStorage.getItem('loggedIn') !== 'true') {
-        window.location.href = "index.html";
-    }
+   <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var username = sessionStorage.getItem('username');
+            var loggedIn = sessionStorage.getItem('loggedIn');
+            var allowedUsers = ["SRTHUANAN", "admin"];
 
-    function goToDashboard() {
-        window.location.href = 'dashboard.html';
-    }
+            if (!loggedIn || !allowedUsers.includes(username)) {
+                alert("Bạn không có quyền truy cập vào trang này!");
+                window.location.href = "đăng nhập.html";
+                return;
+            }
 
-    window.onload = function() {
-        var username = sessionStorage.getItem('username');
-        var allowedUsers = ["SRTHUANAN", "admin"];
-
-        if (!allowedUsers.includes(username)) {
-            alert("Bạn không có quyền truy cập vào trang này!");
-            window.location.href = "index.html";
-            return;
+            if (username === "admin") {
+                document.querySelectorAll('td[contenteditable]')
+                    .forEach(td => td.contentEditable = true);
+                document.getElementById("saveBtn").style.display = "inline-block";
+            }
+        });
+        
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
         }
 
-        if (username === "admin") {
-            document.querySelectorAll('td').forEach(function(td) {
-                td.contentEditable = true;
-            });
+        function saveData() {
+            alert("Dữ liệu đã được lưu thành công!");
         }
-    }
-</script>
+    </script>
 
 
 <body>
