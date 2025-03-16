@@ -519,9 +519,17 @@ th.sorted-desc::after {
         </div>
     </div>
 <script>
-     if (sessionStorage.getItem('loggedIn') !== 'true') {
-        window.location.href = "dang-nhap.html";
-    }
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!sessionStorage.getItem('loggedIn')) {
+                window.location.href = "index.html";
+            }
+            document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
+        });
+
+        function logout() {
+            sessionStorage.removeItem('loggedIn');
+            window.location.href = 'index.html';
+        }
 let tableData = {
     table1: [],
     table2: []
@@ -532,7 +540,7 @@ function fetchData() {
     const loadingElement = document.getElementById("loading");
     loadingElement.style.display = "block";
 
-    const apiURL = "https://script.google.com/macros/s/AKfycbyT5ODh1u0mbxbh6flo1vb5-7dPff6w9zrvFoCfXlqBRCscfLT0J79zVrpqziMqqTfR/exec";
+    const apiURL = "https://script.google.com/macros/s/AKfycbxE4BRRHoRguCQd9qnqLeyAuUSSG-jvtx0cwexz2nX3oUwP6VPaahfOXebsmsWgEyzV/exec";
 
     axios.get(apiURL)
         .then(response => {
@@ -799,7 +807,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const loadingElement = document.getElementById("loading");
         loadingElement.style.display = "block";
 
-        const apiURL = "https://script.google.com/macros/s/AKfycbyT5ODh1u0mbxbh6flo1vb5-7dPff6w9zrvFoCfXlqBRCscfLT0J79zVrpqziMqqTfR/exec";
+        const apiURL = "https://script.google.com/macros/s/AKfycbxE4BRRHoRguCQd9qnqLeyAuUSSG-jvtx0cwexz2nX3oUwP6VPaahfOXebsmsWgEyzV/exec";
 
         axios.get(apiURL)
             .then(response => {
