@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPIs Tháng 3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #003366;
+            color: white;
+        }
+        tfoot {
+            font-weight: bold;
+            background-color: #003366;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h2>KPIs Tháng 3</h2>
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="2">STT</th>
+                <th rowspan="2">TVBH</th>
+                <th rowspan="2">Chỉ Tiêu XHD</th>
+                <th colspan="6">Số Lượng Cọc</th>
+                <th colspan="6">Số Lượng XHD</th>
+                <th rowspan="2">Tổng Cọc</th>
+                <th rowspan="2">Tổng XHD</th>
+                <th rowspan="2">% Đạt XHD</th>
+            </tr>
+            <tr>
+                <th>VF 3</th>
+                <th>VF 5</th>
+                <th>VF 6</th>
+                <th>VF 7</th>
+                <th>VF 8</th>
+                <th>VF 9</th>
+                <th>VF 3</th>
+                <th>VF 5</th>
+                <th>VF 6</th>
+                <th>VF 7</th>
+                <th>VF 8</th>
+                <th>VF 9</th>
+            </tr>
+        </thead>
+        <tbody>
+                        <tr>
+                <td>1</td>
+                <td>Đinh Trọng Nhân</td>
+                <td>11</td>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>1</td>
+                <td>9%</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Lê Mai Anh</td>
+                <td>11</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Lê Quốc Thịnh</td>
+                <td>10</td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>2</td>
+                <td>20%</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Lương Thế Ngọc</td>
+                <td>10</td>
+                <td>2</td>
+                <td>1</td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>4</td>
+                <td>4</td>
+                <td>40%</td>
+            </tr>
+            <!-- Bổ sung đầy đủ 22 tư vấn bán hàng -->
+            <tr>
+                <td>5</td>
+                <td>Lý Kim Vinh</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>11%</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Nguyễn Anh Tuấn</td>
+                <td>9</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>11%</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Nguyễn Hoàng Phúc</td>
+                <td>9</td>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>3</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>3</td>
+                <td>33%</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Nguyễn Minh Trung</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>Nguyễn Thiện Thảo</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>2</td>
+                <td>22%</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>Nguyễn Trần Hoàng Thanh</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>2</td>
+                <td>22%</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>Phạm Trọng Huy</td>
+                <td>10</td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td>2</td>
+                <td>20%</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>Tất Bách Tường</td>
+                <td>11</td>
+                <td>3</td>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>2</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>3</td>
+                <td>2</td>
+                <td>18%</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>Thành Ngọc Vinh</td>
+                <td>10</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>4</td>
+                <td>2</td>
+                <td>20%</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>Trần Thị Nguyệt Bạch</td>
+                <td>8</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>13%</td>
+            </tr>
+                    <tr>
+                <td>15</td>
+                <td>Võ Minh Tuấn</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>11%</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>Vũ Thị Trang</td>
+                <td>9</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>Trần Danh Phương</td>
+                <td>6</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>17%</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>Bùi Anh Tài</td>
+                <td>6</td>
+                <td></td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>1</td>
+                <td>1</td>
+                <td>17%</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>Nguyễn Hoàng Thạch</td>
+                <td>9</td>
+                <td>2</td>
+                <td>1</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>3</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>Sang</td>
+                <td>5</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>Huỳnh</td>
+                <td>6</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>Lâm</td>
+                <td>5</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0%</td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">TỔNG</td>
+                <td>190</td>
+                <td>10</td>
+                <td>12</td>
+                <td>2</td>
+                <td>1</td>
+                <td>0</td>
+                <td>11</td>
+                <td>8</td>
+                <td>7</td>
+                <td>3</td>
+                <td>1</td>
+                <td>0</td>
+                <td>26</td>
+                <td>20</td>
+                <td>11%</td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>
