@@ -94,14 +94,17 @@
         var password = document.getElementById("password").value.trim();
 
         var users = {
-            "SRTHUANAN": "HeyVF123"
+            "SRTHUANAN": "HeyVF123",
+            "admin": "admin123"
         };
 
         if (users[username] && users[username] === password) {
-            sessionStorage.setItem('loggedIn', 'true'); // <-- thêm dòng này
+            sessionStorage.setItem('loggedIn', 'true');
+
+            var message = username === "admin" ? "Chào mừng Admin, bạn đang được chuyển hướng đến trang KPI!" : "Đăng nhập thành công!";
 
             Toastify({
-                text: "Đăng nhập thành công!",
+                text: message,
                 duration: 1500,
                 close: true,
                 gravity: "top",
@@ -110,7 +113,11 @@
             }).showToast();
 
             setTimeout(() => {
-                window.location.href = "dashboard.html";
+                if(username === "admin"){
+                    window.location.href = "kpi.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
             }, 1500);
         } else {
             var errorMessage = document.getElementById("error-message");
