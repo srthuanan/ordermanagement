@@ -211,6 +211,20 @@
 
     <div id="toast" class="toast">✅ Đơn hàng đã được thêm thành công!</div>
 <script>
+  // Kiểm tra đăng nhập
+  document.addEventListener("DOMContentLoaded", function () {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+
+    if (!isLoggedIn) {
+      window.location.href = "index.html"; // Chuyển hướng nếu chưa đăng nhập
+    }
+  });
+
+  function logout() {
+    localStorage.removeItem("isLoggedIn"); // Xóa trạng thái đăng nhập
+    window.location.href = "index.html"; // Chuyển về trang đăng nhập
+  }
+
   function showToast(message) {
     const toast = document.getElementById("toast");
     toast.textContent = message;
