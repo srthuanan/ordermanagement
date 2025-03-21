@@ -213,7 +213,7 @@
 <script>
   // Kiểm tra đăng nhập
   document.addEventListener("DOMContentLoaded", function () {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const isLoggedIn = sessionStorage.getItem("loggedIn");
 
     if (!isLoggedIn) {
       window.location.href = "index.html"; // Chuyển hướng nếu chưa đăng nhập
