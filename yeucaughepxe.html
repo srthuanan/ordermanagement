@@ -83,10 +83,25 @@
 
     <!-- Lịch sử bảng đẹp -->
     <div class="glass space-y-4">
-      <h2 class="text-xl font-semibold text-sky-400">📜 Lịch sử yêu cầu ghép xe</h2>
-      <div id="history-table" class="overflow-auto max-h-[400px] text-sm text-white/90">
-        <div class="text-white">⏳ Đang tải dữ liệu...</div>
-      </div>
+      
+
+<h2 class="text-xl font-semibold text-sky-400">📜 Lịch sử yêu cầu ghép xe</h2>
+<div class="flex justify-between items-center mb-3">
+  <input id="search-box" type="text" placeholder="🔍 Tìm kiếm theo tên, số đơn hàng, phiên bản..." class="input-hyper w-2/3" oninput="filterHistory(this.value)">
+  <div class="flex items-center gap-3">
+    <div id="total-count" class="text-sm text-white/70"></div>
+    <button onclick="exportToExcel()" title="Xuất Excel" class="text-white hover:scale-110 transition">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-6 h-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 6a2 2 0 012-2h5.172a2 2 0 011.414.586l5.828 5.828a2 2 0 01.586 1.414V18a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" />
+</svg>
+</button>
+  </div>
+</div>
+<div id="history-table" class="overflow-auto max-h-[400px] text-sm text-white/90">
+  <div class="text-white">⏳ Đang tải dữ liệu...</div>
+</div>
+
+
     </div>
   </div>
 
@@ -383,7 +398,7 @@ function fetchHistory() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", fetchHistory);
+
 </script>
 
 
@@ -409,5 +424,106 @@ document.addEventListener("DOMContentLoaded", fetchHistory);
      class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-6 rounded-2xl shadow-2xl hidden text-center font-semibold text-lg ring-2 ring-white/30">
 </div>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let historyData = [];
+
+function renderHistory(data) {
+  const table = document.getElementById("history-table");
+  const total = document.getElementById("total-count");
+  if (!data.length) {
+    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
+    total.innerText = "";
+    return;
+  }
+
+  const headers = ["STT", ...Object.keys(data[0])];
+  const html = `<table id="export-table" class="table-auto w-full text-left border-collapse">
+    <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
+    <tbody>${data.map((row, i) =>
+      `<tr><td class="border-b p-2">${i + 1}</td>${Object.keys(row).map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
+    ).join("")}</tbody>
+  </table>`;
+  table.innerHTML = html;
+  total.innerText = `📊 Tổng số yêu cầu: ${data.length}`;
+}
+
+function filterHistory(keyword) {
+  const lowerKeyword = keyword.toLowerCase();
+  const filtered = historyData.filter(row =>
+    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
+  );
+  renderHistory(filtered);
+}
+
+function exportToExcel() {
+  const table = document.getElementById("export-table");
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Lịch sử ghép xe" });
+  XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
+}
+
+function fetchHistory() {
+  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
+    .then(res => res.json())
+    .then(data => {
+      historyData = data;
+      renderHistory(historyData);
+    })
+    .catch(err => {
+      const table = document.getElementById("history-table");
+      if (table) table.innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchHistory);
+</script>
+
 </body>
 </html>
+
+<script>
+let historyData = [];
+
+function renderHistory(data) {
+  const table = document.getElementById("history-table");
+
+  if (!data.length) {
+    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const html = `<table class="table-auto w-full text-left border-collapse">
+    <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
+    <tbody>${data.map(row =>
+      `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
+    ).join("")}</tbody>
+  </table>`;
+
+  table.innerHTML = html;
+}
+
+function filterHistory(keyword) {
+  const lowerKeyword = keyword.toLowerCase();
+  const filtered = historyData.filter(row =>
+    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
+  );
+  renderHistory(filtered);
+}
+
+function fetchHistory() {
+  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
+    .then(res => res.json())
+    .then(data => {
+      historyData = data;
+      renderHistory(historyData);
+    })
+    .catch(err => {
+      document.getElementById("history-table").innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
+      console.error(err);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchHistory);
+</script>
