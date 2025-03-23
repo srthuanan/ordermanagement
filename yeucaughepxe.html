@@ -8,39 +8,100 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style>
+  
+<style>
     body {
       font-family: 'Inter', sans-serif;
-    }
-    .input-hyper {
-      background-color: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 0.75rem 1rem;
-      border-radius: 0.75rem;
-      width: 100%;
-      color: white;
-      font-size: 0.95rem;
-    }
-    .button-hyper {
-      background: linear-gradient(to right, #0ea5e9, #6366f1);
-      padding: 0.75rem 2rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      color: white;
-      transition: transform 0.2s ease;
-    }
-    .button-hyper:hover {
-      transform: scale(1.05);
+      background: #dbe4ee !important;
+      color: #1f2937 !important;
     }
     .glass {
-      backdrop-filter: blur(18px);
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 1.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+      border-radius: 20px !important;
+      background: #dbe4ee !important;
+      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
+      padding: 1.5rem !important;
+      backdrop-filter: none !important;
+      border: none !important;
     }
-  </style>
+    .input-hyper {
+      border-radius: 12px !important;
+      border: none !important;
+      background: #dbe4ee !important;
+      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
+      padding: 0.75rem 1rem !important;
+      width: 100% !important;
+      font-size: 0.95rem !important;
+      color: #1f2937 !important;
+    }
+    .button-hyper {
+      background: #c8102e !important;
+      padding: 0.75rem 2rem !important;
+      border-radius: 15px !important;
+      font-weight: 600 !important;
+      color: #ffffff !important;
+      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
+      transition: box-shadow 0.2s ease !important;
+    }
+    .button-hyper:hover {
+      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
+      transform: none !important;
+    }
+    h1, h2 {
+      color: #002147 !important; /* Xanh đậm sang trọng */
+    }
+    ::placeholder {
+      color: #6b7280 !important;
+    }
+</style>
+
+
+
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #dbe4ee !important;
+      color: #1f2937 !important;
+    }
+    .glass {
+      border-radius: 20px !important;
+      background: #dbe4ee !important;
+      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
+      padding: 1.5rem !important;
+      backdrop-filter: none !important;
+      border: none !important;
+    }
+    .input-hyper {
+      border-radius: 12px !important;
+      border: none !important;
+      background: #dbe4ee !important;
+      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
+      padding: 0.75rem 1rem !important;
+      width: 100% !important;
+      font-size: 0.95rem !important;
+      color: #1f2937 !important;
+    }
+    .button-hyper {
+      background: #c8102e !important;
+      padding: 0.75rem 2rem !important;
+      border-radius: 15px !important;
+      font-weight: 600 !important;
+      color: #ffffff !important;
+      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
+      transition: box-shadow 0.2s ease !important;
+    }
+    .button-hyper:hover {
+      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
+      transform: none !important;
+    }
+    h1, h2 {
+      color: #002147 !important; /* Xanh đậm sang trọng */
+    }
+    ::placeholder {
+      color: #6b7280 !important;
+    }
+</style>
+
+
 </head>
 <body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 min-h-screen">
 
@@ -84,23 +145,21 @@
     <!-- Lịch sử bảng đẹp -->
     <div class="glass space-y-4">
       
-
 <h2 class="text-xl font-semibold text-sky-400">📜 Lịch sử yêu cầu ghép xe</h2>
 <div class="flex justify-between items-center mb-3">
-  <input id="search-box" type="text" placeholder="🔍 Tìm kiếm theo tên, số đơn hàng, phiên bản..." class="input-hyper w-2/3" oninput="filterHistory(this.value)">
+  <input id="search-box" type="text" placeholder="🔍 Tìm kiếm theo tên, số đơn hàng..." class="input-hyper w-2/3" oninput="filterHistory(this.value)">
   <div class="flex items-center gap-3">
     <div id="total-count" class="text-sm text-white/70"></div>
     <button onclick="exportToExcel()" title="Xuất Excel" class="text-white hover:scale-110 transition">
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-6 h-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 6a2 2 0 012-2h5.172a2 2 0 011.414.586l5.828 5.828a2 2 0 01.586 1.414V18a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" />
-</svg>
-</button>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
+      </svg>
+    </button>
   </div>
 </div>
 <div id="history-table" class="overflow-auto max-h-[400px] text-sm text-white/90">
   <div class="text-white">⏳ Đang tải dữ liệu...</div>
 </div>
-
 
     </div>
   </div>
@@ -425,6 +484,53 @@ function fetchHistory() {
 </div>
 
 
+
+<style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #dbe4ee !important;
+      color: #1f2937 !important;
+    }
+    .glass {
+      border-radius: 20px !important;
+      background: #dbe4ee !important;
+      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
+      padding: 1.5rem !important;
+      backdrop-filter: none !important;
+      border: none !important;
+    }
+    .input-hyper {
+      border-radius: 12px !important;
+      border: none !important;
+      background: #dbe4ee !important;
+      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
+      padding: 0.75rem 1rem !important;
+      width: 100% !important;
+      font-size: 0.95rem !important;
+      color: #1f2937 !important;
+    }
+    .button-hyper {
+      background: #c8102e !important;
+      padding: 0.75rem 2rem !important;
+      border-radius: 15px !important;
+      font-weight: 600 !important;
+      color: #ffffff !important;
+      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
+      transition: box-shadow 0.2s ease !important;
+    }
+    .button-hyper:hover {
+      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
+      transform: none !important;
+    }
+    h1, h2 {
+      color: #002147 !important; /* Xanh đậm sang trọng */
+    }
+    ::placeholder {
+      color: #6b7280 !important;
+    }
+</style>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 let historyData = [];
@@ -432,21 +538,41 @@ let historyData = [];
 function renderHistory(data) {
   const table = document.getElementById("history-table");
   const total = document.getElementById("total-count");
+  if (!table || !total) return;
+
   if (!data.length) {
     table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
     total.innerText = "";
     return;
   }
 
-  const headers = ["STT", ...Object.keys(data[0])];
-  const html = `<table id="export-table" class="table-auto w-full text-left border-collapse">
-    <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
-    <tbody>${data.map((row, i) =>
-      `<tr><td class="border-b p-2">${i + 1}</td>${Object.keys(row).map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
-    ).join("")}</tbody>
-  </table>`;
+  const headers = Object.keys(data[0]);
+  const html = `
+    <table id="export-table" class="table-fixed w-full text-left border-collapse text-sm shadow-md rounded overflow-hidden">
+      <thead class="sticky top-0 bg-slate-700 text-white z-10">
+        <tr>
+          <th class="border-b px-3 py-2 text-center w-[50px]">STT</th>
+          ${headers.map(h => {
+            let width = 'w-[140px]';
+            if (["ten_ban_hang", "ten_khach_hang"].includes(h)) width = 'w-[200px]';
+            else if (["dong_xe", "phien_ban", "ngoai_that", "noi_that"].includes(h)) width = 'w-[140px]';
+            else if (["so_don_hang"].includes(h)) width = 'w-[120px]';
+            else if (["ngay_coc", "thoi_gian_nhap"].includes(h)) width = 'w-[180px]';
+            return `<th class="border-b px-3 py-2 ${width}">${h}</th>`;
+          }).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map((row, i) => `
+          <tr class="even:bg-slate-800/30 hover:bg-sky-900/30 transition">
+            <td class="border-b px-3 py-2 text-center">${i + 1}</td>
+            ${headers.map(h => `<td class="border-b px-3 py-2">${row[h] || ""}</td>`).join("")}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>`;
   table.innerHTML = html;
-  total.innerText = `📊 Tổng số yêu cầu: ${data.length}`;
+  total.innerText = `📊 Tổng số đơn: ${data.length}`;
 }
 
 function filterHistory(keyword) {
@@ -459,6 +585,7 @@ function filterHistory(keyword) {
 
 function exportToExcel() {
   const table = document.getElementById("export-table");
+  if (!table) return;
   const wb = XLSX.utils.table_to_book(table, { sheet: "Lịch sử ghép xe" });
   XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
 }
@@ -475,7 +602,6 @@ function fetchHistory() {
       if (table) table.innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
     });
 }
-
 document.addEventListener("DOMContentLoaded", fetchHistory);
 </script>
 
@@ -522,6 +648,71 @@ function fetchHistory() {
     .catch(err => {
       document.getElementById("history-table").innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
       console.error(err);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchHistory);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let historyData = [];
+
+function renderHistory(data) {
+  const table = document.getElementById("history-table");
+  const total = document.getElementById("total-count");
+  if (!data.length) {
+    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
+    total.innerText = "";
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const html = `
+  <table id="export-table" class="table-auto w-full text-left border-collapse text-sm shadow-md rounded-lg overflow-hidden">
+    <thead class="sticky top-0 bg-slate-700 text-white z-10">
+      <tr>
+        <th class="border-b px-3 py-2 text-center w-[40px]">STT</th>
+        ${headers.map(h => `<th class="border-b px-3 py-2">${h}</th>`).join("")}
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map((row, i) => `
+        <tr class="even:bg-slate-800/30 hover:bg-sky-900/30 transition">
+          <td class="border-b px-3 py-2 text-center">${i + 1}</td>
+          ${headers.map(h => `<td class="border-b px-3 py-2">${row[h] || ""}</td>`).join("")}
+        </tr>`).join("")}
+    </tbody>
+  </table>`;
+
+  table.innerHTML = html;
+  total.innerText = `📊 Tổng số đơn: ${data.length}`;
+}
+
+function filterHistory(keyword) {
+  const lowerKeyword = keyword.toLowerCase();
+  const filtered = historyData.filter(row =>
+    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
+  );
+  renderHistory(filtered);
+}
+
+function exportToExcel() {
+  const table = document.getElementById("export-table");
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Lịch sử ghép xe" });
+  XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
+}
+
+function fetchHistory() {
+  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
+    .then(res => res.json())
+    .then(data => {
+      historyData = data;
+      renderHistory(historyData);
+    })
+    .catch(err => {
+      const table = document.getElementById("history-table");
+      if (table) table.innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
     });
 }
 
