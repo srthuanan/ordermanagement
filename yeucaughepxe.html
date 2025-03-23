@@ -4,207 +4,387 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ghép Xe VinFast – UI Tailwind</title>
+  <title>Ghép Xe VinFast – Giao diện tinh tế</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(to right, #0f172a, #1e293b);
-      color: #e0f2fe;
-      min-height: 100vh;
     }
-
-    body.light {
-      background: linear-gradient(to right, #f1f5f9, #e2e8f0);
-      color: #0f172a;
+    .input-hyper {
+      background-color: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      width: 100%;
+      color: white;
+      font-size: 0.95rem;
     }
-
-    .capsule {
-      backdrop-filter: blur(20px);
+    .button-hyper {
+      background: linear-gradient(to right, #0ea5e9, #6366f1);
+      padding: 0.75rem 2rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      color: white;
+      transition: transform 0.2s ease;
+    }
+    .button-hyper:hover {
+      transform: scale(1.05);
+    }
+    .glass {
+      backdrop-filter: blur(18px);
       background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 1.5rem;
       padding: 1.5rem;
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.1);
-    }
-
-    .input-hyper {
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid #94a3b8;
-      padding: 0.75rem 0.5rem;
-      width: 100%;
-      color: inherit;
-      font-size: 1rem;
-    }
-
-    .input-hyper:focus {
-      outline: none;
-      border-color: #38bdf8;
-      box-shadow: 0 1px 0 #38bdf8;
-    }
-
-    .button-hyper {
-      background: linear-gradient(to right, #38bdf8, #6366f1);
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.75rem;
-      font-weight: bold;
-      color: white;
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
     }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center p-6">
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 min-h-screen">
 
-  <!-- Toggle Theme -->
-  <button onclick="document.body.classList.toggle('light')" class="fixed top-4 left-4 bg-white text-black px-4 py-2 rounded shadow">🌗 Đổi giao diện</button>
-
-  <!-- Lottie Avatar -->
-  <div class="fixed top-4 right-4 w-[100px] z-50 text-center">
+  <div class="fixed top-4 right-4 w-[80px] z-50">
     <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_YXD37q.json" background="transparent" speed="1" loop autoplay></lottie-player>
   </div>
 
-  <div class="max-w-4xl w-full mt-32 space-y-10">
-    <h1 class="text-3xl font-bold text-center text-cyan-300">🚗 Ghép Xe VinFast – Giao Diện Mới</h1>
+  <div class="max-w-6xl mx-auto space-y-10 mt-10">
+    <h1 class="text-4xl font-bold text-center text-sky-400">🚗 Ghép Xe VinFast</h1>
 
-    <!-- Progress bar -->
-    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-      <div id="progress-bar" class="bg-cyan-400 h-full transition-all duration-500" style="width: 0%;"></div>
+    <form id="vinfast-form" class="grid md:grid-cols-2 gap-6" onsubmit="previewForm(event)">
+      <div class="glass space-y-4">
+        <h2 class="text-lg font-semibold text-sky-300">👤 Thông tin</h2>
+        <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" class="input-hyper" required />
+        <input name="ten_khach_hang" placeholder="Tên khách hàng" class="input-hyper" required />
+      </div>
+      <div class="glass space-y-4">
+        <h2 class="text-lg font-semibold text-sky-300">🚘 Cấu hình xe</h2>
+        <input name="dong_xe" placeholder="Dòng xe" class="input-hyper" required />
+        <input name="phien_ban" placeholder="Phiên bản" class="input-hyper" required />
+        <input name="ngoai_that" placeholder="Ngoại thất" class="input-hyper" required />
+        <input name="noi_that" placeholder="Nội thất" class="input-hyper" required />
+      </div>
+      <div class="glass space-y-4 col-span-2">
+        <h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <input name="so_don_hang" placeholder="Số đơn hàng" class="input-hyper" required />
+          
+    <div class="flex flex-col gap-1">
+      <label class="text-sm text-slate-300">Ngày cọc (vui lòng nhập ngày khách hàng đặt cọc)</label>
+      <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
     </div>
-
-    <!-- Form -->
-    <form id="vinfast-form" class="space-y-10" oninput="updateProgress()" onsubmit="submitForm(event)">
-      <!-- Tư vấn & khách hàng -->
-      <div class="capsule space-y-4">
-        <h2 class="text-lg font-semibold text-cyan-200">👤 TƯ VẤN & KHÁCH HÀNG</h2>
-        <input type="text" placeholder="Tên tư vấn bán hàng" class="input-hyper group1" required />
-        <input type="text" placeholder="Tên khách hàng" class="input-hyper group1" required />
+    
+        </div>
       </div>
-
-      <!-- Cấu hình xe -->
-      <div class="capsule space-y-4">
-        <h2 class="text-lg font-semibold text-cyan-200">🚘 CẤU HÌNH XE</h2>
-        <input type="text" placeholder="Dòng xe (VF8, VF9...)" class="input-hyper group2" required />
-        <input type="text" placeholder="Phiên bản (Base, Plus...)" class="input-hyper group2" required />
-        <input type="text" placeholder="Ngoại thất" class="input-hyper group2" required />
-        <input type="text" placeholder="Nội thất" class="input-hyper group2" required />
-      </div>
-
-      <!-- Đơn hàng -->
-      <div class="capsule space-y-4">
-        <h2 class="text-lg font-semibold text-cyan-200">📦 THÔNG TIN ĐƠN HÀNG</h2>
-        <input type="text" placeholder="Số đơn hàng" class="input-hyper group3" required />
-        <input type="datetime-local" class="input-hyper group3" required />
-      </div>
-
-      <!-- Nút gửi -->
-      <div class="text-right">
-        <button type="submit" class="button-hyper transform transition hover:scale-105 active:scale-95">🚀 GỬI NHU CẦU</button>
+      <div class="col-span-2 text-center">
+        <button type="submit" class="button-hyper">🔍 Xem trước & Gửi</button>
       </div>
     </form>
 
-    <!-- Snackbar -->
-    <div id="snackbar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg hidden">
-      ✅ Yêu cầu đã được gửi!
+    <!-- Lịch sử bảng đẹp -->
+    <div class="glass space-y-4">
+      <h2 class="text-xl font-semibold text-sky-400">📜 Lịch sử yêu cầu ghép xe</h2>
+      <div id="history-table" class="overflow-auto max-h-[400px] text-sm text-white/90">
+        <div class="text-white">⏳ Đang tải dữ liệu...</div>
+      </div>
     </div>
   </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const isLoggedIn = sessionStorage.getItem("loggedIn");
-    if (!isLoggedIn) window.location.href = "index.html";
+<script src="https://cdn.tailwindcss.com">
+// ... To be inserted inside <script> section
+document.addEventListener("DOMContentLoaded", function () {
+  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
 
-    const userName = sessionStorage.getItem("userName");
-    if (userName) {
-      console.log("👋 Xin chào,", userName);
+  // Inject warning element
+  const warningElement = document.createElement("div");
+  warningElement.id = "advisor-warning";
+  warningElement.className = "text-sm text-red-400 mt-2 hidden";
+  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
+  advisorInput.insertAdjacentElement("afterend", warningElement);
+
+  function validateAdvisorInput() {
+    const value = advisorInput.value.trim().toLowerCase();
+    const matched = validAdvisors.some(name => name.toLowerCase() === value);
+    warningElement.classList.toggle("hidden", matched || !value);
+    return matched;
+  }
+
+  advisorInput.addEventListener("blur", validateAdvisorInput);
+  advisorInput.addEventListener("input", validateAdvisorInput);
+});
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+    const advisorWarning = document.getElementById("advisor-warning");
+
+    function checkAdvisorName() {
+      const value = advisorInput.value.trim().toLowerCase();
+      const matched = validAdvisors.some(name => name.toLowerCase() === value);
+
+      if (!matched && value !== "") {
+        advisorWarning.classList.remove("opacity-0");
+        showWarningModal();
+      } else {
+        advisorWarning.classList.add("opacity-0");
+      }
     }
+
+    advisorInput.addEventListener("blur", checkAdvisorName);
+    advisorInput.addEventListener("input", checkAdvisorName);
   });
 
-  function submitForm(event) {
-    event.preventDefault();
-    const form = document.getElementById("ghex-form");
-    const inputs = form.querySelectorAll("input, select");
-    let valid = true;
 
-    inputs.forEach(input => {
-      if (!input.checkValidity()) {
-        input.style.borderColor = "red";
-        input.scrollIntoView({ behavior: "smooth", block: "center" });
-        valid = false;
+function capturePreview() {
+  const preview = document.getElementById("preview-content");
+  html2canvas(preview).then(canvas => {
+    const link = document.createElement("a");
+    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+</script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js">
+// ... To be inserted inside <script> section
+document.addEventListener("DOMContentLoaded", function () {
+  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+
+  // Inject warning element
+  const warningElement = document.createElement("div");
+  warningElement.id = "advisor-warning";
+  warningElement.className = "text-sm text-red-400 mt-2 hidden";
+  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
+  advisorInput.insertAdjacentElement("afterend", warningElement);
+
+  function validateAdvisorInput() {
+    const value = advisorInput.value.trim().toLowerCase();
+    const matched = validAdvisors.some(name => name.toLowerCase() === value);
+    warningElement.classList.toggle("hidden", matched || !value);
+    return matched;
+  }
+
+  advisorInput.addEventListener("blur", validateAdvisorInput);
+  advisorInput.addEventListener("input", validateAdvisorInput);
+});
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+    const advisorWarning = document.getElementById("advisor-warning");
+
+    function checkAdvisorName() {
+      const value = advisorInput.value.trim().toLowerCase();
+      const matched = validAdvisors.some(name => name.toLowerCase() === value);
+
+      if (!matched && value !== "") {
+        advisorWarning.classList.remove("opacity-0");
+        showWarningModal();
       } else {
-        input.style.borderColor = "#999";
+        advisorWarning.classList.add("opacity-0");
       }
-    });
-
-    if (!valid) {
-      alert("⚠️ Vui lòng điền đầy đủ thông tin trước khi gửi.");
-      return;
     }
 
-    showConfirmModal();
-  }
+    advisorInput.addEventListener("blur", checkAdvisorName);
+    advisorInput.addEventListener("input", checkAdvisorName);
+  });
 
-  function showConfirmModal() {
-    const form = document.getElementById("ghex-form");
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
 
-    let previewHTML = "";
-    for (const [key, value] of Object.entries(data)) {
-      const label = key.replace(/_/g, " ").toUpperCase();
-      previewHTML += `<strong>${label}:</strong> ${value}<br>`;
+function capturePreview() {
+  const preview = document.getElementById("preview-content");
+  html2canvas(preview).then(canvas => {
+    const link = document.createElement("a");
+    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+</script>
+<script>
+    let formData = {};
+    let orderId = "";
+
+    const labelMap = {
+      ten_ban_hang: "Tên tư vấn bán hàng",
+      ten_khach_hang: "Tên khách hàng",
+      dong_xe: "Dòng xe",
+      phien_ban: "Phiên bản",
+      ngoai_that: "Ngoại thất",
+      noi_that: "Nội thất",
+      so_don_hang: "Số đơn hàng",
+      ngay_coc: "Ngày cọc"
+    };
+
+    function formatDateTime(dtString) {
+      const d = new Date(dtString);
+      return d.toLocaleString("vi-VN", { dateStyle: "full", timeStyle: "short" });
     }
 
-    document.getElementById("previewData").innerHTML = previewHTML;
-    document.getElementById("confirmModal").style.display = "block";
-  }
+    
+    const validAdvisors = ["Trần Thị Nguyệt Bạch", "Bùi Anh Tài", "Lê Quốc Thịnh", "Lê Mai Anh", "Võ Minh Tuấn", "Lương Thế Ngọc", "Thành Ngọc Vinh", "Nguyễn Thiện Thảo", "Nguyễn Anh Tuấn", "Đinh Trọng Nhân", "Nguyễn Trần Hoàng Thanh", "Nguyễn Hoàng Phúc", "Trần Danh Phương", "Phạm Thành Nhân", "Nguyễn Hoàng Thạch", "Tất Bách Tường", "Vũ Thị Trang", "Phạm Trọng Huy"]; // <-- bạn có thể thay danh sách này
 
-  function closeConfirmModal() {
-    document.getElementById("confirmModal").style.display = "none";
-  }
+    function previewForm(e) {
+      const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+      const advisorName = advisorInput.value.trim().toLowerCase();
+      const matched = validAdvisors.some(n => n.toLowerCase() === advisorName);
 
-  function showSuccessModal() {
-    const modal = document.getElementById("successModal");
-    modal.style.display = "block";
+      if (!matched) {
+        alert("⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng đã đăng ký để hệ thống ghi nhận yêu cầu.");
+        advisorInput.focus();
+        return;
+      }
 
-    const sound = document.getElementById("successSound");
-    if (sound) sound.play();
+      e.preventDefault();
+      const form = document.getElementById("vinfast-form");
+      const inputs = form.querySelectorAll("input");
+      formData = {}; orderId = "";
+      let html = "";
 
-    setTimeout(() => {
-      modal.style.display = "none";
-    }, 3000);
-  }
+      inputs.forEach(input => {
+        if (input.name) {
+          formData[input.name] = input.value;
+          if (input.name === "so_don_hang") orderId = input.value;
+          const label = labelMap[input.name] || input.name;
+          const value = input.type === "datetime-local" ? formatDateTime(input.value) : input.value;
+          html += `<div class='border-b border-white/20 pb-2'><span class='text-cyan-400 font-semibold'>${label}:</span> ${value || "<i>Chưa nhập</i>"}</div>`;
+        }
+      });
 
-  async function confirmSubmit() {
-    const form = document.getElementById("ghex-form");
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+      document.getElementById("preview-content").innerHTML = html;
+      document.getElementById("preview-modal").classList.remove("hidden");
+    }
 
-    const depositDate = new Date(data.ngay_coc);
-    data.ngay_coc = depositDate.toISOString();
-    data.thoi_gian_nhap = new Date().toISOString();
+    function closeModal() {
+      document.getElementById("preview-modal").classList.add("hidden");
+    }
 
-    let history = JSON.parse(localStorage.getItem("ghex_history") || "[]");
-    history.push(data);
-    localStorage.setItem("ghex_history", JSON.stringify(history));
+    function confirmSubmit() {
+      closeModal();
+      document.getElementById("loading").classList.remove("hidden");
 
-    try {
-      await fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
+      if (formData["ngay_coc"]) {
+        formData["ngay_coc"] = new Date(formData["ngay_coc"]).toISOString();
+      }
+      formData["thoi_gian_nhap"] = new Date().toISOString();
+
+      fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify(formData)
+      }).then(() => {
+        document.getElementById("loading").classList.add("hidden");
+
+        const snackbar = document.getElementById("snackbar");
+        snackbar.innerHTML = `<div class="flex items-center gap-3 justify-center">
+          <lottie-player src='https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json' background="transparent" speed="1" style="width: 40px; height: 40px;" loop autoplay></lottie-player>
+          
+<lottie-player src='https://assets10.lottiefiles.com/packages/lf20_oGlWy5.json' background="transparent" speed="1" style="width: 60px; height: 60px;" autoplay></lottie-player>
+<div class='text-left'>
+            <div class='text-white font-semibold'>🚀 Hệ thống đã ghi nhận yêu cầu ghép xe!</div>
+            <div class='text-sm text-white/80'>Mã đơn hàng: <strong>${orderId || "Không rõ"}</strong></div>
+          </div>
+        </div>`;
+        snackbar.classList.remove("hidden");
+        snackbar.style.opacity = 1;
+
+        setTimeout(() => {
+          snackbar.style.opacity = 0;
+          setTimeout(() => {
+            snackbar.classList.add("hidden");
+          }, 500);
+          document.getElementById("vinfast-form").reset();
+        }, 4000);
       });
-      showSuccessModal();
-    } catch (err) {
-      alert("❌ Không thể gửi yêu cầu.");
+    }
+  
+// ... To be inserted inside <script> section
+document.addEventListener("DOMContentLoaded", function () {
+  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+
+  // Inject warning element
+  const warningElement = document.createElement("div");
+  warningElement.id = "advisor-warning";
+  warningElement.className = "text-sm text-red-400 mt-2 hidden";
+  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
+  advisorInput.insertAdjacentElement("afterend", warningElement);
+
+  function validateAdvisorInput() {
+    const value = advisorInput.value.trim().toLowerCase();
+    const matched = validAdvisors.some(name => name.toLowerCase() === value);
+    warningElement.classList.toggle("hidden", matched || !value);
+    return matched;
+  }
+
+  advisorInput.addEventListener("blur", validateAdvisorInput);
+  advisorInput.addEventListener("input", validateAdvisorInput);
+});
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
+    const advisorWarning = document.getElementById("advisor-warning");
+
+    function checkAdvisorName() {
+      const value = advisorInput.value.trim().toLowerCase();
+      const matched = validAdvisors.some(name => name.toLowerCase() === value);
+
+      if (!matched && value !== "") {
+        advisorWarning.classList.remove("opacity-0");
+        showWarningModal();
+      } else {
+        advisorWarning.classList.add("opacity-0");
+      }
     }
 
-    form.reset();
-    closeConfirmModal();
-  }
-</script>
+    advisorInput.addEventListener("blur", checkAdvisorName);
+    advisorInput.addEventListener("input", checkAdvisorName);
+  });
 
+
+function capturePreview() {
+  const preview = document.getElementById("preview-content");
+  html2canvas(preview).then(canvas => {
+    const link = document.createElement("a");
+    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+
+</script>
+<script>
+const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+
+function fetchHistory() {
+  fetch(historyURL)
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById("history-table");
+      if (!data.length) {
+        table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu lịch sử.</div>";
+        return;
+      }
+
+      let headers = Object.keys(data[0]);
+      let html = `<table class="table-auto w-full text-left border-collapse">
+        <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
+        <tbody>${data.map(row =>
+          `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
+        ).join("")}</tbody>
+      </table>`;
+      table.innerHTML = html;
+    })
+    .catch(err => {
+      document.getElementById("history-table").innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
+      console.error(err);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", fetchHistory);
+</script>
 
 </body>
 </html>
