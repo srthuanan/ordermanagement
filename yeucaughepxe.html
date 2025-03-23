@@ -68,12 +68,7 @@
         <h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
         <div class="grid md:grid-cols-2 gap-4">
           <input name="so_don_hang" placeholder="Số đơn hàng" class="input-hyper" required />
-          
-    <div class="flex flex-col gap-1">
-      <label class="text-sm text-slate-300">Ngày cọc</label>
-      <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
-    </div>
-    
+          <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
         </div>
       </div>
       <div class="col-span-2 text-center">
@@ -370,7 +365,7 @@ function fetchHistory() {
 
       let headers = Object.keys(data[0]);
       let html = `<table class="table-auto w-full text-left border-collapse">
-        <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
+        <thead><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
         <tbody>${data.map(row =>
           `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
         ).join("")}</tbody>
