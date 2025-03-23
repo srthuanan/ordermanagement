@@ -68,7 +68,12 @@
         <h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
         <div class="grid md:grid-cols-2 gap-4">
           <input name="so_don_hang" placeholder="Số đơn hàng" class="input-hyper" required />
-          <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
+          
+    <div class="flex flex-col gap-1">
+      <label class="text-sm text-slate-300">Ngày cọc (vui lòng nhập ngày khách hàng đặt cọc)</label>
+      <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
+    </div>
+    
         </div>
       </div>
       <div class="col-span-2 text-center">
@@ -365,7 +370,7 @@ function fetchHistory() {
 
       let headers = Object.keys(data[0]);
       let html = `<table class="table-auto w-full text-left border-collapse">
-        <thead><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
+        <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
         <tbody>${data.map(row =>
           `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
         ).join("")}</tbody>
@@ -380,6 +385,29 @@ function fetchHistory() {
 
 document.addEventListener("DOMContentLoaded", fetchHistory);
 </script>
+
+
+<!-- Modal xem trước và xác nhận -->
+<div id="preview-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+  <div class="bg-white text-black p-6 rounded-xl max-w-xl w-full space-y-4 shadow-lg">
+    <h2 class="text-xl font-bold text-blue-700">🔍 Vui lòng kiểm tra thông tin trước khi gửi</h2>
+    <div id="preview-content" class="text-sm space-y-2 leading-6"></div>
+    <div class="text-right space-x-2 pt-2">
+      <button onclick="closeModal()" class="px-4 py-2 bg-gray-400 text-white rounded">❌ Huỷ</button>
+      <button onclick="confirmSubmit()" class="px-4 py-2 bg-green-600 text-white rounded">✅ Gửi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loader -->
+<div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+  <div class="loader border-4 border-white border-t-cyan-400 rounded-full w-12 h-12 animate-spin"></div>
+</div>
+
+<!-- Snackbar -->
+<div id="snackbar" style="opacity:0;"
+     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-6 rounded-2xl shadow-2xl hidden text-center font-semibold text-lg ring-2 ring-white/30">
+</div>
 
 </body>
 </html>
