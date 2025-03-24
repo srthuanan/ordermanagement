@@ -1,17 +1,143 @@
 
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ghép Xe VinFast – Giao diện tinh tế</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ghép Xe VinFast – Giao diện tinh tế</title>
+<script src="https://cdn.tailwindcss.com">
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
+
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
+
+</script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js">
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
+
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
+
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
 <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Sarabun', sans-serif;
+      background: #dbe4ee !important;
+      color: #1f2937 !important;
+    }
+    .glass {
+      border-radius: 20px !important;
+      background: #dbe4ee !important;
+      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
+      padding: 1.5rem !important;
+      backdrop-filter: none !important;
+      border: none !important;
+    }
+    .input-hyper {
+      border-radius: 12px !important;
+      border: none !important;
+      background: #dbe4ee !important;
+      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
+      padding: 0.75rem 1rem !important;
+      width: 100% !important;
+      font-size: 0.95rem !important;
+      color: #1f2937 !important;
+    }
+    .button-hyper {
+      background: #c8102e !important;
+      padding: 0.75rem 2rem !important;
+      border-radius: 15px !important;
+      font-weight: 600 !important;
+      color: #ffffff !important;
+      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
+      transition: box-shadow 0.2s ease !important;
+    }
+    .button-hyper:hover {
+      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
+      transform: none !important;
+    }
+    h1, h2 {
+      color: #002147 !important; /* Xanh đậm sang trọng */
+    }
+    ::placeholder {
+      color: #6b7280 !important;
+    }
+
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 6px;
+}
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+</style>
+<style>
+    body {
+      font-family: 'Sarabun', sans-serif;
       background: #dbe4ee !important;
       color: #1f2937 !important;
     }
@@ -53,117 +179,91 @@
       color: #6b7280 !important;
     }
 </style>
-
-
-
-<style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #dbe4ee !important;
-      color: #1f2937 !important;
-    }
-    .glass {
-      border-radius: 20px !important;
-      background: #dbe4ee !important;
-      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
-      padding: 1.5rem !important;
-      backdrop-filter: none !important;
-      border: none !important;
-    }
-    .input-hyper {
-      border-radius: 12px !important;
-      border: none !important;
-      background: #dbe4ee !important;
-      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
-      padding: 0.75rem 1rem !important;
-      width: 100% !important;
-      font-size: 0.95rem !important;
-      color: #1f2937 !important;
-    }
-    .button-hyper {
-      background: #c8102e !important;
-      padding: 0.75rem 2rem !important;
-      border-radius: 15px !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
-      transition: box-shadow 0.2s ease !important;
-    }
-    .button-hyper:hover {
-      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
-      transform: none !important;
-    }
-    h1, h2 {
-      color: #002147 !important; /* Xanh đậm sang trọng */
-    }
-    ::placeholder {
-      color: #6b7280 !important;
-    }
-</style>
-
-
-</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
 <body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 min-h-screen">
-
-  <div class="fixed top-4 right-4 w-[80px] z-50">
-    <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_YXD37q.json" background="transparent" speed="1" loop autoplay></lottie-player>
-  </div>
-
-  <div class="max-w-6xl mx-auto space-y-10 mt-10">
-    <h1 class="text-4xl font-bold text-center text-sky-400">🚗 Ghép Xe VinFast</h1>
-
-    <form id="vinfast-form" class="grid md:grid-cols-2 gap-6" onsubmit="previewForm(event)">
-      <div class="glass space-y-4">
-        <h2 class="text-lg font-semibold text-sky-300">👤 Thông tin</h2>
-        <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" class="input-hyper" required />
-        <input name="ten_khach_hang" placeholder="Tên khách hàng" class="input-hyper" required />
-      </div>
-      <div class="glass space-y-4">
-        <h2 class="text-lg font-semibold text-sky-300">🚘 Cấu hình xe</h2>
-        <input name="dong_xe" placeholder="Dòng xe" class="input-hyper" required />
-        <input name="phien_ban" placeholder="Phiên bản" class="input-hyper" required />
-        <input name="ngoai_that" placeholder="Ngoại thất" class="input-hyper" required />
-        <input name="noi_that" placeholder="Nội thất" class="input-hyper" required />
-      </div>
-      <div class="glass space-y-4 col-span-2">
-        <h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
-        <div class="grid md:grid-cols-2 gap-4">
-          <input name="so_don_hang" placeholder="Số đơn hàng" class="input-hyper" required />
-          
-    <div class="flex flex-col gap-1">
-      <label class="text-sm text-slate-300">Ngày cọc (vui lòng nhập ngày khách hàng đặt cọc)</label>
-      <input name="ngay_coc" type="datetime-local" class="input-hyper" required />
-    </div>
-    
-        </div>
-      </div>
-      <div class="col-span-2 text-center">
-        <button type="submit" class="button-hyper">🔍 Xem trước & Gửi</button>
-      </div>
-    </form>
-
-    <!-- Lịch sử bảng đẹp -->
-    <div class="glass space-y-4">
-      
-<h2 class="text-xl font-semibold text-sky-400">📜 Lịch sử yêu cầu ghép xe</h2>
-<div class="flex justify-between items-center mb-3">
-  <input id="search-box" type="text" placeholder="🔍 Tìm kiếm theo tên, số đơn hàng..." class="input-hyper w-2/3" oninput="filterHistory(this.value)">
-  <div class="flex items-center gap-3">
-    <div id="total-count" class="text-sm text-white/70"></div>
-    <button onclick="exportToExcel()" title="Xuất Excel" class="text-white hover:scale-110 transition">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" />
-      </svg>
-    </button>
-  </div>
+<div class="fixed top-4 right-4 w-[80px] z-50">
+<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets1.lottiefiles.com/packages/lf20_YXD37q.json"></lottie-player>
 </div>
-<div id="history-table" class="overflow-auto max-h-[400px] text-sm text-white/90">
-  <div class="text-white">⏳ Đang tải dữ liệu...</div>
+<div class="max-w-6xl mx-auto space-y-10 mt-10">
+<h1 class="text-4xl font-extrabold text-center text-slate-800 flex items-center justify-center gap-3 bg-[#e6f3fa] py-6 px-8 rounded-3xl shadow-lg border border-sky-200 tracking-wide uppercase">
+
+<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets6.lottiefiles.com/private_files/lf30_lkquf6qz.json" style="width: 48px; height: 48px;"></lottie-player>
+<span class="bg-gradient-to-r from-sky-600 to-cyan-400 bg-clip-text text-transparent tracking-wide">Tạo Yêu Cầu Ghép Xe</span>
+</h1>
+<form class="grid md:grid-cols-2 gap-6" id="vinfast-form" onsubmit="previewForm(event)">
+<div class="glass space-y-4">
+<h2 class="text-lg font-semibold text-sky-300">👤 Thông tin</h2>
+<input class="input-hyper" name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required=""/>
+<input class="input-hyper" name="ten_khach_hang" placeholder="Tên khách hàng" required=""/>
 </div>
-
-    </div>
-  </div>
-
+<div class="glass space-y-4">
+<h2 class="text-lg font-semibold text-sky-300">🚘 Cấu hình xe</h2>
+<input class="input-hyper" name="dong_xe" placeholder="Dòng xe" required=""/>
+<input class="input-hyper" name="phien_ban" placeholder="Phiên bản" required=""/>
+<input class="input-hyper" name="ngoai_that" placeholder="Ngoại thất" required=""/>
+<input class="input-hyper" name="noi_that" placeholder="Nội thất" required=""/>
+</div>
+<div class="glass space-y-4 col-span-2">
+<h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
+<div class="grid md:grid-cols-2 gap-4">
+<input class="input-hyper" name="so_don_hang" placeholder="Số đơn hàng" required=""/>
+<div class="flex flex-col gap-1">
+<label class="text-sm text-slate-300">Ngày cọc (vui lòng nhập ngày khách hàng đặt cọc)</label>
+<input class="input-hyper" name="ngay_coc" required="" type="datetime-local"/>
+</div>
+</div>
+</div>
+<div class="col-span-2 text-center">
+<button class="mx-auto mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-full text-base shadow-lg transition-all duration-300 border-none" type="submit">
+<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets3.lottiefiles.com/packages/lf20_x62chJ.json" style="width:24px; height:24px;"></lottie-player>
+<span>Gửi Nhu Cầu</span>
+</button>
+</div>
+</form>
+<div class="flex gap-3 justify-end mb-2" id="global-tab-buttons">
+<button class="px-4 py-2 text-sm font-semibold rounded-full border transition duration-300 bg-white text-sky-700 hover:bg-sky-100 border-sky-300 shadow-md" id="tab-history" onclick="switchTab('history-section')">📜 Lịch sử</button>
+<button class="px-4 py-2 text-sm font-semibold rounded-full border transition duration-300 bg-white text-green-700 hover:bg-emerald-100 border-emerald-300 shadow-md" id="tab-chart" onclick="switchTab('chart-section')">📊 Thống kê</button>
+</div><div class="glass mt-10 space-y-4 w-full overflow-hidden" id="history-section">
+<div class="flex items-center justify-between gap-4 flex-wrap">
+<h2 class="text-lg font-semibold text-sky-300">📜 Lịch sử yêu cầu ghép xe</h2>
+<div class="flex items-center gap-2 ml-auto">
+<span class="text-xs text-white/80 flex items-center gap-1" id="total-don">
+      📊 Tổng số đơn: <span class="font-semibold text-white" id="total-don-count">0</span>
+</span>
+<button class="p-2 rounded-full bg-white text-sky-700 hover:bg-sky-100 border border-sky-200 shadow-sm" onclick="exportToExcel()" title="Xuất Excel">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+<div class="mt-2 flex items-center">
+<input class="input-hyper w-full" id="search-box" oninput="filterHistory()" placeholder="🔎 Tìm kiếm toàn bộ dữ liệu..." type="text"/>
+</div>
+<div class="w-full flex justify-center items-center py-6 text-center text-sky-600 text-sm" id="history-loading">
+<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets4.lottiefiles.com/private_files/lf30_m6j5igxb.json" style="width: 80px; height: 80px;"></lottie-player>
+</div>
+<div class="w-full bg-white rounded-xl text-sm custom-scroll p-2 overflow-y-scroll max-h-[500px]" id="history-table">
+<!-- Table will render here -->
+</div>
+<div class="text-right text-xs text-gray-500 pt-2" id="total-count">Tổng số dòng: 0</div><div class="text-right text-xs text-gray-500 -mt-2" id="total-don"></div>
+</div>
+<div class="glass mt-6 space-y-4 hidden" id="chart-section">
+<h2 class="text-base font-semibold text-green-700 flex items-center gap-2">📊 Biểu đồ phân tích yêu cầu</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white rounded-xl p-4 shadow border"><canvas height="200" id="chart-by-car"></canvas></div>
+<div class="bg-white rounded-xl p-4 shadow border"><canvas height="200" id="chart-by-advisor"></canvas></div>
+</div>
+</div>
+<footer class="text-center text-xs text-slate-400 mt-10">
+  © 2025 VinFast Ghép Xe • Made with ❤️ by Cody
+</footer>
+</div>
 <script src="https://cdn.tailwindcss.com">
 // ... To be inserted inside <script> section
 document.addEventListener("DOMContentLoaded", function () {
@@ -218,6 +318,41 @@ function capturePreview() {
     link.click();
   });
 }
+
+
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
+
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
 
 </script>
 <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js">
@@ -274,6 +409,41 @@ function capturePreview() {
     link.click();
   });
 }
+
+
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
+
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
 
 </script>
 <script>
@@ -352,15 +522,14 @@ function capturePreview() {
         document.getElementById("loading").classList.add("hidden");
 
         const snackbar = document.getElementById("snackbar");
-        snackbar.innerHTML = `<div class="flex items-center gap-3 justify-center">
-          <lottie-player src='https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json' background="transparent" speed="1" style="width: 40px; height: 40px;" loop autoplay></lottie-player>
-          
-<lottie-player src='https://assets10.lottiefiles.com/packages/lf20_oGlWy5.json' background="transparent" speed="1" style="width: 60px; height: 60px;" autoplay></lottie-player>
-<div class='text-left'>
-            <div class='text-white font-semibold'>🚀 Hệ thống đã ghi nhận yêu cầu ghép xe!</div>
-            <div class='text-sm text-white/80'>Mã đơn hàng: <strong>${orderId || "Không rõ"}</strong></div>
-          </div>
-        </div>`;
+        
+snackbar.innerHTML = `
+  <div class="flex flex-col items-center gap-2">
+    <lottie-player src='https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json' background="transparent" speed="1" style="width: 60px; height: 60px;" autoplay></lottie-player>
+    <div class="text-xl font-bold tracking-wide text-sky-700">🚀 HỆ THỐNG ĐÃ GHI NHẬN YÊU CẦU GHÉP XE CỦA BẠN</div>
+    <div class="text-sm text-sky-600">Chúng tôi sẽ xử lý và liên hệ bạn sớm nhất</div>
+  </div>`;
+
         snackbar.classList.remove("hidden");
         snackbar.style.opacity = 1;
 
@@ -428,66 +597,74 @@ function capturePreview() {
   });
 }
 
-</script>
-<script>
-const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 
-function fetchHistory() {
-  fetch(historyURL)
-    .then(res => res.json())
-    .then(data => {
-      const table = document.getElementById("history-table");
-      if (!data.length) {
-        table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu lịch sử.</div>";
-        return;
-      }
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
 
-      let headers = Object.keys(data[0]);
-      let html = `<table class="table-auto w-full text-left border-collapse">
-        <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
-        <tbody>${data.map(row =>
-          `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
-        ).join("")}</tbody>
-      </table>`;
-      table.innerHTML = html;
-    })
-    .catch(err => {
-      document.getElementById("history-table").innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
-      console.error(err);
-    });
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
 }
 
 
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
+
 </script>
-
-
 <!-- Modal xem trước và xác nhận -->
-<div id="preview-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-  <div class="bg-white text-black p-6 rounded-xl max-w-xl w-full space-y-4 shadow-lg">
-    <h2 class="text-xl font-bold text-blue-700">🔍 Vui lòng kiểm tra thông tin trước khi gửi</h2>
-    <div id="preview-content" class="text-sm space-y-2 leading-6"></div>
-    <div class="text-right space-x-2 pt-2">
-      <button onclick="closeModal()" class="px-4 py-2 bg-gray-400 text-white rounded">❌ Huỷ</button>
-      <button onclick="confirmSubmit()" class="px-4 py-2 bg-green-600 text-white rounded">✅ Gửi</button>
-    </div>
-  </div>
+<div class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="preview-modal">
+<div class="bg-white text-gray-800 p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-2xl font-extrabold text-sky-700 flex items-center gap-2 tracking-wide">
+<svg class="w-7 h-7 text-sky-500" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 17h5l-1.405-1.405M19.595 15.595A2.5 2.5 0 0117.5 17h-11a2.5 2.5 0 01-2.5-2.5V6a2.5 2.5 0 012.5-2.5h11A2.5 2.5 0 0119.595 6.405L21 8v7a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+        Xác nhận thông tin ghép xe
+      </h2>
+<button class="text-gray-400 hover:text-gray-700 text-3xl font-bold" onclick="closeModal()" title="Đóng">×</button>
 </div>
-
+<div class="space-y-3 text-sm leading-relaxed max-h-[420px] overflow-y-auto px-1" id="preview-content">
+<!-- Dynamic content here -->
+</div>
+<div class="flex justify-end gap-4 pt-6">
+<button class="px-5 py-2 rounded-xl text-sm font-semibold bg-gray-300 text-gray-800 hover:bg-gray-400 transition" onclick="closeModal()">❌ Huỷ</button>
+<button class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-700 text-white hover:bg-sky-800 transition shadow-md" onclick="confirmSubmit()">✅ Gửi yêu cầu</button>
+</div>
+</div>
+</div>
 <!-- Loader -->
-<div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-  <div class="loader border-4 border-white border-t-cyan-400 rounded-full w-12 h-12 animate-spin"></div>
+<div class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" id="loading">
+<div class="loader border-4 border-white border-t-cyan-400 rounded-full w-12 h-12 animate-spin"></div>
 </div>
-
 <!-- Snackbar -->
-<div id="snackbar" style="opacity:0;"
-     class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-6 rounded-2xl shadow-2xl hidden text-center font-semibold text-lg ring-2 ring-white/30">
+<div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white text-sky-700 px-8 py-6 rounded-3xl shadow-2xl hidden text-center font-bold text-lg ring-2 ring-sky-200 tracking-wide" id="snackbar" style="opacity:0; transition: opacity 0.5s ease, transform 0.5s ease;">
+<lottie-player autoplay="" background="transparent" speed="1" src="https://assets10.lottiefiles.com/packages/lf20_oGlWy5.json" style="width: 48px; height: 48px;"></lottie-player>
 </div>
-
-
-
 <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Sarabun', sans-serif;
       background: #dbe4ee !important;
       color: #1f2937 !important;
     }
@@ -528,193 +705,261 @@ function fetchHistory() {
     ::placeholder {
       color: #6b7280 !important;
     }
+
+.input-hyper:focus {
+  outline: 2px solid #38bdf8 !important;
+  transition: all 0.2s ease-in-out;
+}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
+
+</script>
 <script>
+const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 let historyData = [];
+
+function fetchHistory() {
+  document.getElementById("history-loading").classList.remove("hidden");
+  fetch(historyURL)
+    .then(res => res.text())
+    .then(txt => {
+      try {
+        const json = JSON.parse(txt);
+        historyData = json;
+        renderHistory(json);
+        document.getElementById('history-loading').classList.add('hidden');
+      } catch (err) {
+        console.error("❌ JSON parse error:", err);
+        document.getElementById("history-loading").classList.add("hidden");
+        document.getElementById("history-table").innerHTML = "<div class='text-red-500 p-4'>⚠️ Không đọc được dữ liệu từ Google Sheet.</div>";
+      }
+    })
+    .catch(err => {
+      console.error("❌ Fetch failed:", err);
+      document.getElementById("history-loading").classList.add("hidden");
+        document.getElementById("history-table").innerHTML = "<div class='text-red-500 p-4'>⚠️ Không thể kết nối đến API.</div>";
+    });
+}
 
 function renderHistory(data) {
   const table = document.getElementById("history-table");
-  const total = document.getElementById("total-count");
-  if (!table || !total) return;
-
   if (!data.length) {
-    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
-    total.innerText = "";
+    table.innerHTML = "<div class='text-red-400 p-4'>❌ Không có dữ liệu.</div>";
     return;
   }
 
-  const headers = Object.keys(data[0]);
-  const html = `
-    <table id="export-table" class="table-fixed w-full text-left border-collapse text-sm shadow-md rounded overflow-hidden">
-      <thead class="sticky top-0 bg-slate-700 text-white z-10">
-        <tr>
-          <th class="border-b px-3 py-2 text-center w-[50px]">STT</th>
-          ${headers.map(h => {
-            let width = 'w-[140px]';
-            if (["ten_ban_hang", "ten_khach_hang"].includes(h)) width = 'w-[200px]';
-            else if (["dong_xe", "phien_ban", "ngoai_that", "noi_that"].includes(h)) width = 'w-[140px]';
-            else if (["so_don_hang"].includes(h)) width = 'w-[120px]';
-            else if (["ngay_coc", "thoi_gian_nhap"].includes(h)) width = 'w-[180px]';
-            return `<th class="border-b px-3 py-2 ${width}">${h}</th>`;
-          }).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map((row, i) => `
-          <tr class="even:bg-slate-800/30 hover:bg-sky-900/30 transition">
-            <td class="border-b px-3 py-2 text-center">${i + 1}</td>
-            ${headers.map(h => `<td class="border-b px-3 py-2">${row[h] || ""}</td>`).join("")}
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>`;
+  const headers = ["STT", ...Object.keys(data[0])];
+  let html = "<table class='w-full border-collapse text-gray-800 table-auto'><thead><tr>" +
+    headers.map((h, i) => `<th class='p-2 border-b border-sky-200 text-base font-bold text-left sticky top-0 bg-sky-100 z-10'>${h}</th>
+`).join("") +
+    "</tr></thead><tbody>" +
+    data.map((row, i) => {
+      const rowHtml = headers.map((h, idx) =>
+        `<td class='p-2 border-b border-gray-100 break-words max-w-[180px]'>${idx === 0 ? i + 1 : (row[h] || "")}</td>`
+      ).join("");
+      return `<tr class='hover:bg-sky-50 cursor-pointer' onclick='showRowModal(historyData[${i}])'>${rowHtml}</tr>`;
+    }).join("") +
+    "</tbody></table>";
+
   table.innerHTML = html;
-  total.innerText = `📊 Tổng số đơn: ${data.length}`;
+  
+  document.getElementById("total-count").textContent = "Tổng số dòng: " + data.length;
+  document.getElementById("total-don-count").textContent = data.length;
 }
 
-function filterHistory(keyword) {
-  const lowerKeyword = keyword.toLowerCase();
+function normalizeVN(str) {
+  return str.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function filterHistory() {
+  const keyword = normalizeVN(document.getElementById("search-box").value);
   const filtered = historyData.filter(row =>
-    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
+    Object.values(row).some(val => normalizeVN(String(val)).includes(keyword))
   );
   renderHistory(filtered);
 }
 
 function exportToExcel() {
-  const table = document.getElementById("export-table");
-  if (!table) return;
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Lịch sử ghép xe" });
+  const ws = XLSX.utils.json_to_sheet(historyData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
   XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
 }
 
-function fetchHistory() {
-  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
-    .then(res => res.json())
-    .then(data => {
-      historyData = data;
-      renderHistory(historyData);
-    })
-    .catch(err => {
-      const table = document.getElementById("history-table");
-      if (table) table.innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
-    });
-}
 document.addEventListener("DOMContentLoaded", fetchHistory);
-</script>
 
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
+}
+
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
+}
+
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
+}
+
+
+
+</script>
+<!-- Modal chi tiết dòng -->
+<div class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="row-modal">
+<div class="bg-white text-gray-800 p-6 rounded-3xl shadow-2xl max-w-xl w-full border border-gray-200">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-xl font-bold text-sky-700">📋 Chi tiết đơn</h2>
+<button class="text-2xl font-bold text-gray-500 hover:text-gray-800" onclick="closeRowModal()">×</button>
+</div>
+<div class="space-y-2 text-sm leading-relaxed" id="row-modal-content"></div>
+<div class="text-right mt-4">
+<button class="px-4 py-2 rounded-xl bg-cyan-600 text-white hover:bg-cyan-700 shadow" onclick="captureRow()">📄 Tải PDF</button>
+</div>
+</div>
+</div>
+<script>
+function switchTab(sectionId) {
+  const history = document.getElementById("history-section");
+  const chart = document.getElementById("chart-section");
+
+  history.classList.add("hidden");
+  chart.classList.add("hidden");
+
+  document.getElementById(sectionId).classList.remove("hidden");
+
+  // toggle active
+  document.getElementById("tab-history").classList.toggle("bg-sky-300", sectionId === 'history-section');
+  document.getElementById("tab-chart").classList.toggle("bg-emerald-300", sectionId === 'chart-section');
+}
+
+function renderCharts(data) {
+  const byCar = {}, byAdvisor = {};
+  data.forEach(row => {
+    const car = row["Dòng xe"];
+    const advisor = row["Tên tư vấn bán hàng"];
+    if (car) byCar[car] = (byCar[car] || 0) + 1;
+    if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
+  });
+
+  new Chart(document.getElementById("chart-by-car"), {
+    type: "pie",
+    data: {
+      labels: Object.keys(byCar),
+      datasets: [{ data: Object.values(byCar), label: "Dòng xe" }]
+    }
+  });
+
+  new Chart(document.getElementById("chart-by-advisor"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(byAdvisor),
+      datasets: [{
+        label: "Tư vấn viên",
+        data: Object.values(byAdvisor),
+        backgroundColor: "#34d399"
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+const originalRenderHistory = renderHistory;
+renderHistory = function(data) {
+  originalRenderHistory(data);
+  renderCharts(data);
+}
+</script>
 </body>
 </html>
-
-<script>
-let historyData = [];
-
-function renderHistory(data) {
-  const table = document.getElementById("history-table");
-
-  if (!data.length) {
-    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
-    return;
-  }
-
-  const headers = Object.keys(data[0]);
-  const html = `<table class="table-auto w-full text-left border-collapse">
-    <thead class="sticky top-0 bg-slate-800 z-10"><tr>${headers.map(h => `<th class="border-b p-2">${h}</th>`).join("")}</tr></thead>
-    <tbody>${data.map(row =>
-      `<tr>${headers.map(h => `<td class="border-b p-2">${row[h] || ""}</td>`).join("")}</tr>`
-    ).join("")}</tbody>
-  </table>`;
-
-  table.innerHTML = html;
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+function showRowModal(data) {
+  const modal = document.getElementById("row-modal");
+  const content = document.getElementById("row-modal-content");
+  content.innerHTML = Object.entries(data).map(([k, v]) =>
+    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
+  ).join("");
+  modal.classList.remove("hidden");
+  window._modalData = content;
 }
 
-function filterHistory(keyword) {
-  const lowerKeyword = keyword.toLowerCase();
-  const filtered = historyData.filter(row =>
-    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
-  );
-  renderHistory(filtered);
+function closeRowModal() {
+  document.getElementById("row-modal").classList.add("hidden");
 }
 
-function fetchHistory() {
-  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
-    .then(res => res.json())
-    .then(data => {
-      historyData = data;
-      renderHistory(historyData);
-    })
-    .catch(err => {
-      document.getElementById("history-table").innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
-      console.error(err);
-    });
+
+async 
+async function captureRow() {
+  const contentElement = document.getElementById("row-modal-content");
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const canvas = await html2canvas(contentElement);
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
+  doc.save("chi_tiet_don.pdf");
 }
 
-document.addEventListener("DOMContentLoaded", fetchHistory);
-</script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-let historyData = [];
 
-function renderHistory(data) {
-  const table = document.getElementById("history-table");
-  const total = document.getElementById("total-count");
-  if (!data.length) {
-    table.innerHTML = "<div class='text-red-300'>❌ Không có dữ liệu phù hợp.</div>";
-    total.innerText = "";
-    return;
-  }
-
-  const headers = Object.keys(data[0]);
-  const html = `
-  <table id="export-table" class="table-auto w-full text-left border-collapse text-sm shadow-md rounded-lg overflow-hidden">
-    <thead class="sticky top-0 bg-slate-700 text-white z-10">
-      <tr>
-        <th class="border-b px-3 py-2 text-center w-[40px]">STT</th>
-        ${headers.map(h => `<th class="border-b px-3 py-2">${h}</th>`).join("")}
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map((row, i) => `
-        <tr class="even:bg-slate-800/30 hover:bg-sky-900/30 transition">
-          <td class="border-b px-3 py-2 text-center">${i + 1}</td>
-          ${headers.map(h => `<td class="border-b px-3 py-2">${row[h] || ""}</td>`).join("")}
-        </tr>`).join("")}
-    </tbody>
-  </table>`;
-
-  table.innerHTML = html;
-  total.innerText = `📊 Tổng số đơn: ${data.length}`;
-}
-
-function filterHistory(keyword) {
-  const lowerKeyword = keyword.toLowerCase();
-  const filtered = historyData.filter(row =>
-    Object.values(row).some(val => (val || "").toString().toLowerCase().includes(lowerKeyword))
-  );
-  renderHistory(filtered);
-}
-
-function exportToExcel() {
-  const table = document.getElementById("export-table");
-  const wb = XLSX.utils.table_to_book(table, { sheet: "Lịch sử ghép xe" });
-  XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
-}
-
-function fetchHistory() {
-  fetch("https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec")
-    .then(res => res.json())
-    .then(data => {
-      historyData = data;
-      renderHistory(historyData);
-    })
-    .catch(err => {
-      const table = document.getElementById("history-table");
-      if (table) table.innerHTML = "<div class='text-red-300'>⚠️ Lỗi khi tải dữ liệu.</div>";
-    });
-}
-
-document.addEventListener("DOMContentLoaded", fetchHistory);
 </script>
