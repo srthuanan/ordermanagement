@@ -274,7 +274,7 @@ async function captureRow() {
 </div>
 </div>
 <footer class="text-center text-xs text-slate-400 mt-10">
-  © 2025 Ghép Xe • Made with ❤️ by NHÂN
+  © 2025 VinFast Ghép Xe • Made with ❤️ by Cody
 </footer>
 </div>
 <script src="https://cdn.tailwindcss.com">
@@ -883,17 +883,6 @@ async function captureRow() {
 </div>
 </div>
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            if (!sessionStorage.getItem('loggedIn')) {
-                window.location.href = "index.html";
-            }
-            document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
-        });
-
-        function logout() {
-            sessionStorage.removeItem('loggedIn');
-            window.location.href = 'index.html';
-        }
 function switchTab(sectionId) {
   const history = document.getElementById("history-section");
   const chart = document.getElementById("chart-section");
@@ -1084,6 +1073,72 @@ function renderCharts(data) {
 }
 
 </script>
+
+<script>
+function createLandingPage(data) {
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Đơn hàng #${data.so_don_hang}</title>
+  <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'>
+</head>
+<body class='bg-gray-100 text-gray-800'>
+  <div class='max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-6'>
+    <div class='text-center'>
+      <h1 class='text-2xl font-bold text-blue-600'>🔖 ĐƠN HÀNG GHÉP XE</h1>
+      <p class='text-sm text-gray-500'>Mã đơn: <strong>#${data.so_don_hang}</strong></p>
+    </div>
+    <div class='border-t pt-4 space-y-2'>
+      <h2 class='text-lg font-semibold text-gray-700'>👤 Thông tin khách hàng</h2>
+      <p><strong>Tư vấn viên:</strong> ${data.ten_ban_hang}</p>
+      <p><strong>Khách hàng:</strong> ${data.ten_khach_hang}</p>
+      <p><strong>Ngày cọc:</strong> ${data.ngay_coc}</p>
+    </div>
+    <div class='border-t pt-4 space-y-2'>
+      <h2 class='text-lg font-semibold text-gray-700'>🚗 Cấu hình xe</h2>
+      <ul class='list-disc list-inside'>
+        <li><strong>Dòng xe:</strong> ${data.dong_xe}</li>
+        <li><strong>Phiên bản:</strong> ${data.phien_ban}</li>
+        <li><strong>Ngoại thất:</strong> ${data.ngoai_that}</li>
+        <li><strong>Nội thất:</strong> ${data.noi_that}</li>
+      </ul>
+    </div>
+    <div class='border-t pt-4'>
+      <h2 class='text-lg font-semibold text-gray-700'>📦 Trạng thái đơn</h2>
+      <p class='text-yellow-600 font-medium'>⏳ Đang xử lý...</p>
+    </div>
+    <div class='text-center pt-6'>
+      <button onclick='window.print()' class='bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition'>📄 In phiếu xác nhận</button>
+    </div>
+  </div>
+</body>
+</html>`;
+  const blob = new Blob([htmlContent], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `don_${data.so_don_hang || Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("vinfast-form");
+  if (!form) return;
+
+  form.addEventListener("submit", () => {
+    const data = {};
+    form.querySelectorAll("input").forEach(input => {
+      if (input.name) data[input.name] = input.value;
+    });
+    createLandingPage(data);
+  });
+});
+</script>
+
 </body>
 </html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
