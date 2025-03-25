@@ -1,24 +1,26 @@
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
-    <!-- Thêm Bootstrap từ thư mục cục bộ -->
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-
-    <!-- Thêm Axios từ thư mục cục bộ -->
-    <script src="js/axios.min.js"></script>
-
-    <!-- Thêm Bootstrap JS từ thư mục cục bộ -->
-    <script src="js/bootstrap.bundle.min.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh Sách Đơn Hàng Bán Xe</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
+<link href="https://fonts.googleapis.com/css2?family=Poppins&amp;display=swap" rel="stylesheet"/>
+<!-- Thêm Bootstrap từ thư mục cục bộ -->
+<link href="css/bootstrap.min.css" rel="stylesheet"/>
+<!-- Thêm Axios từ thư mục cục bộ -->
+<script src="js/axios.min.js"></script>
+<!-- Thêm Bootstrap JS từ thư mục cục bộ -->
+<script src="js/bootstrap.bundle.min.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Danh Sách Đơn Hàng Bán Xe</title>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<style>
         body {
-            font-family:'Montserrat', sans-serif;
-            background: url('https://vinfastotominhdao.vn/wp-content/uploads/vf7-trang.jpg') no-repeat center center fixed;
+    color: white;
+
+            font-family: 'Poppins', sans-serif; color: white;
+            background: #f9f9f9;
             background-size: cover;
             color: #f8f9fa;
             padding: 20px;
@@ -26,7 +28,7 @@
         .container {
             max-width: 1550px;
             margin: auto;
-            background: rgba(181, 181, 181, 0.85);
+            background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
@@ -34,6 +36,10 @@
         }
 
 .nav-tabs .nav-link {
+    background: #e0e0e0;
+    color: white;
+    border: none;
+    margin-right: 5px;
     color: white;
     background: #222; /* Màu mặc định của tab chưa chọn */
     border-radius: 8px 8px 0 0;
@@ -42,8 +48,11 @@
 }
 
 .nav-tabs .nav-link.active {
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
     background: linear-gradient(45deg, #333333, #333300); /* Gradient vàng cam */
-    color: black; /* Chữ màu đen để tương phản */
+    color: white !important; /* Chữ màu đen để tương phản */
     font-weight: bold;
     border: 2px solid #FFFFFF; /* Viền vàng */
     box-shadow: 0 4px 10px rgba(255, 204, 0, 0.5); /* Hiệu ứng đổ bóng */
@@ -102,6 +111,8 @@ tbody tr {
             border-radius: 8px;
         }
         th {
+    color: white !important;
+
             white-space: nowrap;
             background: linear-gradient(45deg, #444444, #222222);
             color: white;
@@ -145,12 +156,13 @@ tbody tr:hover {
     outline: none;
     transition: all 0.3s ease-in-out;
 }
+
 #reloadData {
     float: right; /* Đưa nút về góc phải */
     padding: 10px 20px;
     font-size: 15px;
     font-weight: bold;
-    color: black;
+    color: white !important;
     background: linear-gradient(45deg, #444444, #222222); /* Vàng cam */
     border: #666666;
     border-radius: 8px;
@@ -158,8 +170,9 @@ tbody tr:hover {
     transition: all 0.3s ease-in-out;
 }
 /* Đổi màu nền của bảng */
+.table-striped tbody tr:nth-of-type(odd) { background-color: #f2f2f2; }
 .table-dark {
-    background-color: rgba(169, 169, 169, 0.5); /* Màu xám đậm, độ trong suốt nhẹ */
+    background-color: white; /* Màu xám đậm, độ trong suốt nhẹ */
     color: white; /* Chữ màu trắng */
 }
 
@@ -227,7 +240,7 @@ tbody tr:hover {
 }
 .highlight {
     background-color: yellow;
-    color: black;
+    color: white !important;
     font-weight: bold;
 }
 
@@ -243,6 +256,8 @@ tbody tr:hover {
     100% { opacity: 1; }
 }
 th {
+    color: white !important;
+
     cursor: pointer; /* Hiển thị con trỏ khi hover */
     user-select: none; /* Ngăn chọn văn bản khi nhấn */
     position: relative;
@@ -271,7 +286,6 @@ th.sorted-desc::after {
 }
 
     </style>
-
 <style>
 /* Cố định tiêu đề bảng */
 .table-responsive {
@@ -281,14 +295,14 @@ th.sorted-desc::after {
 }
 
 .table thead th {
+    color: white !important;
+
     position: sticky;
     top: 0;
     background: linear-gradient(45deg, #444444, #222222); /* Giữ nền tiêu đề */
     z-index: 100;
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng cho số VIN */
 @keyframes glow {
@@ -303,8 +317,6 @@ th.sorted-desc::after {
     animation: glow 1.5s infinite alternate;
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng cho số VIN với màu vàng */
 @keyframes glowYellow {
@@ -319,8 +331,6 @@ th.sorted-desc::after {
     animation: glowYellow 1.5s infinite alternate;
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng cho số VIN với màu vàng và kích thước lớn hơn */
 @keyframes glowYellow {
@@ -336,8 +346,6 @@ th.sorted-desc::after {
     animation: glowYellow 1.5s infinite alternate;
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng sang trọng với màu vàng gold */
 @keyframes glowGold {
@@ -354,8 +362,6 @@ th.sorted-desc::after {
     text-transform: uppercase; /* In hoa để tăng độ sang trọng */
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng sang trọng với màu bạc sáng */
 @keyframes glowSilver {
@@ -372,8 +378,6 @@ th.sorted-desc::after {
     text-transform: uppercase; /* In hoa để tăng độ sang trọng */
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng nhẹ với màu bạc gốc */
 @keyframes glowSilverLight {
@@ -390,8 +394,6 @@ th.sorted-desc::after {
     text-transform: uppercase; /* In hoa để dễ nhìn hơn */
 }
 </style>
-
-
 <style>
 /* Hiệu ứng phát sáng nhẹ với màu bạc gốc */
 @keyframes glowSilverLight {
@@ -408,128 +410,134 @@ th.sorted-desc::after {
     text-transform: uppercase; /* In hoa để tăng độ nổi bật */
 }
 </style>
-
-</head>
+<script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.min.js"></script><style>
+#pdfExportBox {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #212529;
+}
+#pdfExportBox ul {
+    padding-left: 0;
+    list-style: none;
+}
+#pdfExportBox li {
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #ffffff, #f1f3f5);
+    border-left: 4px solid #007bff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+#pdfExportBox strong {
+    color: #007bff;
+}
+</style></head>
 <body>
-    <div class="container">
-        <div class="header text-center text-white py-3">
+<div class="container">
+<div class="header text-center text-white py-3">
             📋 DANH SÁCH ĐƠN HÀNG BÁN XE 🚗
         </div>
-
-        <ul class="nav nav-tabs" id="myTabs">
-            <li class="nav-item">
-                <a class="nav-link active" id="tab1-tab" data-bs-toggle="tab" href="#tab1">ĐÃ GHÉP</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="tab2-tab" data-bs-toggle="tab" href="#tab2">CHƯA GHÉP</a>
-            </li>
-
-        </ul>
-        <div class="tab-content mt-1">
-            <div class="loading" id="loading">Loading...</div>
-            <div class="tab-pane fade show active" id="tab1">
-                <input type="text" id="search1" class="form-control search-box" placeholder="🔍 Tìm kiếm...">
+<ul class="nav nav-tabs" id="myTabs">
+<li class="nav-item">
+<a class="nav-link active" data-bs-toggle="tab" href="#tab1" id="tab1-tab">ĐÃ GHÉP</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" data-bs-toggle="tab" href="#tab2" id="tab2-tab">CHƯA GHÉP</a>
+</li>
+</ul>
+<div class="tab-content mt-1">
+<div class="loading" id="loading">Loading...</div>
+<div class="tab-pane fade show active" id="tab1">
+<input class="form-control search-box" id="search1" placeholder="🔍 Tìm kiếm..." type="text"/>
 <div class="filter-container">
-    <select id="filter-tuvan" class="form-control filter-box">
-        <option value="">Chọn Tư Vấn BH</option>
-      <option value="Đinh Trọng Nhân">Đinh Trọng Nhân</option>
-    <option value="Lê Mai Anh">Lê Mai Anh</option>
-    <option value="Lê Quốc Thịnh">Lê Quốc Thịnh</option>
-    <option value="Lương Thế Ngọc">Lương Thế Ngọc</option>
-    <option value="Nguyễn Hoàng Phúc">Nguyễn Hoàng Phúc</option>
-    <option value="Nguyễn Minh Trung">Nguyễn Minh Trung</option>
-    <option value="Nguyễn Thiện Thảo">Nguyễn Thiện Thảo</option>
-    <option value="Tất Bách Tường">Tất Bách Tường</option>
-    <option value="Thành Ngọc Vinh">Thành Ngọc Vinh</option>
-    <option value="Võ Minh Tuấn">Võ Minh Tuấn</option>
-    <option value="Trần Thị Nguyệt Bạch">Trần Thị Nguyệt Bạch</option>
-    <option value="Phạm Trọng Huy">Phạm Trọng Huy</option>
-    <option value="Nguyễn Anh Tuấn">Nguyễn Anh Tuấn</option>
-    <option value="Nguyễn Trần Hoàng Thanh">Nguyễn Trần Hoàng Thanh</option>
-    <option value="Nguyễn Hoàng Thạch">Nguyễn Hoàng Thạch</option>
-    <option value="Lý Kim Vinh">Lý Kim Vinh</option>
-    <option value="Bùi Anh Tài">Bùi Anh Tài</option>
-    <option value="Vũ Thị Trang">Vũ Thị Trang</option>
-    </select>
-    <select id="filter-dongxe" class="form-control filter-box">
-        <option value="">Chọn Dòng Xe</option>
-          <option value="VF3">VF3</option>
-    <option value="VF5">VF5</option>
-    <option value="VF6">VF6</option>
-    <option value="VF7">VF7</option>
-    <option value="VF8">VF8</option>
-    <option value="VF9">VF9</option>
-    </select>
-<button id="reloadData" class="btn btn-warning">🔄 Tải lại dữ liệu</button></div><p id="count1" class="count-orders">Tổng Đơn: 0</p>
-                <div class="table-responsive">
-                    <table class="table table-dark table-bordered text-center" id="table1">
+<select class="form-control filter-box" id="filter-tuvan">
+<option value="">Chọn Tư Vấn BH</option>
+<option value="Đinh Trọng Nhân">Đinh Trọng Nhân</option>
+<option value="Lê Mai Anh">Lê Mai Anh</option>
+<option value="Lê Quốc Thịnh">Lê Quốc Thịnh</option>
+<option value="Lương Thế Ngọc">Lương Thế Ngọc</option>
+<option value="Nguyễn Hoàng Phúc">Nguyễn Hoàng Phúc</option>
+<option value="Nguyễn Minh Trung">Nguyễn Minh Trung</option>
+<option value="Nguyễn Thiện Thảo">Nguyễn Thiện Thảo</option>
+<option value="Tất Bách Tường">Tất Bách Tường</option>
+<option value="Thành Ngọc Vinh">Thành Ngọc Vinh</option>
+<option value="Võ Minh Tuấn">Võ Minh Tuấn</option>
+<option value="Trần Thị Nguyệt Bạch">Trần Thị Nguyệt Bạch</option>
+<option value="Phạm Trọng Huy">Phạm Trọng Huy</option>
+<option value="Nguyễn Anh Tuấn">Nguyễn Anh Tuấn</option>
+<option value="Nguyễn Trần Hoàng Thanh">Nguyễn Trần Hoàng Thanh</option>
+<option value="Nguyễn Hoàng Thạch">Nguyễn Hoàng Thạch</option>
+<option value="Lý Kim Vinh">Lý Kim Vinh</option>
+<option value="Bùi Anh Tài">Bùi Anh Tài</option>
+<option value="Vũ Thị Trang">Vũ Thị Trang</option>
+</select>
+<select class="form-control filter-box" id="filter-dongxe">
+<option value="">Chọn Dòng Xe</option>
+<option value="VF3">VF3</option>
+<option value="VF5">VF5</option>
+<option value="VF6">VF6</option>
+<option value="VF7">VF7</option>
+<option value="VF8">VF8</option>
+<option value="VF9">VF9</option>
+</select>
+<button class="btn btn-warning" id="reloadData">🔄 Tải lại dữ liệu</button></div><p class="count-orders" id="count1">Tổng Đơn: 0</p>
+<div class="table-responsive">
+<table class="table table-bordered text-center table-striped" id="table1">
 <thead>
-    <tr>
-        <th onclick="sortTable(0)">SỐ TT</th>
-        <th onclick="sortTable(1)">TƯ VẤN BH</th>
-        <th onclick="sortTable(2)">DÒNG XE</th>
-        <th onclick="sortTable(3)">MODEL</th>
-        <th onclick="sortTable(4)">NGOẠI THẤT</th>
-        <th onclick="sortTable(5)">NỘI THẤT</th>
-        <th onclick="sortTable(6)">SỐ ĐƠN HÀNG (VSO)</th>
-        <th onclick="sortTable(7)">TÊN KHÁCH HÀNG</th>
-        <th onclick="sortTable(8)">SỐ VIN</th>
-        <th onclick="sortTable(9)">NGÀY GHÉP</th>
-        <th onclick="sortTable(10)">SỐ NGÀY</th>
-        <th onclick="sortTable(11)">VỊ TRÍ XE</th>
-    </tr>
+<tr>
+<th onclick="sortTable(0)">SỐ TT</th>
+<th onclick="sortTable(1)">TƯ VẤN BH</th>
+<th onclick="sortTable(2)">DÒNG XE</th>
+<th onclick="sortTable(3)">MODEL</th>
+<th onclick="sortTable(4)">NGOẠI THẤT</th>
+<th onclick="sortTable(5)">NỘI THẤT</th>
+<th onclick="sortTable(6)">SỐ ĐƠN HÀNG (VSO)</th>
+<th onclick="sortTable(7)">TÊN KHÁCH HÀNG</th>
+<th onclick="sortTable(8)">SỐ VIN</th>
+<th onclick="sortTable(9)">NGÀY GHÉP</th>
+<th onclick="sortTable(10)">SỐ NGÀY</th>
+<th onclick="sortTable(11)">VỊ TRÍ XE</th>
+</tr>
 </thead>
-
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="tab2">
-                <input type="text" id="search2" class="form-control search-box" placeholder="🔍 Tìm kiếm..."><div class="filter-container">
-    <select id="filter-dongxe2" class="form-control filter-box">
-        <option value="">Chọn Dòng Xe</option>
-        <option value="VF3">VF3</option>
-        <option value="VF5">VF5</option>
-        <option value="VF6">VF6</option>
-        <option value="VF7">VF7</option>
-        <option value="VF8">VF8</option>
-        <option value="VF9">VF9</option>
-    </select>
+<tbody></tbody>
+</table>
 </div>
-<p id="count2" class="count-orders">Tổng Đơn: 0</p>
-                <div class="table-responsive">
-                    <table class="table table-dark table-bordered text-center" id="table2">
-                        <thead>
-                            <tr>
-                                <th>SỐ TT</th>
-                                <th>TƯ VẤN BH</th>
-                                <th>DÒNG XE</th>
-                                <th>MODEL</th>
-                                <th>NGOẠI THẤT</th>
-                                <th>NỘI THẤT</th>
-                                <th>SỐ ĐƠN HÀNG (VSO)</th>
-                                <th>TÊN KHÁCH HÀNG</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
+<div class="tab-pane fade" id="tab2">
+<input class="form-control search-box" id="search2" placeholder="🔍 Tìm kiếm..." type="text"/><div class="filter-container">
+<select class="form-control filter-box" id="filter-dongxe2">
+<option value="">Chọn Dòng Xe</option>
+<option value="VF3">VF3</option>
+<option value="VF5">VF5</option>
+<option value="VF6">VF6</option>
+<option value="VF7">VF7</option>
+<option value="VF8">VF8</option>
+<option value="VF9">VF9</option>
+</select>
+</div>
+<p class="count-orders" id="count2">Tổng Đơn: 0</p>
+<div class="table-responsive">
+<table class="table table-bordered text-center table-striped" id="table2">
+<thead>
+<tr>
+<th>SỐ TT</th>
+<th>TƯ VẤN BH</th>
+<th>DÒNG XE</th>
+<th>MODEL</th>
+<th>NGOẠI THẤT</th>
+<th>NỘI THẤT</th>
+<th>SỐ ĐƠN HÀNG (VSO)</th>
+<th>TÊN KHÁCH HÀNG</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            if (!sessionStorage.getItem('loggedIn')) {
-                window.location.href = "index.html";
-            }
-            document.body.style.opacity = "1"; // Kích hoạt hiệu ứng fade-in
-        });
 
-        function logout() {
-            sessionStorage.removeItem('loggedIn');
-            window.location.href = 'index.html';
-        }
 let tableData = {
     table1: [],
     table2: []
@@ -540,7 +548,7 @@ function fetchData() {
     const loadingElement = document.getElementById("loading");
     loadingElement.style.display = "block";
 
-    const apiURL = "https://script.google.com/macros/s/AKfycbzi2O-yVJyp0gyWchknyN1FdHfcOSJt-tn3GH1w8MOQ0YFL8fBU-nwmTYLgWfbLuTobJQ/exec";
+    const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
 
     axios.get(apiURL)
         .then(response => {
@@ -571,7 +579,27 @@ function renderTable(data, tableId) {
     tableBody.innerHTML = "";
 
     let fragment = document.createDocumentFragment();
+
     data.forEach((row, index) => {
+        // Chỉ làm tròn số ngày và format ngày ghép nếu là table1
+        if (tableId === "table1") {
+            if (!row || row.length < 10) return;
+
+            let soNgay = Number(row[9]);
+            if (!isNaN(soNgay)) {
+                row[9] = Math.floor(soNgay);  // Chuyển sang số nguyên
+            }
+
+            let rawDate = row[8];
+            let parsedDate = new Date(rawDate);
+            if (!isNaN(parsedDate)) {
+                let dd = String(parsedDate.getDate()).padStart(2, '0');
+                let mm = String(parsedDate.getMonth() + 1).padStart(2, '0');
+                let yyyy = parsedDate.getFullYear();
+                row[8] = `${dd}/${mm}/${yyyy}`;
+            }
+        }
+
         let tr = document.createElement("tr");
         tr.innerHTML = `<td>${index + 1}</td>` + row.map(cell => `<td>${cell || ""}</td>`).join("");
         fragment.appendChild(tr);
@@ -579,6 +607,7 @@ function renderTable(data, tableId) {
 
     tableBody.appendChild(fragment);
     updateCount(tableId);
+    setupRowClickForModal(tableId);
 }
 
 // Xóa dấu tiếng Việt để tìm kiếm và lọc không phân biệt dấu
@@ -652,6 +681,7 @@ function highlightSearch(tableId, searchValue) {
     });
 
     updateCount(tableId);
+    setupRowClickForModal(tableId);
 }
 
 // Hàm xóa highlight và hiển thị lại dữ liệu gốc
@@ -670,6 +700,7 @@ function removeHighlight(tableId) {
     });
 
     updateCount(tableId);
+    setupRowClickForModal(tableId);
 }
 
 // Thiết lập tìm kiếm với highlight
@@ -712,6 +743,7 @@ function filterTable(tableId) {
     });
 
     updateCount(tableId);
+    setupRowClickForModal(tableId);
 }
 
 // **Lọc dữ liệu theo dòng xe cho Tab 2**
@@ -787,6 +819,7 @@ function removeHighlight(tableId) {
     });
 
     updateCount(tableId);
+    setupRowClickForModal(tableId);
 }
 
 document.getElementById("reloadData").addEventListener("click", function () {
@@ -800,14 +833,13 @@ document.getElementById("reloadData").addEventListener("click", function () {
 });
 
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     function fetchData() {
         const loadingElement = document.getElementById("loading");
         loadingElement.style.display = "block";
 
-        const apiURL = "https://script.google.com/macros/s/AKfycbzi2O-yVJyp0gyWchknyN1FdHfcOSJt-tn3GH1w8MOQ0YFL8fBU-nwmTYLgWfbLuTobJQ/exec";
+        const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
 
         axios.get(apiURL)
             .then(response => {
@@ -858,9 +890,148 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
     document.head.appendChild(style);
 
-    fetchData(); // Gọi fetchData khi trang tải xong
+    fetchData();
+    setupRowClickForModal('table1');
+    setupRowClickForModal('table2');
 });
 </script>
+<!-- Modal hiển thị chi tiết -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content bg-white text-dark">
+<div class="modal-header">
+<h5 class="modal-title">Chi tiết đơn hàng</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="modalContent"><div class="card shadow-sm p-4" id="pdfExportBox">
+<div style="text-align:center; margin-bottom: 10px;">
+<img alt="VinFast Logo" src="https://vinfastauto.com/themes/custom/vinfast_frontend/logo.svg" style="max-height: 60px;"/>
+<h4 style="margin-top: 10px; color: #212529;">CHI TIẾT ĐƠN HÀNG</h4>
+</div>
 
+
+
+&lt;!-- Nội dung sẽ được chèn vào đây --&gt;
+
+<div style="margin-top: 30px; text-align: right; font-style: italic; font-size: 13px;">
+<p>Ngày in: <span id="printDate"></span></p>
+<p>Người xuất: <strong>.....................................</strong></p>
+</div>
+
+<div style="margin-top: 30px; text-align: right; font-style: italic; font-size: 13px;">
+<p>Ngày in: <span id="printDate"></span></p>
+<p>Người xuất: <strong>.....................................</strong></p>
+</div>
+</div></div>
+<div class="modal-footer justify-content-end"><button class="btn btn-outline-primary btn-sm" id="exportPdf">💾 Lưu PDF</button></div></div>
+</div>
+</div>
+<script>
+function setupRowClickForModal(tableId) {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    const headers = document.querySelectorAll(`#${tableId} thead th`);
+
+    rows.forEach(row => {
+        row.addEventListener("click", function () {
+            const cells = this.querySelectorAll("td");
+
+            const data = {
+                "TƯ VẤN BH": cells[1]?.textContent || "",
+                "DÒNG XE": cells[2]?.textContent || "",
+                "MODEL": cells[3]?.textContent || "",
+                "NGOẠI THẤT": cells[4]?.textContent || "",
+                "NỘI THẤT": cells[5]?.textContent || "",
+                "SỐ ĐƠN HÀNG (VSO)": cells[6]?.textContent || "",
+                "TÊN KHÁCH HÀNG": cells[7]?.textContent || "",
+                "SỐ VIN": cells[8]?.textContent || "",
+                "NGÀY GHÉP": cells[9]?.textContent || "",
+                "SỐ NGÀY": cells[10]?.textContent || "",
+                "VỊ TRÍ XE": cells[11]?.textContent || "",
+            };
+
+            // Format lại ngày ghép dạng dd/mm/yyyy
+            if (data["NGÀY GHÉP"]) {
+                const date = new Date(data["NGÀY GHÉP"]);
+                if (!isNaN(date)) {
+                    data["NGÀY GHÉP"] = date.toLocaleDateString("vi-VN", {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                }
+            }
+
+            // Làm tròn số ngày
+            if (data["SỐ NGÀY"]) {
+                const num = parseFloat(data["SỐ NGÀY"]);
+                if (!isNaN(num)) {
+                    data["SỐ NGÀY"] = Math.round(num);
+                }
+            }
+
+
+            const html = `
+<div class="card shadow-sm border rounded" style="padding: 20px; font-family: 'Poppins', sans-serif;">
+    <div style="text-align: center; background: #333; padding: 10px; color: white; font-size: 20px; border-radius: 6px 6px 0 0;">
+        🚗 <strong>SHOWROOM THUẬN AN</strong> 🚗
+    </div>
+    <div style="margin: 20px 0; text-align: center;">
+        <p style="font-size: 15px;">Xin chào <strong>${data["TƯ VẤN BH"]}</strong>,<br/>
+        Đơn hàng của anh/chị đã được ghép VIN:</p>
+    </div>
+    <table style="width: 100%; font-size: 14px;">
+        <tbody>
+            <tr><td>🚙 <strong>Dòng Xe</strong></td><td>${data["DÒNG XE"]}</td></tr>
+            <tr><td>📄 <strong>Phiên Bản</strong></td><td>${data["MODEL"]}</td></tr>
+            <tr><td>🎨 <strong>Ngoại Thất</strong></td><td>${data["NGOẠI THẤT"]}</td></tr>
+            <tr><td>🛋️ <strong>Nội Thất</strong></td><td>${data["NỘI THẤT"]}</td></tr>
+            <tr><td>📑 <strong>Số Đơn Hàng</strong></td><td>${data["SỐ ĐƠN HÀNG (VSO)"]}</td></tr>
+            <tr><td>👤 <strong>Tên Khách Hàng</strong></td><td>${data["TÊN KHÁCH HÀNG"]}</td></tr>
+            <tr><td>📅 <strong>Ngày Ghép</strong></td><td>${data["NGÀY GHÉP"]}</td></tr>
+            <tr><td>📆 <strong>Số Ngày</strong></td><td>${data["SỐ NGÀY"]}</td></tr>
+            <tr><td>🗺️ <strong>Vị Trí Xe</strong></td><td>${data["VỊ TRÍ XE"]}</td></tr>
+        </tbody>
+    </table>
+    <div style="margin-top: 20px; text-align: center; font-size: 18px; font-weight: bold; color: red; background: #eee; padding: 10px; border-radius: 8px;">
+        🔑 VIN: ${data["SỐ VIN"]}
+    </div>
+</div>`;
+
+            document.getElementById("modalContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("detailModal")).show();
+        });
+    });
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const btnExport = document.getElementById("exportPdf");
+    if (btnExport) {
+        btnExport.addEventListener("click", () => {
+            const element = document.getElementById("modalContent");
+            const opt = {
+                margin:       0.3,
+                filename:     'don_hang_vinfast.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        });
+    }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dateSpan = document.getElementById("printDate");
+    if (dateSpan) {
+        const now = new Date();
+        const formatted = now.toLocaleDateString("vi-VN", {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+        dateSpan.textContent = formatted;
+    }
+});
+</script>
 </body>
 </html>
