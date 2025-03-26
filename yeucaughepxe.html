@@ -1,1179 +1,988 @@
-
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Ghép Xe VinFast – Giao diện tinh tế</title>
-<script src="https://cdn.tailwindcss.com">
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js">
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&amp;display=swap" rel="stylesheet"/>
-<style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background: #dbe4ee !important;
-      color: #1f2937 !important;
-    }
-    .glass {
-      border-radius: 20px !important;
-      background: #dbe4ee !important;
-      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
-      padding: 1.5rem !important;
-      backdrop-filter: none !important;
-      border: none !important;
-    }
-    .input-hyper {
-      border-radius: 12px !important;
-      border: none !important;
-      background: #dbe4ee !important;
-      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
-      padding: 0.75rem 1rem !important;
-      width: 100% !important;
-      font-size: 0.95rem !important;
-      color: #1f2937 !important;
-    }
-    .button-hyper {
-      background: #c8102e !important;
-      padding: 0.75rem 2rem !important;
-      border-radius: 15px !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
-      transition: box-shadow 0.2s ease !important;
-    }
-    .button-hyper:hover {
-      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
-      transform: none !important;
-    }
-    h1, h2 {
-      color: #002147 !important; /* Xanh đậm sang trọng */
-    }
-    ::placeholder {
-      color: #6b7280 !important;
-    }
-
-.custom-scroll::-webkit-scrollbar {
-  width: 8px;
-}
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 6px;
-}
-.custom-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #94a3b8 transparent;
-}
-</style>
-<style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background: #dbe4ee !important;
-      color: #1f2937 !important;
-    }
-    .glass {
-      border-radius: 20px !important;
-      background: #dbe4ee !important;
-      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
-      padding: 1.5rem !important;
-      backdrop-filter: none !important;
-      border: none !important;
-    }
-    .input-hyper {
-      border-radius: 12px !important;
-      border: none !important;
-      background: #dbe4ee !important;
-      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
-      padding: 0.75rem 1rem !important;
-      width: 100% !important;
-      font-size: 0.95rem !important;
-      color: #1f2937 !important;
-    }
-    .button-hyper {
-      background: #c8102e !important;
-      padding: 0.75rem 2rem !important;
-      border-radius: 15px !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
-      transition: box-shadow 0.2s ease !important;
-    }
-    .button-hyper:hover {
-      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
-      transform: none !important;
-    }
-    h1, h2 {
-      color: #002147 !important; /* Xanh đậm sang trọng */
-    }
-    ::placeholder {
-      color: #6b7280 !important;
-    }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- html2canvas -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 min-h-screen">
-<div class="fixed top-4 right-4 w-[80px] z-50">
-<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets1.lottiefiles.com/packages/lf20_YXD37q.json"></lottie-player>
-</div>
-<div class="max-w-6xl mx-auto space-y-10 mt-10">
-<h1 class="text-4xl font-extrabold text-center text-slate-800 flex items-center justify-center gap-3 bg-[#e6f3fa] py-6 px-8 rounded-3xl shadow-lg border border-sky-200 tracking-wide uppercase">
-
-<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets6.lottiefiles.com/private_files/lf30_lkquf6qz.json" style="width: 48px; height: 48px;"></lottie-player>
-<span class="bg-gradient-to-r from-sky-600 to-cyan-400 bg-clip-text text-transparent tracking-wide">Tạo Yêu Cầu Ghép Xe</span>
-</h1>
-<form class="grid md:grid-cols-2 gap-6" id="vinfast-form" onsubmit="previewForm(event)">
-<div class="glass space-y-4">
-<h2 class="text-lg font-semibold text-sky-300">👤 Thông tin</h2>
-<input class="input-hyper" name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required=""/>
-<input class="input-hyper" name="ten_khach_hang" placeholder="Tên khách hàng" required=""/>
-</div>
-<div class="glass space-y-4">
-<h2 class="text-lg font-semibold text-sky-300">🚘 Cấu hình xe</h2>
-<input class="input-hyper" name="dong_xe" placeholder="Dòng xe" required=""/>
-<input class="input-hyper" name="phien_ban" placeholder="Phiên bản" required=""/>
-<input class="input-hyper" name="ngoai_that" placeholder="Ngoại thất" required=""/>
-<input class="input-hyper" name="noi_that" placeholder="Nội thất" required=""/>
-</div>
-<div class="glass space-y-4 col-span-2">
-<h2 class="text-lg font-semibold text-sky-300">📦 Đơn hàng</h2>
-<div class="grid md:grid-cols-2 gap-4">
-<input class="input-hyper" name="so_don_hang" placeholder="Số đơn hàng" required=""/>
-<div class="flex flex-col gap-1">
-<label class="text-sm text-slate-300">Ngày cọc (vui lòng nhập ngày khách hàng đặt cọc)</label>
-<input class="input-hyper" name="ngay_coc" required="" type="datetime-local"/>
-</div>
-</div>
-</div>
-<div class="col-span-2 text-center">
-<button class="mx-auto mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-full text-base shadow-lg transition-all duration-300 border-none" type="submit">
-<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets3.lottiefiles.com/packages/lf20_x62chJ.json" style="width:24px; height:24px;"></lottie-player>
-<span>Gửi Nhu Cầu</span>
-</button>
-</div>
-</form>
-<div class="flex gap-3 justify-end mb-2" id="global-tab-buttons">
-<button class="px-4 py-2 text-sm font-semibold rounded-full border transition duration-300 bg-white text-sky-700 hover:bg-sky-100 border-sky-300 shadow-md" id="tab-history" onclick="switchTab('history-section')">📜 Lịch sử</button>
-<button class="px-4 py-2 text-sm font-semibold rounded-full border transition duration-300 bg-white text-green-700 hover:bg-emerald-100 border-emerald-300 shadow-md" id="tab-chart" onclick="switchTab('chart-section')">📊 Thống kê</button>
-</div><div class="glass mt-10 space-y-4 w-full overflow-hidden" id="history-section">
-<div class="flex items-center justify-between gap-4 flex-wrap">
-<h2 class="text-lg font-semibold text-sky-300">📜 Lịch sử yêu cầu ghép xe</h2>
-<div class="flex items-center gap-2 ml-auto">
-<span class="text-xs text-white/80 flex items-center gap-1" id="total-don">
-      📊 Tổng số đơn: <span class="font-semibold text-white" id="total-don-count">0</span>
-</span>
-<button class="p-2 rounded-full bg-white text-sky-700 hover:bg-sky-100 border border-sky-200 shadow-sm" onclick="exportToExcel()" title="Xuất Excel">
-<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
-<path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"></path>
-</svg>
-</button>
-</div>
-</div>
-<div class="mt-2 flex items-center">
-<input class="input-hyper w-full" id="search-box" oninput="filterHistory()" placeholder="🔎 Tìm kiếm toàn bộ dữ liệu..." type="text"/>
-</div>
-<div class="w-full flex justify-center items-center py-6 text-center text-sky-600 text-sm" id="history-loading">
-<lottie-player autoplay="" background="transparent" loop="" speed="1" src="https://assets4.lottiefiles.com/private_files/lf30_m6j5igxb.json" style="width: 80px; height: 80px;"></lottie-player>
-</div>
-<div class="w-full bg-white rounded-xl text-sm custom-scroll p-2 overflow-y-scroll max-h-[500px]" id="history-table">
-<!-- Table will render here -->
-</div>
-<div class="text-right text-xs text-gray-500 pt-2" id="total-count">Tổng số dòng: 0</div><div class="text-right text-xs text-gray-500 -mt-2" id="total-don"></div>
-</div>
-<div class="glass mt-6 space-y-4 hidden" id="chart-section">
-<div id="chart-loading" class="flex justify-center items-center p-6">
-  <lottie-player src="https://assets4.lottiefiles.com/private_files/lf30_m6j5igxb.json"
-                 background="transparent" speed="1" loop autoplay
-                 style="width: 80px; height: 80px;"></lottie-player>
-</div>
-
-<h2 class="text-base font-semibold text-green-700 flex items-center gap-2">📊 Biểu đồ phân tích yêu cầu</h2>
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="bg-white rounded-xl p-4 shadow border">
-    <div class="text-sm font-semibold text-gray-700 mb-2 text-center">🔧 Thống kê theo dòng xe</div>
-    <canvas height="200" id="chart-by-car"></canvas>
-    </div>
-<div class="bg-white rounded-xl p-4 shadow border">
-    <div class="text-sm font-semibold text-gray-700 mb-2 text-center">🧑‍💼 Thống kê theo tư vấn viên</div>
-    <canvas height="200" id="chart-by-advisor"></canvas>
-    </div>
-</div>
-</div>
-<footer class="text-center text-xs text-slate-400 mt-10">
-  © 2025 VinFast Ghép Xe • Made with ❤️ by Cody
-</footer>
-</div>
-<script src="https://cdn.tailwindcss.com">
-// ... To be inserted inside <script> section
-document.addEventListener("DOMContentLoaded", function () {
-  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-
-  // Inject warning element
-  const warningElement = document.createElement("div");
-  warningElement.id = "advisor-warning";
-  warningElement.className = "text-sm text-red-400 mt-2 hidden";
-  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
-  advisorInput.insertAdjacentElement("afterend", warningElement);
-
-  function validateAdvisorInput() {
-    const value = advisorInput.value.trim().toLowerCase();
-    const matched = validAdvisors.some(name => name.toLowerCase() === value);
-    warningElement.classList.toggle("hidden", matched || !value);
-    return matched;
-  }
-
-  advisorInput.addEventListener("blur", validateAdvisorInput);
-  advisorInput.addEventListener("input", validateAdvisorInput);
-});
-
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-    const advisorWarning = document.getElementById("advisor-warning");
-
-    function checkAdvisorName() {
-      const value = advisorInput.value.trim().toLowerCase();
-      const matched = validAdvisors.some(name => name.toLowerCase() === value);
-
-      if (!matched && value !== "") {
-        advisorWarning.classList.remove("opacity-0");
-        showWarningModal();
-      } else {
-        advisorWarning.classList.add("opacity-0");
-      }
-    }
-
-    advisorInput.addEventListener("blur", checkAdvisorName);
-    advisorInput.addEventListener("input", checkAdvisorName);
-  });
-
-
-function capturePreview() {
-  const preview = document.getElementById("preview-content");
-  html2canvas(preview).then(canvas => {
-    const link = document.createElement("a");
-    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-}
-
-
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js">
-// ... To be inserted inside <script> section
-document.addEventListener("DOMContentLoaded", function () {
-  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-
-  // Inject warning element
-  const warningElement = document.createElement("div");
-  warningElement.id = "advisor-warning";
-  warningElement.className = "text-sm text-red-400 mt-2 hidden";
-  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
-  advisorInput.insertAdjacentElement("afterend", warningElement);
-
-  function validateAdvisorInput() {
-    const value = advisorInput.value.trim().toLowerCase();
-    const matched = validAdvisors.some(name => name.toLowerCase() === value);
-    warningElement.classList.toggle("hidden", matched || !value);
-    return matched;
-  }
-
-  advisorInput.addEventListener("blur", validateAdvisorInput);
-  advisorInput.addEventListener("input", validateAdvisorInput);
-});
-
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-    const advisorWarning = document.getElementById("advisor-warning");
-
-    function checkAdvisorName() {
-      const value = advisorInput.value.trim().toLowerCase();
-      const matched = validAdvisors.some(name => name.toLowerCase() === value);
-
-      if (!matched && value !== "") {
-        advisorWarning.classList.remove("opacity-0");
-        showWarningModal();
-      } else {
-        advisorWarning.classList.add("opacity-0");
-      }
-    }
-
-    advisorInput.addEventListener("blur", checkAdvisorName);
-    advisorInput.addEventListener("input", checkAdvisorName);
-  });
-
-
-function capturePreview() {
-  const preview = document.getElementById("preview-content");
-  html2canvas(preview).then(canvas => {
-    const link = document.createElement("a");
-    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-}
-
-
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<script>
-    let formData = {};
-    let orderId = "";
-
-    const labelMap = {
-      ten_ban_hang: "Tên tư vấn bán hàng",
-      ten_khach_hang: "Tên khách hàng",
-      dong_xe: "Dòng xe",
-      phien_ban: "Phiên bản",
-      ngoai_that: "Ngoại thất",
-      noi_that: "Nội thất",
-      so_don_hang: "Số đơn hàng",
-      ngay_coc: "Ngày cọc"
-    };
-
-    function formatDateTime(dtString) {
-      const d = new Date(dtString);
-      return d.toLocaleString("vi-VN", { dateStyle: "full", timeStyle: "short" });
-    }
-
-    
-    const validAdvisors = ["Trần Thị Nguyệt Bạch", "Bùi Anh Tài", "Lê Quốc Thịnh", "Lê Mai Anh", "Võ Minh Tuấn", "Lương Thế Ngọc", "Thành Ngọc Vinh", "Nguyễn Thiện Thảo", "Nguyễn Anh Tuấn", "Đinh Trọng Nhân", "Nguyễn Trần Hoàng Thanh", "Nguyễn Hoàng Phúc", "Trần Danh Phương", "Phạm Thành Nhân", "Nguyễn Hoàng Thạch", "Tất Bách Tường", "Vũ Thị Trang", "Phạm Trọng Huy"]; // <-- bạn có thể thay danh sách này
-
-    function previewForm(e) {
-      const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-      const advisorName = advisorInput.value.trim().toLowerCase();
-      const matched = validAdvisors.some(n => n.toLowerCase() === advisorName);
-
-      if (!matched) {
-        alert("⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng đã đăng ký để hệ thống ghi nhận yêu cầu.");
-        advisorInput.focus();
-        return;
-      }
-
-      e.preventDefault();
-      const form = document.getElementById("vinfast-form");
-      const inputs = form.querySelectorAll("input");
-      formData = {}; orderId = "";
-      let html = "";
-
-      inputs.forEach(input => {
-        if (input.name) {
-          formData[input.name] = input.value;
-          if (input.name === "so_don_hang") orderId = input.value;
-          const label = labelMap[input.name] || input.name;
-          const value = input.type === "datetime-local" ? formatDateTime(input.value) : input.value;
-          html += `<div class='border-b border-white/20 pb-2'><span class='text-cyan-400 font-semibold'>${label}:</span> ${value || "<i>Chưa nhập</i>"}</div>`;
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Ghép Xe VinFast – Yêu Cầu Ghép Xe Chủ Đạo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-      });
-
-      document.getElementById("preview-content").innerHTML = html;
-      document.getElementById("preview-modal").classList.remove("hidden");
-    }
-
-    function closeModal() {
-      document.getElementById("preview-modal").classList.add("hidden");
-    }
-
-    function confirmSubmit() {
-      closeModal();
-      document.getElementById("loading").classList.remove("hidden");
-
-      if (formData["ngay_coc"]) {
-        formData["ngay_coc"] = new Date(formData["ngay_coc"]).toISOString();
-      }
-      formData["thoi_gian_nhap"] = new Date().toISOString();
-
-      fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      }).then(() => {
-        document.getElementById("loading").classList.add("hidden");
-
-        const snackbar = document.getElementById("snackbar");
-        
-snackbar.innerHTML = `
-  <div class="flex flex-col items-center gap-2">
-    <lottie-player src='https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json' background="transparent" speed="1" style="width: 60px; height: 60px;" autoplay></lottie-player>
-    <div class="text-xl font-bold tracking-wide text-sky-700">🚀 HỆ THỐNG ĐÃ GHI NHẬN YÊU CẦU GHÉP XE CỦA BẠN</div>
-    <div class="text-sm text-sky-600">Chúng tôi sẽ xử lý và liên hệ bạn sớm nhất</div>
-  </div>`;
-
-        snackbar.classList.remove("hidden");
-        snackbar.style.opacity = 1;
-
-        setTimeout(() => {
-          snackbar.style.opacity = 0;
-          setTimeout(() => {
-            snackbar.classList.add("hidden");
-          }, 500);
-          document.getElementById("vinfast-form").reset();
-        }, 4000);
-      });
-    }
-  
-// ... To be inserted inside <script> section
-document.addEventListener("DOMContentLoaded", function () {
-  const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-
-  // Inject warning element
-  const warningElement = document.createElement("div");
-  warningElement.id = "advisor-warning";
-  warningElement.className = "text-sm text-red-400 mt-2 hidden";
-  warningElement.innerHTML = "⚠️ Vui lòng nhập đúng tên Tư Vấn Bán Hàng.";
-  advisorInput.insertAdjacentElement("afterend", warningElement);
-
-  function validateAdvisorInput() {
-    const value = advisorInput.value.trim().toLowerCase();
-    const matched = validAdvisors.some(name => name.toLowerCase() === value);
-    warningElement.classList.toggle("hidden", matched || !value);
-    return matched;
-  }
-
-  advisorInput.addEventListener("blur", validateAdvisorInput);
-  advisorInput.addEventListener("input", validateAdvisorInput);
-});
-
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const advisorInput = document.querySelector('input[name="ten_ban_hang"]');
-    const advisorWarning = document.getElementById("advisor-warning");
-
-    function checkAdvisorName() {
-      const value = advisorInput.value.trim().toLowerCase();
-      const matched = validAdvisors.some(name => name.toLowerCase() === value);
-
-      if (!matched && value !== "") {
-        advisorWarning.classList.remove("opacity-0");
-        showWarningModal();
-      } else {
-        advisorWarning.classList.add("opacity-0");
-      }
-    }
-
-    advisorInput.addEventListener("blur", checkAdvisorName);
-    advisorInput.addEventListener("input", checkAdvisorName);
-  });
-
-
-function capturePreview() {
-  const preview = document.getElementById("preview-content");
-  html2canvas(preview).then(canvas => {
-    const link = document.createElement("a");
-    link.download = `ghep-xe-${orderId || "vinfast"}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  });
-}
-
-
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<!-- Modal xem trước và xác nhận -->
-<div class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="preview-modal">
-<div class="bg-white text-gray-800 p-8 rounded-3xl shadow-2xl max-w-2xl w-full border border-gray-200">
-<div class="flex items-center justify-between mb-4">
-<h2 class="text-2xl font-extrabold text-sky-700 flex items-center gap-2 tracking-wide">
-<svg class="w-7 h-7 text-sky-500" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 17h5l-1.405-1.405M19.595 15.595A2.5 2.5 0 0117.5 17h-11a2.5 2.5 0 01-2.5-2.5V6a2.5 2.5 0 012.5-2.5h11A2.5 2.5 0 0119.595 6.405L21 8v7a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-        Xác nhận thông tin ghép xe
-      </h2>
-<button class="text-gray-400 hover:text-gray-700 text-3xl font-bold" onclick="closeModal()" title="Đóng">×</button>
-</div>
-<div class="space-y-3 text-sm leading-relaxed max-h-[420px] overflow-y-auto px-1" id="preview-content">
-<!-- Dynamic content here -->
-</div>
-<div class="flex justify-end gap-4 pt-6">
-<button class="px-5 py-2 rounded-xl text-sm font-semibold bg-gray-300 text-gray-800 hover:bg-gray-400 transition" onclick="closeModal()">❌ Huỷ</button>
-<button class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-700 text-white hover:bg-sky-800 transition shadow-md" onclick="confirmSubmit()">✅ Gửi yêu cầu</button>
-</div>
-</div>
-</div>
-<!-- Loader -->
-<div class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" id="loading">
-<div class="loader border-4 border-white border-t-cyan-400 rounded-full w-12 h-12 animate-spin"></div>
-</div>
-<!-- Snackbar -->
-<div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white text-sky-700 px-8 py-6 rounded-3xl shadow-2xl hidden text-center font-bold text-lg ring-2 ring-sky-200 tracking-wide" id="snackbar" style="opacity:0; transition: opacity 0.5s ease, transform 0.5s ease;">
-<lottie-player autoplay="" background="transparent" speed="1" src="https://assets10.lottiefiles.com/packages/lf20_oGlWy5.json" style="width: 48px; height: 48px;"></lottie-player>
-</div>
-<style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background: #dbe4ee !important;
-      color: #1f2937 !important;
-    }
-    .glass {
-      border-radius: 20px !important;
-      background: #dbe4ee !important;
-      box-shadow: 12px 12px 24px #b1c0d4, -12px -12px 24px #eff7ff !important;
-      padding: 1.5rem !important;
-      backdrop-filter: none !important;
-      border: none !important;
-    }
-    .input-hyper {
-      border-radius: 12px !important;
-      border: none !important;
-      background: #dbe4ee !important;
-      box-shadow: inset 6px 6px 12px #b1c0d4, inset -6px -6px 12px #eff7ff !important;
-      padding: 0.75rem 1rem !important;
-      width: 100% !important;
-      font-size: 0.95rem !important;
-      color: #1f2937 !important;
-    }
-    .button-hyper {
-      background: #c8102e !important;
-      padding: 0.75rem 2rem !important;
-      border-radius: 15px !important;
-      font-weight: 600 !important;
-      color: #ffffff !important;
-      box-shadow: 6px 6px 12px #900b22, -6px -6px 12px #ff3b4a !important;
-      transition: box-shadow 0.2s ease !important;
-    }
-    .button-hyper:hover {
-      box-shadow: inset 6px 6px 12px #900b22, inset -6px -6px 12px #ff3b4a !important;
-      transform: none !important;
-    }
-    h1, h2 {
-      color: #002147 !important; /* Xanh đậm sang trọng */
-    }
-    ::placeholder {
-      color: #6b7280 !important;
-    }
-
-.input-hyper:focus {
-  outline: 2px solid #38bdf8 !important;
-  transition: all 0.2s ease-in-out;
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<script>
-const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
-let historyData = [];
-
-function fetchHistory() {
-  document.getElementById("history-loading").classList.remove("hidden");
-  fetch(historyURL)
-    .then(res => res.text())
-    .then(txt => {
-      try {
-        const json = JSON.parse(txt);
-        historyData = json;
-        renderHistory(json);
-        document.getElementById('history-loading').classList.add('hidden');
-      } catch (err) {
-        console.error("❌ JSON parse error:", err);
-        document.getElementById("history-loading").classList.add("hidden");
-        document.getElementById("history-table").innerHTML = "<div class='text-red-500 p-4'>⚠️ Không đọc được dữ liệu từ Google Sheet.</div>";
-      }
-    })
-    .catch(err => {
-      console.error("❌ Fetch failed:", err);
-      document.getElementById("history-loading").classList.add("hidden");
-        document.getElementById("history-table").innerHTML = "<div class='text-red-500 p-4'>⚠️ Không thể kết nối đến API.</div>";
-    });
-}
-
-function renderHistory(data) {
-  const table = document.getElementById("history-table");
-  if (!data.length) {
-    table.innerHTML = "<div class='text-red-400 p-4'>❌ Không có dữ liệu.</div>";
-    return;
-  }
-
-  const headers = ["STT", ...Object.keys(data[0])];
-  let html = "<table class='w-full border-collapse text-gray-800 table-auto'><thead><tr>" +
-    headers.map((h, i) => `<th class='p-2 border-b border-sky-200 text-base font-bold text-left sticky top-0 bg-sky-100 z-10'>${h}</th>
-`).join("") +
-    "</tr></thead><tbody>" +
-    data.map((row, i) => {
-      const rowHtml = headers.map((h, idx) =>
-        `<td class='p-2 border-b border-gray-100 break-words max-w-[180px]'>${idx === 0 ? i + 1 : (row[h] || "")}</td>`
-      ).join("");
-      return `<tr class='hover:bg-sky-50 cursor-pointer' onclick='showRowModal(historyData[${i}])'>${rowHtml}</tr>`;
-    }).join("") +
-    "</tbody></table>";
-
-  table.innerHTML = html;
-  
-  document.getElementById("total-count").textContent = "Tổng số dòng: " + data.length;
-  document.getElementById("total-don-count").textContent = data.length;
-}
-
-function normalizeVN(str) {
-  return str.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
-
-function filterHistory() {
-  const keyword = normalizeVN(document.getElementById("search-box").value);
-  const filtered = historyData.filter(row =>
-    Object.values(row).some(val => normalizeVN(String(val)).includes(keyword))
-  );
-  renderHistory(filtered);
-}
-
-function exportToExcel() {
-  const ws = XLSX.utils.json_to_sheet(historyData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
-  XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
-}
-
-document.addEventListener("DOMContentLoaded", fetchHistory);
-
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
-<!-- Modal chi tiết dòng -->
-<div class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50" id="row-modal">
-<div class="bg-white text-gray-800 p-6 rounded-3xl shadow-2xl max-w-xl w-full border border-gray-200">
-<div class="flex justify-between items-center mb-4">
-<h2 class="text-xl font-bold text-sky-700">📋 Chi tiết đơn</h2>
-<button class="text-2xl font-bold text-gray-500 hover:text-gray-800" onclick="closeRowModal()">×</button>
-</div>
-<div class="space-y-2 text-sm leading-relaxed" id="row-modal-content"></div>
-<div class="text-right mt-4">
-<button class="px-4 py-2 rounded-xl bg-cyan-600 text-white hover:bg-cyan-700 shadow" onclick="captureRow()">📄 Tải PDF</button>
-</div>
-</div>
-</div>
-<script>
-function switchTab(sectionId) {
-  const history = document.getElementById("history-section");
-  const chart = document.getElementById("chart-section");
-
-  history.classList.add("hidden");
-  chart.classList.add("hidden");
-
-  document.getElementById(sectionId).classList.remove("hidden");
-
-  // toggle active
-  document.getElementById("tab-history").classList.toggle("bg-sky-300", sectionId === 'history-section');
-  document.getElementById("tab-chart").classList.toggle("bg-emerald-300", sectionId === 'chart-section');
-}
-
-function renderCharts(data) {
-  const byCar = {}, byAdvisor = {};
-  data.forEach(row => {
-    const car = row["Dòng xe"];
-    const advisor = row["Tên tư vấn bán hàng"];
-    if (car) byCar[car] = (byCar[car] || 0) + 1;
-    if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-  });
-
-  new Chart(document.getElementById("chart-by-car"), {
-    type: "pie",
-    data: {
-      labels: Object.keys(byCar),
-      datasets: [{ data: Object.values(byCar), label: "Dòng xe" }]
-    }
-  });
-
-  new Chart(document.getElementById("chart-by-advisor"), {
-    type: "bar",
-    data: {
-      labels: Object.keys(byAdvisor),
-      datasets: [{
-        label: "Tư vấn viên",
-        data: Object.values(byAdvisor),
-        backgroundColor: "#34d399"
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-const originalRenderHistory = renderHistory;
-renderHistory = function(data) {
-  originalRenderHistory(data);
-  renderCharts(data);
-}
-
-let trendChartInstance;
-
-function filterByDate() {
-  const from = new Date(document.getElementById('filter-from').value);
-  const to = new Date(document.getElementById('filter-to').value);
-
-  if (!from || !to || from > to) {
-    alert("⚠️ Vui lòng chọn khoảng thời gian hợp lệ!");
-    return;
-  }
-
-  const filtered = historyData.filter(row => {
-    const date = new Date(row["Ngày cọc"]);
-    return !isNaN(date) && date >= from && date <= to;
-  });
-
-  renderTrendChart(filtered);
-}
-
-function renderTrendChart(data) {
-  const trendData = {};
-
-  data.forEach(row => {
-    const date = new Date(row["Ngày cọc"]);
-    if (isNaN(date)) return;
-    const key = date.toISOString().slice(0, 10);
-    trendData[key] = (trendData[key] || 0) + 1;
-  });
-
-  const labels = Object.keys(trendData).sort();
-  const values = labels.map(key => trendData[key]);
-
-  const ctx = document.getElementById("chart-trend").getContext("2d");
-  if (trendChartInstance) trendChartInstance.destroy();
-
-  trendChartInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Số lượng đơn theo ngày",
-        data: values,
-        borderColor: "#0ea5e9",
-        backgroundColor: "rgba(14,165,233,0.2)",
-        fill: true,
-        tension: 0.3,
-        pointRadius: 3,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        x: {
-          title: { display: true, text: "Ngày", color: "#475569" },
-          ticks: { color: "#475569" }
-        },
-        y: {
-          title: { display: true, text: "Số đơn", color: "#475569" },
-          ticks: { precision: 0, color: "#475569" },
-          beginAtZero: true
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, #003087, #005eb8);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
-      },
-      plugins: {
-        legend: { labels: { color: "#475569" } }
-      }
-    }
-  });
-}
+        .navbar .logo h1 {
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .navbar .tabs {
+            display: flex;
+            margin-left: auto;
+        }
+        .navbar .tabs a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .navbar .tabs a:hover, .navbar .tabs a.active {
+            background: #005eb8;
+            box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
+            animation: glowPulse 2s infinite ease-in-out;
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.8); }
+            50% { box-shadow: 0 0 30px rgba(0, 94, 184, 1); }
+        }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 70px;
+            padding: 10px;
+            gap: 10px;
+            min-height: calc(100vh - 90px);
+        }
+        .form-container {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .form-container h2 {
+            font-size: 16px;
+            color: #003087;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .form-container form {
+            display: grid;
+            gap: 10px;
+        }
+        .form-container input {
+            padding: 10px 15px;
+            border: 1px solid #a9a9a9;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .form-container input:focus {
+            border-color: #005eb8;
+            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
+            outline: none;
+        }
+        .form-container button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #005eb8, #003087);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 94, 184, 0.3);
+        }
+        .form-container button:hover {
+            background: linear-gradient(135deg, #003087, #005eb8);
+            box-shadow: 0 4px 15px rgba(0, 94, 184, 0.5);
+            transform: translateY(-2px);
+        }
+        .grid-container {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        .search-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .search-container input, .search-container select {
+            padding: 10px 15px;
+            border: 1px solid #a9a9a9;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+        .search-container input:focus, .search-container select:focus {
+            border-color: #005eb8;
+            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
+            outline: none;
+        }
+        .export-btn-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .export-btn, .refresh-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #005eb8, #003087);
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 94, 184, 0.3);
+            position: relative;
+        }
+        .export-btn:hover, .refresh-btn:hover {
+            background: linear-gradient(135deg, #003087, #005eb8);
+            box-shadow: 0 4px 15px rgba(0, 94, 184, 0.5);
+            transform: translateY(-2px);
+        }
+        .export-btn:hover::after, .refresh-btn:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 94, 184, 0.9);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .table-wrapper {
+            max-height: calc(100% - 120px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #005eb8 #f0f0f0;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #005eb8, #003087);
+            border-radius: 10px;
+            border: 2px solid #f0f0f0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #003087, #005eb8);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #003087;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td {
+            background: #ffffff;
+        }
+        tbody tr:hover {
+            background: #f0f8ff;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 10px;
+        }
+        .modal-content {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 90%;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content h2 {
+            color: #003087;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .success-modal-content, .loading-modal-content {
+            text-align: center;
+            max-width: 300px;
+        }
+        .success-modal-content i {
+            font-size: 36px;
+            color: #16a34a;
+            margin-bottom: 15px;
+        }
+        .loading-modal-content i {
+            font-size: 36px;
+            color: #005eb8;
+            margin-bottom: 15px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .detail-table th {
+            background: #f9f9f9;
+            color: #1a1a1a;
+            text-align: left;
+            padding: 10px;
+            font-weight: 400;
+        }
+        .detail-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #005eb8, #003087);
+            color: #ffffff;
+        }
+        .modal-btn.primary:hover {
+            background: linear-gradient(135deg, #003087, #005eb8);
+            box-shadow: 0 4px 15px rgba(0, 94, 184, 0.5);
+            transform: translateY(-2px);
+        }
+        .modal-btn.secondary {
+            background: linear-gradient(135deg, #a9a9a9, #8c8c8c);
+            color: #ffffff;
+        }
+        .modal-btn.secondary:hover {
+            background: linear-gradient(135deg, #8c8c8c, #a9a9a9);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        .summary-section {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .summary-section h3 {
+            font-size: 14px;
+            color: #003087;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .summary-section p {
+            font-size: 12px;
+            color: #1a1a1a;
+            margin: 5px 0;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #003087;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 10px;
+        }
 
-
-function renderCharts(data) {
-  const chartContainer = document.getElementById("chart-loading");
-  chartContainer.classList.remove("hidden");
-
-  setTimeout(() => {
-    const byCar = {}, byAdvisor = {};
-    data.forEach(row => {
-      const car = row["Dòng xe"];
-      const advisor = row["Tên tư vấn bán hàng"];
-      if (car) byCar[car] = (byCar[car] || 0) + 1;
-      if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-    });
-
-    new Chart(document.getElementById("chart-by-car"), {
-      type: "pie",
-      data: {
-        labels: Object.keys(byCar),
-        datasets: [{
-          data: Object.values(byCar),
-          label: "Dòng xe"
-        }]
-      },
-      options: {
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => `📦 Số đơn: ${ctx.raw}`,
-              title: ctx => `🚘 ${ctx[0].label}`
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .navbar {
+                height: 80px;
+                padding: 0 40px;
             }
-          }
-        }
-      }
-    });
-
-    new Chart(document.getElementById("chart-by-advisor"), {
-      type: "bar",
-      data: {
-        labels: Object.keys(byAdvisor),
-        datasets: [{
-          label: "Tư vấn viên",
-          data: Object.values(byAdvisor),
-          backgroundColor: "#34d399"
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => `📦 Số đơn: ${ctx.raw}`,
-              title: ctx => `🧑‍💼 ${ctx[0].label}`
+            .navbar .logo h1 {
+                font-size: 24px;
             }
-          }
+            .navbar .tabs a {
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+            .main-container {
+                flex-direction: row;
+                margin-top: 100px;
+                padding: 20px 40px;
+                gap: 20px;
+                height: calc(100vh - 120px);
+            }
+            .form-container {
+                flex: 1;
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .form-container h2 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            .form-container input {
+                padding: 12px 20px;
+                font-size: 14px;
+                border-radius: 10px;
+            }
+            .form-container button {
+                padding: 12px 25px;
+                font-size: 14px;
+                border-radius: 10px;
+            }
+            .grid-container {
+                flex: 2;
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .controls {
+                flex-wrap: nowrap;
+                gap: 20px;
+            }
+            .search-container {
+                width: auto;
+            }
+            .search-container input, .search-container select {
+                padding: 12px 20px;
+                font-size: 14px;
+                border-radius: 10px;
+            }
+            .export-btn, .refresh-btn {
+                padding: 12px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+            .export-btn:hover::after, .refresh-btn:hover::after {
+                top: -30px;
+                font-size: 12px;
+            }
+            .table-wrapper {
+                max-height: calc(100% - 120px);
+            }
+            .table-wrapper::-webkit-scrollbar {
+                width: 10px;
+            }
+            table {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 15px;
+            }
+            .modal-content {
+                max-width: 600px;
+                padding: 20px;
+                border-radius: 15px;
+            }
+            .modal-content h2 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+            .success-modal-content, .loading-modal-content {
+                max-width: 400px;
+            }
+            .success-modal-content i, .loading-modal-content i {
+                font-size: 48px;
+                margin-bottom: 20px;
+            }
+            .detail-table {
+                font-size: 14px;
+            }
+            .detail-table th, .detail-table td {
+                padding: 12px;
+            }
+            .modal-btn {
+                padding: 12px 25px;
+                font-size: 14px;
+                border-radius: 10px;
+            }
+            .chart-container {
+                height: 300px;
+            }
+            .summary-section {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            }
+            .summary-section h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .summary-section p {
+                font-size: 14px;
+            }
+            footer {
+                padding: 10px 0;
+                font-size: 12px;
+            }
         }
-      }
-    });
 
-    chartContainer.classList.add("hidden");
-  }, 300);
-}
-
-</script>
-
-<script>
-function createLandingPage(data) {
-  const htmlContent = `
-<!DOCTYPE html>
-<html lang='vi'>
-<head>
-  <meta charset='UTF-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>Đơn hàng #${data.so_don_hang}</title>
-  <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css'>
+        /* Mobile Table to List */
+        @media (max-width: 767px) {
+            table {
+                display: block;
+            }
+            thead {
+                display: none;
+            }
+            tbody, tr {
+                display: block;
+            }
+            tr {
+                margin-bottom: 10px;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                background: #ffffff;
+                padding: 10px;
+            }
+            td {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 10px;
+                border: none;
+                font-size: 12px;
+            }
+            td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #003087;
+                flex: 1;
+            }
+            td:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
 </head>
-<body class='bg-gray-100 text-gray-800'>
-  <div class='max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md space-y-6'>
-    <div class='text-center'>
-      <h1 class='text-2xl font-bold text-blue-600'>🔖 ĐƠN HÀNG GHÉP XE</h1>
-      <p class='text-sm text-gray-500'>Mã đơn: <strong>#${data.so_don_hang}</strong></p>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>VinFast Ghép Xe</h1>
+        </div>
+        <div class="tabs">
+            <a href="#" onclick="switchTab('form', this)" class="active">Yêu Cầu Ghép Xe</a>
+            <a href="#" onclick="switchTab('history', this)">Lịch Sử</a>
+            <a href="#" onclick="switchTab('charts', this)">Thống Kê</a>
+        </div>
     </div>
-    <div class='border-t pt-4 space-y-2'>
-      <h2 class='text-lg font-semibold text-gray-700'>👤 Thông tin khách hàng</h2>
-      <p><strong>Tư vấn viên:</strong> ${data.ten_ban_hang}</p>
-      <p><strong>Khách hàng:</strong> ${data.ten_khach_hang}</p>
-      <p><strong>Ngày cọc:</strong> ${data.ngay_coc}</p>
-    </div>
-    <div class='border-t pt-4 space-y-2'>
-      <h2 class='text-lg font-semibold text-gray-700'>🚗 Cấu hình xe</h2>
-      <ul class='list-disc list-inside'>
-        <li><strong>Dòng xe:</strong> ${data.dong_xe}</li>
-        <li><strong>Phiên bản:</strong> ${data.phien_ban}</li>
-        <li><strong>Ngoại thất:</strong> ${data.ngoai_that}</li>
-        <li><strong>Nội thất:</strong> ${data.noi_that}</li>
-      </ul>
-    </div>
-    <div class='border-t pt-4'>
-      <h2 class='text-lg font-semibold text-gray-700'>📦 Trạng thái đơn</h2>
-      <p class='text-yellow-600 font-medium'>⏳ Đang xử lý...</p>
-    </div>
-    <div class='text-center pt-6'>
-      <button onclick='window.print()' class='bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition'>📄 In phiếu xác nhận</button>
-    </div>
-  </div>
-</body>
-</html>`;
-  const blob = new Blob([htmlContent], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `don_${data.so_don_hang || Date.now()}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("vinfast-form");
-  if (!form) return;
+    <div class="main-container">
+        <!-- Form Ghép Xe (Chủ đạo) -->
+        <div class="form-container" id="form-section">
+            <h2>Thêm Yêu Cầu Ghép Xe</h2>
+            <form id="vinfast-form" onsubmit="previewForm(event)">
+                <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required/>
+                <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
+                <input name="dong_xe" placeholder="Dòng xe" required/>
+                <input name="phien_ban" placeholder="Phiên bản" required/>
+                <input name="ngoai_that" placeholder="Ngoại thất" required/>
+                <input name="noi_that" placeholder="Nội thất" required/>
+                <input name="so_don_hang" placeholder="Số đơn hàng" required/>
+                <input name="ngay_coc" type="datetime-local" required/>
+                <button type="submit">Xác Nhận</button>
+            </form>
+        </div>
 
-  form.addEventListener("submit", () => {
-    const data = {};
-    form.querySelectorAll("input").forEach(input => {
-      if (input.name) data[input.name] = input.value;
-    });
-    createLandingPage(data);
-  });
-});
-</script>
+        <!-- Lịch Sử -->
+        <div class="grid-container" id="history-section">
+            <div class="summary-section">
+                <h3>Tổng Quan</h3>
+                <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
+                <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
+                <p>Tư vấn viên tích cực nhất: <span id="summary-top-advisor">Chưa có dữ liệu</span></p>
+            </div>
+            <div class="controls">
+                <div class="search-container">
+                    <input type="text" id="search-box" oninput="filterHistory()" placeholder="Tìm kiếm...">
+                    <select id="filter-car" onchange="filterHistory()">
+                        <option value="">Tất cả dòng xe</option>
+                    </select>
+                    <select id="filter-advisor" onchange="filterHistory()">
+                        <option value="">Tất cả tư vấn viên</option>
+                    </select>
+                    <input type="date" id="filter-date" onchange="filterHistory()">
+                </div>
+                <div class="export-btn-container">
+                    <span>Tổng số đơn: <span id="total-don-count">0</span></span>
+                    <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                    <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="history-table">
+                    <thead id="table-header">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên TVBH</th>
+                            <th>Tên KH</th>
+                            <th>Số Đơn Hàng</th>
+                            <th>Dòng Xe</th>
+                            <th>Phiên Bản</th>
+                            <th>Ngoại Thất</th>
+                            <th>Nội Thất</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
 
+        <!-- Thống Kê -->
+        <div class="grid-container hidden" id="chart-section">
+            <h2 style="color: #003087; margin-bottom: 15px;">Thống Kê Yêu Cầu</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div class="bg-white rounded-lg p-3 shadow">
+                    <div class="text-xs font-semibold text-gray-700 mb-2 text-center">Thống kê theo dòng xe</div>
+                    <div class="chart-container">
+                        <canvas id="chart-by-car"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow">
+                    <div class="text-xs font-semibold text-gray-700 mb-2 text-center">Thống kê theo tư vấn viên</div>
+                    <div class="chart-container">
+                        <canvas id="chart-by-advisor"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        © 2025 VinFast Auto. All rights reserved. Hotline: 1900 232389
+    </footer>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <h2>Xác Nhận Thông Tin</h2>
+            <div id="preview-content" class="space-y-2 text-sm"></div>
+            <div class="flex justify-end gap-4 mt-4">
+                <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Huỷ</button>
+                <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detail-modal">
+        <div class="modal-content">
+            <h2>Chi Tiết Yêu Cầu</h2>
+            <div id="detail-content" class="space-y-2 text-sm"></div>
+            <div class="flex justify-end gap-4 mt-4">
+                <button class="modal-btn primary" onclick="closeModal('detail-modal')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content success-modal-content">
+            <i class="fas fa-check-circle"></i>
+            <h2>Gửi Yêu Cầu Thành Công</h2>
+            <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
+            <div class="flex justify-center gap-4 mt-4">
+                <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loading-modal">
+        <div class="modal-content loading-modal-content">
+            <i class="fas fa-spinner"></i>
+            <h2>Đang Gửi Yêu Cầu...</h2>
+            <p>Vui lòng chờ trong giây lát.</p>
+        </div>
+    </div>
+
+    <script>
+        let historyData = [], formData = {}, orderId = "";
+        const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+        const labelMap = {
+            ten_ban_hang: "Tên tư vấn bán hàng",
+            ten_khach_hang: "Tên khách hàng",
+            dong_xe: "Dòng xe",
+            phien_ban: "Phiên bản",
+            ngoai_that: "Ngoại thất",
+            noi_that: "Nội thất",
+            so_don_hang: "Số đơn hàng",
+            ngay_coc: "Ngày cọc",
+            thoi_gian_nhap: "Thời gian nhập"
+        };
+
+        function formatDateTime(dtString) {
+            const d = new Date(dtString);
+            return d.toLocaleString("vi-VN", { dateStyle: "full", timeStyle: "short" });
+        }
+
+        function formatDateForFilter(dtString) {
+            const d = new Date(dtString);
+            return d.toISOString().split('T')[0];
+        }
+
+        function fetchHistory() {
+            fetch(historyURL)
+                .then(res => res.text())
+                .then(txt => {
+                    const json = JSON.parse(txt);
+                    historyData = json;
+                    populateFilters(json);
+                    renderHistory(json);
+                    renderCharts(json);
+                    renderSummary(json);
+                });
+        }
+
+        function refreshData() {
+            fetchHistory();
+        }
+
+        function populateFilters(data) {
+            const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean);
+            const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean);
+
+            const carFilter = document.getElementById("filter-car");
+            carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
+            cars.forEach(car => {
+                carFilter.innerHTML += `<option value="${car}">${car}</option>`;
+            });
+
+            const advisorFilter = document.getElementById("filter-advisor");
+            advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
+            advisors.forEach(advisor => {
+                advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
+            });
+        }
+
+        function renderSummary(data) {
+            const total = data.length;
+            const byCar = {};
+            const byAdvisor = {};
+            data.forEach(row => {
+                const car = row["Dòng xe"];
+                const advisor = row["Tên tư vấn bán hàng"];
+                if (car) byCar[car] = (byCar[car] || 0) + 1;
+                if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
+            });
+
+            const topCar = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
+            const topAdvisor = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
+
+            document.getElementById("summary-total").textContent = total;
+            document.getElementById("summary-top-car").textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
+            document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
+        }
+
+        function renderHistory(data) {
+            document.getElementById("table-header").innerHTML = `
+                <tr>
+                    <th>STT</th>
+                    <th>Tên TVBH</th>
+                    <th>Tên KH</th>
+                    <th>Số Đơn Hàng</th>
+                    <th>Dòng Xe</th>
+                    <th>Phiên Bản</th>
+                    <th>Ngoại Thất</th>
+                    <th>Nội Thất</th>
+                </tr>
+            `;
+            const tbody = document.getElementById("table-body");
+            if (!data.length) {
+                tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
+                return;
+            }
+            let content = data.map((row, i) => `
+                <tr onclick="showDetail(${i})">
+                    <td data-label="STT">${i + 1}</td>
+                    <td data-label="Tên TVBH">${row["Tên tư vấn bán hàng"] || ""}</td>
+                    <td data-label="Tên KH">${row["Tên khách hàng"] || ""}</td>
+                    <td data-label="Số Đơn Hàng">${row["Số đơn hàng"] || ""}</td>
+                    <td data-label="Dòng Xe">${row["Dòng xe"] || ""}</td>
+                    <td data-label="Phiên Bản">${row["Phiên bản"] || ""}</td>
+                    <td data-label="Ngoại Thất">${row["Ngoại thất"] || ""}</td>
+                    <td data-label="Nội Thất">${row["Nội thất"] || ""}</td>
+                </tr>
+            `).join("");
+            tbody.innerHTML = content;
+            document.getElementById("total-don-count").textContent = data.length;
+        }
+
+        function filterHistory() {
+            const keyword = document.getElementById("search-box").value.toLowerCase();
+            const selectedCar = document.getElementById("filter-car").value;
+            const selectedAdvisor = document.getElementById("filter-advisor").value;
+            const selectedDate = document.getElementById("filter-date").value;
+
+            const filtered = historyData.filter(row => {
+                const matchesKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
+                const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
+                const matchesAdvisor = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
+                const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
+                return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
+            });
+
+            renderHistory(filtered);
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(historyData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
+            XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
+        }
+
+        function previewForm(e) {
+            e.preventDefault();
+            const form = document.getElementById("vinfast-form");
+            const inputs = form.querySelectorAll("input");
+            formData = {}; orderId = "";
+            let html = "";
+
+            inputs.forEach(input => {
+                if (input.name) {
+                    formData[input.name] = input.value;
+                    if (input.name === "so_don_hang") orderId = input.value;
+                    const label = labelMap[input.name] || input.name;
+                    const value = input.type === "datetime-local" ? formatDateTime(input.value) : input.value;
+                    html += `<div><strong>${label}:</strong> ${value || "Chưa nhập"}</div>`;
+                }
+            });
+
+            document.getElementById("preview-content").innerHTML = html;
+            document.getElementById("preview-modal").style.display = "flex";
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        function confirmSubmit() {
+            closeModal("preview-modal");
+            document.getElementById("loading-modal").style.display = "flex";
+
+            formData["thoi_gian_nhap"] = new Date().toISOString();
+            fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            }).then(() => {
+                closeModal("loading-modal");
+                fetchHistory();
+                document.getElementById("vinfast-form").reset();
+                document.getElementById("success-modal").style.display = "flex";
+            }).catch(error => {
+                closeModal("loading-modal");
+                alert("Có lỗi xảy ra khi gửi yêu cầu: " + error.message);
+            });
+        }
+
+        function showDetail(index) {
+            const row = historyData[index];
+            const modal = document.getElementById("detail-modal");
+            const content = document.getElementById("detail-content");
+            let html = "<table class='detail-table'>";
+            Object.entries(row).forEach(([key, value]) => {
+                const label = labelMap[key] || key;
+                const formattedValue = key === "ngay_coc" || key === "thoi_gian_nhap" ? formatDateTime(value) : value;
+                html += `<tr><th>${label}</th><td>${formattedValue || "Không có"}</td></tr>`;
+            });
+            html += "</table>";
+            content.innerHTML = html;
+            modal.style.display = "flex";
+        }
+
+        function switchTab(tab, element) {
+            document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById("form-section").classList.toggle("hidden", tab !== "form");
+            document.getElementById("history-section").classList.toggle("hidden", tab !== "history");
+            document.getElementById("chart-section").classList.toggle("hidden", tab !== "charts");
+
+            if (tab === "history") {
+                renderHistory(historyData);
+                renderSummary(historyData);
+            } else if (tab === "charts") {
+                renderCharts(historyData);
+            }
+        }
+
+        function renderCharts(data) {
+            const byCar = {}, byAdvisor = {};
+            data.forEach(row => {
+                const car = row["Dòng xe"];
+                const advisor = row["Tên tư vấn bán hàng"];
+                if (car) byCar[car] = (byCar[car] || 0) + 1;
+                if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
+            });
+
+            const vinFastColors = ['#005eb8', '#003087', '#34d399', '#60a5fa', '#1d4ed8'];
+
+            new Chart(document.getElementById("chart-by-car"), {
+                type: "pie",
+                data: {
+                    labels: Object.keys(byCar),
+                    datasets: [{
+                        data: Object.values(byCar),
+                        backgroundColor: vinFastColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Montserrat', size: 12, weight: '700' },
+                                color: '#1a1a1a',
+                                padding: 15,
+                                boxWidth: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 94, 184, 0.9)',
+                            titleFont: { family: 'Montserrat', size: 12, weight: '700' },
+                            bodyFont: { family: 'Montserrat', size: 10 },
+                            padding: 10,
+                            cornerRadius: 6,
+                            borderColor: '#ffffff',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: { animateScale: true, animateRotate: true }
+                }
+            });
+
+            new Chart(document.getElementById("chart-by-advisor"), {
+                type: "bar",
+                data: {
+                    labels: Object.keys(byAdvisor),
+                    datasets: [{
+                        label: "Số lượng yêu cầu",
+                        data: Object.values(byAdvisor),
+                        backgroundColor: vinFastColors.map(color => `${color}cc`),
+                        borderColor: vinFastColors,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        barThickness: 15
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 94, 184, 0.9)',
+                            titleFont: { family: 'Montserrat', size: 12, weight: '700' },
+                            bodyFont: { family: 'Montserrat', size: 10 },
+                            padding: 10,
+                            cornerRadius: 6,
+                            borderColor: '#ffffff',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { display: false },
+                            ticks: { font: { family: 'Montserrat', size: 10, weight: '400' }, color: '#1a1a1a' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Montserrat', size: 10, weight: '700' }, color: '#1a1a1a' }
+                        }
+                    },
+                    animation: { duration: 1500, easing: 'easeOutQuart' }
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchHistory();
+        });
+    </script>
 </body>
 </html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
-function showRowModal(data) {
-  const modal = document.getElementById("row-modal");
-  const content = document.getElementById("row-modal-content");
-  content.innerHTML = Object.entries(data).map(([k, v]) =>
-    `<div><strong>${k}:</strong> ${v || "<i>Không có</i>"}</div>`
-  ).join("");
-  modal.classList.remove("hidden");
-  window._modalData = content;
-}
-
-function closeRowModal() {
-  document.getElementById("row-modal").classList.add("hidden");
-}
-
-
-async 
-async function captureRow() {
-  const contentElement = document.getElementById("row-modal-content");
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const canvas = await html2canvas(contentElement);
-  const imgData = canvas.toDataURL("image/png");
-  const imgProps = doc.getImageProperties(imgData);
-  const pdfWidth = doc.internal.pageSize.getWidth();
-  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-  doc.addImage(imgData, "PNG", 0, 10, pdfWidth, pdfHeight);
-  doc.save("chi_tiet_don.pdf");
-}
-
-
-
-</script>
