@@ -956,8 +956,8 @@
             <div id="total-tables" style="display: none;">
                 <div class="overview-section">
                     <div class="overview-item">Tổng số xe: <span id="total-cars">0</span></div>
-                    <div class="overview-item">Dòng xe bán chạy: <span id="top-car">-</span></div>
-                    <div class="overview-item">TƯ VẤN BÁN HÀNG dẫn đầu: <span id="top-tvbh">-</span></div>
+                    <div class="overview-item">Dòng Xe bán chạy: <span id="top-car">-</span></div>
+                    <div class="overview-item">Tư Vấn Bán Hàng có số xe cao nhất: <span id="top-tvbh">-</span></div>
                 </div>
                 <div class="total-section">
                     <div class="table-title">Tổng Hợp Theo Dòng Xe</div>
@@ -973,10 +973,10 @@
                     </div>
                 </div>
                 <div class="total-section">
-                    <div class="table-title">Tổng Hợp Theo TƯ VẤN BÁN HÀNG</div>
+                    <div class="table-title">Tổng Hợp Theo Tư Vấn Bán Hàng</div>
                     <div class="chart-container">
                         <canvas id="tvbh-chart"></canvas>
-                        <button class="download-btn" onclick="downloadChart('tvbh-chart', 'Biểu đồ TƯ VẤN BÁN HÀNG')"><i class="fas fa-download"></i></button>
+                        <button class="download-btn" onclick="downloadChart('tvbh-chart', 'Biểu đồ Tư Vấn Bán Hàng')"><i class="fas fa-download"></i></button>
                     </div>
                     <div class="table-container">
                         <table id="total-tvbh-table">
@@ -989,10 +989,10 @@
             <div id="month-data">
                 <div class="filter-container">
                     <select id="car-filter" onchange="filterMonthData()">
-                        <option value="">Lọc theo dòng xe</option>
+                        <option value="">Lọc theo Dòng Xe</option>
                     </select>
                     <select id="tvbh-filter" onchange="filterMonthData()">
-                        <option value="">Lọc theo TƯ VẤN BÁN HÀNG</option>
+                        <option value="">Lọc theo Tư Vấn Bán Hàng</option>
                     </select>
                 </div>
                 <div class="table-container">
@@ -1016,7 +1016,7 @@
     </div>
 
     <footer>
-        © 2025 VinFast Auto. All rights reserved. Hotline: 1900 232389
+        © 2025 VinFast Minh Đạo An Phú
     </footer>
 
     <div class="loading-spinner">
@@ -1258,7 +1258,7 @@
                     carStats[carModel] = true;
                 }
             });
-            carFilter.innerHTML = '<option value="">Lọc theo dòng xe</option>';
+            carFilter.innerHTML = '<option value="">Lọc theo Dòng Xe</option>';
             Object.keys(carStats).forEach(model => {
                 carFilter.innerHTML += `<option value="${model}">${model}</option>`;
             });
@@ -1271,7 +1271,7 @@
                     tvbhStats[tvbh] = true;
                 }
             });
-            tvbhFilter.innerHTML = '<option value="">Lọc theo TƯ VẤN BÁN HÀNG</option>';
+            tvbhFilter.innerHTML = '<option value="">Lọc theo Tư Vấn Bán Hàng</option>';
             Object.keys(tvbhStats).forEach(tvbh => {
                 tvbhFilter.innerHTML += `<option value="${tvbh}">${tvbh}</option>`;
             });
@@ -1294,7 +1294,7 @@
             document.getElementById("table-header").innerHTML = `
                 <tr>
                     <th>STT</th>
-                    <th>TÊN KHÁCH HÀNG</th>
+                    <th>Tên Khách Hàng</th>
                     <th>Số Đơn Hàng</th>
                     <th>Dòng Xe</th>
                     <th>Phiên Bản</th>
@@ -1358,7 +1358,7 @@
             // Bảng tổng hợp theo TƯ VẤN BÁN HÀNG
             document.getElementById("total-tvbh-header").innerHTML = `
                 <tr>
-                    <th>TƯ VẤN BÁN HÀNG</th>
+                    <th>Tư Vấn Bán Hàng</th>
                     <th>Tổng Số Lượng Xe</th>
                 </tr>
             `;
@@ -1606,7 +1606,7 @@
                 filteredData = fullData.filter(row => 
                     row.some(cell => cell?.toString().toLowerCase().includes(searchTerm))
                 );
-                filterMonthData(); // Áp dụng lại bộ lọc dòng xe và TƯ VẤN BÁN HÀNG
+                filterMonthData(); // Áp dụng lại bộ lọc dòng xe và Tư Vấn Bán Hàng
             }
             currentPage = 1;
         }
@@ -1629,7 +1629,7 @@
                 if (currentSheet === "Total") {
                     let carTable = document.getElementById("total-car-table").outerHTML;
                     let tvbhTable = document.getElementById("total-tvbh-table").outerHTML;
-                    tableHTML = `<h3>Tổng Hợp Theo Dòng Xe</h3>${carTable}<h3>Tổng Hợp Theo TƯ VẤN BÁN HÀNG</h3>${tvbhTable}`.replace(/ /g, '%20');
+                    tableHTML = `<h3>Tổng Hợp Theo Dòng Xe</h3>${carTable}<h3>Tổng Hợp Theo Tư Vấn Bán Hàng</h3>${tvbhTable}`.replace(/ /g, '%20');
                 } else {
                     let table = document.getElementById("data-table");
                     tableHTML = table.outerHTML.replace(/ /g, '%20');
