@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Thêm Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Thêm html2canvas để lưu biểu đồ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         * {
@@ -20,6 +24,12 @@
             color: #1a1a1a;
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #ffffff;
         }
 
         .navbar {
@@ -27,11 +37,11 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 80px;
+            height: 60px; /* Giảm chiều cao trên điện thoại */
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
-            padding: 0 40px;
+            padding: 0 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             z-index: 1000;
         }
@@ -43,12 +53,8 @@
             flex-shrink: 0;
         }
 
-        .navbar .logo img {
-            height: 50px;
-        }
-
         .navbar .logo h1 {
-            font-size: 24px;
+            font-size: 20px; /* Giảm font trên điện thoại */
             color: #ffffff;
             font-weight: 700;
             text-transform: uppercase;
@@ -60,7 +66,7 @@
             overflow-x: auto;
             white-space: nowrap;
             flex-grow: 1;
-            margin-left: 20px;
+            margin-left: 10px;
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
@@ -71,10 +77,10 @@
 
         .navbar .tabs a {
             position: relative;
-            padding: 14px 20px;
+            padding: 10px 15px;
             text-decoration: none;
             color: #ffffff;
-            font-size: 14px;
+            font-size: 12px; /* Giảm font trên điện thoại */
             font-weight: 700;
             transition: all 0.3s ease;
             overflow: hidden;
@@ -87,7 +93,7 @@
             left: 50%;
             width: 0;
             height: 0;
-            background: rgba(0, 94, 184, 0.5); /* Màu xanh nhạt hơn */
+            background: rgba(0, 94, 184, 0.5);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             transition: width 0.6s ease, height 0.6s ease;
@@ -95,12 +101,12 @@
         }
 
         .navbar .tabs a:hover::before, .navbar .tabs a.active::before {
-            width: 300px;
-            height: 300px;
+            width: 200px;
+            height: 200px;
         }
 
         .navbar .tabs a:hover {
-            background: #005eb8; /* Màu xanh của VinFast */
+            background: #005eb8;
             color: #ffffff;
             box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
         }
@@ -115,14 +121,24 @@
         .navbar .tabs a.total-tab {
             background: linear-gradient(135deg, #d4af37, #ffd700);
             color: #1a1a1a;
-            font-size: 16px;
-            padding: 14px 30px;
+            font-size: 14px;
+            padding: 10px 20px;
         }
 
         .navbar .tabs a.total-tab:hover, .navbar .tabs a.total-tab.active {
             background: linear-gradient(135deg, #ffd700, #d4af37);
             box-shadow: 0 0 25px rgba(212, 175, 55, 1);
             animation: glowPulseGold 2s infinite ease-in-out;
+        }
+
+        .theme-toggle {
+            margin-left: 10px;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
         }
 
         @keyframes glowPulse {
@@ -137,38 +153,71 @@
 
         .main-container {
             display: flex;
-            margin-top: 100px;
-            padding: 20px 40px;
-            gap: 20px;
-            height: calc(100vh - 120px);
+            margin-top: 90px; /* Điều chỉnh margin-top do navbar nhỏ hơn */
+            padding: 15px;
+            gap: 15px;
+            height: calc(100vh - 110px);
+        }
+
+        .datetime {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 5px 0;
+            background: #ffffff;
+            z-index: 999;
+            font-size: 12px;
+            color: #555;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark-mode .datetime {
+            background: #1a1a1a;
+            color: #cccccc;
         }
 
         .grid-container {
             flex: 2;
             background: #f9f9f9;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            overflow-y: auto;
+            transition: background 0.3s;
+        }
+
+        .grid-container.full-width {
+            flex: 1;
+        }
+
+        body.dark-mode .grid-container {
+            background: #2a2a2a;
         }
 
         .controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            gap: 20px;
+            margin-bottom: 15px;
+            gap: 15px;
             flex-wrap: wrap;
         }
 
         .search-container input {
-            padding: 12px 20px;
+            padding: 10px 15px;
             width: 100%;
-            max-width: 300px;
+            max-width: 250px;
             border: 1px solid #a9a9a9;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.3s ease;
+        }
+
+        body.dark-mode .search-container input {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
         }
 
         .search-container input:focus {
@@ -179,20 +228,42 @@
 
         .export-btn-container {
             display: flex;
-            gap: 20px;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
             align-items: center;
         }
 
+        .total-count-container {
+            text-align: center;
+            font-size: 12px;
+            color: #1a1a1a;
+        }
+
+        body.dark-mode .total-count-container {
+            color: #ffffff;
+        }
+
         .export-btn {
-            padding: 12px 25px;
+            position: relative;
+            padding: 10px;
             border: none;
             border-radius: 10px;
             background: #005eb8;
             color: #ffffff;
             font-size: 14px;
-            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .export-btn:hover {
@@ -200,15 +271,111 @@
             box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
         }
 
+        .refresh-btn {
+            background: #28a745;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+        }
+
+        /* Tùy chỉnh tooltip */
+        .export-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .export-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .export-btn:hover::after, .export-btn:hover::before {
+            opacity: 1;
+        }
+
+        body.dark-mode .export-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .export-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+
+        .table-container {
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            overflow-x: auto; /* Thêm cuộn ngang cho bảng */
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px; /* Chiều cao thanh cuộn ngang */
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #005eb8;
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #003087;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+
+        .total-section .table-container {
+            max-height: calc(50vh - 130px); /* Giới hạn chiều cao cho bảng trong tab Tổng */
+        }
+
         table {
             width: 100%;
+            min-width: 600px; /* Đảm bảo bảng có thể cuộn ngang trên điện thoại */
             border-collapse: collapse;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 12px; /* Giảm font chữ cho bảng */
         }
 
         th, td {
-            padding: 15px;
+            padding: 6px; /* Giảm padding để gọn hơn */
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -228,10 +395,25 @@
             color: #1a1a1a;
         }
 
+        body.dark-mode th {
+            background: #0044cc;
+        }
+
+        body.dark-mode td {
+            background: #333;
+            color: #ffffff;
+            border-bottom: 1px solid #555;
+        }
+
         .vin-highlight {
             background: #e6f0ff;
             font-weight: 700;
             color: #003087;
+        }
+
+        body.dark-mode .vin-highlight {
+            background: #4a6fa5;
+            color: #ffffff;
         }
 
         tbody tr:hover {
@@ -240,71 +422,237 @@
             transition: background 0.3s ease;
         }
 
+        body.dark-mode tbody tr:hover {
+            background: #444;
+        }
+
         tbody tr.selected {
             background: #cce5ff;
             font-weight: 700;
         }
 
+        body.dark-mode tbody tr.selected {
+            background: #5a7fb5;
+        }
+
         .table-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #003087;
             margin-bottom: 10px;
+            border-bottom: 2px solid #005eb8;
+            padding-bottom: 5px;
+        }
+
+        body.dark-mode .table-title {
+            color: #66b0ff;
+            border-bottom: 2px solid #66b0ff;
+        }
+
+        .total-section {
+            margin-bottom: 15px; /* Giảm khoảng cách giữa các bảng */
+        }
+
+        .total-section table {
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+
+        body.dark-mode .total-section table {
+            border: 1px solid #555;
+        }
+
+        .total-section th:first-child, .total-section td:first-child {
+            width: 60%; /* Giảm chiều rộng cột Dòng Xe/TƯ VẤN BÁN HÀNG */
+            text-align: left;
+        }
+
+        .total-section th:last-child, .total-section td:last-child {
+            width: 40%; /* Tăng chiều rộng cột Tổng Số Lượng */
+            text-align: center;
+        }
+
+        .summary-row {
+            font-weight: 700;
+            background: #e6f0ff;
+        }
+
+        body.dark-mode .summary-row {
+            background: #4a6fa5;
+        }
+
+        .overview-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 8px;
+            background: #e6f0ff;
+            border-radius: 10px;
+        }
+
+        body.dark-mode .overview-section {
+            background: #4a6fa5;
+        }
+
+        .overview-item {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .overview-item span {
+            font-weight: 700;
+            color: #003087;
+        }
+
+        body.dark-mode .overview-item span {
+            color: #66b0ff;
+        }
+
+        .filter-container {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-container select {
+            padding: 8px;
+            border: 1px solid #a9a9a9;
+            border-radius: 10px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        body.dark-mode .filter-container select {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
+        }
+
+        .filter-container select:focus {
+            border-color: #005eb8;
+            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
+            outline: none;
         }
 
         .detail-panel {
             flex: 1;
             background: #ffffff;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            overflow-y: auto;
             border-left: 4px solid #005eb8;
             transition: all 0.3s ease;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .detail-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .detail-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .detail-panel::-webkit-scrollbar-thumb {
+            background: #005eb8;
+            border-radius: 10px;
+        }
+
+        .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #003087;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-track {
+            background: #333;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+
+        body.dark-mode .detail-panel {
+            background: #2a2a2a;
+            border-left: 4px solid #66b0ff;
         }
 
         .detail-panel h3 {
-            font-size: 20px;
+            font-size: 18px;
             color: #003087;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             font-weight: 700;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+
+        body.dark-mode .detail-panel h3 {
+            color: #66b0ff;
+            background: #2a2a2a;
         }
 
         .detail-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .detail-table th {
             background: #f9f9f9;
             color: #1a1a1a;
             text-align: left;
-            padding: 12px;
+            padding: 10px;
             font-weight: 400;
         }
 
+        body.dark-mode .detail-table th {
+            background: #333;
+            color: #ffffff;
+        }
+
         .detail-table td {
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #e0e0e0;
+        }
+
+        body.dark-mode .detail-table td {
+            border-bottom: 1px solid #555;
+            color: #ffffff;
         }
 
         .pagination {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .pagination button {
-            padding: 12px 25px;
+            padding: 10px 20px;
             border: 1px solid #a9a9a9;
             border-radius: 10px;
             background: #ffffff;
             color: #1a1a1a;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
+        }
+
+        body.dark-mode .pagination button {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
         }
 
         .pagination button:hover {
@@ -319,9 +667,13 @@
         }
 
         .pagination span {
-            padding: 12px 25px;
-            font-size: 14px;
+            padding: 10px 20px;
+            font-size: 12px;
             color: #003087;
+        }
+
+        body.dark-mode .pagination span {
+            color: #66b0ff;
         }
 
         footer {
@@ -332,8 +684,12 @@
             background: #003087;
             color: #ffffff;
             text-align: center;
-            padding: 10px 0;
-            font-size: 12px;
+            padding: 8px 0;
+            font-size: 10px;
+        }
+
+        body.dark-mode footer {
+            background: #0044cc;
         }
 
         .loading-spinner {
@@ -345,12 +701,17 @@
         }
 
         .loading-spinner .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #a9a9a9;
-            border-top: 5px solid #005eb8;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #a9a9a9;
+            border-top: 4px solid #005eb8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+        }
+
+        body.dark-mode .loading-spinner .spinner {
+            border: 4px solid #555;
+            border-top: 4px solid #66b0ff;
         }
 
         @keyframes spin {
@@ -360,41 +721,192 @@
 
         #notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
             background: #005eb8;
             color: #ffffff;
             border-radius: 10px;
             display: none;
             z-index: 10001;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+        }
+
+        body.dark-mode #notification {
+            background: #66b0ff;
+        }
+
+        /* Kiểu cho biểu đồ */
+        .chart-container {
+            position: relative;
+            margin-bottom: 15px;
+            max-width: 100%;
+            height: 250px;
+        }
+
+        .chart-container .download-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: #28a745;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chart-container .download-btn:hover {
+            background: #218838;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
 
         @media (max-width: 768px) {
             .navbar {
-                padding: 0 20px;
+                padding: 0 10px;
+                height: 50px;
             }
             .navbar .logo h1 {
-                font-size: 18px;
+                font-size: 16px;
             }
             .navbar .tabs a {
-                padding: 10px 15px;
+                padding: 8px 10px;
+                font-size: 10px;
+            }
+            .navbar .tabs a.total-tab {
                 font-size: 12px;
+                padding: 8px 15px;
+            }
+            .theme-toggle {
+                font-size: 14px;
+                padding: 5px;
             }
             .main-container {
                 flex-direction: column;
-                padding: 20px;
+                padding: 10px;
                 margin-top: 80px;
+                height: calc(100vh - 100px);
             }
-            .detail-panel {
-                margin-top: 20px;
-                border-left: none;
-                border-top: 4px solid #005eb8;
+            .datetime {
+                font-size: 10px;
+                top: 50px;
+            }
+            .grid-container {
+                padding: 10px;
             }
             .controls {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 10px;
+            }
+            .search-container input {
+                max-width: 100%;
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+            .export-btn-container {
+                align-items: center;
+                width: 100%;
+            }
+            .button-group {
+                gap: 10px;
+            }
+            .export-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            .export-btn[data-tooltip]::after {
+                font-size: 10px;
+                top: -30px;
+                padding: 4px 8px;
+            }
+            .export-btn[data-tooltip]::before {
+                top: -6px;
+                border-width: 3px;
+            }
+            .total-count-container {
+                font-size: 11px;
+            }
+            .table-container {
+                max-height: calc(100vh - 320px);
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 5px;
+            }
+            .table-title {
+                font-size: 14px;
+            }
+            .total-section .table-container {
+                max-height: calc(50vh - 150px);
+            }
+            .overview-section {
+                flex-direction: column;
+                gap: 8px;
+                font-size: 11px;
+            }
+            .filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .filter-container select {
+                font-size: 11px;
+                padding: 6px;
+                max-width: 100%;
+            }
+            .detail-panel {
+                margin-top: 15px;
+                border-left: none;
+                border-top: 4px solid #005eb8;
+                max-height: calc(100vh - 320px);
+                padding: 10px;
+            }
+            body.dark-mode .detail-panel {
+                border-top: 4px solid #66b0ff;
+            }
+            .detail-panel h3 {
+                font-size: 16px;
+            }
+            .detail-table {
+                font-size: 11px;
+            }
+            .detail-table th, .detail-table td {
+                padding: 8px;
+            }
+            .pagination {
+                gap: 10px;
+            }
+            .pagination button {
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+            .pagination span {
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+            footer {
+                font-size: 9px;
+                padding: 6px 0;
+            }
+            #notification {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+            .chart-container {
+                height: 200px;
+            }
+            .chart-container .download-btn {
+                font-size: 10px;
+                padding: 6px;
             }
         }
     </style>
@@ -402,8 +914,7 @@
 <body>
     <div class="navbar">
         <div class="logo">
-          
-            <h1>VinFast MĐ An Phú</h1>
+            <h1>VinFast MĐ An Phú</h1>
         </div>
         <div class="tabs">
             <a href="#" onclick="fetchSheetData('January', this)">Tháng 1</a>
@@ -420,37 +931,78 @@
             <a href="#" onclick="fetchSheetData('December', this)">Tháng 12</a>
             <a href="#" onclick="fetchTotalData(this)" class="total-tab active">Tổng</a>
         </div>
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </div>
 
+    <div class="datetime" id="datetime"></div>
+
     <div class="main-container">
-        <div class="grid-container">
+        <div class="grid-container" id="grid-container">
             <div class="controls">
                 <div class="search-container">
                     <input type="text" id="search-input" placeholder="Tìm kiếm...">
                 </div>
                 <div class="export-btn-container">
-                    <span>Tổng số lượng: <span id="total-count">0</span></span>
-                    <button class="export-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Xuất Excel</button>
-                    <button class="export-btn" onclick="printTable()"><i class="fas fa-print"></i> In</button>
+                    <div class="button-group">
+                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                    </div>
+                    <div class="total-count-container">
+                        Tổng số lượng: <span id="total-count">0</span>
+                    </div>
                 </div>
             </div>
             <div id="total-tables" style="display: none;">
-                <div class="table-title">Tổng Hợp Theo Dòng Xe</div>
-                <table id="total-car-table">
-                    <thead id="total-car-header"></thead>
-                    <tbody id="total-car-body"></tbody>
-                </table>
-                <div class="table-title">Tổng Hợp Theo TVBH</div>
-                <table id="total-tvbh-table">
-                    <thead id="total-tvbh-header"></thead>
-                    <tbody id="total-tvbh-body"></tbody>
-                </table>
+                <div class="overview-section">
+                    <div class="overview-item">Tổng số xe: <span id="total-cars">0</span></div>
+                    <div class="overview-item">Dòng xe bán chạy: <span id="top-car">-</span></div>
+                    <div class="overview-item">TƯ VẤN BÁN HÀNG dẫn đầu: <span id="top-tvbh">-</span></div>
+                </div>
+                <div class="total-section">
+                    <div class="table-title">Tổng Hợp Theo Dòng Xe</div>
+                    <div class="chart-container">
+                        <canvas id="car-chart"></canvas>
+                        <button class="download-btn" onclick="downloadChart('car-chart', 'Biểu đồ Dòng Xe')"><i class="fas fa-download"></i></button>
+                    </div>
+                    <div class="table-container">
+                        <table id="total-car-table">
+                            <thead id="total-car-header"></thead>
+                            <tbody id="total-car-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="total-section">
+                    <div class="table-title">Tổng Hợp Theo TƯ VẤN BÁN HÀNG</div>
+                    <div class="chart-container">
+                        <canvas id="tvbh-chart"></canvas>
+                        <button class="download-btn" onclick="downloadChart('tvbh-chart', 'Biểu đồ TƯ VẤN BÁN HÀNG')"><i class="fas fa-download"></i></button>
+                    </div>
+                    <div class="table-container">
+                        <table id="total-tvbh-table">
+                            <thead id="total-tvbh-header"></thead>
+                            <tbody id="total-tvbh-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <table id="data-table">
-                <thead id="table-header"></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-            <div class="pagination">
+            <div id="month-data">
+                <div class="filter-container">
+                    <select id="car-filter" onchange="filterMonthData()">
+                        <option value="">Lọc theo dòng xe</option>
+                    </select>
+                    <select id="tvbh-filter" onchange="filterMonthData()">
+                        <option value="">Lọc theo TƯ VẤN BÁN HÀNG</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="data-table">
+                        <thead id="table-header"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination" id="pagination">
                 <button onclick="changePage(-1)" id="prev-btn">Trước</button>
                 <span id="page-info">Trang 1</span>
                 <button onclick="changePage(1)" id="next-btn">Sau</button>
@@ -478,12 +1030,56 @@
         const rowsPerPage = 15;
         let fullData = [];
         let fullTvbhData = [];
+        let filteredCarData = [];
+        let filteredTvbhData = [];
         let currentSheet = "Total";
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        let carChart, tvbhChart;
+
+        // Dark Mode
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+                updateChartColors();
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+                updateChartColors();
+            }
+        }
+
+        // Load theme from localStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.remove('fa-moon');
+            document.querySelector('.theme-toggle i').classList.add('fa-sun');
+        }
+
+        // Update DateTime
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit', 
+                hour12: false 
+            };
+            document.getElementById("datetime").textContent = `Cập nhật lúc: ${now.toLocaleString('vi-VN', options)}`;
+        }
 
         document.addEventListener("DOMContentLoaded", () => {
             fetchTotalData(document.querySelector('.tabs a.total-tab'));
             setupEventListeners();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
             setInterval(() => {
                 if (currentSheet === "Total") {
                     fetchTotalData(document.querySelector('.tabs a.active'));
@@ -495,6 +1091,28 @@
 
         function setupEventListeners() {
             document.getElementById("search-input").addEventListener("input", filterTable);
+
+            // Đồng bộ thanh cuộn
+            const tableContainer = document.querySelector('.table-container');
+            const detailPanel = document.getElementById("detail-panel");
+            let isTableScrolling = false;
+            let isDetailScrolling = false;
+
+            tableContainer.addEventListener('scroll', () => {
+                if (!isDetailScrolling && currentSheet !== "Total") {
+                    isTableScrolling = true;
+                    detailPanel.scrollTop = tableContainer.scrollTop;
+                    setTimeout(() => { isTableScrolling = false; }, 100);
+                }
+            });
+
+            detailPanel.addEventListener('scroll', () => {
+                if (!isTableScrolling && currentSheet !== "Total") {
+                    isDetailScrolling = true;
+                    tableContainer.scrollTop = detailPanel.scrollTop;
+                    setTimeout(() => { isDetailScrolling = false; }, 100);
+                }
+            });
         }
 
         let cachedData = {};
@@ -504,7 +1122,10 @@
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             document.getElementById("total-tables").style.display = "none";
-            document.getElementById("data-table").style.display = "table";
+            document.getElementById("month-data").style.display = "block";
+            document.getElementById("detail-panel").style.display = "block";
+            document.getElementById("grid-container").classList.remove("full-width");
+            document.getElementById("pagination").style.display = "flex"; // Hiển thị phân trang
 
             if (!cachedData[sheetName]) {
                 document.querySelector('.loading-spinner').style.display = 'block';
@@ -513,6 +1134,7 @@
             let storedData = sessionStorage.getItem(sheetName);
             if (storedData) {
                 fullData = JSON.parse(storedData);
+                updateFilters(fullData);
                 renderTable(fullData);
                 document.querySelector('.loading-spinner').style.display = 'none';
                 return;
@@ -525,8 +1147,9 @@
                 sessionStorage.setItem(sheetName, JSON.stringify(data));
                 cachedData[sheetName] = data;
                 fullData = data;
+                updateFilters(fullData);
                 renderTable(fullData);
-                showNotification("Dữ liệu đã được cập nhật!", 2000);
+                showNotification(`Dữ liệu ${sheetName} đã được cập nhật! (${data.length} đơn hàng)`, 2000);
             } catch (error) {
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="7">Lỗi: ${error.message}. Vui lòng thử lại sau!</td></tr>`;
                 showNotification("Lỗi tải dữ liệu!", 3000);
@@ -539,8 +1162,11 @@
             currentSheet = "Total";
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
-            document.getElementById("data-table").style.display = "none";
+            document.getElementById("month-data").style.display = "none";
             document.getElementById("total-tables").style.display = "block";
+            document.getElementById("detail-panel").style.display = "none";
+            document.getElementById("grid-container").classList.add("full-width");
+            document.getElementById("pagination").style.display = "none"; // Ẩn phân trang trong tab Tổng
             document.querySelector('.loading-spinner').style.display = 'block';
 
             let totalCarData = [];
@@ -571,12 +1197,12 @@
 
             try {
                 let results = await Promise.all(fetchPromises);
-                let allData = results.flat(); // Gộp tất cả dữ liệu từ 12 tháng
+                let allData = results.flat();
 
                 // Tổng hợp theo dòng xe
                 let carStats = {};
                 allData.forEach(row => {
-                    let carModel = row[3]; // Cột "Dòng Xe"
+                    let carModel = row[3];
                     if (carModel) {
                         carStats[carModel] = (carStats[carModel] || 0) + 1;
                     }
@@ -587,10 +1213,10 @@
                     count: count
                 }));
 
-                // Tổng hợp theo TVBH
+                // Tổng hợp theo TƯ VẤN BÁN HÀNG
                 let tvbhStats = {};
                 allData.forEach(row => {
-                    let tvbh = row[7]; // Cột "TVBH"
+                    let tvbh = row[7];
                     if (tvbh) {
                         tvbhStats[tvbh] = (tvbhStats[tvbh] || 0) + 1;
                     }
@@ -603,8 +1229,14 @@
 
                 fullData = totalCarData;
                 fullTvbhData = totalTvbhData;
+                filteredCarData = totalCarData; // Dữ liệu đã lọc cho biểu đồ
+                filteredTvbhData = totalTvbhData;
+
+                // Cập nhật thống kê tổng quan
+                updateOverview(totalCarData, totalTvbhData, allData.length);
+
                 renderTotalTables(totalCarData, totalTvbhData);
-                showNotification("Dữ liệu tổng đã được cập nhật!", 2000);
+                showNotification(`Dữ liệu tổng đã được cập nhật! (${allData.length} đơn hàng)`, 2000);
             } catch (error) {
                 document.getElementById("total-car-body").innerHTML = `<tr><td colspan="2">Lỗi: ${error.message}. Vui lòng thử lại sau!</td></tr>`;
                 document.getElementById("total-tvbh-body").innerHTML = `<tr><td colspan="2">Lỗi: ${error.message}. Vui lòng thử lại sau!</td></tr>`;
@@ -614,11 +1246,55 @@
             document.querySelector('.loading-spinner').style.display = 'none';
         }
 
+        function updateFilters(data) {
+            const carFilter = document.getElementById("car-filter");
+            const tvbhFilter = document.getElementById("tvbh-filter");
+
+            // Tạo danh sách dòng xe
+            let carStats = {};
+            data.forEach(row => {
+                let carModel = row[3];
+                if (carModel) {
+                    carStats[carModel] = true;
+                }
+            });
+            carFilter.innerHTML = '<option value="">Lọc theo dòng xe</option>';
+            Object.keys(carStats).forEach(model => {
+                carFilter.innerHTML += `<option value="${model}">${model}</option>`;
+            });
+
+            // Tạo danh sách TƯ VẤN BÁN HÀNG
+            let tvbhStats = {};
+            data.forEach(row => {
+                let tvbh = row[7];
+                if (tvbh) {
+                    tvbhStats[tvbh] = true;
+                }
+            });
+            tvbhFilter.innerHTML = '<option value="">Lọc theo TƯ VẤN BÁN HÀNG</option>';
+            Object.keys(tvbhStats).forEach(tvbh => {
+                tvbhFilter.innerHTML += `<option value="${tvbh}">${tvbh}</option>`;
+            });
+        }
+
+        function updateOverview(carData, tvbhData, totalCars) {
+            // Tổng số xe
+            document.getElementById("total-cars").textContent = totalCars;
+
+            // Dòng xe bán chạy nhất
+            const topCar = carData.reduce((max, row) => row.count > max.count ? row : max, carData[0] || { model: "-", count: 0 });
+            document.getElementById("top-car").textContent = topCar.model;
+
+            // TƯ VẤN BÁN HÀNG dẫn đầu
+            const topTvbh = tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0] || { tvbh: "-", count: 0 });
+            document.getElementById("top-tvbh").textContent = topTvbh.tvbh;
+        }
+
         function renderTable(data) {
             document.getElementById("table-header").innerHTML = `
                 <tr>
                     <th>STT</th>
-                    <th>Tên KH</th>
+                    <th>TÊN KHÁCH HÀNG</th>
                     <th>Số Đơn Hàng</th>
                     <th>Dòng Xe</th>
                     <th>Phiên Bản</th>
@@ -664,69 +1340,287 @@
                     <th>Tổng Số Lượng</th>
                 </tr>
             `;
-            let carStart = (currentPage - 1) * rowsPerPage;
-            let carEnd = carStart + rowsPerPage;
-            let paginatedCarData = carData.slice(carStart, carEnd);
-            let carContent = paginatedCarData.map(row => `
+            let carContent = carData.map(row => `
                 <tr>
                     <td>${row.model}</td>
                     <td>${row.count}</td>
                 </tr>
             `).join("");
+            const totalCarCount = carData.reduce((sum, row) => sum + row.count, 0);
+            carContent += `
+                <tr class="summary-row">
+                    <td>Tổng cộng</td>
+                    <td>${totalCarCount}</td>
+                </tr>
+            `;
             document.getElementById("total-car-body").innerHTML = carContent;
 
-            // Bảng tổng hợp theo TVBH
+            // Bảng tổng hợp theo TƯ VẤN BÁN HÀNG
             document.getElementById("total-tvbh-header").innerHTML = `
                 <tr>
-                    <th>TVBH</th>
+                    <th>TƯ VẤN BÁN HÀNG</th>
                     <th>Tổng Số Lượng Xe</th>
                 </tr>
             `;
-            let tvbhStart = (currentPage - 1) * rowsPerPage;
-            let tvbhEnd = tvbhStart + rowsPerPage;
-            let paginatedTvbhData = tvbhData.slice(tvbhStart, tvbhEnd);
-            let tvbhContent = paginatedTvbhData.map(row => `
+            let tvbhContent = tvbhData.map(row => `
                 <tr>
                     <td>${row.tvbh}</td>
                     <td>${row.count}</td>
                 </tr>
             `).join("");
+            const totalTvbhCount = tvbhData.reduce((sum, row) => sum + row.count, 0);
+            tvbhContent += `
+                <tr class="summary-row">
+                    <td>Tổng cộng</td>
+                    <td>${totalTvbhCount}</td>
+                </tr>
+            `;
             document.getElementById("total-tvbh-body").innerHTML = tvbhContent;
 
-            document.getElementById("total-count").textContent = carData.reduce((sum, row) => sum + row.count, 0);
-            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.max(Math.ceil(carData.length / rowsPerPage), Math.ceil(tvbhData.length / rowsPerPage))}`;
-            document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = carEnd >= carData.length && tvbhEnd >= tvbhData.length;
+            document.getElementById("total-count").textContent = totalCarCount;
+
+            // Tạo biểu đồ
+            renderCharts(carData, tvbhData);
+        }
+
+        function renderCharts(carData, tvbhData) {
+            // Màu sắc cho biểu đồ
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const backgroundColors = isDarkMode
+                ? ['#66b0ff', '#4a90e2', '#357abd', '#1f5a95', '#0a3d6b']
+                : ['#005eb8', '#003087', '#0044cc', '#0066ff', '#0088ff'];
+            const textColor = isDarkMode ? '#ffffff' : '#1a1a1a';
+            const gridColor = isDarkMode ? '#555' : '#e0e0e0';
+
+            // Hủy biểu đồ cũ nếu tồn tại
+            if (carChart) carChart.destroy();
+            if (tvbhChart) tvbhChart.destroy();
+
+            // Biểu đồ cột cho Dòng Xe
+            const carCtx = document.getElementById('car-chart').getContext('2d');
+            carChart = new Chart(carCtx, {
+                type: 'bar',
+                data: {
+                    labels: carData.map(row => row.model),
+                    datasets: [{
+                        label: 'Số lượng xe',
+                        data: carData.map(row => row.count),
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1500, // Hiệu ứng động khi xuất hiện
+                        easing: 'easeOutBounce'
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Số lượng',
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 9 : 11
+                                }
+                            },
+                            grid: {
+                                color: gridColor
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Dòng xe',
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 10 : 12
+                                }
+                            },
+                            ticks: {
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 9 : 11
+                                }
+                            },
+                            grid: {
+                                color: gridColor
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 10 : 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    return `${label}: ${value} xe`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const selectedModel = carData[index].model;
+                            filteredCarData = fullData.filter(row => row.model === selectedModel);
+                            renderTotalTables(filteredCarData, filteredTvbhData);
+                            document.getElementById("search-input").value = selectedModel;
+                        }
+                    }
+                }
+            });
+
+            // Biểu đồ tròn cho TƯ VẤN BÁN HÀNG
+            const tvbhCtx = document.getElementById('tvbh-chart').getContext('2d');
+            tvbhChart = new Chart(tvbhCtx, {
+                type: 'pie',
+                data: {
+                    labels: tvbhData.map(row => row.tvbh),
+                    datasets: [{
+                        label: 'Số lượng xe',
+                        data: tvbhData.map(row => row.count),
+                        backgroundColor: backgroundColors,
+                        borderColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1500, // Hiệu ứng động khi xuất hiện
+                        easing: 'easeOutBounce'
+                    },
+                    plugins: {
+                        legend: {
+                            position: window.innerWidth <= 768 ? 'bottom' : 'right',
+                            labels: {
+                                color: textColor,
+                                font: {
+                                    size: window.innerWidth <= 768 ? 10 : 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    let total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    let percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} xe (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const selectedTvbh = tvbhData[index].tvbh;
+                            filteredTvbhData = fullTvbhData.filter(row => row.tvbh === selectedTvbh);
+                            renderTotalTables(filteredCarData, filteredTvbhData);
+                            document.getElementById("search-input").value = selectedTvbh;
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if (currentSheet === "Total") {
+                renderCharts(filteredCarData, filteredTvbhData);
+            }
+        }
+
+        function downloadChart(chartId, chartName) {
+            const canvas = document.getElementById(chartId);
+            html2canvas(canvas).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${chartName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification("Đã tải biểu đồ thành công!", 2000);
+            });
+        }
+
+        function filterMonthData() {
+            const carFilter = document.getElementById("car-filter").value;
+            const tvbhFilter = document.getElementById("tvbh-filter").value;
+
+            let filteredData = fullData;
+
+            if (carFilter) {
+                filteredData = filteredData.filter(row => row[3] === carFilter);
+            }
+
+            if (tvbhFilter) {
+                filteredData = filteredData.filter(row => row[7] === tvbhFilter);
+            }
+
+            renderTable(filteredData);
+            currentPage = 1;
         }
 
         function changePage(delta) {
             currentPage += delta;
-            if (currentSheet === "Total") {
-                renderTotalTables(fullData, fullTvbhData);
-            } else {
-                renderTable(fullData);
+            if (currentSheet !== "Total") {
+                filterMonthData();
             }
-            document.querySelector('.grid-container').scrollTop = 0;
+            const tableContainer = document.querySelector('.table-container');
+            const detailPanel = document.getElementById("detail-panel");
+            tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function filterTable(e) {
             const searchTerm = e.target.value.toLowerCase();
             let filteredData, filteredTvbhData;
             if (currentSheet === "Total") {
-                filteredData = fullData.filter(row => 
+                filteredCarData = fullData.filter(row => 
                     row.model.toLowerCase().includes(searchTerm)
                 );
                 filteredTvbhData = fullTvbhData.filter(row => 
                     row.tvbh.toLowerCase().includes(searchTerm)
                 );
-                renderTotalTables(filteredData, filteredTvbhData);
+                renderTotalTables(filteredCarData, filteredTvbhData);
             } else {
                 filteredData = fullData.filter(row => 
                     row.some(cell => cell?.toString().toLowerCase().includes(searchTerm))
                 );
-                renderTable(filteredData);
+                filterMonthData(); // Áp dụng lại bộ lọc dòng xe và TƯ VẤN BÁN HÀNG
             }
             currentPage = 1;
+        }
+
+        function refreshData() {
+            if (currentSheet === "Total") {
+                fetchTotalData(document.querySelector('.tabs a.active'));
+            } else {
+                fetchSheetData(currentSheet, document.querySelector('.tabs a.active'));
+            }
+            document.getElementById("search-input").value = "";
+            document.getElementById("car-filter").value = "";
+            document.getElementById("tvbh-filter").value = "";
+            showNotification("Dữ liệu đã được làm mới!", 2000);
         }
 
         function exportToExcel() {
@@ -735,7 +1629,7 @@
                 if (currentSheet === "Total") {
                     let carTable = document.getElementById("total-car-table").outerHTML;
                     let tvbhTable = document.getElementById("total-tvbh-table").outerHTML;
-                    tableHTML = `<h3>Tổng Hợp Theo Dòng Xe</h3>${carTable}<h3>Tổng Hợp Theo TVBH</h3>${tvbhTable}`.replace(/ /g, '%20');
+                    tableHTML = `<h3>Tổng Hợp Theo Dòng Xe</h3>${carTable}<h3>Tổng Hợp Theo TƯ VẤN BÁN HÀNG</h3>${tvbhTable}`.replace(/ /g, '%20');
                 } else {
                     let table = document.getElementById("data-table");
                     tableHTML = table.outerHTML.replace(/ /g, '%20');
@@ -758,18 +1652,35 @@
         }
 
         function printTable() {
+            const now = new Date();
+            const printDateTime = now.toLocaleString('vi-VN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit', 
+                hour12: false 
+            });
+
             let printContent;
             if (currentSheet === "Total") {
                 printContent = `
-                    <h3>Tổng Hợp Theo Dòng Xe</h3>${document.getElementById("total-car-table").outerHTML}
-                    <h3>Tổng Hợp Theo TVBH</h3>${document.getElementById("total-tvbh-table").outerHTML}
+                    <div style="text-align: center;">
+                        <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
+                        <p>Hotline: 1900 232389</p>
+                        <p>In lúc: ${printDateTime}</p>
+                    </div>
+                    <h3 style="color: #003087; margin-top: 20px;">Tổng Hợp Theo Dòng Xe</h3>
+                    ${document.getElementById("total-car-table").outerHTML}
+                    <h3 style="color: #003087; margin-top: 20px;">Tổng Hợp Theo TƯ VẤN BÁN HÀNG</h3>
+                    ${document.getElementById("total-tvbh-table").outerHTML}
                 `;
             } else {
-                // Tạo bảng in đầy đủ thông tin
-                const columnNames = ["STT", "Tên KH", "Ngày", "Số Đơn Hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "TVBH", "Vin", "Chính sách", "Ghi chú"];
-                let tableContent = "<table><thead><tr>";
+                const columnNames = ["STT", "TÊN KHÁCH HÀNG", "Ngày", "Số Đơn Hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "TƯ VẤN BÁN HÀNG", "Vin", "Chính sách", "Ghi chú"];
+                let tableContent = "<table style='width: 100%; border-collapse: collapse;'><thead><tr>";
                 columnNames.forEach(col => {
-                    tableContent += `<th>${col}</th>`;
+                    tableContent += `<th style='border: 1px solid #000; padding: 8px; background: #003087; color: #fff;'>${col}</th>`;
                 });
                 tableContent += "</tr></thead><tbody>";
 
@@ -779,28 +1690,51 @@
                     let isHighlight = note.includes("ưu tiên") || policy.includes("đặc biệt");
                     let rowClass = isHighlight ? ' class="selected"' : '';
                     tableContent += `<tr${rowClass}>`;
-                    tableContent += `<td>${index + 1}</td>`; // STT
-                    tableContent += `<td>${row[0] ?? ""}</td>`; // Tên KH
-                    tableContent += `<td>${row[1] ?? ""}</td>`; // Ngày
-                    tableContent += `<td>${row[2] ?? ""}</td>`; // Số Đơn Hàng
-                    tableContent += `<td>${row[3] ?? ""}</td>`; // Dòng xe
-                    tableContent += `<td>${row[4] ?? ""}</td>`; // Phiên bản
-                    tableContent += `<td>${row[5] ?? ""}</td>`; // Ngoại thất
-                    tableContent += `<td>${row[6] ?? ""}</td>`; // Nội thất
-                    tableContent += `<td>${row[7] ?? ""}</td>`; // TVBH
-                    tableContent += `<td class="vin-highlight">${row[8] ?? ""}</td>`; // Vin
-                    tableContent += `<td>${row[10] ?? ""}</td>`; // Chính sách
-                    tableContent += `<td>${row[11] ?? ""}</td>`; // Ghi chú
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${index + 1}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[0] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[1] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[2] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[3] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[4] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[5] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[6] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[7] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px; background: #e6f0ff; font-weight: 700; color: #003087;'>${row[8] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[10] ?? ""}</td>`;
+                    tableContent += `<td style='border: 1px solid #000; padding: 8px;'>${row[11] ?? ""}</td>`;
                     tableContent += "</tr>";
                 });
                 tableContent += "</tbody></table>";
-                printContent = tableContent;
+                printContent = `
+                    <div style="text-align: center;">
+                        <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
+                        <p>Hotline: 1900 232389</p>
+                        <p>In lúc: ${printDateTime}</p>
+                    </div>
+                    ${tableContent}
+                `;
             }
 
             const win = window.open('', '', 'width=800,height=600');
             win.document.write(`
                 <html>
-                <head><title>In danh sách VinFast - ${currentSheet}</title><style>table { width: 100%; border-collapse: collapse; margin-bottom: 20px; } th, td { border: 1px solid #000; padding: 8px; } th { background: #003087; color: #fff; } h3 { color: #003087; } .vin-highlight { background: #e6f0ff; font-weight: 700; color: #003087; } .selected { background: #cce5ff; font-weight: 700; }</style></head>
+                <head>
+                    <title>In danh sách VinFast - ${currentSheet}</title>
+                    <style>
+                        body { font-family: 'Montserrat', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th, td { border: 1px solid #000; padding: 8px; }
+                        th { background: #003087; color: #fff; }
+                        h3 { color: #003087; }
+                        .vin-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
+                        .selected { background: #cce5ff; font-weight: 700; }
+                        @media print {
+                            body { margin: 0; }
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                        }
+                    </style>
+                </head>
                 <body>${printContent}</body>
                 </html>
             `);
@@ -812,7 +1746,7 @@
             if (currentSheet === "Total") return;
             const panel = document.getElementById("detail-panel");
             const body = document.getElementById("detail-body");
-            const columnNames = ["Tên KH", "Số Đơn Hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "TVBH", "Vin", "Chính sách"];
+            const columnNames = ["TÊN KHÁCH HÀNG", "Số Đơn Hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "TƯ VẤN BÁN HÀNG", "Vin", "Chính sách"];
             let html = "<table class='detail-table'>";
             for (let i = 0; i < columnNames.length; i++) {
                 let cellClass = i === 7 ? ' class="vin-highlight"' : '';
