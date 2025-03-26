@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VinFast - Danh Sách Đơn Hàng Bán Xe</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* CSS giữ nguyên từ file thứ hai, chỉ điều chỉnh một số phần cần thiết */
         * {
             margin: 0;
             padding: 0;
@@ -280,7 +280,7 @@
         }
 
         .table-container {
-            max-height: calc(100vh - 180px);
+            max-height: calc(100vh - 220px);
             overflow-y: auto;
             overflow-x: auto;
             position: relative;
@@ -479,6 +479,51 @@
             color: #ffffff;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            border: 1px solid #a9a9a9;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #1a1a1a;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .pagination button {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
+        }
+
+        .pagination button:hover {
+            background: #005eb8;
+            color: #ffffff;
+            border-color: #005eb8;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #003087;
+        }
+
+        body.dark-mode .pagination span {
+            color: #66b0ff;
+        }
+
         footer {
             position: fixed;
             bottom: 0;
@@ -600,7 +645,7 @@
                 font-size: 11px;
             }
             .table-container {
-                max-height: calc(100vh - 220px);
+                max-height: calc(100vh - 260px);
             }
             table {
                 font-size: 11px;
@@ -612,7 +657,7 @@
                 margin-top: 15px;
                 border-left: none;
                 border-top: 4px solid #005eb8;
-                max-height: calc(100vh - 220px);
+                max-height: calc(100vh - 260px);
                 padding: 10px;
             }
             body.dark-mode .detail-panel {
@@ -626,6 +671,14 @@
             }
             .detail-table th, .detail-table td {
                 padding: 8px;
+            }
+            .pagination button {
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+            .pagination span {
+                padding: 8px 15px;
+                font-size: 11px;
             }
             footer {
                 font-size: 9px;
@@ -675,6 +728,7 @@
                     <tbody id="table-body"></tbody>
                 </table>
             </div>
+            <div class="pagination" id="pagination"></div>
         </div>
 
         <div class="detail-panel" id="detail-panel">
@@ -696,6 +750,8 @@
     <script>
         let tableData = {};
         let currentSheet = 'Đã Ghép';
+        let currentPage = 1;
+        const rowsPerPage = 15;
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -721,9 +777,17 @@
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             currentSheet = sheetName;
+            currentPage = 1;
 
             const spinner = document.querySelector('.loading-spinner');
-            if (!tableData[sheetName]) spinner.style.display = 'block';
+            if (!tableData[sheetName]) {
+                const cachedData = sessionStorage.getItem(sheetName);
+                if (cachedData) {
+                    tableData[sheetName] = JSON.parse(cachedData);
+                } else {
+                    spinner.style.display = 'block';
+                }
+            }
 
             const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
             try {
@@ -731,16 +795,17 @@
                     const response = await axios.get(apiURL);
                     tableData['Đã Ghép'] = response.data.Sheet1 ? response.data.Sheet1.map(row => Object.values(row)) : [];
                     tableData['Chưa Ghép'] = response.data.Sheet2 ? response.data.Sheet2.map(row => Object.values(row)) : [];
+                    sessionStorage.setItem(sheetName, JSON.stringify(tableData[sheetName]));
                 }
                 renderTable(tableData[sheetName]);
                 highlightVinNumbers();
                 showNotification(`Dữ liệu ${sheetName} đã được cập nhật! (${tableData[sheetName].length} đơn hàng)`, 2000);
             } catch (error) {
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ Error loading data: ${error.message}</td></tr>`;
-                showNotification("Lỗi tải dữ liệu!", 3000);
+                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
             }
             spinner.style.display = 'none';
-
             updateTableHeader(sheetName);
         }
 
@@ -779,23 +844,24 @@
             }
         }
 
-        function renderTable(data) {
+        function renderTable(data, page = currentPage) {
             const tbody = document.getElementById("table-body");
             tbody.innerHTML = "";
-            data.forEach((row, index) => {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = data.slice(start, end);
+
+            paginatedData.forEach((row, index) => {
+                const globalIndex = start + index + 1;
                 const tr = document.createElement("tr");
-                let cells = [`<td>${index + 1}</td>`];
+                let cells = [`<td>${globalIndex}</td>`];
                 
                 row.forEach((cell, i) => {
                     let value = cell || "";
                     if (currentSheet === 'Đã Ghép' && i === 8 && value) {
                         const date = new Date(value);
                         if (!isNaN(date)) {
-                            value = date.toLocaleDateString('vi-VN', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                            });
+                            value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                         }
                     } else if (currentSheet === 'Đã Ghép' && i === 9 && value) {
                         value = Math.floor(parseFloat(value)).toString();
@@ -804,24 +870,48 @@
                 });
                 
                 tr.innerHTML = cells.join("");
-                tr.onclick = () => showDetail(row, index + 1);
+                tr.onclick = () => showDetail(row, globalIndex);
                 tbody.appendChild(tr);
             });
-            document.getElementById("total-count").textContent = data.length;
 
-            // Hiển thị chi tiết của đơn hàng đầu tiên (nếu có)
+            document.getElementById("total-count").textContent = data.length;
+            renderPagination(data.length, page);
+            
             if (data.length > 0) {
-                showDetail(data[0], 1);
+                showDetail(data[0], start + 1);
             } else {
                 document.getElementById("detail-body").innerHTML = "<p>Không có dữ liệu để hiển thị.</p>";
             }
         }
 
+        function renderPagination(totalRows, currentPage) {
+            const paginationDiv = document.getElementById("pagination");
+            paginationDiv.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trước</button>
+                <span>Trang ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage >= Math.ceil(totalRows / rowsPerPage) ? 'disabled' : ''}>Sau</button>
+            `;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
+            const filteredData = tableData[currentSheet].filter(row =>
+                row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
+            );
+            renderTable(filteredData, currentPage);
+            highlightVinNumbers();
+            document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         function highlightVinNumbers() {
             const tableRows = document.querySelectorAll("#table-body tr");
             tableRows.forEach(row => {
-                const vinCell = row.cells[8];
-                if (vinCell && vinCell.textContent.trim() !== "") vinCell.classList.add("vin-highlight");
+                const vinCell = currentSheet === 'Đã Ghép' ? row.cells[8] : null; // Cột SỐ VIN trong "Đã Ghép"
+                if (vinCell && vinCell.textContent.trim() !== "") {
+                    vinCell.classList.add("vin-highlight");
+                }
             });
         }
 
@@ -832,51 +922,51 @@
                 : ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG"];
             let html = "<table class='detail-table'>";
             
-            // Thêm số thứ tự
             html += `<tr><th>${headers[0]}</th><td>${index}</td></tr>`;
-            
-            // Thêm các cột còn lại
             row.forEach((cell, i) => {
                 let value = cell || "";
                 if (currentSheet === 'Đã Ghép' && i === 8 && value) {
                     const date = new Date(value);
-                    if (!isNaN(date)) {
-                        value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    }
+                    if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 } else if (currentSheet === 'Đã Ghép' && i === 9 && value) {
                     value = Math.floor(parseFloat(value)).toString();
                 }
-                const cellClass = (currentSheet === 'Đã Ghép' && i === 8) ? ' class="vin-highlight"' : '';
+                const cellClass = (currentSheet === 'Đã Ghép' && i === 7) ? ' class="vin-highlight"' : ''; // SỐ VIN trong chi tiết (i=7 vì bỏ SỐ TT)
                 html += `<tr><th>${headers[i + 1]}</th><td${cellClass}>${value}</td></tr>`;
             });
             
             html += "</table>";
             detailBody.innerHTML = html;
 
-            // Đánh dấu hàng được chọn
             const rows = document.querySelectorAll("#table-body tr");
             rows.forEach(row => row.classList.remove("selected"));
-            rows[index - 1].classList.add("selected");
+            const selectedRowIndex = (index - 1) % rowsPerPage;
+            if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
         }
 
         function exportToExcel() {
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
-                const table = document.getElementById("data-table");
-                const tableHTML = table.outerHTML.replace(/ /g, '%20');
-                const dataType = 'application/vnd.ms-excel';
-                const downloadLink = document.createElement("a");
-                document.body.appendChild(downloadLink);
-
-                const filename = `VinFast_Don_Hang_${currentSheet}.xls`;
-                if (navigator.msSaveOrOpenBlob) {
-                    const blob = new Blob(['\ufeff', tableHTML], { type: dataType });
-                    navigator.msSaveOrOpenBlob(blob, filename);
-                } else {
-                    downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-                    downloadLink.download = filename;
-                    downloadLink.click();
-                }
-                document.body.removeChild(downloadLink);
+                const headers = currentSheet === 'Đã Ghép' 
+                    ? ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "VỊ TRÍ XE"]
+                    : ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG"];
+                const wsData = tableData[currentSheet].map((row, index) => {
+                    const rowData = { "SỐ TT": index + 1 };
+                    row.forEach((cell, i) => {
+                        let value = cell || "";
+                        if (currentSheet === 'Đã Ghép' && i === 8 && value) {
+                            const date = new Date(value);
+                            if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        } else if (currentSheet === 'Đã Ghép' && i === 9 && value) {
+                            value = Math.floor(parseFloat(value)).toString();
+                        }
+                        rowData[headers[i + 1]] = value;
+                    });
+                    return rowData;
+                });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, currentSheet);
+                XLSX.writeFile(wb, `VinFast_Don_Hang_${currentSheet}_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
                 showNotification("Đã xuất file thành công!", 2000);
             }
         }
@@ -932,18 +1022,51 @@
         function refreshData() {
             fetchSheetData(currentSheet, document.querySelector('.tabs a.active'));
             document.getElementById("search-input").value = "";
+            currentPage = 1;
             showNotification("Dữ liệu đã được làm mới!", 2000);
         }
 
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
         function setupSearch() {
-            document.getElementById("search-input").addEventListener("input", function () {
+            document.getElementById("search-input").addEventListener("input", debounce(function () {
                 const searchValue = this.value.trim().toLowerCase();
                 const filteredData = tableData[currentSheet].filter(row =>
                     row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
                 );
+                currentPage = 1;
                 renderTable(filteredData);
                 highlightVinNumbers();
                 document.getElementById("total-count").textContent = filteredData.length;
+            }, 300));
+        }
+
+        function setupScrollSync() {
+            const tableContainer = document.querySelector('.table-container');
+            const detailPanel = document.getElementById("detail-panel");
+            let isTableScrolling = false;
+            let isDetailScrolling = false;
+
+            tableContainer.addEventListener('scroll', () => {
+                if (!isDetailScrolling) {
+                    isTableScrolling = true;
+                    detailPanel.scrollTop = tableContainer.scrollTop;
+                    setTimeout(() => { isTableScrolling = false; }, 100);
+                }
+            });
+
+            detailPanel.addEventListener('scroll', () => {
+                if (!isTableScrolling) {
+                    isDetailScrolling = true;
+                    tableContainer.scrollTop = detailPanel.scrollTop;
+                    setTimeout(() => { isDetailScrolling = false; }, 100);
+                }
             });
         }
 
@@ -957,6 +1080,8 @@
         document.addEventListener("DOMContentLoaded", function () {
             fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
             setupSearch();
+            setupScrollSync();
+            setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
         });
     </script>
 </body>
