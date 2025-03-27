@@ -3,129 +3,692 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Ghép Xe</title>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <title>Showroom Thuận An - VinFast Nội Bộ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Montserrat', sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode { background: #1a1a1a; color: #ffffff; }
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
-            background: url('https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6dac8f1c/images/vfast/Hinh-anh-xe-SUV-VinFast-President-gia-xe-thong-so-bang-mau-dong-co-v8.jpg') no-repeat center center/cover;
-            color: white;
+            padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
-        .container {
-            display: flex;
-            width: 800px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.4);
+        .navbar .logo-text {
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        .left-panel, .right-panel {
-            flex: 1;
-            padding: 50px;
+        .navbar .logo-text span { color: #ffffff; }
+        .navbar .menu {
+            display: none;
+            flex-grow: 1;
+            justify-content: center;
+            list-style: none;
+            margin-left: 20px;
         }
-        .left-panel {
-            background: rgba(255, 255, 255, 0.2);
-            text-align: center;
+        .navbar .menu.active { display: flex; }
+        .navbar .menu li a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 5px;
+        }
+        .navbar .menu li a:hover {
+            background: #ffd700;
+            color: #003087;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        .navbar .menu li a.active {
+            background: #ffd700;
+            color: #003087;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: highlight 1.5s infinite ease-in-out;
+        }
+        @keyframes highlight {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 215, 0, 1); }
+        }
+        .logout-btn {
+            padding: 6px 12px;
+            background: #004aad;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-left: auto;
+        }
+        .logout-btn:hover {
+            background: #003087;
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.4);
+        }
+        .dark-mode-btn, .language-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .user-info {
+            color: #ffffff;
+            font-size: 12px;
+            margin-left: 10px;
+            display: none;
+        }
+        .session-time {
+            color: #ffffff;
+            font-size: 12px;
+            margin-left: 10px;
+            display: none;
+        }
+        .online-status {
+            width: 10px;
+            height: 10px;
+            background: #28a745;
+            border-radius: 50%;
+            display: none;
+            margin-left: 10px;
+        }
+        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; }
+        .hero {
+            height: 50vh;
+            background: url('https://file3.qdnd.vn/data/images/0/2025/01/11/upload_2085/a1.jpg') no-repeat center/cover;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-        }
-        .right-panel h2 {
-            font-size: 26px;
-            margin-bottom: 25px;
             text-align: center;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            margin-top: 60px;
         }
-        .input-group {
-            position: relative;
+        .hero h2 { font-size: 36px; font-weight: 700; }
+        .hero p { font-size: 18px; }
+        .internal-section, .dashboard-section {
+            padding: 40px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .internal-section, body.dark-mode .dashboard-section { background: #2a2a2a; }
+        .internal-section h3, .dashboard-section h3 { font-size: 24px; color: #003087; font-weight: 700; margin-bottom: 20px; }
+        body.dark-mode .internal-section h3, body.dark-mode .dashboard-section h3 { color: #66b0ff; }
+        .login-btn {
+            padding: 10px 20px;
+            background: #005eb8;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .login-btn:hover {
+            background: #003087;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+        }
+        .dashboard-section { display: none; }
+        .dashboard-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .dashboard-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .dashboard-card { background: #333; }
+        .dashboard-card h4 { font-size: 18px; color: #003087; }
+        body.dark-mode .dashboard-card h4 { color: #66b0ff; }
+        .dashboard-card p { font-size: 14px; color: #555; }
+        body.dark-mode .dashboard-card p { color: #cccccc; }
+        .search-bar input {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #a9a9a9;
+            border-radius: 10px;
+            font-size: 12px;
             margin-bottom: 20px;
         }
-        .input-group input {
-            width: 100%;
-            padding: 14px;
+        body.dark-mode .search-bar input { background: #333; color: #fff; border-color: #555; }
+        .notification-list { max-height: 200px; overflow-y: auto; }
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        body.dark-mode .notification-item { border-bottom: 1px solid #555; }
+        .notification-item .delete-btn {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .notification-item .delete-btn:hover { background: #c53030; }
+        .refresh-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: #ffffff;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .refresh-btn:hover {
+            background: #218838;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+        }
+        .modal, .alert-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+        }
+        .login-modal-content, .alert-modal-content {
+            background: #ffffff;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative;
+            border-top: 5px solid #005eb8;
+        }
+        body.dark-mode .login-modal-content, body.dark-mode .alert-modal-content { background: #2a2a2a; border-top: 5px solid #66b0ff; }
+        .login-modal-content h2, .alert-modal-content h2 {
+            font-size: 24px;
+            color: #003087;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        body.dark-mode .login-modal-content h2, body.dark-mode .alert-modal-content h2 { color: #66b0ff; }
+        .login-modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .login-modal-content input {
+            padding: 10px;
+            border: 1px solid #a9a9a9;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .login-modal-content input {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
+        }
+        .login-modal-content input:focus {
+            border-color: #005eb8;
+            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
             outline: none;
         }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(90deg, #4CAF50, #45a049);
-            color: white;
-            font-size: 16px;
+        .login-modal-content button, .alert-modal-content button {
+            padding: 10px;
+            background: #005eb8;
+            color: #ffffff;
             border: none;
             border-radius: 10px;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .login-modal-content button:hover, .alert-modal-content button:hover {
+            background: #003087;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+        }
+        .reset-password {
+            font-size: 12px;
+            color: #005eb8;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 10px;
+        }
+        body.dark-mode .reset-password { color: #66b0ff; }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #555;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode .close { color: #cccccc; }
+        .close:hover { color: #003087; }
+        body.dark-mode .close:hover { color: #66b0ff; }
+        @media (max-width: 768px) {
+            .navbar { padding: 0 10px; height: 50px; }
+            .navbar .logo-text { font-size: 14px; }
+            .navbar .menu {
+                display: none;
+                position: absolute;
+                top: 50px;
+                left: 0;
+                width: 100%;
+                background: #003087;
+                padding: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .navbar .menu.active { display: flex; }
+            .hamburger { display: block; }
+            .hero { margin-top: 50px; }
+            .hero h2 { font-size: 24px; }
+            .hero p { font-size: 14px; }
+            .internal-section, .dashboard-section { padding: 20px 10px; }
+            .dashboard-content { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="left-panel">
-            <h2>Showroom VF Minh Đạo Thuận An</h2>
-            <p>Đăng nhập để quản lý đơn hàng của bạn dễ dàng và hiệu quả.</p>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo-text">VINFAST <span>AN PHÚ</span></div>
+        <ul class="menu" id="navMenu"></ul>
+        <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
+        <span class="user-info" id="userInfo"></span>
+        <span class="session-time" id="sessionTime"></span>
+        <div class="online-status" id="onlineStatus"></div>
+        <div class="logout-btn" onclick="logout()" id="logoutBtn">Đăng Xuất</div>
+        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
+        <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" data-aos="fade-up">
+        <h2 data-lang="hero-title">Hệ Thống Nội Bộ VinFast</h2>
+        <p data-lang="hero-subtitle">Showroom Thuận An</p>
+    </section>
+
+    <!-- Internal Section -->
+    <section class="internal-section" id="welcomeSection" data-aos="fade-up">
+        <h3 data-lang="welcome-title">Chào Mừng Đến Với Hệ Thống Nội Bộ</h3>
+        <p data-lang="welcome-text">Vui lòng đăng nhập để truy cập các chức năng quản lý kinh doanh, đơn hàng, và xe đã bán.</p>
+        <button class="login-btn" onclick="openModal('loginModal')" data-lang="login-btn">Đăng Nhập</button>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section class="dashboard-section" id="dashboard" data-aos="fade-up">
+        <h3 data-lang="dashboard-title">Bảng Điều Khiển</h3>
+        <div class="dashboard-content">
+            <div class="dashboard-card">
+                <h4 data-lang="sales-title">Doanh Số</h4>
+                <p id="salesData">50 xe (Tháng 3/2025)</p>
+            </div>
+            <div class="dashboard-card">
+                <h4 data-lang="orders-title">Đơn Hàng Chờ</h4>
+                <p id="ordersData">10 đơn</p>
+            </div>
+            <div class="dashboard-card">
+                <h4 data-lang="notifications-title">Thông Báo</h4>
+                <div class="search-bar">
+                    <input type="text" id="notificationSearch" placeholder="Tìm kiếm thông báo..." oninput="filterNotifications()" data-lang-placeholder="search-notifications">
+                </div>
+                <div class="notification-list" id="notificationList"></div>
+            </div>
         </div>
-        <div class="right-panel">
-            <h2>Đăng Nhập</h2>
-            <div class="input-group">
-                <input type="text" id="username" placeholder="Tên đăng nhập">
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Nhập mật khẩu">
-            </div>
-            <button class="btn" onclick="login()">Đăng Nhập</button>
-            <p id="error-message" style="color:#ff4c4c; display: none;">Sai tên đăng nhập hoặc mật khẩu</p>
+        <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn">Làm Mới</button>
+    </section>
+
+    <!-- Modal Đăng Nhập -->
+    <div id="loginModal" class="modal">
+        <div class="login-modal-content">
+            <span class="close" onclick="closeModal('loginModal')">×</span>
+            <h2 data-lang="login-title">Đăng Nhập</h2>
+            <form onsubmit="login(event)">
+                <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password">
+                <button type="submit" data-lang="login-btn">Đăng Nhập</button>
+            </form>
+            <span class="reset-password" onclick="resetPassword()" data-lang="reset-password">Đặt lại mật khẩu</span>
         </div>
     </div>
 
+    <!-- Modal Thông Báo -->
+    <div id="alertModal" class="alert-modal">
+        <div class="alert-modal-content">
+            <span class="close" onclick="closeModal('alertModal')">×</span>
+            <h2 id="alertTitle"></h2>
+            <p id="alertMessage"></p>
+            <button onclick="closeModal('alertModal')">OK</button>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-function login() {
-    var username = document.getElementById("username").value.trim();
-    var password = document.getElementById("password").value.trim();
+        AOS.init({ duration: 1500, easing: 'ease-out-bounce' });
+        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        let currentUser = localStorage.getItem('currentUser') || '';
+        let userRole = localStorage.getItem('userRole') || 'employee';
+        const sessionTimeout = 15 * 60 * 1000; // 15 phút
+        let notifications = JSON.parse(localStorage.getItem('notifications')) || [
+            { id: 1, text: "Cuộc họp 10:00 ngày 27/03", date: "26/03/2025" },
+            { id: 2, text: "Cập nhật KPI tháng 3", date: "25/03/2025" },
+            { id: 3, text: "Xe VF9 mới nhập kho", date: "24/03/2025" }
+        ];
+        let language = localStorage.getItem('language') || 'vi';
 
-    var users = {
-        "SRTHUANAN": "HeyVF123",
-        "admin": "admin123"
-    };
-
-    if (users[username] && users[username] === password) {
-        sessionStorage.setItem('loggedIn', 'true');
-        sessionStorage.setItem('username', username);  // Lưu username vào sessionStorage
-
-        var message = username === "admin" ? "Chào mừng Admin, bạn đang được chuyển hướng đến trang KPI!" : "Đăng nhập thành công!";
-
-        Toastify({
-            text: message,
-            duration: 1500,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "green",
-        }).showToast();
-
-        setTimeout(() => {
-            if(username === "admin"){
-                window.location.href = "kpi.html";
-            } else {
-                window.location.href = "dashboard.html";
+        const translations = {
+            vi: {
+                "hero-title": "Hệ Thống Nội Bộ VinFast",
+                "hero-subtitle": "Showroom Thuận An",
+                "welcome-title": "Chào Mừng Đến Với Hệ Thống Nội Bộ",
+                "welcome-text": "Vui lòng đăng nhập để truy cập các chức năng quản lý kinh doanh, đơn hàng, và xe đã bán.",
+                "login-btn": "Đăng Nhập",
+                "dashboard-title": "Bảng Điều Khiển",
+                "sales-title": "Doanh Số",
+                "orders-title": "Đơn Hàng Chờ",
+                "notifications-title": "Thông Báo",
+                "search-notifications": "Tìm kiếm thông báo...",
+                "refresh-btn": "Làm Mới",
+                "login-title": "Đăng Nhập",
+                "username": "Tên đăng nhập",
+                "password": "Mật khẩu",
+                "reset-password": "Đặt lại mật khẩu"
+            },
+            en: {
+                "hero-title": "VinFast Internal System",
+                "hero-subtitle": "Thuan An Showroom",
+                "welcome-title": "Welcome to the Internal System",
+                "welcome-text": "Please log in to access business management, orders, and sold vehicles features.",
+                "login-btn": "Login",
+                "dashboard-title": "Dashboard",
+                "sales-title": "Sales",
+                "orders-title": "Pending Orders",
+                "notifications-title": "Notifications",
+                "search-notifications": "Search notifications...",
+                "refresh-btn": "Refresh",
+                "login-title": "Login",
+                "username": "Username",
+                "password": "Password",
+                "reset-password": "Reset Password"
             }
-        }, 1500);
-    } else {
-        var errorMessage = document.getElementById("error-message");
-        errorMessage.style.display = "block";
-    }
-}
+        };
 
+        document.addEventListener("DOMContentLoaded", () => {
+            updateUI();
+            updateLanguage();
+            if (isLoggedIn) {
+                startSessionTimer();
+                updateSessionTime();
+                loadNotifications();
+            }
+        });
+
+        function updateUI() {
+            const menu = document.getElementById('navMenu');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo');
+            const sessionTime = document.getElementById('sessionTime');
+            const onlineStatus = document.getElementById('onlineStatus');
+            const dashboard = document.getElementById('dashboard');
+            const welcomeSection = document.getElementById('welcomeSection');
+
+            logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
+            onlineStatus.style.display = isLoggedIn ? 'inline-block' : 'none';
+            userInfo.style.display = isLoggedIn ? 'inline' : 'none';
+            sessionTime.style.display = isLoggedIn ? 'inline' : 'none';
+
+            if (isLoggedIn) {
+                menu.classList.add('active');
+                dashboard.style.display = 'block';
+                welcomeSection.style.display = 'none';
+                userInfo.textContent = `${language === 'vi' ? 'Xin chào' : 'Hello'}, ${currentUser} (${userRole === 'manager' ? (language === 'vi' ? 'Quản lý' : 'Manager') : (language === 'vi' ? 'Nhân viên' : 'Employee')})`;
+                updateMenu();
+            } else {
+                menu.classList.remove('active');
+                dashboard.style.display = 'none';
+                welcomeSection.style.display = 'block';
+                menu.innerHTML = '';
+            }
+        }
+
+        function updateMenu() {
+            const menu = document.getElementById('navMenu');
+            const commonLinks = `
+                <li><a href="kpi.html" onclick="checkLogin(event, 'navigate', 'kpi.html')">${language === 'vi' ? 'Kết Quả Kinh Doanh' : 'Business Results'}</a></li>
+                <li><a href="yeucaughepxe.html" onclick="checkLogin(event, 'navigate', 'yeucaughepxe.html')">${language === 'vi' ? 'Yêu Cầu Ghép Xe' : 'Vehicle Pairing Request'}</a></li>
+                <li><a href="danhsach.html" onclick="checkLogin(event, 'navigate', 'danhsach.html')">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a></li>
+                <li><a href="xedaban.html" onclick="checkLogin(event, 'navigate', 'xedaban.html')">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a></li>
+            `;
+            const managerLinks = userRole === 'manager' ? `
+                <li><a href="manage.html" onclick="checkLogin(event, 'navigate', 'manage.html')">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a></li>
+            ` : '';
+            menu.innerHTML = commonLinks + managerLinks;
+        }
+
+        function login(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            let role = 'employee';
+            if (username === 'admin' && password === '123456') {
+                role = 'manager';
+            } else if (username === 'staff' && password === '123456') {
+                role = 'employee';
+            } else {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
+                return;
+            }
+            isLoggedIn = true;
+            currentUser = username;
+            userRole = role;
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', username);
+            localStorage.setItem('userRole', role);
+            localStorage.setItem('loginTime', Date.now());
+            closeModal('loginModal');
+            showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
+            updateUI();
+            startSessionTimer();
+            updateSessionTime();
+            loadNotifications();
+            highlightMenu(); // Gọi hàm làm nổi bật menu sau khi đăng nhập
+        }
+
+        function highlightMenu() {
+            const menuLinks = document.querySelectorAll('.navbar .menu li a');
+            menuLinks.forEach(link => {
+                link.classList.add('active'); // Thêm class active để làm nổi bật
+                setTimeout(() => link.classList.remove('active'), 3000); // Tắt hiệu ứng sau 3 giây
+            });
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            currentUser = '';
+            userRole = 'employee';
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('loginTime');
+            clearTimeout(sessionTimer);
+            clearInterval(sessionInterval);
+            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã đăng xuất!' : 'Logged out!');
+            updateUI();
+        }
+
+        let sessionTimer, sessionInterval;
+        function startSessionTimer() {
+            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const timeElapsed = Date.now() - loginTime;
+            if (timeElapsed >= sessionTimeout) {
+                logout();
+                showAlert(language === 'vi' ? 'Hết Phiên' : 'Session Expired', language === 'vi' ? 'Phiên đăng nhập đã hết hạn!' : 'Your session has expired!');
+            } else {
+                sessionTimer = setTimeout(() => {
+                    logout();
+                    showAlert(language === 'vi' ? 'Hết Phiên' : 'Session Expired', language === 'vi' ? 'Phiên đăng nhập đã hết hạn!' : 'Your session has expired!');
+                }, sessionTimeout - timeElapsed);
+                sessionInterval = setInterval(updateSessionTime, 1000);
+            }
+        }
+
+        function updateSessionTime() {
+            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const timeLeft = sessionTimeout - (Date.now() - loginTime);
+            if (timeLeft <= 0) return;
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            document.getElementById('sessionTime').textContent = `${language === 'vi' ? 'Phiên' : 'Session'}: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function checkLogin(event, action, param = null) {
+            if (!isLoggedIn) {
+                event.preventDefault();
+                openModal('loginModal');
+                return false;
+            }
+            switch (action) {
+                case 'navigate': window.location.href = param; break;
+            }
+            return true;
+        }
+
+        function toggleMenu() { 
+            const menu = document.querySelector('.menu');
+            if (isLoggedIn) menu.classList.toggle('active'); 
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = "block"; }
+        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+        window.onclick = (e) => {
+            const modals = document.getElementsByClassName('modal');
+            const alerts = document.getElementsByClassName('alert-modal');
+            for (let modal of modals) if (e.target == modal) modal.style.display = "none";
+            for (let alert of alerts) if (e.target == alert) alert.style.display = "none";
+        };
+
+        function showAlert(title, message) {
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+            openModal('alertModal');
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.dark-mode-btn i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.dark-mode-btn i').classList.remove('fa-moon');
+            document.querySelector('.dark-mode-btn i').classList.add('fa-sun');
+        }
+
+        function toggleLanguage() {
+            language = language === 'vi' ? 'en' : 'vi';
+            localStorage.setItem('language', language);
+            document.getElementById('languageBtn').textContent = language === 'vi' ? 'EN' : 'VI';
+            updateLanguage();
+            updateUI();
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                element.textContent = translations[language][key];
+            });
+            document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-lang-placeholder');
+                element.placeholder = translations[language][key];
+            });
+        }
+
+        function loadNotifications() {
+            const list = document.getElementById('notificationList');
+            list.innerHTML = '';
+            notifications.forEach(notif => {
+                list.innerHTML += `
+                    <div class="notification-item" data-text="${notif.text.toLowerCase()}">
+                        ${notif.date}: ${notif.text}
+                        <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === 'vi' ? 'Xóa' : 'Delete'}</button>
+                    </div>`;
+            });
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+        }
+
+        function filterNotifications() {
+            const query = document.getElementById('notificationSearch').value.toLowerCase();
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.style.display = item.dataset.text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function refreshDashboard() {
+            document.getElementById('salesData').textContent = `${Math.floor(Math.random() * 10) + 50} ${language === 'vi' ? 'xe (Tháng 3/2025)' : 'vehicles (March 2025)'}`;
+            document.getElementById('ordersData').textContent = `${Math.floor(Math.random() * 5) + 10} ${language === 'vi' ? 'đơn' : 'orders'}`;
+            notifications.push({ 
+                id: notifications.length + 1, 
+                text: language === 'vi' ? 'Dữ liệu đã làm mới' : 'Data refreshed', 
+                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US') 
+            });
+            loadNotifications();
+            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã làm mới dữ liệu!' : 'Data refreshed!');
+        }
+
+        function deleteNotification(id) {
+            notifications = notifications.filter(notif => notif.id !== id);
+            loadNotifications();
+            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã xóa thông báo!' : 'Notification deleted!');
+        }
+
+        function resetPassword() {
+            showAlert(language === 'vi' ? 'Đặt Lại Mật Khẩu' : 'Reset Password', language === 'vi' ? 'Vui lòng liên hệ quản trị viên để đặt lại mật khẩu!' : 'Please contact the administrator to reset your password!');
+        }
     </script>
 </body>
 </html>
