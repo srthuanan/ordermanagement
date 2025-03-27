@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -675,25 +676,29 @@
             menu.innerHTML = commonLinks + managerLinks;
         }
 
-        function login(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            let role = 'employee';
-            if (username === 'admin' && password === '123456') {
-                role = 'manager';
-            } else if (username === 'staff' && password === '123456') {
-                role = 'employee';
-            } else {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
-                return;
+async function login(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        // Gửi yêu cầu đến Google Apps Script API
+        const response = await axios.get('https://script.google.com/macros/s/AKfycbxfwderL-YXHBqsJg54fkmUzlXXL490Lp1u3r6QdiNYtiNxh96X4RvWVAznSIkfKmlcBA/exec', {
+            params: {
+                username: username,
+                password: password
             }
+        });
+
+        const users = response.data;
+        if (users.length > 0) {
+            const user = users[0]; // Lấy user đầu tiên khớp
             isLoggedIn = true;
-            currentUser = username;
-            userRole = role;
+            currentUser = user.username;
+            userRole = user.role;
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', username);
-            localStorage.setItem('userRole', role);
+            localStorage.setItem('currentUser', user.username);
+            localStorage.setItem('userRole', user.role);
             localStorage.setItem('loginTime', Date.now());
             closeModal('loginModal');
             showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
@@ -702,8 +707,14 @@
             updateSessionTime();
             loadNotifications();
             highlightMenu();
+        } else {
+            showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
         }
-
+    } catch (error) {
+        console.error('Lỗi khi đăng nhập:', error);
+        showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
+    }
+}
         function highlightMenu() {
             const menuLinks = document.querySelectorAll('.navbar .menu li a');
             menuLinks.forEach(link => {
