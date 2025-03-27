@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -691,7 +692,6 @@
         ];
         let language = localStorage.getItem('language') || 'vi';
         let tempUsername = ''; // Lưu tạm username khi quên mật khẩu
-        let tempEmail = ''; // Lưu tạm email khi quên mật khẩu
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbwqbedHB1kGSopSm5HFahyLDpTzy2WlDOKYs1XPznb2GagrFdyrs499i7IcHHZUB5yT/exec';
 
@@ -829,23 +829,19 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const loginButton = document.querySelector('#loginForm button[type="submit"]');
 
-            if (!username || !password) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập tên đăng nhập và mật khẩu!' : 'Please enter username and password!');
-                return;
-            }
-
             loadingOverlay.style.display = 'flex';
             loginButton.disabled = true;
             loginButton.style.opacity = '0.6';
 
             try {
-                const response = await fetch(`${API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
-                    method: 'GET',
-                    mode: 'cors',
-                    redirect: 'follow'
+                const response = await axios.get(API_URL, {
+                    params: {
+                        username: username,
+                        password: password
+                    }
                 });
 
-                const users = await response.json();
+                const users = response.data;
                 if (users.length > 0) {
                     const user = users[0];
                     isLoggedIn = true;
@@ -1081,11 +1077,6 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const changeButton = document.querySelector('#resetPasswordForm button[type="submit"]');
 
-            if (!oldPassword || !newPassword || !confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
-                return;
-            }
-
             if (newPassword !== confirmPassword) {
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
                 return;
@@ -1096,13 +1087,16 @@
             changeButton.style.opacity = '0.6';
 
             try {
-                const response = await fetch(`${API_URL}?action=changePassword&username=${encodeURIComponent(currentUser)}&oldPassword=${encodeURIComponent(oldPassword)}&newPassword=${encodeURIComponent(newPassword)}`, {
-                    method: 'GET',
-                    mode: 'cors',
-                    redirect: 'follow'
+                const response = await axios.get(API_URL, {
+                    params: {
+                        username: currentUser,
+                        oldPassword: oldPassword,
+                        newPassword: newPassword,
+                        action: 'changePassword'
+                    }
                 });
 
-                const result = await response.json();
+                const result = response.data;
                 if (result.success) {
                     closeModal('loginModal');
                     showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đổi mật khẩu thành công!' : 'Password changed successfully!');
@@ -1126,35 +1120,23 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const sendButton = document.querySelector('#forgotPasswordForm button[type="submit"]');
 
-            if (!username || !email) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập tên đăng nhập và email!' : 'Please enter username and email!');
-                return;
-            }
-
             loadingOverlay.style.display = 'flex';
             sendButton.disabled = true;
             sendButton.style.opacity = '0.6';
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'forgotPassword',
+                const response = await axios.get(API_URL, {
+                    params: {
                         username: username,
-                        email: email
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    mode: 'cors',
-                    redirect: 'follow'
+                        email: email,
+                        action: 'forgotPassword'
+                    }
                 });
 
-                const result = await response.json();
-                if (result.status === 'success') {
-                    tempUsername = username;
-                    tempEmail = email;
-                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Mã xác nhận đã được gửi qua email!' : 'Verification code sent to your email!'));
+                const result = response.data;
+                if (result.success) {
+                    tempUsername = username; // Lưu username để dùng cho bước đặt lại mật khẩu
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Mã xác nhận đã được gửi!' : 'Verification code sent!');
                     showResetPasswordWithOTPForm();
                 } else {
                     showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Tên đăng nhập hoặc email không đúng!' : 'Username or email incorrect!'));
@@ -1177,11 +1159,6 @@
             const loadingOverlay = document.getElementById('loadingOverlay');
             const resetButton = document.querySelector('#resetPasswordWithOTPForm button[type="submit"]');
 
-            if (!otpCode || !newPassword || !confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
-                return;
-            }
-
             if (newPassword !== confirmPassword) {
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
                 return;
@@ -1192,26 +1169,19 @@
             resetButton.style.opacity = '0.6';
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'resetPassword',
+                const response = await axios.get(API_URL, {
+                    params: {
                         username: tempUsername,
-                        email: tempEmail,
                         otp: otpCode,
-                        newPassword: newPassword
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    mode: 'cors',
-                    redirect: 'follow'
+                        newPassword: newPassword,
+                        action: 'resetPassword'
+                    }
                 });
 
-                const result = await response.json();
-                if (result.status === 'success') {
+                const result = response.data;
+                if (result.success) {
                     closeModal('loginModal');
-                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đặt lại mật khẩu thành công!' : 'Password reset successfully!'));
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đặt lại mật khẩu thành công!' : 'Password reset successfully!');
                 } else {
                     showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Mã xác nhận không đúng!' : 'Invalid verification code!'));
                 }
