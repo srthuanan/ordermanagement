@@ -12,392 +12,336 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Montserrat', sans-serif;
-            background: #ffffff;
+            background: #f0f4f8;
             color: #1a1a1a;
             min-height: 100vh;
             overflow-x: hidden;
             transition: background 0.3s, color 0.3s;
         }
-        body.dark-mode { background: #1a1a1a; color: #ffffff; }
+        body.dark-mode { background: #1a1a1a; color: #e0e0e0; }
         .navbar {
             position: fixed;
             top: 0;
             width: 100%;
-            height: 60px;
+            height: 70px;
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 0 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
+            transition: height 0.3s ease;
         }
         .navbar .logo-text {
             color: #ffffff;
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 700;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
-        .navbar .logo-text span { color: #ffffff; }
         .navbar .menu {
-            display: none;
+            display: flex;
             flex-grow: 1;
             justify-content: center;
             list-style: none;
             margin-left: 20px;
+            transition: all 0.3s ease;
         }
-        .navbar .menu.active { display: flex; }
         .navbar .menu li a {
-            padding: 10px 15px;
+            padding: 12px 20px;
             text-decoration: none;
             color: #ffffff;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 600;
             transition: all 0.3s ease;
             position: relative;
-            border-radius: 5px;
+            border-radius: 8px;
         }
-        .navbar .menu li a:hover {
-            background: #005eb8;
-            color: #ffffff;
+        .navbar .menu li a:hover, .navbar .menu li a.active {
+            background: rgba(255, 255, 255, 0.2);
             box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
-        }
-        .navbar .menu li a.active {
-            background: #005eb8;
-            color: #ffffff;
-            box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
-            animation: highlight 1.5s infinite ease-in-out;
-        }
-        @keyframes highlight {
-            0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.5); }
-            50% { box-shadow: 0 0 25px rgba(0, 94, 184, 1); }
+            transform: scale(1.05);
         }
         .logout-btn {
-            padding: 6px 12px;
-            background: #004aad;
+            padding: 8px 15px;
+            background: #dc3545;
             color: #fff;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            display: none;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             margin-left: 10px;
         }
         .logout-btn:hover {
-            background: #003087;
-            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.4);
+            background: #c82333;
+            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
         }
         .dark-mode-btn, .language-btn {
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
-            margin-left: 10px;
+            margin-left: 15px;
+            transition: transform 0.3s ease;
         }
-        .user-info {
-            color: #ffffff;
-            font-size: 12px;
-            margin-left: 10px;
-            display: none;
+        .dark-mode-btn:hover, .language-btn:hover {
+            transform: scale(1.2);
         }
-        .session-time {
-            color: #ffffff;
-            font-size: 12px;
-            margin-left: 10px;
-            display: none;
-        }
+        .user-info { color: #ffffff; font-size: 13px; margin-left: 15px; }
+        .session-time { color: #ffffff; font-size: 13px; margin-left: 15px; }
         .online-status {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background: #28a745;
             border-radius: 50%;
-            display: none;
             margin-left: 10px;
+            box-shadow: 0 0 5px #28a745;
         }
-        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; }
+        .hamburger { display: none; font-size: 26px; color: #ffffff; cursor: pointer; }
+
+        /* Hero Section */
         .hero {
-            height: 50vh;
-            background: url('https://file3.qdnd.vn/data/images/0/2025/01/11/upload_2085/a1.jpg') no-repeat center/cover;
+            position: relative;
+            height: 80vh;
+            overflow: hidden;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             text-align: center;
+            margin-top: 70px;
+            background: linear-gradient(135deg, rgba(0, 48, 135, 0.8), rgba(0, 94, 184, 0.8));
+        }
+        .hero-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://file3.qdnd.vn/data/images/0/2025/01/11/upload_2085/a1.jpg') no-repeat center/cover;
+            filter: blur(5px);
+            transform: scale(1.1);
+            transition: transform 0.5s ease;
+            z-index: -1;
+        }
+        .hero-content {
             color: #ffffff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            margin-top: 60px;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.7);
+            z-index: 1;
+            padding: 30px;
         }
-        .hero h2 { font-size: 36px; font-weight: 700; }
-        .hero p { font-size: 18px; }
-        .internal-section, .dashboard-section {
-            padding: 40px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            background: #f9f9f9;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-        body.dark-mode .internal-section, body.dark-mode .dashboard-section { background: #2a2a2a; }
-        .internal-section h3, .dashboard-section h3 { font-size: 24px; color: #003087; font-weight: 700; margin-bottom: 20px; }
-        body.dark-mode .internal-section h3, body.dark-mode .dashboard-section h3 { color: #66b0ff; }
-        .login-btn {
-            padding: 10px 20px;
-            background: #005eb8;
+        .hero h2 { font-size: 52px; font-weight: 700; margin-bottom: 15px; }
+        .hero p { font-size: 22px; margin-bottom: 25px; }
+        .hero .login-btn {
+            padding: 14px 35px;
+            background: linear-gradient(135deg, #005eb8, #003087);
             color: #ffffff;
             border: none;
-            border-radius: 10px;
-            font-size: 14px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0, 94, 184, 0.6);
         }
-        .login-btn:hover {
-            background: #003087;
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+        .hero .login-btn:hover {
+            background: linear-gradient(135deg, #003087, #001f5f);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 94, 184, 0.9);
         }
-        .dashboard-section { display: none; }
-        .dashboard-content {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+
+        /* Internal Section */
+        .internal-section {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 25px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
         }
+        body.dark-mode .internal-section { background: #2a2a2a; }
+        .internal-section h3 { font-size: 36px; color: #003087; font-weight: 700; margin-bottom: 25px; }
+        body.dark-mode .internal-section h3 { color: #66b0ff; }
+        .internal-section p { font-size: 18px; color: #555; margin-bottom: 40px; }
+        body.dark-mode .internal-section p { color: #cccccc; }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .feature-card {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark-mode .feature-card { background: #333; }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 5px 20px rgba(0, 94, 184, 0.3);
+        }
+        .feature-card i { font-size: 28px; color: #005eb8; margin-bottom: 15px; }
+        body.dark-mode .feature-card i { color: #66b0ff; }
+        .feature-card h4 { font-size: 20px; color: #003087; margin-bottom: 15px; }
+        body.dark-mode .feature-card h4 { color: #66b0ff; }
+        .feature-card p { font-size: 15px; color: #555; }
+        body.dark-mode .feature-card p { color: #cccccc; }
+
+        /* Dashboard Section */
+        .dashboard-section {
+            display: none;
+            padding: 60px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .dashboard-section { background: #2a2a2a; }
+        .dashboard-section h3 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 25px; }
+        body.dark-mode .dashboard-section h3 { color: #66b0ff; }
+        .dashboard-content { display: flex; gap: 25px; flex-wrap: wrap; }
         .dashboard-card {
             flex: 1;
-            min-width: 200px;
-            padding: 20px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            min-width: 250px;
+            padding: 25px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
         body.dark-mode .dashboard-card { background: #333; }
-        .dashboard-card h4 { font-size: 18px; color: #003087; }
+        .dashboard-card:hover { transform: translateY(-5px); }
+        .dashboard-card h4 { font-size: 20px; color: #003087; }
         body.dark-mode .dashboard-card h4 { color: #66b0ff; }
-        .dashboard-card p { font-size: 14px; color: #555; }
+        .dashboard-card p { font-size: 16px; color: #555; }
         body.dark-mode .dashboard-card p { color: #cccccc; }
         .search-bar input {
-            padding: 10px;
+            padding: 12px;
             width: 100%;
-            max-width: 300px;
-            border: 1px solid #a9a9a9;
+            max-width: 350px;
+            border: 2px solid #a9a9a9;
             border-radius: 10px;
-            font-size: 12px;
+            font-size: 14px;
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
         body.dark-mode .search-bar input { background: #333; color: #fff; border-color: #555; }
-        .notification-list { max-height: 200px; overflow-y: auto; }
+        .search-bar input:focus { border-color: #005eb8; box-shadow: 0 0 10px rgba(0, 94, 184, 0.3); outline: none; }
+        .notification-list { max-height: 250px; overflow-y: auto; }
         .notification-item {
-            padding: 10px;
+            padding: 12px;
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background 0.3s ease;
         }
         body.dark-mode .notification-item { border-bottom: 1px solid #555; }
+        .notification-item:hover { background: #f0f8ff; }
+        body.dark-mode .notification-item:hover { background: #444; }
         .notification-item .delete-btn {
             background: #ef4444;
             color: #fff;
             border: none;
             border-radius: 5px;
-            padding: 5px 10px;
+            padding: 6px 12px;
             cursor: pointer;
             font-size: 12px;
+            transition: all 0.3s ease;
         }
         .notification-item .delete-btn:hover { background: #c53030; }
         .refresh-btn {
-            padding: 10px 20px;
+            padding: 12px 25px;
             background: #28a745;
             color: #ffffff;
             border: none;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 20px;
+            box-shadow: 0 3px 15px rgba(40, 167, 69, 0.3);
         }
         .refresh-btn:hover {
             background: #218838;
-            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.5);
+            transform: translateY(-3px);
         }
-        .modal, .alert-modal {
+
+        /* Modal */
+        .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .login-modal-content, .alert-modal-content {
-            background: #ffffff;
-            margin: 15% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            position: relative;
-            border-top: 5px solid #005eb8;
-        }
-        body.dark-mode .login-modal-content, body.dark-mode .alert-modal-content { 
-            background: #2a2a2a; 
-            border-top: 5px solid #66b0ff; 
-        }
-        .login-modal-content h2, .alert-modal-content h2 {
-            font-size: 24px;
-            color: #003087;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        body.dark-mode .login-modal-content h2, body.dark-mode .alert-modal-content h2 { 
-            color: #66b0ff; 
-        }
-        .login-modal-content form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .login-modal-content input {
-            padding: 10px;
-            border: 1px solid #a9a9a9;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        body.dark-mode .login-modal-content input {
-            background: #333;
-            color: #ffffff;
-            border-color: #555;
-        }
-        .login-modal-content input:focus {
-            border-color: #005eb8;
-            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
-            outline: none;
-        }
-        .login-modal-content button, .alert-modal-content button {
-            padding: 10px;
-            background: #005eb8;
-            color: #ffffff;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .login-modal-content button:hover, .alert-modal-content button:hover {
-            background: #003087;
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
-        }
-        .reset-password, .forgot-password, .back-to-login {
-            font-size: 12px;
-            color: #005eb8;
-            cursor: pointer;
-            text-decoration: underline;
-            margin-top: 10px;
-            display: block;
-        }
-        body.dark-mode .reset-password, body.dark-mode .forgot-password, body.dark-mode .back-to-login { color: #66b0ff; }
-        .close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            color: #555;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        body.dark-mode .close { color: #cccccc; }
-        .close:hover { color: #003087; }
-        body.dark-mode .close:hover { color: #66b0ff; }
-        @media (max-width: 768px) {
-            .navbar { padding: 0 10px; height: 50px; }
-            .navbar .logo-text { font-size: 14px; }
-            .navbar .menu {
-                display: none;
-                position: absolute;
-                top: 50px;
-                left: 0;
-                width: 100%;
-                background: #003087;
-                padding: 10px;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .navbar .menu.active { display: flex; }
-            .hamburger { display: block; }
-            .hero { margin-top: 50px; }
-            .hero h2 { font-size: 24px; }
-            .hero p { font-size: 14px; }
-            .internal-section, .dashboard-section { padding: 20px 10px; }
-            .dashboard-content { flex-direction: column; }
-        }
-        .login-modal-content {
+        .modal-content {
             background: linear-gradient(135deg, #ffffff, #f9f9f9);
-            margin: 10% auto;
+            margin: 0 auto;
             padding: 40px;
             border-radius: 20px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             border-top: 6px solid #005eb8;
             transform: scale(0.9);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
         }
-        body.dark-mode .login-modal-content {
+        .modal-content.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        body.dark-mode .modal-content {
             background: linear-gradient(135deg, #2a2a2a, #333);
             border-top: 6px solid #66b0ff;
         }
-        .login-modal-content h2 {
+        .modal-content h2 {
             font-size: 28px;
             color: #003087;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-align: center;
         }
-        body.dark-mode .login-modal-content h2 { color: #66b0ff; }
-        .login-modal-content p {
-            font-size: 14px;
-            color: #555;
-            text-align: center;
-        }
-        body.dark-mode .login-modal-content p { color: #cccccc; }
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
+        body.dark-mode .modal-content h2 { color: #66b0ff; }
+        .modal-content p { font-size: 15px; color: #555; text-align: center; margin-bottom: 20px; }
+        body.dark-mode .modal-content p { color: #cccccc; }
+        .input-group { position: relative; margin-bottom: 20px; }
         .input-group .input-icon {
             position: absolute;
             top: 50%;
             left: 15px;
             transform: translateY(-50%);
             color: #005eb8;
-            font-size: 16px;
+            font-size: 18px;
         }
         body.dark-mode .input-group .input-icon { color: #66b0ff; }
-        .login-modal-content input {
-            padding: 12px 12px 12px 40px;
+        .modal-content input {
+            padding: 12px 15px 12px 45px;
             border: 2px solid #a9a9a9;
             border-radius: 12px;
-            font-size: 14px;
+            font-size: 15px;
             width: 100%;
             transition: all 0.3s ease;
         }
-        body.dark-mode .login-modal-content input {
-            background: #333;
-            color: #ffffff;
-            border-color: #555;
-        }
-        .login-modal-content input:focus {
-            border-color: #005eb8;
-            box-shadow: 0 0 12px rgba(0, 94, 184, 0.4);
-            outline: none;
-        }
-        .login-modal-content button {
-            padding: 12px 20px;
+        body.dark-mode .modal-content input { background: #333; color: #ffffff; border-color: #555; }
+        .modal-content input:focus { border-color: #005eb8; box-shadow: 0 0 12px rgba(0, 94, 184, 0.4); outline: none; }
+        .modal-content button {
+            padding: 12px 25px;
             background: linear-gradient(135deg, #005eb8, #003087);
             color: #ffffff;
             border: none;
@@ -409,50 +353,37 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            width: 100%;
         }
-        .login-modal-content button:hover {
+        .modal-content button:hover {
             background: linear-gradient(135deg, #003087, #001f5f);
             box-shadow: 0 6px 20px rgba(0, 94, 184, 0.6);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
-        .reset-password, .forgot-password, .back-to-login {
+        .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
+        .modal-links span {
             font-size: 13px;
             color: #005eb8;
             cursor: pointer;
             text-decoration: underline;
-            margin-top: 15px;
-            display: block;
-            text-align: center;
             transition: color 0.3s ease;
         }
-        body.dark-mode .reset-password, body.dark-mode .forgot-password, body.dark-mode .back-to-login { color: #66b0ff; }
-        .reset-password:hover, .forgot-password:hover, .back-to-login:hover { color: #003087; }
-        body.dark-mode .reset-password:hover, body.dark-mode .forgot-password:hover, body.dark-mode .back-to-login:hover { color: #ffffff; }
+        body.dark-mode .modal-links span { color: #66b0ff; }
+        .modal-links span:hover { color: #003087; }
+        body.dark-mode .modal-links span:hover { color: #ffffff; }
         .close {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            right: 15px;
             font-size: 28px;
             color: #555;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
         body.dark-mode .close { color: #cccccc; }
-        .close:hover {
-            color: #003087;
-            transform: rotate(90deg);
-        }
+        .close:hover { color: #003087; transform: rotate(90deg); }
         body.dark-mode .close:hover { color: #66b0ff; }
-        @media (max-width: 768px) {
-            .login-modal-content {
-                padding: 30px;
-                margin: 20% auto;
-                max-width: 350px;
-            }
-            .login-modal-content h2 { font-size: 24px; }
-            .login-modal-content input { padding: 10px 10px 10px 35px; }
-            .login-modal-content button { padding: 10px 15px; font-size: 14px; }
-        }
         .loading-overlay {
             display: none;
             position: absolute;
@@ -460,27 +391,50 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             border-radius: 20px;
             z-index: 10;
             justify-content: center;
             align-items: center;
         }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #005eb8;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #005eb8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        body.dark-mode .spinner {
-            border: 4px solid #555;
-            border-top: 4px solid #66b0ff;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        body.dark-mode .spinner { border: 5px solid #555; border-top: 5px solid #66b0ff; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar { padding: 0 15px; height: 60px; }
+            .navbar .logo-text { font-size: 18px; }
+            .navbar .menu {
+                display: none;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                width: 100%;
+                background: #003087;
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .navbar .menu.active { display: flex; }
+            .hamburger { display: block; }
+            .hero { height: 70vh; margin-top: 60px; }
+            .hero h2 { font-size: 36px; }
+            .hero p { font-size: 18px; }
+            .hero .login-btn { padding: 12px 25px; font-size: 16px; }
+            .internal-section { padding: 40px 15px; }
+            .dashboard-section { padding: 40px 15px; }
+            .modal-content { padding: 30px; max-width: 400px; }
+            .modal-content h2 { font-size: 24px; }
+            .modal-content input { padding: 10px 10px 10px 40px; }
+            .modal-content button { padding: 10px 20px; font-size: 14px; }
         }
     </style>
 </head>
@@ -499,16 +453,36 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero" data-aos="fade-up">
-        <h2 data-lang="hero-title">Hệ Thống Nội Bộ VinFast</h2>
-        <p data-lang="hero-subtitle">Showroom Thuận An</p>
+    <section class="hero" id="heroSection" data-aos="fade-up">
+        <div class="hero-background" id="heroBackground"></div>
+        <div class="hero-content">
+            <h2 data-lang="hero-title">Hệ Thống Nội Bộ VinFast</h2>
+            <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
+            <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
+        </div>
     </section>
 
     <!-- Internal Section -->
     <section class="internal-section" id="welcomeSection" data-aos="fade-up">
         <h3 data-lang="welcome-title">Chào Mừng Đến Với Hệ Thống Nội Bộ</h3>
-        <p data-lang="welcome-text">Vui lòng đăng nhập để truy cập các chức năng quản lý kinh doanh, đơn hàng, và xe đã bán.</p>
-        <button class="login-btn" onclick="openModal('loginModal')" data-lang="login-btn">Đăng Nhập</button>
+        <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ VinFast.</p>
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-chart-line"></i>
+                <h4 data-lang="sales-title">Theo Dõi Doanh Số</h4>
+                <p>Cập nhật doanh số bán hàng theo thời gian thực.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-clipboard-list"></i>
+                <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
+                <p>Theo dõi và xử lý đơn hàng nhanh chóng.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <i class="fas fa-bell"></i>
+                <h4 data-lang="notifications-title">Thông Báo</h4>
+                <p>Nhận thông báo quan trọng ngay lập tức.</p>
+            </div>
+        </div>
     </section>
 
     <!-- Dashboard Section -->
@@ -531,17 +505,17 @@
                 <div class="notification-list" id="notificationList"></div>
             </div>
         </div>
-        <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn">Làm Mới</button>
+        <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn"><i class="fas fa-sync-alt"></i> Làm Mới</button>
     </section>
 
-    <!-- Modal Đăng Nhập -->
+    <!-- Login Modal -->
     <div id="loginModal" class="modal">
-        <div class="login-modal-content" data-aos="zoom-in">
+        <div class="modal-content">
             <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
-            <!-- Form Đăng Nhập -->
+            <!-- Login Form -->
             <div id="loginForm">
                 <h2 data-lang="login-title">Đăng Nhập</h2>
                 <p data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
@@ -556,10 +530,13 @@
                     </div>
                     <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
                 </form>
-                <span class="reset-password" onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
-                <span class="forgot-password" onclick="showContactAdmin()" data-lang="forgot-password">Quên mật khẩu?</span>
+                <div class="modal-links">
+                    <span class="reset-password" onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
+                    <span class="forgot-password" onclick="showContactAdmin()" data-lang="forgot-password">Quên mật khẩu?</span>
+                </div>
+                <span class="register-link" onclick="showForm('registerForm')" data-lang="register">Chưa có tài khoản? Đăng ký</span>
             </div>
-            <!-- Form Đổi Mật Khẩu -->
+            <!-- Reset Password Form -->
             <div id="resetPasswordForm" style="display: none;">
                 <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
                 <p data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
@@ -582,15 +559,40 @@
                     </div>
                     <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> Đổi Mật Khẩu</button>
                 </form>
-                <span class="back-to-login" onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                <div class="modal-links">
+                    <span class="back-to-login" onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                </div>
+            </div>
+            <!-- Register Form -->
+            <div id="registerForm" style="display: none;">
+                <h2 data-lang="register-title">Đăng Ký</h2>
+                <p data-lang="register-subtitle">Tạo tài khoản mới để truy cập hệ thống</p>
+                <form onsubmit="register(event)">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="regUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="regPassword" placeholder="Mật khẩu" required data-lang-placeholder="password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" required data-lang-placeholder="confirm-password">
+                    </div>
+                    <button type="submit" data-lang="register-btn"><i class="fas fa-user-plus"></i> Đăng Ký</button>
+                </form>
+                <div class="modal-links">
+                    <span class="back-to-login" onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Thông Báo -->
-    <div id="alertModal" class="alert-modal">
-        <div class="alert-modal-content">
-            <span class="close" onclick="closeModal('alertModal')">×</span>
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('alertModal')"><i class="fas fa-times"></i></span>
             <h2 id="alertTitle"></h2>
             <p id="alertMessage"></p>
             <button onclick="closeModal('alertModal')">OK</button>
@@ -600,12 +602,13 @@
     <!-- Script -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 1500, easing: 'ease-out-bounce' });
-        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        let currentUser = localStorage.getItem('currentUser') || '';
-        let userRole = localStorage.getItem('userRole') || 'employee';
+        AOS.init({ duration: 1200, easing: 'ease-out-back' });
+
+        let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+        let currentUser = sessionStorage.getItem('currentUser') || '';
+        let userRole = sessionStorage.getItem('userRole') || 'employee';
         const sessionTimeout = 15 * 60 * 1000; // 15 phút
-        let notifications = JSON.parse(localStorage.getItem('notifications')) || [
+        let notifications = JSON.parse(sessionStorage.getItem('notifications')) || [
             { id: 1, text: "Cuộc họp 10:00 ngày 27/03", date: "26/03/2025" },
             { id: 2, text: "Cập nhật KPI tháng 3", date: "25/03/2025" },
             { id: 3, text: "Xe VF9 mới nhập kho", date: "24/03/2025" }
@@ -618,13 +621,13 @@
         const translations = {
             vi: {
                 "hero-title": "Hệ Thống Nội Bộ VinFast",
-                "hero-subtitle": "Showroom Thuận An",
+                "hero-subtitle": "Chào mừng đến với Showroom Thuận An",
                 "welcome-title": "Chào Mừng Đến Với Hệ Thống Nội Bộ",
-                "welcome-text": "Vui lòng đăng nhập để truy cập các chức năng quản lý kinh doanh, đơn hàng, và xe đã bán.",
+                "welcome-text": "Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ VinFast.",
                 "login-btn": "Đăng Nhập",
                 "dashboard-title": "Bảng Điều Khiển",
-                "sales-title": "Doanh Số",
-                "orders-title": "Đơn Hàng Chờ",
+                "sales-title": "Theo Dõi Doanh Số",
+                "orders-title": "Quản Lý Đơn Hàng",
                 "notifications-title": "Thông Báo",
                 "search-notifications": "Tìm kiếm thông báo...",
                 "refresh-btn": "Làm Mới",
@@ -641,17 +644,17 @@
                 "confirm-password": "Xác nhận mật khẩu mới",
                 "change-password-btn": "Đổi Mật Khẩu",
                 "back-to-login": "Quay lại đăng nhập",
-                "contact-admin": "Liên hệ admin để lấy lại mật khẩu"
+                "contact-admin": "Liên hệ admin để lấy lại mật khẩu",
             },
             en: {
                 "hero-title": "VinFast Internal System",
-                "hero-subtitle": "Thuan An Showroom",
+                "hero-subtitle": "Welcome to Thuan An Showroom",
                 "welcome-title": "Welcome to the Internal System",
-                "welcome-text": "Please log in to access business management, orders, and sold vehicles features.",
+                "welcome-text": "Efficiently manage sales, orders, and sold vehicles with the VinFast internal system.",
                 "login-btn": "Login",
                 "dashboard-title": "Dashboard",
-                "sales-title": "Sales",
-                "orders-title": "Pending Orders",
+                "sales-title": "Track Sales",
+                "orders-title": "Manage Orders",
                 "notifications-title": "Notifications",
                 "search-notifications": "Search notifications...",
                 "refresh-btn": "Refresh",
@@ -668,7 +671,7 @@
                 "confirm-password": "Confirm New Password",
                 "change-password-btn": "Change Password",
                 "back-to-login": "Back to Login",
-                "contact-admin": "Contact admin to recover password"
+                "contact-admin": "Contact admin to recover password",
             }
         };
 
@@ -679,7 +682,13 @@
                 startSessionTimer();
                 updateSessionTime();
                 loadNotifications();
+                showWelcomeNotification();
             }
+            window.addEventListener('scroll', () => {
+                const heroBackground = document.getElementById('heroBackground');
+                const scrollPosition = window.scrollY;
+                heroBackground.style.transform = `scale(1.1) translateY(${scrollPosition * 0.4}px)`;
+            });
         });
 
         function updateUI() {
@@ -690,6 +699,7 @@
             const onlineStatus = document.getElementById('onlineStatus');
             const dashboard = document.getElementById('dashboard');
             const welcomeSection = document.getElementById('welcomeSection');
+            const heroSection = document.getElementById('heroSection');
 
             logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
             onlineStatus.style.display = isLoggedIn ? 'inline-block' : 'none';
@@ -700,12 +710,14 @@
                 menu.classList.add('active');
                 dashboard.style.display = 'block';
                 welcomeSection.style.display = 'none';
+                heroSection.style.display = 'none';
                 userInfo.textContent = `${language === 'vi' ? 'Xin chào' : 'Hello'}, ${currentUser} (${userRole === 'manager' ? (language === 'vi' ? 'Quản lý' : 'Manager') : (language === 'vi' ? 'Nhân viên' : 'Employee')})`;
                 updateMenu();
             } else {
                 menu.classList.remove('active');
                 dashboard.style.display = 'none';
                 welcomeSection.style.display = 'block';
+                heroSection.style.display = 'flex';
                 menu.innerHTML = '';
             }
         }
@@ -738,59 +750,51 @@
 
             loadingOverlay.style.display = 'flex';
             loginButton.disabled = true;
-            loginButton.style.opacity = '0.6';
 
             try {
-                const response = await axios.get(API_URL, {
-                    params: { username, password }
-                });
-
+                const response = await axios.get(API_URL, { params: { username, password } });
                 const users = response.data;
                 if (users.length > 0) {
                     const user = users[0];
                     isLoggedIn = true;
                     currentUser = user.username;
                     userRole = user.role;
-                    localStorage.setItem('isLoggedIn', 'true');
-                    localStorage.setItem('currentUser', user.username);
-                    localStorage.setItem('userRole', user.role);
-                    localStorage.setItem('loginTime', Date.now());
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('currentUser', user.username);
+                    sessionStorage.setItem('userRole', user.role);
+                    sessionStorage.setItem('loginTime', Date.now());
                     closeModal('loginModal');
                     showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
                     updateUI();
                     startSessionTimer();
                     updateSessionTime();
                     loadNotifications();
-                    highlightMenu();
+                    showWelcomeNotification();
                 } else {
                     showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
                 }
             } catch (error) {
-                const msg = error.response?.data?.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', msg);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', error.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!'));
             } finally {
                 loadingOverlay.style.display = 'none';
                 loginButton.disabled = false;
-                loginButton.style.opacity = '1';
             }
         }
 
-        function highlightMenu() {
-            const menuLinks = document.querySelectorAll('.navbar .menu li a');
-            menuLinks.forEach(link => {
-                link.classList.add('active');
-                setTimeout(() => link.classList.remove('active'), 3000);
+        function showWelcomeNotification() {
+            notifications.unshift({
+                id: Date.now(),
+                text: `${language === 'vi' ? 'Chào mừng' : 'Welcome'} ${currentUser} ${language === 'vi' ? 'đến hệ thống!' : 'to the system!'}`,
+                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')
             });
+            loadNotifications();
         }
 
         function logout() {
             isLoggedIn = false;
             currentUser = '';
             userRole = 'employee';
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('loginTime');
+            sessionStorage.clear();
             clearTimeout(sessionTimer);
             clearInterval(sessionInterval);
             showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã đăng xuất!' : 'Logged out!');
@@ -799,7 +803,7 @@
 
         let sessionTimer, sessionInterval;
         function startSessionTimer() {
-            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const loginTime = parseInt(sessionStorage.getItem('loginTime')) || Date.now();
             const timeElapsed = Date.now() - loginTime;
             if (timeElapsed >= sessionTimeout) {
                 logout();
@@ -814,7 +818,7 @@
         }
 
         function updateSessionTime() {
-            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const loginTime = parseInt(sessionStorage.getItem('loginTime')) || Date.now();
             const timeLeft = sessionTimeout - (Date.now() - loginTime);
             if (timeLeft <= 0) return;
             const minutes = Math.floor(timeLeft / 60000);
@@ -834,26 +838,29 @@
             return true;
         }
 
-        function toggleMenu() { 
+        function toggleMenu() {
             const menu = document.querySelector('.menu');
-            if (isLoggedIn) menu.classList.toggle('active'); 
+            if (isLoggedIn) menu.classList.toggle('active');
         }
 
-        function openModal(id) { 
-            document.getElementById(id).style.display = "block"; 
-            showForm('loginForm');
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const content = modal.querySelector('.modal-content');
+            modal.style.display = 'flex';
+            setTimeout(() => content.classList.add('active'), 10);
         }
 
-        function closeModal(id) { 
-            document.getElementById(id).style.display = "none"; 
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const content = modal.querySelector('.modal-content');
+            content.classList.remove('active');
+            setTimeout(() => modal.style.display = 'none', 300);
             showForm('loginForm');
         }
 
         window.onclick = (e) => {
             const modals = document.getElementsByClassName('modal');
-            const alerts = document.getElementsByClassName('alert-modal');
             for (let modal of modals) if (e.target == modal) closeModal(modal.id);
-            for (let alert of alerts) if (e.target == alert) closeModal(alert.id);
         };
 
         function showAlert(title, message) {
@@ -863,10 +870,7 @@
         }
 
         function showContactAdmin() {
-            showAlert(
-                language === 'vi' ? 'Thông Báo' : 'Notification',
-                translations[language]["contact-admin"]
-            );
+            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', translations[language]["contact-admin"]);
         }
 
         function toggleDarkMode() {
@@ -878,8 +882,7 @@
         }
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
-            document.querySelector('.dark-mode-btn i').classList.remove('fa-moon');
-            document.querySelector('.dark-mode-btn i').classList.add('fa-sun');
+            document.querySelector('.dark-mode-btn i').classList.replace('fa-moon', 'fa-sun');
         }
 
         function toggleLanguage() {
@@ -911,7 +914,7 @@
                         <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === 'vi' ? 'Xóa' : 'Delete'}</button>
                     </div>`;
             });
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+            sessionStorage.setItem('notifications', JSON.stringify(notifications));
         }
 
         function filterNotifications() {
@@ -924,10 +927,10 @@
         function refreshDashboard() {
             document.getElementById('salesData').textContent = `${Math.floor(Math.random() * 10) + 50} ${language === 'vi' ? 'xe (Tháng 3/2025)' : 'vehicles (March 2025)'}`;
             document.getElementById('ordersData').textContent = `${Math.floor(Math.random() * 5) + 10} ${language === 'vi' ? 'đơn' : 'orders'}`;
-            notifications.push({ 
-                id: notifications.length + 1, 
-                text: language === 'vi' ? 'Dữ liệu đã làm mới' : 'Data refreshed', 
-                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US') 
+            notifications.unshift({
+                id: Date.now(),
+                text: language === 'vi' ? 'Dữ liệu đã làm mới' : 'Data refreshed',
+                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')
             });
             loadNotifications();
             showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã làm mới dữ liệu!' : 'Data refreshed!');
@@ -941,7 +944,7 @@
 
         function showForm(formName) {
             currentForm = formName;
-            const forms = ['loginForm', 'resetPasswordForm'];
+            const forms = ['loginForm', 'resetPasswordForm', 'registerForm'];
             forms.forEach(form => document.getElementById(form).style.display = form === formName ? 'block' : 'none');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
@@ -949,6 +952,9 @@
             document.getElementById('oldPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirmPassword').value = '';
         }
 
         async function changePassword(e) {
@@ -958,13 +964,11 @@
             const newPassword = document.getElementById('newPassword').value.trim();
             const confirmPassword = document.getElementById('confirmPassword').value.trim();
             const loadingOverlay = document.getElementById('loadingOverlay');
-            const changeButton = document.querySelector('#resetPasswordForm button[type="submit"]');
 
             if (!username || !oldPassword || !newPassword || !confirmPassword) {
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
                 return;
             }
-
             if (newPassword !== confirmPassword) {
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
                 return;
@@ -975,19 +979,10 @@
             }
 
             loadingOverlay.style.display = 'flex';
-            changeButton.disabled = true;
-            changeButton.style.opacity = '0.6';
-
             try {
                 const response = await axios.get(API_URL, {
-                    params: {
-                        username: username,
-                        oldPassword,
-                        newPassword,
-                        action: 'changePassword'
-                    }
+                    params: { username, oldPassword, newPassword, action: 'changePassword' }
                 });
-
                 const result = response.data;
                 if (result.success) {
                     closeModal('loginModal');
@@ -996,13 +991,39 @@
                     showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu cũ không đúng!' : 'Username or old password is incorrect!'));
                 }
             } catch (error) {
-                const msg = error.response?.data?.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', msg);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', error.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!'));
             } finally {
                 loadingOverlay.style.display = 'none';
-                changeButton.disabled = false;
-                changeButton.style.opacity = '1';
             }
+        }
+
+        async function register(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+
+            if (!username || !password || !confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
+                return;
+            }
+            if (password !== confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu không khớp!' : 'Passwords do not match!');
+                return;
+            }
+            if (password.length < 6) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu phải dài ít nhất 6 ký tự!' : 'Password must be at least 6 characters!');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+            // Giả lập API đăng ký (cần tích hợp API thực tế)
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                closeModal('loginModal');
+                showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng ký thành công! Vui lòng đăng nhập.' : 'Registration successful! Please log in.');
+            }, 1000);
         }
     </script>
 </body>
