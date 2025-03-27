@@ -84,8 +84,8 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            gap: 15px; /* Tùy chỉnh khoảng cách giữa các tab */
-            transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt mà */
+            gap: 15px;
+            transition: all 0.3s ease;
         }
         .navbar .tabs a {
             padding: 10px 15px;
@@ -100,24 +100,93 @@
             background: #005eb8;
             box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
             animation: glowPulse 2s infinite ease-in-out;
-            transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover/active */
+            transform: scale(1.05);
         }
         @keyframes glowPulse {
             0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.8); }
             50% { box-shadow: 0 0 30px rgba(0, 94, 184, 1); }
         }
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 20px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
+        .navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-left: auto;
         }
-        .theme-toggle:hover {
-            transform: scale(1.2);
+        .nav-btn {
+            position: relative;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            background: #005eb8;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        .nav-btn:hover {
+            background: #003087;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+        }
+        .nav-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .nav-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .nav-btn:hover::after, .nav-btn:hover::before {
+            opacity: 1;
+        }
+        [data-theme="dark"] .nav-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+        [data-theme="dark"] .nav-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+.theme-toggle {
+    background: none;
+    border: none;
+    color: #ffffff; /* Đảm bảo icon luôn trắng */
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.2);
+}
+
+/* Đảm bảo màu trắng không bị ghi đè trong dark mode */
+[data-theme="dark"] .theme-toggle {
+    color: #ffffff;
+}
         .hamburger {
             display: none;
             background: none;
@@ -134,7 +203,7 @@
             padding: 10px;
             gap: 10px;
             min-height: calc(100vh - 90px);
-            transition: opacity 0.3s ease; /* Hiệu ứng chuyển đổi nội dung */
+            transition: opacity 0.3s ease;
         }
         .form-container {
             background: var(--container-bg);
@@ -226,36 +295,88 @@
             gap: 10px;
             align-items: center;
         }
-        .export-btn, .refresh-btn {
+        .export-btn {
+            position: relative;
             padding: 10px;
             border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #005eb8, #003087);
+            border-radius: 10px;
+            background: #005eb8;
             color: #ffffff;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 94, 184, 0.3);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-btn:hover {
+            background: #003087;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+        }
+        .refresh-btn {
             position: relative;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #005eb8, #003087); /* Giữ giao diện gốc */
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .export-btn:hover, .refresh-btn:hover {
-            background: linear-gradient(135deg, #003087, #005eb8);
-            box-shadow: 0 4px 15px rgba(0, 94, 184, 0.5);
-            transform: translateY(-2px);
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #003087, #005eb8); /* Giữ giao diện gốc */
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
         }
-        .export-btn:hover::after, .refresh-btn:hover::after {
+        .export-btn[data-tooltip]::after,
+        .refresh-btn[data-tooltip]::after {
             content: attr(data-tooltip);
             position: absolute;
-            top: -25px;
+            top: -35px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 94, 184, 0.9);
+            background: #333;
             color: #ffffff;
             padding: 5px 10px;
             border-radius: 5px;
-            font-size: 10px;
+            font-size: 11px;
             white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
             z-index: 10;
+        }
+        .export-btn[data-tooltip]::before,
+        .refresh-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .export-btn:hover::after, .export-btn:hover::before,
+        .refresh-btn:hover::after, .refresh-btn:hover::before {
+            opacity: 1;
+        }
+        [data-theme="dark"] .export-btn[data-tooltip]::after,
+        [data-theme="dark"] .refresh-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+        [data-theme="dark"] .export-btn[data-tooltip]::before,
+        [data-theme="dark"] .refresh-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
         }
         .table-wrapper {
             max-height: calc(100% - 120px);
@@ -441,7 +562,7 @@
                 font-size: 24px;
             }
             .navbar .tabs {
-                gap: 20px; /* Khoảng cách lớn hơn trên màn hình lớn */
+                gap: 20px;
             }
             .navbar .tabs a {
                 padding: 14px 20px;
@@ -490,20 +611,13 @@
                 font-size: 14px;
                 border-radius: 10px;
             }
-            .export-btn, .refresh-btn {
+            .export-btn {
                 padding: 12px;
                 font-size: 16px;
                 border-radius: 10px;
             }
-            .export-btn:hover::after, .refresh-btn:hover::after {
-                top: -30px;
-                font-size: 12px;
-            }
             .table-wrapper {
                 max-height: calc(100% - 120px);
-            }
-            .table-wrapper::-webkit-scrollbar {
-                width: 10px;
             }
             table {
                 font-size: 14px;
@@ -620,504 +734,557 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="logo">
-            <h1>VinFast Ghép Xe</h1>
-        </div>
-        <button class="hamburger" onclick="toggleMenu()">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div class="tabs">
-            <a href="#" onclick="switchTab('form', this)" class="active">Yêu Cầu Ghép Xe</a>
-            <a href="#" onclick="switchTab('history', this)">Lịch Sử</a>
-            <a href="#" onclick="switchTab('charts', this)">Thống Kê</a>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Chuyển đổi chế độ sáng/tối">
-            <span id="theme-icon">☀️</span>
-        </button>
+<div class="navbar">
+    <div class="logo">
+        <h1>VinFast Ghép Xe</h1>
+    </div>
+    <button class="hamburger" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="tabs">
+        <a href="#" onclick="switchTab('form', this)" class="active">Yêu Cầu Ghép Xe</a>
+        <a href="#" onclick="switchTab('history', this)">Lịch Sử</a>
+        <a href="#" onclick="switchTab('charts', this)">Thống Kê</a>
+    </div>
+<div class="navbar-controls">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Chuyển đổi chế độ sáng/tối">
+        <i class="fas fa-moon" id="theme-icon"></i> <!-- Sử dụng Font Awesome -->
+    </button>
+    <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+    <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+</div>
+
+<div class="main-container">
+    <!-- Form Ghép Xe (Chủ đạo) -->
+    <div class="form-container" id="form-section">
+        <h2>Thêm Yêu Cầu Ghép Xe</h2>
+        <form id="vinfast-form" onsubmit="previewForm(event)">
+            <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required/>
+            <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
+            <input name="dong_xe" placeholder="Dòng xe" required/>
+            <input name="phien_ban" placeholder="Phiên bản" required/>
+            <input name="ngoai_that" placeholder="Ngoại thất" required/>
+            <input name="noi_that" placeholder="Nội thất" required/>
+            <input name="so_don_hang" placeholder="Số đơn hàng" required/>
+            <input name="ngay_coc" type="datetime-local" required/>
+            <button type="submit">Xác Nhận</button>
+        </form>
     </div>
 
-    <div class="main-container">
-        <!-- Form Ghép Xe (Chủ đạo) -->
-        <div class="form-container" id="form-section">
-            <h2>Thêm Yêu Cầu Ghép Xe</h2>
-            <form id="vinfast-form" onsubmit="previewForm(event)">
-                <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required/>
-                <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
-                <input name="dong_xe" placeholder="Dòng xe" required/>
-                <input name="phien_ban" placeholder="Phiên bản" required/>
-                <input name="ngoai_that" placeholder="Ngoại thất" required/>
-                <input name="noi_that" placeholder="Nội thất" required/>
-                <input name="so_don_hang" placeholder="Số đơn hàng" required/>
-                <input name="ngay_coc" type="datetime-local" required/>
-                <button type="submit">Xác Nhận</button>
-            </form>
+    <!-- Lịch Sử -->
+    <div class="grid-container" id="history-section">
+        <div class="summary-section">
+            <h3>Tổng Quan</h3>
+            <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
+            <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
+            <p>Tư vấn viên tích cực nhất: <span id="summary-top-advisor">Chưa có dữ liệu</span></p>
         </div>
-
-        <!-- Lịch Sử -->
-        <div class="grid-container" id="history-section">
-            <div class="summary-section">
-                <h3>Tổng Quan</h3>
-                <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
-                <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
-                <p>Tư vấn viên tích cực nhất: <span id="summary-top-advisor">Chưa có dữ liệu</span></p>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="search-box" oninput="filterHistory()" placeholder="Tìm kiếm...">
+                <select id="filter-car" onchange="filterHistory()">
+                    <option value="">Tất cả dòng xe</option>
+                </select>
+                <select id="filter-advisor" onchange="filterHistory()">
+                    <option value="">Tất cả tư vấn viên</option>
+                </select>
+                <input type="date" id="filter-date" onchange="filterHistory()">
             </div>
-            <div class="controls">
-                <div class="search-container">
-                    <input type="text" id="search-box" oninput="filterHistory()" placeholder="Tìm kiếm...">
-                    <select id="filter-car" onchange="filterHistory()">
-                        <option value="">Tất cả dòng xe</option>
-                    </select>
-                    <select id="filter-advisor" onchange="filterHistory()">
-                        <option value="">Tất cả tư vấn viên</option>
-                    </select>
-                    <input type="date" id="filter-date" onchange="filterHistory()">
-                </div>
-                <div class="export-btn-container">
-                    <span>Tổng số đơn: <span id="total-don-count">0</span></span>
-                    <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                    <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                </div>
-            </div>
-            <div class="table-wrapper">
-                <table id="history-table">
-                    <thead id="table-header">
-                        <tr>
-                            <th>STT</th>
-                            <th>Tên TVBH</th>
-                            <th>Tên KH</th>
-                            <th>Số Đơn Hàng</th>
-                            <th>Dòng Xe</th>
-                            <th>Phiên Bản</th>
-                            <th>Ngoại Thất</th>
-                            <th>Nội Thất</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
+            <div class="export-btn-container">
+                <span>Tổng số đơn: <span id="total-don-count">0</span></span>
+                <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
             </div>
         </div>
+        <div class="table-wrapper">
+            <table id="history-table">
+                <thead id="table-header">
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên TVBH</th>
+                        <th>Tên KH</th>
+                        <th>Số Đơn Hàng</th>
+                        <th>Dòng Xe</th>
+                        <th>Phiên Bản</th>
+                        <th>Ngoại Thất</th>
+                        <th>Nội Thất</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
 
-        <!-- Thống Kê -->
-        <div class="grid-container hidden" id="chart-section">
-            <h2 style="color: #003087; margin-bottom: 15px;">Thống Kê Yêu Cầu</h2>
-            <div class="grid grid-cols-1 gap-4">
-                <div class="bg-white rounded-lg p-3 shadow" style="background: var(--chart-bg);">
-                    <div class="text-xs font-semibold text-gray-700 mb-2 text-center" style="color: var(--text-color);">Thống kê theo dòng xe</div>
-                    <div class="chart-container">
-                        <canvas id="chart-by-car"></canvas>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg p-3 shadow" style="background: var(--chart-bg);">
-                    <div class="text-xs font-semibold text-gray-700 mb-2 text-center" style="color: var(--text-color);">Thống kê theo tư vấn viên</div>
-                    <div class="chart-container">
-                        <canvas id="chart-by-advisor"></canvas>
-                    </div>
+    <!-- Thống Kê -->
+    <div class="grid-container hidden" id="chart-section">
+        <h2 style="color: #003087; margin-bottom: 15px;">Thống Kê Yêu Cầu</h2>
+        <div class="grid grid-cols-1 gap-4">
+            <div class="bg-white rounded-lg p-3 shadow" style="background: var(--chart-bg);">
+                <div class="text-xs font-semibold text-gray-700 mb-2 text-center" style="color: var(--text-color);">Thống kê theo dòng xe</div>
+                <div class="chart-container">
+                    <canvas id="chart-by-car"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <footer>
-        © 2025 VinFast Auto. All rights reserved. Hotline: 1900 232389
-    </footer>
-
-    <!-- Preview Modal -->
-    <div class="modal" id="preview-modal">
-        <div class="modal-content">
-            <h2>Xác Nhận Thông Tin</h2>
-            <div id="preview-content" class="space-y-2 text-sm"></div>
-            <div class="flex justify-end gap-4 mt-4">
-                <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Huỷ</button>
-                <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
+            <div class="bg-white rounded-lg p-3 shadow" style="background: var(--chart-bg);">
+                <div class="text-xs font-semibold text-gray-700 mb-2 text-center" style="color: var(--text-color);">Thống kê theo tư vấn viên</div>
+                <div class="chart-container">
+                    <canvas id="chart-by-advisor"></canvas>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Detail Modal -->
-    <div class="modal" id="detail-modal">
-        <div class="modal-content">
-            <h2>Chi Tiết Yêu Cầu</h2>
-            <div id="detail-content" class="space-y-2 text-sm"></div>
-            <div class="flex justify-end gap-4 mt-4">
-                <button class="modal-btn primary" onclick="closeModal('detail-modal')">Đóng</button>
-            </div>
+<footer>
+    © 2025 VinFast Auto. All rights reserved. Hotline: 1900 232389
+</footer>
+
+<!-- Preview Modal -->
+<div class="modal" id="preview-modal">
+    <div class="modal-content">
+        <h2>Xác Nhận Thông Tin</h2>
+        <div id="preview-content" class="space-y-2 text-sm"></div>
+        <div class="flex justify-end gap-4 mt-4">
+            <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Huỷ</button>
+            <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
         </div>
     </div>
+</div>
 
-    <!-- Success Modal -->
-    <div class="modal" id="success-modal">
-        <div class="modal-content success-modal-content">
-            <i class="fas fa-check-circle"></i>
-            <h2>Gửi Yêu Cầu Thành Công</h2>
-            <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
-            <div class="flex justify-center gap-4 mt-4">
-                <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
-            </div>
+<!-- Detail Modal -->
+<div class="modal" id="detail-modal">
+    <div class="modal-content">
+        <h2>Chi Tiết Yêu Cầu</h2>
+        <div id="detail-content" class="space-y-2 text-sm"></div>
+        <div class="flex justify-end gap-4 mt-4">
+            <button class="modal-btn primary" onclick="closeModal('detail-modal')">Đóng</button>
         </div>
     </div>
+</div>
 
-    <!-- Loading Modal -->
-    <div class="modal" id="loading-modal">
-        <div class="modal-content loading-modal-content">
-            <i class="fas fa-spinner"></i>
-            <h2>Đang Gửi Yêu Cầu...</h2>
-            <p>Vui lòng chờ trong giây lát.</p>
+<!-- Success Modal -->
+<div class="modal" id="success-modal">
+    <div class="modal-content success-modal-content">
+        <i class="fas fa-check-circle"></i>
+        <h2>Gửi Yêu Cầu Thành Công</h2>
+        <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
+        <div class="flex justify-center gap-4 mt-4">
+            <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
         </div>
     </div>
+</div>
 
-    <script>
-        let historyData = [], formData = {}, orderId = "";
-        const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
-        const labelMap = {
-            ten_ban_hang: "Tên tư vấn bán hàng",
-            ten_khach_hang: "Tên khách hàng",
-            dong_xe: "Dòng xe",
-            phien_ban: "Phiên bản",
-            ngoai_that: "Ngoại thất",
-            noi_that: "Nội thất",
-            so_don_hang: "Số đơn hàng",
-            ngay_coc: "Ngày cọc",
-            thoi_gian_nhap: "Thời gian nhập"
-        };
+<!-- Loading Modal -->
+<div class="modal" id="loading-modal">
+    <div class="modal-content loading-modal-content">
+        <i class="fas fa-spinner"></i>
+        <h2>Đang Gửi Yêu Cầu...</h2>
+        <p>Vui lòng chờ trong giây lát.</p>
+    </div>
+</div>
 
-        // Theme toggle functionality
-        function toggleTheme() {
-            const currentTheme = document.body.getAttribute("data-theme");
-            const newTheme = currentTheme === "dark" ? "light" : "dark";
-            document.body.setAttribute("data-theme", newTheme);
-            document.getElementById("theme-icon").textContent = newTheme === "dark" ? "🌙" : "☀️";
-            localStorage.setItem("theme", newTheme);
-        }
+<script>
+// Kiểm tra trạng thái đăng nhập khi tải trang
+document.addEventListener("DOMContentLoaded", function () {
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "index.html";
+    } else {
+        fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
+        setupSearch();
+        setupScrollSync();
+        setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
+    }
+});
 
-        // Hamburger menu toggle
-        function toggleMenu() {
-            const tabs = document.querySelector('.navbar .tabs');
-            tabs.classList.toggle('active');
-        }
+// Thêm hàm đăng xuất
+function logout() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+    showNotification("Đã đăng xuất!", 2000);
+}
 
-        // Load theme from localStorage
-        document.addEventListener("DOMContentLoaded", () => {
-            const savedTheme = localStorage.getItem("theme") || "light";
-            document.body.setAttribute("data-theme", savedTheme);
-            document.getElementById("theme-icon").textContent = savedTheme === "dark" ? "🌙" : "☀️";
-            fetchHistory();
+function goBack() {
+    window.location.href = "index.html"; // Loại bỏ alert
+}
+
+let historyData = [], formData = {}, orderId = "";
+const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+const labelMap = {
+    ten_ban_hang: "Tên tư vấn bán hàng",
+    ten_khach_hang: "Tên khách hàng",
+    dong_xe: "Dòng xe",
+    phien_ban: "Phiên bản",
+    ngoai_that: "Ngoại thất",
+    noi_that: "Nội thất",
+    so_don_hang: "Số đơn hàng",
+    ngay_coc: "Ngày cọc",
+    thoi_gian_nhap: "Thời gian nhập"
+};
+
+// Theme toggle functionality
+// Theme toggle functionality
+function toggleTheme() {
+    const currentTheme = document.body.getAttribute("data-theme");
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    document.body.setAttribute("data-theme", newTheme);
+    
+    const themeIcon = document.getElementById("theme-icon");
+    if (newTheme === "dark") {
+        themeIcon.classList.remove("fa-moon");
+        themeIcon.classList.add("fa-sun");
+    } else {
+        themeIcon.classList.remove("fa-sun");
+        themeIcon.classList.add("fa-moon");
+    }
+    
+    localStorage.setItem("theme", newTheme);
+}
+
+// Load theme from localStorage
+document.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.setAttribute("data-theme", savedTheme);
+    const themeIcon = document.getElementById("theme-icon");
+    if (savedTheme === "dark") {
+        themeIcon.classList.remove("fa-moon");
+        themeIcon.classList.add("fa-sun");
+    } else {
+        themeIcon.classList.remove("fa-sun");
+        themeIcon.classList.add("fa-moon");
+    }
+    fetchHistory();
+});
+function formatDateTime(dtString) {
+    const d = new Date(dtString);
+    return d.toLocaleString("vi-VN", { dateStyle: "full", timeStyle: "short" });
+}
+
+function formatDateForFilter(dtString) {
+    const d = new Date(dtString);
+    return d.toISOString().split('T')[0];
+}
+
+function fetchHistory() {
+    fetch(historyURL)
+        .then(res => res.text())
+        .then(txt => {
+            const json = JSON.parse(txt);
+            historyData = json;
+            populateFilters(json);
+            renderHistory(json);
+            renderCharts(json);
+            renderSummary(json);
         });
+}
 
-        function formatDateTime(dtString) {
-            const d = new Date(dtString);
-            return d.toLocaleString("vi-VN", { dateStyle: "full", timeStyle: "short" });
+function refreshData() {
+    fetchHistory();
+}
+
+function populateFilters(data) {
+    const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean);
+    const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean);
+
+    const carFilter = document.getElementById("filter-car");
+    carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
+    cars.forEach(car => {
+        carFilter.innerHTML += `<option value="${car}">${car}</option>`;
+    });
+
+    const advisorFilter = document.getElementById("filter-advisor");
+    advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
+    advisors.forEach(advisor => {
+        advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
+    });
+}
+
+function renderSummary(data) {
+    const total = data.length;
+    const byCar = {};
+    const byAdvisor = {};
+    data.forEach(row => {
+        const car = row["Dòng xe"];
+        const advisor = row["Tên tư vấn bán hàng"];
+        if (car) byCar[car] = (byCar[car] || 0) + 1;
+        if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
+    });
+
+    const topCar = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
+    const topAdvisor = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
+
+    document.getElementById("summary-total").textContent = total;
+    document.getElementById("summary-top-car").textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
+    document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
+}
+
+function renderHistory(data) {
+    document.getElementById("table-header").innerHTML = `
+        <tr>
+            <th>STT</th>
+            <th>Tên TVBH</th>
+            <th>Tên KH</th>
+            <th>Số Đơn Hàng</th>
+            <th>Dòng Xe</th>
+            <th>Phiên Bản</th>
+            <th>Ngoại Thất</th>
+            <th>Nội Thất</th>
+        </tr>
+    `;
+    const tbody = document.getElementById("table-body");
+    if (!data.length) {
+        tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
+        return;
+    }
+    let content = data.map((row, i) => `
+        <tr onclick="showDetail(${i})">
+            <td data-label="STT">${i + 1}</td>
+            <td data-label="Tên TVBH">${row["Tên tư vấn bán hàng"] || ""}</td>
+            <td data-label="Tên KH">${row["Tên khách hàng"] || ""}</td>
+            <td data-label="Số Đơn Hàng">${row["Số đơn hàng"] || ""}</td>
+            <td data-label="Dòng Xe">${row["Dòng xe"] || ""}</td>
+            <td data-label="Phiên Bản">${row["Phiên bản"] || ""}</td>
+            <td data-label="Ngoại Thất">${row["Ngoại thất"] || ""}</td>
+            <td data-label="Nội Thất">${row["Nội thất"] || ""}</td>
+        </tr>
+    `).join("");
+    tbody.innerHTML = content;
+    document.getElementById("total-don-count").textContent = data.length;
+}
+
+function filterHistory() {
+    const keyword = document.getElementById("search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("filter-car").value;
+    const selectedAdvisor = document.getElementById("filter-advisor").value;
+    const selectedDate = document.getElementById("filter-date").value;
+
+    const filtered = historyData.filter(row => {
+        const matchesKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
+        const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
+        const matchesAdvisor = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
+        const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
+        return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
+    });
+
+    renderHistory(filtered);
+}
+
+function exportToExcel() {
+    const ws = XLSX.utils.json_to_sheet(historyData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
+    XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
+}
+
+function previewForm(e) {
+    e.preventDefault();
+    const form = document.getElementById("vinfast-form");
+    const inputs = form.querySelectorAll("input");
+    formData = {}; orderId = "";
+    let html = "";
+
+    inputs.forEach(input => {
+        if (input.name) {
+            formData[input.name] = input.value;
+            if (input.name === "so_don_hang") orderId = input.value;
+            const label = labelMap[input.name] || input.name;
+            const value = input.type === "datetime-local" ? formatDateTime(input.value) : input.value;
+            html += `<div><strong>${label}:</strong> ${value || "Chưa nhập"}</div>`;
         }
+    });
 
-        function formatDateForFilter(dtString) {
-            const d = new Date(dtString);
-            return d.toISOString().split('T')[0];
+    document.getElementById("preview-content").innerHTML = html;
+    document.getElementById("preview-modal").style.display = "flex";
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+}
+
+function confirmSubmit() {
+    closeModal("preview-modal");
+    document.getElementById("loading-modal").style.display = "flex";
+
+    formData["thoi_gian_nhap"] = new Date().toISOString();
+    fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+    }).then(() => {
+        closeModal("loading-modal");
+        fetchHistory();
+        document.getElementById("vinfast-form").reset();
+        document.getElementById("success-modal").style.display = "flex";
+    }).catch(error => {
+        closeModal("loading-modal");
+        alert("Có lỗi xảy ra khi gửi yêu cầu: " + error.message);
+    });
+}
+
+function showDetail(index) {
+    const row = historyData[index];
+    const modal = document.getElementById("detail-modal");
+    const content = document.getElementById("detail-content");
+    let html = "<table class='detail-table'>";
+    Object.entries(row).forEach(([key, value]) => {
+        const label = labelMap[key] || key;
+        const formattedValue = key === "ngay_coc" || key === "thoi_gian_nhap" ? formatDateTime(value) : value;
+        html += `<tr><th>${label}</th><td>${formattedValue || "Không có"}</td></tr>`;
+    });
+    html += "</table>";
+    content.innerHTML = html;
+    modal.style.display = "flex";
+}
+
+function switchTab(tab, element) {
+    document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+    
+    const mainContainer = document.querySelector('.main-container');
+    mainContainer.style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById("form-section").classList.toggle("hidden", tab !== "form");
+        document.getElementById("history-section").classList.toggle("hidden", tab !== "history");
+        document.getElementById("chart-section").classList.toggle("hidden", tab !== "charts");
+
+        if (tab === "history") {
+            renderHistory(historyData);
+            renderSummary(historyData);
+        } else if (tab === "charts") {
+            renderCharts(historyData);
         }
+        mainContainer.style.opacity = '1';
+    }, 300);
 
-        function fetchHistory() {
-            fetch(historyURL)
-                .then(res => res.text())
-                .then(txt => {
-                    const json = JSON.parse(txt);
-                    historyData = json;
-                    populateFilters(json);
-                    renderHistory(json);
-                    renderCharts(json);
-                    renderSummary(json);
-                });
-        }
+    if (window.innerWidth <= 767) {
+        document.querySelector('.navbar .tabs').classList.remove('active');
+    }
+}
 
-        function refreshData() {
-            fetchHistory();
-        }
+function renderCharts(data) {
+    const byCar = {}, byAdvisor = {};
+    data.forEach(row => {
+        const car = row["Dòng xe"];
+        const advisor = row["Tên tư vấn bán hàng"];
+        if (car) byCar[car] = (byCar[car] || 0) + 1;
+        if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
+    });
 
-        function populateFilters(data) {
-            const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean);
-            const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean);
+    const vinFastColors = ['#005eb8', '#003087', '#34d399', '#60a5fa', '#1d4ed8'];
 
-            const carFilter = document.getElementById("filter-car");
-            carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-            cars.forEach(car => {
-                carFilter.innerHTML += `<option value="${car}">${car}</option>`;
-            });
-
-            const advisorFilter = document.getElementById("filter-advisor");
-            advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-            advisors.forEach(advisor => {
-                advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
-            });
-        }
-
-        function renderSummary(data) {
-            const total = data.length;
-            const byCar = {};
-            const byAdvisor = {};
-            data.forEach(row => {
-                const car = row["Dòng xe"];
-                const advisor = row["Tên tư vấn bán hàng"];
-                if (car) byCar[car] = (byCar[car] || 0) + 1;
-                if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-            });
-
-            const topCar = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
-            const topAdvisor = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
-
-            document.getElementById("summary-total").textContent = total;
-            document.getElementById("summary-top-car").textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
-            document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
-        }
-
-        function renderHistory(data) {
-            document.getElementById("table-header").innerHTML = `
-                <tr>
-                    <th>STT</th>
-                    <th>Tên TVBH</th>
-                    <th>Tên KH</th>
-                    <th>Số Đơn Hàng</th>
-                    <th>Dòng Xe</th>
-                    <th>Phiên Bản</th>
-                    <th>Ngoại Thất</th>
-                    <th>Nội Thất</th>
-                </tr>
-            `;
-            const tbody = document.getElementById("table-body");
-            if (!data.length) {
-                tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
-                return;
-            }
-            let content = data.map((row, i) => `
-                <tr onclick="showDetail(${i})">
-                    <td data-label="STT">${i + 1}</td>
-                    <td data-label="Tên TVBH">${row["Tên tư vấn bán hàng"] || ""}</td>
-                    <td data-label="Tên KH">${row["Tên khách hàng"] || ""}</td>
-                    <td data-label="Số Đơn Hàng">${row["Số đơn hàng"] || ""}</td>
-                    <td data-label="Dòng Xe">${row["Dòng xe"] || ""}</td>
-                    <td data-label="Phiên Bản">${row["Phiên bản"] || ""}</td>
-                    <td data-label="Ngoại Thất">${row["Ngoại thất"] || ""}</td>
-                    <td data-label="Nội Thất">${row["Nội thất"] || ""}</td>
-                </tr>
-            `).join("");
-            tbody.innerHTML = content;
-            document.getElementById("total-don-count").textContent = data.length;
-        }
-
-        function filterHistory() {
-            const keyword = document.getElementById("search-box").value.toLowerCase();
-            const selectedCar = document.getElementById("filter-car").value;
-            const selectedAdvisor = document.getElementById("filter-advisor").value;
-            const selectedDate = document.getElementById("filter-date").value;
-
-            const filtered = historyData.filter(row => {
-                const matchesKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-                const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
-                const matchesAdvisor = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
-                const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
-                return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
-            });
-
-            renderHistory(filtered);
-        }
-
-        function exportToExcel() {
-            const ws = XLSX.utils.json_to_sheet(historyData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
-            XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
-        }
-
-        function previewForm(e) {
-            e.preventDefault();
-            const form = document.getElementById("vinfast-form");
-            const inputs = form.querySelectorAll("input");
-            formData = {}; orderId = "";
-            let html = "";
-
-            inputs.forEach(input => {
-                if (input.name) {
-                    formData[input.name] = input.value;
-                    if (input.name === "so_don_hang") orderId = input.value;
-                    const label = labelMap[input.name] || input.name;
-                    const value = input.type === "datetime-local" ? formatDateTime(input.value) : input.value;
-                    html += `<div><strong>${label}:</strong> ${value || "Chưa nhập"}</div>`;
-                }
-            });
-
-            document.getElementById("preview-content").innerHTML = html;
-            document.getElementById("preview-modal").style.display = "flex";
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = "none";
-        }
-
-        function confirmSubmit() {
-            closeModal("preview-modal");
-            document.getElementById("loading-modal").style.display = "flex";
-
-            formData["thoi_gian_nhap"] = new Date().toISOString();
-            fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
-            }).then(() => {
-                closeModal("loading-modal");
-                fetchHistory();
-                document.getElementById("vinfast-form").reset();
-                document.getElementById("success-modal").style.display = "flex";
-            }).catch(error => {
-                closeModal("loading-modal");
-                alert("Có lỗi xảy ra khi gửi yêu cầu: " + error.message);
-            });
-        }
-
-        function showDetail(index) {
-            const row = historyData[index];
-            const modal = document.getElementById("detail-modal");
-            const content = document.getElementById("detail-content");
-            let html = "<table class='detail-table'>";
-            Object.entries(row).forEach(([key, value]) => {
-                const label = labelMap[key] || key;
-                const formattedValue = key === "ngay_coc" || key === "thoi_gian_nhap" ? formatDateTime(value) : value;
-                html += `<tr><th>${label}</th><td>${formattedValue || "Không có"}</td></tr>`;
-            });
-            html += "</table>";
-            content.innerHTML = html;
-            modal.style.display = "flex";
-        }
-
-        function switchTab(tab, element) {
-            document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-            
-            // Thêm hiệu ứng fade cho nội dung
-            const mainContainer = document.querySelector('.main-container');
-            mainContainer.style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById("form-section").classList.toggle("hidden", tab !== "form");
-                document.getElementById("history-section").classList.toggle("hidden", tab !== "history");
-                document.getElementById("chart-section").classList.toggle("hidden", tab !== "charts");
-
-                if (tab === "history") {
-                    renderHistory(historyData);
-                    renderSummary(historyData);
-                } else if (tab === "charts") {
-                    renderCharts(historyData);
-                }
-                mainContainer.style.opacity = '1';
-            }, 300);
-
-            // Đóng menu hamburger trên di động sau khi chọn tab
-            if (window.innerWidth <= 767) {
-                document.querySelector('.navbar .tabs').classList.remove('active');
-            }
-        }
-
-        function renderCharts(data) {
-            const byCar = {}, byAdvisor = {};
-            data.forEach(row => {
-                const car = row["Dòng xe"];
-                const advisor = row["Tên tư vấn bán hàng"];
-                if (car) byCar[car] = (byCar[car] || 0) + 1;
-                if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-            });
-
-            const vinFastColors = ['#005eb8', '#003087', '#34d399', '#60a5fa', '#1d4ed8'];
-
-            new Chart(document.getElementById("chart-by-car"), {
-                type: "pie",
-                data: {
-                    labels: Object.keys(byCar),
-                    datasets: [{
-                        data: Object.values(byCar),
-                        backgroundColor: vinFastColors,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
-                        hoverOffset: 20
-                    }]
+    new Chart(document.getElementById("chart-by-car"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(byCar),
+            datasets: [{
+                data: Object.values(byCar),
+                backgroundColor: vinFastColors,
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Montserrat', size: 12, weight: '700' },
+                        color: 'var(--text-color)',
+                        padding: 15,
+                        boxWidth: 15,
+                        usePointStyle: true
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: { family: 'Montserrat', size: 12, weight: '700' },
-                                color: 'var(--text-color)',
-                                padding: 15,
-                                boxWidth: 15,
-                                usePointStyle: true
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 94, 184, 0.9)',
-                            titleFont: { family: 'Montserrat', size: 12, weight: '700' },
-                            bodyFont: { family: 'Montserrat', size: 10 },
-                            padding: 10,
-                            cornerRadius: 6,
-                            borderColor: '#ffffff',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
+                tooltip: {
+                    backgroundColor: 'rgba(0, 94, 184, 0.9)',
+                    titleFont: { family: 'Montserrat', size: 12, weight: '700' },
+                    bodyFont: { family: 'Montserrat', size: 10 },
+                    padding: 10,
+                    cornerRadius: 6,
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} (${percentage}%)`;
                         }
-                    },
-                    animation: { animateScale: true, animateRotate: true }
+                    }
                 }
-            });
-
-            new Chart(document.getElementById("chart-by-advisor"), {
-                type: "bar",
-                data: {
-                    labels: Object.keys(byAdvisor),
-                    datasets: [{
-                        label: "Số lượng yêu cầu",
-                        data: Object.values(byAdvisor),
-                        backgroundColor: vinFastColors.map(color => `${color}cc`),
-                        borderColor: vinFastColors,
-                        borderWidth: 2,
-                        borderRadius: 6,
-                        barThickness: 15
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 94, 184, 0.9)',
-                            titleFont: { family: 'Montserrat', size: 12, weight: '700' },
-                            bodyFont: { family: 'Montserrat', size: 10 },
-                            padding: 10,
-                            cornerRadius: 6,
-                            borderColor: '#ffffff',
-                            borderWidth: 1
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: { display: false },
-                            ticks: { font: { family: 'Montserrat', size: 10, weight: '400' }, color: 'var(--text-color)' }
-                        },
-                        y: {
-                            grid: { display: false },
-                            ticks: { font: { family: 'Montserrat', size: 10, weight: '700' }, color: 'var(--text-color)' }
-                        }
-                    },
-                    animation: { duration: 1500, easing: 'easeOutQuart' }
-                }
-            });
+            },
+            animation: { animateScale: true, animateRotate: true }
         }
-    </script>
+    });
+
+    new Chart(document.getElementById("chart-by-advisor"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(byAdvisor),
+            datasets: [{
+                label: "Số lượng yêu cầu",
+                data: Object.values(byAdvisor),
+                backgroundColor: vinFastColors.map(color => `${color}cc`),
+                borderColor: vinFastColors,
+                borderWidth: 2,
+                borderRadius: 6,
+                barThickness: 15
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 94, 184, 0.9)',
+                    titleFont: { family: 'Montserrat', size: 12, weight: '700' },
+                    bodyFont: { family: 'Montserrat', size: 10 },
+                    padding: 10,
+                    cornerRadius: 6,
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { display: false },
+                    ticks: { font: { family: 'Montserrat', size: 10, weight: '400' }, color: 'var(--text-color)' }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Montserrat', size: 10, weight: '700' }, color: 'var(--text-color)' }
+                }
+            },
+            animation: { duration: 1500, easing: 'easeOutQuart' }
+        }
+    });
+}
+
+// Placeholder functions for missing dependencies
+function fetchSheetData(sheetName, element) {
+    console.log(`Fetching data for ${sheetName}`);
+}
+
+function setupSearch() {
+    console.log("Search setup placeholder");
+}
+
+function setupScrollSync() {
+    console.log("Scroll sync setup placeholder");
+}
+
+function showNotification(message, duration) {
+    console.log(`${message} - Duration: ${duration}ms`);
+}
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926f2cafeea7b023',t:'MTc0MzA4MTUxNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
