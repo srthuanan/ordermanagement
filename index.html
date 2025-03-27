@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -72,7 +71,7 @@
             0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.5); }
             50% { box-shadow: 0 0 25px rgba(0, 94, 184, 1); }
         }
-        .logout-btn {
+        .logout-btn, .change-password-btn {
             padding: 6px 12px;
             background: #004aad;
             color: #fff;
@@ -83,9 +82,9 @@
             display: none;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            margin-left: auto;
+            margin-left: 10px;
         }
-        .logout-btn:hover {
+        .logout-btn:hover, .change-password-btn:hover {
             background: #003087;
             box-shadow: 0 4px 10px rgba(0, 48, 135, 0.4);
         }
@@ -243,14 +242,19 @@
             position: relative;
             border-top: 5px solid #005eb8;
         }
-        body.dark-mode .login-modal-content, body.dark-mode .alert-modal-content { background: #2a2a2a; border-top: 5px solid #66b0ff; }
+        body.dark-mode .login-modal-content, body.dark-mode .alert-modal-content { 
+            background: #2a2a2a; 
+            border-top: 5px solid #66b0ff; 
+        }
         .login-modal-content h2, .alert-modal-content h2 {
             font-size: 24px;
             color: #003087;
             font-weight: 700;
             margin-bottom: 20px;
         }
-        body.dark-mode .login-modal-content h2, body.dark-mode .alert-modal-content h2 { color: #66b0ff; }
+        body.dark-mode .login-modal-content h2, body.dark-mode .alert-modal-content h2 { 
+            color: #66b0ff; 
+        }
         .login-modal-content form {
             display: flex;
             flex-direction: column;
@@ -287,14 +291,15 @@
             background: #003087;
             box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
         }
-        .reset-password {
+        .reset-password, .forgot-password, .back-to-login {
             font-size: 12px;
             color: #005eb8;
             cursor: pointer;
             text-decoration: underline;
             margin-top: 10px;
+            display: block;
         }
-        body.dark-mode .reset-password { color: #66b0ff; }
+        body.dark-mode .reset-password, body.dark-mode .forgot-password, body.dark-mode .back-to-login { color: #66b0ff; }
         .close {
             position: absolute;
             top: 10px;
@@ -428,8 +433,8 @@
             transform: translateY(-2px);
         }
 
-        /* Reset Password */
-        .reset-password {
+        /* Reset Password, Forgot Password, Back to Login */
+        .reset-password, .forgot-password, .back-to-login {
             font-size: 13px;
             color: #005eb8;
             cursor: pointer;
@@ -439,13 +444,13 @@
             text-align: center;
             transition: color 0.3s ease;
         }
-        body.dark-mode .reset-password {
+        body.dark-mode .reset-password, body.dark-mode .forgot-password, body.dark-mode .back-to-login {
             color: #66b0ff;
         }
-        .reset-password:hover {
+        .reset-password:hover, .forgot-password:hover, .back-to-login:hover {
             color: #003087;
         }
-        body.dark-mode .reset-password:hover {
+        body.dark-mode .reset-password:hover, body.dark-mode .forgot-password:hover, body.dark-mode .back-to-login:hover {
             color: #ffffff;
         }
 
@@ -533,6 +538,7 @@
         <span class="session-time" id="sessionTime"></span>
         <div class="online-status" id="onlineStatus"></div>
         <div class="logout-btn" onclick="logout()" id="logoutBtn">Đăng Xuất</div>
+        <button class="change-password-btn" onclick="openModal('loginModal'); showResetPasswordForm()" id="changePasswordBtn">Đổi Mật Khẩu</button>
         <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
         <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
     </nav>
@@ -573,27 +579,90 @@
         <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn">Làm Mới</button>
     </section>
 
-    <!-- Modal Đăng Nhập Nâng Cấp -->
+    <!-- Modal Đăng Nhập -->
     <div id="loginModal" class="modal">
         <div class="login-modal-content" data-aos="zoom-in">
             <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
-            <h2 data-lang="login-title">Đăng Nhập</h2>
-            <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
-            <form onsubmit="login(event)">
-                <div class="input-group">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password">
-                </div>
-                <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
-            </form>
-            <span class="reset-password" onclick="resetPassword()" data-lang="reset-password">Đặt lại mật khẩu</span>
+            <!-- Form Đăng Nhập -->
+            <div id="loginForm">
+                <h2 data-lang="login-title">Đăng Nhập</h2>
+                <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
+                <form onsubmit="login(event)">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password">
+                    </div>
+                    <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
+                </form>
+                <span class="reset-password" onclick="showResetPasswordForm()" data-lang="reset-password">Đặt lại mật khẩu</span>
+                <span class="forgot-password" onclick="showForgotPasswordForm()" data-lang="forgot-password">Quên mật khẩu?</span>
+            </div>
+            <!-- Form Đổi Mật Khẩu -->
+            <div id="resetPasswordForm" style="display: none;">
+                <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
+                <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
+                <form onsubmit="changePassword(event)">
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="oldPassword" placeholder="Mật khẩu cũ" required data-lang-placeholder="old-password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="newPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                    </div>
+                    <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> Đổi Mật Khẩu</button>
+                </form>
+                <span class="back-to-login" onclick="showLoginForm()" data-lang="back-to-login">Quay lại đăng nhập</span>
+            </div>
+            <!-- Form Quên Mật Khẩu -->
+            <div id="forgotPasswordForm" style="display: none;">
+                <h2 data-lang="forgot-password-title">Quên Mật Khẩu</h2>
+                <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="forgot-password-subtitle">Nhập thông tin để nhận mã xác nhận</p>
+                <form onsubmit="forgotPassword(event)">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="forgotUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="forgotEmail" placeholder="Email" required data-lang-placeholder="email">
+                    </div>
+                    <button type="submit" data-lang="send-otp-btn"><i class="fas fa-paper-plane"></i> Gửi Mã Xác Nhận</button>
+                </form>
+                <span class="back-to-login" onclick="showLoginForm()" data-lang="back-to-login">Quay lại đăng nhập</span>
+            </div>
+            <!-- Form Đặt Lại Mật Khẩu -->
+            <div id="resetPasswordWithOTPForm" style="display: none;">
+                <h2 data-lang="reset-password-otp-title">Đặt Lại Mật Khẩu</h2>
+                <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="reset-password-otp-subtitle">Nhập mã xác nhận và mật khẩu mới</p>
+                <form onsubmit="resetPasswordWithOTP(event)">
+                    <div class="input-group">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="text" id="otpCode" placeholder="Mã xác nhận" required data-lang-placeholder="otp-code">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="newPasswordOTP" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="confirmPasswordOTP" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                    </div>
+                    <button type="submit" data-lang="reset-password-btn"><i class="fas fa-key"></i> Đặt Lại Mật Khẩu</button>
+                </form>
+                <span class="back-to-login" onclick="showForgotPasswordForm()" data-lang="back-to-forgot">Quay lại quên mật khẩu</span>
+            </div>
         </div>
     </div>
 
@@ -621,6 +690,10 @@
             { id: 3, text: "Xe VF9 mới nhập kho", date: "24/03/2025" }
         ];
         let language = localStorage.getItem('language') || 'vi';
+        let tempUsername = ''; // Lưu tạm username khi quên mật khẩu
+        let tempEmail = ''; // Lưu tạm email khi quên mật khẩu
+
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwqbedHB1kGSopSm5HFahyLDpTzy2WlDOKYs1XPznb2GagrFdyrs499i7IcHHZUB5yT/exec';
 
         const translations = {
             vi: {
@@ -639,7 +712,24 @@
                 "username": "Tên đăng nhập",
                 "password": "Mật khẩu",
                 "reset-password": "Đặt lại mật khẩu",
-                "login-subtitle": "Truy cập hệ thống nội bộ VinFast"
+                "forgot-password": "Quên mật khẩu?",
+                "login-subtitle": "Truy cập hệ thống nội bộ VinFast",
+                "reset-password-title": "Đổi Mật Khẩu",
+                "reset-password-subtitle": "Nhập thông tin để đổi mật khẩu",
+                "old-password": "Mật khẩu cũ",
+                "new-password": "Mật khẩu mới",
+                "confirm-password": "Xác nhận mật khẩu mới",
+                "change-password-btn": "Đổi Mật Khẩu",
+                "back-to-login": "Quay lại đăng nhập",
+                "forgot-password-title": "Quên Mật Khẩu",
+                "forgot-password-subtitle": "Nhập thông tin để nhận mã xác nhận",
+                "email": "Email",
+                "send-otp-btn": "Gửi Mã Xác Nhận",
+                "reset-password-otp-title": "Đặt Lại Mật Khẩu",
+                "reset-password-otp-subtitle": "Nhập mã xác nhận và mật khẩu mới",
+                "otp-code": "Mã xác nhận",
+                "reset-password-btn": "Đặt Lại Mật Khẩu",
+                "back-to-forgot": "Quay lại quên mật khẩu"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -657,7 +747,24 @@
                 "username": "Username",
                 "password": "Password",
                 "reset-password": "Reset Password",
-                "login-subtitle": "Access the VinFast internal system"
+                "forgot-password": "Forgot Password?",
+                "login-subtitle": "Access the VinFast internal system",
+                "reset-password-title": "Change Password",
+                "reset-password-subtitle": "Enter details to change your password",
+                "old-password": "Old Password",
+                "new-password": "New Password",
+                "confirm-password": "Confirm New Password",
+                "change-password-btn": "Change Password",
+                "back-to-login": "Back to Login",
+                "forgot-password-title": "Forgot Password",
+                "forgot-password-subtitle": "Enter details to receive a verification code",
+                "email": "Email",
+                "send-otp-btn": "Send Verification Code",
+                "reset-password-otp-title": "Reset Password",
+                "reset-password-otp-subtitle": "Enter verification code and new password",
+                "otp-code": "Verification Code",
+                "reset-password-btn": "Reset Password",
+                "back-to-forgot": "Back to Forgot Password"
             }
         };
 
@@ -674,6 +781,7 @@
         function updateUI() {
             const menu = document.getElementById('navMenu');
             const logoutBtn = document.getElementById('logoutBtn');
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
             const userInfo = document.getElementById('userInfo');
             const sessionTime = document.getElementById('sessionTime');
             const onlineStatus = document.getElementById('onlineStatus');
@@ -681,6 +789,7 @@
             const welcomeSection = document.getElementById('welcomeSection');
 
             logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
+            changePasswordBtn.style.display = isLoggedIn ? 'block' : 'none';
             onlineStatus.style.display = isLoggedIn ? 'inline-block' : 'none';
             userInfo.style.display = isLoggedIn ? 'inline' : 'none';
             sessionTime.style.display = isLoggedIn ? 'inline' : 'none';
@@ -718,26 +827,25 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
             const loadingOverlay = document.getElementById('loadingOverlay');
-            const loginButton = document.querySelector('#loginModal button[type="submit"]');
+            const loginButton = document.querySelector('#loginForm button[type="submit"]');
 
-            // Hiển thị hiệu ứng loading và vô hiệu hóa nút đăng nhập
+            if (!username || !password) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập tên đăng nhập và mật khẩu!' : 'Please enter username and password!');
+                return;
+            }
+
             loadingOverlay.style.display = 'flex';
             loginButton.disabled = true;
             loginButton.style.opacity = '0.6';
 
-            // Log để debug
-            console.log("Username before sending: " + username);
-            console.log("Password before sending: " + password);
-
             try {
-                const response = await axios.get('https://script.google.com/macros/s/AKfycbxAgZNK10-aUuNUCFCnmvXE7JHjn5Qg7wOjYo9BPLS9i_sCZTp6JIUIEOWExnI7dj_B/exec', {
-                    params: {
-                        username: username,
-                        password: password
-                    }
+                const response = await fetch(`${API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
                 });
 
-                const users = response.data;
+                const users = await response.json();
                 if (users.length > 0) {
                     const user = users[0];
                     isLoggedIn = true;
@@ -761,7 +869,6 @@
                 console.error('Lỗi khi đăng nhập:', error);
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
             } finally {
-                // Ẩn hiệu ứng loading và khôi phục nút đăng nhập
                 loadingOverlay.style.display = 'none';
                 loginButton.disabled = false;
                 loginButton.style.opacity = '1';
@@ -832,13 +939,19 @@
             if (isLoggedIn) menu.classList.toggle('active'); 
         }
 
-        function openModal(id) { document.getElementById(id).style.display = "block"; }
-        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+        function openModal(id) { 
+            document.getElementById(id).style.display = "block"; 
+            showLoginForm(); // Mặc định hiển thị form đăng nhập khi mở modal
+        }
+        function closeModal(id) { 
+            document.getElementById(id).style.display = "none"; 
+            showLoginForm(); // Reset về form đăng nhập khi đóng modal
+        }
         window.onclick = (e) => {
             const modals = document.getElementsByClassName('modal');
             const alerts = document.getElementsByClassName('alert-modal');
-            for (let modal of modals) if (e.target == modal) modal.style.display = "none";
-            for (let alert of alerts) if (e.target == alert) alert.style.display = "none";
+            for (let modal of modals) if (e.target == modal) closeModal(modal.id);
+            for (let alert of alerts) if (e.target == alert) closeModal(alert.id);
         };
 
         function showAlert(title, message) {
@@ -917,12 +1030,200 @@
             showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã xóa thông báo!' : 'Notification deleted!');
         }
 
-        function resetPassword() {
-            showAlert(language === 'vi' ? 'Đặt Lại Mật Khẩu' : 'Reset Password', language === 'vi' ? 'Vui lòng liên hệ quản trị viên để đặt lại mật khẩu!' : 'Please contact the administrator to reset your password!');
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordWithOTPForm').style.display = 'none';
+            // Reset các trường nhập liệu
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('forgotUsername').value = '';
+            document.getElementById('forgotEmail').value = '';
+            document.getElementById('otpCode').value = '';
+            document.getElementById('newPasswordOTP').value = '';
+            document.getElementById('confirmPasswordOTP').value = '';
+        }
+
+        function showResetPasswordForm() {
+            if (!isLoggedIn) {
+                showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Vui lòng đăng nhập trước!' : 'Please log in first!');
+                return;
+            }
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordWithOTPForm').style.display = 'none';
+        }
+
+        function showForgotPasswordForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('resetPasswordWithOTPForm').style.display = 'none';
+        }
+
+        function showResetPasswordWithOTPForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordWithOTPForm').style.display = 'block';
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+            const oldPassword = document.getElementById('oldPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const changeButton = document.querySelector('#resetPasswordForm button[type="submit"]');
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+            changeButton.disabled = true;
+            changeButton.style.opacity = '0.6';
+
+            try {
+                const response = await fetch(`${API_URL}?action=changePassword&username=${encodeURIComponent(currentUser)}&oldPassword=${encodeURIComponent(oldPassword)}&newPassword=${encodeURIComponent(newPassword)}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('loginModal');
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đổi mật khẩu thành công!' : 'Password changed successfully!');
+                } else {
+                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Mật khẩu cũ không đúng!' : 'Old password is incorrect!'));
+                }
+            } catch (error) {
+                console.error('Lỗi khi đổi mật khẩu:', error);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
+            } finally {
+                loadingOverlay.style.display = 'none';
+                changeButton.disabled = false;
+                changeButton.style.opacity = '1';
+            }
+        }
+
+        async function forgotPassword(e) {
+            e.preventDefault();
+            const username = document.getElementById('forgotUsername').value.trim();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const sendButton = document.querySelector('#forgotPasswordForm button[type="submit"]');
+
+            if (!username || !email) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập tên đăng nhập và email!' : 'Please enter username and email!');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+            sendButton.disabled = true;
+            sendButton.style.opacity = '0.6';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'forgotPassword',
+                        username: username,
+                        email: email
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    tempUsername = username;
+                    tempEmail = email;
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Mã xác nhận đã được gửi qua email!' : 'Verification code sent to your email!'));
+                    showResetPasswordWithOTPForm();
+                } else {
+                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Tên đăng nhập hoặc email không đúng!' : 'Username or email incorrect!'));
+                }
+            } catch (error) {
+                console.error('Lỗi khi gửi mã xác nhận:', error);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
+            } finally {
+                loadingOverlay.style.display = 'none';
+                sendButton.disabled = false;
+                sendButton.style.opacity = '1';
+            }
+        }
+
+        async function resetPasswordWithOTP(e) {
+            e.preventDefault();
+            const otpCode = document.getElementById('otpCode').value.trim();
+            const newPassword = document.getElementById('newPasswordOTP').value.trim();
+            const confirmPassword = document.getElementById('confirmPasswordOTP').value.trim();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const resetButton = document.querySelector('#resetPasswordWithOTPForm button[type="submit"]');
+
+            if (!otpCode || !newPassword || !confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+            resetButton.disabled = true;
+            resetButton.style.opacity = '0.6';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'resetPassword',
+                        username: tempUsername,
+                        email: tempEmail,
+                        otp: otpCode,
+                        newPassword: newPassword
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    closeModal('loginModal');
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đặt lại mật khẩu thành công!' : 'Password reset successfully!'));
+                } else {
+                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Mã xác nhận không đúng!' : 'Invalid verification code!'));
+                }
+            } catch (error) {
+                console.error('Lỗi khi đặt lại mật khẩu:', error);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
+            } finally {
+                loadingOverlay.style.display = 'none';
+                resetButton.disabled = false;
+                resetButton.style.opacity = '1';
+            }
         }
     </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926c50fd8abbb07f',t:'MTc0MzA1MTU0NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926cc329fe3f53f9',t:'MTc0MzA1NjIyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926ce3e24daf8831',t:'MTc0MzA1NzU2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
