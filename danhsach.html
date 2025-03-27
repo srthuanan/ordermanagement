@@ -82,7 +82,77 @@
             transition: all 0.3s ease;
             overflow: hidden;
         }
+.navbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 10px;
+}
 
+.nav-btn {
+    position: relative;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    background: #005eb8;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover {
+    background: #003087;
+    box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+}
+
+.nav-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.nav-btn[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #333;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.nav-btn:hover::after, .nav-btn:hover::before {
+    opacity: 1;
+}
+
+body.dark-mode .nav-btn[data-tooltip]::after {
+    background: #66b0ff;
+}
+
+body.dark-mode .nav-btn[data-tooltip]::before {
+    border-top-color: #66b0ff;
+}
         .navbar .tabs a::before {
             content: '';
             position: absolute;
@@ -653,6 +723,7 @@
             th, td {
                 padding: 5px;
             }
+
             .detail-panel {
                 margin-top: 15px;
                 border-left: none;
@@ -694,8 +765,20 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="logo">
+<div class="navbar">
+    <div class="logo">
+        <h1>VinFast MĐ An Phú</h1>
+    </div>
+    <div class="tabs">
+        <a href="#" onclick="fetchSheetData('Đã Ghép', this)" class="active">Đã Ghép</a>
+        <a href="#" onclick="fetchSheetData('Chưa Ghép', this)">Chưa Ghép</a>
+    </div>
+    <div class="navbar-controls">
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+</div>        <div class="logo">
             <h1>VinFast MĐ An Phú</h1>
         </div>
         <div class="tabs">
@@ -748,6 +831,29 @@
     <div id="notification"></div>
 
     <script>
+// Kiểm tra trạng thái đăng nhập khi tải trang
+    document.addEventListener("DOMContentLoaded", function () {
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "index.html"; // Chuyển hướng về index.html nếu chưa đăng nhập
+        } else {
+            // Nếu đã đăng nhập, tiếp tục tải dữ liệu
+            fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
+            setupSearch();
+            setupScrollSync();
+            setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
+        }
+    });
+
+    // Thêm hàm đăng xuất
+    function logout() {
+        sessionStorage.clear(); // Xóa toàn bộ sessionStorage
+        window.location.href = "index.html"; // Chuyển hướng về index.html
+        showNotification("Đã đăng xuất!", 2000);
+    }
+function goBack() {
+    window.location.href = "index.html";
+    showNotification("Đã quay lại trang chủ!", 2000);
+}
         let tableData = {};
         let currentSheet = 'Đã Ghép';
         let currentPage = 1;
