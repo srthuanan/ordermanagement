@@ -470,6 +470,64 @@ body.dark-mode .nav-btn[data-tooltip]::before {
         body.dark-mode .spinner { border: 5px solid #555; border-top: 5px solid #66b0ff; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Footer Styles */
+        footer {
+            background: linear-gradient(135deg, #003087, #005eb8);
+            color: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 50px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            transition: background 0.3s ease;
+        }
+        body.dark-mode footer {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        }
+        footer .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        footer h4 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        footer p {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        footer .social-links {
+            margin-top: 20px;
+        }
+        footer .social-links a {
+            color: #ffffff;
+            font-size: 20px;
+            margin: 0 15px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        footer .social-links a:hover {
+            transform Podešavanje transform: scale(1.2);
+            color: #66b0ff;
+        }
+        body.dark-mode footer .social-links a:hover {
+            color: #005eb8;
+        }
+        @media (max-width: 768px) {
+            footer {
+                padding: 20px 15px;
+            }
+            footer h4 {
+                font-size: 18px;
+            }
+            footer p {
+                font-size: 12px;
+            }
+            footer .social-links a {
+                font-size: 18px;
+                margin: 0 10px;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .navbar { padding: 0 15px; height: 60px; }
@@ -662,6 +720,22 @@ body.dark-mode .nav-btn[data-tooltip]::before {
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <h4 data-lang="footer-title">VINFAST THUẬN AN</h4>
+            <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
+            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: Saleadminminhdaothuanan@vandao.vn</p>
+            <div class="social-links">
+                <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p>&copy; 2025 VinFast Thuận An. All rights reserved.</p>
+        </div>
+    </footer>
+
     <!-- Script -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
@@ -708,6 +782,9 @@ body.dark-mode .nav-btn[data-tooltip]::before {
                 "change-password-btn": "Đổi Mật Khẩu",
                 "back-to-login": "Quay lại đăng nhập",
                 "contact-admin": "Liên hệ admin để lấy lại mật khẩu",
+                "footer-title": "VINFAST THUẬN AN",
+                "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
+                "footer-contact": "Liên hệ: 0968 275 404 | Email: saleadminminhdaothuanan@vandao.vn"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -735,6 +812,9 @@ body.dark-mode .nav-btn[data-tooltip]::before {
                 "change-password-btn": "Change Password",
                 "back-to-login": "Back to Login",
                 "contact-admin": "Contact admin to recover password",
+                "footer-title": "VINFAST THUAN AN",
+                "footer-address": "Address: 123 Road No. 1, Thuan An, Binh Duong",
+                "footer-contact": "Contact: 0909 123 456 | Email: contact@vinfast-thuanan.vn"
             }
         };
 
@@ -1111,5 +1191,5 @@ function logout() {
             }, 1000);
         }
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926f8514ab6a507f',t:'MTc0MzA4NTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
