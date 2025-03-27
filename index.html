@@ -25,7 +25,7 @@
             width: 100%;
             height: 60px;
             background: linear-gradient(135deg, #003087, #005eb8);
-            display: flex;
+            display: flex
             align-items: center;
             padding: 0 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -387,7 +387,7 @@
         }
 
         .login-modal-content input {
-            padding: 12px 12px 12px 40px; /* Thêm padding trái để tránh đè lên icon */
+            padding: 12px 12px 12px 40px;
             border: 2px solid #a9a9a9;
             border-radius: 12px;
             font-size: 14px;
@@ -487,6 +487,40 @@
                 font-size: 14px;
             }
         }
+
+        /* Hiệu ứng Loading */
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #005eb8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        body.dark-mode .spinner {
+            border: 4px solid #555;
+            border-top: 4px solid #66b0ff;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -543,6 +577,9 @@
     <div id="loginModal" class="modal">
         <div class="login-modal-content" data-aos="zoom-in">
             <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
             <h2 data-lang="login-title">Đăng Nhập</h2>
             <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
             <form onsubmit="login(event)">
@@ -680,6 +717,13 @@
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loginButton = document.querySelector('#loginModal button[type="submit"]');
+
+            // Hiển thị hiệu ứng loading và vô hiệu hóa nút đăng nhập
+            loadingOverlay.style.display = 'flex';
+            loginButton.disabled = true;
+            loginButton.style.opacity = '0.6';
 
             // Log để debug
             console.log("Username before sending: " + username);
@@ -716,6 +760,11 @@
             } catch (error) {
                 console.error('Lỗi khi đăng nhập:', error);
                 showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
+            } finally {
+                // Ẩn hiệu ứng loading và khôi phục nút đăng nhập
+                loadingOverlay.style.display = 'none';
+                loginButton.disabled = false;
+                loginButton.style.opacity = '1';
             }
         }
 
@@ -874,5 +923,6 @@
     </script>
     <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926c50fd8abbb07f',t:'MTc0MzA1MTU0NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
     <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926cc329fe3f53f9',t:'MTc0MzA1NjIyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926ce3e24daf8831',t:'MTc0MzA1NzU2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
