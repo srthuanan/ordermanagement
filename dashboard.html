@@ -3,703 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Showroom Thuận An - VinFast</title>
-    <!-- Preload logo và hình nền hero -->
-    <link rel="preload" href="https://vinfastauto.com/themes/porto/img/logo_vinfast.png" as="image">
-    <link rel="preload" href="https://vinfastauto.us/themes/custom/vinfast_v2/images/v3/vf-9/vf9-plus.webp" as="image">
-    <!-- Tải Tailwind CSS từ CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Tải font Roboto từ Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- Tải biểu tượng từ FontAwesome -->
+    <title>Quản Lý Thao Tác Nhân Viên - VinFast Nội Bộ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Roboto', sans-serif;
-            background: #f4f7fa;
-            color: #1f2937;
-            margin: 0;
-            padding: 0;
-            opacity: 0;
-            transition: opacity 0.5s ease-in;
+            font-family: 'Montserrat', sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            min-height: 100vh;
             overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
         }
+        body.dark-mode { background: #1a1a1a; color: #ffffff; }
         .navbar {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            padding: 15px 40px;
+            height: 60px;
+            background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
-        .navbar .logo img {
-            height: 35px;
-        }
-        .navbar .menu {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            gap: 25px;
-        }
-        .navbar .menu li a {
-            color: #1f2937;
-            text-decoration: none;
+        .navbar .logo-text {
+            color: #ffffff;
+            font-size: 18px;
             font-weight: 700;
-            font-size: 16px;
-            padding: 8px 16px;
-            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .navbar .logo-text span { color: #ffffff; }
+        .navbar .menu {
+            display: none;
+            flex-grow: 1;
+            justify-content: center;
+            list-style: none;
+            margin-left: 20px;
+        }
+        .navbar .menu.active { display: flex; }
+        .navbar .menu li a {
+            padding: 10px 15px;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
             transition: all 0.3s ease;
+            position: relative;
+            border-radius: 5px;
         }
         .navbar .menu li a:hover {
-            background: #1e40af;
+            background: #005eb8;
             color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
         }
-        .hamburger {
-            display: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #1e40af;
+        .navbar .menu li a.active {
+            background: #005eb8;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
+            animation: highlight 1.5s infinite ease-in-out;
+        }
+        @keyframes highlight {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 94, 184, 1); }
         }
         .logout-btn {
-            background: #ef4444;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-weight: 700;
+            padding: 6px 12px;
+            background: #004aad;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
+            display: none;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-left: 10px;
         }
         .logout-btn:hover {
-            background: #b91c1c;
-            transform: scale(1.05);
+            background: #003087;
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.4);
         }
+        .dark-mode-btn, .language-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .user-info {
+            color: #ffffff;
+            font-size: 12px;
+            margin-left: 10px;
+            display: none;
+        }
+        .session-time {
+            color: #ffffff;
+            font-size: 12px;
+            margin-left: 10px;
+            display: none;
+        }
+        .online-status {
+            width: 10px;
+            height: 10px;
+            background: #28a745;
+            border-radius: 50%;
+            display: none;
+            margin-left: 10px;
+        }
+        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; }
         .hero {
-            height: 80vh;
-            background: url('https://vinfastauto.us/themes/custom/vinfast_v2/images/v3/vf-9/vf9-plus.webp') no-repeat center/cover;
+            height: 50vh;
+            background: url('https://file3.qdnd.vn/data/images/0/2025/01/11/upload_2085/a1.jpg') no-repeat center/cover;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
             color: #ffffff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
-            position: relative;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            margin-top: 60px;
         }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-        }
-        .hero h2 {
-            font-size: 50px;
-            font-weight: 900;
-            margin: 0;
-            z-index: 2;
-        }
-        .hero p {
-            font-size: 20px;
-            margin: 15px 0 30px;
-            z-index: 2;
-        }
-        .hero .btn-group {
-            z-index: 2;
-            display: flex;
-            gap: 15px;
-        }
-        .hero .explore-btn, .hero .contact-btn {
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.3s ease;
-        }
-        .hero .explore-btn {
-            background: #1e40af;
-            color: #ffffff;
-        }
-        .hero .explore-btn:hover {
-            background: #1e3a8a;
-            transform: scale(1.05);
-        }
-        .hero .contact-btn {
-            background: transparent;
-            color: #ffffff;
-            border: 2px solid #ffffff;
-        }
-        .hero .contact-btn:hover {
-            background: #ffffff;
-            color: #1e40af;
-            transform: scale(1.05);
-        }
-        .car-section {
-            padding: 80px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            text-align: center;
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            margin-top: -40px;
-            position: relative;
-        }
-        .car-section h3 {
-            font-size: 36px;
-            font-weight: 900;
-            color: #1e40af;
-            margin-bottom: 40px;
-        }
-        .car-carousel {
-            display: flex;
-            overflow-x: auto;
-            gap: 20px;
-            padding-bottom: 20px;
-            scroll-snap-type: x mandatory;
-            transition: transform 0.5s ease;
-        }
-        .car-card {
-            flex: 0 0 300px;
-            background: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            scroll-snap-align: center;
-            transition: transform 0.3s ease;
-        }
-        .car-card:hover {
-            transform: translateY(-10px);
-        }
-        .car-card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            loading: lazy;
-        }
-        .car-info {
-            padding: 15px;
-        }
-        .car-info h4 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0 0 10px;
-        }
-        .car-info p {
-            font-size: 14px;
-            color: #6b7280;
-            margin: 0 0 15px;
-        }
-        .car-info .details-btn {
-            background: #1e40af;
-            color: #ffffff;
-            padding: 8px 18px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: inline-block;
-        }
-        .car-info .details-btn:hover {
-            background: #1e3a8a;
-            transform: scale(1.05);
-        }
-        .carousel-controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .carousel-btn {
-            background: #1e40af;
-            color: #ffffff;
-            padding: 8px 15px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .carousel-btn:hover {
-            background: #1e3a8a;
-            transform: scale(1.1);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            animation: fadeIn 0.3s ease;
-        }
-        .modal-content {
-            background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            animation: slideIn 0.3s ease;
-        }
-        .modal-content img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        .close {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close:hover,
-        .close:focus {
-            color: #1e40af;
-        }
-        .modal-content h2 {
-            font-size: 28px;
-            font-weight: 900;
-            color: #1e40af;
-            margin-bottom: 15px;
-        }
-        .modal-content .spec-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 14px;
-        }
-        .modal-content .spec-table th, .modal-content .spec-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .modal-content .spec-table th {
-            background: #1e40af;
-            color: #ffffff;
-            font-weight: 700;
-        }
-        .modal-content .book-btn {
-            background: #ef4444;
-            color: #ffffff;
-            padding: 10px 25px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 700;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-        .modal-content .book-btn:hover {
-            background: #b91c1c;
-            transform: scale(1.05);
-        }
-        .news-section {
+        .hero h2 { font-size: 36px; font-weight: 700; }
+        .hero p { font-size: 18px; }
+        .management-section {
             padding: 40px 20px;
             max-width: 1400px;
             margin: 0 auto;
-            text-align: center;
-            background: #f9fafb;
+            background: #f9f9f9;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
-        .news-section h3 {
-            font-size: 28px;
-            font-weight: 900;
-            color: #1e40af;
-            margin-bottom: 30px;
-        }
-        .news-item {
+        body.dark-mode .management-section { background: #2a2a2a; }
+        .management-section h3 {
+            font-size: 24px;
+            color: #003087;
+            font-weight: 700;
             margin-bottom: 20px;
-            padding: 15px;
-            background: #ffffff;
+        }
+        body.dark-mode .management-section h3 { color: #66b0ff; }
+        .management-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .management-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #fff;
             border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        footer {
-            background: #1e40af;
-            color: #ffffff;
-            padding: 30px 20px;
-            text-align: center;
+        body.dark-mode .management-card { background: #333; }
+        .management-card h4 {
+            font-size: 18px;
+            color: #003087;
+            margin-bottom: 15px;
         }
-        footer .footer-content {
+        body.dark-mode .management-card h4 { color: #66b0ff; }
+        .search-bar input {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #a9a9a9;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        body.dark-mode .search-bar input {
+            background: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             justify-content: space-between;
-            max-width: 1400px;
-            margin: 0 auto 20px;
-            flex-wrap: wrap;
-            gap: 20px;
+            align-items: center;
         }
-        footer .footer-content div {
-            flex: 1;
-            min-width: 180px;
+        body.dark-mode .activity-item { border-bottom: 1px solid #555; }
+        .activity-item span {
+            font-size: 14px;
+            color: #555;
         }
-        footer iframe {
-            border-radius: 10px;
-            margin-top: 20px;
-            width: 100%;
-            max-width: 600px;
-            height: 150px;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        body.dark-mode .activity-item span { color: #cccccc; }
         @media (max-width: 768px) {
-            .navbar {
-                padding: 15px 20px;
-            }
+            .navbar { padding: 0 10px; height: 50px; }
+            .navbar .logo-text { font-size: 14px; }
             .navbar .menu {
                 display: none;
-                flex-direction: column;
                 position: absolute;
-                top: 60px;
+                top: 50px;
                 left: 0;
                 width: 100%;
-                background: #ffffff;
-                padding: 20px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            }
-            .navbar .menu.active {
-                display: flex;
-            }
-            .hamburger {
-                display: block;
-            }
-            .hero {
-                height: 60vh;
-            }
-            .hero h2 {
-                font-size: 32px;
-            }
-            .hero p {
-                font-size: 16px;
-                margin: 10px 0 20px;
-            }
-            .hero .btn-group {
+                background: #003087;
+                padding: 10px;
                 flex-direction: column;
-                gap: 10px;
+                align-items: flex-start;
             }
-            .car-card {
-                flex: 0 0 280px;
-            }
-            .modal-content {
-                width: 95%;
-                padding: 15px;
-            }
-            .modal-content img {
-                height: 150px;
-            }
-            .modal-content h2 {
-                font-size: 24px;
-            }
-            .modal-content .spec-table {
-                font-size: 12px;
-            }
-            footer .footer-content {
-                flex-direction: column;
-                text-align: center;
-            }
+            .navbar .menu.active { display: flex; }
+            .hamburger { display: block; }
+            .hero { margin-top: 50px; }
+            .hero h2 { font-size: 24px; }
+            .hero p { font-size: 14px; }
+            .management-section { padding: 20px 10px; }
+            .management-content { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <!-- Thanh điều hướng cố định -->
+    <!-- Navbar -->
     <nav class="navbar">
-        <div class="logo">
-            <img src="https://vinfastauto.com/themes/porto/img/logo_vinfast.png" alt="VinFast Logo">
-        </div>
-        <ul class="menu">
-            <li><a href="kpi.html">Kết Quả Kinh Doanh</a></li>
-            <li><a href="yeucaughepxe.html">Yêu Cầu Ghép Xe</a></li>
-            <li><a href="danhsach.html">Danh Sách Đơn Hàng</a></li>
-            <li><a href="xedaban.html">Danh Sách Xe Đã Bán</a></li>
-            <li><a href="#settings">Cài Đặt</a></li>
-        </ul>
+        <div class="logo-text">VINFAST <span>AN PHÚ</span></div>
+        <ul class="menu" id="navMenu"></ul>
         <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
-        <div class="logout-btn" onclick="logout()">Đăng Xuất</div>
+        <span class="user-info" id="userInfo"></span>
+        <span class="session-time" id="sessionTime"></span>
+        <div class="online-status" id="onlineStatus"></div>
+        <div class="logout-btn" onclick="logout()" id="logoutBtn">Đăng Xuất</div>
+        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
+        <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <h2>Tương Lai Di Chuyển</h2>
-        <p>Công nghệ vượt trội cùng VinFast</p>
-        <div class="btn-group">
-            <a href="#cars" class="explore-btn">Khám Phá Xe</a>
-            <a href="#footer" class="contact-btn">Liên Hệ</a>
+    <section class="hero" data-aos="fade-up">
+        <h2 data-lang="hero-title">Hệ Thống Nội Bộ VinFast</h2>
+        <p data-lang="hero-subtitle">Showroom Thuận An</p>
+    </section>
+
+    <!-- Management Section -->
+    <section class="management-section" id="managementSection" data-aos="fade-up">
+        <h3 data-lang="management-title">Quản Lý Thao Tác Nhân Viên</h3>
+        <div class="management-content">
+            <div class="management-card">
+                <h4 data-lang="activity-log-title">Lịch Sử Thao Tác</h4>
+                <div class="search-bar">
+                    <input type="text" id="activitySearch" placeholder="Tìm kiếm lịch sử..." oninput="filterActivities()" data-lang-placeholder="search-activities">
+                </div>
+                <div class="activity-list" id="activityList"></div>
+            </div>
         </div>
     </section>
 
-    <!-- Danh sách xe dạng carousel -->
-    <section class="car-section" id="cars">
-        <h3>Các Dòng Xe VinFast</h3>
-        <div class="car-carousel" id="carousel">
-            <div class="car-card">
-                <img src="https://vinfastphutho.vn/wp-content/uploads/2024/09/vf3-rose-pink.png" alt="VinFast VF3">
-                <div class="car-info">
-                    <h4>VinFast VF3</h4>
-                    <p>Mini SUV | 43 mã lực | 210 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf3')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfast-vn.vn/wp-content/uploads/2023/10/vinfast-vf5-white.png" alt="VinFast VF5 Plus">
-                <div class="car-info">
-                    <h4>VinFast VF5 Plus</h4>
-                    <p>SUV hạng A | 134 mã lực | 300 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf5')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vnvinfast.com/data/upload/media/vinfast-vf6.png" alt="VinFast VF6">
-                <div class="car-info">
-                    <h4>VinFast VF6</h4>
-                    <p>SUV hạng B | 174-201 mã lực | 381-399 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf6')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfastotovinh.vn/wp-content/uploads/2013/06/vinfast-vf7-mau-den-2048x1152.jpg" alt="VinFast VF7">
-                <div class="car-info">
-                    <h4>VinFast VF7</h4>
-                    <p>SUV hạng C | 174-349 mã lực | 375-431 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf7')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfastauto.com/sites/default/files/2022-11/VFe34-white.png" alt="VinFast VF e34">
-                <div class="car-info">
-                    <h4>VinFast VF e34</h4>
-                    <p>SUV hạng C | 148 mã lực | 300 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vfe34')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfastautothaibinh.com/wp-content/uploads/2021/08/vf8-plus-1.png" alt="VinFast VF8">
-                <div class="car-info">
-                    <h4>VinFast VF8</h4>
-                    <p>SUV hạng D | 349-402 mã lực | 400-425 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf8')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfastauto.us/themes/custom/vinfast_v2/images/v3/vf-9/vf9-plus.webp" alt="VinFast VF9">
-                <div class="car-info">
-                    <h4>VinFast VF9</h4>
-                    <p>SUV hạng E | 402 mã lực | 423-438 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('vf9')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://vinfastauto.us/themes/custom/vinfast_v2/images/vf-wild/vf-wild-concept.webp" alt="VinFast VF Wild">
-                <div class="car-info">
-                    <h4>VinFast VF Wild</h4>
-                    <p>Xe bán tải điện | Chưa công bố</p>
-                    <span class="details-btn" onclick="openModal('vfwild')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://cdn-images.oto.com/wp-content/uploads/2025/01/08173847/VinFast-Minio-Green-1.jpg" alt="VinFast Minio Green">
-                <div class="car-info">
-                    <h4>VinFast Minio Green</h4>
-                    <p>Xe đô thị nhỏ gọn | 26 mã lực | 180 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('minio')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://cdn-images.oto.com/wp-content/uploads/2025/01/08173847/VinFast-Herio-Green-1.jpg" alt="VinFast Herio Green">
-                <div class="car-info">
-                    <h4>VinFast Herio Green</h4>
-                    <p>SUV cỡ nhỏ (Dịch vụ) | 134 mã lực | 326 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('herio')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://cdn-images.oto.com/wp-content/uploads/2025/03/18172847/VinFast-Nerio-Green-1.jpg" alt="VinFast Nerio Green">
-                <div class="car-info">
-                    <h4>VinFast Nerio Green</h4>
-                    <p>SUV hạng C (Dịch vụ) | 148 mã lực | 318 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('nerio')">Chi Tiết</span>
-                </div>
-            </div>
-            <div class="car-card">
-                <img src="https://cdn-images.oto.com/wp-content/uploads/2025/03/03172847/VinFast-Limo-Green-1.jpg" alt="VinFast Limo Green">
-                <div class="car-info">
-                    <h4>VinFast Limo Green</h4>
-                    <p>SUV 7 chỗ cao cấp (Dịch vụ) | 450 km/sạc</p>
-                    <span class="details-btn" onclick="openModal('limo')">Chi Tiết</span>
-                </div>
-            </div>
-        </div>
-        <div class="carousel-controls">
-            <span class="carousel-btn" onclick="scrollCarousel(-300)"><i class="fas fa-chevron-left"></i></span>
-            <span class="carousel-btn" onclick="scrollCarousel(300)"><i class="fas fa-chevron-right"></i></span>
-        </div>
-    </section>
-
-    <!-- Modal cho từng dòng xe -->
-    <div id="vf3" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('vf3')">×</span>
-            <img src="https://vinfastphutho.vn/wp-content/uploads/2024/09/vf3-rose-pink.png" alt="VinFast VF3">
-            <h2>VinFast VF3</h2>
-            <table class="spec-table">
-                <tr><th>Thông số</th><th>Chi tiết</th></tr>
-                <tr><td>Phân khúc</td><td>Mini SUV</td></tr>
-                <tr><td>Động cơ</td><td>Điện, 43 mã lực, 110 Nm</td></tr>
-                <tr><td>Pin</td><td>Lithium-ion, 18.64 kWh</td></tr>
-                <tr><td>Quãng đường</td><td>210 km/lần sạc</td></tr>
-                <tr><td>Kích thước</td><td>3.114 x 1.675 x 1.592 mm</td></tr>
-                <tr><td>Giá bán</td><td>299 triệu đồng</td></tr>
-            </table>
-            <p><strong>Tính năng nổi bật:</strong> Nhỏ gọn, phù hợp đô thị, màn hình 10 inch.</p>
-            <a href="#" class="book-btn">Đặt Cọc Ngay</a>
-        </div>
-    </div>
-    <div id="vf5" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('vf5')">×</span>
-            <img src="https://vinfast-vn.vn/wp-content/uploads/2023/10/vinfast-vf5-white.png" alt="VinFast VF5 Plus">
-            <h2>VinFast VF5 Plus</h2>
-            <table class="spec-table">
-                <tr><th>Thông số</th><th>Chi tiết</th></tr>
-                <tr><td>Phân khúc</td><td>SUV hạng A</td></tr>
-                <tr><td>Động cơ</td><td>Điện, 134 mã lực, 135 Nm</td></tr>
-                <tr><td>Pin</td><td>Lithium-ion, 37.23 kWh</td></tr>
-                <tr><td>Quãng đường</td><td>300 km/lần sạc</td></tr>
-                <tr><td>Kích thước</td><td>3.967 x 1.723 x 1.578 mm</td></tr>
-                <tr><td>Giá bán</td><td>529 triệu đồng</td></tr>
-            </table>
-            <p><strong>Tính năng nổi bật:</strong> Màn hình 10 inch, thiết kế trẻ trung.</p>
-            <a href="#" class="book-btn">Đặt Cọc Ngay</a>
-        </div>
-    </div>
-    <!-- Các modal khác giữ nguyên nội dung, chỉ điều chỉnh kích thước trên mobile -->
-    <div id="vf6" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('vf6')">×</span>
-            <img src="https://vnvinfast.com/data/upload/media/vinfast-vf6.png" alt="VinFast VF6">
-            <h2>VinFast VF6</h2>
-            <table class="spec-table">
-                <tr><th>Thông số</th><th>Chi tiết</th></tr>
-                <tr><td>Phân khúc</td><td>SUV hạng B</td></tr>
-                <tr><td>Động cơ</td><td>Base: 174 mã lực; Plus: 201 mã lực</td></tr>
-                <tr><td>Pin</td><td>Lithium-ion, 59.6 kWh</td></tr>
-                <tr><td>Quãng đường</td><td>399 km (Base), 381 km (Plus)</td></tr>
-                <tr><td>Kích thước</td><td>4.238 x 1.820 x 1.594 mm</td></tr>
-                <tr><td>Giá bán</td><td>675-855 triệu đồng</td></tr>
-            </table>
-            <p><strong>Tính năng nổi bật:</strong> Màn hình 12.9 inch, thiết kế thể thao.</p>
-            <a href="#" class="book-btn">Đặt Cọc Ngay</a>
-        </div>
-    </div>
-    <!-- Thêm các modal khác tương tự, tôi sẽ lược bớt để ngắn gọn -->
-
-    <!-- Tin tức mới nhất -->
-    <section class="news-section">
-        <h3>Tin Tức Mới Nhất</h3>
-        <div class="news-item">
-            <p><strong>20/03/2025 - VnExpress:</strong> "VinFast Green nhận 46.000 đặt cọc sau 3 ngày."</p>
-            <a href="https://vnexpress.net/dong-xe-vinfast-green-nhan-gan-46-000-dat-coc-sau-ba-ngay-4726320.html">Đọc thêm</a>
-        </div>
-        <div class="news-item">
-            <p><strong>18/03/2025 - TienPhong:</strong> "Cận cảnh Nerio Green và Herio Green."</p>
-            <a href="https://tienphong.vn/can-canh-2-dong-xe-dien-vinfast-nerio-green-va-herio-green-post1725999.tpo">Đọc thêm</a>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer id="footer">
-        <div class="footer-content">
-            <div>
-                <h3>Showroom Thuận An</h3>
-                <p>123 Đường Lái Thiêu, Thuận An, BD</p>
-                <p>Liên hệ: 0909 123 456</p>
-            </div>
-            <div>
-                <h3>Liên Kết</h3>
-                <p><a href="#cars" style="color: #ffffff;">Dòng Xe</a></p>
-                <p><a href="#news" style="color: #ffffff;">Tin Tức</a></p>
-            </div>
-            <div>
-                <h3>Giờ Mở Cửa</h3>
-                <p>T2 - T6: 8:00 - 18:00</p>
-                <p>T7 - CN: 9:00 - 17:00</p>
-            </div>
-        </div>
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.614627614614!2d106.698357614748!3d10.923456992214!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174d8a5a9e8c5f5%3A0x5e5e5e5e5e5e5e5e!2sThu%E1%BA%ADn%20An%2C%20B%C3%ACnh%20D%C6%B0%C6%A1ng!5e0!3m2!1svi!2s!4v1617171717171!5m2!1svi!2s" loading="lazy"></iframe>
-    </footer>
-
-    <!-- Script xử lý logic -->
+    <!-- Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.body.style.opacity = "1";
-            startCarousel();
+        AOS.init({ duration: 1500, easing: 'ease-out-bounce' });
+        let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        let currentUser = localStorage.getItem('currentUser') || '';
+        let userRole = localStorage.getItem('userRole') || 'employee';
+        const sessionTimeout = 15 * 60 * 1000; // 15 phút
+        let activityLog = JSON.parse(localStorage.getItem('activityLog')) || [];
+        let language = localStorage.getItem('language') || 'vi';
+
+        const translations = {
+            vi: {
+                "hero-title": "Hệ Thống Nội Bộ VinFast",
+                "hero-subtitle": "Showroom Thuận An",
+                "management-title": "Quản Lý Thao Tác Nhân Viên",
+                "activity-log-title": "Lịch Sử Thao Tác",
+                "search-activities": "Tìm kiếm lịch sử..."
+            },
+            en: {
+                "hero-title": "VinFast Internal System",
+                "hero-subtitle": "Thuan An Showroom",
+                "management-title": "Employee Activity Management",
+                "activity-log-title": "Activity Log",
+                "search-activities": "Search activity log..."
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updateUI();
+            updateLanguage();
+            if (isLoggedIn) {
+                startSessionTimer();
+                updateSessionTime();
+                if (userRole === 'manager') loadActivities();
+                else window.location.href = 'index.html'; // Chuyển hướng nếu không phải manager
+            } else {
+                window.location.href = 'index.html'; // Chuyển hướng nếu chưa đăng nhập
+            }
         });
 
-        function logout() {
-            sessionStorage.removeItem('loggedIn');
-            window.location.href = 'index.html';
-        }
+        function updateUI() {
+            const menu = document.getElementById('navMenu');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo');
+            const sessionTime = document.getElementById('sessionTime');
+            const onlineStatus = document.getElementById('onlineStatus');
 
-        function toggleMenu() {
-            const menu = document.querySelector('.menu');
-            menu.classList.toggle('active');
-        }
+            logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
+            onlineStatus.style.display = isLoggedIn ? 'inline-block' : 'none';
+            userInfo.style.display = isLoggedIn ? 'inline' : 'none';
+            sessionTime.style.display = isLoggedIn ? 'inline' : 'none';
 
-        function openModal(carId) {
-            document.getElementById(carId).style.display = "block";
-        }
-
-        function closeModal(carId) {
-            document.getElementById(carId).style.display = "none";
-        }
-
-        window.onclick = function(event) {
-            const modals = document.getElementsByClassName('modal');
-            for (let i = 0; i < modals.length; i++) {
-                if (event.target == modals[i]) {
-                    modals[i].style.display = "none";
-                }
+            if (isLoggedIn) {
+                menu.classList.add('active');
+                userInfo.textContent = `${language === 'vi' ? 'Xin chào' : 'Hello'}, ${currentUser} (${userRole === 'manager' ? (language === 'vi' ? 'Quản lý' : 'Manager') : (language === 'vi' ? 'Nhân viên' : 'Employee')})`;
+                updateMenu();
+            } else {
+                menu.classList.remove('active');
+                menu.innerHTML = '';
             }
         }
 
-        function scrollCarousel(amount) {
-            const carousel = document.getElementById('carousel');
-            carousel.scrollBy({ left: amount, behavior: 'smooth' });
+        function updateMenu() {
+            const menu = document.getElementById('navMenu');
+            const commonLinks = `
+                <li><a href="kpi.html">${language === 'vi' ? 'Kết Quả Kinh Doanh' : 'Business Results'}</a></li>
+                <li><a href="yeucaughepxe.html">${language === 'vi' ? 'Yêu Cầu Ghép Xe' : 'Vehicle Pairing Request'}</a></li>
+                <li><a href="danhsach.html">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a></li>
+                <li><a href="xedaban.html">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a></li>
+            `;
+            const managerLinks = userRole === 'manager' ? `
+                <li><a href="manage.html">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a></li>
+            ` : '';
+            menu.innerHTML = commonLinks + managerLinks;
+
+            // Highlight menu item
+            const menuLinks = document.querySelectorAll('.navbar .menu li a');
+            menuLinks.forEach(link => {
+                if (link.href.includes('manage.html')) {
+                    link.classList.add('active');
+                }
+            });
         }
 
-        function startCarousel() {
-            const carousel = document.getElementById('carousel');
-            let scrollAmount = 0;
-            setInterval(() => {
-                if (scrollAmount >= carousel.scrollWidth - carousel.clientWidth) {
-                    scrollAmount = 0;
-                } else {
-                    scrollAmount += 300;
-                }
-                carousel.scrollTo({ left: scrollAmount, behavior: 'smooth' });
-            }, 3000);
+        function logout() {
+            logActivity(language === 'vi' ? 'Đăng xuất' : 'Logout');
+            isLoggedIn = false;
+            currentUser = '';
+            userRole = 'employee';
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('loginTime');
+            clearTimeout(sessionTimer);
+            clearInterval(sessionInterval);
+            window.location.href = 'index.html';
+        }
+
+        let sessionTimer, sessionInterval;
+        function startSessionTimer() {
+            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const timeElapsed = Date.now() - loginTime;
+            if (timeElapsed >= sessionTimeout) {
+                logout();
+            } else {
+                sessionTimer = setTimeout(() => {
+                    logout();
+                }, sessionTimeout - timeElapsed);
+                sessionInterval = setInterval(updateSessionTime, 1000);
+            }
+        }
+
+        function updateSessionTime() {
+            const loginTime = parseInt(localStorage.getItem('loginTime')) || Date.now();
+            const timeLeft = sessionTimeout - (Date.now() - loginTime);
+            if (timeLeft <= 0) return;
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            document.getElementById('sessionTime').textContent = `${language === 'vi' ? 'Phiên' : 'Session'}: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function toggleMenu() { 
+            const menu = document.querySelector('.menu');
+            if (isLoggedIn) menu.classList.toggle('active'); 
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.dark-mode-btn i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.dark-mode-btn i').classList.remove('fa-moon');
+            document.querySelector('.dark-mode-btn i').classList.add('fa-sun');
+        }
+
+        function toggleLanguage() {
+            language = language === 'vi' ? 'en' : 'vi';
+            localStorage.setItem('language', language);
+            document.getElementById('languageBtn').textContent = language === 'vi' ? 'EN' : 'VI';
+            updateLanguage();
+            updateUI();
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.getAttribute('data-lang');
+                element.textContent = translations[language][key];
+            });
+            document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-lang-placeholder');
+                element.placeholder = translations[language][key];
+            });
+        }
+
+        function loadActivities() {
+            const list = document.getElementById('activityList');
+            list.innerHTML = '';
+            activityLog.forEach(log => {
+                list.innerHTML += `
+                    <div class="activity-item" data-text="${log.action.toLowerCase()} ${log.user.toLowerCase()} ${log.details.toLowerCase()}">
+                        <span>${log.timestamp}: ${log.user} - ${log.action}${log.details ? ` (${log.details})` : ''}</span>
+                    </div>`;
+            });
+        }
+
+        function filterActivities() {
+            const query = document.getElementById('activitySearch').value.toLowerCase();
+            document.querySelectorAll('.activity-item').forEach(item => {
+                item.style.display = item.dataset.text.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function logActivity(action, details = '') {
+            const timestamp = new Date().toLocaleString(language === 'vi' ? 'vi-VN' : 'en-US');
+            const log = {
+                id: activityLog.length + 1,
+                user: currentUser || 'Unknown',
+                action,
+                details,
+                timestamp
+            };
+            activityLog.push(log);
+            localStorage.setItem('activityLog', JSON.stringify(activityLog));
+            if (isLoggedIn && userRole === 'manager') loadActivities();
         }
     </script>
 </body>
