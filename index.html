@@ -31,7 +31,7 @@
             z-index: 1000;
         }
         .navbar .logo-text {
-            color: #ffd700;
+            color: #ffffff;
             font-size: 18px;
             font-weight: 700;
             letter-spacing: 1px;
@@ -57,19 +57,19 @@
             border-radius: 5px;
         }
         .navbar .menu li a:hover {
-            background: #ffd700;
-            color: #003087;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            background: #005eb8;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
         }
         .navbar .menu li a.active {
-            background: #ffd700;
-            color: #003087;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            background: #005eb8;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
             animation: highlight 1.5s infinite ease-in-out;
         }
         @keyframes highlight {
-            0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
-            50% { box-shadow: 0 0 25px rgba(255, 215, 0, 1); }
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 94, 184, 1); }
         }
         .logout-btn {
             padding: 6px 12px;
@@ -328,6 +328,164 @@
             .internal-section, .dashboard-section { padding: 20px 10px; }
             .dashboard-content { flex-direction: column; }
         }
+
+        /* Nâng cấp Modal Đăng Nhập */
+        .login-modal-content {
+            background: linear-gradient(135deg, #ffffff, #f9f9f9);
+            margin: 10% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            border-top: 6px solid #005eb8;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        body.dark-mode .login-modal-content {
+            background: linear-gradient(135deg, #2a2a2a, #333);
+            border-top: 6px solid #66b0ff;
+        }
+
+        .login-modal-content h2 {
+            font-size: 28px;
+            color: #003087;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        body.dark-mode .login-modal-content h2 {
+            color: #66b0ff;
+        }
+
+        .login-modal-content p {
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
+        body.dark-mode .login-modal-content p {
+            color: #cccccc;
+        }
+
+        /* Input Group với Icon */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            color: #005eb8;
+            font-size: 16px;
+        }
+        body.dark-mode .input-group .input-icon {
+            color: #66b0ff;
+        }
+
+        .login-modal-content input {
+            padding: 12px 12px 12px 40px; /* Thêm padding trái để tránh đè lên icon */
+            border: 2px solid #a9a9a9;
+            border-radius: 12px;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .login-modal-content input {
+            background: #333;
+            color: #ffffff;
+            border-color: #555;
+        }
+
+        .login-modal-content input:focus {
+            border-color: #005eb8;
+            box-shadow: 0 0 12px rgba(0, 94, 184, 0.4);
+            outline: none;
+        }
+
+        /* Nút Đăng Nhập */
+        .login-modal-content button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #005eb8, #003087);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-modal-content button:hover {
+            background: linear-gradient(135deg, #003087, #001f5f);
+            box-shadow: 0 6px 20px rgba(0, 94, 184, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Reset Password */
+        .reset-password {
+            font-size: 13px;
+            color: #005eb8;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 15px;
+            display: block;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+        body.dark-mode .reset-password {
+            color: #66b0ff;
+        }
+        .reset-password:hover {
+            color: #003087;
+        }
+        body.dark-mode .reset-password:hover {
+            color: #ffffff;
+        }
+
+        /* Close Button */
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 28px;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .close {
+            color: #cccccc;
+        }
+        .close:hover {
+            color: #003087;
+            transform: rotate(90deg);
+        }
+        body.dark-mode .close:hover {
+            color: #66b0ff;
+        }
+
+        /* Responsive cho Modal */
+        @media (max-width: 768px) {
+            .login-modal-content {
+                padding: 30px;
+                margin: 20% auto;
+                max-width: 350px;
+            }
+            .login-modal-content h2 {
+                font-size: 24px;
+            }
+            .login-modal-content input {
+                padding: 10px 10px 10px 35px;
+            }
+            .login-modal-content button {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -380,15 +538,22 @@
         <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn">Làm Mới</button>
     </section>
 
-    <!-- Modal Đăng Nhập -->
+    <!-- Modal Đăng Nhập Nâng Cấp -->
     <div id="loginModal" class="modal">
-        <div class="login-modal-content">
-            <span class="close" onclick="closeModal('loginModal')">×</span>
+        <div class="login-modal-content" data-aos="zoom-in">
+            <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
             <h2 data-lang="login-title">Đăng Nhập</h2>
+            <p style="font-size: 14px; color: #555; margin-bottom: 20px;" data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
             <form onsubmit="login(event)">
-                <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
-                <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password">
-                <button type="submit" data-lang="login-btn">Đăng Nhập</button>
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password">
+                </div>
+                <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
             </form>
             <span class="reset-password" onclick="resetPassword()" data-lang="reset-password">Đặt lại mật khẩu</span>
         </div>
@@ -435,7 +600,8 @@
                 "login-title": "Đăng Nhập",
                 "username": "Tên đăng nhập",
                 "password": "Mật khẩu",
-                "reset-password": "Đặt lại mật khẩu"
+                "reset-password": "Đặt lại mật khẩu",
+                "login-subtitle": "Truy cập hệ thống nội bộ VinFast"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -452,7 +618,8 @@
                 "login-title": "Login",
                 "username": "Username",
                 "password": "Password",
-                "reset-password": "Reset Password"
+                "reset-password": "Reset Password",
+                "login-subtitle": "Access the VinFast internal system"
             }
         };
 
@@ -534,14 +701,14 @@
             startSessionTimer();
             updateSessionTime();
             loadNotifications();
-            highlightMenu(); // Gọi hàm làm nổi bật menu sau khi đăng nhập
+            highlightMenu();
         }
 
         function highlightMenu() {
             const menuLinks = document.querySelectorAll('.navbar .menu li a');
             menuLinks.forEach(link => {
-                link.classList.add('active'); // Thêm class active để làm nổi bật
-                setTimeout(() => link.classList.remove('active'), 3000); // Tắt hiệu ứng sau 3 giây
+                link.classList.add('active');
+                setTimeout(() => link.classList.remove('active'), 3000);
             });
         }
 
@@ -690,5 +857,6 @@
             showAlert(language === 'vi' ? 'Đặt Lại Mật Khẩu' : 'Reset Password', language === 'vi' ? 'Vui lòng liên hệ quản trị viên để đặt lại mật khẩu!' : 'Please contact the administrator to reset your password!');
         }
     </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926c50fd8abbb07f',t:'MTc0MzA1MTU0NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
