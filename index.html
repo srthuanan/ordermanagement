@@ -676,45 +676,45 @@
             menu.innerHTML = commonLinks + managerLinks;
         }
 
-async function login(e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+        async function login(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-    try {
-        // Gửi yêu cầu đến Google Apps Script API
-        const response = await axios.get('https://script.google.com/macros/s/AKfycbxfwderL-YXHBqsJg54fkmUzlXXL490Lp1u3r6QdiNYtiNxh96X4RvWVAznSIkfKmlcBA/exec', {
-            params: {
-                username: username,
-                password: password
+            try {
+                const response = await axios.get('https://script.google.com/macros/s/AKfycbxfwderL-YXHBqsJg54fkmUzlXXL490Lp1u3r6QdiNYtiNxh96X4RvWVAznSIkfKmlcBA/exec', {
+                    params: {
+                        username: username,
+                        password: password
+                    }
+                });
+
+                const users = response.data;
+                if (users.length > 0) {
+                    const user = users[0];
+                    isLoggedIn = true;
+                    currentUser = user.username;
+                    userRole = user.role;
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('currentUser', user.username);
+                    localStorage.setItem('userRole', user.role);
+                    localStorage.setItem('loginTime', Date.now());
+                    closeModal('loginModal');
+                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
+                    updateUI();
+                    startSessionTimer();
+                    updateSessionTime();
+                    loadNotifications();
+                    highlightMenu();
+                } else {
+                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
+                }
+            } catch (error) {
+                console.error('Lỗi khi đăng nhập:', error);
+                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
             }
-        });
-
-        const users = response.data;
-        if (users.length > 0) {
-            const user = users[0]; // Lấy user đầu tiên khớp
-            isLoggedIn = true;
-            currentUser = user.username;
-            userRole = user.role;
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', user.username);
-            localStorage.setItem('userRole', user.role);
-            localStorage.setItem('loginTime', Date.now());
-            closeModal('loginModal');
-            showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
-            updateUI();
-            startSessionTimer();
-            updateSessionTime();
-            loadNotifications();
-            highlightMenu();
-        } else {
-            showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
         }
-    } catch (error) {
-        console.error('Lỗi khi đăng nhập:', error);
-        showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!');
-    }
-}
+
         function highlightMenu() {
             const menuLinks = document.querySelectorAll('.navbar .menu li a');
             menuLinks.forEach(link => {
