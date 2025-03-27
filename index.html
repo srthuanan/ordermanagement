@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Showroom Thuận An - VinFast Nội Bộ</title>
+    <title>Showroom Thuận An</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
@@ -62,23 +62,85 @@
             box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
             transform: scale(1.05);
         }
-        .logout-btn {
-            padding: 8px 15px;
-            background: #dc3545;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            margin-left: 10px;
-        }
-        .logout-btn:hover {
-            background: #c82333;
-            box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
-        }
-        .dark-mode-btn, .language-btn {
+.navbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 10px;
+}
+
+.nav-btn {
+    position: relative;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    background: #005eb8;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover {
+    background: #003087;
+    box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+}
+
+.nav-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.nav-btn[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #333;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.nav-btn:hover::after, .nav-btn:hover::before {
+    opacity: 1;
+}
+
+body.dark-mode .nav-btn {
+    background: #005eb8;
+}
+
+body.dark-mode .nav-btn:hover {
+    background: #003087;
+}
+
+body.dark-mode .nav-btn[data-tooltip]::after {
+    background: #66b0ff;
+}
+
+body.dark-mode .nav-btn[data-tooltip]::before {
+    border-top-color: #66b0ff;
+}        .dark-mode-btn, .language-btn {
             background: none;
             border: none;
             color: #ffffff;
@@ -440,23 +502,24 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar">
-        <div class="logo-text">VINFAST <span>AN PHÚ</span></div>
-        <ul class="menu" id="navMenu"></ul>
-        <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
-        <span class="user-info" id="userInfo"></span>
-        <span class="session-time" id="sessionTime"></span>
-        <div class="online-status" id="onlineStatus"></div>
-        <div class="logout-btn" onclick="logout()" id="logoutBtn">Đăng Xuất</div>
-        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
-        <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
-    </nav>
-
+<nav class="navbar">
+    <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
+    <ul class="menu" id="navMenu"></ul>
+    <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
+    <span class="user-info" id="userInfo"></span>
+    <span class="session-time" id="sessionTime"></span>
+    <div class="online-status" id="onlineStatus"></div>
+    <div class="navbar-controls">
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+    <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
+    <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+</nav>
     <!-- Hero Section -->
     <section class="hero" id="heroSection" data-aos="fade-up">
         <div class="hero-background" id="heroBackground"></div>
         <div class="hero-content">
-            <h2 data-lang="hero-title">Hệ Thống Nội Bộ VinFast</h2>
+            <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
             <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
             <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
         </div>
@@ -464,13 +527,13 @@
 
     <!-- Internal Section -->
     <section class="internal-section" id="welcomeSection" data-aos="fade-up">
-        <h3 data-lang="welcome-title">Chào Mừng Đến Với Hệ Thống Nội Bộ</h3>
+        <h3 data-lang="welcome-title">Chào Mừng Bạn!!!</h3>
         <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ VinFast.</p>
         <div class="features-grid">
             <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
                 <i class="fas fa-chart-line"></i>
                 <h4 data-lang="sales-title">Theo Dõi Doanh Số</h4>
-                <p>Cập nhật doanh số bán hàng theo thời gian thực.</p>
+                <p>Cập nhật doanh số bán hàng</p>
             </div>
             <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
                 <i class="fas fa-clipboard-list"></i>
@@ -487,7 +550,7 @@
 
     <!-- Dashboard Section -->
     <section class="dashboard-section" id="dashboard" data-aos="fade-up">
-        <h3 data-lang="dashboard-title">Bảng Điều Khiển</h3>
+        <h3 data-lang="dashboard-title">Danh Mục</h3>
         <div class="dashboard-content">
             <div class="dashboard-card">
                 <h4 data-lang="sales-title">Doanh Số</h4>
@@ -518,7 +581,7 @@
             <!-- Login Form -->
             <div id="loginForm">
                 <h2 data-lang="login-title">Đăng Nhập</h2>
-                <p data-lang="login-subtitle">Truy cập hệ thống nội bộ VinFast</p>
+                <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận AN</p>
                 <form onsubmit="login(event)">
                     <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
@@ -789,17 +852,39 @@
             });
             loadNotifications();
         }
-
-        function logout() {
-            isLoggedIn = false;
-            currentUser = '';
-            userRole = 'employee';
-            sessionStorage.clear();
-            clearTimeout(sessionTimer);
-            clearInterval(sessionInterval);
-            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã đăng xuất!' : 'Logged out!');
-            updateUI();
-        }
+function showNotification(message, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #66b0ff;
+        color: #ffffff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1002;
+        transition: opacity 0.3s ease;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, duration);
+}
+function logout() {
+    isLoggedIn = false;
+    currentUser = '';
+    userRole = 'employee';
+    sessionStorage.clear();
+    clearTimeout(sessionTimer);
+    clearInterval(sessionInterval);
+    window.location.href = 'index.html'; // Chuyển hướng về trang chính
+    showNotification(language === 'vi' ? 'Đã đăng xuất!' : 'Logged out!', 2000);
+    updateUI();
+}
 
         let sessionTimer, sessionInterval;
         function startSessionTimer() {
