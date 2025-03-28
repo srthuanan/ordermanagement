@@ -25,91 +25,111 @@
             position: fixed;
             top: 0;
             width: 100%;
-            height: 70px;
+            height: 80px; /* Tăng chiều cao để thoáng hơn */
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
-            padding: 0 30px;
-            box-shadow: 5px 5px 15px rgba(0, 48, 135, 0.3), -2px -2px 5px rgba(255, 255, 255, 0.3);
+            padding: 0 40px; /* Tăng padding hai bên */
+            box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3);
             z-index: 1000;
             transition: height 0.3s ease;
         }
         .navbar .logo-text {
             color: #ffffff;
-            font-size: 22px;
+            font-size: 24px; /* Tăng nhẹ kích thước chữ */
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
+            flex-shrink: 0;
         }
         .navbar .menu {
             display: flex;
             flex-grow: 1;
             justify-content: center;
             list-style: none;
-            margin-left: 20px;
+            gap: 15px; /* Thêm khoảng cách giữa các mục */
         }
         .navbar .menu li a {
-            padding: 12px 20px;
+            padding: 10px 16px; /* Giảm padding để gọn hơn */
             text-decoration: none;
             color: #ffffff;
-            font-size: 14px;
+            font-size: 13px; /* Giảm kích thước chữ */
             font-weight: 600;
             background: #003087;
-            border-radius: 12px;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
         .navbar .menu li a:hover, .navbar .menu li a.active {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -1px -1px 4px rgba(255, 255, 255, 0.3);
         }
         .navbar-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-left: 10px;
+            gap: 12px; /* Tăng khoảng cách giữa các nút */
+            flex-shrink: 0;
         }
         .nav-btn {
-            padding: 8px;
+            padding: 6px;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             background: #005eb8;
             color: #ffffff;
             font-size: 14px;
             cursor: pointer;
-            width: 36px;
-            height: 36px;
+            width: 32px; /* Giảm kích thước nút */
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
         .nav-btn:hover {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -1px -1px 4px rgba(255, 255, 255, 0.3);
         }
         .dark-mode-btn, .language-btn {
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 16px; /* Giảm kích thước icon */
             cursor: pointer;
-            margin-left: 15px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: transform 0.3s ease;
         }
         .dark-mode-btn:hover, .language-btn:hover {
-            transform: scale(1.2);
+            transform: scale(1.1);
         }
-        .user-info { color: #ffffff; font-size: 13px; margin-left: 15px; }
-        .session-time { color: #ffffff; font-size: 13px; margin-left: 15px; }
+        .user-info { 
+            color: #ffffff; 
+            font-size: 12px; /* Giảm kích thước chữ */
+            margin: 0 20px; /* Điều chỉnh margin */
+            white-space: nowrap;
+        }
+        .session-time { 
+            color: #ffffff; 
+            font-size: 12px; 
+            margin-right: 20px; 
+            white-space: nowrap;
+        }
         .online-status {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: #28a745;
             border-radius: 50%;
-            margin-left: 10px;
-            box-shadow: 0 0 5px #28a745;
+            box-shadow: 0 0 4px #28a745;
         }
-        .hamburger { display: none; font-size: 26px; color: #ffffff; cursor: pointer; }
+        .hamburger { 
+            display: none; 
+            font-size: 24px; 
+            color: #ffffff; 
+            cursor: pointer; 
+            margin-left: 20px;
+        }
 
         /* Hero Section */
         .hero {
@@ -120,7 +140,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            margin-top: 70px;
+            margin-top: 80px; /* Điều chỉnh theo chiều cao navbar */
             background: #e0e6ed;
         }
         .hero-background {
@@ -149,36 +169,34 @@
             font-size: 52px;
             font-weight: 700;
             margin-bottom: 15px;
-            color: #ffffff; /* Màu trắng cho h2 */
+            color: #ffffff;
         }
         .hero p {
             font-size: 22px;
             margin-bottom: 25px;
-            color: #ffffff; /* Màu trắng cho p */
+            color: #ffffff;
         }
         .hero .login-btn {
-            padding: 16px 40px; /* Tăng kích thước nút */
-            background: linear-gradient(135deg, #005eb8, #003087); /* Màu nền gradient xanh dương đậm */
-            color: #ffffff; /* Màu chữ trắng */
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #005eb8, #003087);
+            color: #ffffff;
             border: none;
-            border-radius: 25px; /* Bo góc mềm mại hơn */
-            font-size: 20px; /* Tăng kích thước chữ */
-            font-weight: 700; /* Chữ đậm hơn */
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.7), /* Hiệu ứng phát sáng xanh dương */
-                       5px 5px 10px rgba(0, 0, 0, 0.2); /* Bóng tối nhẹ */
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.7), 5px 5px 10px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
-            text-transform: uppercase; /* Chữ in hoa */
+            text-transform: uppercase;
         }
         body.dark-mode .hero .login-btn {
-            background: linear-gradient(135deg, #66b0ff, #005eb8); /* Gradient sáng hơn trong dark mode */
+            background: linear-gradient(135deg, #66b0ff, #005eb8);
             color: #ffffff;
         }
         .hero .login-btn:hover {
-            background: linear-gradient(135deg, #003087, #005eb8); /* Đảo ngược gradient khi hover */
-            box-shadow: 0 0 25px rgba(0, 94, 184, 1), /* Tăng độ sáng của hiệu ứng phát sáng */
-                       inset 5px 5px 10px rgba(0, 0, 0, 0.2);
-            transform: scale(1.05); /* Phóng to nhẹ khi hover */
+            background: linear-gradient(135deg, #003087, #005eb8);
+            box-shadow: 0 0 25px rgba(0, 94, 184, 1), inset 5px 5px 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
         }
 
         /* Internal Section */
@@ -472,9 +490,13 @@
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .navbar { padding: 0 15px; height: 60px; }
-            .navbar .logo-text { font-size: 18px; }
+        @media (max-width: 900px) { /* Giảm breakpoint để hamburger xuất hiện sớm hơn */
+            .navbar { 
+                padding: 0 20px; 
+                height: 60px; 
+                justify-content: space-between; /* Cân bằng bố cục */
+            }
+            .navbar .logo-text { font-size: 20px; }
             .navbar .menu {
                 display: none;
                 position: absolute;
@@ -482,25 +504,27 @@
                 left: 0;
                 width: 100%;
                 background: #003087;
-                padding: 15px;
+                padding: 20px;
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 10px;
             }
             .navbar .menu.active { display: flex; }
             .hamburger { display: block; }
-            .hero { height: 70vh; margin-top: 60px; }
-            .hero h2 { font-size: 36px; }
-            .hero p { font-size: 18px; }
-            .hero .login-btn { 
-                padding: 12px 30px; /* Giảm kích thước nút trên mobile */
-                font-size: 16px; /* Giảm kích thước chữ */
+            .navbar-controls { gap: 8px; }
+            .user-info, .session-time { 
+                display: none; /* Ẩn thông tin người dùng và thời gian phiên trên mobile */
             }
-            .internal-section { padding: 40px 15px; }
-            .dashboard-section { padding: 40px 15px; }
-            .modal-content { padding: 30px; max-width: 400px; }
-            .modal-content h2 { font-size: 24px; }
-            .modal-content input { padding: 10px 10px 10px 40px; }
-            .modal-content button { padding: 10px 20px; font-size: 14px; }
+            .hero { margin-top: 60px; }
+        }
+        @media (max-width: 480px) {
+            .navbar .logo-text { font-size: 18px; }
+            .nav-btn, .dark-mode-btn, .language-btn { 
+                width: 28px; 
+                height: 28px; 
+                font-size: 14px; 
+            }
+            .hamburger { font-size: 20px; }
         }
     </style>
 </head>
@@ -514,10 +538,10 @@
         <span class="session-time" id="sessionTime"></span>
         <div class="online-status" id="onlineStatus"></div>
         <div class="navbar-controls">
-            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="nav-btn" onclick="logout()" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
+            <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
         </div>
-        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
-        <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
     </nav>
 
     <!-- Hero Section -->
@@ -737,7 +761,8 @@
                 "register": "Chưa có tài khoản? Đăng ký",
                 "register-title": "Đăng Ký",
                 "register-subtitle": "Tạo tài khoản mới để truy cập hệ thống",
-                "register-btn": "Đăng Ký"
+                "register-btn": "Đăng Ký",
+                "policies-title": "Tài Liệu - Chính Sách"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -772,7 +797,8 @@
                 "register": "Don't have an account? Register",
                 "register-title": "Register",
                 "register-subtitle": "Create a new account to access the system",
-                "register-btn": "Register"
+                "register-btn": "Register",
+                "policies-title": "Documents - Policies"
             }
         };
 
@@ -831,6 +857,7 @@
                 <li><a href="danhsach.html" onclick="checkLogin(event, 'navigate', 'danhsach.html')">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a></li>
                 <li><a href="xedaban.html" onclick="checkLogin(event, 'navigate', 'xedaban.html')">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a></li>
                 <li><a href="khoxe.html" onclick="checkLogin(event, 'navigate', 'khoxe.html')" data-lang="vehicle-inventory">${translations[language]["vehicle-inventory"]}</a></li>
+                <li><a href="chinhsach.html" onclick="checkLogin(event, 'navigate', 'chinhsach.html')" data-lang="policies-title">${translations[language]["policies-title"]}</a></li>
             `;
             const managerLinks = userRole === 'manager' ? `
                 <li><a href="manage.html" onclick="checkLogin(event, 'navigate', 'manage.html')">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a></li>
@@ -1127,5 +1154,5 @@
             }, 1000);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9276f44e8d1e4527',t:'MTc0MzE2MzA5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
