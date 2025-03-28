@@ -839,7 +839,7 @@
         let tableData = [];
         let currentPage = 1;
         const rowsPerPage = 15;
-        const apiURL = "https://script.google.com/macros/s/AKfycbzfoNKUXHIVyGjfWPWJgcjq9Zvn_jgz6jHUBPwgimSj46qGTnuTb_4elZ0yuVGN56ZA/exec";
+        const apiURL = "https://script.google.com/macros/s/AKfycbxkc1IdCLjBB-vECgilI-dyHR62Jiik3Yho61-ic7MfnGX4LuOBjUppKzHn9lkPOj5_/exec";
 
         document.addEventListener("DOMContentLoaded", function () {
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
@@ -890,28 +890,41 @@ async function uploadFile(files) {
     const spinner = document.querySelector('.loading-spinner');
     spinner.style.display = 'block';
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("filename", file.name);
+    // Đọc file dưới dạng ArrayBuffer để gửi dữ liệu thô
+    const reader = new FileReader();
+    reader.onload = async function (event) {
+        const fileData = event.target.result;
 
-    try {
-        const response = await axios.post(apiURL, formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
+        try {
+            const response = await axios.post(apiURL, fileData, {
+                headers: {
+                    "Content-Type": file.type || "application/octet-stream",
+                    "X-Filename": file.name // Gửi tên file qua header
+                }
+            });
 
-        if (response.data.status === "success") {
-            showNotification("Tải lên thành công!", 2000);
-            await refreshData();
-        } else {
-            showNotification("Tải lên thất bại: " + response.data.message, 3000);
+            if (response.data.status === "success") {
+                showNotification("Tải lên thành công!", 2000);
+                await refreshData();
+            } else {
+                showNotification("Tải lên thất bại: " + response.data.message, 3000);
+            }
+        } catch (error) {
+            const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+            showNotification(errorMsg, 3000);
         }
-    } catch (error) {
-        const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
-        showNotification(errorMsg, 3000);
-    }
 
-    spinner.style.display = 'none';
-    document.getElementById("file-upload").value = "";
+        spinner.style.display = 'none';
+        document.getElementById("file-upload").value = "";
+    };
+
+    reader.onerror = function () {
+        showNotification("Lỗi khi đọc file!", 3000);
+        spinner.style.display = 'none';
+        document.getElementById("file-upload").value = "";
+    };
+
+    reader.readAsArrayBuffer(file);
 }
         function logout() {
             sessionStorage.clear();
