@@ -6,6 +6,7 @@
     <title>Kho Xe - Showroom Thuận An</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -236,9 +237,15 @@
 
         .controls {
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-filter-container {
+            display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
             gap: 15px;
             flex-wrap: wrap;
         }
@@ -266,8 +273,20 @@
             box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
-        body.dark-mode .search-container input:focus {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6);
+        .filter-container select {
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            font-size: 12px;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .filter-container select {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
         .export-btn-container {
@@ -383,7 +402,7 @@
         }
 
         .table-container {
-            max-height: calc(100vh - 220px);
+            max-height: calc(100vh - 260px);
             overflow-y: auto;
             overflow-x: auto;
             position: relative;
@@ -443,6 +462,20 @@
             top: 0;
             z-index: 10;
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        th::after {
+            content: " ⇅";
+            font-size: 10px;
+        }
+
+        th.asc::after {
+            content: " ↑";
+        }
+
+        th.desc::after {
+            content: " ↓";
         }
 
         td {
@@ -606,7 +639,7 @@
         }
 
         .pagination button:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 0.8);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
             transform: translateY(2px);
         }
 
@@ -727,14 +760,20 @@
                 padding: 10px;
             }
             .controls {
+                gap: 10px;
+            }
+            .search-filter-container {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
             }
             .search-container input {
                 max-width: 100%;
                 font-size: 11px;
                 padding: 8px 12px;
+            }
+            .filter-container select {
+                width: 100%;
+                font-size: 11px;
             }
             .export-btn-container {
                 align-items: center;
@@ -748,20 +787,11 @@
                 height: 32px;
                 font-size: 12px;
             }
-            .export-btn[data-tooltip]::after {
-                font-size: 10px;
-                top: -30px;
-                padding: 4px 8px;
-            }
-            .export-btn[data-tooltip]::before {
-                top: -6px;
-                border-width: 3px;
-            }
             .total-count-container {
                 font-size: 11px;
             }
             .table-container {
-                max-height: calc(100vh - 260px);
+                max-height: calc(100vh - 300px);
             }
             table {
                 font-size: 11px;
@@ -821,17 +851,30 @@
     <div class="main-container">
         <div class="grid-container">
             <div class="controls">
-                <div class="search-container">
-                    <input type="text" id="search-input" placeholder="Tìm kiếm..." data-lang-placeholder="search-inventory">
-                </div>
-                <div class="export-btn-container">
-                    <div class="button-group">
-                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                <div class="search-filter-container">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Tìm kiếm..." data-lang-placeholder="search-inventory">
                     </div>
-                    <div class="total-count-container" data-lang="total-count">
-                        Tổng số lượng: <span id="total-count">0</span>
+                    <div class="filter-container">
+                        <select id="filter-line" onchange="applyFilters()">
+                            <option value="">Tất cả dòng xe</option>
+                        </select>
+                        <select id="filter-warehouse" onchange="applyFilters()">
+                            <option value="">Tất cả kho</option>
+                        </select>
+                        <select id="filter-status" onchange="applyFilters()">
+                            <option value="">Tất cả trạng thái</option>
+                        </select>
+                    </div>
+                    <div class="export-btn-container">
+                        <div class="button-group">
+                            <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                            <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                            <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                        </div>
+                        <div class="total-count-container" data-lang="total-count">
+                            Tổng số lượng: <span id="total-count">0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -839,15 +882,15 @@
                 <table id="data-table">
                     <thead id="table-head">
                         <tr>
-                            <th>SỐ TT</th>
-                            <th data-lang="vehicle-line">DÒNG XE</th>
-                            <th data-lang="vehicle-version">PHIÊN BẢN</th>
-                            <th data-lang="vehicle-exterior">NGOẠI THẤT</th>
-                            <th data-lang="vehicle-interior">NỘI THẤT</th>
-                            <th data-lang="vehicle-order-id">MÃ XHĐ</th>
-                            <th data-lang="vehicle-vin">SỐ VIN</th>
-                            <th data-lang="vehicle-warehouse">KHO</th>
-                            <th data-lang="vehicle-status">TRẠNG THÁI</th>
+                            <th id="sort-tt">SỐ TT</th>
+                            <th id="sort-line" data-lang="vehicle-line">DÒNG XE</th>
+                            <th id="sort-version" data-lang="vehicle-version">PHIÊN BẢN</th>
+                            <th id="sort-exterior" data-lang="vehicle-exterior">NGOẠI THẤT</th>
+                            <th id="sort-interior" data-lang="vehicle-interior">NỘI THẤT</th>
+                            <th id="sort-order" data-lang="vehicle-order-id">MÃ XHĐ</th>
+                            <th id="sort-vin" data-lang="vehicle-vin">SỐ VIN</th>
+                            <th id="sort-warehouse" data-lang="vehicle-warehouse">KHO</th>
+                            <th id="sort-status" data-lang="vehicle-status">TRẠNG THÁI</th>
                         </tr>
                     </thead>
                     <tbody id="table-body"></tbody>
@@ -858,6 +901,7 @@
 
         <div class="detail-panel" id="detail-panel">
             <h3 data-lang="inventory-detail">Chi Tiết Xe Trong Kho</h3>
+            <canvas id="stats-chart" style="margin-bottom: 15px;"></canvas>
             <div id="detail-body"></div>
         </div>
     </div>
@@ -877,9 +921,12 @@
         let currentUser = sessionStorage.getItem('currentUser') || '';
         let userRole = sessionStorage.getItem('userRole') || 'employee';
         let tableData = [];
+        let filteredData = [];
         let currentPage = 1;
         const rowsPerPage = 15;
         let language = localStorage.getItem('language') || 'vi';
+        let sortColumn = null;
+        let sortDirection = 'asc';
 
         const translations = {
             vi: {
@@ -911,7 +958,6 @@
         };
 
         document.addEventListener("DOMContentLoaded", function () {
-            console.log("isLoggedIn:", isLoggedIn);
             if (!isLoggedIn) {
                 window.location.href = "index.html";
             } else {
@@ -920,6 +966,7 @@
                 loadInitialData();
                 setupSearch();
                 setupScrollSync();
+                setupSort();
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
                     document.querySelector('.theme-toggle i').classList.remove('fa-moon');
@@ -943,19 +990,20 @@
             const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
 
             try {
-                console.log("Đang tải dữ liệu từ API...");
                 const response = await axios.get(apiURL);
-                console.log("Dữ liệu API:", response.data);
                 if (response.status !== 200) {
                     throw new Error(`Lỗi API: ${response.status}`);
                 }
                 tableData = response.data.slice(1); // Bỏ hàng tiêu đề
-                console.log("tableData sau khi bỏ tiêu đề:", tableData);
                 if (tableData.length === 0) {
                     throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
                 }
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                renderTable(tableData);
+                filteredData = [...tableData]; // Khởi tạo filteredData
+                renderTable(filteredData);
+                populateFilters();
+                renderChart();
+                updateTotalCount(filteredData.length);
                 showNotification(language === 'vi' ? "Dữ liệu đã được tải thành công!" : "Data loaded successfully!", 2000);
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu:", error);
@@ -969,9 +1017,17 @@
                 if (tableBody) {
                     tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
                 }
+                updateTotalCount(0);
                 showNotification(errorMsg, 3000);
             } finally {
                 if (spinner) spinner.style.display = 'none';
+            }
+        }
+
+        function updateTotalCount(count) {
+            const totalCountElement = document.getElementById("total-count");
+            if (totalCountElement) {
+                totalCountElement.textContent = count || 0;
             }
         }
 
@@ -1011,7 +1067,8 @@
             }
             updateLanguage();
             updateUI();
-            renderTable(tableData);
+            renderTable(filteredData);
+            renderChart();
         }
 
         function updateLanguage() {
@@ -1026,80 +1083,59 @@
         }
 
         function renderTable(data, page = currentPage) {
-            console.log("Đang render bảng với dữ liệu:", data);
             const tbody = document.getElementById("table-body");
-            const totalCountElement = document.getElementById("total-count");
             const paginationDiv = document.getElementById("pagination");
 
-            if (!tbody) {
-                console.error("Không tìm thấy tbody với id 'table-body'");
-                return;
-            }
-            if (!paginationDiv) {
-                console.error("Không tìm thấy pagination div");
-                return;
-            }
+            if (!tbody || !paginationDiv) return;
 
             tbody.innerHTML = "";
-            console.log("Đã xóa nội dung cũ trong tbody");
-
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = data.slice(start, end);
-            console.log("Dữ liệu phân trang:", paginatedData);
 
             if (!paginatedData || paginatedData.length === 0) {
-                console.warn("Không có dữ liệu để render trong trang này");
                 tbody.innerHTML = `<tr><td colspan="9">Không có dữ liệu</td></tr>`;
-                if (totalCountElement) {
-                    totalCountElement.textContent = "0";
-                }
+                updateTotalCount(0);
                 paginationDiv.innerHTML = "";
                 return;
             }
 
-            paginatedData.forEach((row, index) => {
-                console.log("Đang render hàng:", row);
-                const globalIndex = start + index + 1;
-                const tr = document.createElement("tr");
-                let cells = [`<td>${globalIndex}</td>`];
-                row.forEach((cell, i) => {
-                    const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
-                    cells.push(`<td${className}>${cell || ""}</td>`);
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const index = parseInt(entry.target.dataset.index);
+                        const row = paginatedData[index];
+                        const globalIndex = start + index + 1;
+                        const tr = document.createElement("tr");
+                        let cells = [`<td>${globalIndex}</td>`];
+                        row.forEach((cell, i) => {
+                            const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
+                            cells.push(`<td${className}>${cell || ""}</td>`);
+                        });
+                        tr.innerHTML = cells.join("");
+                        tr.onclick = () => showDetail(row, globalIndex);
+                        entry.target.replaceWith(tr);
+                        observer.unobserve(entry.target);
+                    }
                 });
-                tr.innerHTML = cells.join("");
-                tr.onclick = () => showDetail(row, globalIndex);
-                tbody.appendChild(tr);
-                console.log("Đã thêm hàng vào tbody:", tr.outerHTML);
+            }, { root: document.querySelector('.table-container'), threshold: 0.1 });
+
+            paginatedData.forEach((_, index) => {
+                const placeholder = document.createElement("tr");
+                placeholder.dataset.index = index;
+                placeholder.innerHTML = `<td colspan="9" style="height: 30px;"></td>`;
+                tbody.appendChild(placeholder);
+                observer.observe(placeholder);
             });
 
-            if (totalCountElement) {
-                totalCountElement.textContent = data.length;
-                console.log("Đã cập nhật tổng số lượng:", data.length);
-            } else {
-                console.warn("Không tìm thấy total-count element, bỏ qua cập nhật tổng số lượng");
-            }
-
+            updateTotalCount(data.length);
             renderPagination(data.length, page);
-            console.log("Đã render phân trang");
-
-            if (data.length > 0) {
-                showDetail(data[0], start + 1);
-                console.log("Đã hiển thị chi tiết hàng đầu tiên");
-            } else {
-                const detailBody = document.getElementById("detail-body");
-                if (detailBody) {
-                    detailBody.innerHTML = `<p>${language === 'vi' ? "Không có dữ liệu để hiển thị." : "No data to display."}</p>`;
-                }
-            }
+            if (data.length > 0) showDetail(data[0], start + 1);
         }
 
         function renderPagination(totalRows, currentPage) {
             const paginationDiv = document.getElementById("pagination");
-            if (!paginationDiv) {
-                console.error("Không tìm thấy pagination div");
-                return;
-            }
+            if (!paginationDiv) return;
             paginationDiv.innerHTML = `
                 <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>${language === 'vi' ? "Trước" : "Previous"}</button>
                 <span>${language === 'vi' ? "Trang" : "Page"} ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
@@ -1109,12 +1145,6 @@
 
         function changePage(newPage) {
             currentPage = newPage;
-            const searchInput = document.getElementById("search-input");
-            if (!searchInput) return;
-            const searchValue = searchInput.value.trim().toLowerCase();
-            const filteredData = tableData.filter(row =>
-                row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
-            );
             renderTable(filteredData, currentPage);
             const tableContainer = document.querySelector('.table-container');
             const detailPanel = document.getElementById("detail-panel");
@@ -1124,10 +1154,7 @@
 
         function showDetail(row, index) {
             const detailBody = document.getElementById("detail-body");
-            if (!detailBody) {
-                console.error("Không tìm thấy detail-body");
-                return;
-            }
+            if (!detailBody) return;
             const headers = [
                 translations[language]["vehicle-line"],
                 translations[language]["vehicle-version"],
@@ -1140,6 +1167,7 @@
             ];
             const totalCount = document.getElementById("total-count")?.textContent || "0";
             let html = `<p style="margin-bottom: 10px;">${translations[language]["total-count"]}: ${totalCount}</p>`;
+            html += `<button onclick="copyDetail()" style="margin-bottom: 10px; padding: 5px 10px; background: #003087; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Copy</button>`;
             html += "<table class='detail-table'>";
             row.forEach((cell, i) => {
                 const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
@@ -1147,12 +1175,24 @@
             });
             html += "</table>";
             detailBody.innerHTML = html;
-            console.log("Đã render chi tiết:", html);
 
             const rows = document.querySelectorAll("#table-body tr");
             rows.forEach(row => row.classList.remove("selected"));
             const selectedRowIndex = (index - 1) % rowsPerPage;
             if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
+        }
+
+        function copyDetail() {
+            const detailBody = document.getElementById("detail-body");
+            const text = Array.from(detailBody.querySelectorAll('tr')).map(tr => {
+                const th = tr.querySelector('th').textContent;
+                const td = tr.querySelector('td').textContent;
+                return `${th}: ${td}`;
+            }).join('\n');
+            const totalCount = document.getElementById("total-count")?.textContent || "0";
+            const fullText = `${translations[language]["total-count"]}: ${totalCount}\n${text}`;
+            navigator.clipboard.writeText(fullText);
+            showNotification(language === 'vi' ? "Đã sao chép chi tiết!" : "Details copied!", 2000);
         }
 
         function exportToExcel() {
@@ -1168,7 +1208,7 @@
                     translations[language]["vehicle-warehouse"],
                     translations[language]["vehicle-status"]
                 ];
-                const wsData = tableData.map((row, index) => {
+                const wsData = filteredData.map((row, index) => {
                     const rowData = { "SỐ TT": index + 1 };
                     row.forEach((cell, i) => rowData[headers[i + 1]] = cell || "");
                     return rowData;
@@ -1241,19 +1281,20 @@
             const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
 
             try {
-                console.log("Đang làm mới dữ liệu...");
                 const response = await axios.get(apiURL);
-                console.log("Dữ liệu API khi làm mới:", response.data);
                 if (response.status !== 200) {
                     throw new Error(`Lỗi API: ${response.status}`);
                 }
-                tableData = response.data.slice(1); // Bỏ hàng tiêu đề
-                console.log("tableData sau khi làm mới:", tableData);
+                tableData = response.data.slice(1);
                 if (tableData.length === 0) {
                     throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
                 }
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                renderTable(tableData);
+                filteredData = [...tableData];
+                renderTable(filteredData);
+                populateFilters();
+                renderChart();
+                updateTotalCount(filteredData.length);
                 showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
             } catch (error) {
                 console.error("Lỗi khi làm mới dữ liệu:", error);
@@ -1267,6 +1308,7 @@
                 if (tableBody) {
                     tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
                 }
+                updateTotalCount(0);
                 showNotification(errorMsg, 3000);
             } finally {
                 if (spinner) spinner.style.display = 'none';
@@ -1285,16 +1327,7 @@
             const searchInput = document.getElementById("search-input");
             if (!searchInput) return;
             searchInput.addEventListener("input", debounce(function () {
-                const searchValue = this.value.trim().toLowerCase();
-                const filteredData = tableData.filter(row =>
-                    row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
-                );
-                currentPage = 1;
-                renderTable(filteredData);
-                const totalCountElement = document.getElementById("total-count");
-                if (totalCountElement) {
-                    totalCountElement.textContent = filteredData.length;
-                }
+                applyFilters();
             }, 300));
         }
 
@@ -1318,6 +1351,112 @@
                     isDetailScrolling = true;
                     tableContainer.scrollTop = detailPanel.scrollTop;
                     setTimeout(() => { isDetailScrolling = false; }, 100);
+                }
+            });
+        }
+
+        function setupSort() {
+            document.querySelectorAll('#table-head th').forEach((th, index) => {
+                th.addEventListener('click', () => sortTable(index === 0 ? 0 : index - 1));
+            });
+        }
+
+        function sortTable(columnIndex) {
+            if (sortColumn === columnIndex) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = columnIndex;
+                sortDirection = 'asc';
+            }
+
+            filteredData.sort((a, b) => {
+                const valA = a[columnIndex] || '';
+                const valB = b[columnIndex] || '';
+                if (sortDirection === 'asc') {
+                    return valA.toString().localeCompare(valB.toString());
+                } else {
+                    return valB.toString().localeCompare(valA.toString());
+                }
+            });
+
+            renderTable(filteredData);
+            updateSortIndicators(columnIndex);
+        }
+
+        function updateSortIndicators(columnIndex) {
+            document.querySelectorAll('#table-head th').forEach(th => {
+                th.classList.remove('asc', 'desc');
+            });
+            const th = document.getElementById(`sort-${['tt', 'line', 'version', 'exterior', 'interior', 'order', 'vin', 'warehouse', 'status'][columnIndex]}`);
+            if (th) th.classList.add(sortDirection);
+        }
+
+        function populateFilters() {
+            const lineSelect = document.getElementById("filter-line");
+            const warehouseSelect = document.getElementById("filter-warehouse");
+            const statusSelect = document.getElementById("filter-status");
+
+            const lines = [...new Set(tableData.map(row => row[0]))];
+            const warehouses = [...new Set(tableData.map(row => row[6]))];
+            const statuses = [...new Set(tableData.map(row => row[7]))];
+
+            lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}">${line}</option>`).join('');
+            warehouseSelect.innerHTML = '<option value="">Tất cả kho</option>' + warehouses.map(wh => `<option value="${wh}">${wh}</option>`).join('');
+            statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}">${status}</option>`).join('');
+        }
+
+        function applyFilters() {
+            const lineFilter = document.getElementById("filter-line").value;
+            const warehouseFilter = document.getElementById("filter-warehouse").value;
+            const statusFilter = document.getElementById("filter-status").value;
+            const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
+
+            filteredData = tableData.filter(row => {
+                return (!lineFilter || row[0] === lineFilter) &&
+                       (!warehouseFilter || row[6] === warehouseFilter) &&
+                       (!statusFilter || row[7] === statusFilter) &&
+                       (!searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue)));
+            });
+
+            if (sortColumn !== null) {
+                filteredData.sort((a, b) => {
+                    const valA = a[sortColumn] || '';
+                    const valB = b[sortColumn] || '';
+                    if (sortDirection === 'asc') {
+                        return valA.toString().localeCompare(valB.toString());
+                    } else {
+                        return valB.toString().localeCompare(valA.toString());
+                    }
+                });
+            }
+
+            currentPage = 1;
+            renderTable(filteredData);
+            updateTotalCount(filteredData.length);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('stats-chart').getContext('2d');
+            const lines = [...new Set(filteredData.map(row => row[0]))];
+            const lineCounts = lines.map(line => filteredData.filter(row => row[0] === line).length);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: lines,
+                    datasets: [{
+                        label: language === 'vi' ? 'Số lượng theo dòng xe' : 'Quantity by vehicle line',
+                        data: lineCounts,
+                        backgroundColor: '#003087',
+                        borderColor: '#001f5f',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
                 }
             });
         }
