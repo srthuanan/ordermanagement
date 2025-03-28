@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Giữ nguyên toàn bộ CSS từ phiên bản trước */
         * {
             margin: 0;
             padding: 0;
@@ -780,6 +779,7 @@
             <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
             <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
             <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+
         </div>
     </div>
 
@@ -789,11 +789,13 @@
                 <div class="search-container">
                     <input type="text" id="search-input" placeholder="Tìm kiếm...">
                 </div>
+
                 <div class="export-btn-container">
                     <div class="button-group">
                         <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
                         <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button> <button class="nav-btn" onclick="document.getElementById('file-upload').click()" data-tooltip="Tải lên"><i class="fas fa-upload"></i></button>
+<input type="file" id="file-upload" style="display: none;" onchange="uploadFile(this.files)">
                     </div>
                     <div class="total-count-container">
                         Tổng số lượng: <span id="total-count">0</span>
@@ -857,12 +859,11 @@
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
 
-            const apiURL = "https://script.google.com/macros/s/YOUR_GOOGLE_SCRIPT_URL/exec"; // Thay bằng URL Web App của Google Apps Script
+            const apiURL = "https://script.google.com/macros/s/AKfycbyuKrwSJ3v3_kfTXh0V8R9VNQpoCtwd7mNB88yqI8Ku6ckyTEUXQ98-K9lwMnChNmNt/exec";
             try {
                 const response = await axios.get(apiURL);
                 tableData = response.data.map(file => [
                     file.name,
-                    "", // Placeholder nếu cần thêm cột khác
                     file.uploadDate,
                     file.owner,
                     file.link
@@ -903,7 +904,42 @@
                 localStorage.setItem('theme', 'light');
             }
         }
+async function uploadFile(files) {
+    if (!files || files.length === 0) {
+        showNotification("Vui lòng chọn file để tải lên!", 3000);
+        return;
+    }
 
+    const file = files[0];
+    const spinner = document.querySelector('.loading-spinner');
+    spinner.style.display = 'block';
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("owner", "Guest"); // Thay bằng tên người dùng nếu có hệ thống đăng nhập
+    formData.append("uploadDate", new Date().toISOString());
+
+    const apiURL = "https://script.google.com/macros/s/YOUR_API_URL/exec"; // Thay bằng URL API thực tế
+
+    try {
+        const response = await axios.post(apiURL, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        if (response.data.status === "success") {
+            showNotification("Tải lên thành công!", 2000);
+            await refreshData(); // Làm mới bảng sau khi tải lên
+        } else {
+            showNotification("Tải lên thất bại: " + response.data.message, 3000);
+        }
+    } catch (error) {
+        const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+        showNotification(errorMsg, 3000);
+    }
+
+    spinner.style.display = 'none';
+    document.getElementById("file-upload").value = ""; // Reset input file
+}
         function renderTable(data, page = currentPage) {
             const tbody = document.getElementById("table-body");
             tbody.innerHTML = "";
@@ -918,13 +954,13 @@
                 
                 row.forEach((cell, i) => {
                     let value = cell || "";
-                    if (i === 2 && value) {
+                    if (i === 1 && value) {
                         const date = new Date(value);
                         if (!isNaN(date)) {
                             value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                         }
-                    } else if (i === 4 && value) {
-                        value = `<a href="${value}" target="_blank">${value}</a>`;
+                    } else if (i === 3 && value) {
+                        value = `<a href="${value}" target="_blank" class="download-link"><i class="fas fa-download"></i></a>`;
                     }
                     cells.push(`<td>${value}</td>`);
                 });
@@ -981,17 +1017,15 @@
             let html = "<table class='detail-table'>";
             
             row.forEach((cell, i) => {
-                if (i === 1) return; // Bỏ qua cột placeholder nếu không cần
                 let value = cell || "";
-                if (i === 2 && value) {
+                if (i === 1 && value) {
                     const date = new Date(value);
                     if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                } else if (i === 4 && value) {
-                    value = `<a href="${value}" target="_blank">${value}</a>`;
+                } else if (i === 3 && value) {
+                    value = `<a href="${value}" target="_blank">Bản xem thử của tài liệu</a>`;
                 }
-                const headerIndex = i > 1 ? i - 1 : i; // Điều chỉnh chỉ số headers do bỏ cột 1
-                const cellClass = (i === 4) ? ' class="link-highlight"' : '';
-                html += `<tr><th>${headers[headerIndex]}</th><td${cellClass}>${value}</td></tr>`;
+                const cellClass = (i === 3) ? ' class="link-highlight"' : '';
+                html += `<tr><th>${headers[i]}</th><td${cellClass}>${value}</td></tr>`;
             });
             
             html += "</table>";
@@ -1010,14 +1044,11 @@
                     const rowData = { "SỐ TT": index + 1 };
                     row.forEach((cell, i) => {
                         let value = cell || "";
-                        if (i === 2 && value) {
+                        if (i === 1 && value) {
                             const date = new Date(value);
                             if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                         }
-                        if (i !== 1) { // Bỏ qua cột placeholder
-                            const headerIndex = i > 1 ? i - 1 : i;
-                            rowData[headers[headerIndex]] = value;
-                        }
+                        rowData[headers[i + 1]] = value;
                     });
                     return rowData;
                 });
@@ -1063,6 +1094,7 @@
                         th { background: #003087; color: #fff; }
                         .link-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
                         .selected { background: #cce5ff; font-weight: 700; }
+                        .download-link { text-decoration: none; color: #003087; }
                         @media print {
                             body { margin: 0; }
                             table { page-break-inside: auto; }
@@ -1083,12 +1115,11 @@
             document.getElementById("search-input").value = "";
             currentPage = 1;
 
-            const apiURL = "https://script.google.com/macros/s/YOUR_GOOGLE_SCRIPT_URL/exec"; // Thay bằng URL Web App của Google Apps Script
+            const apiURL = "https://script.google.com/macros/s/AKfycbyuKrwSJ3v3_kfTXh0V8R9VNQpoCtwd7mNB88yqI8Ku6ckyTEUXQ98-K9lwMnChNmNt/exec";
             try {
                 const response = await axios.get(apiURL);
                 tableData = response.data.map(file => [
                     file.name,
-                    "", // Placeholder nếu cần thêm cột khác
                     file.uploadDate,
                     file.owner,
                     file.link
