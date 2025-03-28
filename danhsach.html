@@ -17,7 +17,7 @@
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background: #ffffff;
+            background: #f0f4f8; /* Màu nền sáng cho Neumorphism */
             color: #1a1a1a;
             min-height: 100vh;
             overflow-x: hidden;
@@ -26,21 +26,28 @@
 
         body.dark-mode {
             background: #1a1a1a;
-            color: #ffffff;
+            color: #e0e0e0;
         }
 
+        /* Navbar với màu xanh VinFast */
         .navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 60px;
-            background: linear-gradient(135deg, #003087, #005eb8);
+            background: #003087; /* Màu xanh VinFast */
             display: flex;
             align-items: center;
             padding: 0 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 15px 15px;
             z-index: 1000;
+        }
+
+        body.dark-mode .navbar {
+            background: #003087; /* Giữ màu xanh VinFast trong chế độ tối */
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
         }
 
         .navbar .logo {
@@ -52,10 +59,13 @@
 
         .navbar .logo h1 {
             font-size: 20px;
-            color: #ffffff;
+            color: #ffffff; /* Chữ trắng để nổi trên nền xanh */
             font-weight: 700;
             text-transform: uppercase;
-            text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .navbar .logo h1 {
+            color: #ffffff; /* Giữ màu trắng trong chế độ tối */
         }
 
         .navbar .tabs {
@@ -76,11 +86,29 @@
             position: relative;
             padding: 10px 15px;
             text-decoration: none;
-            color: #ffffff;
+            color: #ffffff; /* Chữ trắng để nổi trên nền xanh */
             font-size: 12px;
             font-weight: 700;
+            background: #003087; /* Nền xanh VinFast */
+            border-radius: 10px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
             overflow: hidden;
+        }
+
+        .navbar .tabs a:hover, .navbar .tabs a.active {
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+
+        body.dark-mode .navbar .tabs a {
+            background: #003087; /* Giữ màu xanh VinFast */
+            color: #ffffff; /* Chữ trắng trong chế độ tối */
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active {
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -3px -3px 8px rgba(50, 50, 50, 0.5);
         }
 
         .navbar-controls {
@@ -95,8 +123,8 @@
             padding: 8px;
             border: none;
             border-radius: 10px;
-            background: #005eb8;
-            color: #ffffff;
+            background: #003087; /* Nền xanh VinFast */
+            color: #ffffff; /* Chữ trắng để nổi trên nền xanh */
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -105,11 +133,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
         }
 
         .nav-btn:hover {
-            background: #003087;
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+
+        body.dark-mode .nav-btn {
+            background: #003087; /* Giữ màu xanh VinFast */
+            color: #ffffff; /* Chữ trắng trong chế độ tối */
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .nav-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
         .nav-btn[data-tooltip]::after {
@@ -155,53 +194,26 @@
             border-top-color: #66b0ff;
         }
 
-        .navbar .tabs a::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(0, 94, 184, 0.5);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-            z-index: -1;
-        }
-
-        .navbar .tabs a:hover::before, .navbar .tabs a.active::before {
-            width: 200px;
-            height: 200px;
-        }
-
-        .navbar .tabs a:hover {
-            background: #005eb8;
-            color: #ffffff;
-            box-shadow: 0 0 20px rgba(0, 94, 184, 0.8);
-        }
-
-        .navbar .tabs a.active {
-            background: #005eb8;
-            color: #ffffff;
-            box-shadow: 0 0 25px rgba(0, 94, 184, 1);
-            animation: glowPulse 2s infinite ease-in-out;
-        }
-
         .theme-toggle {
             margin-left: 10px;
             padding: 8px;
             background: none;
             border: none;
-            color: #ffffff;
+            color: #ffffff; /* Chữ trắng để nổi trên nền xanh */
             font-size: 16px;
             cursor: pointer;
+            transition: transform 0.3s ease;
         }
 
-        @keyframes glowPulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(0, 94, 184, 0.8); }
-            50% { box-shadow: 0 0 30px rgba(0, 94, 184, 1); }
+        body.dark-mode .theme-toggle {
+            color: #ffffff; /* Giữ màu trắng trong chế độ tối */
         }
 
+        .theme-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        /* Main Container */
         .main-container {
             display: flex;
             margin-top: 60px;
@@ -212,15 +224,16 @@
 
         .grid-container {
             flex: 2;
-            background: #f9f9f9;
+            background: #f0f4f8;
             border-radius: 15px;
             padding: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: background 0.3s;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
         }
 
         body.dark-mode .grid-container {
-            background: #2a2a2a;
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
         }
 
         .controls {
@@ -236,22 +249,27 @@
             padding: 10px 15px;
             width: 100%;
             max-width: 250px;
-            border: 1px solid #a9a9a9;
+            border: none;
             border-radius: 10px;
+            background: #f0f4f8;
             font-size: 12px;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
         }
 
-        body.dark-mode .search-container input {
-            background: #333;
-            color: #ffffff;
-            border-color: #555;
+        .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
+            outline: none;
         }
 
-        .search-container input:focus {
-            border-color: #005eb8;
-            box-shadow: 0 0 10px rgba(0, 94, 184, 0.3);
-            outline: none;
+        body.dark-mode .search-container input {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6);
         }
 
         .export-btn-container {
@@ -274,7 +292,7 @@
         }
 
         body.dark-mode .total-count-container {
-            color: #ffffff;
+            color: #e0e0e0;
         }
 
         .export-btn {
@@ -282,8 +300,8 @@
             padding: 10px;
             border: none;
             border-radius: 10px;
-            background: #005eb8;
-            color: #ffffff;
+            background: #f0f4f8;
+            color: #003087;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -292,20 +310,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
         }
 
         .export-btn:hover {
-            background: #003087;
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
         }
 
         .refresh-btn {
-            background: #28a745;
+            background: #f0f4f8;
+            color: #28a745;
         }
 
         .refresh-btn:hover {
-            background: #218838;
-            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .refresh-btn {
+            color: #28a745;
+        }
+
+        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
         .export-btn[data-tooltip]::after {
@@ -365,21 +398,21 @@
         }
 
         .table-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #f0f4f8;
             border-radius: 10px;
         }
 
         .table-container::-webkit-scrollbar-thumb {
-            background: #005eb8;
+            background: #003087;
             border-radius: 10px;
         }
 
         .table-container::-webkit-scrollbar-thumb:hover {
-            background: #003087;
+            background: #001f5f;
         }
 
         body.dark-mode .table-container::-webkit-scrollbar-track {
-            background: #333;
+            background: #1a1a1a;
         }
 
         body.dark-mode .table-container::-webkit-scrollbar-thumb {
@@ -404,27 +437,30 @@
         }
 
         th {
-            background: #003087;
-            color: #ffffff;
+            background: #000099;
+            color: #FFFFFF;
             font-weight: 700;
             text-transform: uppercase;
             position: sticky;
             top: 0;
             z-index: 10;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
         }
 
         td {
-            background: #ffffff;
+            background: #f0f4f8;
             color: #1a1a1a;
         }
 
         body.dark-mode th {
-            background: #0044cc;
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
         }
 
         body.dark-mode td {
-            background: #333;
-            color: #ffffff;
+            background: #1a1a1a;
+            color: #e0e0e0;
             border-bottom: 1px solid #555;
         }
 
@@ -440,13 +476,13 @@
         }
 
         tbody tr:hover {
-            background: #f0f8ff;
+            background: #e8eef4;
             cursor: pointer;
             transition: background 0.3s ease;
         }
 
         body.dark-mode tbody tr:hover {
-            background: #444;
+            background: #222;
         }
 
         tbody tr.selected {
@@ -460,15 +496,19 @@
 
         .detail-panel {
             flex: 1;
-            background: #ffffff;
+            background: #f0f4f8;
             border-radius: 15px;
             padding: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border-left: 4px solid #005eb8;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
             max-height: calc(100vh - 80px);
             overflow-y: auto;
             scroll-behavior: smooth;
+        }
+
+        body.dark-mode .detail-panel {
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
         }
 
         .detail-panel::-webkit-scrollbar {
@@ -476,21 +516,21 @@
         }
 
         .detail-panel::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #f0f4f8;
             border-radius: 10px;
         }
 
         .detail-panel::-webkit-scrollbar-thumb {
-            background: #005eb8;
+            background: #003087;
             border-radius: 10px;
         }
 
         .detail-panel::-webkit-scrollbar-thumb:hover {
-            background: #003087;
+            background: #001f5f;
         }
 
         body.dark-mode .detail-panel::-webkit-scrollbar-track {
-            background: #333;
+            background: #1a1a1a;
         }
 
         body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
@@ -501,11 +541,6 @@
             background: #4a90e2;
         }
 
-        body.dark-mode .detail-panel {
-            background: #2a2a2a;
-            border-left: 4px solid #66b0ff;
-        }
-
         .detail-panel h3 {
             font-size: 18px;
             color: #003087;
@@ -513,13 +548,13 @@
             font-weight: 700;
             position: sticky;
             top: 0;
-            background: #ffffff;
+            background: #f0f4f8;
             z-index: 10;
         }
 
         body.dark-mode .detail-panel h3 {
             color: #66b0ff;
-            background: #2a2a2a;
+            background: #1a1a1a;
         }
 
         .detail-table {
@@ -529,16 +564,18 @@
         }
 
         .detail-table th {
-            background: #f9f9f9;
+            background: #f0f4f8;
             color: #1a1a1a;
             text-align: left;
             padding: 10px;
             font-weight: 400;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
         }
 
         body.dark-mode .detail-table th {
-            background: #333;
-            color: #ffffff;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
         }
 
         .detail-table td {
@@ -548,7 +585,7 @@
 
         body.dark-mode .detail-table td {
             border-bottom: 1px solid #555;
-            color: #ffffff;
+            color: #e0e0e0;
         }
 
         .pagination {
@@ -560,25 +597,29 @@
 
         .pagination button {
             padding: 10px 20px;
-            border: 1px solid #a9a9a9;
+            border: none;
             border-radius: 10px;
-            background: #ffffff;
-            color: #1a1a1a;
+            background: #f0f4f8;
+            color: #003087;
             font-size: 12px;
             cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
         }
 
-        body.dark-mode .pagination button {
-            background: #333;
-            color: #ffffff;
-            border-color: #555;
+        .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
         }
 
-        .pagination button:hover {
-            background: #005eb8;
-            color: #ffffff;
-            border-color: #005eb8;
+        body.dark-mode .pagination button {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
         .pagination button:disabled {
@@ -596,20 +637,24 @@
             color: #66b0ff;
         }
 
+        /* Footer với màu xanh VinFast */
         footer {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: #003087;
-            color: #ffffff;
+            background: #003087; /* Màu xanh VinFast */
+            color: #ffffff; /* Chữ trắng để nổi trên nền xanh */
             text-align: center;
             padding: 8px 0;
             font-size: 10px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
         }
 
         body.dark-mode footer {
-            background: #0044cc;
+            background: #003087; /* Giữ màu xanh VinFast trong chế độ tối */
+            color: #ffffff; /* Chữ trắng trong chế độ tối */
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
         }
 
         .loading-spinner {
@@ -623,8 +668,8 @@
         .loading-spinner .spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid #a9a9a9;
-            border-top: 4px solid #005eb8;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #003087;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -644,17 +689,19 @@
             top: 15px;
             right: 15px;
             padding: 8px 15px;
-            background: #005eb8;
-            color: #ffffff;
+            background: #f0f4f8;
+            color: #003087;
             border-radius: 10px;
             display: none;
             z-index: 10001;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
             font-size: 12px;
         }
 
         body.dark-mode #notification {
-            background: #66b0ff;
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
 
         @media (max-width: 768px) {
@@ -727,13 +774,8 @@
             }
             .detail-panel {
                 margin-top: 15px;
-                border-left: none;
-                border-top: 4px solid #005eb8;
                 max-height: calc(100vh - 260px);
                 padding: 10px;
-            }
-            body.dark-mode .detail-panel {
-                border-top: 4px solid #66b0ff;
             }
             .detail-panel h3 {
                 font-size: 16px;
@@ -771,8 +813,8 @@
             <h1>VinFast Thuận An</h1>
         </div>
         <div class="tabs">
-            <a href="#" onclick="fetchSheetData('Đã Ghép', this)" class="active">Đã Ghép</a>
-            <a href="#" onclick="fetchSheetData('Chưa Ghép', this)">Chưa Ghép</a>
+            <a href="#" onclick="switchTab('Đã Ghép', this)" class="active">Đã Ghép</a>
+            <a href="#" onclick="switchTab('Chưa Ghép', this)">Chưa Ghép</a>
         </div>
         <div class="navbar-controls">
             <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
@@ -824,19 +866,53 @@
     <div id="notification"></div>
 
     <script>
-        // Kiểm tra trạng thái đăng nhập khi tải trang
+        // Kiểm tra trạng thái đăng nhập và tải dữ liệu một lần khi khởi động
+        let tableData = {};
+        let currentSheet = 'Đã Ghép';
+        let currentPage = 1;
+        const rowsPerPage = 15;
+
         document.addEventListener("DOMContentLoaded", function () {
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
-                window.location.href = "index.html"; // Chuyển hướng về index.html nếu chưa đăng nhập
+                window.location.href = "index.html";
             } else {
-                fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
+                loadInitialData(); // Tải dữ liệu một lần
                 setupSearch();
                 setupScrollSync();
-                setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
+                // Kiểm tra theme đã lưu
+                if (localStorage.getItem('theme') === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    document.querySelector('.theme-toggle i').classList.remove('fa-moon');
+                    document.querySelector('.theme-toggle i').classList.add('fa-sun');
+                }
             }
         });
 
-        // Thêm hàm đăng xuất và quay lại
+        // Hàm tải dữ liệu ban đầu một lần
+        async function loadInitialData() {
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
+
+            const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
+            try {
+                const response = await axios.get(apiURL);
+                tableData['Đã Ghép'] = response.data.Sheet1 ? response.data.Sheet1.map(row => Object.values(row)) : [];
+                tableData['Chưa Ghép'] = response.data.Sheet2 ? response.data.Sheet2.map(row => Object.values(row)) : [];
+                sessionStorage.setItem('Đã Ghép', JSON.stringify(tableData['Đã Ghép']));
+                sessionStorage.setItem('Chưa Ghép', JSON.stringify(tableData['Chưa Ghép']));
+                renderTable(tableData[currentSheet]);
+                highlightVinNumbers();
+                showNotification("Dữ liệu đã được tải thành công!", 2000);
+            } catch (error) {
+                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
+            }
+            spinner.style.display = 'none';
+            updateTableHeader(currentSheet);
+        }
+
+        // Hàm đăng xuất
         function logout() {
             sessionStorage.clear();
             window.location.href = "index.html";
@@ -847,11 +923,6 @@
             window.location.href = "index.html";
             showNotification("Đã quay lại trang chủ!", 2000);
         }
-
-        let tableData = {};
-        let currentSheet = 'Đã Ghép';
-        let currentPage = 1;
-        const rowsPerPage = 15;
 
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
@@ -867,51 +938,21 @@
             }
         }
 
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle i').classList.remove('fa-moon');
-            document.querySelector('.theme-toggle i').classList.add('fa-sun');
-        }
-
-        async function fetchSheetData(sheetName, element) {
+        // Hàm chuyển tab mà không tải lại dữ liệu
+        function switchTab(sheetName, element) {
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             currentSheet = sheetName;
             currentPage = 1;
 
-            const spinner = document.querySelector('.loading-spinner');
-            if (!tableData[sheetName]) {
-                const cachedData = sessionStorage.getItem(sheetName);
-                if (cachedData) {
-                    tableData[sheetName] = JSON.parse(cachedData);
-                } else {
-                    spinner.style.display = 'block';
-                }
-            }
-
-            const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
-            try {
-                if (!tableData[sheetName]) {
-                    const response = await axios.get(apiURL);
-                    const sheet1Data = response.data.Sheet1 ? response.data.Sheet1.map(row => Object.values(row)) : [];
-                    const sheet2Data = response.data.Sheet2 ? response.data.Sheet2.map(row => Object.values(row)) : [];
-                    tableData['Đã Ghép'] = Array.isArray(sheet1Data) ? sheet1Data : [];
-                    tableData['Chưa Ghép'] = Array.isArray(sheet2Data) ? sheet2Data : [];
-                    sessionStorage.setItem('Đã Ghép', JSON.stringify(tableData['Đã Ghép']));
-                    sessionStorage.setItem('Chưa Ghép', JSON.stringify(tableData['Chưa Ghép']));
-                }
-                const dataToRender = Array.isArray(tableData[sheetName]) ? tableData[sheetName] : [];
-                renderTable(dataToRender);
+            if (tableData[sheetName] && tableData[sheetName].length > 0) {
+                renderTable(tableData[sheetName]);
                 highlightVinNumbers();
-                showNotification(`Dữ liệu ${sheetName} đã được cập nhật! (${dataToRender.length} đơn hàng)`, 2000);
-            } catch (error) {
-                console.error("Lỗi khi lấy dữ liệu:", error);
-                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-                showNotification(errorMsg, 3000);
+                updateTableHeader(sheetName);
+            } else {
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="12">Không có dữ liệu cho ${sheetName}</td></tr>`;
+                showNotification(`Không có dữ liệu cho ${sheetName}`, 2000);
             }
-            spinner.style.display = 'none';
-            updateTableHeader(sheetName);
         }
 
         function updateTableHeader(sheetName) {
@@ -952,15 +993,6 @@
         function renderTable(data, page = currentPage) {
             const tbody = document.getElementById("table-body");
             tbody.innerHTML = "";
-            if (!Array.isArray(data)) {
-                console.error("Dữ liệu không phải mảng:", data);
-                tbody.innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ Dữ liệu không hợp lệ</td></tr>`;
-                document.getElementById("total-count").textContent = "0";
-                renderPagination(0, 1);
-                document.getElementById("detail-body").innerHTML = "<p>Không có dữ liệu để hiển thị.</p>";
-                return;
-            }
-
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = data.slice(start, end);
@@ -1000,20 +1032,19 @@
 
         function renderPagination(totalRows, currentPage) {
             const paginationDiv = document.getElementById("pagination");
-            const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
             paginationDiv.innerHTML = `
                 <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trước</button>
-                <span>Trang ${currentPage} / ${totalPages}</span>
-                <button onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>Sau</button>
+                <span>Trang ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage >= Math.ceil(totalRows / rowsPerPage) ? 'disabled' : ''}>Sau</button>
             `;
         }
 
         function changePage(newPage) {
             currentPage = newPage;
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
-            const filteredData = Array.isArray(tableData[currentSheet]) 
-                ? tableData[currentSheet].filter(row => row.some(cell => cell?.toString().toLowerCase().includes(searchValue)))
-                : [];
+            const filteredData = tableData[currentSheet].filter(row =>
+                row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
+            );
             renderTable(filteredData, currentPage);
             highlightVinNumbers();
             document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
@@ -1030,42 +1061,38 @@
             });
         }
 
-        function showDetail(row, index) {
-            const detailBody = document.getElementById("detail-body");
-            let headers = currentSheet === 'Đã Ghép' 
-                ? ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "VỊ TRÍ XE"]
-                : ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG"];
-            let html = "<table class='detail-table'>";
-            
-            html += `<tr><th>${headers[0]}</th><td>${index}</td></tr>`;
-            row.forEach((cell, i) => {
-                let value = cell || "";
-                if (currentSheet === 'Đã Ghép' && i === 8 && value) {
-                    const date = new Date(value);
-                    if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                } else if (currentSheet === 'Đã Ghép' && i === 9 && value) {
-                    value = Math.floor(parseFloat(value)).toString();
-                }
-                const cellClass = (currentSheet === 'Đã Ghép' && i === 7) ? ' class="vin-highlight"' : '';
-                html += `<tr><th>${headers[i + 1]}</th><td${cellClass}>${value}</td></tr>`;
-            });
-            
-            html += "</table>";
-            detailBody.innerHTML = html;
-
-            const rows = document.querySelectorAll("#table-body tr");
-            rows.forEach(row => row.classList.remove("selected"));
-            const selectedRowIndex = (index - 1) % rowsPerPage;
-            if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
+function showDetail(row, index) {
+    const detailBody = document.getElementById("detail-body");
+    let headers = currentSheet === 'Đã Ghép' 
+        ? ["TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "VỊ TRÍ XE"]
+        : ["TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG"];
+    let html = "<table class='detail-table'>";
+    
+    row.forEach((cell, i) => {
+        let value = cell || "";
+        if (currentSheet === 'Đã Ghép' && i === 8 && value) {
+            const date = new Date(value);
+            if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        } else if (currentSheet === 'Đã Ghép' && i === 9 && value) {
+            value = Math.floor(parseFloat(value)).toString();
         }
+        const cellClass = (currentSheet === 'Đã Ghép' && i === 7) ? ' class="vin-highlight"' : '';
+        html += `<tr><th>${headers[i]}</th><td${cellClass}>${value}</td></tr>`;
+    });
+    
+    html += "</table>";
+    detailBody.innerHTML = html;
 
-        function exportToExcel() {
+    const rows = document.querySelectorAll("#table-body tr");
+    rows.forEach(row => row.classList.remove("selected"));
+    const selectedRowIndex = (index - 1) % rowsPerPage;
+    if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
+}        function exportToExcel() {
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
                 const headers = currentSheet === 'Đã Ghép' 
                     ? ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "VỊ TRÍ XE"]
                     : ["SỐ TT", "TƯ VẤN BH", "DÒNG XE", "MODEL", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG (VSO)", "TÊN KHÁCH HÀNG"];
-                const data = Array.isArray(tableData[currentSheet]) ? tableData[currentSheet] : [];
-                const wsData = data.map((row, index) => {
+                const wsData = tableData[currentSheet].map((row, index) => {
                     const rowData = { "SỐ TT": index + 1 };
                     row.forEach((cell, i) => {
                         let value = cell || "";
@@ -1102,7 +1129,7 @@
             const table = document.getElementById("data-table");
             const printContent = `
                 <div style="text-align: center;">
-                    <h2 style="color: #003087;">VINFAST MĐ THUẬN AN</h2>
+                    <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
                     <p>Hotline: 1900 232389</p>
                     <p>In lúc: ${printDateTime}</p>
                 </div>
@@ -1135,11 +1162,30 @@
             win.print();
         }
 
-        function refreshData() {
-            fetchSheetData(currentSheet, document.querySelector('.tabs a.active'));
+        // Hàm làm mới dữ liệu khi nhấp nút
+        async function refreshData() {
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
             document.getElementById("search-input").value = "";
             currentPage = 1;
-            showNotification("Dữ liệu đã được làm mới!", 2000);
+
+            const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
+            try {
+                const response = await axios.get(apiURL);
+                tableData['Đã Ghép'] = response.data.Sheet1 ? response.data.Sheet1.map(row => Object.values(row)) : [];
+                tableData['Chưa Ghép'] = response.data.Sheet2 ? response.data.Sheet2.map(row => Object.values(row)) : [];
+                sessionStorage.setItem('Đã Ghép', JSON.stringify(tableData['Đã Ghép']));
+                sessionStorage.setItem('Chưa Ghép', JSON.stringify(tableData['Chưa Ghép']));
+                renderTable(tableData[currentSheet]);
+                highlightVinNumbers();
+                showNotification("Dữ liệu đã được làm mới!", 2000);
+            } catch (error) {
+                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="12" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
+            }
+            spinner.style.display = 'none';
+            updateTableHeader(currentSheet);
         }
 
         function debounce(func, wait) {
@@ -1153,9 +1199,9 @@
         function setupSearch() {
             document.getElementById("search-input").addEventListener("input", debounce(function () {
                 const searchValue = this.value.trim().toLowerCase();
-                const filteredData = Array.isArray(tableData[currentSheet]) 
-                    ? tableData[currentSheet].filter(row => row.some(cell => cell?.toString().toLowerCase().includes(searchValue)))
-                    : [];
+                const filteredData = tableData[currentSheet].filter(row =>
+                    row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
+                );
                 currentPage = 1;
                 renderTable(filteredData);
                 highlightVinNumbers();
