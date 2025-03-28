@@ -12,13 +12,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Montserrat', sans-serif;
-            background: #f0f4f8;
+            background: #e0e6ed;
             color: #1a1a1a;
             min-height: 100vh;
             overflow-x: hidden;
             transition: background 0.3s, color 0.3s;
         }
-        body.dark-mode { background: #1a1a1a; color: #e0e0e0; }
+        body.dark-mode { background: #1e2529; color: #e0e0e0; }
+
+        /* Navbar */
         .navbar {
             position: fixed;
             top: 0;
@@ -28,7 +30,7 @@
             display: flex;
             align-items: center;
             padding: 0 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 5px 5px 15px rgba(0, 48, 135, 0.3), -2px -2px 5px rgba(255, 255, 255, 0.3);
             z-index: 1000;
             transition: height 0.3s ease;
         }
@@ -45,7 +47,6 @@
             justify-content: center;
             list-style: none;
             margin-left: 20px;
-            transition: all 0.3s ease;
         }
         .navbar .menu li a {
             padding: 12px 20px;
@@ -53,94 +54,40 @@
             color: #ffffff;
             font-size: 14px;
             font-weight: 600;
+            background: #003087;
+            border-radius: 12px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
-            position: relative;
-            border-radius: 8px;
         }
         .navbar .menu li a:hover, .navbar .menu li a.active {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
-            transform: scale(1.05);
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
-.navbar-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: 10px;
-}
-
-.nav-btn {
-    position: relative;
-    padding: 8px;
-    border: none;
-    border-radius: 10px;
-    background: #005eb8;
-    color: #ffffff;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-btn:hover {
-    background: #003087;
-    box-shadow: 0 0 15px rgba(0, 94, 184, 0.5);
-}
-
-.nav-btn[data-tooltip]::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: #ffffff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.nav-btn[data-tooltip]::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: #333;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.nav-btn:hover::after, .nav-btn:hover::before {
-    opacity: 1;
-}
-
-body.dark-mode .nav-btn {
-    background: #005eb8;
-}
-
-body.dark-mode .nav-btn:hover {
-    background: #003087;
-}
-
-body.dark-mode .nav-btn[data-tooltip]::after {
-    background: #66b0ff;
-}
-
-body.dark-mode .nav-btn[data-tooltip]::before {
-    border-top-color: #66b0ff;
-}        .dark-mode-btn, .language-btn {
+        .navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 10px;
+        }
+        .nav-btn {
+            padding: 8px;
+            border: none;
+            border-radius: 12px;
+            background: #005eb8;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+        }
+        .dark-mode-btn, .language-btn {
             background: none;
             border: none;
             color: #ffffff;
@@ -174,7 +121,7 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             justify-content: center;
             text-align: center;
             margin-top: 70px;
-            background: linear-gradient(135deg, rgba(0, 48, 135, 0.8), rgba(0, 94, 184, 0.8));
+            background: #e0e6ed;
         }
         .hero-background {
             position: absolute;
@@ -189,29 +136,49 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             z-index: -1;
         }
         .hero-content {
-            color: #ffffff;
-            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.7);
+            color: #1a1a1a;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
             z-index: 1;
             padding: 30px;
+            background: transparent;
+            border-radius: 20px;
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
-        .hero h2 { font-size: 52px; font-weight: 700; margin-bottom: 15px; }
-        .hero p { font-size: 22px; margin-bottom: 25px; }
+        body.dark-mode .hero-content { background: #1e2529; color: #e0e0e0; }
+        .hero h2 {
+            font-size: 52px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ffffff; /* Màu trắng cho h2 */
+        }
+        .hero p {
+            font-size: 22px;
+            margin-bottom: 25px;
+            color: #ffffff; /* Màu trắng cho p */
+        }
         .hero .login-btn {
-            padding: 14px 35px;
-            background: linear-gradient(135deg, #005eb8, #003087);
-            color: #ffffff;
+            padding: 16px 40px; /* Tăng kích thước nút */
+            background: linear-gradient(135deg, #005eb8, #003087); /* Màu nền gradient xanh dương đậm */
+            color: #ffffff; /* Màu chữ trắng */
             border: none;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: 600;
+            border-radius: 25px; /* Bo góc mềm mại hơn */
+            font-size: 20px; /* Tăng kích thước chữ */
+            font-weight: 700; /* Chữ đậm hơn */
             cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 94, 184, 0.7), /* Hiệu ứng phát sáng xanh dương */
+                       5px 5px 10px rgba(0, 0, 0, 0.2); /* Bóng tối nhẹ */
             transition: all 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0, 94, 184, 0.6);
+            text-transform: uppercase; /* Chữ in hoa */
+        }
+        body.dark-mode .hero .login-btn {
+            background: linear-gradient(135deg, #66b0ff, #005eb8); /* Gradient sáng hơn trong dark mode */
+            color: #ffffff;
         }
         .hero .login-btn:hover {
-            background: linear-gradient(135deg, #003087, #001f5f);
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 94, 184, 0.9);
+            background: linear-gradient(135deg, #003087, #005eb8); /* Đảo ngược gradient khi hover */
+            box-shadow: 0 0 25px rgba(0, 94, 184, 1), /* Tăng độ sáng của hiệu ứng phát sáng */
+                       inset 5px 5px 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05); /* Phóng to nhẹ khi hover */
         }
 
         /* Internal Section */
@@ -219,13 +186,12 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             padding: 80px 20px;
             max-width: 1200px;
             margin: 0 auto;
-            background: #ffffff;
+            background: #e0e6ed;
             border-radius: 25px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
             text-align: center;
-            transition: all 0.3s ease;
         }
-        body.dark-mode .internal-section { background: #2a2a2a; }
+        body.dark-mode .internal-section { background: #1e2529; }
         .internal-section h3 { font-size: 36px; color: #003087; font-weight: 700; margin-bottom: 25px; }
         body.dark-mode .internal-section h3 { color: #66b0ff; }
         .internal-section p { font-size: 18px; color: #555; margin-bottom: 40px; }
@@ -237,16 +203,15 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             margin-top: 30px;
         }
         .feature-card {
-            background: #f9f9f9;
+            background: #e0e6ed;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
         }
-        body.dark-mode .feature-card { background: #333; }
+        body.dark-mode .feature-card { background: #1e2529; }
         .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 5px 20px rgba(0, 94, 184, 0.3);
+            box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
         .feature-card i { font-size: 28px; color: #005eb8; margin-bottom: 15px; }
         body.dark-mode .feature-card i { color: #66b0ff; }
@@ -261,11 +226,11 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             padding: 60px 20px;
             max-width: 1400px;
             margin: 0 auto;
-            background: #ffffff;
+            background: #e0e6ed;
             border-radius: 20px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
-        body.dark-mode .dashboard-section { background: #2a2a2a; }
+        body.dark-mode .dashboard-section { background: #1e2529; }
         .dashboard-section h3 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 25px; }
         body.dark-mode .dashboard-section h3 { color: #66b0ff; }
         .dashboard-content { display: flex; gap: 25px; flex-wrap: wrap; }
@@ -273,13 +238,15 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             flex: 1;
             min-width: 250px;
             padding: 25px;
-            background: #f9f9f9;
+            background: #e0e6ed;
             border-radius: 15px;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
         }
-        body.dark-mode .dashboard-card { background: #333; }
-        .dashboard-card:hover { transform: translateY(-5px); }
+        body.dark-mode .dashboard-card { background: #1e2529; }
+        .dashboard-card:hover {
+            box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+        }
         .dashboard-card h4 { font-size: 20px; color: #003087; }
         body.dark-mode .dashboard-card h4 { color: #66b0ff; }
         .dashboard-card p { font-size: 16px; color: #555; }
@@ -288,53 +255,64 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             padding: 12px;
             width: 100%;
             max-width: 350px;
-            border: 2px solid #a9a9a9;
+            border: none;
             border-radius: 10px;
             font-size: 14px;
             margin-bottom: 20px;
+            background: #e0e6ed;
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
-        body.dark-mode .search-bar input { background: #333; color: #fff; border-color: #555; }
-        .search-bar input:focus { border-color: #005eb8; box-shadow: 0 0 10px rgba(0, 94, 184, 0.3); outline: none; }
+        body.dark-mode .search-bar input { background: #1e2529; color: #fff; }
+        .search-bar input:focus {
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5);
+            outline: none;
+        }
         .notification-list { max-height: 250px; overflow-y: auto; }
         .notification-item {
             padding: 12px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #d0d6dd;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.3s ease;
+            background: #e0e6ed;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
         }
-        body.dark-mode .notification-item { border-bottom: 1px solid #555; }
-        .notification-item:hover { background: #f0f8ff; }
-        body.dark-mode .notification-item:hover { background: #444; }
+        body.dark-mode .notification-item { background: #1e2529; border-bottom: 1px solid #2e3539; }
+        .notification-item:hover {
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+        }
         .notification-item .delete-btn {
             background: #ef4444;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             padding: 6px 12px;
             cursor: pointer;
             font-size: 12px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
-        .notification-item .delete-btn:hover { background: #c53030; }
+        .notification-item .delete-btn:hover {
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+        }
         .refresh-btn {
             padding: 12px 25px;
-            background: #28a745;
-            color: #ffffff;
+            background: #e0e6ed;
+            color: #28a745;
             border: none;
-            border-radius: 10px;
+            border-radius: 15px;
             font-size: 16px;
             cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
             margin-top: 20px;
-            box-shadow: 0 3px 15px rgba(40, 167, 69, 0.3);
         }
+        body.dark-mode .refresh-btn { background: #1e2529; }
         .refresh-btn:hover {
-            background: #218838;
-            box-shadow: 0 5px 20px rgba(40, 167, 69, 0.5);
-            transform: translateY(-3px);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
 
         /* Modal */
@@ -352,14 +330,13 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             padding: 20px;
         }
         .modal-content {
-            background: linear-gradient(135deg, #ffffff, #f9f9f9);
+            background: #e0e6ed;
             margin: 0 auto;
             padding: 40px;
             border-radius: 20px;
             max-width: 500px;
             width: 100%;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            border-top: 6px solid #005eb8;
+            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
             transform: scale(0.9);
             transition: transform 0.3s ease, opacity 0.3s ease;
             opacity: 0;
@@ -368,17 +345,8 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             transform: scale(1);
             opacity: 1;
         }
-        body.dark-mode .modal-content {
-            background: linear-gradient(135deg, #2a2a2a, #333);
-            border-top: 6px solid #66b0ff;
-        }
-        .modal-content h2 {
-            font-size: 28px;
-            color: #003087;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-align: center;
-        }
+        body.dark-mode .modal-content { background: #1e2529; }
+        .modal-content h2 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 15px; text-align: center; }
         body.dark-mode .modal-content h2 { color: #66b0ff; }
         .modal-content p { font-size: 15px; color: #555; text-align: center; margin-bottom: 20px; }
         body.dark-mode .modal-content p { color: #cccccc; }
@@ -394,23 +362,29 @@ body.dark-mode .nav-btn[data-tooltip]::before {
         body.dark-mode .input-group .input-icon { color: #66b0ff; }
         .modal-content input {
             padding: 12px 15px 12px 45px;
-            border: 2px solid #a9a9a9;
+            border: none;
             border-radius: 12px;
             font-size: 15px;
             width: 100%;
+            background: #e0e6ed;
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
-        body.dark-mode .modal-content input { background: #333; color: #ffffff; border-color: #555; }
-        .modal-content input:focus { border-color: #005eb8; box-shadow: 0 0 12px rgba(0, 94, 184, 0.4); outline: none; }
+        body.dark-mode .modal-content input { background: #1e2529; color: #ffffff; }
+        .modal-content input:focus {
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5);
+            outline: none;
+        }
         .modal-content button {
             padding: 12px 25px;
-            background: linear-gradient(135deg, #005eb8, #003087);
-            color: #ffffff;
+            background: #e0e6ed;
+            color: #003087;
             border: none;
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
@@ -418,10 +392,9 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             gap: 10px;
             width: 100%;
         }
+        body.dark-mode .modal-content button { background: #1e2529; color: #66b0ff; }
         .modal-content button:hover {
-            background: linear-gradient(135deg, #003087, #001f5f);
-            box-shadow: 0 6px 20px rgba(0, 94, 184, 0.6);
-            transform: translateY(-3px);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
         .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
         .modal-links span {
@@ -462,70 +435,40 @@ body.dark-mode .nav-btn[data-tooltip]::before {
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid #f3f3f3;
+            border: 5px solid #d0d6dd;
             border-top: 5px solid #005eb8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        body.dark-mode .spinner { border: 5px solid #555; border-top: 5px solid #66b0ff; }
+        body.dark-mode .spinner { border: 5px solid #2e3539; border-top: 5px solid #66b0ff; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Footer Styles */
+        /* Footer */
         footer {
             background: linear-gradient(135deg, #003087, #005eb8);
             color: #ffffff;
             padding: 40px 20px;
             text-align: center;
             margin-top: 50px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-            transition: background 0.3s ease;
+            box-shadow: 5px 5px 15px rgba(0, 48, 135, 0.3), -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
-        body.dark-mode footer {
-            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        }
-        footer .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        footer h4 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-        footer p {
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        footer .social-links {
-            margin-top: 20px;
-        }
+        body.dark-mode footer { background: linear-gradient(135deg, #003087, #005eb8); }
+        footer .footer-content { max-width: 1200px; margin: 0 auto; }
+        footer h4 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
+        footer p { font-size: 14px; margin-bottom: 10px; }
+        footer .social-links { margin-top: 20px; }
         footer .social-links a {
             color: #ffffff;
             font-size: 20px;
             margin: 0 15px;
-            transition: transform 0.3s ease, color 0.3s ease;
+            background: #003087;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
         }
         footer .social-links a:hover {
-            transform Podešavanje transform: scale(1.2);
-            color: #66b0ff;
-        }
-        body.dark-mode footer .social-links a:hover {
-            color: #005eb8;
-        }
-        @media (max-width: 768px) {
-            footer {
-                padding: 20px 15px;
-            }
-            footer h4 {
-                font-size: 18px;
-            }
-            footer p {
-                font-size: 12px;
-            }
-            footer .social-links a {
-                font-size: 18px;
-                margin: 0 10px;
-            }
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
 
         /* Responsive */
@@ -548,7 +491,10 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             .hero { height: 70vh; margin-top: 60px; }
             .hero h2 { font-size: 36px; }
             .hero p { font-size: 18px; }
-            .hero .login-btn { padding: 12px 25px; font-size: 16px; }
+            .hero .login-btn { 
+                padding: 12px 30px; /* Giảm kích thước nút trên mobile */
+                font-size: 16px; /* Giảm kích thước chữ */
+            }
             .internal-section { padding: 40px 15px; }
             .dashboard-section { padding: 40px 15px; }
             .modal-content { padding: 30px; max-width: 400px; }
@@ -560,19 +506,20 @@ body.dark-mode .nav-btn[data-tooltip]::before {
 </head>
 <body>
     <!-- Navbar -->
-<nav class="navbar">
-    <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
-    <ul class="menu" id="navMenu"></ul>
-    <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
-    <span class="user-info" id="userInfo"></span>
-    <span class="session-time" id="sessionTime"></span>
-    <div class="online-status" id="onlineStatus"></div>
-    <div class="navbar-controls">
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-    <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
-    <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
-</nav>
+    <nav class="navbar">
+        <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
+        <ul class="menu" id="navMenu"></ul>
+        <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
+        <span class="user-info" id="userInfo"></span>
+        <span class="session-time" id="sessionTime"></span>
+        <div class="online-status" id="onlineStatus"></div>
+        <div class="navbar-controls">
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
+        <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+    </nav>
+
     <!-- Hero Section -->
     <section class="hero" id="heroSection" data-aos="fade-up">
         <div class="hero-background" id="heroBackground"></div>
@@ -725,18 +672,19 @@ body.dark-mode .nav-btn[data-tooltip]::before {
         <div class="footer-content">
             <h4 data-lang="footer-title">VINFAST THUẬN AN</h4>
             <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
-            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: Saleadminminhdaothuanan@vandao.vn</p>
+            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="83d0e2efe6e2e7eeeaedeeeaedebe7e2ecf7ebf6e2ede2edc3f5e2ede7e2ecadf5ed">[email protected]</a></p>
             <div class="social-links">
                 <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
             </div>
-            <p>&copy; 2025 VinFast Thuận An. All rights reserved.</p>
+            <p>© 2025 VinFast Thuận An. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Script -->
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({ duration: 1200, easing: 'ease-out-back' });
@@ -784,7 +732,12 @@ body.dark-mode .nav-btn[data-tooltip]::before {
                 "contact-admin": "Liên hệ admin để lấy lại mật khẩu",
                 "footer-title": "VINFAST THUẬN AN",
                 "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
-                "footer-contact": "Liên hệ: 0968 275 404 | Email: saleadminminhdaothuanan@vandao.vn"
+                "footer-contact": "Liên hệ: 0968 275 404 | Email: saleadminminhdaothuanan@vandao.vn",
+                "vehicle-inventory": "Kho Xe",
+                "register": "Chưa có tài khoản? Đăng ký",
+                "register-title": "Đăng Ký",
+                "register-subtitle": "Tạo tài khoản mới để truy cập hệ thống",
+                "register-btn": "Đăng Ký"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -814,7 +767,12 @@ body.dark-mode .nav-btn[data-tooltip]::before {
                 "contact-admin": "Contact admin to recover password",
                 "footer-title": "VINFAST THUAN AN",
                 "footer-address": "Address: 123 Road No. 1, Thuan An, Binh Duong",
-                "footer-contact": "Contact: 0909 123 456 | Email: contact@vinfast-thuanan.vn"
+                "footer-contact": "Contact: 0909 123 456 | Email: contact@vinfast-thuanan.vn",
+                "vehicle-inventory": "Vehicle Inventory",
+                "register": "Don't have an account? Register",
+                "register-title": "Register",
+                "register-subtitle": "Create a new account to access the system",
+                "register-btn": "Register"
             }
         };
 
@@ -872,6 +830,7 @@ body.dark-mode .nav-btn[data-tooltip]::before {
                 <li><a href="yeucaughepxe.html" onclick="checkLogin(event, 'navigate', 'yeucaughepxe.html')">${language === 'vi' ? 'Yêu Cầu Ghép Xe' : 'Vehicle Pairing Request'}</a></li>
                 <li><a href="danhsach.html" onclick="checkLogin(event, 'navigate', 'danhsach.html')">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a></li>
                 <li><a href="xedaban.html" onclick="checkLogin(event, 'navigate', 'xedaban.html')">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a></li>
+                <li><a href="khoxe.html" onclick="checkLogin(event, 'navigate', 'khoxe.html')" data-lang="vehicle-inventory">${translations[language]["vehicle-inventory"]}</a></li>
             `;
             const managerLinks = userRole === 'manager' ? `
                 <li><a href="manage.html" onclick="checkLogin(event, 'navigate', 'manage.html')">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a></li>
@@ -932,39 +891,17 @@ body.dark-mode .nav-btn[data-tooltip]::before {
             });
             loadNotifications();
         }
-function showNotification(message, duration = 3000) {
-    const notification = document.createElement('div');
-    notification.id = 'notification';
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #66b0ff;
-        color: #ffffff;
-        padding: 10px 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        z-index: 1002;
-        transition: opacity 0.3s ease;
-    `;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => notification.remove(), 300);
-    }, duration);
-}
-function logout() {
-    isLoggedIn = false;
-    currentUser = '';
-    userRole = 'employee';
-    sessionStorage.clear();
-    clearTimeout(sessionTimer);
-    clearInterval(sessionInterval);
-    window.location.href = 'index.html'; // Chuyển hướng về trang chính
-    showNotification(language === 'vi' ? 'Đã đăng xuất!' : 'Logged out!', 2000);
-    updateUI();
-}
+
+        function logout() {
+            isLoggedIn = false;
+            currentUser = '';
+            userRole = 'employee';
+            sessionStorage.clear();
+            clearTimeout(sessionTimer);
+            clearInterval(sessionInterval);
+            window.location.href = 'index.html';
+            updateUI();
+        }
 
         let sessionTimer, sessionInterval;
         function startSessionTimer() {
@@ -1183,7 +1120,6 @@ function logout() {
             }
 
             loadingOverlay.style.display = 'flex';
-            // Giả lập API đăng ký (cần tích hợp API thực tế)
             setTimeout(() => {
                 loadingOverlay.style.display = 'none';
                 closeModal('loginModal');
@@ -1191,5 +1127,5 @@ function logout() {
             }, 1000);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'926f8514ab6a507f',t:'MTc0MzA4NTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9276f44e8d1e4527',t:'MTc0MzE2MzA5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
