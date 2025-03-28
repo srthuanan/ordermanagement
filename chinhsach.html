@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài Liệu - Chính Sách</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Giữ nguyên toàn bộ CSS từ phiên bản trước */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f0f4f8;
+            color: #1a1a1a;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #003087;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 15px 15px;
+            z-index: 1000;
+        }
+
+        body.dark-mode .navbar {
+            background: #003087;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .navbar .logo h1 {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .navbar .title {
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: 400;
+            margin-left: 15px;
+        }
+
+        body.dark-mode .navbar .logo h1,
+        body.dark-mode .navbar .title {
+            color: #ffffff;
+        }
+
+        .navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .nav-btn {
+            position: relative;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            background: #003087;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+
+        body.dark-mode .nav-btn {
+            background: #003087;
+            color: #ffffff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .nav-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        .nav-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .nav-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .nav-btn:hover::after, .nav-btn:hover::before {
+            opacity: 1;
+        }
+
+        body.dark-mode .nav-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .nav-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+
+        .theme-toggle {
+            margin-left: 10px;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        body.dark-mode .theme-toggle {
+            color: #ffffff;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        .main-container {
+            display: flex;
+            margin-top: 60px;
+            padding: 15px;
+            gap: 15px;
+            height: calc(100vh - 80px);
+        }
+
+        .grid-container {
+            flex: 2;
+            background: #f0f4f8;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .grid-container {
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-container input {
+            padding: 10px 15px;
+            width: 100%;
+            max-width: 250px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            font-size: 12px;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
+            outline: none;
+        }
+
+        body.dark-mode .search-container input {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6);
+        }
+
+        .export-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .total-count-container {
+            text-align: center;
+            font-size: 12px;
+            color: #1a1a1a;
+        }
+
+        body.dark-mode .total-count-container {
+            color: #e0e0e0;
+        }
+
+        .export-btn {
+            position: relative;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            color: #003087;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .export-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+
+        .refresh-btn {
+            background: #f0f4f8;
+            color: #28a745;
+        }
+
+        .refresh-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .refresh-btn {
+            color: #28a745;
+        }
+
+        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        .export-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .export-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .export-btn:hover::after, .export-btn:hover::before {
+            opacity: 1;
+        }
+
+        body.dark-mode .export-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .export-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+
+        .table-container {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            overflow-x: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #003087;
+            border-radius: 10px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #001f5f;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+
+        table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th, td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #000099;
+            color: #FFFFFF;
+            font-weight: 700;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+        }
+
+        td {
+            background: #f0f4f8;
+            color: #1a1a1a;
+        }
+
+        body.dark-mode th {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode td {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border-bottom: 1px solid #555;
+        }
+
+        .link-highlight {
+            background: #e6f0ff;
+            font-weight: 700;
+            color: #003087;
+        }
+
+        body.dark-mode .link-highlight {
+            background: #4a6fa5;
+            color: #ffffff;
+        }
+
+        tbody tr:hover {
+            background: #e8eef4;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode tbody tr:hover {
+            background: #222;
+        }
+
+        tbody tr.selected {
+            background: #cce5ff;
+            font-weight: 700;
+        }
+
+        body.dark-mode tbody tr.selected {
+            background: #5a7fb5;
+        }
+
+        .detail-panel {
+            flex: 1;
+            background: #f0f4f8;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        body.dark-mode .detail-panel {
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+
+        .detail-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .detail-panel::-webkit-scrollbar-track {
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+
+        .detail-panel::-webkit-scrollbar-thumb {
+            background: #003087;
+            border-radius: 10px;
+        }
+
+        .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #001f5f;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+
+        .detail-panel h3 {
+            font-size: 18px;
+            color: #003087;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            background: #f0f4f8;
+            z-index: 10;
+        }
+
+        body.dark-mode .detail-panel h3 {
+            color: #66b0ff;
+            background: #1a1a1a;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .detail-table th {
+            background: #f0f4f8;
+            color: #1a1a1a;
+            text-align: left;
+            padding: 10px;
+            font-weight: 400;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode .detail-table th {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+
+        .detail-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        body.dark-mode .detail-table td {
+            border-bottom: 1px solid #555;
+            color: #e0e0e0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            color: #003087;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+
+        body.dark-mode .pagination button {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        body.dark-mode .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #003087;
+        }
+
+        body.dark-mode .pagination span {
+            color: #66b0ff;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #003087;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 10px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode footer {
+            background: #003087;
+            color: #ffffff;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .loading-spinner .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #003087;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        body.dark-mode .loading-spinner .spinner {
+            border: 4px solid #555;
+            border-top: 4px solid #66b0ff;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
+            background: #f0f4f8;
+            color: #003087;
+            border-radius: 10px;
+            display: none;
+            z-index: 10001;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+
+        body.dark-mode #notification {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 10px;
+                height: 50px;
+            }
+            .navbar .logo h1 {
+                font-size: 16px;
+            }
+            .navbar .title {
+                font-size: 12px;
+                margin-left: 10px;
+            }
+            .theme-toggle {
+                font-size: 14px;
+                padding: 5px;
+            }
+            .main-container {
+                flex-direction: column;
+                padding: 10px;
+                margin-top: 50px;
+                height: calc(100vh - 70px);
+            }
+            .grid-container {
+                padding: 10px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .search-container input {
+                max-width: 100%;
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+            .export-btn-container {
+                align-items: center;
+                width: 100%;
+            }
+            .button-group {
+                gap: 10px;
+            }
+            .export-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            .export-btn[data-tooltip]::after {
+                font-size: 10px;
+                top: -30px;
+                padding: 4px 8px;
+            }
+            .export-btn[data-tooltip]::before {
+                top: -6px;
+                border-width: 3px;
+            }
+            .total-count-container {
+                font-size: 11px;
+            }
+            .table-container {
+                max-height: calc(100vh - 260px);
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 5px;
+            }
+            .detail-panel {
+                margin-top: 15px;
+                max-height: calc(100vh - 260px);
+                padding: 10px;
+            }
+            .detail-panel h3 {
+                font-size: 16px;
+            }
+            .detail-table {
+                font-size: 11px;
+            }
+            .detail-table th, .detail-table td {
+                padding: 8px;
+            }
+            .pagination button {
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+            .pagination span {
+                padding: 8px 15px;
+                font-size: 11px;
+            }
+            footer {
+                font-size: 9px;
+                padding: 6px 0;
+            }
+            #notification {
+                top: 10px;
+                right: 10px;
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>VinFast Thuận An</h1>
+            <span class="title">Tài Liệu & Chính Sách</span>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="grid-container">
+            <div class="controls">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Tìm kiếm...">
+                </div>
+                <div class="export-btn-container">
+                    <div class="button-group">
+                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                    </div>
+                    <div class="total-count-container">
+                        Tổng số lượng: <span id="total-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="data-table">
+                    <thead id="table-head">
+                        <tr>
+                            <th>SỐ TT</th>
+                            <th>TÊN TÀI LIỆU</th>
+                            <th>NGÀY TẢI LÊN</th>
+                            <th>NGƯỜI TẢI LÊN</th>
+                            <th>LIÊN KẾT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+
+        <div class="detail-panel" id="detail-panel">
+            <h3>Chi Tiết Tài Liệu</h3>
+            <div id="detail-body"></div>
+        </div>
+    </div>
+
+    <footer>
+        © 2025 VinFast Minh Đạo Thuận An
+    </footer>
+
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="notification"></div>
+
+    <script>
+        let tableData = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (sessionStorage.getItem("isLoggedIn") !== "true") {
+                window.location.href = "index.html";
+            } else {
+                loadInitialData();
+                setupSearch();
+                setupScrollSync();
+                if (localStorage.getItem('theme') === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    document.querySelector('.theme-toggle i').classList.remove('fa-moon');
+                    document.querySelector('.theme-toggle i').classList.add('fa-sun');
+                }
+            }
+        });
+
+        async function loadInitialData() {
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
+
+            const apiURL = "https://script.google.com/macros/s/YOUR_GOOGLE_SCRIPT_URL/exec"; // Thay bằng URL Web App của Google Apps Script
+            try {
+                const response = await axios.get(apiURL);
+                tableData = response.data.map(file => [
+                    file.name,
+                    "", // Placeholder nếu cần thêm cột khác
+                    file.uploadDate,
+                    file.owner,
+                    file.link
+                ]);
+                sessionStorage.setItem('TaiLieuChinhSach', JSON.stringify(tableData));
+                renderTable(tableData);
+                highlightLinks();
+                showNotification("Dữ liệu đã được tải thành công!", 2000);
+            } catch (error) {
+                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
+            }
+            spinner.style.display = 'none';
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+            showNotification("Đã đăng xuất!", 2000);
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+            showNotification("Đã quay lại trang chủ!", 2000);
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function renderTable(data, page = currentPage) {
+            const tbody = document.getElementById("table-body");
+            tbody.innerHTML = "";
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = data.slice(start, end);
+
+            paginatedData.forEach((row, index) => {
+                const globalIndex = start + index + 1;
+                const tr = document.createElement("tr");
+                let cells = [`<td>${globalIndex}</td>`];
+                
+                row.forEach((cell, i) => {
+                    let value = cell || "";
+                    if (i === 2 && value) {
+                        const date = new Date(value);
+                        if (!isNaN(date)) {
+                            value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    } else if (i === 4 && value) {
+                        value = `<a href="${value}" target="_blank">${value}</a>`;
+                    }
+                    cells.push(`<td>${value}</td>`);
+                });
+                
+                tr.innerHTML = cells.join("");
+                tr.onclick = () => showDetail(row, globalIndex);
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("total-count").textContent = data.length;
+            renderPagination(data.length, page);
+            
+            if (data.length > 0) {
+                showDetail(data[0], start + 1);
+            } else {
+                document.getElementById("detail-body").innerHTML = "<p>Không có dữ liệu để hiển thị.</p>";
+            }
+        }
+
+        function renderPagination(totalRows, currentPage) {
+            const paginationDiv = document.getElementById("pagination");
+            paginationDiv.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trước</button>
+                <span>Trang ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage >= Math.ceil(totalRows / rowsPerPage) ? 'disabled' : ''}>Sau</button>
+            `;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
+            const filteredData = tableData.filter(row =>
+                row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
+            );
+            renderTable(filteredData, currentPage);
+            highlightLinks();
+            document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightLinks() {
+            const tableRows = document.querySelectorAll("#table-body tr");
+            tableRows.forEach(row => {
+                const linkCell = row.cells[4];
+                if (linkCell && linkCell.textContent.trim() !== "") {
+                    linkCell.classList.add("link-highlight");
+                }
+            });
+        }
+
+        function showDetail(row, index) {
+            const detailBody = document.getElementById("detail-body");
+            const headers = ["TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
+            let html = "<table class='detail-table'>";
+            
+            row.forEach((cell, i) => {
+                if (i === 1) return; // Bỏ qua cột placeholder nếu không cần
+                let value = cell || "";
+                if (i === 2 && value) {
+                    const date = new Date(value);
+                    if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                } else if (i === 4 && value) {
+                    value = `<a href="${value}" target="_blank">${value}</a>`;
+                }
+                const headerIndex = i > 1 ? i - 1 : i; // Điều chỉnh chỉ số headers do bỏ cột 1
+                const cellClass = (i === 4) ? ' class="link-highlight"' : '';
+                html += `<tr><th>${headers[headerIndex]}</th><td${cellClass}>${value}</td></tr>`;
+            });
+            
+            html += "</table>";
+            detailBody.innerHTML = html;
+
+            const rows = document.querySelectorAll("#table-body tr");
+            rows.forEach(row => row.classList.remove("selected"));
+            const selectedRowIndex = (index - 1) % rowsPerPage;
+            if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
+        }
+
+        function exportToExcel() {
+            if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
+                const headers = ["SỐ TT", "TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
+                const wsData = tableData.map((row, index) => {
+                    const rowData = { "SỐ TT": index + 1 };
+                    row.forEach((cell, i) => {
+                        let value = cell || "";
+                        if (i === 2 && value) {
+                            const date = new Date(value);
+                            if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                        if (i !== 1) { // Bỏ qua cột placeholder
+                            const headerIndex = i > 1 ? i - 1 : i;
+                            rowData[headers[headerIndex]] = value;
+                        }
+                    });
+                    return rowData;
+                });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "TaiLieuChinhSach");
+                XLSX.writeFile(wb, `VinFast_TaiLieu_ChinhSach_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                showNotification("Đã xuất file thành công!", 2000);
+            }
+        }
+
+        function printTable() {
+            const now = new Date();
+            const printDateTime = now.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+
+            const table = document.getElementById("data-table");
+            const printContent = `
+                <div style="text-align: center;">
+                    <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
+                    <p>Hotline: 1900 232389</p>
+                    <p>In lúc: ${printDateTime}</p>
+                </div>
+                ${table.outerHTML}
+            `;
+
+            const win = window.open('', '', 'width=800,height=600');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>In danh sách VinFast - Tài Liệu & Chính Sách</title>
+                    <style>
+                        body { font-family: 'Montserrat', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #000; padding: 8px; }
+                        th { background: #003087; color: #fff; }
+                        .link-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
+                        .selected { background: #cce5ff; font-weight: 700; }
+                        @media print {
+                            body { margin: 0; }
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                        }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        async function refreshData() {
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
+            document.getElementById("search-input").value = "";
+            currentPage = 1;
+
+            const apiURL = "https://script.google.com/macros/s/YOUR_GOOGLE_SCRIPT_URL/exec"; // Thay bằng URL Web App của Google Apps Script
+            try {
+                const response = await axios.get(apiURL);
+                tableData = response.data.map(file => [
+                    file.name,
+                    "", // Placeholder nếu cần thêm cột khác
+                    file.uploadDate,
+                    file.owner,
+                    file.link
+                ]);
+                sessionStorage.setItem('TaiLieuChinhSach', JSON.stringify(tableData));
+                renderTable(tableData);
+                highlightLinks();
+                showNotification("Dữ liệu đã được làm mới!", 2000);
+            } catch (error) {
+                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
+            }
+            spinner.style.display = 'none';
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function setupSearch() {
+            document.getElementById("search-input").addEventListener("input", debounce(function () {
+                const searchValue = this.value.trim().toLowerCase();
+                const filteredData = tableData.filter(row =>
+                    row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
+                );
+                currentPage = 1;
+                renderTable(filteredData);
+                highlightLinks();
+                document.getElementById("total-count").textContent = filteredData.length;
+            }, 300));
+        }
+
+        function setupScrollSync() {
+            const tableContainer = document.querySelector('.table-container');
+            const detailPanel = document.getElementById("detail-panel");
+            let isTableScrolling = false;
+            let isDetailScrolling = false;
+
+            tableContainer.addEventListener('scroll', () => {
+                if (!isDetailScrolling) {
+                    isTableScrolling = true;
+                    detailPanel.scrollTop = tableContainer.scrollTop;
+                    setTimeout(() => { isTableScrolling = false; }, 100);
+                }
+            });
+
+            detailPanel.addEventListener('scroll', () => {
+                if (!isTableScrolling) {
+                    isDetailScrolling = true;
+                    tableContainer.scrollTop = detailPanel.scrollTop;
+                    setTimeout(() => { isDetailScrolling = false; }, 100);
+                }
+            });
+        }
+
+        function showNotification(message, duration = 3000) {
+            const notif = document.getElementById("notification");
+            notif.textContent = message;
+            notif.style.display = "block";
+            setTimeout(() => notif.style.display = "none", duration);
+        }
+    </script>
+</body>
+</html>
