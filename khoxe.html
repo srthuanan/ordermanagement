@@ -96,7 +96,7 @@
         }
 
         .navbar .tabs a:hover, .navbar .tabs a.active {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 0.8);
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 255, 0.8);
             transform: translateY(2px);
         }
 
@@ -839,6 +839,7 @@
                 <table id="data-table">
                     <thead id="table-head">
                         <tr>
+                            <th>SỐ TT</th>
                             <th data-lang="vehicle-line">DÒNG XE</th>
                             <th data-lang="vehicle-version">PHIÊN BẢN</th>
                             <th data-lang="vehicle-exterior">NGOẠI THẤT</th>
@@ -910,6 +911,7 @@
         };
 
         document.addEventListener("DOMContentLoaded", function () {
+            console.log("isLoggedIn:", isLoggedIn);
             if (!isLoggedIn) {
                 window.location.href = "index.html";
             } else {
@@ -945,23 +947,39 @@
         async function loadInitialData() {
             const spinner = document.querySelector('.loading-spinner');
             if (spinner) spinner.style.display = 'block';
-            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec"; // Thay bằng URL Web App của bạn
+            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
 
             try {
+                console.log("Đang tải dữ liệu từ API...");
                 const response = await axios.get(apiURL);
+                console.log("Dữ liệu API:", response.data);
+                if (response.status !== 200) {
+                    throw new Error(`Lỗi API: ${response.status}`);
+                }
                 tableData = response.data.slice(1); // Bỏ hàng tiêu đề
+                console.log("tableData sau khi bỏ tiêu đề:", tableData);
+                if (tableData.length === 0) {
+                    throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
+                }
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
                 renderTable(tableData);
                 showNotification(language === 'vi' ? "Dữ liệu đã được tải thành công!" : "Data loaded successfully!", 2000);
             } catch (error) {
-                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                console.error("Lỗi khi tải dữ liệu:", error);
+                let errorMsg = language === 'vi' ? "Không thể tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to load data. Please check your connection or API access.";
+                if (error.response) {
+                    errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
                 const tableBody = document.getElementById("table-body");
                 if (tableBody) {
-                    tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
                 }
                 showNotification(errorMsg, 3000);
+            } finally {
+                if (spinner) spinner.style.display = 'none';
             }
-            if (spinner) spinner.style.display = 'none';
         }
 
         function logout() {
@@ -1015,30 +1033,70 @@
         }
 
         function renderTable(data, page = currentPage) {
+            console.log("Đang render bảng với dữ liệu:", data);
             const tbody = document.getElementById("table-body");
             const totalCountElement = document.getElementById("total-count");
-            if (!tbody || !totalCountElement) return;
+            const paginationDiv = document.getElementById("pagination");
 
+            // Kiểm tra xem các phần tử DOM có tồn tại không
+            if (!tbody) {
+                console.error("Không tìm thấy tbody với id 'table-body'");
+                return;
+            }
+            if (!totalCountElement) {
+                console.error("Không tìm thấy total-count element");
+                return;
+            }
+            if (!paginationDiv) {
+                console.error("Không tìm thấy pagination div");
+                return;
+            }
+
+            // Xóa nội dung cũ trong tbody
             tbody.innerHTML = "";
+            console.log("Đã xóa nội dung cũ trong tbody");
+
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = data.slice(start, end);
+            console.log("Dữ liệu phân trang:", paginatedData);
 
+            // Kiểm tra dữ liệu phân trang
+            if (!paginatedData || paginatedData.length === 0) {
+                console.warn("Không có dữ liệu để render trong trang này");
+                tbody.innerHTML = `<tr><td colspan="9">Không có dữ liệu</td></tr>`;
+                totalCountElement.textContent = "0";
+                paginationDiv.innerHTML = "";
+                return;
+            }
+
+            // Render từng hàng
             paginatedData.forEach((row, index) => {
+                console.log("Đang render hàng:", row); // Debug mỗi hàng
                 const globalIndex = start + index + 1;
                 const tr = document.createElement("tr");
                 let cells = [`<td>${globalIndex}</td>`];
-                row.forEach(cell => cells.push(`<td>${cell || ""}</td>`));
+                row.forEach(cell => {
+                    cells.push(`<td>${cell || ""}</td>`);
+                });
                 tr.innerHTML = cells.join("");
                 tr.onclick = () => showDetail(row, globalIndex);
                 tbody.appendChild(tr);
+                console.log("Đã thêm hàng vào tbody:", tr.outerHTML);
             });
 
+            // Cập nhật tổng số lượng
             totalCountElement.textContent = data.length;
-            renderPagination(data.length, page);
+            console.log("Đã cập nhật tổng số lượng:", data.length);
 
+            // Render phân trang
+            renderPagination(data.length, page);
+            console.log("Đã render phân trang");
+
+            // Hiển thị chi tiết của hàng đầu tiên
             if (data.length > 0) {
                 showDetail(data[0], start + 1);
+                console.log("Đã hiển thị chi tiết hàng đầu tiên");
             } else {
                 const detailBody = document.getElementById("detail-body");
                 if (detailBody) {
@@ -1049,7 +1107,10 @@
 
         function renderPagination(totalRows, currentPage) {
             const paginationDiv = document.getElementById("pagination");
-            if (!paginationDiv) return;
+            if (!paginationDiv) {
+                console.error("Không tìm thấy pagination div");
+                return;
+            }
             paginationDiv.innerHTML = `
                 <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>${language === 'vi' ? "Trước" : "Previous"}</button>
                 <span>${language === 'vi' ? "Trang" : "Page"} ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
@@ -1074,7 +1135,10 @@
 
         function showDetail(row, index) {
             const detailBody = document.getElementById("detail-body");
-            if (!detailBody) return;
+            if (!detailBody) {
+                console.error("Không tìm thấy detail-body");
+                return;
+            }
             const headers = [
                 translations[language]["vehicle-line"],
                 translations[language]["vehicle-version"],
@@ -1091,6 +1155,7 @@
             });
             html += "</table>";
             detailBody.innerHTML = html;
+            console.log("Đã render chi tiết:", html);
 
             const rows = document.querySelectorAll("#table-body tr");
             rows.forEach(row => row.classList.remove("selected"));
@@ -1178,23 +1243,39 @@
             const searchInput = document.getElementById("search-input");
             if (searchInput) searchInput.value = "";
             currentPage = 1;
-            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec"; // Thay bằng URL Web App của bạn
+            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
 
             try {
+                console.log("Đang làm mới dữ liệu...");
                 const response = await axios.get(apiURL);
+                console.log("Dữ liệu API khi làm mới:", response.data);
+                if (response.status !== 200) {
+                    throw new Error(`Lỗi API: ${response.status}`);
+                }
                 tableData = response.data.slice(1); // Bỏ hàng tiêu đề
+                console.log("tableData sau khi làm mới:", tableData);
+                if (tableData.length === 0) {
+                    throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
+                }
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
                 renderTable(tableData);
                 showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
             } catch (error) {
-                const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
+                console.error("Lỗi khi làm mới dữ liệu:", error);
+                let errorMsg = language === 'vi' ? "Không thể làm mới dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to refresh data. Please check your connection or API access.";
+                if (error.response) {
+                    errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
                 const tableBody = document.getElementById("table-body");
                 if (tableBody) {
-                    tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
                 }
                 showNotification(errorMsg, 3000);
+            } finally {
+                if (spinner) spinner.style.display = 'none';
             }
-            if (spinner) spinner.style.display = 'none';
         }
 
         function debounce(func, wait) {
