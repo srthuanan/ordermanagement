@@ -606,7 +606,7 @@
         }
 
         .pagination button:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 0.8);
             transform: translateY(2px);
         }
 
@@ -931,17 +931,10 @@
         function updateUI() {
             const menu = document.getElementById('navMenu');
             if (!menu) return;
-            const commonLinks = `
-                <a href="kpi.html">${language === 'vi' ? 'Kết Quả Kinh Doanh' : 'Business Results'}</a>
-                <a href="yeucaughepxe.html">${language === 'vi' ? 'Yêu Cầu Ghép Xe' : 'Vehicle Pairing Request'}</a>
-                <a href="danhsach.html">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a>
-                <a href="xedaban.html">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a>
+            const khoXeLink = `
                 <a href="khoxe.html" class="active">${language === 'vi' ? 'Kho Xe' : 'Vehicle Inventory'}</a>
             `;
-            const managerLinks = userRole === 'manager' ? `
-                <a href="manage.html">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a>
-            ` : '';
-            menu.innerHTML = commonLinks + managerLinks;
+            menu.innerHTML = khoXeLink;
         }
 
         async function loadInitialData() {
@@ -1038,13 +1031,8 @@
             const totalCountElement = document.getElementById("total-count");
             const paginationDiv = document.getElementById("pagination");
 
-            // Kiểm tra xem các phần tử DOM có tồn tại không
             if (!tbody) {
                 console.error("Không tìm thấy tbody với id 'table-body'");
-                return;
-            }
-            if (!totalCountElement) {
-                console.error("Không tìm thấy total-count element");
                 return;
             }
             if (!paginationDiv) {
@@ -1052,7 +1040,6 @@
                 return;
             }
 
-            // Xóa nội dung cũ trong tbody
             tbody.innerHTML = "";
             console.log("Đã xóa nội dung cũ trong tbody");
 
@@ -1061,23 +1048,24 @@
             const paginatedData = data.slice(start, end);
             console.log("Dữ liệu phân trang:", paginatedData);
 
-            // Kiểm tra dữ liệu phân trang
             if (!paginatedData || paginatedData.length === 0) {
                 console.warn("Không có dữ liệu để render trong trang này");
                 tbody.innerHTML = `<tr><td colspan="9">Không có dữ liệu</td></tr>`;
-                totalCountElement.textContent = "0";
+                if (totalCountElement) {
+                    totalCountElement.textContent = "0";
+                }
                 paginationDiv.innerHTML = "";
                 return;
             }
 
-            // Render từng hàng
             paginatedData.forEach((row, index) => {
-                console.log("Đang render hàng:", row); // Debug mỗi hàng
+                console.log("Đang render hàng:", row);
                 const globalIndex = start + index + 1;
                 const tr = document.createElement("tr");
                 let cells = [`<td>${globalIndex}</td>`];
-                row.forEach(cell => {
-                    cells.push(`<td>${cell || ""}</td>`);
+                row.forEach((cell, i) => {
+                    const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
+                    cells.push(`<td${className}>${cell || ""}</td>`);
                 });
                 tr.innerHTML = cells.join("");
                 tr.onclick = () => showDetail(row, globalIndex);
@@ -1085,15 +1073,16 @@
                 console.log("Đã thêm hàng vào tbody:", tr.outerHTML);
             });
 
-            // Cập nhật tổng số lượng
-            totalCountElement.textContent = data.length;
-            console.log("Đã cập nhật tổng số lượng:", data.length);
+            if (totalCountElement) {
+                totalCountElement.textContent = data.length;
+                console.log("Đã cập nhật tổng số lượng:", data.length);
+            } else {
+                console.warn("Không tìm thấy total-count element, bỏ qua cập nhật tổng số lượng");
+            }
 
-            // Render phân trang
             renderPagination(data.length, page);
             console.log("Đã render phân trang");
 
-            // Hiển thị chi tiết của hàng đầu tiên
             if (data.length > 0) {
                 showDetail(data[0], start + 1);
                 console.log("Đã hiển thị chi tiết hàng đầu tiên");
@@ -1149,9 +1138,12 @@
                 translations[language]["vehicle-warehouse"],
                 translations[language]["vehicle-status"]
             ];
-            let html = "<table class='detail-table'>";
+            const totalCount = document.getElementById("total-count")?.textContent || "0";
+            let html = `<p style="margin-bottom: 10px;">${translations[language]["total-count"]}: ${totalCount}</p>`;
+            html += "<table class='detail-table'>";
             row.forEach((cell, i) => {
-                html += `<tr><th>${headers[i]}</th><td>${cell || ""}</td></tr>`;
+                const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
+                html += `<tr><th>${headers[i]}</th><td${className}>${cell || ""}</td></tr>`;
             });
             html += "</table>";
             detailBody.innerHTML = html;
@@ -1203,10 +1195,12 @@
 
             const table = document.getElementById("data-table");
             if (!table) return;
+            const totalCount = document.getElementById("total-count")?.textContent || "0";
             const printContent = `
                 <div style="text-align: center;">
                     <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
                     <p>Hotline: 1900 232389</p>
+                    <p>${language === 'vi' ? "Tổng số lượng" : "Total quantity"}: ${totalCount}</p>
                     <p>${language === 'vi' ? "In lúc" : "Printed at"}: ${printDateTime}</p>
                 </div>
                 ${table.outerHTML}
@@ -1222,6 +1216,7 @@
                         table { width: 100%; border-collapse: collapse; }
                         th, td { border: 1px solid #000; padding: 8px; }
                         th { background: #003087; color: #fff; }
+                        .highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
                         .selected { background: #cce5ff; font-weight: 700; }
                         @media print {
                             body { margin: 0; }
@@ -1297,7 +1292,9 @@
                 currentPage = 1;
                 renderTable(filteredData);
                 const totalCountElement = document.getElementById("total-count");
-                if (totalCountElement) totalCountElement.textContent = filteredData.length;
+                if (totalCountElement) {
+                    totalCountElement.textContent = filteredData.length;
+                }
             }, 300));
         }
 
