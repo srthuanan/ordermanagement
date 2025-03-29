@@ -558,7 +558,6 @@
                     <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
                     <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">Quên mật khẩu?</span>
                 </div>
-                <span class="register-link" onclick="showForm('registerForm')" data-lang="register">Chưa có tài khoản? Đăng ký</span>
             </div>
             <div id="resetPasswordForm" style="display: none;">
                 <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
@@ -581,32 +580,6 @@
                         <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
                     </div>
                     <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> Đổi Mật Khẩu</button>
-                </form>
-                <div class="modal-links">
-                    <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
-                </div>
-            </div>
-            <div id="registerForm" style="display: none;">
-                <h2 data-lang="register-title">Đăng Ký</h2>
-                <p data-lang="register-subtitle">Tạo tài khoản mới để truy cập hệ thống</p>
-                <form onsubmit="register(event)">
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="regUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="regPassword" placeholder="Mật khẩu" required data-lang-placeholder="password">
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" required data-lang-placeholder="confirm-password">
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="regEmail" placeholder="Email" required data-lang-placeholder="email">
-                    </div>
-                    <button type="submit" data-lang="register-btn"><i class="fas fa-user-plus"></i> Đăng Ký</button>
                 </form>
                 <div class="modal-links">
                     <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
@@ -716,14 +689,6 @@
                 "email": "Email",
                 "reset-password": "Đặt lại mật khẩu",
                 "forgot-password": "Quên mật khẩu?",
-                "register": "Chưa có tài khoản? Đăng ký",
-                "register-title": "Đăng Ký",
-                "register-subtitle": "Tạo tài khoản mới để truy cập hệ thống",
-                "register-btn": "Đăng Ký",
-                "otp-title": "Xác Minh OTP",
-                "otp-subtitle": "Nhập mã OTP đã gửi qua email của bạn",
-                "verify-btn": "Xác Minh",
-                "back-to-register": "Quay lại đăng ký",
                 "reset-password-title": "Đổi Mật Khẩu",
                 "reset-password-subtitle": "Nhập thông tin để đổi mật khẩu",
                 "old-password": "Mật khẩu cũ",
@@ -732,7 +697,7 @@
                 "change-password-btn": "Đổi Mật Khẩu",
                 "back-to-login": "Quay lại đăng nhập",
                 "forgot-password-title": "Quên Mật Khẩu",
-                "forgot-password-subtitle": "Nhập email để nhận OTP đặt lại mật khẩu",
+                "forgot-password-subtitle": "Nhập email để nhận OTP đặt lại密 khẩu",
                 "send-otp-btn": "Gửi OTP",
                 "reset-password-otp-title": "Đặt Lại Mật Khẩu",
                 "reset-password-otp-subtitle": "Nhập OTP và mật khẩu mới",
@@ -755,8 +720,6 @@
                 "password-mismatch": "Mật khẩu không khớp!",
                 "password-length": "Mật khẩu phải dài ít nhất 6 ký tự!",
                 "server-error": "Không thể kết nối đến server!",
-                "enter-otp": "Vui lòng nhập OTP!",
-                "register-success": "Đăng ký thành công! Vui lòng kiểm tra email để nhận OTP.",
                 "login-success": "Đăng nhập thành công!",
                 "logout-success": "Đăng xuất thành công!",
                 "password-changed": "Đổi mật khẩu thành công!",
@@ -776,14 +739,6 @@
                 "email": "Email",
                 "reset-password": "Reset Password",
                 "forgot-password": "Forgot Password?",
-                "register": "Don't have an account? Register",
-                "register-title": "Register",
-                "register-subtitle": "Create a new account to access the system",
-                "register-btn": "Register",
-                "otp-title": "Verify OTP",
-                "otp-subtitle": "Enter the OTP sent to your email",
-                "verify-btn": "Verify",
-                "back-to-register": "Back to register",
                 "reset-password-title": "Change Password",
                 "reset-password-subtitle": "Enter information to change your password",
                 "old-password": "Old Password",
@@ -815,8 +770,6 @@
                 "password-mismatch": "Passwords do not match!",
                 "password-length": "Password must be at least 6 characters long!",
                 "server-error": "Unable to connect to the server!",
-                "enter-otp": "Please enter OTP!",
-                "register-success": "Registration successful! Please check your email for OTP.",
                 "login-success": "Login successful!",
                 "logout-success": "Logout successful!",
                 "password-changed": "Password changed successfully!",
@@ -867,105 +820,6 @@
             const sessionTime = document.getElementById("sessionTime");
             const elapsed = Math.floor((Date.now() - sessionStartTime) / 60000);
             sessionTime.textContent = language === "vi" ? `Thời gian: ${elapsed} phút` : `Session: ${elapsed} minutes`;
-        }
-
-        // Đăng ký
-        async function register(e) {
-            e.preventDefault();
-            const username = document.getElementById("regUsername").value.trim();
-            const password = document.getElementById("regPassword").value.trim();
-            const confirmPassword = document.getElementById("regConfirmPassword").value.trim();
-            const email = document.getElementById("regEmail").value.trim();
-            const loadingOverlay = document.getElementById("loadingOverlay");
-
-            if (!username || !password || !confirmPassword || !email) {
-                showAlert("Error", translations[language]["fill-all-fields"]);
-                return;
-            }
-            if (password !== confirmPassword) {
-                showAlert("Error", translations[language]["password-mismatch"]);
-                return;
-            }
-            if (password.length < 6) {
-                showAlert("Error", translations[language]["password-length"]);
-                return;
-            }
-
-            loadingOverlay.style.display = "flex";
-            try {
-                const response = await axios.post(API_URL, null, { params: { action: "register", username, password, email } });
-                const result = response.data;
-                if (result.success) {
-                    showOTPForm(username, password, email);
-                } else {
-                    showAlert("Error", result.message);
-                }
-            } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
-            } finally {
-                loadingOverlay.style.display = "none";
-            }
-        }
-
-        // Hiển thị form OTP
-        function showOTPForm(username, password, email) {
-            const modalContent = document.querySelector("#loginModal .modal-content");
-            modalContent.innerHTML = `
-                <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="spinner"></div>
-                </div>
-                <h2 data-lang="otp-title">${translations[language]["otp-title"]}</h2>
-                <p data-lang="otp-subtitle">${translations[language]["otp-subtitle"]}</p>
-                <form onsubmit="verifyOTP(event, '${username}', '${password}', '${email}')">
-                    <div class="input-group">
-                        <i class="fas fa-key input-icon"></i>
-                        <input type="text" id="otpInput" placeholder="${translations[language]["otp"]}" required>
-                    </div>
-                    <button type="submit" data-lang="verify-btn"><i class="fas fa-check"></i> ${translations[language]["verify-btn"]}</button>
-                </form>
-                <div class="modal-links">
-                    <span onclick="showForm('registerForm')" data-lang="back-to-register">${translations[language]["back-to-register"]}</span>
-                </div>
-            `;
-            openModal("loginModal");
-        }
-
-        // Xác minh OTP
-        async function verifyOTP(e, username, password, email) {
-            e.preventDefault();
-            const otpInput = document.getElementById("otpInput").value.trim();
-            const loadingOverlay = document.getElementById("loadingOverlay");
-
-            if (!otpInput) {
-                showAlert("Error", translations[language]["enter-otp"]);
-                return;
-            }
-
-            loadingOverlay.style.display = "flex";
-            try {
-                const response = await axios.post(API_URL, null, { params: { action: "verifyOTP", username, otp: otpInput } });
-                const result = response.data;
-                if (result.success) {
-                    isLoggedIn = true;
-                    currentUser = result.username;
-                    userRole = result.role || "employee";
-                    sessionStorage.setItem("isLoggedIn", "true");
-                    sessionStorage.setItem("currentUser", result.username);
-                    sessionStorage.setItem("userRole", userRole);
-                    sessionStorage.setItem("sessionStartTime", Date.now());
-                    closeModal("loginModal");
-                    showAlert("Success", translations[language]["register-success"]);
-                    updateUI();
-                    renderNotifications();
-                } else {
-                    showAlert("Error", result.message);
-                }
-            } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
-            } finally {
-                loadingOverlay.style.display = "none";
-            }
         }
 
         // Đăng nhập
@@ -1179,7 +1033,6 @@
                         <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">${translations[language]["reset-password"]}</span>
                         <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">${translations[language]["forgot-password"]}</span>
                     </div>
-                    <span class="register-link" onclick="showForm('registerForm')" data-lang="register">${translations[language]["register"]}</span>
                 </div>
                 <div id="resetPasswordForm" style="display: none;">
                     <h2 data-lang="reset-password-title">${translations[language]["reset-password-title"]}</h2>
@@ -1202,32 +1055,6 @@
                             <input type="password" id="confirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
                         </div>
                         <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> ${translations[language]["change-password-btn"]}</button>
-                    </form>
-                    <div class="modal-links">
-                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
-                    </div>
-                </div>
-                <div id="registerForm" style="display: none;">
-                    <h2 data-lang="register-title">${translations[language]["register-title"]}</h2>
-                    <p data-lang="register-subtitle">${translations[language]["register-subtitle"]}</p>
-                    <form onsubmit="register(event)">
-                        <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="regUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="regPassword" placeholder="${translations[language]["password"]}" required data-lang-placeholder="password">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="regConfirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" id="regEmail" placeholder="${translations[language]["email"]}" required data-lang-placeholder="email">
-                        </div>
-                        <button type="submit" data-lang="register-btn"><i class="fas fa-user-plus"></i> ${translations[language]["register-btn"]}</button>
                     </form>
                     <div class="modal-links">
                         <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
@@ -1316,7 +1143,7 @@
 
         // Hiển thị form
         function showForm(formName) {
-            ["loginForm", "resetPasswordForm", "registerForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(form => {
+            ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(form => {
                 const formElement = document.getElementById(form);
                 if (formElement) formElement.style.display = form === formName ? "block" : "none";
             });
