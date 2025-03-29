@@ -236,60 +236,9 @@
         body.dark-mode .dashboard-card h4 { color: #66b0ff; }
         .dashboard-card p { font-size: 16px; color: #555; }
         body.dark-mode .dashboard-card p { color: #cccccc; }
-        .search-bar input {
-            padding: 12px;
-            width: 100%;
-            max-width: 350px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            background: #e0e6ed;
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
-        }
-        body.dark-mode .search-bar input { background: #1e2529; color: #fff; }
-        .search-bar input:focus { box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5); outline: none; }
-        .notification-list { max-height: 250px; overflow-y: auto; }
-        .notification-item {
-            padding: 12px;
-            border-bottom: 1px solid #d0d6dd;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #e0e6ed;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
-        }
-        body.dark-mode .notification-item { background: #1e2529; border-bottom: 1px solid #2e3539; }
-        .notification-item:hover { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
-        .notification-item .delete-btn {
-            background: #ef4444;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 6px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-        .notification-item .delete-btn:hover { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -1px -1px 4px rgba(255, 255, 255, 0.3); }
-        .refresh-btn {
-            padding: 12px 25px;
-            background: #e0e6ed;
-            color: #28a745;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-        body.dark-mode .refresh-btn { background: #1e2529; }
-        .refresh-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
+        .dashboard-card a { color: #005eb8; text-decoration: none; }
+        body.dark-mode .dashboard-card a { color: #66b0ff; }
+        .dashboard-card a:hover { text-decoration: underline; }
 
         /* Modal */
         .modal {
@@ -465,7 +414,13 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
-        <ul class="menu" id="navMenu"></ul>
+        <ul class="menu" id="navMenu">
+            <li><a href="khoxe.html" data-lang="stock">Kho Xe</a></li>
+            <li><a href="xedaban.html" data-lang="sold-cars">Danh Sách Xe Đã Bán</a></li>
+            <li><a href="yeucaughepxe.html" data-lang="pairing-request">Nhu Cầu Ghép Xe</a></li>
+            <li><a href="danhsach.html" data-lang="pairing-list">Danh Sách Ghép Xe</a></li>
+            <li><a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs">Chính Sách & Tài Liệu</a></li>
+        </ul>
         <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
         <span class="user-info" id="userInfo"></span>
         <span class="session-time" id="sessionTime"></span>
@@ -512,25 +467,29 @@
 
     <!-- Dashboard Section -->
     <section class="dashboard-section" id="dashboard" data-aos="fade-up">
-        <h3 data-lang="dashboard-title">Danh Mục</h3>
+        <h3 data-lang="dashboard-title">Bảng Điều Khiển</h3>
         <div class="dashboard-content">
             <div class="dashboard-card">
-                <h4 data-lang="sales-title">Doanh Số</h4>
-                <p id="salesData">50 xe (Tháng 3/2025)</p>
+                <h4 data-lang="stock">Kho Xe</h4>
+                <p><a href="khoxe.html">Xem chi tiết kho xe hiện tại</a></p>
             </div>
             <div class="dashboard-card">
-                <h4 data-lang="orders-title">Đơn Hàng Chờ</h4>
-                <p id="ordersData">10 đơn</p>
+                <h4 data-lang="sold-cars">Danh Sách Xe Đã Bán</h4>
+                <p><a href="xedaban.html">Xem danh sách xe đã bán</a></p>
             </div>
             <div class="dashboard-card">
-                <h4 data-lang="notifications-title">Thông Báo</h4>
-                <div class="search-bar">
-                    <input type="text" id="notificationSearch" placeholder="Tìm kiếm thông báo..." oninput="filterNotifications()" data-lang-placeholder="search-notifications">
-                </div>
-                <div class="notification-list" id="notificationList"></div>
+                <h4 data-lang="pairing-request">Nhu Cầu Ghép Xe</h4>
+                <p><a href="yeucaughepxe.html">Xem yêu cầu ghép xe</a></p>
+            </div>
+            <div class="dashboard-card">
+                <h4 data-lang="pairing-list">Danh Sách Ghép Xe</h4>
+                <p><a href="danhsach.html">Xem danh sách ghép xe</a></p>
+            </div>
+            <div class="dashboard-card">
+                <h4 data-lang="policy-docs">Chính Sách & Tài Liệu</h4>
+                <p><a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank">Xem tài liệu và chính sách</a></p>
             </div>
         </div>
-        <button class="refresh-btn" onclick="refreshDashboard()" data-lang="refresh-btn"><i class="fas fa-sync-alt"></i> Làm Mới</button>
     </section>
 
     <!-- Login Modal -->
@@ -667,13 +626,6 @@
         let language = localStorage.getItem("language") || "vi";
         let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
 
-        // Dữ liệu giả lập thông báo
-        let notifications = [
-            { id: 1, message: "Đơn hàng #123 đã được xác nhận", timestamp: "2025-03-28 09:00" },
-            { id: 2, message: "Xe VF8 đã sẵn sàng giao hàng", timestamp: "2025-03-28 10:15" },
-            { id: 3, message: "Cập nhật doanh số tháng 3", timestamp: "2025-03-28 14:30" }
-        ];
-
         // Dữ liệu dịch ngôn ngữ
         const translations = {
             vi: {
@@ -697,7 +649,7 @@
                 "change-password-btn": "Đổi Mật Khẩu",
                 "back-to-login": "Quay lại đăng nhập",
                 "forgot-password-title": "Quên Mật Khẩu",
-                "forgot-password-subtitle": "Nhập email để nhận OTP đặt lại密 khẩu",
+                "forgot-password-subtitle": "Nhập email để nhận OTP đặt lại mật khẩu",
                 "send-otp-btn": "Gửi OTP",
                 "reset-password-otp-title": "Đặt Lại Mật Khẩu",
                 "reset-password-otp-subtitle": "Nhập OTP và mật khẩu mới",
@@ -709,9 +661,7 @@
                 "orders-text": "Theo dõi và xử lý đơn hàng nhanh chóng.",
                 "notifications-title": "Thông Báo",
                 "notifications-text": "Nhận thông báo quan trọng ngay lập tức.",
-                "dashboard-title": "Danh Mục",
-                "search-notifications": "Tìm kiếm thông báo...",
-                "refresh-btn": "Làm Mới",
+                "dashboard-title": "Bảng Điều Khiển",
                 "footer-title": "VINFAST THUẬN AN",
                 "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
                 "footer-contact": "Liên hệ: 0968275404 | Email: showroomthuanan@gmail.com",
@@ -724,7 +674,12 @@
                 "logout-success": "Đăng xuất thành công!",
                 "password-changed": "Đổi mật khẩu thành công!",
                 "otp-sent": "OTP đã được gửi đến email của bạn!",
-                "password-reset-success": "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại."
+                "password-reset-success": "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.",
+                "stock": "Kho Xe",
+                "sold-cars": "Danh Sách Xe Đã Bán",
+                "pairing-request": "Nhu Cầu Ghép Xe",
+                "pairing-list": "Danh Sách Ghép Xe",
+                "policy-docs": "Chính Sách & Tài Liệu"
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -760,8 +715,6 @@
                 "notifications-title": "Notifications",
                 "notifications-text": "Receive important notifications instantly.",
                 "dashboard-title": "Dashboard",
-                "search-notifications": "Search notifications...",
-                "refresh-btn": "Refresh",
                 "footer-title": "VINFAST THUAN AN",
                 "footer-address": "Address: 8/1A, An Phu, Thuan An, Binh Duong",
                 "footer-contact": "Contact: 0968275404 | Email: showroomthuanan@gmail.com",
@@ -774,7 +727,12 @@
                 "logout-success": "Logout successful!",
                 "password-changed": "Password changed successfully!",
                 "otp-sent": "OTP has been sent to your email!",
-                "password-reset-success": "Password reset successful! Please login again."
+                "password-reset-success": "Password reset successful! Please login again.",
+                "stock": "Vehicle Inventory",
+                "sold-cars": "List of Sold Vehicles",
+                "pairing-request": "Vehicle Pairing Requests",
+                "pairing-list": "Pairing List",
+                "policy-docs": "Policies & Documents"
             }
         };
 
@@ -782,7 +740,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             updateUI();
             updateLanguage();
-            renderNotifications();
             if (localStorage.getItem("theme") === "dark") {
                 document.body.classList.add("dark-mode");
                 document.querySelector(".dark-mode-btn i").classList.replace("fa-moon", "fa-sun");
@@ -798,18 +755,20 @@
             const dashboard = document.getElementById("dashboard");
             const userInfo = document.getElementById("userInfo");
             const logoutBtn = document.getElementById("logoutBtn");
+            const navMenu = document.getElementById("navMenu");
 
             if (isLoggedIn && currentUser) {
                 heroSection.style.display = "none";
                 welcomeSection.style.display = "none";
                 dashboard.style.display = "block";
+                navMenu.style.display = "flex";
                 userInfo.textContent = language === "vi" ? `Xin chào, ${currentUser} (${userRole})` : `Hello, ${currentUser} (${userRole})`;
                 logoutBtn.style.display = "block";
-                renderNotifications();
             } else {
                 heroSection.style.display = "flex";
                 welcomeSection.style.display = "block";
                 dashboard.style.display = "none";
+                navMenu.style.display = "none";
                 userInfo.textContent = "";
                 logoutBtn.style.display = "none";
             }
@@ -849,7 +808,6 @@
                     closeModal("loginModal");
                     showAlert("Success", translations[language]["login-success"]);
                     updateUI();
-                    renderNotifications();
                 } else {
                     showAlert("Error", result.message);
                 }
@@ -1009,98 +967,6 @@
 
         // Reset modal về form đăng nhập
         function resetModalToLogin() {
-            const modalContent = document.querySelector("#loginModal .modal-content");
-            modalContent.innerHTML = `
-                <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="spinner"></div>
-                </div>
-                <div id="loginForm">
-                    <h2 data-lang="login-title">${translations[language]["login-title"]}</h2>
-                    <p data-lang="login-subtitle">${translations[language]["login-subtitle"]}</p>
-                    <form onsubmit="login(event)">
-                        <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="username" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="password" placeholder="${translations[language]["password"]}" required data-lang-placeholder="password">
-                        </div>
-                        <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> ${translations[language]["login-btn"]}</button>
-                    </form>
-                    <div class="modal-links">
-                        <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">${translations[language]["reset-password"]}</span>
-                        <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">${translations[language]["forgot-password"]}</span>
-                    </div>
-                </div>
-                <div id="resetPasswordForm" style="display: none;">
-                    <h2 data-lang="reset-password-title">${translations[language]["reset-password-title"]}</h2>
-                    <p data-lang="reset-password-subtitle">${translations[language]["reset-password-subtitle"]}</p>
-                    <form onsubmit="changePassword(event)">
-                        <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="changeUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="oldPassword" placeholder="${translations[language]["old-password"]}" required data-lang-placeholder="old-password">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="newPassword" placeholder="${translations[language]["new-password"]}" required data-lang-placeholder="new-password">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="confirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
-                        </div>
-                        <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> ${translations[language]["change-password-btn"]}</button>
-                    </form>
-                    <div class="modal-links">
-                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
-                    </div>
-                </div>
-                <div id="forgotPasswordForm" style="display: none;">
-                    <h2 data-lang="forgot-password-title">${translations[language]["forgot-password-title"]}</h2>
-                    <p data-lang="forgot-password-subtitle">${translations[language]["forgot-password-subtitle"]}</p>
-                    <form onsubmit="forgotPassword(event)">
-                        <div class="input-group">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" id="forgotEmail" placeholder="${translations[language]["email"]}" required data-lang-placeholder="email">
-                        </div>
-                        <button type="submit" data-lang="send-otp-btn"><i class="fas fa-paper-plane"></i> ${translations[language]["send-otp-btn"]}</button>
-                    </form>
-                    <div class="modal-links">
-                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
-                    </div>
-                </div>
-                <div id="resetPasswordWithOTPForm" style="display: none;">
-                    <h2 data-lang="reset-password-otp-title">${translations[language]["reset-password-otp-title"]}</h2>
-                    <p data-lang="reset-password-otp-subtitle">${translations[language]["reset-password-otp-subtitle"]}</p>
-                    <form onsubmit="resetPasswordWithOTP(event)">
-                        <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="resetUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-key input-icon"></i>
-                            <input type="text" id="resetOTP" placeholder="${translations[language]["otp"]}" required data-lang-placeholder="otp">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="resetNewPassword" placeholder="${translations[language]["new-password"]}" required data-lang-placeholder="new-password">
-                        </div>
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="resetConfirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
-                        </div>
-                        <button type="submit" data-lang="reset-password-btn"><i class="fas fa-key"></i> ${translations[language]["reset-password-btn"]}</button>
-                    </form>
-                    <div class="modal-links">
-                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
-                    </div>
-                </div>
-            `;
             showForm("loginForm");
         }
 
@@ -1147,49 +1013,6 @@
                 const formElement = document.getElementById(form);
                 if (formElement) formElement.style.display = form === formName ? "block" : "none";
             });
-        }
-
-        // Làm mới dashboard
-        function refreshDashboard() {
-            document.getElementById("salesData").textContent = `${Math.floor(Math.random() * 10) + 50} xe (Tháng 3/2025)`;
-            document.getElementById("ordersData").textContent = `${Math.floor(Math.random() * 5) + 10} đơn`;
-            notifications.push({
-                id: notifications.length + 1,
-                message: translations[language]["data-refreshed"],
-                timestamp: new Date().toISOString().slice(0, 16).replace("T", " ")
-            });
-            renderNotifications();
-            showAlert("Notice", translations[language]["data-refreshed"]);
-        }
-
-        // Hiển thị thông báo
-        function renderNotifications() {
-            const list = document.getElementById("notificationList");
-            list.innerHTML = notifications.map(notif => `
-                <div class="notification-item">
-                    <span>${notif.message} (${notif.timestamp})</span>
-                    <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === "vi" ? "Xóa" : "Delete"}</button>
-                </div>
-            `).join("");
-        }
-
-        // Xóa thông báo
-        function deleteNotification(id) {
-            notifications = notifications.filter(notif => notif.id !== id);
-            renderNotifications();
-        }
-
-        // Lọc thông báo
-        function filterNotifications() {
-            const search = document.getElementById("notificationSearch").value.toLowerCase();
-            const filtered = notifications.filter(notif => notif.message.toLowerCase().includes(search));
-            const list = document.getElementById("notificationList");
-            list.innerHTML = filtered.map(notif => `
-                <div class="notification-item">
-                    <span>${notif.message} (${notif.timestamp})</span>
-                    <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === "vi" ? "Xóa" : "Delete"}</button>
-                </div>
-            `).join("");
         }
     </script>
 </body>
