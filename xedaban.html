@@ -6,1046 +6,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Thêm Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Thêm html2canvas để lưu biểu đồ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Montserrat', sans-serif;
-        background: #f0f4f8; /* Màu nền sáng cho Neomorphism */
-        color: #1a1a1a;
-        min-height: 100vh;
-        overflow-x: hidden;
-        transition: background 0.3s, color 0.3s;
-    }
-
-    body.dark-mode {
-        background: #1a1a1a; /* Màu nền tối cho Neomorphism */
-        color: #e0e0e0;
-    }
-
-    .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 60px;
-        background: linear-gradient(135deg, #003087, #005eb8); /* Giữ màu xanh VinFast */
-        display: flex;
-        align-items: center;
-        padding: 0 20px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-        z-index: 1000;
-    }
-
-    body.dark-mode .navbar {
-        background: linear-gradient(135deg, #003087, #005eb8); /* Giữ màu xanh VinFast */
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .navbar .logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-shrink: 0;
-    }
-
-    .navbar .logo h1 {
-        font-size: 20px;
-        color: #ffffff;
-        font-weight: 700;
-        text-transform: uppercase;
-        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
-    }
-
-    .navbar .tabs {
-        display: flex;
-        overflow-x: auto;
-        white-space: nowrap;
-        flex-grow: 1;
-        margin-left: 10px;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .navbar .tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-.navbar .tabs a {
-    position: relative;
-    padding: 10px 15px;
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 12px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #003087, #005eb8); /* Đồng bộ màu với navbar */
-    border-radius: 10px;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); /* Đổ bóng trắng mỏng */
-    transition: all 0.3s ease;
-    overflow: hidden;
-    border: 2px solid transparent; /* Thêm border mặc định là trong suốt */
-}
-
-.navbar .tabs a:hover {
-    background: linear-gradient(135deg, #0044cc, #0066ff); /* Hiệu ứng sáng hơn khi hover */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); /* Đổ bóng trắng mỏng hơn khi hover */
-    transform: translateY(1px);
-}
-
-.navbar .tabs a.active {
-    background: linear-gradient(135deg, #0044cc, #0066ff); /* Hiệu ứng sáng hơn khi active */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); /* Đổ bóng trắng mỏng */
-    border: 1px solid #ffffff; /* Viền trắng khi tab được chọn */
-    transform: translateY(1px);
-}
-
-body.dark-mode .navbar .tabs a {
-    background: linear-gradient(135deg, #003087, #005eb8); /* Giữ màu trong dark mode */
-    color: #ffffff;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); /* Đổ bóng trắng mỏng */
-    border: 2px solid transparent; /* Border mặc định trong suốt */
-}
-
-body.dark-mode .navbar .tabs a:hover {
-    background: linear-gradient(135deg, #0044cc, #0066ff);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-
-body.dark-mode .navbar .tabs a.active {
-    background: linear-gradient(135deg, #0044cc, #0066ff);
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-    border: 1px solid #ffffff; /* Viền trắng khi tab được chọn */
-}    .navbar .tabs a.total-tab {
-        background: linear-gradient(135deg, #d4af37, #ffd700);
-        color: #1a1a1a;
-        font-size: 14px;
-        padding: 10px 20px;
-    }
-
-    .navbar .tabs a.total-tab:hover, .navbar .tabs a.total-tab.active {
-        background: linear-gradient(135deg, #ffd700, #d4af37);
-        box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -3px -3px 8px rgba(50, 50, 50, 0.5);
-    }
-
-    .navbar-controls {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-left: 10px;
-    }
-
-    .nav-btn {
-        position: relative;
-        padding: 8px;
-        border: none;
-        border-radius: 10px;
-        background: #003087;
-        color: #ffffff;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
-
-    .nav-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transform: translateY(2px);
-    }
-
-    body.dark-mode .nav-btn {
-        background: #003087;
-        color: #ffffff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode .nav-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    .nav-btn[data-tooltip]::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        top: -35px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #333;
-        color: #ffffff;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-        z-index: 10;
-    }
-
-    .nav-btn[data-tooltip]::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 4px solid transparent;
-        border-top-color: #333;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-    }
-
-    .nav-btn:hover::after, .nav-btn:hover::before {
-        opacity: 1;
-    }
-
-    body.dark-mode .nav-btn[data-tooltip]::after {
-        background: #66b0ff;
-    }
-
-    body.dark-mode .nav-btn[data-tooltip]::before {
-        border-top-color: #66b0ff;
-    }
-
-    .theme-toggle {
-        margin-left: 10px;
-        padding: 8px;
-        background: none;
-        border: none;
-        color: #ffffff;
-        font-size: 16px;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-
-    body.dark-mode .theme-toggle {
-        color: #ffffff;
-    }
-
-    .theme-toggle:hover {
-        transform: scale(1.2);
-    }
-
-    .main-container {
-        display: flex;
-        margin-top: 90px;
-        padding: 15px;
-        gap: 15px;
-        height: calc(100vh - 110px);
-    }
-
-    .datetime {
-        position: fixed;
-        top: 60px;
-        left: 0;
-        width: 100%;
-        text-align: center;
-        padding: 5px 0;
-        background: #f0f4f8;
-        z-index: 999;
-        font-size: 12px;
-        color: #555;
-        transition: background 0.3s, color 0.3s;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .datetime {
-        background: #1a1a1a;
-        color: #cccccc;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .grid-container {
-        flex: 2;
-        background: #f0f4f8;
-        border-radius: 15px;
-        padding: 15px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-    }
-
-    .grid-container.full-width {
-        flex: 1;
-    }
-
-    body.dark-mode .grid-container {
-        background: #1a1a1a;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
-
-    .search-container input {
-        padding: 10px 15px;
-        width: 100%;
-        max-width: 250px;
-        border: none;
-        border-radius: 10px;
-        background: #f0f4f8;
-        font-size: 12px;
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-    }
-
-    .search-container input:focus {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
-        outline: none;
-    }
-
-    body.dark-mode .search-container input {
-        background: #1a1a1a;
-        color: #e0e0e0;
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode .search-container input:focus {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6);
-    }
-
-    .export-btn-container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 8px;
-    }
-
-    .button-group {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .total-count-container {
-        text-align: center;
-        font-size: 12px;
-        color: #1a1a1a;
-    }
-
-    body.dark-mode .total-count-container {
-        color: #e0e0e0;
-    }
-
-    .export-btn {
-        position: relative;
-        padding: 10px;
-        border: none;
-        border-radius: 10px;
-        background: #f0f4f8;
-        color: #003087;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
-
-    .export-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transform: translateY(2px);
-    }
-
-    .refresh-btn {
-        background: #f0f4f8;
-        color: #28a745;
-    }
-
-    .refresh-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .export-btn, body.dark-mode .refresh-btn {
-        background: #1a1a1a;
-        color: #66b0ff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode .refresh-btn {
-        color: #28a745;
-    }
-
-    body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    .export-btn[data-tooltip]::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        top: -35px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #333;
-        color: #ffffff;
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-        z-index: 10;
-    }
-
-    .export-btn[data-tooltip]::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 4px solid transparent;
-        border-top-color: #333;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-    }
-
-    .export-btn:hover::after, .export-btn:hover::before {
-        opacity: 1;
-    }
-
-    body.dark-mode .export-btn[data-tooltip]::after {
-        background: #66b0ff;
-    }
-
-    body.dark-mode .export-btn[data-tooltip]::before {
-        border-top-color: #66b0ff;
-    }
-
-    .table-container {
-        max-height: calc(100vh - 280px);
-        overflow-y: auto;
-        overflow-x: auto;
-        position: relative;
-        scroll-behavior: smooth;
-    }
-
-    .table-container::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    .table-container::-webkit-scrollbar-track {
-        background: #f0f4f8;
-        border-radius: 10px;
-    }
-
-    .table-container::-webkit-scrollbar-thumb {
-        background: #003087;
-        border-radius: 10px;
-    }
-
-    .table-container::-webkit-scrollbar-thumb:hover {
-        background: #001f5f;
-    }
-
-    body.dark-mode .table-container::-webkit-scrollbar-track {
-        background: #1a1a1a;
-    }
-
-    body.dark-mode .table-container::-webkit-scrollbar-thumb {
-        background: #66b0ff;
-    }
-
-    body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
-        background: #4a90e2;
-    }
-
-    .total-section .table-container {
-        max-height: calc(50vh - 130px);
-    }
-
-    table {
-        width: 100%;
-        min-width: 600px;
-        border-collapse: collapse;
-        font-size: 12px;
-    }
-
-    th, td {
-        padding: 6px;
-        text-align: left;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    th {
-        background: #f0f4f8;
-        color: #003087;
-        font-weight: 700;
-        text-transform: uppercase;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
-    }
-
-    td {
-        background: #f0f4f8;
-        color: #1a1a1a;
-    }
-
-    body.dark-mode th {
-        background: #1a1a1a;
-        color: #66b0ff;
-        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode td {
-        background: #1a1a1a;
-        color: #e0e0e0;
-        border-bottom: 1px solid #555;
-    }
-
-    .vin-highlight {
-        background: #e6f0ff;
-        font-weight: 700;
-        color: #003087;
-    }
-
-    body.dark-mode .vin-highlight {
-        background: #4a6fa5;
-        color: #ffffff;
-    }
-
-    tbody tr:hover {
-        background: #e8eef4;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-
-    body.dark-mode tbody tr:hover {
-        background: #222;
-    }
-
-    tbody tr.selected {
-        background: #cce5ff;
-        font-weight: 700;
-    }
-
-    body.dark-mode tbody tr.selected {
-        background: #5a7fb5;
-    }
-
-    .table-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #003087;
-        margin-bottom: 10px;
-        border-bottom: 2px solid #005eb8;
-        padding-bottom: 5px;
-    }
-
-    body.dark-mode .table-title {
-        color: #66b0ff;
-        border-bottom: 2px solid #66b0ff;
-    }
-
-    .total-section {
-        margin-bottom: 15px;
-    }
-
-    .total-section table {
-        border: none;
-        border-radius: 5px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .total-section table {
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .total-section th:first-child, .total-section td:first-child {
-        width: 60%;
-        text-align: left;
-    }
-
-    .total-section th:last-child, .total-section td:last-child {
-        width: 40%;
-        text-align: center;
-    }
-
-    .summary-row {
-        font-weight: 700;
-        background: #e6f0ff;
-    }
-
-    body.dark-mode .summary-row {
-        background: #4a6fa5;
-    }
-
-    .overview-section {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        padding: 8px;
-        background: #f0f4f8;
-        border-radius: 10px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .overview-section {
-        background: #1a1a1a;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .overview-item {
-        flex: 1;
-        text-align: center;
-        font-size: 12px;
-    }
-
-    .overview-item span {
-        font-weight: 700;
-        color: #003087;
-    }
-
-    body.dark-mode .overview-item span {
-        color: #66b0ff;
-    }
-
-    .filter-container {
-        margin-bottom: 15px;
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .filter-container select {
-        padding: 8px;
-        border: none;
-        border-radius: 10px;
-        background: #f0f4f8;
-        font-size: 12px;
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-        width: 100%;
-        max-width: 200px;
-    }
-
-    body.dark-mode .filter-container select {
-        background: #1a1a1a;
-        color: #e0e0e0;
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    .filter-container select:focus {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
-        outline: none;
-    }
-
-    .detail-panel {
-        flex: 1;
-        background: #f0f4f8;
-        border-radius: 15px;
-        padding: 15px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-        max-height: calc(100vh - 280px);
-        overflow-y: auto;
-        scroll-behavior: smooth;
-    }
-
-    body.dark-mode .detail-panel {
-        background: #1a1a1a;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .detail-panel::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .detail-panel::-webkit-scrollbar-track {
-        background: #f0f4f8;
-        border-radius: 10px;
-    }
-
-    .detail-panel::-webkit-scrollbar-thumb {
-        background: #003087;
-        border-radius: 10px;
-    }
-
-    .detail-panel::-webkit-scrollbar-thumb:hover {
-        background: #001f5f;
-    }
-
-    body.dark-mode .detail-panel::-webkit-scrollbar-track {
-        background: #1a1a1a;
-    }
-
-    body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
-        background: #66b0ff;
-    }
-
-    body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover {
-        background: #4a90e2;
-    }
-
-    .detail-panel h3 {
-        font-size: 18px;
-        color: #003087;
-        margin-bottom: 15px;
-        font-weight: 700;
-        position: sticky;
-        top: 0;
-        background: #f0f4f8;
-        z-index: 10;
-    }
-
-    body.dark-mode .detail-panel h3 {
-        color: #66b0ff;
-        background: #1a1a1a;
-    }
-
-    .detail-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12px;
-    }
-
-    .detail-table th {
-        background: #f0f4f8;
-        color: #1a1a1a;
-        text-align: left;
-        padding: 10px;
-        font-weight: 400;
-        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .detail-table th {
-        background: #1a1a1a;
-        color: #e0e0e0;
-        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
-    }
-
-    .detail-table td {
-        padding: 10px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    body.dark-mode .detail-table td {
-        border-bottom: 1px solid #555;
-        color: #e0e0e0;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 15px;
-    }
-
-    .pagination button {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 10px;
-        background: #f0f4f8;
-        color: #003087;
-        font-size: 12px;
-        cursor: pointer;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-    }
-
-    .pagination button:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transform: translateY(2px);
-    }
-
-    body.dark-mode .pagination button {
-        background: #1a1a1a;
-        color: #66b0ff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode .pagination button:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    .pagination button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .pagination span {
-        padding: 10px 20px;
-        font-size: 12px;
-        color: #003087;
-    }
-
-    body.dark-mode .pagination span {
-        color: #66b0ff;
-    }
-
-    footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #003087; /* Giữ màu xanh VinFast */
-        color: #ffffff;
-        text-align: center;
-        padding: 8px 0;
-        font-size: 10px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode footer {
-        background: #003087; /* Giữ màu xanh VinFast */
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .loading-spinner {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-
-    .loading-spinner .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #e0e0e0;
-        border-top: 4px solid #003087;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    body.dark-mode .loading-spinner .spinner {
-        border: 4px solid #555;
-        border-top: 4px solid #66b0ff;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    #notification {
-        position: fixed;
-        top: 15px;
-        right: 15px;
-        padding: 8px 15px;
-        background: #f0f4f8;
-        color: #003087;
-        border-radius: 10px;
-        display: none;
-        z-index: 10001;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-        font-size: 12px;
-    }
-
-    body.dark-mode #notification {
-        background: #1a1a1a;
-        color: #66b0ff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    .chart-container {
-        position: relative;
-        margin-bottom: 15px;
-        max-width: 100%;
-        height: 250px;
-        background: #f0f4f8;
-        border-radius: 10px;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-    }
-
-    body.dark-mode .chart-container {
-        background: #1a1a1a;
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-    }
-
-    .chart-container .download-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        padding: 8px;
-        border: none;
-        border-radius: 5px;
-        background: #f0f4f8;
-        color: #28a745;
-        font-size: 12px;
-        cursor: pointer;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transition: all 0.3s ease;
-    }
-
-    .chart-container .download-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        transform: translateY(2px);
-    }
-
-    body.dark-mode .chart-container .download-btn {
-        background: #1a1a1a;
-        color: #28a745;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    body.dark-mode .chart-container .download-btn:hover {
-        box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-    }
-
-    @media (max-width: 768px) {
-        .navbar {
-            padding: 0 10px;
-            height: 50px;
-        }
-        .navbar .logo h1 {
-            font-size: 16px;
-        }
-        .navbar .tabs a {
-            padding: 8px 10px;
-            font-size: 10px;
-        }
-        .navbar .tabs a.total-tab {
-            font-size: 12px;
-            padding: 8px 15px;
-        }
-        .theme-toggle {
-            font-size: 14px;
-            padding: 5px;
-        }
-        .main-container {
-            flex-direction: column;
-            padding: 10px;
-            margin-top: 80px;
-            height: calc(100vh - 100px);
-        }
-        .datetime {
-            font-size: 10px;
-            top: 50px;
-        }
-        .grid-container {
-            padding: 10px;
-        }
-        .controls {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        .search-container input {
-            max-width: 100%;
-            font-size: 11px;
-            padding: 8px 12px;
-        }
-        .export-btn-container {
-            align-items: center;
-            width: 100%;
-        }
-        .button-group {
-            gap: 10px;
-        }
-        .export-btn {
-            width: 32px;
-            height: 32px;
-            font-size: 12px;
-        }
-        .export-btn[data-tooltip]::after {
-            font-size: 10px;
-            top: -30px;
-            padding: 4px 8px;
-        }
-        .export-btn[data-tooltip]::before {
-            top: -6px;
-            border-width: 3px;
-        }
-        .total-count-container {
-            font-size: 11px;
-        }
-        .table-container {
-            max-height: calc(100vh - 320px);
-        }
-        table {
-            font-size: 11px;
-        }
-        th, td {
-            padding: 5px;
-        }
-        .table-title {
-            font-size: 14px;
-        }
-        .total-section .table-container {
-            max-height: calc(50vh - 150px);
-        }
-        .overview-section {
-            flex-direction: column;
-            gap: 8px;
-            font-size: 11px;
-        }
-        .filter-container {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        .filter-container select {
-            font-size: 11px;
-            padding: 6px;
-            max-width: 100%;
-        }
-        .detail-panel {
-            margin-top: 15px;
-            max-height: calc(100vh - 320px);
-            padding: 10px;
-        }
-        .detail-panel h3 {
-            font-size: 16px;
-        }
-        .detail-table {
-            font-size: 11px;
-        }
-        .detail-table th, .detail-table td {
-            padding: 8px;
-        }
-        .pagination {
-            gap: 10px;
-        }
-        .pagination button {
-            padding: 8px 15px;
-            font-size: 11px;
-        }
-        .pagination span {
-            padding: 8px 15px;
-            font-size: 11px;
-        }
-        footer {
-            font-size: 9px;
-            padding: 6px 0;
-        }
-        #notification {
-            top: 10px;
-            right: 10px;
-            padding: 6px 12px;
-            font-size: 11px;
-        }
-        .chart-container {
-            height: 200px;
-        }
-        .chart-container .download-btn {
-            font-size: 10px;
-            padding: 6px;
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Montserrat', sans-serif; background: #f0f4f8; color: #1a1a1a; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+    body.dark-mode { background: #1a1a1a; color: #e0e0e0; }
+    .navbar { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(135deg, #003087, #005eb8); display: flex; align-items: center; padding: 0 20px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); z-index: 1000; }
+    body.dark-mode .navbar { box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .navbar .logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .navbar .logo h1 { font-size: 20px; color: #ffffff; font-weight: 700; text-transform: uppercase; text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3); }
+    .navbar .tabs { display: flex; overflow-x: auto; white-space: nowrap; flex-grow: 1; margin-left: 10px; -ms-overflow-style: none; scrollbar-width: none; }
+    .navbar .tabs::-webkit-scrollbar { display: none; }
+    .navbar .tabs a { position: relative; padding: 10px 15px; text-decoration: none; color: #ffffff; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #003087, #005eb8); border-radius: 10px; box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); transition: all 0.3s ease; overflow: hidden; border: 2px solid transparent; }
+    .navbar .tabs a:hover { background: linear-gradient(135deg, #0044cc, #0066ff); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); transform: translateY(1px); }
+    .navbar .tabs a.active { background: linear-gradient(135deg, #0044cc, #0066ff); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); border: 1px solid #ffffff; transform: translateY(1px); }
+    body.dark-mode .navbar .tabs a { box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); border: 2px solid transparent; }
+    body.dark-mode .navbar .tabs a:hover { background: linear-gradient(135deg, #0044cc, #0066ff); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+    body.dark-mode .navbar .tabs a.active { background: linear-gradient(135deg, #0044cc, #0066ff); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); border: 1px solid #ffffff; }
+    .navbar .tabs a.total-tab { background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; font-size: 14px; padding: 10px 20px; }
+    .navbar .tabs a.total-tab:hover, .navbar .tabs a.total-tab.active { background: linear-gradient(135deg, #ffd700, #d4af37); box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -3px -3px 8px rgba(50, 50, 50, 0.5); }
+    .navbar-controls { display: flex; align-items: center; gap: 10px; margin-left: 10px; }
+    .nav-btn { padding: 8px; border: none; border-radius: 10px; background: #003087; color: #ffffff; font-size: 14px; cursor: pointer; transition: all 0.3s ease; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); }
+    .nav-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transform: translateY(2px); }
+    body.dark-mode .nav-btn { background: #003087; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    body.dark-mode .nav-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    .nav-btn[data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #333; color: #ffffff; padding: 5px 10px; border-radius: 5px; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 10; }
+    .nav-btn[data-tooltip]::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #333; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+    .nav-btn:hover::after, .nav-btn:hover::before { opacity: 1; }
+    body.dark-mode .nav-btn[data-tooltip]::after { background: #66b0ff; }
+    body.dark-mode .nav-btn[data-tooltip]::before { border-top-color: #66b0ff; }
+    .theme-toggle { margin-left: 10px; padding: 8px; background: none; border: none; color: #ffffff; font-size: 16px; cursor: pointer; transition: transform 0.3s ease; }
+    body.dark-mode .theme-toggle { color: #ffffff; }
+    .theme-toggle:hover { transform: scale(1.2); }
+    .main-container { display: flex; margin-top: 90px; padding: 15px; gap: 15px; height: calc(100vh - 110px); }
+    .datetime { position: fixed; top: 60px; left: 0; width: 100%; text-align: center; padding: 5px 0; background: #f0f4f8; z-index: 999; font-size: 12px; color: #555; transition: background 0.3s, color 0.3s; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .datetime { background: #1a1a1a; color: #cccccc; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .grid-container { flex: 2; background: #f0f4f8; border-radius: 15px; padding: 15px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; }
+    .grid-container.full-width { flex: 1; }
+    body.dark-mode .grid-container { background: #1a1a1a; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 15px; flex-wrap: wrap; }
+    .search-container input { padding: 10px 15px; width: 100%; max-width: 250px; border: none; border-radius: 10px; background: #f0f4f8; font-size: 12px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; }
+    .search-container input:focus { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9); outline: none; }
+    body.dark-mode .search-container input { background: #1a1a1a; color: #e0e0e0; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    body.dark-mode .search-container input:focus { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6); }
+    .export-btn-container { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .button-group { display: flex; gap: 15px; align-items: center; }
+    .total-count-container { text-align: center; font-size: 12px; color: #1a1a1a; }
+    body.dark-mode .total-count-container { color: #e0e0e0; }
+    .export-btn { padding: 10px; border: none; border-radius: 10px; background: #f0f4f8; color: #003087; font-size: 14px; cursor: pointer; transition: all 0.3s ease; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); }
+    .export-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transform: translateY(2px); }
+    .refresh-btn { background: #f0f4f8; color: #28a745; }
+    .refresh-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .export-btn, body.dark-mode .refresh-btn { background: #1a1a1a; color: #66b0ff; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    body.dark-mode .refresh-btn { color: #28a745; }
+    body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    .export-btn[data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #333; color: #ffffff; padding: 5px 10px; border-radius: 5px; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 10; }
+    .export-btn[data-tooltip]::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #333; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+    .export-btn:hover::after, .export-btn:hover::before { opacity: 1; }
+    body.dark-mode .export-btn[data-tooltip]::after { background: #66b0ff; }
+    body.dark-mode .export-btn[data-tooltip]::before { border-top-color: #66b0ff; }
+    .table-container { max-height: calc(100vh - 280px); overflow-y: auto; overflow-x: auto; position: relative; scroll-behavior: smooth; }
+    .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-container::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 10px; }
+    .table-container::-webkit-scrollbar-thumb { background: #003087; border-radius: 10px; }
+    .table-container::-webkit-scrollbar-thumb:hover { background: #001f5f; }
+    body.dark-mode .table-container::-webkit-scrollbar-track { background: #1a1a1a; }
+    body.dark-mode .table-container::-webkit-scrollbar-thumb { background: #66b0ff; }
+    body.dark-mode .table-container::-webkit-scrollbar-thumb:hover { background: #4a90e2; }
+    .total-section .table-container { max-height: calc(50vh - 130px); }
+    table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 6px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    th { background: #f0f4f8; color: #003087; font-weight: 700; text-transform: uppercase; position: sticky; top: 0; z-index: 10; box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8); }
+    td { background: #f0f4f8; color: #1a1a1a; }
+    body.dark-mode th { background: #1a1a1a; color: #66b0ff; box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5); }
+    body.dark-mode td { background: #1a1a1a; color: #e0e0e0; border-bottom: 1px solid #555; }
+    .vin-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
+    body.dark-mode .vin-highlight { background: #4a6fa5; color: #ffffff; }
+    tbody tr:hover { background: #e8eef4; cursor: pointer; transition: background 0.3s ease; }
+    body.dark-mode tbody tr:hover { background: #222; }
+    tbody tr.selected { background: #cce5ff; font-weight: 700; }
+    body.dark-mode tbody tr.selected { background: #5a7fb5; }
+    .table-title { font-size: 16px; font-weight: 700; color: #003087; margin-bottom: 10px; border-bottom: 2px solid #005eb8; padding-bottom: 5px; }
+    body.dark-mode .table-title { color: #66b0ff; border-bottom: 2px solid #66b0ff; }
+    .total-section { margin-bottom: 15px; }
+    .total-section table { border: none; border-radius: 5px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .total-section table { box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .total-section th:first-child, .total-section td:first-child { width: 60%; text-align: left; }
+    .total-section th:last-child, .total-section td:last-child { width: 40%; text-align: center; }
+    .summary-row { font-weight: 700; background: #e6f0ff; }
+    body.dark-mode .summary-row { background: #4a6fa5; }
+    .overview-section { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 8px; background: #f0f4f8; border-radius: 10px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .overview-section { background: #1a1a1a; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .overview-item { flex: 1; text-align: center; font-size: 12px; }
+    .overview-item span { font-weight: 700; color: #003087; }
+    body.dark-mode .overview-item span { color: #66b0ff; }
+    .filter-container { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
+    .filter-container select { padding: 8px; border: none; border-radius: 10px; background: #f0f4f8; font-size: 12px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; width: 100%; max-width: 200px; }
+    body.dark-mode .filter-container select { background: #1a1a1a; color: #e0e0e0; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    .filter-container select:focus { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9); outline: none; }
+    .detail-panel { flex: 1; background: #f0f4f8; border-radius: 15px; padding: 15px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; max-height: calc(100vh - 280px); overflow-y: auto; scroll-behavior: smooth; }
+    body.dark-mode .detail-panel { background: #1a1a1a; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .detail-panel::-webkit-scrollbar { width: 8px; }
+    .detail-panel::-webkit-scrollbar-track { background: #f0f4f8; border-radius: 10px; }
+    .detail-panel::-webkit-scrollbar-thumb { background: #003087; border-radius: 10px; }
+    .detail-panel::-webkit-scrollbar-thumb:hover { background: #001f5f; }
+    body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #1a1a1a; }
+    body.dark-mode .detail-panel::-webkit-scrollbar-thumb { background: #66b0ff; }
+    body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover { background: #4a90e2; }
+    .detail-panel h3 { font-size: 18px; color: #003087; margin-bottom: 15px; font-weight: 700; position: sticky; top: 0; background: #f0f4f8; z-index: 10; }
+    body.dark-mode .detail-panel h3 { color: #66b0ff; background: #1a1a1a; }
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .detail-table th { background: #f0f4f8; color: #1a1a1a; text-align: left; padding: 10px; font-weight: 400; box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .detail-table th { background: #1a1a1a; color: #e0e0e0; box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5); }
+    .detail-table td { padding: 10px; border-bottom: 1px solid #e0e0e0; }
+    body.dark-mode .detail-table td { border-bottom: 1px solid #555; color: #e0e0e0; }
+    .pagination { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+    .pagination button { padding: 10px 20px; border: none; border-radius: 10px; background: #f0f4f8; color: #003087; font-size: 12px; cursor: pointer; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; }
+    .pagination button:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transform: translateY(2px); }
+    body.dark-mode .pagination button { background: #1a1a1a; color: #66b0ff; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    body.dark-mode .pagination button:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pagination span { padding: 10px 20px; font-size: 12px; color: #003087; }
+    body.dark-mode .pagination span { color: #66b0ff; }
+    footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #003087; color: #ffffff; text-align: center; padding: 8px 0; font-size: 10px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); }
+    body.dark-mode footer { box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .loading-spinner { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .loading-spinner .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top: 4px solid #003087; border-radius: 50%; animation: spin 1s linear infinite; }
+    body.dark-mode .loading-spinner .spinner { border: 4px solid #555; border-top: 4px solid #66b0ff; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #notification { position: fixed; top: 15px; right: 15px; padding: 8px 15px; background: #f0f4f8; color: #003087; border-radius: 10px; display: none; z-index: 10001; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); font-size: 12px; }
+    body.dark-mode #notification { background: #1a1a1a; color: #66b0ff; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    .chart-container { position: relative; margin-bottom: 15px; max-width: 100%; height: 250px; background: #f0f4f8; border-radius: 10px; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); }
+    body.dark-mode .chart-container { background: #1a1a1a; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); }
+    .chart-container .download-btn { position: absolute; top: 10px; right: 10px; padding: 8px; border: none; border-radius: 5px; background: #f0f4f8; color: #28a745; font-size: 12px; cursor: pointer; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; }
+    .chart-container .download-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); transform: translateY(2px); }
+    body.dark-mode .chart-container .download-btn { background: #1a1a1a; color: #28a745; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    body.dark-mode .chart-container .download-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+    @media (max-width: 768px) { 
+        .navbar { padding: 0 10px; height: 50px; } 
+        .navbar .logo h1 { font-size: 16px; } 
+        .navbar .tabs a { padding: 8px 10px; font-size: 10px; } 
+        .navbar .tabs a.total-tab { font-size: 12px; padding: 8px 15px; } 
+        .theme-toggle { font-size: 14px; padding: 5px; } 
+        .main-container { flex-direction: column; padding: 10px; margin-top: 80px; height: calc(100vh - 100px); } 
+        .datetime { font-size: 10px; top: 50px; } 
+        .grid-container { padding: 10px; } 
+        .controls { flex-direction: column; align-items: flex-start; gap: 10px; } 
+        .search-container input { max-width: 100%; font-size: 11px; padding: 8px 12px; } 
+        .export-btn-container { align-items: center; width: 100%; } 
+        .button-group { gap: 10px; } 
+        .export-btn { width: 32px; height: 32px; font-size: 12px; } 
+        .export-btn[data-tooltip]::after { font-size: 10px; top: -30px; padding: 4px 8px; } 
+        .export-btn[data-tooltip]::before { top: -6px; border-width: 3px; } 
+        .total-count-container { font-size: 11px; } 
+        .table-container { max-height: calc(100vh - 320px); } 
+        table { font-size: 11px; } 
+        th, td { padding: 5px; } 
+        .table-title { font-size: 14px; } 
+        .total-section .table-container { max-height: calc(50vh - 150px); } 
+        .overview-section { flex-direction: column; gap: 8px; font-size: 11px; } 
+        .filter-container { flex-direction: column; align-items: flex-start; gap: 10px; } 
+        .filter-container select { font-size: 11px; padding: 6px; max-width: 100%; } 
+        .detail-panel { margin-top: 15px; max-height: calc(100vh - 320px); padding: 10px; } 
+        .detail-panel h3 { font-size: 16px; } 
+        .detail-table { font-size: 11px; } 
+        .detail-table th, .detail-table td { padding: 8px; } 
+        .pagination { gap: 10px; } 
+        .pagination button { padding: 8px 15px; font-size: 11px; } 
+        .pagination span { padding: 8px 15px; font-size: 11px; } 
+        footer { font-size: 9px; padding: 6px 0; } 
+        #notification { top: 10px; right: 10px; padding: 6px 12px; font-size: 11px; } 
+        .chart-container { height: 200px; } 
+        .chart-container .download-btn { font-size: 10px; padding: 6px; } 
     }
 </style>
 </head>
@@ -1070,12 +203,10 @@ body.dark-mode .navbar .tabs a.active {
             <a href="#" onclick="fetchTotalData(this)" class="total-tab active">Tổng</a>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-<button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-<button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
     </div>
-
     <div class="datetime" id="datetime"></div>
-
     <div class="main-container">
         <div class="grid-container" id="grid-container">
             <div class="controls">
@@ -1128,10 +259,10 @@ body.dark-mode .navbar .tabs a.active {
             </div>
             <div id="month-data">
                 <div class="filter-container">
-                    <select id="car-filter" onchange="filterMonthData()">
+                    <select id="car-filter" onchange="applyFilters()">
                         <option value="">Lọc theo Dòng Xe</option>
                     </select>
-                    <select id="tvbh-filter" onchange="filterMonthData()">
+                    <select id="tvbh-filter" onchange="applyFilters()">
                         <option value="">Lọc theo Tư Vấn Bán Hàng</option>
                     </select>
                 </div>
@@ -1148,23 +279,18 @@ body.dark-mode .navbar .tabs a.active {
                 <button onclick="changePage(1)" id="next-btn">Sau</button>
             </div>
         </div>
-
         <div class="detail-panel" id="detail-panel">
             <h3>Chi Tiết Đơn Hàng</h3>
             <div id="detail-body"></div>
         </div>
     </div>
-
     <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
-
     <div class="loading-spinner">
         <div class="spinner"></div>
     </div>
-
     <div id="notification"></div>
-
     <script>
         let currentPage = 1;
         const rowsPerPage = 15;
@@ -1172,23 +298,22 @@ body.dark-mode .navbar .tabs a.active {
         let fullTvbhData = [];
         let filteredCarData = [];
         let filteredTvbhData = [];
+        let filteredMonthData = [];
         let currentSheet = "Total";
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         let carChart, tvbhChart;
-// Kiểm tra trạng thái đăng nhập khi tải trang
-    document.addEventListener("DOMContentLoaded", function () {
-        if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; // Chuyển hướng về index.html nếu chưa đăng nhập
-        } else {
-            // Nếu đã đăng nhập, tiếp tục tải dữ liệu
-            fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
-            setupSearch();
-            setupScrollSync();
-            setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
-        }
-    });
 
-        // Dark Mode
+        document.addEventListener("DOMContentLoaded", function () {
+            if (sessionStorage.getItem("isLoggedIn") !== "true") {
+                window.location.href = "index.html";
+            } else {
+                fetchTotalData(document.querySelector('.tabs a.total-tab'));
+                setupEventListeners();
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+            }
+        });
+
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const themeIcon = document.querySelector('.theme-toggle i');
@@ -1204,55 +329,32 @@ body.dark-mode .navbar .tabs a.active {
                 updateChartColors();
             }
         }
-function goBack() {
-    window.location.href = "index.html";
-    showNotification("Đã quay lại trang chủ!", 2000);
-}
-function logout() {
-    sessionStorage.clear(); // Xóa toàn bộ sessionStorage
-    window.location.href = "index.html"; // Chuyển hướng về index.html
-    showNotification("Đã đăng xuất!", 2000);
-}
-        // Load theme from localStorage
+
+        function goBack() {
+            window.location.href = "index.html";
+            showNotification("Đã quay lại trang chủ!", 2000);
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+            showNotification("Đã đăng xuất!", 2000);
+        }
+
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
             document.querySelector('.theme-toggle i').classList.remove('fa-moon');
             document.querySelector('.theme-toggle i').classList.add('fa-sun');
         }
 
-        // Update DateTime
         function updateDateTime() {
             const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: '2-digit', 
-                day: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit', 
-                hour12: false 
-            };
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
             document.getElementById("datetime").textContent = `Cập nhật lúc: ${now.toLocaleString('vi-VN', options)}`;
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchTotalData(document.querySelector('.tabs a.total-tab'));
-            setupEventListeners();
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
-            setInterval(() => {
-                if (currentSheet === "Total") {
-                    fetchTotalData(document.querySelector('.tabs a.active'));
-                } else {
-                    fetchSheetData(currentSheet, document.querySelector('.tabs a.active'));
-                }
-            }, 60000);
-        });
-
         function setupEventListeners() {
             document.getElementById("search-input").addEventListener("input", filterTable);
-
-            // Đồng bộ thanh cuộn
             const tableContainer = document.querySelector('.table-container');
             const detailPanel = document.getElementById("detail-panel");
             let isTableScrolling = false;
@@ -1285,7 +387,7 @@ function logout() {
             document.getElementById("month-data").style.display = "block";
             document.getElementById("detail-panel").style.display = "block";
             document.getElementById("grid-container").classList.remove("full-width");
-            document.getElementById("pagination").style.display = "flex"; // Hiển thị phân trang
+            document.getElementById("pagination").style.display = "flex";
 
             if (!cachedData[sheetName]) {
                 document.querySelector('.loading-spinner').style.display = 'block';
@@ -1294,8 +396,9 @@ function logout() {
             let storedData = sessionStorage.getItem(sheetName);
             if (storedData) {
                 fullData = JSON.parse(storedData);
+                filteredMonthData = fullData;
                 updateFilters(fullData);
-                renderTable(fullData);
+                renderTable(filteredMonthData);
                 document.querySelector('.loading-spinner').style.display = 'none';
                 return;
             }
@@ -1307,8 +410,9 @@ function logout() {
                 sessionStorage.setItem(sheetName, JSON.stringify(data));
                 cachedData[sheetName] = data;
                 fullData = data;
+                filteredMonthData = fullData;
                 updateFilters(fullData);
-                renderTable(fullData);
+                renderTable(filteredMonthData);
                 showNotification(`Dữ liệu ${sheetName} đã được cập nhật! (${data.length} đơn hàng)`, 2000);
             } catch (error) {
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="7">Lỗi: ${error.message}. Vui lòng thử lại sau!</td></tr>`;
@@ -1326,7 +430,7 @@ function logout() {
             document.getElementById("total-tables").style.display = "block";
             document.getElementById("detail-panel").style.display = "none";
             document.getElementById("grid-container").classList.add("full-width");
-            document.getElementById("pagination").style.display = "none"; // Ẩn phân trang trong tab Tổng
+            document.getElementById("pagination").style.display = "none";
             document.querySelector('.loading-spinner').style.display = 'block';
 
             let totalCarData = [];
@@ -1359,7 +463,6 @@ function logout() {
                 let results = await Promise.all(fetchPromises);
                 let allData = results.flat();
 
-                // Tổng hợp theo dòng xe
                 let carStats = {};
                 allData.forEach(row => {
                     let carModel = row[3];
@@ -1373,7 +476,6 @@ function logout() {
                     count: count
                 }));
 
-                // Tổng hợp theo TƯ VẤN BÁN HÀNG
                 let tvbhStats = {};
                 allData.forEach(row => {
                     let tvbh = row[7];
@@ -1389,12 +491,10 @@ function logout() {
 
                 fullData = totalCarData;
                 fullTvbhData = totalTvbhData;
-                filteredCarData = totalCarData; // Dữ liệu đã lọc cho biểu đồ
+                filteredCarData = totalCarData;
                 filteredTvbhData = totalTvbhData;
 
-                // Cập nhật thống kê tổng quan
                 updateOverview(totalCarData, totalTvbhData, allData.length);
-
                 renderTotalTables(totalCarData, totalTvbhData);
                 showNotification(`Dữ liệu tổng đã được cập nhật! (${allData.length} đơn hàng)`, 2000);
             } catch (error) {
@@ -1410,7 +510,6 @@ function logout() {
             const carFilter = document.getElementById("car-filter");
             const tvbhFilter = document.getElementById("tvbh-filter");
 
-            // Tạo danh sách dòng xe
             let carStats = {};
             data.forEach(row => {
                 let carModel = row[3];
@@ -1423,7 +522,6 @@ function logout() {
                 carFilter.innerHTML += `<option value="${model}">${model}</option>`;
             });
 
-            // Tạo danh sách TƯ VẤN BÁN HÀNG
             let tvbhStats = {};
             data.forEach(row => {
                 let tvbh = row[7];
@@ -1438,14 +536,9 @@ function logout() {
         }
 
         function updateOverview(carData, tvbhData, totalCars) {
-            // Tổng số xe
             document.getElementById("total-cars").textContent = totalCars;
-
-            // Dòng xe bán chạy nhất
             const topCar = carData.reduce((max, row) => row.count > max.count ? row : max, carData[0] || { model: "-", count: 0 });
             document.getElementById("top-car").textContent = topCar.model;
-
-            // TƯ VẤN BÁN HÀNG dẫn đầu
             const topTvbh = tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0] || { tvbh: "-", count: 0 });
             document.getElementById("top-tvbh").textContent = topTvbh.tvbh;
         }
@@ -1493,7 +586,6 @@ function logout() {
         }
 
         function renderTotalTables(carData, tvbhData) {
-            // Bảng tổng hợp theo dòng xe
             document.getElementById("total-car-header").innerHTML = `
                 <tr>
                     <th>Dòng Xe</th>
@@ -1515,7 +607,6 @@ function logout() {
             `;
             document.getElementById("total-car-body").innerHTML = carContent;
 
-            // Bảng tổng hợp theo TƯ VẤN BÁN HÀNG
             document.getElementById("total-tvbh-header").innerHTML = `
                 <tr>
                     <th>Tư Vấn Bán Hàng</th>
@@ -1538,25 +629,18 @@ function logout() {
             document.getElementById("total-tvbh-body").innerHTML = tvbhContent;
 
             document.getElementById("total-count").textContent = totalCarCount;
-
-            // Tạo biểu đồ
             renderCharts(carData, tvbhData);
         }
 
         function renderCharts(carData, tvbhData) {
-            // Màu sắc cho biểu đồ
             const isDarkMode = document.body.classList.contains('dark-mode');
-            const backgroundColors = isDarkMode
-                ? ['#66b0ff', '#4a90e2', '#357abd', '#1f5a95', '#0a3d6b']
-                : ['#005eb8', '#003087', '#0044cc', '#0066ff', '#0088ff'];
+            const backgroundColors = isDarkMode ? ['#66b0ff', '#4a90e2', '#357abd', '#1f5a95', '#0a3d6b'] : ['#005eb8', '#003087', '#0044cc', '#0066ff', '#0088ff'];
             const textColor = isDarkMode ? '#ffffff' : '#1a1a1a';
             const gridColor = isDarkMode ? '#555' : '#e0e0e0';
 
-            // Hủy biểu đồ cũ nếu tồn tại
             if (carChart) carChart.destroy();
             if (tvbhChart) tvbhChart.destroy();
 
-            // Biểu đồ cột cho Dòng Xe
             const carCtx = document.getElementById('car-chart').getContext('2d');
             carChart = new Chart(carCtx, {
                 type: 'bar',
@@ -1573,69 +657,13 @@ function logout() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: {
-                        duration: 1500, // Hiệu ứng động khi xuất hiện
-                        easing: 'easeOutBounce'
-                    },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Số lượng',
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 10 : 12
-                                }
-                            },
-                            ticks: {
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 9 : 11
-                                }
-                            },
-                            grid: {
-                                color: gridColor
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Dòng xe',
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 10 : 12
-                                }
-                            },
-                            ticks: {
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 9 : 11
-                                }
-                            },
-                            grid: {
-                                color: gridColor
-                            }
-                        }
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+                        x: { title: { display: true, text: 'Dòng xe', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } }
                     },
                     plugins: {
-                        legend: {
-                            labels: {
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 10 : 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.raw || 0;
-                                    return `${label}: ${value} xe`;
-                                }
-                            }
-                        }
+                        legend: { labels: { color: textColor } },
+                        tooltip: { callbacks: { label: function(context) { return `${context.label}: ${context.raw} xe`; } } }
                     },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
@@ -1649,7 +677,6 @@ function logout() {
                 }
             });
 
-            // Biểu đồ tròn cho TƯ VẤN BÁN HÀNG
             const tvbhCtx = document.getElementById('tvbh-chart').getContext('2d');
             tvbhChart = new Chart(tvbhCtx, {
                 type: 'pie',
@@ -1666,31 +693,9 @@ function logout() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: {
-                        duration: 1500, // Hiệu ứng động khi xuất hiện
-                        easing: 'easeOutBounce'
-                    },
                     plugins: {
-                        legend: {
-                            position: window.innerWidth <= 768 ? 'bottom' : 'right',
-                            labels: {
-                                color: textColor,
-                                font: {
-                                    size: window.innerWidth <= 768 ? 10 : 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    let value = context.raw || 0;
-                                    let total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                    let percentage = ((value / total) * 100).toFixed(1);
-                                    return `${label}: ${value} xe (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { position: 'right', labels: { color: textColor } },
+                        tooltip: { callbacks: { label: function(context) { let total = context.dataset.data.reduce((sum, val) => sum + val, 0); return `${context.label}: ${context.raw} xe (${((context.raw / total) * 100).toFixed(1)}%)`; } } }
                     },
                     onClick: (event, elements) => {
                         if (elements.length > 0) {
@@ -1722,29 +727,32 @@ function logout() {
             });
         }
 
-        function filterMonthData() {
+        function applyFilters() {
             const carFilter = document.getElementById("car-filter").value;
             const tvbhFilter = document.getElementById("tvbh-filter").value;
+            const searchTerm = document.getElementById("search-input").value.toLowerCase();
 
             let filteredData = fullData;
 
             if (carFilter) {
                 filteredData = filteredData.filter(row => row[3] === carFilter);
             }
-
             if (tvbhFilter) {
                 filteredData = filteredData.filter(row => row[7] === tvbhFilter);
             }
+            if (searchTerm) {
+                filteredData = filteredData.filter(row => row.some(cell => cell?.toString().toLowerCase().includes(searchTerm)));
+            }
 
-            renderTable(filteredData);
+            filteredMonthData = filteredData;
             currentPage = 1;
+            renderTable(filteredMonthData);
         }
 
         function changePage(delta) {
-            currentPage += delta;
-            if (currentSheet !== "Total") {
-                filterMonthData();
-            }
+            const totalPages = Math.ceil(filteredMonthData.length / rowsPerPage);
+            currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
+            renderTable(filteredMonthData);
             const tableContainer = document.querySelector('.table-container');
             const detailPanel = document.getElementById("detail-panel");
             tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1753,22 +761,14 @@ function logout() {
 
         function filterTable(e) {
             const searchTerm = e.target.value.toLowerCase();
-            let filteredData, filteredTvbhData;
             if (currentSheet === "Total") {
-                filteredCarData = fullData.filter(row => 
-                    row.model.toLowerCase().includes(searchTerm)
-                );
-                filteredTvbhData = fullTvbhData.filter(row => 
-                    row.tvbh.toLowerCase().includes(searchTerm)
-                );
+                filteredCarData = fullData.filter(row => row.model.toLowerCase().includes(searchTerm));
+                filteredTvbhData = fullTvbhData.filter(row => row.tvbh.toLowerCase().includes(searchTerm));
                 renderTotalTables(filteredCarData, filteredTvbhData);
             } else {
-                filteredData = fullData.filter(row => 
-                    row.some(cell => cell?.toString().toLowerCase().includes(searchTerm))
-                );
-                filterMonthData(); // Áp dụng lại bộ lọc dòng xe và Tư Vấn Bán Hàng
+                filteredMonthData = fullData.filter(row => row.some(cell => cell?.toString().toLowerCase().includes(searchTerm)));
+                applyFilters();
             }
-            currentPage = 1;
         }
 
         function refreshData() {
@@ -1813,15 +813,7 @@ function logout() {
 
         function printTable() {
             const now = new Date();
-            const printDateTime = now.toLocaleString('vi-VN', { 
-                year: 'numeric', 
-                month: '2-digit', 
-                day: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit', 
-                hour12: false 
-            });
+            const printDateTime = now.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
             let printContent;
             if (currentSheet === "Total") {
@@ -1833,7 +825,7 @@ function logout() {
                     </div>
                     <h3 style="color: #003087; margin-top: 20px;">Tổng Hợp Theo Dòng Xe</h3>
                     ${document.getElementById("total-car-table").outerHTML}
-                    <h3 style="color: #003087; margin-top: 20px;">Tổng Hợp Theo TƯ VẤN BÁN HÀNG</h3>
+                    <h3 style="color: #003087; margin-top: 20px;">Tổng Hợp Theo Tư Vấn Bán Hàng</h3>
                     ${document.getElementById("total-tvbh-table").outerHTML}
                 `;
             } else {
@@ -1888,11 +880,7 @@ function logout() {
                         h3 { color: #003087; }
                         .vin-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
                         .selected { background: #cce5ff; font-weight: 700; }
-                        @media print {
-                            body { margin: 0; }
-                            table { page-break-inside: auto; }
-                            tr { page-break-inside: avoid; page-break-after: auto; }
-                        }
+                        @media print { body { margin: 0; } table { page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } }
                     </style>
                 </head>
                 <body>${printContent}</body>
@@ -1904,7 +892,6 @@ function logout() {
 
         function showDetail(data) {
             if (currentSheet === "Total") return;
-            const panel = document.getElementById("detail-panel");
             const body = document.getElementById("detail-body");
             const columnNames = ["TÊN KHÁCH HÀNG", "Số Đơn Hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "TƯ VẤN BÁN HÀNG", "Vin", "Chính sách"];
             let html = "<table class='detail-table'>";
@@ -1914,7 +901,6 @@ function logout() {
             }
             html += "</table>";
             body.innerHTML = html;
-            panel.style.transform = "translateX(0)";
         }
 
         function showNotification(message, duration = 3000) {
