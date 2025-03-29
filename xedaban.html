@@ -381,6 +381,7 @@
 
         async function fetchSheetData(sheetName, element) {
             currentSheet = sheetName;
+            currentPage = 1; // Reset về trang 1 khi chuyển tab
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             document.getElementById("total-tables").style.display = "none";
@@ -424,6 +425,7 @@
 
         async function fetchTotalData(element) {
             currentSheet = "Total";
+            currentPage = 1; // Reset về trang 1 khi chuyển tab
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             document.getElementById("month-data").style.display = "none";
