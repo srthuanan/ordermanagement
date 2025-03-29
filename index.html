@@ -4,22 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Showroom Thuận An</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <style>
+        :root {
+            --primary-color: #003087;
+            --secondary-color: #005eb8;
+            --accent-color: #66b0ff;
+            --background-light: #e0e6ed;
+            --background-dark: #1e2529;
+            --text-light: #1a1a1a;
+            --text-dark: #e0e0e0;
+            --table-bg-light: rgba(255, 255, 255, 0.2);
+            --table-bg-dark: rgba(30, 37, 41, 0.2);
+            --gradient-light: linear-gradient(135deg, #f0f4f8, #e0e6ed);
+            --gradient-dark: linear-gradient(135deg, #3a4145, #1e2529);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: #e0e6ed;
-            color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+            background: var(--background-light);
+            color: var(--text-light);
             min-height: 100vh;
             overflow-x: hidden;
             transition: background 0.3s, color 0.3s;
         }
-        body.dark-mode { background: #1e2529; color: #e0e0e0; }
+        body.dark-mode {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
 
         /* Navbar */
         .navbar {
@@ -27,7 +44,7 @@
             top: 0;
             width: 100%;
             height: 80px;
-            background: linear-gradient(135deg, #003087, #005eb8);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             display: flex;
             align-items: center;
             padding: 0 40px;
@@ -56,7 +73,7 @@
             color: #ffffff;
             font-size: 13px;
             font-weight: 600;
-            background: #003087;
+            background: var(--primary-color);
             border-radius: 10px;
             box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2), -1px -1px 4px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
@@ -74,7 +91,7 @@
             padding: 6px;
             border: none;
             border-radius: 10px;
-            background: #005eb8;
+            background: var(--secondary-color);
             color: #ffffff;
             font-size: 14px;
             cursor: pointer;
@@ -112,7 +129,7 @@
             border-radius: 50%;
             box-shadow: 0 0 4px #28a745;
         }
-        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; margin-left: 20px; }
+        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; margin-left: 15px; }
 
         /* Hero Section */
         .hero {
@@ -124,13 +141,13 @@
             justify-content: center;
             text-align: center;
             margin-top: 80px;
-            background: #e0e6ed;
+            background: var(--background-light);
         }
         .hero-background {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
+            width: 150%;
             height: 100%;
             background: url('https://file3.qdnd.vn/data/images/0/2025/01/11/upload_2085/a1.jpg') no-repeat center/cover;
             filter: blur(5px);
@@ -139,7 +156,7 @@
             z-index: -1;
         }
         .hero-content {
-            color: #1a1a1a;
+            color: var(--text-light);
             text-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
             z-index: 1;
             padding: 30px;
@@ -147,12 +164,12 @@
             border-radius: 20px;
             box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
-        body.dark-mode .hero-content { background: #1e2529; color: #e0e0e0; }
+        body.dark-mode .hero-content { background: var(--background-dark); color: var(--text-dark); }
         .hero h2 { font-size: 52px; font-weight: 700; margin-bottom: 15px; color: #ffffff; }
         .hero p { font-size: 22px; margin-bottom: 25px; color: #ffffff; }
         .hero .login-btn {
             padding: 16px 40px;
-            background: linear-gradient(135deg, #005eb8, #003087);
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: #ffffff;
             border: none;
             border-radius: 25px;
@@ -163,9 +180,9 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        body.dark-mode .hero .login-btn { background: linear-gradient(135deg, #66b0ff, #005eb8); }
+        body.dark-mode .hero .login-btn { background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)); }
         .hero .login-btn:hover {
-            background: linear-gradient(135deg, #003087, #005eb8);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             box-shadow: 0 0 25px rgba(0, 94, 184, 1), inset 5px 5px 10px rgba(0, 0, 0, 0.2);
             transform: scale(1.05);
         }
@@ -173,16 +190,16 @@
         /* Internal Section */
         .internal-section {
             padding: 80px 20px;
-            max-width: 1200px;
+            max-width: 100px;
             margin: 0 auto;
-            background: #e0e6ed;
+            background: var(--background-light);
             border-radius: 25px;
             box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
             text-align: center;
         }
-        body.dark-mode .internal-section { background: #1e2529; }
-        .internal-section h3 { font-size: 36px; color: #003087; font-weight: 700; margin-bottom: 25px; }
-        body.dark-mode .internal-section h3 { color: #66b0ff; }
+        body.dark-mode .internal-section { background: var(--background-dark); }
+        .internal-section h3 { font-size: 36px; color: var(--primary-color); font-weight: 700; margin-bottom: 25px; }
+        body.dark-mode .internal-section h3 { color: var(--accent-color); }
         .internal-section p { font-size: 18px; color: #555; margin-bottom: 40px; }
         body.dark-mode .internal-section p { color: #cccccc; }
         .features-grid {
@@ -192,53 +209,182 @@
             margin-top: 30px;
         }
         .feature-card {
-            background: #e0e6ed;
+            background: var(--background-light);
             padding: 25px;
             border-radius: 15px;
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
-        body.dark-mode .feature-card { background: #1e2529; }
+        body.dark-mode .feature-card { background: var(--background-dark); }
         .feature-card:hover { box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
-        .feature-card i { font-size: 28px; color: #005eb8; margin-bottom: 15px; }
-        body.dark-mode .feature-card i { color: #66b0ff; }
-        .feature-card h4 { font-size: 20px; color: #003087; margin-bottom: 15px; }
-        body.dark-mode .feature-card h4 { color: #66b0ff; }
+        .feature-card i { font-size: 28px; color: var(--secondary-color); margin-bottom: 15px; }
+        body.dark-mode .feature-card i { color: var(--accent-color); }
+        .feature-card h4 { font-size: 20px; color: var(--primary-color); margin-bottom: 15px; }
+        body.dark-mode .feature-card h4 { color: var(--accent-color); }
         .feature-card p { font-size: 15px; color: #555; }
         body.dark-mode .feature-card p { color: #cccccc; }
 
         /* Dashboard Section */
         .dashboard-section {
             display: none;
-            padding: 60px 20px;
-            max-width: 1400px;
+            padding: 100px 20px 60px;
+            max-width: 1900px;
             margin: 0 auto;
-            background: #e0e6ed;
+            background: var(--background-light);
             border-radius: 20px;
             box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
-        body.dark-mode .dashboard-section { background: #1e2529; }
-        .dashboard-section h3 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 25px; }
-        body.dark-mode .dashboard-section h3 { color: #66b0ff; }
-        .dashboard-content { display: flex; gap: 25px; flex-wrap: wrap; }
+        body.dark-mode .dashboard-section { background: var(--background-dark); }
+        .dashboard-section h3 { font-size: 32px; color: var(--primary-color); font-weight: 700; margin-bottom: 30px; text-align: center; }
+        body.dark-mode .dashboard-section h3 { color: var(--accent-color); }
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
         .dashboard-card {
-            flex: 1;
-            min-width: 250px;
+            background: var(--background-light);
             padding: 25px;
-            background: #e0e6ed;
             border-radius: 15px;
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
-        body.dark-mode .dashboard-card { background: #1e2529; }
+        body.dark-mode .dashboard-card { background: var(--background-dark); }
         .dashboard-card:hover { box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
-        .dashboard-card h4 { font-size: 20px; color: #003087; }
-        body.dark-mode .dashboard-card h4 { color: #66b0ff; }
-        .dashboard-card p { font-size: 16px; color: #555; }
+        .dashboard-card h4 { font-size: 22px; color: var(--primary-color); margin-bottom: 15px; }
+        body.dark-mode .dashboard-card h4 { color: var(--accent-color); }
+        .dashboard-card p { font-size: 16px; color: #555; margin-bottom: 15px; }
         body.dark-mode .dashboard-card p { color: #cccccc; }
-        .dashboard-card a { color: #005eb8; text-decoration: none; }
-        body.dark-mode .dashboard-card a { color: #66b0ff; }
+        .dashboard-card a { color: var(--secondary-color); text-decoration: none; font-weight: 600; }
+        body.dark-mode .dashboard-card a { color: var(--accent-color); }
         .dashboard-card a:hover { text-decoration: underline; }
+
+        /* Table Styles */
+        .table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            position: relative;
+            border-radius: 12px;
+            background: var(--table-bg-light);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .table-container {
+            background: var(--table-bg-dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 12px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 12px;
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            table-layout: fixed;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .data-table th, .data-table td {
+            padding: 14px 16px;
+            text-align: left;
+            transition: all 0.3s ease;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        body.dark-mode .data-table th, body.dark-mode .data-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .data-table th {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        body.dark-mode .data-table th {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+        }
+        .data-table tr {
+            transition: all 0.3s ease;
+        }
+        .data-table tr:nth-child(even) {
+            background: var(--gradient-light);
+        }
+        body.dark-mode .data-table tr:nth-child(even) {
+            background: var(--gradient-dark);
+        }
+        .data-table tr:hover {
+            background: linear-gradient(135deg, rgba(0, 94, 184, 0.1), rgba(0, 48, 135, 0.1));
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        body.dark-mode .data-table tr:hover {
+            background: linear-gradient(135deg, rgba(102, 176, 255, 0.1), rgba(0, 94, 184, 0.1));
+        }
+        .data-table td:hover {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            background: rgba(0, 94, 184, 0.05);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+            transform: scale(1.02);
+            z-index: 1;
+            position: relative;
+        }
+        body.dark-mode .data-table td:hover {
+            background: rgba(102, 176, 255, 0.05);
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
+        }
+        .data-table.stock-table th:nth-child(1), .data-table.stock-table td:nth-child(1) { width: 25%; }
+        .data-table.stock-table th:nth-child(2), .data-table.stock-table td:nth-child(2) { width: 25%; }
+        .data-table.stock-table th:nth-child(3), .data-table.stock-table td:nth-child(3) { width: 25%; }
+        .data-table.stock-table th:nth-child(4), .data-table.stock-table td:nth-child(4) { width: 25%; }
+        .data-table.sold-cars-table th:nth-child(1), .data-table.sold-cars-table td:nth-child(1) { width: 33%; }
+        .data-table.sold-cars-table th:nth-child(2), .data-table.sold-cars-table td:nth-child(2) { width: 33%; }
+        .data-table.sold-cars-table th:nth-child(3), .data-table.sold-cars-table td:nth-child(3) { width: 34%; }
+        .data-table.pairing-table th:nth-child(1), .data-table.pairing-table td:nth-child(1) { width: 25%; }
+        .data-table.pairing-table th:nth-child(2), .data-table.pairing-table td:nth-child(2) { width: 25%; }
+        .data-table.pairing-table th:nth-child(3), .data-table.pairing-table td:nth-child(3) { width: 25%; }
+        .data-table.pairing-table th:nth-child(4), .data-table.pairing-table td:nth-child(4) { width: 25%; }
+
+        /* Skeleton Loading */
+        .data-table.loading tbody tr td {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        body.dark-mode .data-table.loading tbody tr td {
+            background: linear-gradient(90deg, #2e3539 25%, #3a4145 50%, #2e3539 75%);
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
 
         /* Modal */
         .modal {
@@ -255,7 +401,7 @@
             padding: 20px;
         }
         .modal-content {
-            background: #e0e6ed;
+            background: var(--background-light);
             padding: 40px;
             border-radius: 20px;
             max-width: 500px;
@@ -267,9 +413,9 @@
             position: relative;
         }
         .modal-content.active { transform: scale(1); opacity: 1; }
-        body.dark-mode .modal-content { background: #1e2529; }
-        .modal-content h2 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 15px; text-align: center; }
-        body.dark-mode .modal-content h2 { color: #66b0ff; }
+        body.dark-mode .modal-content { background: var(--background-dark); }
+        .modal-content h2 { font-size: 28px; color: var(--primary-color); font-weight: 700; margin-bottom: 15px; text-align: center; }
+        body.dark-mode .modal-content h2 { color: var(--accent-color); }
         .modal-content p { font-size: 15px; color: #555; text-align: center; margin-bottom: 20px; }
         body.dark-mode .modal-content p { color: #cccccc; }
         .input-group { position: relative; margin-bottom: 20px; }
@@ -278,26 +424,26 @@
             top: 50%;
             left: 15px;
             transform: translateY(-50%);
-            color: #005eb8;
+            color: var(--secondary-color);
             font-size: 18px;
         }
-        body.dark-mode .input-group .input-icon { color: #66b0ff; }
+        body.dark-mode .input-group .input-icon { color: var(--accent-color); }
         .modal-content input {
             padding: 12px 15px 12px 45px;
             border: none;
             border-radius: 12px;
             font-size: 15px;
             width: 100%;
-            background: #e0e6ed;
+            background: var(--background-light);
             box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
-        body.dark-mode .modal-content input { background: #1e2529; color: #ffffff; }
+        body.dark-mode .modal-content input { background: var(--background-dark); color: #ffffff; }
         .modal-content input:focus { box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5); outline: none; }
         .modal-content button {
             padding: 12px 25px;
-            background: #e0e6ed;
-            color: #003087;
+            background: var(--background-light);
+            color: var(--primary-color);
             border: none;
             border-radius: 12px;
             font-size: 16px;
@@ -311,18 +457,18 @@
             gap: 10px;
             width: 100%;
         }
-        body.dark-mode .modal-content button { background: #1e2529; color: #66b0ff; }
+        body.dark-mode .modal-content button { background: var(--background-dark); color: var(--accent-color); }
         .modal-content button:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
         .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
         .modal-links span {
             font-size: 13px;
-            color: #005eb8;
+            color: var(--secondary-color);
             cursor: pointer;
             text-decoration: underline;
             transition: color 0.3s ease;
         }
-        body.dark-mode .modal-links span { color: #66b0ff; }
-        .modal-links span:hover { color: #003087; }
+        body.dark-mode .modal-links span { color: var(--accent-color); }
+        .modal-links span:hover { color: var(--primary-color); }
         body.dark-mode .modal-links span:hover { color: #ffffff; }
         .close {
             position: absolute;
@@ -334,8 +480,8 @@
             transition: all 0.3s ease;
         }
         body.dark-mode .close { color: #cccccc; }
-        .close:hover { color: #003087; transform: rotate(90deg); }
-        body.dark-mode .close:hover { color: #66b0ff; }
+        .close:hover { color: var(--primary-color); transform: rotate(90deg); }
+        body.dark-mode .close:hover { color: var(--accent-color); }
         .loading-overlay {
             display: none;
             position: absolute;
@@ -353,16 +499,16 @@
             width: 50px;
             height: 50px;
             border: 5px solid #d0d6dd;
-            border-top: 5px solid #005eb8;
+            border-top: 5px solid var(--secondary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        body.dark-mode .spinner { border: 5px solid #2e3539; border-top: 5px solid #66b0ff; }
+        body.dark-mode .spinner { border: 5px solid #2e3539; border-top: 5px solid var(--accent-color); }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Footer */
         footer {
-            background: linear-gradient(135deg, #003087, #005eb8);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: #ffffff;
             padding: 40px 20px;
             text-align: center;
@@ -377,7 +523,7 @@
             color: #ffffff;
             font-size: 20px;
             margin: 0 15px;
-            background: #003087;
+            background: var(--primary-color);
             padding: 10px;
             border-radius: 50%;
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
@@ -389,7 +535,7 @@
         @media (max-width: 900px) {
             .navbar { padding: 0 20px; height: 60px; justify-content: space-between; }
             .navbar .logo-text { font-size: 20px; }
-            .navbar .menu { display: none; position: absolute; top: 60px; left: 0; width: 100%; background: #003087; padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .navbar .menu { display: none; position: absolute; top: 60px; left: 0; width: 100%; background: var(--primary-color); padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
             .navbar .menu.active { display: flex; }
             .hamburger { display: block; }
             .navbar-controls { gap: 8px; }
@@ -398,6 +544,7 @@
             .hero h2 { font-size: 36px; }
             .hero p { font-size: 18px; }
             .hero .login-btn { padding: 12px 30px; font-size: 16px; }
+            .dashboard-content { grid-template-columns: 1fr; }
         }
         @media (max-width: 480px) {
             .navbar .logo-text { font-size: 18px; }
@@ -407,6 +554,10 @@
             .hero h2 { font-size: 28px; }
             .hero p { font-size: 16px; }
             .hero .login-btn { padding: 10px 20px; font-size: 14px; }
+            .data-table th, .data-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -448,46 +599,73 @@
         <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
         <div class="features-grid">
             <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
-                <i class="fas fa-chart-line"></i>
-                <h4 data-lang="sales-title">Theo Dõi Doanh Số</h4>
-                <p data-lang="sales-text">Cập nhật doanh số bán hàng</p>
-            </div>
-            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
                 <i class="fas fa-clipboard-list"></i>
                 <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
                 <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
-            </div>
-            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
-                <i class="fas fa-bell"></i>
-                <h4 data-lang="notifications-title">Thông Báo</h4>
-                <p data-lang="notifications-text">Nhận thông báo quan trọng ngay lập tức.</p>
             </div>
         </div>
     </section>
 
     <!-- Dashboard Section -->
     <section class="dashboard-section" id="dashboard" data-aos="fade-up">
-        <h3 data-lang="dashboard-title">Bảng Điều Khiển</h3>
         <div class="dashboard-content">
             <div class="dashboard-card">
                 <h4 data-lang="stock">Kho Xe</h4>
-                <p><a href="khoxe.html">Xem chi tiết kho xe hiện tại</a></p>
+                <p>Số lượng xe hiện tại: <strong id="currentStockCount">Đang tải...</strong></p>
+                <div class="table-container">
+                    <table class="data-table stock-table">
+                        <thead>
+                            <tr>
+                                <th>Dòng Xe</th>
+                                <th>Ngoại Thất</th>
+                                <th>Kho</th>
+                                <th>Số VIN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <!-- Dữ liệu sẽ được thêm động bằng JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <p><a href="khoxe.html">Xem chi tiết</a></p>
             </div>
             <div class="dashboard-card">
                 <h4 data-lang="sold-cars">Danh Sách Xe Đã Bán</h4>
-                <p><a href="xedaban.html">Xem danh sách xe đã bán</a></p>
+                <p>Tổng số xe: <strong id="total-sold-cars">Đang tải...</strong></p>
+                <div class="table-container">
+                    <table class="data-table sold-cars-table">
+                        <thead>
+                            <tr>
+                                <th>TVBH</th>
+                                <th>Dòng Xe</th>
+                                <th>VIN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sold-cars-table-body">
+                            <!-- Dữ liệu sẽ được thêm động bằng JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <p><a href="xedaban.html">Xem chi tiết</a></p>
             </div>
             <div class="dashboard-card">
                 <h4 data-lang="pairing-request">Nhu Cầu Ghép Xe</h4>
-                <p><a href="yeucaughepxe.html">Xem yêu cầu ghép xe</a></p>
-            </div>
-            <div class="dashboard-card">
-                <h4 data-lang="pairing-list">Danh Sách Ghép Xe</h4>
-                <p><a href="danhsach.html">Xem danh sách ghép xe</a></p>
-            </div>
-            <div class="dashboard-card">
-                <h4 data-lang="policy-docs">Chính Sách & Tài Liệu</h4>
-                <p><a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank">Xem tài liệu và chính sách</a></p>
+                <p>Yêu cầu đang chờ: <strong id="pairingRequestCount">Đang tải...</strong></p>
+                <div class="table-container">
+                    <table class="data-table pairing-table">
+                        <thead>
+                            <tr>
+                                <th>Dòng Xe</th>
+                                <th>Phiên Bản</th>
+                                <th>Ngoại Thất</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pairingRequestTableBody">
+                            <!-- Dữ liệu sẽ được thêm động bằng JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <p><a href="yeucaughepxe.html">Xem chi tiết</a></p>
             </div>
         </div>
     </section>
@@ -602,7 +780,7 @@
         <div class="footer-content">
             <h4 data-lang="footer-title">VINFAST THUẬN AN</h4>
             <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
-            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: showroomthuanan@gmail.com</p>
+            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8cefe4e3fbfef3e3e1f8e4f9ede2ede2ccebe1ede5e0a2efe3e1">[email protected]</a></p>
             <div class="social-links">
                 <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
@@ -613,8 +791,12 @@
         </div>
     </footer>
 
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
+        const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+        const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
+        const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 
         // Khởi tạo AOS
         AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
@@ -655,12 +837,8 @@
                 "reset-password-otp-subtitle": "Nhập OTP và mật khẩu mới",
                 "otp": "OTP",
                 "reset-password-btn": "Đặt Lại Mật Khẩu",
-                "sales-title": "Theo Dõi Doanh Số",
-                "sales-text": "Cập nhật doanh số bán hàng",
                 "orders-title": "Quản Lý Đơn Hàng",
                 "orders-text": "Theo dõi và xử lý đơn hàng nhanh chóng.",
-                "notifications-title": "Thông Báo",
-                "notifications-text": "Nhận thông báo quan trọng ngay lập tức.",
                 "dashboard-title": "Bảng Điều Khiển",
                 "footer-title": "VINFAST THUẬN AN",
                 "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
@@ -708,12 +886,8 @@
                 "reset-password-otp-subtitle": "Enter OTP and new password",
                 "otp": "OTP",
                 "reset-password-btn": "Reset Password",
-                "sales-title": "Track Sales",
-                "sales-text": "Update sales figures",
                 "orders-title": "Manage Orders",
                 "orders-text": "Track and process orders quickly.",
-                "notifications-title": "Notifications",
-                "notifications-text": "Receive important notifications instantly.",
                 "dashboard-title": "Dashboard",
                 "footer-title": "VINFAST THUAN AN",
                 "footer-address": "Address: 8/1A, An Phu, Thuan An, Binh Duong",
@@ -746,6 +920,12 @@
             }
             updateSessionTime();
             setInterval(updateSessionTime, 60000);
+            if (isLoggedIn) {
+                fetchTotalSoldCars();
+                fetchSoldCarsData();
+                fetchRandomStockData();
+                fetchPairingRequests();
+            }
         });
 
         // Cập nhật giao diện
@@ -781,6 +961,237 @@
             sessionTime.textContent = language === "vi" ? `Thời gian: ${elapsed} phút` : `Session: ${elapsed} minutes`;
         }
 
+        // Lấy tổng số xe đã bán từ 12 tháng
+        async function fetchTotalSoldCars() {
+            const loadingIndicator = document.getElementById("totalSoldCarsLoading");
+            const cacheKey = "totalSoldCars";
+            const cacheExpirationKey = "totalSoldCarsExpiration";
+            const cacheDuration = 5 * 60 * 1000; // 5 phút
+
+            // Kiểm tra xem dữ liệu đã được lưu trong cache chưa
+            const cachedTotal = localStorage.getItem(cacheKey);
+            const cacheExpiration = localStorage.getItem(cacheExpirationKey);
+
+            if (cachedTotal && cacheExpiration && Date.now() < parseInt(cacheExpiration)) {
+                // Sử dụng dữ liệu từ cache
+                document.getElementById("total-sold-cars").textContent = `${cachedTotal} xe`;
+                return;
+            }
+
+            loadingIndicator.style.display = "flex";
+            const months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            let totalSoldCars = 0;
+
+            try {
+                const fetchPromises = months.map(month =>
+                    fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
+                        .then(response => response.json())
+                        .then(data => (data && data.length > 1 ? data.length - 1 : 0))
+                        .catch(error => {
+                            console.error(`Lỗi khi lấy dữ liệu tháng ${month}:`, error);
+                            return 0;
+                        })
+                );
+
+                const results = await Promise.all(fetchPromises);
+                totalSoldCars = results.reduce((sum, count) => sum + count, 0);
+
+                // Lưu dữ liệu vào cache
+                localStorage.setItem(cacheKey, totalSoldCars);
+                localStorage.setItem(cacheExpirationKey, Date.now() + cacheDuration);
+
+                document.getElementById("total-sold-cars").textContent = `${totalSoldCars} xe`;
+            } catch (error) {
+                console.error("Lỗi khi lấy tổng số xe đã bán:", error);
+                document.getElementById("total-sold-cars").textContent = "Lỗi tải dữ liệu";
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingIndicator.style.display = "none";
+            }
+        }
+
+        // Lấy dữ liệu xe đã bán từ tất cả 12 tháng và chọn ngẫu nhiên 5 dòng
+        async function fetchSoldCarsData() {
+            const table = document.querySelector(".sold-cars-table");
+            table.classList.add("loading");
+            const tableBody = document.getElementById("sold-cars-table-body");
+            tableBody.innerHTML = "<tr><td></td><td></td><td></td></tr>".repeat(5);
+
+            const cacheKey = "soldCarsData";
+            const cacheExpirationKey = "soldCarsDataExpiration";
+            const cacheDuration = 5 * 60 * 1000; // 5 phút
+
+            // Kiểm tra xem dữ liệu đã được lưu trong cache chưa
+            const cachedData = localStorage.getItem(cacheKey);
+            const cacheExpiration = localStorage.getItem(cacheExpirationKey);
+
+            if (cachedData && cacheExpiration && Date.now() < parseInt(cacheExpiration)) {
+                // Sử dụng dữ liệu từ cache
+                const allSoldCars = JSON.parse(cachedData);
+                const randomData = getRandomRows(allSoldCars, 10);
+                table.classList.remove("loading");
+                displaySoldCarsData(randomData);
+                return;
+            }
+
+            const months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            let allSoldCars = [];
+
+            try {
+                const fetchPromises = months.map(month =>
+                    fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
+                        .then(response => response.json())
+                        .then(data => (data && data.length > 1 ? data.slice(1) : []))
+                        .catch(error => {
+                            console.error(`Lỗi khi lấy dữ liệu tháng ${month}:`, error);
+                            return [];
+                        })
+                );
+
+                const results = await Promise.all(fetchPromises);
+                allSoldCars = results.flat();
+
+                // Lưu dữ liệu vào cache
+                localStorage.setItem(cacheKey, JSON.stringify(allSoldCars));
+                localStorage.setItem(cacheExpirationKey, Date.now() + cacheDuration);
+
+                const randomData = getRandomRows(allSoldCars, 10);
+                table.classList.remove("loading");
+                displaySoldCarsData(randomData);
+            } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu xe đã bán:", error);
+                table.classList.remove("loading");
+                showAlert("Error", translations[language]["server-error"]);
+            }
+        }
+
+        // Hàm chọn ngẫu nhiên tối ưu
+        function getRandomRows(array, count) {
+            if (array.length <= count) return array.slice();
+
+            const result = [];
+            const indices = new Set();
+
+            while (indices.size < count) {
+                const randomIndex = Math.floor(Math.random() * array.length);
+                indices.add(randomIndex);
+            }
+
+            indices.forEach(index => result.push(array[index]));
+            return result;
+        }
+
+        // Hiển thị dữ liệu xe đã bán
+        function displaySoldCarsData(data) {
+            const tableBody = document.getElementById("sold-cars-table-body");
+            tableBody.innerHTML = "";
+            if (data.length === 0) {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="3" style="text-align: center;">Không có dữ liệu</td>`;
+                tableBody.appendChild(tr);
+                return;
+            }
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row[7] || "Chưa có dữ liệu"}</td>
+                    <td>${row[3] || "Chưa có dữ liệu"}</td>
+                    <td>${row[8] || "Chưa có dữ liệu"}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Lấy dữ liệu ngẫu nhiên từ API Kho Xe
+        async function fetchRandomStockData() {
+            const table = document.querySelector(".stock-table");
+            table.classList.add("loading");
+            const stockTableBody = document.getElementById("stockTableBody");
+            const stockCountElement = document.getElementById("currentStockCount");
+            stockTableBody.innerHTML = "<tr><td></td><td></td><td></td><td></td></tr>".repeat(5);
+
+            try {
+                const response = await fetch(STOCK_API_URL);
+                const data = await response.json();
+                const stockData = data.slice(1);
+
+                const randomRows = getRandomRows(stockData, 10);
+                stockTableBody.innerHTML = "";
+                randomRows.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row[0] || "N/A"}</td>
+                        <td>${row[2] || "N/A"}</td>
+                        <td>${row[6] || "N/A"}</td>
+                        <td>${row[5] || "N/A"}</td>
+                    `;
+                    stockTableBody.appendChild(tr);
+                });
+
+                const totalStock = stockData.length;
+                stockCountElement.textContent = `${totalStock} xe`;
+                table.classList.remove("loading");
+            } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu Kho Xe:", error);
+                stockTableBody.innerHTML = '<tr><td colspan="4">Lỗi tải dữ liệu</td></tr>';
+                stockCountElement.textContent = "Lỗi tải dữ liệu";
+                table.classList.remove("loading");
+                showAlert("Error", translations[language]["server-error"]);
+            }
+        }
+
+        // Lấy dữ liệu yêu cầu ghép xe mới nhất
+        async function fetchPairingRequests() {
+            const table = document.querySelector(".pairing-table");
+            table.classList.add("loading");
+            const pairingTableBody = document.getElementById("pairingRequestTableBody");
+            const pairingCountElement = document.getElementById("pairingRequestCount");
+            pairingTableBody.innerHTML = "<tr><td></td><td></td><td></td></tr>".repeat(5);
+
+            try {
+                const response = await fetch(PAIRING_REQUEST_API_URL);
+                const data = await response.text();
+                const jsonData = JSON.parse(data);
+
+                // Sắp xếp dữ liệu theo thời gian nhập (mới nhất trước)
+                jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
+
+                // Lấy 10 yêu cầu mới nhất
+                const latestRequests = jsonData.slice(0, 10);
+
+                pairingTableBody.innerHTML = "";
+                if (latestRequests.length === 0) {
+                    pairingTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>';
+                } else {
+                    latestRequests.forEach(row => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${row["Dòng xe"] || "N/A"}</td>
+                            <td>${row["Phiên bản"] || "N/A"}</td>
+                            <td>${row["Ngoại thất"] || "N/A"}</td>
+                        `;
+                        pairingTableBody.appendChild(tr);
+                    });
+                }
+
+                const totalRequests = jsonData.length;
+                pairingCountElement.textContent = `${totalRequests}`;
+                table.classList.remove("loading");
+            } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu yêu cầu ghép xe:", error);
+                pairingTableBody.innerHTML = '<tr><td colspan="4">Lỗi tải dữ liệu</td></tr>';
+                pairingCountElement.textContent = "Lỗi tải dữ liệu";
+                table.classList.remove("loading");
+                showAlert("Error", translations[language]["server-error"]);
+            }
+        }
+
         // Đăng nhập
         async function login(e) {
             e.preventDefault();
@@ -808,6 +1219,10 @@
                     closeModal("loginModal");
                     showAlert("Success", translations[language]["login-success"]);
                     updateUI();
+                    fetchTotalSoldCars();
+                    fetchSoldCarsData();
+                    fetchRandomStockData();
+                    fetchPairingRequests();
                 } else {
                     showAlert("Error", result.message);
                 }
@@ -1015,5 +1430,6 @@
             });
         }
     </script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'927e1dc54a76dd20',t:'MTc0MzIzODE5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
