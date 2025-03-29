@@ -1169,7 +1169,7 @@ function showDetail(row, index) {
             document.getElementById("search-input").value = "";
             currentPage = 1;
 
-            const apiURL = "https://script.google.com/macros/s/AKfycbymGID5EShR1NmVoG3h69qGbFrwRF0qAVEJEllnU65NFHOXKIVPkdcc4j9lKI_9E0q7fA/exec";
+            const apiURL = "https://script.google.com/macros/s/AKfycbxCxV0E71ziqx8bl3J_TTjtGYnNB00dDy1v7OnaaCOuotS72G_9DV9U26xYPw7wsrCvuA/exec";
             try {
                 const response = await axios.get(apiURL);
                 tableData['Đã Ghép'] = response.data.Sheet1 ? response.data.Sheet1.map(row => Object.values(row)) : [];
