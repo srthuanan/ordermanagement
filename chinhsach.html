@@ -733,7 +733,7 @@
         let tableData = [];
         let currentPage = 1;
         const rowsPerPage = 15;
-        const apiURL = "https://script.google.com/macros/s/AKfycbwFyruh-6FOdWq6X8XLQNVFxCakHyzF47nyA_ipIYPL0h8qa0PqItd8YVQk-Iu2QTFMXg/exec"; // Thay bằng URL của bạn
+        const apiURL = "https://script.google.com/macros/s/AKfycbzSAlEgqEeMHTEJl3BUwdWuv3GINDZJ7oIjwG3ses63A7iY7CkIABHVoreYtkWmUyYDeg/exec"; // Thay bằng URL của bạn
 
         document.addEventListener("DOMContentLoaded", function () {
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
@@ -795,7 +795,7 @@
             // Tạo form ẩn để gửi file
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = apiURL + "?callback=handleUploadResponse";
+            form.action = apiURL;
             form.enctype = 'multipart/form-data';
             form.style.display = 'none';
 
@@ -805,7 +805,7 @@
             input.files = files;
             form.appendChild(input);
 
-            // Thêm các tham số bổ sung (nếu cần)
+            // Thêm các tham số bổ sung
             const contentTypeInput = document.createElement('input');
             contentTypeInput.type = 'hidden';
             contentTypeInput.name = 'Content-Type';
@@ -820,31 +820,32 @@
 
             document.body.appendChild(form);
 
-            // Tạo iframe để nhận kết quả từ Google Apps Script
+            // Tạo iframe để nhận kết quả
             const iframe = document.createElement('iframe');
-            iframe.name = 'upload-iframe';
+            iframe.name = 'upload-iframe-' + Date.now();
             iframe.style.display = 'none';
-            form.target = 'upload-iframe';
+            form.target = iframe.name;
             document.body.appendChild(iframe);
 
-            iframe.onload = function () {
+            // Lắng nghe thông điệp từ iframe
+            window.addEventListener('message', function handleMessage(event) {
+                const response = event.data;
                 spinner.style.display = 'none';
                 document.getElementById("file-upload").value = "";
                 document.body.removeChild(form);
                 document.body.removeChild(iframe);
-            };
+                window.removeEventListener('message', handleMessage);
+
+                if (response.status === "success") {
+                    showNotification("Tải lên thành công!", 2000);
+                    refreshData();
+                } else {
+                    showNotification("Tải lên thất bại: " + response.message, 3000);
+                }
+            });
 
             form.submit();
         }
-
-        window.handleUploadResponse = function (response) {
-            if (response.status === "success") {
-                showNotification("Tải lên thành công!", 2000);
-                refreshData();
-            } else {
-                showNotification("Tải lên thất bại: " + response.message, 3000);
-            }
-        };
 
         function logout() {
             sessionStorage.clear();
