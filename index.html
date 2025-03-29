@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -25,18 +26,18 @@
             position: fixed;
             top: 0;
             width: 100%;
-            height: 80px; /* Tăng chiều cao để thoáng hơn */
+            height: 80px;
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
-            padding: 0 40px; /* Tăng padding hai bên */
+            padding: 0 40px;
             box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3);
             z-index: 1000;
             transition: height 0.3s ease;
         }
         .navbar .logo-text {
             color: #ffffff;
-            font-size: 24px; /* Tăng nhẹ kích thước chữ */
+            font-size: 24px;
             font-weight: 700;
             letter-spacing: 1.5px;
             text-transform: uppercase;
@@ -47,13 +48,13 @@
             flex-grow: 1;
             justify-content: center;
             list-style: none;
-            gap: 15px; /* Thêm khoảng cách giữa các mục */
+            gap: 15px;
         }
         .navbar .menu li a {
-            padding: 10px 16px; /* Giảm padding để gọn hơn */
+            padding: 10px 16px;
             text-decoration: none;
             color: #ffffff;
-            font-size: 13px; /* Giảm kích thước chữ */
+            font-size: 13px;
             font-weight: 600;
             background: #003087;
             border-radius: 10px;
@@ -66,7 +67,7 @@
         .navbar-controls {
             display: flex;
             align-items: center;
-            gap: 12px; /* Tăng khoảng cách giữa các nút */
+            gap: 12px;
             flex-shrink: 0;
         }
         .nav-btn {
@@ -77,7 +78,7 @@
             color: #ffffff;
             font-size: 14px;
             cursor: pointer;
-            width: 32px; /* Giảm kích thước nút */
+            width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
@@ -92,7 +93,7 @@
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 16px; /* Giảm kích thước icon */
+            font-size: 16px;
             cursor: pointer;
             width: 32px;
             height: 32px;
@@ -101,21 +102,9 @@
             justify-content: center;
             transition: transform 0.3s ease;
         }
-        .dark-mode-btn:hover, .language-btn:hover {
-            transform: scale(1.1);
-        }
-        .user-info { 
-            color: #ffffff; 
-            font-size: 12px; /* Giảm kích thước chữ */
-            margin: 0 20px; /* Điều chỉnh margin */
-            white-space: nowrap;
-        }
-        .session-time { 
-            color: #ffffff; 
-            font-size: 12px; 
-            margin-right: 20px; 
-            white-space: nowrap;
-        }
+        .dark-mode-btn:hover, .language-btn:hover { transform: scale(1.1); }
+        .user-info { color: #ffffff; font-size: 12px; margin: 0 20px; white-space: nowrap; }
+        .session-time { color: #ffffff; font-size: 12px; margin-right: 20px; white-space: nowrap; }
         .online-status {
             width: 10px;
             height: 10px;
@@ -123,13 +112,7 @@
             border-radius: 50%;
             box-shadow: 0 0 4px #28a745;
         }
-        .hamburger { 
-            display: none; 
-            font-size: 24px; 
-            color: #ffffff; 
-            cursor: pointer; 
-            margin-left: 20px;
-        }
+        .hamburger { display: none; font-size: 24px; color: #ffffff; cursor: pointer; margin-left: 20px; }
 
         /* Hero Section */
         .hero {
@@ -140,7 +123,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            margin-top: 80px; /* Điều chỉnh theo chiều cao navbar */
+            margin-top: 80px;
             background: #e0e6ed;
         }
         .hero-background {
@@ -165,17 +148,8 @@
             box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode .hero-content { background: #1e2529; color: #e0e0e0; }
-        .hero h2 {
-            font-size: 52px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #ffffff;
-        }
-        .hero p {
-            font-size: 22px;
-            margin-bottom: 25px;
-            color: #ffffff;
-        }
+        .hero h2 { font-size: 52px; font-weight: 700; margin-bottom: 15px; color: #ffffff; }
+        .hero p { font-size: 22px; margin-bottom: 25px; color: #ffffff; }
         .hero .login-btn {
             padding: 16px 40px;
             background: linear-gradient(135deg, #005eb8, #003087);
@@ -189,10 +163,7 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        body.dark-mode .hero .login-btn {
-            background: linear-gradient(135deg, #66b0ff, #005eb8);
-            color: #ffffff;
-        }
+        body.dark-mode .hero .login-btn { background: linear-gradient(135deg, #66b0ff, #005eb8); }
         .hero .login-btn:hover {
             background: linear-gradient(135deg, #003087, #005eb8);
             box-shadow: 0 0 25px rgba(0, 94, 184, 1), inset 5px 5px 10px rgba(0, 0, 0, 0.2);
@@ -228,9 +199,7 @@
             transition: all 0.3s ease;
         }
         body.dark-mode .feature-card { background: #1e2529; }
-        .feature-card:hover {
-            box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .feature-card:hover { box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
         .feature-card i { font-size: 28px; color: #005eb8; margin-bottom: 15px; }
         body.dark-mode .feature-card i { color: #66b0ff; }
         .feature-card h4 { font-size: 20px; color: #003087; margin-bottom: 15px; }
@@ -262,9 +231,7 @@
             transition: all 0.3s ease;
         }
         body.dark-mode .dashboard-card { background: #1e2529; }
-        .dashboard-card:hover {
-            box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .dashboard-card:hover { box-shadow: inset 5px 5px 15px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
         .dashboard-card h4 { font-size: 20px; color: #003087; }
         body.dark-mode .dashboard-card h4 { color: #66b0ff; }
         .dashboard-card p { font-size: 16px; color: #555; }
@@ -282,10 +249,7 @@
             transition: all 0.3s ease;
         }
         body.dark-mode .search-bar input { background: #1e2529; color: #fff; }
-        .search-bar input:focus {
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5);
-            outline: none;
-        }
+        .search-bar input:focus { box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5); outline: none; }
         .notification-list { max-height: 250px; overflow-y: auto; }
         .notification-item {
             padding: 12px;
@@ -299,9 +263,7 @@
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode .notification-item { background: #1e2529; border-bottom: 1px solid #2e3539; }
-        .notification-item:hover {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .notification-item:hover { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
         .notification-item .delete-btn {
             background: #ef4444;
             color: #fff;
@@ -313,9 +275,7 @@
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
-        .notification-item .delete-btn:hover {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .notification-item .delete-btn:hover { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -1px -1px 4px rgba(255, 255, 255, 0.3); }
         .refresh-btn {
             padding: 12px 25px;
             background: #e0e6ed;
@@ -329,9 +289,7 @@
             margin-top: 20px;
         }
         body.dark-mode .refresh-btn { background: #1e2529; }
-        .refresh-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .refresh-btn:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
 
         /* Modal */
         .modal {
@@ -349,7 +307,6 @@
         }
         .modal-content {
             background: #e0e6ed;
-            margin: 0 auto;
             padding: 40px;
             border-radius: 20px;
             max-width: 500px;
@@ -358,11 +315,9 @@
             transform: scale(0.9);
             transition: transform 0.3s ease, opacity 0.3s ease;
             opacity: 0;
+            position: relative;
         }
-        .modal-content.active {
-            transform: scale(1);
-            opacity: 1;
-        }
+        .modal-content.active { transform: scale(1); opacity: 1; }
         body.dark-mode .modal-content { background: #1e2529; }
         .modal-content h2 { font-size: 28px; color: #003087; font-weight: 700; margin-bottom: 15px; text-align: center; }
         body.dark-mode .modal-content h2 { color: #66b0ff; }
@@ -389,10 +344,7 @@
             transition: all 0.3s ease;
         }
         body.dark-mode .modal-content input { background: #1e2529; color: #ffffff; }
-        .modal-content input:focus {
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5);
-            outline: none;
-        }
+        .modal-content input:focus { box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.5); outline: none; }
         .modal-content button {
             padding: 12px 25px;
             background: #e0e6ed;
@@ -411,9 +363,7 @@
             width: 100%;
         }
         body.dark-mode .modal-content button { background: #1e2529; color: #66b0ff; }
-        .modal-content button:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        .modal-content button:hover { box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
         .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
         .modal-links span {
             font-size: 13px;
@@ -470,7 +420,6 @@
             margin-top: 50px;
             box-shadow: 5px 5px 15px rgba(0, 48, 135, 0.3), -2px -2px 5px rgba(255, 255, 255, 0.3);
         }
-        body.dark-mode footer { background: linear-gradient(135deg, #003087, #005eb8); }
         footer .footer-content { max-width: 1200px; margin: 0 auto; }
         footer h4 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
         footer p { font-size: 14px; margin-bottom: 10px; }
@@ -485,60 +434,44 @@
             box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.3);
             transition: all 0.3s ease;
         }
-        footer .social-links a:hover {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
-        }
+        footer .social-links a:hover { box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.3); }
 
         /* Responsive */
-        @media (max-width: 900px) { /* Giảm breakpoint để hamburger xuất hiện sớm hơn */
-            .navbar { 
-                padding: 0 20px; 
-                height: 60px; 
-                justify-content: space-between; /* Cân bằng bố cục */
-            }
+        @media (max-width: 900px) {
+            .navbar { padding: 0 20px; height: 60px; justify-content: space-between; }
             .navbar .logo-text { font-size: 20px; }
-            .navbar .menu {
-                display: none;
-                position: absolute;
-                top: 60px;
-                left: 0;
-                width: 100%;
-                background: #003087;
-                padding: 20px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
+            .navbar .menu { display: none; position: absolute; top: 60px; left: 0; width: 100%; background: #003087; padding: 20px; flex-direction: column; align-items: flex-start; gap: 10px; }
             .navbar .menu.active { display: flex; }
             .hamburger { display: block; }
             .navbar-controls { gap: 8px; }
-            .user-info, .session-time { 
-                display: none; /* Ẩn thông tin người dùng và thời gian phiên trên mobile */
-            }
+            .user-info, .session-time { display: none; }
             .hero { margin-top: 60px; }
+            .hero h2 { font-size: 36px; }
+            .hero p { font-size: 18px; }
+            .hero .login-btn { padding: 12px 30px; font-size: 16px; }
         }
         @media (max-width: 480px) {
             .navbar .logo-text { font-size: 18px; }
-            .nav-btn, .dark-mode-btn, .language-btn { 
-                width: 28px; 
-                height: 28px; 
-                font-size: 14px; 
-            }
+            .nav-btn, .dark-mode-btn, .language-btn { width: 28px; height: 28px; font-size: 14px; }
             .hamburger { font-size: 20px; }
+            .modal-content { padding: 20px; }
+            .hero h2 { font-size: 28px; }
+            .hero p { font-size: 16px; }
+            .hero .login-btn { padding: 10px 20px; font-size: 14px; }
         }
     </style>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
+        <div class="logo-text">VINFAST <span>THUẬN AN</span></div>
         <ul class="menu" id="navMenu"></ul>
         <span class="hamburger" onclick="toggleMenu()"><i class="fas fa-bars"></i></span>
         <span class="user-info" id="userInfo"></span>
         <span class="session-time" id="sessionTime"></span>
         <div class="online-status" id="onlineStatus"></div>
         <div class="navbar-controls">
-            <button class="nav-btn" onclick="logout()" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="nav-btn" onclick="logout()" id="logoutBtn" style="display: none;"><i class="fas fa-sign-out-alt"></i></button>
             <button class="language-btn" onclick="toggleLanguage()" id="languageBtn">EN</button>
             <button class="dark-mode-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
         </div>
@@ -546,9 +479,9 @@
 
     <!-- Hero Section -->
     <section class="hero" id="heroSection" data-aos="fade-up">
-        <div class="hero-background" id="heroBackground"></div>
+        <div class="hero-background"></div>
         <div class="hero-content">
-            <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
+            <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
             <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
             <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
         </div>
@@ -556,30 +489,30 @@
 
     <!-- Internal Section -->
     <section class="internal-section" id="welcomeSection" data-aos="fade-up">
-        <h3 data-lang="welcome-title">Chào Mừng Bạn!!!</h3>
-        <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
+        <h3 data-lang="welcome-title">Chào Mừng Bạn!!!</h3>
+        <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
         <div class="features-grid">
             <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
                 <i class="fas fa-chart-line"></i>
                 <h4 data-lang="sales-title">Theo Dõi Doanh Số</h4>
-                <p>Cập nhật doanh số bán hàng</p>
+                <p data-lang="sales-text">Cập nhật doanh số bán hàng</p>
             </div>
             <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
                 <i class="fas fa-clipboard-list"></i>
                 <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
-                <p>Theo dõi và xử lý đơn hàng nhanh chóng.</p>
+                <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
             </div>
             <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
                 <i class="fas fa-bell"></i>
                 <h4 data-lang="notifications-title">Thông Báo</h4>
-                <p>Nhận thông báo quan trọng ngay lập tức.</p>
+                <p data-lang="notifications-text">Nhận thông báo quan trọng ngay lập tức.</p>
             </div>
         </div>
     </section>
 
     <!-- Dashboard Section -->
     <section class="dashboard-section" id="dashboard" data-aos="fade-up">
-        <h3 data-lang="dashboard-title">Danh Mục</h3>
+        <h3 data-lang="dashboard-title">Danh Mục</h3>
         <div class="dashboard-content">
             <div class="dashboard-card">
                 <h4 data-lang="sales-title">Doanh Số</h4>
@@ -607,10 +540,9 @@
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
-            <!-- Login Form -->
             <div id="loginForm">
                 <h2 data-lang="login-title">Đăng Nhập</h2>
-                <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận AN</p>
+                <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận An</p>
                 <form onsubmit="login(event)">
                     <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
@@ -623,12 +555,11 @@
                     <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
                 </form>
                 <div class="modal-links">
-                    <span class="reset-password" onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
-                    <span class="forgot-password" onclick="showContactAdmin()" data-lang="forgot-password">Quên mật khẩu?</span>
+                    <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
+                    <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">Quên mật khẩu?</span>
                 </div>
                 <span class="register-link" onclick="showForm('registerForm')" data-lang="register">Chưa có tài khoản? Đăng ký</span>
             </div>
-            <!-- Reset Password Form -->
             <div id="resetPasswordForm" style="display: none;">
                 <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
                 <p data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
@@ -652,10 +583,9 @@
                     <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> Đổi Mật Khẩu</button>
                 </form>
                 <div class="modal-links">
-                    <span class="back-to-login" onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                    <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
                 </div>
             </div>
-            <!-- Register Form -->
             <div id="registerForm" style="display: none;">
                 <h2 data-lang="register-title">Đăng Ký</h2>
                 <p data-lang="register-subtitle">Tạo tài khoản mới để truy cập hệ thống</p>
@@ -672,10 +602,54 @@
                         <i class="fas fa-lock input-icon"></i>
                         <input type="password" id="regConfirmPassword" placeholder="Xác nhận mật khẩu" required data-lang-placeholder="confirm-password">
                     </div>
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="regEmail" placeholder="Email" required data-lang-placeholder="email">
+                    </div>
                     <button type="submit" data-lang="register-btn"><i class="fas fa-user-plus"></i> Đăng Ký</button>
                 </form>
                 <div class="modal-links">
-                    <span class="back-to-login" onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                    <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                </div>
+            </div>
+            <div id="forgotPasswordForm" style="display: none;">
+                <h2 data-lang="forgot-password-title">Quên Mật Khẩu</h2>
+                <p data-lang="forgot-password-subtitle">Nhập email để nhận OTP đặt lại mật khẩu</p>
+                <form onsubmit="forgotPassword(event)">
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="forgotEmail" placeholder="Email" required data-lang-placeholder="email">
+                    </div>
+                    <button type="submit" data-lang="send-otp-btn"><i class="fas fa-paper-plane"></i> Gửi OTP</button>
+                </form>
+                <div class="modal-links">
+                    <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
+                </div>
+            </div>
+            <div id="resetPasswordWithOTPForm" style="display: none;">
+                <h2 data-lang="reset-password-otp-title">Đặt Lại Mật Khẩu</h2>
+                <p data-lang="reset-password-otp-subtitle">Nhập OTP và mật khẩu mới</p>
+                <form onsubmit="resetPasswordWithOTP(event)">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="resetUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="text" id="resetOTP" placeholder="OTP" required data-lang-placeholder="otp">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="resetNewPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="resetConfirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                    </div>
+                    <button type="submit" data-lang="reset-password-btn"><i class="fas fa-key"></i> Đặt Lại Mật Khẩu</button>
+                </form>
+                <div class="modal-links">
+                    <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
                 </div>
             </div>
         </div>
@@ -687,7 +661,7 @@
             <span class="close" onclick="closeModal('alertModal')"><i class="fas fa-times"></i></span>
             <h2 id="alertTitle"></h2>
             <p id="alertMessage"></p>
-            <button onclick="closeModal('alertModal')">OK</button>
+            <button onclick="closeModal('alertModal')" data-lang="ok-btn">OK</button>
         </div>
     </div>
 
@@ -695,8 +669,8 @@
     <footer>
         <div class="footer-content">
             <h4 data-lang="footer-title">VINFAST THUẬN AN</h4>
-            <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
-            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="83d0e2efe6e2e7eeeaedeeeaedebe7e2ecf7ebf6e2ede2edc3f5e2ede7e2ecadf5ed">[email protected]</a></p>
+            <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
+            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: showroomthuanan@gmail.com</p>
             <div class="social-links">
                 <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
@@ -707,45 +681,49 @@
         </div>
     </footer>
 
-    <!-- Script -->
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 1200, easing: 'ease-out-back' });
+        const API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
 
-        let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-        let currentUser = sessionStorage.getItem('currentUser') || '';
-        let userRole = sessionStorage.getItem('userRole') || 'employee';
-        const sessionTimeout = 15 * 60 * 1000; // 15 phút
-        let notifications = JSON.parse(sessionStorage.getItem('notifications')) || [
-            { id: 1, text: "Cuộc họp 10:00 ngày 27/03", date: "26/03/2025" },
-            { id: 2, text: "Cập nhật KPI tháng 3", date: "25/03/2025" },
-            { id: 3, text: "Xe VF9 mới nhập kho", date: "24/03/2025" }
+        // Khởi tạo AOS
+        AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
+
+        // Biến toàn cục
+        let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+        let currentUser = sessionStorage.getItem("currentUser") || "";
+        let userRole = sessionStorage.getItem("userRole") || "employee";
+        let language = localStorage.getItem("language") || "vi";
+        let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
+
+        // Dữ liệu giả lập thông báo
+        let notifications = [
+            { id: 1, message: "Đơn hàng #123 đã được xác nhận", timestamp: "2025-03-28 09:00" },
+            { id: 2, message: "Xe VF8 đã sẵn sàng giao hàng", timestamp: "2025-03-28 10:15" },
+            { id: 3, message: "Cập nhật doanh số tháng 3", timestamp: "2025-03-28 14:30" }
         ];
-        let language = localStorage.getItem('language') || 'vi';
-        let currentForm = 'loginForm';
 
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwqbedHB1kGSopSm5HFahyLDpTzy2WlDOKYs1XPznb2GagrFdyrs499i7IcHHZUB5yT/exec';
-
+        // Dữ liệu dịch ngôn ngữ
         const translations = {
             vi: {
-                "hero-title": "Hệ Thống Nội Bộ Thuận An",
+                "hero-title": "Hệ Thống Quản Lý Đơn Hàng",
                 "hero-subtitle": "Chào mừng đến với Showroom Thuận An",
-                "welcome-title": "Chào Mừng Đến Với Hệ Thống Nội Bộ",
-                "welcome-text": "Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.",
+                "welcome-title": "Chào Mừng Bạn!!!",
+                "welcome-text": "Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.",
                 "login-btn": "Đăng Nhập",
-                "dashboard-title": "Bảng Điều Khiển",
-                "sales-title": "Theo Dõi Doanh Số",
-                "orders-title": "Quản Lý Đơn Hàng",
-                "notifications-title": "Thông Báo",
-                "search-notifications": "Tìm kiếm thông báo...",
-                "refresh-btn": "Làm Mới",
                 "login-title": "Đăng Nhập",
+                "login-subtitle": "Truy cập hệ thống nội bộ Thuận An",
                 "username": "Tên đăng nhập",
                 "password": "Mật khẩu",
+                "email": "Email",
                 "reset-password": "Đặt lại mật khẩu",
                 "forgot-password": "Quên mật khẩu?",
-                "login-subtitle": "Truy cập hệ thống nội bộ Thuận An",
+                "register": "Chưa có tài khoản? Đăng ký",
+                "register-title": "Đăng Ký",
+                "register-subtitle": "Tạo tài khoản mới để truy cập hệ thống",
+                "register-btn": "Đăng Ký",
+                "otp-title": "Xác Minh OTP",
+                "otp-subtitle": "Nhập mã OTP đã gửi qua email của bạn",
+                "verify-btn": "Xác Minh",
+                "back-to-register": "Quay lại đăng ký",
                 "reset-password-title": "Đổi Mật Khẩu",
                 "reset-password-subtitle": "Nhập thông tin để đổi mật khẩu",
                 "old-password": "Mật khẩu cũ",
@@ -753,16 +731,37 @@
                 "confirm-password": "Xác nhận mật khẩu mới",
                 "change-password-btn": "Đổi Mật Khẩu",
                 "back-to-login": "Quay lại đăng nhập",
-                "contact-admin": "Liên hệ admin để lấy lại mật khẩu",
+                "forgot-password-title": "Quên Mật Khẩu",
+                "forgot-password-subtitle": "Nhập email để nhận OTP đặt lại mật khẩu",
+                "send-otp-btn": "Gửi OTP",
+                "reset-password-otp-title": "Đặt Lại Mật Khẩu",
+                "reset-password-otp-subtitle": "Nhập OTP và mật khẩu mới",
+                "otp": "OTP",
+                "reset-password-btn": "Đặt Lại Mật Khẩu",
+                "sales-title": "Theo Dõi Doanh Số",
+                "sales-text": "Cập nhật doanh số bán hàng",
+                "orders-title": "Quản Lý Đơn Hàng",
+                "orders-text": "Theo dõi và xử lý đơn hàng nhanh chóng.",
+                "notifications-title": "Thông Báo",
+                "notifications-text": "Nhận thông báo quan trọng ngay lập tức.",
+                "dashboard-title": "Danh Mục",
+                "search-notifications": "Tìm kiếm thông báo...",
+                "refresh-btn": "Làm Mới",
                 "footer-title": "VINFAST THUẬN AN",
-                "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
-                "footer-contact": "Liên hệ: 0968 275 404 | Email: saleadminminhdaothuanan@vandao.vn",
-                "vehicle-inventory": "Kho Xe",
-                "register": "Chưa có tài khoản? Đăng ký",
-                "register-title": "Đăng Ký",
-                "register-subtitle": "Tạo tài khoản mới để truy cập hệ thống",
-                "register-btn": "Đăng Ký",
-                "policies-title": "Tài Liệu - Chính Sách"
+                "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
+                "footer-contact": "Liên hệ: 0968275404 | Email: showroomthuanan@gmail.com",
+                "ok-btn": "OK",
+                "fill-all-fields": "Vui lòng nhập đầy đủ thông tin!",
+                "password-mismatch": "Mật khẩu không khớp!",
+                "password-length": "Mật khẩu phải dài ít nhất 6 ký tự!",
+                "server-error": "Không thể kết nối đến server!",
+                "enter-otp": "Vui lòng nhập OTP!",
+                "register-success": "Đăng ký thành công! Vui lòng kiểm tra email để nhận OTP.",
+                "login-success": "Đăng nhập thành công!",
+                "logout-success": "Đăng xuất thành công!",
+                "password-changed": "Đổi mật khẩu thành công!",
+                "otp-sent": "OTP đã được gửi đến email của bạn!",
+                "password-reset-success": "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại."
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -770,388 +769,600 @@
                 "welcome-title": "Welcome to the Internal System",
                 "welcome-text": "Efficiently manage sales, orders, and sold vehicles with the VinFast internal system.",
                 "login-btn": "Login",
-                "dashboard-title": "Dashboard",
-                "sales-title": "Track Sales",
-                "orders-title": "Manage Orders",
-                "notifications-title": "Notifications",
-                "search-notifications": "Search notifications...",
-                "refresh-btn": "Refresh",
                 "login-title": "Login",
+                "login-subtitle": "Access the VinFast internal system",
                 "username": "Username",
                 "password": "Password",
+                "email": "Email",
                 "reset-password": "Reset Password",
                 "forgot-password": "Forgot Password?",
-                "login-subtitle": "Access the VinFast internal system",
+                "register": "Don't have an account? Register",
+                "register-title": "Register",
+                "register-subtitle": "Create a new account to access the system",
+                "register-btn": "Register",
+                "otp-title": "Verify OTP",
+                "otp-subtitle": "Enter the OTP sent to your email",
+                "verify-btn": "Verify",
+                "back-to-register": "Back to register",
                 "reset-password-title": "Change Password",
-                "reset-password-subtitle": "Enter details to change your password",
+                "reset-password-subtitle": "Enter information to change your password",
                 "old-password": "Old Password",
                 "new-password": "New Password",
                 "confirm-password": "Confirm New Password",
                 "change-password-btn": "Change Password",
                 "back-to-login": "Back to Login",
-                "contact-admin": "Contact admin to recover password",
+                "forgot-password-title": "Forgot Password",
+                "forgot-password-subtitle": "Enter your email to receive a password reset OTP",
+                "send-otp-btn": "Send OTP",
+                "reset-password-otp-title": "Reset Password",
+                "reset-password-otp-subtitle": "Enter OTP and new password",
+                "otp": "OTP",
+                "reset-password-btn": "Reset Password",
+                "sales-title": "Track Sales",
+                "sales-text": "Update sales figures",
+                "orders-title": "Manage Orders",
+                "orders-text": "Track and process orders quickly.",
+                "notifications-title": "Notifications",
+                "notifications-text": "Receive important notifications instantly.",
+                "dashboard-title": "Dashboard",
+                "search-notifications": "Search notifications...",
+                "refresh-btn": "Refresh",
                 "footer-title": "VINFAST THUAN AN",
-                "footer-address": "Address: 123 Road No. 1, Thuan An, Binh Duong",
-                "footer-contact": "Contact: 0909 123 456 | Email: contact@vinfast-thuanan.vn",
-                "vehicle-inventory": "Vehicle Inventory",
-                "register": "Don't have an account? Register",
-                "register-title": "Register",
-                "register-subtitle": "Create a new account to access the system",
-                "register-btn": "Register",
-                "policies-title": "Documents - Policies"
+                "footer-address": "Address: 8/1A, An Phu, Thuan An, Binh Duong",
+                "footer-contact": "Contact: 0968275404 | Email: showroomthuanan@gmail.com",
+                "ok-btn": "OK",
+                "fill-all-fields": "Please fill in all fields!",
+                "password-mismatch": "Passwords do not match!",
+                "password-length": "Password must be at least 6 characters long!",
+                "server-error": "Unable to connect to the server!",
+                "enter-otp": "Please enter OTP!",
+                "register-success": "Registration successful! Please check your email for OTP.",
+                "login-success": "Login successful!",
+                "logout-success": "Logout successful!",
+                "password-changed": "Password changed successfully!",
+                "otp-sent": "OTP has been sent to your email!",
+                "password-reset-success": "Password reset successful! Please login again."
             }
         };
 
+        // Khởi tạo khi tải trang
         document.addEventListener("DOMContentLoaded", () => {
             updateUI();
             updateLanguage();
-            if (isLoggedIn) {
-                startSessionTimer();
-                updateSessionTime();
-                loadNotifications();
-                showWelcomeNotification();
+            renderNotifications();
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+                document.querySelector(".dark-mode-btn i").classList.replace("fa-moon", "fa-sun");
             }
-            window.addEventListener('scroll', () => {
-                const heroBackground = document.getElementById('heroBackground');
-                const scrollPosition = window.scrollY;
-                heroBackground.style.transform = `scale(1.1) translateY(${scrollPosition * 0.4}px)`;
-            });
+            updateSessionTime();
+            setInterval(updateSessionTime, 60000);
         });
 
+        // Cập nhật giao diện
         function updateUI() {
-            const menu = document.getElementById('navMenu');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const userInfo = document.getElementById('userInfo');
-            const sessionTime = document.getElementById('sessionTime');
-            const onlineStatus = document.getElementById('onlineStatus');
-            const dashboard = document.getElementById('dashboard');
-            const welcomeSection = document.getElementById('welcomeSection');
-            const heroSection = document.getElementById('heroSection');
+            const heroSection = document.getElementById("heroSection");
+            const welcomeSection = document.getElementById("welcomeSection");
+            const dashboard = document.getElementById("dashboard");
+            const userInfo = document.getElementById("userInfo");
+            const logoutBtn = document.getElementById("logoutBtn");
 
-            logoutBtn.style.display = isLoggedIn ? 'block' : 'none';
-            onlineStatus.style.display = isLoggedIn ? 'inline-block' : 'none';
-            userInfo.style.display = isLoggedIn ? 'inline' : 'none';
-            sessionTime.style.display = isLoggedIn ? 'inline' : 'none';
-
-            if (isLoggedIn) {
-                menu.classList.add('active');
-                dashboard.style.display = 'block';
-                welcomeSection.style.display = 'none';
-                heroSection.style.display = 'none';
-                userInfo.textContent = `${language === 'vi' ? 'Xin chào' : 'Hello'}, ${currentUser} (${userRole === 'manager' ? (language === 'vi' ? 'Quản lý' : 'Manager') : (language === 'vi' ? 'Nhân viên' : 'Employee')})`;
-                updateMenu();
+            if (isLoggedIn && currentUser) {
+                heroSection.style.display = "none";
+                welcomeSection.style.display = "none";
+                dashboard.style.display = "block";
+                userInfo.textContent = language === "vi" ? `Xin chào, ${currentUser} (${userRole})` : `Hello, ${currentUser} (${userRole})`;
+                logoutBtn.style.display = "block";
+                renderNotifications();
             } else {
-                menu.classList.remove('active');
-                dashboard.style.display = 'none';
-                welcomeSection.style.display = 'block';
-                heroSection.style.display = 'flex';
-                menu.innerHTML = '';
+                heroSection.style.display = "flex";
+                welcomeSection.style.display = "block";
+                dashboard.style.display = "none";
+                userInfo.textContent = "";
+                logoutBtn.style.display = "none";
             }
         }
 
-        function updateMenu() {
-            const menu = document.getElementById('navMenu');
-            const commonLinks = `
-                <li><a href="kpi.html" onclick="checkLogin(event, 'navigate', 'kpi.html')">${language === 'vi' ? 'Kết Quả Kinh Doanh' : 'Business Results'}</a></li>
-                <li><a href="yeucaughepxe.html" onclick="checkLogin(event, 'navigate', 'yeucaughepxe.html')">${language === 'vi' ? 'Yêu Cầu Ghép Xe' : 'Vehicle Pairing Request'}</a></li>
-                <li><a href="danhsach.html" onclick="checkLogin(event, 'navigate', 'danhsach.html')">${language === 'vi' ? 'Danh Sách Đơn Hàng' : 'Order List'}</a></li>
-                <li><a href="xedaban.html" onclick="checkLogin(event, 'navigate', 'xedaban.html')">${language === 'vi' ? 'Danh Sách Xe Đã Bán' : 'Sold Vehicles List'}</a></li>
-                <li><a href="khoxe.html" onclick="checkLogin(event, 'navigate', 'khoxe.html')" data-lang="vehicle-inventory">${translations[language]["vehicle-inventory"]}</a></li>
-                <li><a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" onclick="checkLogin(event, 'navigate', 'chinhsach.html')" data-lang="policies-title">${translations[language]["policies-title"]}</a></li>
-            `;
-            const managerLinks = userRole === 'manager' ? `
-                <li><a href="manage.html" onclick="checkLogin(event, 'navigate', 'manage.html')">${language === 'vi' ? 'Quản Lý Nhân Viên' : 'Employee Management'}</a></li>
-            ` : '';
-            menu.innerHTML = commonLinks + managerLinks;
+        // Cập nhật thời gian phiên
+        function updateSessionTime() {
+            const sessionTime = document.getElementById("sessionTime");
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 60000);
+            sessionTime.textContent = language === "vi" ? `Thời gian: ${elapsed} phút` : `Session: ${elapsed} minutes`;
         }
 
-        async function login(e) {
+        // Đăng ký
+        async function register(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const loginButton = document.querySelector('#loginForm button[type="submit"]');
+            const username = document.getElementById("regUsername").value.trim();
+            const password = document.getElementById("regPassword").value.trim();
+            const confirmPassword = document.getElementById("regConfirmPassword").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
 
-            if (!username || !password) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
+            if (!username || !password || !confirmPassword || !email) {
+                showAlert("Error", translations[language]["fill-all-fields"]);
+                return;
+            }
+            if (password !== confirmPassword) {
+                showAlert("Error", translations[language]["password-mismatch"]);
+                return;
+            }
+            if (password.length < 6) {
+                showAlert("Error", translations[language]["password-length"]);
                 return;
             }
 
-            loadingOverlay.style.display = 'flex';
-            loginButton.disabled = true;
-
+            loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.get(API_URL, { params: { username, password } });
-                const users = response.data;
-                if (users.length > 0) {
-                    const user = users[0];
-                    isLoggedIn = true;
-                    currentUser = user.username;
-                    userRole = user.role;
-                    sessionStorage.setItem('isLoggedIn', 'true');
-                    sessionStorage.setItem('currentUser', user.username);
-                    sessionStorage.setItem('userRole', user.role);
-                    sessionStorage.setItem('loginTime', Date.now());
-                    closeModal('loginModal');
-                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng nhập thành công!' : 'Login successful!');
-                    updateUI();
-                    startSessionTimer();
-                    updateSessionTime();
-                    loadNotifications();
-                    showWelcomeNotification();
+                const response = await axios.post(API_URL, null, { params: { action: "register", username, password, email } });
+                const result = response.data;
+                if (result.success) {
+                    showOTPForm(username, password, email);
                 } else {
-                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu không đúng!' : 'Incorrect username or password!');
+                    showAlert("Error", result.message);
                 }
             } catch (error) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', error.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!'));
+                showAlert("Error", translations[language]["server-error"]);
             } finally {
-                loadingOverlay.style.display = 'none';
-                loginButton.disabled = false;
+                loadingOverlay.style.display = "none";
             }
         }
 
-        function showWelcomeNotification() {
-            notifications.unshift({
-                id: Date.now(),
-                text: `${language === 'vi' ? 'Chào mừng' : 'Welcome'} ${currentUser} ${language === 'vi' ? 'đến hệ thống!' : 'to the system!'}`,
-                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')
-            });
-            loadNotifications();
+        // Hiển thị form OTP
+        function showOTPForm(username, password, email) {
+            const modalContent = document.querySelector("#loginModal .modal-content");
+            modalContent.innerHTML = `
+                <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="spinner"></div>
+                </div>
+                <h2 data-lang="otp-title">${translations[language]["otp-title"]}</h2>
+                <p data-lang="otp-subtitle">${translations[language]["otp-subtitle"]}</p>
+                <form onsubmit="verifyOTP(event, '${username}', '${password}', '${email}')">
+                    <div class="input-group">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="text" id="otpInput" placeholder="${translations[language]["otp"]}" required>
+                    </div>
+                    <button type="submit" data-lang="verify-btn"><i class="fas fa-check"></i> ${translations[language]["verify-btn"]}</button>
+                </form>
+                <div class="modal-links">
+                    <span onclick="showForm('registerForm')" data-lang="back-to-register">${translations[language]["back-to-register"]}</span>
+                </div>
+            `;
+            openModal("loginModal");
         }
 
+        // Xác minh OTP
+        async function verifyOTP(e, username, password, email) {
+            e.preventDefault();
+            const otpInput = document.getElementById("otpInput").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            if (!otpInput) {
+                showAlert("Error", translations[language]["enter-otp"]);
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "verifyOTP", username, otp: otpInput } });
+                const result = response.data;
+                if (result.success) {
+                    isLoggedIn = true;
+                    currentUser = result.username;
+                    userRole = result.role || "employee";
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    sessionStorage.setItem("currentUser", result.username);
+                    sessionStorage.setItem("userRole", userRole);
+                    sessionStorage.setItem("sessionStartTime", Date.now());
+                    closeModal("loginModal");
+                    showAlert("Success", translations[language]["register-success"]);
+                    updateUI();
+                    renderNotifications();
+                } else {
+                    showAlert("Error", result.message);
+                }
+            } catch (error) {
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
+            }
+        }
+
+        // Đăng nhập
+        async function login(e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            if (!username || !password) {
+                showAlert("Error", translations[language]["fill-all-fields"]);
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
+                const result = response.data;
+                if (result.success) {
+                    isLoggedIn = true;
+                    currentUser = result.username;
+                    userRole = result.role || "employee";
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    sessionStorage.setItem("currentUser", result.username);
+                    sessionStorage.setItem("userRole", userRole);
+                    sessionStorage.setItem("sessionStartTime", Date.now());
+                    closeModal("loginModal");
+                    showAlert("Success", translations[language]["login-success"]);
+                    updateUI();
+                    renderNotifications();
+                } else {
+                    showAlert("Error", result.message);
+                }
+            } catch (error) {
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
+            }
+        }
+
+        // Đổi mật khẩu
+        async function changePassword(e) {
+            e.preventDefault();
+            const username = document.getElementById("changeUsername").value.trim();
+            const oldPassword = document.getElementById("oldPassword").value.trim();
+            const newPassword = document.getElementById("newPassword").value.trim();
+            const confirmPassword = document.getElementById("confirmPassword").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            if (!username || !oldPassword || !newPassword || !confirmPassword) {
+                showAlert("Error", translations[language]["fill-all-fields"]);
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showAlert("Error", translations[language]["password-mismatch"]);
+                return;
+            }
+            if (newPassword.length < 6) {
+                showAlert("Error", translations[language]["password-length"]);
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "changePassword", username, oldPassword, newPassword } });
+                const result = response.data;
+                if (result.success) {
+                    closeModal("loginModal");
+                    showAlert("Success", translations[language]["password-changed"]);
+                } else {
+                    showAlert("Error", result.message);
+                }
+            } catch (error) {
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
+            }
+        }
+
+        // Quên mật khẩu
+        async function forgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById("forgotEmail").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            if (!email) {
+                showAlert("Error", translations[language]["fill-all-fields"]);
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "forgotPassword", email } });
+                const result = response.data;
+                if (result.success) {
+                    showResetPasswordWithOTPForm(result.username);
+                    showAlert("Success", translations[language]["otp-sent"]);
+                } else {
+                    showAlert("Error", result.message);
+                }
+            } catch (error) {
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
+            }
+        }
+
+        // Hiển thị form đặt lại mật khẩu với OTP
+        function showResetPasswordWithOTPForm(username) {
+            showForm('resetPasswordWithOTPForm');
+            document.getElementById("resetUsername").value = username;
+        }
+
+        // Đặt lại mật khẩu với OTP
+        async function resetPasswordWithOTP(e) {
+            e.preventDefault();
+            const username = document.getElementById("resetUsername").value.trim();
+            const otp = document.getElementById("resetOTP").value.trim();
+            const newPassword = document.getElementById("resetNewPassword").value.trim();
+            const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
+            const loadingOverlay = document.getElementById("loadingOverlay");
+
+            if (!username || !otp || !newPassword || !confirmPassword) {
+                showAlert("Error", translations[language]["fill-all-fields"]);
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                showAlert("Error", translations[language]["password-mismatch"]);
+                return;
+            }
+            if (newPassword.length < 6) {
+                showAlert("Error", translations[language]["password-length"]);
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "resetPassword", username, otp, newPassword } });
+                const result = response.data;
+                if (result.success) {
+                    closeModal("loginModal");
+                    showAlert("Success", translations[language]["password-reset-success"]);
+                    showForm('loginForm');
+                } else {
+                    showAlert("Error", result.message);
+                }
+            } catch (error) {
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
+            }
+        }
+
+        // Đăng xuất
         function logout() {
             isLoggedIn = false;
-            currentUser = '';
-            userRole = 'employee';
+            currentUser = "";
+            userRole = "employee";
             sessionStorage.clear();
-            clearTimeout(sessionTimer);
-            clearInterval(sessionInterval);
-            window.location.href = 'index.html';
             updateUI();
+            showAlert("Notice", translations[language]["logout-success"]);
         }
 
-        let sessionTimer, sessionInterval;
-        function startSessionTimer() {
-            const loginTime = parseInt(sessionStorage.getItem('loginTime')) || Date.now();
-            const timeElapsed = Date.now() - loginTime;
-            if (timeElapsed >= sessionTimeout) {
-                logout();
-                showAlert(language === 'vi' ? 'Hết Phiên' : 'Session Expired', language === 'vi' ? 'Phiên đăng nhập đã hết hạn!' : 'Your session has expired!');
-            } else {
-                sessionTimer = setTimeout(() => {
-                    logout();
-                    showAlert(language === 'vi' ? 'Hết Phiên' : 'Session Expired', language === 'vi' ? 'Phiên đăng nhập đã hết hạn!' : 'Your session has expired!');
-                }, sessionTimeout - timeElapsed);
-                sessionInterval = setInterval(updateSessionTime, 1000);
-            }
-        }
-
-        function updateSessionTime() {
-            const loginTime = parseInt(sessionStorage.getItem('loginTime')) || Date.now();
-            const timeLeft = sessionTimeout - (Date.now() - loginTime);
-            if (timeLeft <= 0) return;
-            const minutes = Math.floor(timeLeft / 60000);
-            const seconds = Math.floor((timeLeft % 60000) / 1000);
-            document.getElementById('sessionTime').textContent = `${language === 'vi' ? 'Phiên' : 'Session'}: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        }
-
-        function checkLogin(event, action, param = null) {
-            if (!isLoggedIn) {
-                event.preventDefault();
-                openModal('loginModal');
-                return false;
-            }
-            switch (action) {
-                case 'navigate': window.location.href = param; break;
-            }
-            return true;
-        }
-
+        // Toggle menu mobile
         function toggleMenu() {
-            const menu = document.querySelector('.menu');
-            if (isLoggedIn) menu.classList.toggle('active');
+            document.querySelector(".menu").classList.toggle("active");
         }
 
+        // Mở modal
         function openModal(id) {
             const modal = document.getElementById(id);
-            const content = modal.querySelector('.modal-content');
-            modal.style.display = 'flex';
-            setTimeout(() => content.classList.add('active'), 10);
+            const content = modal.querySelector(".modal-content");
+            modal.style.display = "flex";
+            setTimeout(() => content.classList.add("active"), 10);
         }
 
+        // Đóng modal
         function closeModal(id) {
             const modal = document.getElementById(id);
-            const content = modal.querySelector('.modal-content');
-            content.classList.remove('active');
-            setTimeout(() => modal.style.display = 'none', 300);
-            showForm('loginForm');
+            const content = modal.querySelector(".modal-content");
+            content.classList.remove("active");
+            setTimeout(() => {
+                modal.style.display = "none";
+                if (id === "loginModal") resetModalToLogin();
+            }, 300);
         }
 
-        window.onclick = (e) => {
-            const modals = document.getElementsByClassName('modal');
-            for (let modal of modals) if (e.target == modal) closeModal(modal.id);
-        };
+        // Reset modal về form đăng nhập
+        function resetModalToLogin() {
+            const modalContent = document.querySelector("#loginModal .modal-content");
+            modalContent.innerHTML = `
+                <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="spinner"></div>
+                </div>
+                <div id="loginForm">
+                    <h2 data-lang="login-title">${translations[language]["login-title"]}</h2>
+                    <p data-lang="login-subtitle">${translations[language]["login-subtitle"]}</p>
+                    <form onsubmit="login(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" placeholder="${translations[language]["password"]}" required data-lang-placeholder="password">
+                        </div>
+                        <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> ${translations[language]["login-btn"]}</button>
+                    </form>
+                    <div class="modal-links">
+                        <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">${translations[language]["reset-password"]}</span>
+                        <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">${translations[language]["forgot-password"]}</span>
+                    </div>
+                    <span class="register-link" onclick="showForm('registerForm')" data-lang="register">${translations[language]["register"]}</span>
+                </div>
+                <div id="resetPasswordForm" style="display: none;">
+                    <h2 data-lang="reset-password-title">${translations[language]["reset-password-title"]}</h2>
+                    <p data-lang="reset-password-subtitle">${translations[language]["reset-password-subtitle"]}</p>
+                    <form onsubmit="changePassword(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="changeUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="oldPassword" placeholder="${translations[language]["old-password"]}" required data-lang-placeholder="old-password">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="newPassword" placeholder="${translations[language]["new-password"]}" required data-lang-placeholder="new-password">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="confirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
+                        </div>
+                        <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> ${translations[language]["change-password-btn"]}</button>
+                    </form>
+                    <div class="modal-links">
+                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
+                    </div>
+                </div>
+                <div id="registerForm" style="display: none;">
+                    <h2 data-lang="register-title">${translations[language]["register-title"]}</h2>
+                    <p data-lang="register-subtitle">${translations[language]["register-subtitle"]}</p>
+                    <form onsubmit="register(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="regUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="regPassword" placeholder="${translations[language]["password"]}" required data-lang-placeholder="password">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="regConfirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="regEmail" placeholder="${translations[language]["email"]}" required data-lang-placeholder="email">
+                        </div>
+                        <button type="submit" data-lang="register-btn"><i class="fas fa-user-plus"></i> ${translations[language]["register-btn"]}</button>
+                    </form>
+                    <div class="modal-links">
+                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
+                    </div>
+                </div>
+                <div id="forgotPasswordForm" style="display: none;">
+                    <h2 data-lang="forgot-password-title">${translations[language]["forgot-password-title"]}</h2>
+                    <p data-lang="forgot-password-subtitle">${translations[language]["forgot-password-subtitle"]}</p>
+                    <form onsubmit="forgotPassword(event)">
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="forgotEmail" placeholder="${translations[language]["email"]}" required data-lang-placeholder="email">
+                        </div>
+                        <button type="submit" data-lang="send-otp-btn"><i class="fas fa-paper-plane"></i> ${translations[language]["send-otp-btn"]}</button>
+                    </form>
+                    <div class="modal-links">
+                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
+                    </div>
+                </div>
+                <div id="resetPasswordWithOTPForm" style="display: none;">
+                    <h2 data-lang="reset-password-otp-title">${translations[language]["reset-password-otp-title"]}</h2>
+                    <p data-lang="reset-password-otp-subtitle">${translations[language]["reset-password-otp-subtitle"]}</p>
+                    <form onsubmit="resetPasswordWithOTP(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="resetUsername" placeholder="${translations[language]["username"]}" required data-lang-placeholder="username">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="text" id="resetOTP" placeholder="${translations[language]["otp"]}" required data-lang-placeholder="otp">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="resetNewPassword" placeholder="${translations[language]["new-password"]}" required data-lang-placeholder="new-password">
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="resetConfirmPassword" placeholder="${translations[language]["confirm-password"]}" required data-lang-placeholder="confirm-password">
+                        </div>
+                        <button type="submit" data-lang="reset-password-btn"><i class="fas fa-key"></i> ${translations[language]["reset-password-btn"]}</button>
+                    </form>
+                    <div class="modal-links">
+                        <span onclick="showForm('loginForm')" data-lang="back-to-login">${translations[language]["back-to-login"]}</span>
+                    </div>
+                </div>
+            `;
+            showForm("loginForm");
+        }
 
+        // Hiển thị thông báo
         function showAlert(title, message) {
-            document.getElementById('alertTitle').textContent = title;
-            document.getElementById('alertMessage').textContent = message;
-            openModal('alertModal');
+            document.getElementById("alertTitle").textContent = title;
+            document.getElementById("alertMessage").textContent = message;
+            openModal("alertModal");
         }
 
-        function showContactAdmin() {
-            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', translations[language]["contact-admin"]);
-        }
-
+        // Chuyển đổi sáng/tối
         function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.querySelector('.dark-mode-btn i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        }
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.querySelector('.dark-mode-btn i').classList.replace('fa-moon', 'fa-sun');
+            document.body.classList.toggle("dark-mode");
+            const icon = document.querySelector(".dark-mode-btn i");
+            icon.classList.toggle("fa-moon");
+            icon.classList.toggle("fa-sun");
+            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
         }
 
+        // Chuyển đổi ngôn ngữ
         function toggleLanguage() {
-            language = language === 'vi' ? 'en' : 'vi';
-            localStorage.setItem('language', language);
-            document.getElementById('languageBtn').textContent = language === 'vi' ? 'EN' : 'VI';
+            language = language === "vi" ? "en" : "vi";
+            localStorage.setItem("language", language);
+            document.getElementById("languageBtn").textContent = language === "vi" ? "EN" : "VI";
             updateLanguage();
             updateUI();
         }
 
+        // Cập nhật ngôn ngữ
         function updateLanguage() {
-            document.querySelectorAll('[data-lang]').forEach(element => {
-                const key = element.getAttribute('data-lang');
-                element.textContent = translations[language][key];
+            document.querySelectorAll("[data-lang]").forEach(element => {
+                const key = element.getAttribute("data-lang");
+                if (translations[language][key]) element.textContent = translations[language][key];
             });
-            document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
-                const key = element.getAttribute('data-lang-placeholder');
-                element.placeholder = translations[language][key];
-            });
-        }
-
-        function loadNotifications() {
-            const list = document.getElementById('notificationList');
-            list.innerHTML = '';
-            notifications.forEach(notif => {
-                list.innerHTML += `
-                    <div class="notification-item" data-text="${notif.text.toLowerCase()}">
-                        ${notif.date}: ${notif.text}
-                        <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === 'vi' ? 'Xóa' : 'Delete'}</button>
-                    </div>`;
-            });
-            sessionStorage.setItem('notifications', JSON.stringify(notifications));
-        }
-
-        function filterNotifications() {
-            const query = document.getElementById('notificationSearch').value.toLowerCase();
-            document.querySelectorAll('.notification-item').forEach(item => {
-                item.style.display = item.dataset.text.includes(query) ? 'flex' : 'none';
+            document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
+                const key = element.getAttribute("data-lang-placeholder");
+                if (translations[language][key]) element.placeholder = translations[language][key];
             });
         }
 
+        // Hiển thị form
+        function showForm(formName) {
+            ["loginForm", "resetPasswordForm", "registerForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(form => {
+                const formElement = document.getElementById(form);
+                if (formElement) formElement.style.display = form === formName ? "block" : "none";
+            });
+        }
+
+        // Làm mới dashboard
         function refreshDashboard() {
-            document.getElementById('salesData').textContent = `${Math.floor(Math.random() * 10) + 50} ${language === 'vi' ? 'xe (Tháng 3/2025)' : 'vehicles (March 2025)'}`;
-            document.getElementById('ordersData').textContent = `${Math.floor(Math.random() * 5) + 10} ${language === 'vi' ? 'đơn' : 'orders'}`;
-            notifications.unshift({
-                id: Date.now(),
-                text: language === 'vi' ? 'Dữ liệu đã làm mới' : 'Data refreshed',
-                date: new Date().toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US')
+            document.getElementById("salesData").textContent = `${Math.floor(Math.random() * 10) + 50} xe (Tháng 3/2025)`;
+            document.getElementById("ordersData").textContent = `${Math.floor(Math.random() * 5) + 10} đơn`;
+            notifications.push({
+                id: notifications.length + 1,
+                message: translations[language]["data-refreshed"],
+                timestamp: new Date().toISOString().slice(0, 16).replace("T", " ")
             });
-            loadNotifications();
-            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã làm mới dữ liệu!' : 'Data refreshed!');
+            renderNotifications();
+            showAlert("Notice", translations[language]["data-refreshed"]);
         }
 
+        // Hiển thị thông báo
+        function renderNotifications() {
+            const list = document.getElementById("notificationList");
+            list.innerHTML = notifications.map(notif => `
+                <div class="notification-item">
+                    <span>${notif.message} (${notif.timestamp})</span>
+                    <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === "vi" ? "Xóa" : "Delete"}</button>
+                </div>
+            `).join("");
+        }
+
+        // Xóa thông báo
         function deleteNotification(id) {
             notifications = notifications.filter(notif => notif.id !== id);
-            loadNotifications();
-            showAlert(language === 'vi' ? 'Thông Báo' : 'Notification', language === 'vi' ? 'Đã xóa thông báo!' : 'Notification deleted!');
+            renderNotifications();
         }
 
-        function showForm(formName) {
-            currentForm = formName;
-            const forms = ['loginForm', 'resetPasswordForm', 'registerForm'];
-            forms.forEach(form => document.getElementById(form).style.display = form === formName ? 'block' : 'none');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('changeUsername').value = '';
-            document.getElementById('oldPassword').value = '';
-            document.getElementById('newPassword').value = '';
-            document.getElementById('confirmPassword').value = '';
-            document.getElementById('regUsername').value = '';
-            document.getElementById('regPassword').value = '';
-            document.getElementById('regConfirmPassword').value = '';
-        }
-
-        async function changePassword(e) {
-            e.preventDefault();
-            const username = document.getElementById('changeUsername').value.trim();
-            const oldPassword = document.getElementById('oldPassword').value.trim();
-            const newPassword = document.getElementById('newPassword').value.trim();
-            const confirmPassword = document.getElementById('confirmPassword').value.trim();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-
-            if (!username || !oldPassword || !newPassword || !confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
-                return;
-            }
-            if (newPassword !== confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới không khớp!' : 'New passwords do not match!');
-                return;
-            }
-            if (newPassword.length < 6) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu mới phải dài ít nhất 6 ký tự!' : 'New password must be at least 6 characters!');
-                return;
-            }
-
-            loadingOverlay.style.display = 'flex';
-            try {
-                const response = await axios.get(API_URL, {
-                    params: { username, oldPassword, newPassword, action: 'changePassword' }
-                });
-                const result = response.data;
-                if (result.success) {
-                    closeModal('loginModal');
-                    showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đổi mật khẩu thành công!' : 'Password changed successfully!');
-                } else {
-                    showAlert(language === 'vi' ? 'Lỗi' : 'Error', result.message || (language === 'vi' ? 'Tên đăng nhập hoặc mật khẩu cũ không đúng!' : 'Username or old password is incorrect!'));
-                }
-            } catch (error) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', error.message || (language === 'vi' ? 'Không thể kết nối đến server!' : 'Cannot connect to server!'));
-            } finally {
-                loadingOverlay.style.display = 'none';
-            }
-        }
-
-        async function register(e) {
-            e.preventDefault();
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
-            const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-
-            if (!username || !password || !confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Vui lòng nhập đầy đủ thông tin!' : 'Please fill in all fields!');
-                return;
-            }
-            if (password !== confirmPassword) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu không khớp!' : 'Passwords do not match!');
-                return;
-            }
-            if (password.length < 6) {
-                showAlert(language === 'vi' ? 'Lỗi' : 'Error', language === 'vi' ? 'Mật khẩu phải dài ít nhất 6 ký tự!' : 'Password must be at least 6 characters!');
-                return;
-            }
-
-            loadingOverlay.style.display = 'flex';
-            setTimeout(() => {
-                loadingOverlay.style.display = 'none';
-                closeModal('loginModal');
-                showAlert(language === 'vi' ? 'Thành Công' : 'Success', language === 'vi' ? 'Đăng ký thành công! Vui lòng đăng nhập.' : 'Registration successful! Please log in.');
-            }, 1000);
+        // Lọc thông báo
+        function filterNotifications() {
+            const search = document.getElementById("notificationSearch").value.toLowerCase();
+            const filtered = notifications.filter(notif => notif.message.toLowerCase().includes(search));
+            const list = document.getElementById("notificationList");
+            list.innerHTML = filtered.map(notif => `
+                <div class="notification-item">
+                    <span>${notif.message} (${notif.timestamp})</span>
+                    <button class="delete-btn" onclick="deleteNotification(${notif.id})">${language === "vi" ? "Xóa" : "Delete"}</button>
+                </div>
+            `).join("");
         }
     </script>
 </body>
