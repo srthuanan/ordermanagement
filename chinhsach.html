@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Thêm CSP để cho phép Google API -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com; object-src 'none';">
     <title>Tài Liệu - Chính Sách</title>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Giữ nguyên CSS của bạn -->
- <style>
+    <style>
+        /* Giữ nguyên toàn bộ CSS của bạn */
         .thumbnail-container {
             text-align: center;
             margin-bottom: 15px;
@@ -759,8 +761,8 @@
                     gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
                     updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
                 }).catch(function(error) {
-                    showNotification("Lỗi khởi tạo Google API: " + error.message, 3000);
-                    console.error("Lỗi khởi tạo:", error);
+                    console.error("Chi tiết lỗi khởi tạo:", error);
+                    showNotification("Lỗi khởi tạo Google API: " + (error.details || error.message || "Không xác định"), 5000);
                 });
             });
         }
@@ -768,6 +770,7 @@
         function updateSigninStatus(isSignedIn) {
             if (isSignedIn) {
                 token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+                console.log("Access Token:", token);
                 if (!token) {
                     showNotification("Không thể lấy token, vui lòng thử lại!", 3000);
                     return;
@@ -809,6 +812,7 @@
                 pageSize: 100
             }).then(function(response) {
                 const files = response.result.files || [];
+                console.log("Dữ liệu từ Google Drive:", files);
                 if (!files.length) {
                     document.getElementById("table-body").innerHTML = `<tr><td colspan="5">Thư mục trống hoặc không có quyền truy cập.</td></tr>`;
                     showNotification("Không có dữ liệu trong thư mục!", 3000);
@@ -829,7 +833,8 @@
                 spinner.style.display = 'none';
             }).catch(function(error) {
                 spinner.style.display = 'none';
-                let errorMsg = error.message || "Lỗi không xác định khi tải dữ liệu!";
+                let errorMsg = error.message || "Lỗi không xác định!";
+                if (error.status === 400) errorMsg = "Yêu cầu không hợp lệ, kiểm tra FOLDER_ID!";
                 if (error.status === 403) errorMsg = "Không có quyền truy cập thư mục!";
                 if (error.status === 404) errorMsg = "Thư mục không tồn tại!";
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
