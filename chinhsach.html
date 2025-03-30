@@ -1,1 +1,1099 @@
-A
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cập nhật CSP để cho phép gọi GAS API -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com; object-src 'none';">
+    <title>Tài Liệu - Chính Sách</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Giữ nguyên toàn bộ CSS của bạn */
+        .thumbnail-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .thumbnail-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease;
+        }
+        .thumbnail-container img:hover {
+            transform: scale(1.05);
+        }
+        body.dark-mode .thumbnail-container img {
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+        .no-thumbnail {
+            font-style: italic;
+            color: #666;
+        }
+        body.dark-mode .no-thumbnail {
+            color: #999;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #f0f4f8;
+            color: #1a1a1a;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: #003087;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 15px 15px;
+            z-index: 1000;
+        }
+        body.dark-mode .navbar {
+            background: #003087;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .navbar .logo h1 {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .navbar .title {
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: 400;
+            margin-left: 15px;
+        }
+        body.dark-mode .navbar .logo h1,
+        body.dark-mode .navbar .title {
+            color: #ffffff;
+        }
+        .navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+        .nav-btn {
+            position: relative;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            background: #003087;
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+        .nav-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+        body.dark-mode .nav-btn {
+            background: #003087;
+            color: #ffffff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        body.dark-mode .nav-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        .nav-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .nav-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .nav-btn:hover::after, .nav-btn:hover::before {
+            opacity: 1;
+        }
+        body.dark-mode .nav-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+        body.dark-mode .nav-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+        .theme-toggle {
+            margin-left: 10px;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        body.dark-mode .theme-toggle {
+            color: #ffffff;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.2);
+        }
+        .main-container {
+            display: flex;
+            margin-top: 60px;
+            padding: 15px;
+            gap: 15px;
+            height: calc(100vh - 80px);
+        }
+        .grid-container {
+            flex: 2;
+            background: #f0f4f8;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .grid-container {
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .search-container input {
+            padding: 10px 15px;
+            width: 100%;
+            max-width: 250px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            font-size: 12px;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
+            outline: none;
+        }
+        body.dark-mode .search-container input {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        body.dark-mode .search-container input:focus {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(50, 50, 50, 0.6);
+        }
+        .export-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .total-count-container {
+            text-align: center;
+            font-size: 12px;
+            color: #1a1a1a;
+        }
+        body.dark-mode .total-count-container {
+            color: #e0e0e0;
+        }
+        .export-btn {
+            position: relative;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            color: #003087;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+        .export-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+        .refresh-btn {
+            background: #f0f4f8;
+            color: #28a745;
+        }
+        .refresh-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        body.dark-mode .refresh-btn {
+            color: #28a745;
+        }
+        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        .export-btn[data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .export-btn[data-tooltip]::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .export-btn:hover::after, .export-btn:hover::before {
+            opacity: 1;
+        }
+        body.dark-mode .export-btn[data-tooltip]::after {
+            background: #66b0ff;
+        }
+        body.dark-mode .export-btn[data-tooltip]::before {
+            border-top-color: #66b0ff;
+        }
+        .table-container {
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+            overflow-x: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #003087;
+            border-radius: 10px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #001f5f;
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+        table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 6px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #000099;
+            color: #FFFFFF;
+            font-weight: 700;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+        }
+        td {
+            background: #f0f4f8;
+            color: #1a1a1a;
+        }
+        body.dark-mode th {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+        body.dark-mode td {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border-bottom: 1px solid #555;
+        }
+        .link-highlight {
+            background: #e6f0ff;
+            font-weight: 700;
+            color: #003087;
+        }
+        body.dark-mode .link-highlight {
+            background: #4a6fa5;
+            color: #ffffff;
+        }
+        tbody tr:hover {
+            background: #e8eef4;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        body.dark-mode tbody tr:hover {
+            background: #222;
+        }
+        tbody tr.selected {
+            background: #cce5ff;
+            font-weight: 700;
+        }
+        body.dark-mode tbody tr.selected {
+            background: #5a7fb5;
+        }
+        .detail-panel {
+            flex: 1;
+            background: #f0f4f8;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        body.dark-mode .detail-panel {
+            background: #1a1a1a;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+        .detail-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .detail-panel::-webkit-scrollbar-track {
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+        .detail-panel::-webkit-scrollbar-thumb {
+            background: #003087;
+            border-radius: 10px;
+        }
+        .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #001f5f;
+        }
+        body.dark-mode .detail-panel::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
+            background: #66b0ff;
+        }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover {
+            background: #4a90e2;
+        }
+        .detail-panel h3 {
+            font-size: 18px;
+            color: #003087;
+            margin-bottom: 15px;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            background: #f0f4f8;
+            z-index: 10;
+        }
+        body.dark-mode .detail-panel h3 {
+            color: #66b0ff;
+            background: #1a1a1a;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .detail-table th {
+            background: #f0f4f8;
+            color: #1a1a1a;
+            text-align: left;
+            padding: 10px;
+            font-weight: 400;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
+        }
+        body.dark-mode .detail-table th {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
+        }
+        .detail-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        body.dark-mode .detail-table td {
+            border-bottom: 1px solid #555;
+            color: #e0e0e0;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .pagination button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f4f8;
+            color: #003087;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            transform: translateY(2px);
+        }
+        body.dark-mode .pagination button {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        body.dark-mode .pagination button:hover {
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination span {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #003087;
+        }
+        body.dark-mode .pagination span {
+            color: #66b0ff;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #003087;
+            color: #ffffff;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 10px;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+        }
+        body.dark-mode footer {
+            background: #003087;
+            color: #ffffff;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        }
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .loading-spinner .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #003087;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        body.dark-mode .loading-spinner .spinner {
+            border: 4px solid #555;
+            border-top: 4px solid #66b0ff;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 8px 15px;
+            background: #f0f4f8;
+            color: #003087;
+            border-radius: 10px;
+            display: none;
+            z-index: 10001;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+        body.dark-mode #notification {
+            background: #1a1a1a;
+            color: #66b0ff;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 10px;
+                height: 50px;
+            }
+            .navbar .logo h1 {
+                font-size: 16px;
+            }
+            .navbar .title {
+                font-size: 12px;
+                margin-left: 10px;
+            }
+            .theme-toggle {
+                font-size: 14px;
+                padding: 5px;
+            }
+            .main-container {
+                flex-direction: column;
+                padding: 10px;
+                margin-top: 50px;
+                height: calc(100vh - 70px);
+            }
+            .grid-container {
+                padding: 10px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .search-container input {
+                max-width: 100%;
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+            .export-btn-container {
+                align-items: center;
+                width: 100%;
+            }
+            .button-group {
+                gap: 10px;
+            }
+            .export-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+            .export-btn[data-tooltip]::after {
+                font-size: 10px;
+                top: -30px;
+                padding: 4px 8px;
+            }
+            .export-btn[data-tooltip]::before {
+                top: -6px;
+                border-width: 3px;
+            }
+            .total-count-container {
+                font-size: 11px;
+            }
+            .table-container {
+                max-height: calc(100vh - 260px);
+            }
+            table {
+                font-size: 11px;
+            }
+            th, td {
+                padding: 5px;
+            }
+            .detail-panel {
+                margin-top: 15px;
+                max-height: calc(100vh - 260px);
+                padding: 10px;
+            }
+            .detail-panel h3 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>VinFast Thuận An</h1>
+            <span class="title">Tài Liệu & Chính Sách</span>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+            <!-- Bỏ nút đăng xuất vì không cần OAuth nữa -->
+        </div>
+    </div>
+    <div class="main-container">
+        <div class="grid-container">
+            <div class="controls">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Tìm kiếm...">
+                </div>
+                <div class="export-btn-container">
+                    <div class="button-group">
+                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                        <button class="nav-btn" onclick="document.getElementById('file-upload').click()" data-tooltip="Tải lên"><i class="fas fa-upload"></i></button>
+                        <input type="file" id="file-upload" style="display: none;" onchange="uploadFile(this.files)">
+                    </div>
+                    <div class="total-count-container">
+                        Tổng số lượng: <span id="total-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="data-table">
+                    <thead id="table-head">
+                        <tr>
+                            <th>SỐ TT</th>
+                            <th>TÊN TÀI LIỆU</th>
+                            <th>NGÀY TẢI LÊN</th>
+                            <th>NGƯỜI TẢI LÊN</th>
+                            <th>LIÊN KẾT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+        <div class="detail-panel" id="detail-panel">
+            <h3>Chi Tiết Tài Liệu</h3>
+            <div id="detail-body"></div>
+        </div>
+    </div>
+    <footer>
+        © 2025 VinFast Minh Đạo Thuận An
+    </footer>
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+    <div id="notification"></div>
+
+    <script>
+        // Thay bằng URL của GAS Web App mà bạn đã triển khai
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzZgsN6LrJBBqgFb0TLY-Q6zjq-i7otbiINqAoSB1ql3M97OS72lzNIO9K6JrWAEbrf/exec'; // Ví dụ: https://script.google.com/macros/s/abc123/exec
+
+        let tableData = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadInitialData();
+            setupSearch();
+            setupScrollSync();
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+
+        // Tải danh sách file từ GAS
+        function loadInitialData() {
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
+
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: 'listFiles' })
+            })
+            .then(response => response.json())
+            .then(result => {
+                spinner.style.display = 'none';
+                if (result.status === 'success') {
+                    const files = result.data || [];
+                    console.log("Dữ liệu từ GAS:", files);
+                    if (!files.length) {
+                        document.getElementById("table-body").innerHTML = `<tr><td colspan="5">Thư mục trống hoặc không có quyền truy cập.</td></tr>`;
+                        showNotification("Không có dữ liệu trong thư mục!", 3000);
+                    } else {
+                        tableData = files.map(function(file) {
+                            return [
+                                file.name,
+                                new Date(file.createdTime).toLocaleString('vi-VN'),
+                                file.owner,
+                                file.webViewLink,
+                                file.thumbnailLink || ''
+                            ];
+                        });
+                        renderTable(tableData);
+                        highlightLinks();
+                        showNotification("Dữ liệu đã được tải thành công!", 2000);
+                    }
+                } else {
+                    document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${result.message}</td></tr>`;
+                    showNotification(result.message, 3000);
+                }
+            })
+            .catch(error => {
+                spinner.style.display = 'none';
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ Lỗi kết nối với GAS!</td></tr>`;
+                showNotification("Lỗi kết nối với GAS: " + error.message, 3000);
+                console.error("Lỗi tải dữ liệu:", error);
+            });
+        }
+
+        // Tải file lên Google Drive qua GAS
+        function uploadFile(files) {
+            if (!files || !files.length) {
+                showNotification("Vui lòng chọn file để tải lên!", 3000);
+                return;
+            }
+
+            const file = files[0];
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            if (file.size > MAX_SIZE) {
+                showNotification("File quá lớn! Giới hạn là 10MB.", 3000);
+                return;
+            }
+
+            const spinner = document.querySelector('.loading-spinner');
+            spinner.style.display = 'block';
+
+            // Đọc file dưới dạng Base64
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Content = event.target.result.split(',')[1]; // Lấy phần Base64 (bỏ header)
+
+                fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'uploadFile',
+                        fileName: file.name,
+                        fileContent: base64Content
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    spinner.style.display = 'none';
+                    document.getElementById("file-upload").value = "";
+                    if (result.status === 'success') {
+                        const uploadedFile = result.data;
+                        tableData.unshift([
+                            uploadedFile.name,
+                            new Date(uploadedFile.createdTime).toLocaleString('vi-VN'),
+                            uploadedFile.owner,
+                            uploadedFile.webViewLink,
+                            uploadedFile.thumbnailLink || ''
+                        ]);
+                        renderTable(tableData);
+                        highlightLinks();
+                        showNotification("Tải lên thành công!", 2000);
+                    } else {
+                        showNotification("Lỗi khi tải lên: " + result.message, 3000);
+                    }
+                })
+                .catch(error => {
+                    spinner.style.display = 'none';
+                    document.getElementById("file-upload").value = "";
+                    showNotification("Lỗi khi tải lên: " + error.message, 3000);
+                    console.error("Lỗi upload:", error);
+                });
+            };
+            reader.onerror = function() {
+                spinner.style.display = 'none';
+                showNotification("Lỗi khi đọc file!", 3000);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderTable(data, page) {
+            if (!Array.isArray(data)) return;
+            page = page || currentPage;
+            
+            const tbody = document.getElementById("table-body");
+            tbody.innerHTML = "";
+            const start = (page - 1) * rowsPerPage;
+            const paginatedData = data.slice(start, start + rowsPerPage);
+            
+            paginatedData.forEach(function(row, index) {
+                const tr = document.createElement("tr");
+                const globalIndex = start + index + 1;
+                tr.innerHTML = `
+                    <td>${globalIndex}</td>
+                    <td>${row[0] || ''}</td>
+                    <td>${row[1] || ''}</td>
+                    <td>${row[2] || ''}</td>
+                    <td>${row[3] ? `<a href="${row[3]}" target="_blank" class="download-link"><i class="fas fa-download"></i></a>` : ''}</td>
+                `;
+                tr.onclick = function() { showDetail(row, globalIndex); };
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("total-count").textContent = data.length;
+            renderPagination(data.length, page);
+            if (data.length > 0) showDetail(data[0], start + 1);
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+            showNotification("Đã quay lại trang chủ!", 2000);
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function renderPagination(totalRows, currentPage) {
+            const paginationDiv = document.getElementById("pagination");
+            paginationDiv.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Trước</button>
+                <span>Trang ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage >= Math.ceil(totalRows / rowsPerPage) ? 'disabled' : ''}>Sau</button>
+            `;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
+            const filteredData = tableData.filter(function(row) {
+                return row.some(function(cell) {
+                    return cell && cell.toString().toLowerCase().includes(searchValue);
+                });
+            });
+            renderTable(filteredData, currentPage);
+            highlightLinks();
+            document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightLinks() {
+            const tableRows = document.querySelectorAll("#table-body tr");
+            tableRows.forEach(function(row) {
+                const linkCell = row.cells[4];
+                if (linkCell && linkCell.textContent.trim() !== "") {
+                    linkCell.classList.add("link-highlight");
+                }
+            });
+        }
+
+        function showDetail(row, index) {
+            const detailBody = document.getElementById("detail-body");
+            const headers = ["TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
+            let html = '<div class="thumbnail-container">';
+            if (row[4]) {
+                const thumbnailUrl = row[4].includes('=s') ? row[4].replace(/=s\d+/, '=s400') : row[4] + '=s400';
+                html += `<img src="${thumbnailUrl}" alt="Thumbnail của ${row[0]}" loading="lazy">`;
+            } else {
+                html += '<p class="no-thumbnail">Không có thumbnail cho tài liệu này.</p>';
+            }
+            html += '</div><table class="detail-table">';
+            row.slice(0, 4).forEach(function(cell, i) {
+                let value = cell || "";
+                if (i === 3 && value) {
+                    value = `<a href="${value}" target="_blank">Bản xem thử của tài liệu</a>`;
+                }
+                const cellClass = (i === 3) ? ' class="link-highlight"' : '';
+                html += `<tr><th>${headers[i]}</th><td${cellClass}>${value}</td></tr>`;
+            });
+            html += "</table>";
+            detailBody.innerHTML = html;
+            const rows = document.querySelectorAll("#table-body tr");
+            rows.forEach(function(row) { row.classList.remove("selected"); });
+            const selectedRowIndex = (index - 1) % rowsPerPage;
+            if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
+        }
+
+        function exportToExcel() {
+            if (typeof XLSX === 'undefined') {
+                showNotification("Không thể xuất Excel do thư viện XLSX chưa tải!", 3000);
+                return;
+            }
+            if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
+                const headers = ["SỐ TT", "TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
+                const wsData = tableData.map(function(row, index) {
+                    const rowData = { "SỐ TT": index + 1 };
+                    row.slice(0, 4).forEach(function(cell, i) {
+                        rowData[headers[i + 1]] = cell || "";
+                    });
+                    return rowData;
+                });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "TaiLieuChinhSach");
+                XLSX.writeFile(wb, `VinFast_TaiLieu_ChinhSach_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                showNotification("Đã xuất file thành công!", 2000);
+            }
+        }
+
+        function printTable() {
+            const now = new Date();
+            const printDateTime = now.toLocaleString('vi-VN', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
+            const table = document.getElementById("data-table");
+            const printContent = `
+                <div style="text-align: center;">
+                    <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
+                    <p>Hotline: 1900 232389</p>
+                    <p>In lúc: ${printDateTime}</p>
+                </div>
+                ${table.outerHTML}
+            `;
+            const win = window.open('', '', 'width=800,height=600');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>In danh sách VinFast - Tài Liệu & Chính Sách</title>
+                    <style>
+                        body { font-family: 'Montserrat', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #000; padding: 8px; }
+                        th { background: #003087; color: #fff; }
+                        .link-highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
+                        .selected { background: #cce5ff; font-weight: 700; }
+                        .download-link { text-decoration: none; color: #003087; }
+                        @media print {
+                            body { margin: 0; }
+                            table { page-break-inside: auto; }
+                            tr { page-break-inside: avoid; page-break-after: auto; }
+                        }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
+        function refreshData() {
+            loadInitialData();
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+
+        function setupSearch() {
+            document.getElementById("search-input").addEventListener("input", debounce(function() {
+                const searchValue = this.value.trim().toLowerCase();
+                const filteredData = tableData.filter(function(row) {
+                    return row.some(function(cell) {
+                        return cell && cell.toString().toLowerCase().includes(searchValue);
+                    });
+                });
+                currentPage = 1;
+                renderTable(filteredData);
+                highlightLinks();
+                document.getElementById("total-count").textContent = filteredData.length;
+            }, 300));
+        }
+
+        function setupScrollSync() {
+            const tableContainer = document.querySelector('.table-container');
+            const detailPanel = document.getElementById("detail-panel");
+            let isTableScrolling = false;
+            let isDetailScrolling = false;
+            tableContainer.addEventListener('scroll', function() {
+                if (!isDetailScrolling) {
+                    isTableScrolling = true;
+                    detailPanel.scrollTop = tableContainer.scrollTop;
+                    setTimeout(function() { isTableScrolling = false; }, 100);
+                }
+            });
+            detailPanel.addEventListener('scroll', function() {
+                if (!isTableScrolling) {
+                    isDetailScrolling = true;
+                    tableContainer.scrollTop = detailPanel.scrollTop;
+                    setTimeout(function() { isDetailScrolling = false; }, 100);
+                }
+            });
+        }
+
+        function showNotification(message, duration) {
+            const notif = document.getElementById("notification");
+            notif.textContent = message;
+            notif.style.display = "block";
+            setTimeout(function() { notif.style.display = "none"; }, duration || 3000);
+        }
+    </script>
+</body>
+</html>
