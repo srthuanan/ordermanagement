@@ -790,18 +790,23 @@
         }
 
         // Cập nhật trạng thái đăng nhập
-        function updateSigninStatus(isSignedIn) {
-            if (isSignedIn) {
-                token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-                loadInitialData();
-            } else {
-                gapi.auth2.getAuthInstance().signIn().catch(error => {
-                    showNotification("Lỗi đăng nhập: " + error.message, 3000);
-                    console.error("Lỗi đăng nhập:", error);
-                });
-            }
+// Trong hàm updateSigninStatus
+function updateSigninStatus(isSignedIn) {
+    if (isSignedIn) {
+        token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+        if (!token) {
+            showNotification("Không thể lấy access token, vui lòng thử lại!", 3000);
+            return;
         }
-
+        loadInitialData();
+    } else {
+        showNotification("Đang yêu cầu đăng nhập...", 2000);
+        gapi.auth2.getAuthInstance().signIn().catch(error => {
+            showNotification("Lỗi đăng nhập: " + error.message, 3000);
+            console.error("Lỗi đăng nhập:", error);
+        });
+    }
+}
         // Khởi động khi DOM loaded
         document.addEventListener("DOMContentLoaded", function () {
             if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
