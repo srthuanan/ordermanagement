@@ -9,9 +9,8 @@
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <!-- Thêm Google API Client Library -->
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta name="google-signin-client_id" content="616285478437-qh8p73ascdn7ijqhjknjko2e7m2fb7vf.apps.googleusercontent.com">
+    <!-- Sử dụng Google Sign-In mới -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         :root {
             --primary-color: #003087;
@@ -841,23 +840,23 @@
         </div>
     </footer>
 
-<script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbx8WHVfjnYdWW34I-VrUZX94Hs3dDuhvrXXneH68Z4DVTkGYKznwkOzc07bYOwjreTN/exec";
-    const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
-    const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
-    const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
-    const CLIENT_ID = "616285478437-qh8p73ascdn7ijqhjknjko2e7m2fb7vf.apps.googleusercontent.com";
-    let gapiInited = false;
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyfLUnwCGFiF73zLcxsszfhN2Wu2cYF6AsjEbQKfq2s0mv3Bs3Sbiz77le2Jcn7fCuy/exec";
+        const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+        const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
+        const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+        const CLIENT_ID = "616285478437-qh8p73ascdn7ijqhjknjko2e7m2fb7vf.apps.googleusercontent.com";
 
-    // Khởi tạo AOS
-    AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
+        // Khởi tạo AOS
+        AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
 
-    // Biến toàn cục
-    let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-    let currentUser = sessionStorage.getItem("currentUser") || "";
-    let userRole = sessionStorage.getItem("userRole") || "employee";
-    let language = localStorage.getItem("language") || "vi";
-    let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
+        // Biến toàn cục
+        let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+        let currentUser = sessionStorage.getItem("currentUser") || "";
+        let userRole = sessionStorage.getItem("userRole") || "employee";
+        let language = localStorage.getItem("language") || "vi";
+        let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
+
         // Dữ liệu dịch ngôn ngữ
         const translations = {
             vi: {
@@ -982,264 +981,91 @@
                 fetchRandomStockData();
                 fetchPairingRequests();
             }
-            // Đảm bảo Google API được tải trước khi gọi onLoad
-            const googleApiScript = document.querySelector('script[src="https://apis.google.com/js/platform.js"]');
-            googleApiScript.onload = () => {
-                onLoad();
-            };
-            googleApiScript.onerror = () => {
-                showAlert("Error", translations[language]["google-api-error"]);
-            };
         });
 
-        // Khởi tạo Google Auth
-        function onLoad() {
-            if (window.gapi) {
-                gapi.load('auth2', function() {
-                    gapi.auth2.init({
-                        client_id: CLIENT_ID,
-                        scope: 'profile email'
-                    }).then(() => {
-                        gapiInited = true;
-                        console.log("Google API đã sẵn sàng");
-                    }).catch(err => {
-                        console.error("Lỗi khi khởi tạo Google API:", err);
-                        showAlert("Error", translations[language]["google-api-error"]);
-                    });
+        // Hàm giải mã JWT để lấy thông tin người dùng
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // Đăng nhập bằng Google với Google Sign-In (GSI)
+        async function signInWithGoogle() {
+            const loadingOverlay = document.getElementById("loadingOverlay");
+            loadingOverlay.style.display = "flex";
+
+            try {
+                // Khởi tạo Google Sign-In
+                google.accounts.id.initialize({
+                    client_id: CLIENT_ID,
+                    callback: handleCredentialResponse
                 });
-            } else {
+
+                // Hiển thị cửa sổ đăng nhập Google
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        showAlert("Error", "Không thể hiển thị cửa sổ đăng nhập Google. Vui lòng kiểm tra cài đặt trình duyệt.");
+                        loadingOverlay.style.display = "none";
+                    }
+                });
+            } catch (error) {
+                console.error("Lỗi khi khởi tạo Google Sign-In:", error);
                 showAlert("Error", translations[language]["google-api-error"]);
+                loadingOverlay.style.display = "none";
             }
         }
 
-        // Đăng nhập bằng Google
-async function signInWithGoogle() {
-        if (!window.gapi || !gapi.auth2) {
-            showAlert("Error", translations[language]["google-api-error"]);
-            return;
-        }
-        if (!gapiInited) {
-            showAlert("Error", "Google API chưa sẵn sàng. Vui lòng thử lại.");
-            return;
-        }
+        // Xử lý phản hồi từ Google Sign-In
+        async function handleCredentialResponse(response) {
+            const loadingOverlay = document.getElementById("loadingOverlay");
+            try {
+                const idToken = response.credential;
+                const profile = parseJwt(idToken);
+                const email = profile.email;
+                const username = email.split('@')[0];
 
-        const loadingOverlay = document.getElementById("loadingOverlay");
-        loadingOverlay.style.display = "flex";
+                // Gửi thông tin tới backend để xác thực
+                const apiResponse = await axios.post(API_URL, {
+                    action: "googleLogin",
+                    idToken: idToken,
+                    username: username,
+                    email: email
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
 
-        try {
-            const googleAuth = gapi.auth2.getAuthInstance();
-            const googleUser = await googleAuth.signIn();
-
-            const profile = googleUser.getBasicProfile();
-            const idToken = googleUser.getAuthResponse().id_token;
-            const email = profile.getEmail();
-            const username = email.split('@')[0];
-
-            // Gửi thông tin tới backend mới
-            const response = await axios.post(API_URL, {
-                action: "googleLogin",
-                idToken: idToken,
-                username: username,
-                email: email
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            const result = response.data;
-            if (result.success) {
-                isLoggedIn = true;
-                currentUser = result.username;
-                userRole = result.role || "employee";
-                sessionStorage.setItem("isLoggedIn", "true");
-                sessionStorage.setItem("currentUser", result.username);
-                sessionStorage.setItem("userRole", userRole);
-                sessionStorage.setItem("sessionStartTime", Date.now());
-                closeModal("loginModal");
-                showAlert("Success", translations[language]["login-success"]);
-                updateUI();
-                fetchTotalSoldCars();
-                fetchSoldCarsData();
-                fetchRandomStockData();
-                fetchPairingRequests();
-            } else {
-                showAlert("Error", result.message || translations[language]["email-not-allowed"]);
+                const result = apiResponse.data;
+                if (result.success) {
+                    isLoggedIn = true;
+                    currentUser = result.username;
+                    userRole = result.role || "employee";
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    sessionStorage.setItem("currentUser", result.username);
+                    sessionStorage.setItem("userRole", userRole);
+                    sessionStorage.setItem("sessionStartTime", Date.now());
+                    closeModal("loginModal");
+                    showAlert("Success", translations[language]["login-success"]);
+                    updateUI();
+                    fetchTotalSoldCars();
+                    fetchSoldCarsData();
+                    fetchRandomStockData();
+                    fetchPairingRequests();
+                } else {
+                    showAlert("Error", result.message || translations[language]["email-not-allowed"]);
+                }
+            } catch (error) {
+                console.error("Lỗi khi đăng nhập với Google:", error);
+                showAlert("Error", translations[language]["server-error"]);
+            } finally {
+                loadingOverlay.style.display = "none";
             }
-        } catch (error) {
-            console.error("Lỗi khi đăng nhập với Google:", error);
-            showAlert("Error", translations[language]["server-error"]);
-        } finally {
-            loadingOverlay.style.display = "none";
-        }
-    }
-
-    async function login(e) {
-        e.preventDefault();
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-        const loadingOverlay = document.getElementById("loadingOverlay");
-
-        if (!username || !password) {
-            showAlert("Error", translations[language]["fill-all-fields"]);
-            return;
         }
 
-        loadingOverlay.style.display = "flex";
-        try {
-            const response = await axios.post(API_URL, { 
-                action: "login", 
-                username, 
-                password 
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = response.data;
-            if (result.success) {
-                isLoggedIn = true;
-                currentUser = result.username;
-                userRole = result.role || "employee";
-                sessionStorage.setItem("isLoggedIn", "true");
-                sessionStorage.setItem("currentUser", result.username);
-                sessionStorage.setItem("userRole", userRole);
-                sessionStorage.setItem("sessionStartTime", Date.now());
-                closeModal("loginModal");
-                showAlert("Success", translations[language]["login-success"]);
-                updateUI();
-                fetchTotalSoldCars();
-                fetchSoldCarsData();
-                fetchRandomStockData();
-                fetchPairingRequests();
-            } else {
-                showAlert("Error", result.message);
-            }
-        } catch (error) {
-            showAlert("Error", translations[language]["server-error"]);
-        } finally {
-            loadingOverlay.style.display = "none";
-        }
-    }
-
-    async function changePassword(e) {
-        e.preventDefault();
-        const username = document.getElementById("changeUsername").value.trim();
-        const oldPassword = document.getElementById("oldPassword").value.trim();
-        const newPassword = document.getElementById("newPassword").value.trim();
-        const confirmPassword = document.getElementById("confirmPassword").value.trim();
-        const loadingOverlay = document.getElementById("loadingOverlay");
-
-        if (!username || !oldPassword || !newPassword || !confirmPassword) {
-            showAlert("Error", translations[language]["fill-all-fields"]);
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            showAlert("Error", translations[language]["password-mismatch"]);
-            return;
-        }
-        if (newPassword.length < 6) {
-            showAlert("Error", translations[language]["password-length"]);
-            return;
-        }
-
-        loadingOverlay.style.display = "flex";
-        try {
-            const response = await axios.post(API_URL, { 
-                action: "changePassword", 
-                username, 
-                oldPassword, 
-                newPassword 
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = response.data;
-            if (result.success) {
-                closeModal("loginModal");
-                showAlert("Success", translations[language]["password-changed"]);
-            } else {
-                showAlert("Error", result.message);
-            }
-        } catch (error) {
-            showAlert("Error", translations[language]["server-error"]);
-        } finally {
-            loadingOverlay.style.display = "none";
-        }
-    }
-
-async function forgotPassword(e) {
-  e.preventDefault();
-  const email = document.getElementById("forgotEmail").value.trim();
-  const loadingOverlay = document.getElementById("loadingOverlay");
-
-  if (!email) {
-    showAlert("Error", translations[language]["fill-all-fields"]);
-    return;
-  }
-
-  loadingOverlay.style.display = "flex";
-  try {
-    const response = await axios.post(API_URL, { 
-      action: "forgotPassword", 
-      email 
-    }, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const result = response.data;
-    if (result.success) {
-      showResetPasswordWithOTPForm(result.username);
-      showAlert("Success", translations[language]["otp-sent"]);
-    } else {
-      showAlert("Error", result.message);
-    }
-  } catch (error) {
-    showAlert("Error", translations[language]["server-error"]);
-  } finally {
-    loadingOverlay.style.display = "none";
-  }
-}
-
-async function resetPasswordWithOTP(e) {
-  e.preventDefault();
-  const username = document.getElementById("resetUsername").value.trim();
-  const otp = document.getElementById("resetOTP").value.trim();
-  const newPassword = document.getElementById("resetNewPassword").value.trim();
-  const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
-  const loadingOverlay = document.getElementById("loadingOverlay");
-
-  if (!username || !otp || !newPassword || !confirmPassword) {
-    showAlert("Error", translations[language]["fill-all-fields"]);
-    return;
-  }
-  if (newPassword !== confirmPassword) {
-    showAlert("Error", translations[language]["password-mismatch"]);
-    return;
-  }
-  if (newPassword.length < 6) {
-    showAlert("Error", translations[language]["password-length"]);
-    return;
-  }
-
-  loadingOverlay.style.display = "flex";
-  try {
-    const response = await axios.post(API_URL, { 
-      action: "resetPassword", 
-      username, 
-      otp, 
-      newPassword 
-    }, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const result = response.data;
-    if (result.success) {
-      closeModal("loginModal");
-      showAlert("Success", translations[language]["password-reset-success"]);
-      showForm('loginForm');
-    } else {
-      showAlert("Error", result.message);
-    }
-  } catch (error) {
-    showAlert("Error", translations[language]["server-error"]);
-  } finally {
-    loadingOverlay.style.display = "none";
-  }
-}        // Cập nhật giao diện
+        // Cập nhật giao diện
         function updateUI() {
             const heroSection = document.getElementById("heroSection");
             const welcomeSection = document.getElementById("welcomeSection");
@@ -1514,7 +1340,13 @@ async function resetPasswordWithOTP(e) {
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, { action: "login", username, password });
+                const response = await axios.post(API_URL, { 
+                    action: "login", 
+                    username, 
+                    password 
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 const result = response.data;
                 if (result.success) {
                     isLoggedIn = true;
@@ -1565,7 +1397,14 @@ async function resetPasswordWithOTP(e) {
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, { action: "changePassword", username, oldPassword, newPassword });
+                const response = await axios.post(API_URL, { 
+                    action: "changePassword", 
+                    username, 
+                    oldPassword, 
+                    newPassword 
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
@@ -1593,7 +1432,12 @@ async function resetPasswordWithOTP(e) {
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, { action: "forgotPassword", email });
+                const response = await axios.post(API_URL, { 
+                    action: "forgotPassword", 
+                    email 
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 const result = response.data;
                 if (result.success) {
                     showResetPasswordWithOTPForm(result.username);
@@ -1614,7 +1458,7 @@ async function resetPasswordWithOTP(e) {
             document.getElementById("resetUsername").value = username;
         }
 
-        // Đặt lại mật khẩu với OTP
+         // Đặt lại mật khẩu với OTP
         async function resetPasswordWithOTP(e) {
             e.preventDefault();
             const username = document.getElementById("resetUsername").value.trim();
@@ -1638,7 +1482,14 @@ async function resetPasswordWithOTP(e) {
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, null, { params: { action: "resetPassword", username, otp, newPassword } });
+                const response = await axios.post(API_URL, { 
+                    action: "resetPassword", 
+                    username, 
+                    otp, 
+                    newPassword 
+                }, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
@@ -1659,54 +1510,12 @@ async function resetPasswordWithOTP(e) {
             isLoggedIn = false;
             currentUser = "";
             userRole = "employee";
-            sessionStorage.clear();
+            sessionStorage.removeItem("isLoggedIn");
+            sessionStorage.removeItem("currentUser");
+            sessionStorage.removeItem("userRole");
+            sessionStorage.removeItem("sessionStartTime");
+            showAlert("Success", translations[language]["logout-success"]);
             updateUI();
-            showAlert("Notice", translations[language]["logout-success"]);
-        }
-
-        // Toggle menu mobile
-        function toggleMenu() {
-            document.querySelector(".menu").classList.toggle("active");
-        }
-
-        // Mở modal
-        function openModal(id) {
-            const modal = document.getElementById(id);
-            const content = modal.querySelector(".modal-content");
-            modal.style.display = "flex";
-            setTimeout(() => content.classList.add("active"), 10);
-        }
-
-        // Đóng modal
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-            const content = modal.querySelector(".modal-content");
-            content.classList.remove("active");
-            setTimeout(() => {
-                modal.style.display = "none";
-                if (id === "loginModal") resetModalToLogin();
-            }, 300);
-        }
-
-        // Reset modal về form đăng nhập
-        function resetModalToLogin() {
-            showForm("loginForm");
-        }
-
-        // Hiển thị thông báo
-        function showAlert(title, message) {
-            document.getElementById("alertTitle").textContent = title;
-            document.getElementById("alertMessage").textContent = message;
-            openModal("alertModal");
-        }
-
-        // Chuyển đổi sáng/tối
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            const icon = document.querySelector(".dark-mode-btn i");
-            icon.classList.toggle("fa-moon");
-            icon.classList.toggle("fa-sun");
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
         }
 
         // Chuyển đổi ngôn ngữ
@@ -1722,22 +1531,67 @@ async function resetPasswordWithOTP(e) {
         function updateLanguage() {
             document.querySelectorAll("[data-lang]").forEach(element => {
                 const key = element.getAttribute("data-lang");
-                if (translations[language][key]) element.textContent = translations[language][key];
+                element.textContent = translations[language][key] || element.textContent;
             });
             document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
                 const key = element.getAttribute("data-lang-placeholder");
-                if (translations[language][key]) element.placeholder = translations[language][key];
+                element.placeholder = translations[language][key] || element.placeholder;
             });
         }
 
+        // Chuyển đổi chế độ tối/sáng
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const darkModeBtnIcon = document.querySelector(".dark-mode-btn i");
+            if (document.body.classList.contains("dark-mode")) {
+                darkModeBtnIcon.classList.replace("fa-moon", "fa-sun");
+                localStorage.setItem("theme", "dark");
+            } else {
+                darkModeBtnIcon.classList.replace("fa-sun", "fa-moon");
+                localStorage.setItem("theme", "light");
+            }
+        }
+
+        // Mở modal
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = "flex";
+            setTimeout(() => {
+                modal.querySelector(".modal-content").classList.add("active");
+            }, 50);
+        }
+
+        // Đóng modal
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.querySelector(".modal-content").classList.remove("active");
+            setTimeout(() => {
+                modal.style.display = "none";
+                showForm('loginForm'); // Reset về form đăng nhập mặc định
+            }, 300);
+        }
+
         // Hiển thị form
-        function showForm(formName) {
-            ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(form => {
-                const formElement = document.getElementById(form);
-                if (formElement) formElement.style.display = form === formName ? "block" : "none";
+        function showForm(formId) {
+            document.querySelectorAll("#loginModal > .modal-content > div").forEach(form => {
+                form.style.display = "none";
             });
+            document.getElementById(formId).style.display = "block";
+        }
+
+        // Hiển thị thông báo
+        function showAlert(title, message) {
+            const alertModal = document.getElementById("alertModal");
+            document.getElementById("alertTitle").textContent = title;
+            document.getElementById("alertMessage").textContent = message;
+            openModal("alertModal");
+        }
+
+        // Chuyển đổi menu trên mobile
+        function toggleMenu() {
+            const menu = document.getElementById("navMenu");
+            menu.classList.toggle("active");
         }
     </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'927e1dc54a76dd20',t:'MTc0MzIzODE5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
