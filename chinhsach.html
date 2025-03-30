@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Thêm CSP để cho phép Google API -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com; object-src 'none';">
+    <!-- Cập nhật CSP để bao gồm cdnjs -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://cdnjs.cloudflare.com; object-src 'none';">
     <title>Tài Liệu - Chính Sách</title>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -834,7 +834,7 @@
             }).catch(function(error) {
                 spinner.style.display = 'none';
                 let errorMsg = error.message || "Lỗi không xác định!";
-                if (error.status === 400) errorMsg = "Yêu cầu không hợp lệ, kiểm tra FOLDER_ID!";
+                if (error.status === 400) errorMsg = "Yêu cầu không hợp lệ, kiểm tra FOLDER_ID hoặc cấu hình OAuth!";
                 if (error.status === 403) errorMsg = "Không có quyền truy cập thư mục!";
                 if (error.status === 404) errorMsg = "Thư mục không tồn tại!";
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
@@ -1027,6 +1027,10 @@
         }
 
         function exportToExcel() {
+            if (typeof XLSX === 'undefined') {
+                showNotification("Không thể xuất Excel do thư viện XLSX chưa tải!", 3000);
+                return;
+            }
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
                 const headers = ["SỐ TT", "TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
                 const wsData = tableData.map(function(row, index) {
