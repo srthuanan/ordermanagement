@@ -758,7 +758,7 @@
 
     <script>
         // Cấu hình Google Drive API
-        const CLIENT_ID = '88481536708-kj2557ka1c9a733r7kia6cr87ba9a3pr.apps.googleusercontent.com'; // Thay bằng Client ID của bạn
+        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0uuhbcpsq.apps.googleusercontent.com'; // Thay bằng Client ID của bạn
         const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y'; // Thay bằng Folder ID của bạn
         const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q'; // Thay bằng API Key của bạn
         const SCOPE = 'https://www.googleapis.com/auth/drive.file'; // Scope cho phép đọc và ghi
@@ -865,11 +865,7 @@
             }
             if (!token) {
                 showNotification("Token không hợp lệ, vui lòng đăng nhập lại!", 3000);
-                if (gapi.auth2 && gapi.auth2.getAuthInstance()) {
-                    gapi.auth2.getAuthInstance().signIn();
-                } else {
-                    showNotification("Google API chưa được khởi tạo!", 3000);
-                }
+                gapi.auth2.getAuthInstance().signIn();
                 return;
             }
             const file = files[0];
