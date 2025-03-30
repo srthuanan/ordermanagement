@@ -842,7 +842,7 @@
     </footer>
 
 <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyfLUnwCGFiF73zLcxsszfhN2Wu2cYF6AsjEbQKfq2s0mv3Bs3Sbiz77le2Jcn7fCuy/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzzb3Kd8--zjG0j5ZVtQPyoXoWHDLk1GcgwXRY6wgCuHuV-ICP3MIYoeMliOG9x4YMv/exec";
     const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
     const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
     const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
@@ -1163,84 +1163,83 @@ async function signInWithGoogle() {
         }
     }
 
-    async function forgotPassword(e) {
-        e.preventDefault();
-        const email = document.getElementById("forgotEmail").value.trim();
-        const loadingOverlay = document.getElementById("loadingOverlay");
+async function forgotPassword(e) {
+  e.preventDefault();
+  const email = document.getElementById("forgotEmail").value.trim();
+  const loadingOverlay = document.getElementById("loadingOverlay");
 
-        if (!email) {
-            showAlert("Error", translations[language]["fill-all-fields"]);
-            return;
-        }
+  if (!email) {
+    showAlert("Error", translations[language]["fill-all-fields"]);
+    return;
+  }
 
-        loadingOverlay.style.display = "flex";
-        try {
-            const response = await axios.post(API_URL, { 
-                action: "forgotPassword", 
-                email 
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = response.data;
-            if (result.success) {
-                showResetPasswordWithOTPForm(result.username);
-                showAlert("Success", translations[language]["otp-sent"]);
-            } else {
-                showAlert("Error", result.message);
-            }
-        } catch (error) {
-            showAlert("Error", translations[language]["server-error"]);
-        } finally {
-            loadingOverlay.style.display = "none";
-        }
+  loadingOverlay.style.display = "flex";
+  try {
+    const response = await axios.post(API_URL, { 
+      action: "forgotPassword", 
+      email 
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const result = response.data;
+    if (result.success) {
+      showResetPasswordWithOTPForm(result.username);
+      showAlert("Success", translations[language]["otp-sent"]);
+    } else {
+      showAlert("Error", result.message);
     }
+  } catch (error) {
+    showAlert("Error", translations[language]["server-error"]);
+  } finally {
+    loadingOverlay.style.display = "none";
+  }
+}
 
-    async function resetPasswordWithOTP(e) {
-        e.preventDefault();
-        const username = document.getElementById("resetUsername").value.trim();
-        const otp = document.getElementById("resetOTP").value.trim();
-        const newPassword = document.getElementById("resetNewPassword").value.trim();
-        const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
-        const loadingOverlay = document.getElementById("loadingOverlay");
+async function resetPasswordWithOTP(e) {
+  e.preventDefault();
+  const username = document.getElementById("resetUsername").value.trim();
+  const otp = document.getElementById("resetOTP").value.trim();
+  const newPassword = document.getElementById("resetNewPassword").value.trim();
+  const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
+  const loadingOverlay = document.getElementById("loadingOverlay");
 
-        if (!username || !otp || !newPassword || !confirmPassword) {
-            showAlert("Error", translations[language]["fill-all-fields"]);
-            return;
-        }
-        if (newPassword !== confirmPassword) {
-            showAlert("Error", translations[language]["password-mismatch"]);
-            return;
-        }
-        if (newPassword.length < 6) {
-            showAlert("Error", translations[language]["password-length"]);
-            return;
-        }
+  if (!username || !otp || !newPassword || !confirmPassword) {
+    showAlert("Error", translations[language]["fill-all-fields"]);
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showAlert("Error", translations[language]["password-mismatch"]);
+    return;
+  }
+  if (newPassword.length < 6) {
+    showAlert("Error", translations[language]["password-length"]);
+    return;
+  }
 
-        loadingOverlay.style.display = "flex";
-        try {
-            const response = await axios.post(API_URL, { 
-                action: "resetPassword", 
-                username, 
-                otp, 
-                newPassword 
-            }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = response.data;
-            if (result.success) {
-                closeModal("loginModal");
-                showAlert("Success", translations[language]["password-reset-success"]);
-                showForm('loginForm');
-            } else {
-                showAlert("Error", result.message);
-            }
-        } catch (error) {
-            showAlert("Error", translations[language]["server-error"]);
-        } finally {
-            loadingOverlay.style.display = "none";
-        }
+  loadingOverlay.style.display = "flex";
+  try {
+    const response = await axios.post(API_URL, { 
+      action: "resetPassword", 
+      username, 
+      otp, 
+      newPassword 
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const result = response.data;
+    if (result.success) {
+      closeModal("loginModal");
+      showAlert("Success", translations[language]["password-reset-success"]);
+      showForm('loginForm');
+    } else {
+      showAlert("Error", result.message);
     }
-        // Cập nhật giao diện
+  } catch (error) {
+    showAlert("Error", translations[language]["server-error"]);
+  } finally {
+    loadingOverlay.style.display = "none";
+  }
+}        // Cập nhật giao diện
         function updateUI() {
             const heroSection = document.getElementById("heroSection");
             const welcomeSection = document.getElementById("welcomeSection");
