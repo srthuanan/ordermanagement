@@ -865,7 +865,11 @@
             }
             if (!token) {
                 showNotification("Token không hợp lệ, vui lòng đăng nhập lại!", 3000);
-                gapi.auth2.getAuthInstance().signIn();
+                if (gapi.auth2 && gapi.auth2.getAuthInstance()) {
+                    gapi.auth2.getAuthInstance().signIn();
+                } else {
+                    showNotification("Google API chưa được khởi tạo!", 3000);
+                }
                 return;
             }
             const file = files[0];
