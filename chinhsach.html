@@ -8,7 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
+    <!-- Giữ nguyên CSS của bạn -->
+ <style>
         .thumbnail-container {
             text-align: center;
             margin-bottom: 15px;
@@ -218,7 +219,7 @@
             transition: all 0.3s ease;
         }
         .search-container input:focus {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0 Purity);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
             outline: none;
         }
         body.dark-mode .search-container input {
@@ -732,10 +733,9 @@
     <div id="notification"></div>
 
     <script>
-        // Cấu hình Google Drive API
-        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0uuhbcpsq.apps.googleusercontent.com'; // Thay bằng Client ID thực tế
-        const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y'; // Thay bằng Folder ID thực tế
-        const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q'; // Thay bằng API Key thực tế
+        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0uuhbcpsq.apps.googleusercontent.com';
+        const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y';
+        const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q';
         const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
         let tableData = [];
@@ -743,125 +743,120 @@
         const rowsPerPage = 15;
         let token;
 
-        // Load Google API
         function handleClientLoad() {
             if (typeof gapi === 'undefined') {
                 showNotification("Không thể tải Google API. Vui lòng kiểm tra kết nối!", 5000);
                 return;
             }
-            gapi.load('client:auth2', initClient);
-        }
-
-        // Khởi tạo Google Client
-        function initClient() {
-            gapi.client.init({
-                apiKey: API_KEY,
-                clientId: CLIENT_ID,
-                scope: SCOPE,
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-            }).then(() => {
-                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-            }).catch(error => {
-                showNotification("Lỗi khởi tạo Google API: " + error.message, 3000);
-                console.error("Lỗi khởi tạo:", error);
+            gapi.load('client:auth2', function() {
+                gapi.client.init({
+                    apiKey: API_KEY,
+                    clientId: CLIENT_ID,
+                    scope: SCOPE,
+                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                }).then(function() {
+                    console.log("Google API khởi tạo thành công!");
+                    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+                    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+                }).catch(function(error) {
+                    showNotification("Lỗi khởi tạo Google API: " + error.message, 3000);
+                    console.error("Lỗi khởi tạo:", error);
+                });
             });
         }
 
-        // Cập nhật trạng thái đăng nhập
         function updateSigninStatus(isSignedIn) {
             if (isSignedIn) {
                 token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
                 if (!token) {
-                    showNotification("Không thể lấy access token, vui lòng thử lại!", 3000);
+                    showNotification("Không thể lấy token, vui lòng thử lại!", 3000);
                     return;
                 }
                 loadInitialData();
             } else {
                 showNotification("Đang yêu cầu đăng nhập...", 2000);
-                gapi.auth2.getAuthInstance().signIn().catch(error => {
+                gapi.auth2.getAuthInstance().signIn().catch(function(error) {
                     showNotification("Lỗi đăng nhập: " + error.message, 3000);
                     console.error("Lỗi đăng nhập:", error);
                 });
             }
         }
 
-        // Khởi động khi DOM loaded
-        document.addEventListener("DOMContentLoaded", function () {
-            if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
-                showNotification("Vui lòng thay API_KEY trong code!", 5000);
-                return;
-            }
+        document.addEventListener("DOMContentLoaded", function() {
             handleClientLoad();
             setupSearch();
             setupScrollSync();
-            if (typeof localStorage !== 'undefined') {
-                if (localStorage.getItem('theme') === 'dark') {
-                    document.body.classList.add('dark-mode');
-                    document.querySelector('.theme-toggle i').classList.remove('fa-moon');
-                    document.querySelector('.theme-toggle i').classList.add('fa-sun');
-                }
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
             }
         });
 
-        // Tải dữ liệu từ Google Drive
         function loadInitialData() {
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
+            
             if (!token) {
                 showNotification("Vui lòng đăng nhập để tải dữ liệu!", 3000);
                 spinner.style.display = 'none';
                 return;
             }
+
             gapi.client.drive.files.list({
                 q: `'${FOLDER_ID}' in parents`,
-                fields: 'files(id, name, createdTime, owners, webViewLink, thumbnailLink)',
+                fields: 'files(id, name, createdTime, owners(displayName), webViewLink, thumbnailLink)',
                 pageSize: 100
-            }).then(response => {
+            }).then(function(response) {
                 const files = response.result.files || [];
-                if (files.length === 0) {
+                if (!files.length) {
                     document.getElementById("table-body").innerHTML = `<tr><td colspan="5">Thư mục trống hoặc không có quyền truy cập.</td></tr>`;
                     showNotification("Không có dữ liệu trong thư mục!", 3000);
                 } else {
-                    tableData = files.map(file => [
-                        file.name,
-                        new Date(file.createdTime).toLocaleString('vi-VN'),
-                        file.owners[0].displayName,
-                        file.webViewLink,
-                        file.thumbnailLink
-                    ]);
+                    tableData = files.map(function(file) {
+                        return [
+                            file.name,
+                            new Date(file.createdTime).toLocaleString('vi-VN'),
+                            file.owners[0].displayName,
+                            file.webViewLink,
+                            file.thumbnailLink || ''
+                        ];
+                    });
                     renderTable(tableData);
                     highlightLinks();
                     showNotification("Dữ liệu đã được tải thành công!", 2000);
                 }
                 spinner.style.display = 'none';
-            }).catch(error => {
+            }).catch(function(error) {
                 spinner.style.display = 'none';
-                let errorMsg = "Lỗi khi tải dữ liệu: " + error.message;
+                let errorMsg = error.message || "Lỗi không xác định khi tải dữ liệu!";
                 if (error.status === 403) errorMsg = "Không có quyền truy cập thư mục!";
+                if (error.status === 404) errorMsg = "Thư mục không tồn tại!";
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
                 showNotification(errorMsg, 3000);
                 console.error("Lỗi tải dữ liệu:", error);
             });
         }
 
-        // Upload file lên Google Drive
         function uploadFile(files) {
-            if (!files || files.length === 0) {
+            if (!files || !files.length) {
                 showNotification("Vui lòng chọn file để tải lên!", 3000);
                 return;
             }
+
             const file = files[0];
-            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            const MAX_SIZE = 10 * 1024 * 1024;
             if (file.size > MAX_SIZE) {
                 showNotification("File quá lớn! Giới hạn là 10MB.", 3000);
                 return;
             }
-            if (!token || !gapi.auth2) {
+
+            if (!token) {
                 showNotification("Vui lòng đăng nhập lại để tải file!", 3000);
-                gapi.auth2?.getAuthInstance().signIn();
+                gapi.auth2.getAuthInstance().signIn();
                 return;
             }
+
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
 
@@ -878,13 +873,14 @@
                 method: 'POST',
                 headers: new Headers({ 'Authorization': 'Bearer ' + token }),
                 body: form
-            }).then(response => {
+            }).then(function(response) {
                 if (!response.ok) {
-                    if (response.status === 401) throw new Error("Token không hợp lệ, vui lòng đăng nhập lại!");
-                    throw new Error('Upload thất bại: ' + response.statusText);
+                    return response.json().then(function(errorData) {
+                        throw new Error(errorData.error?.message || 'Upload thất bại: ' + response.statusText);
+                    });
                 }
                 return response.json();
-            }).then(data => {
+            }).then(function(data) {
                 spinner.style.display = 'none';
                 document.getElementById("file-upload").value = "";
                 tableData.unshift([
@@ -897,7 +893,7 @@
                 renderTable(tableData);
                 highlightLinks();
                 showNotification("Tải lên thành công!", 2000);
-            }).catch(error => {
+            }).catch(function(error) {
                 spinner.style.display = 'none';
                 document.getElementById("file-upload").value = "";
                 showNotification("Lỗi khi tải lên: " + error.message, 3000);
@@ -905,15 +901,42 @@
             });
         }
 
-        // Đăng xuất
+        function renderTable(data, page) {
+            if (!Array.isArray(data)) return;
+            page = page || currentPage;
+            
+            const tbody = document.getElementById("table-body");
+            tbody.innerHTML = "";
+            const start = (page - 1) * rowsPerPage;
+            const paginatedData = data.slice(start, start + rowsPerPage);
+            
+            paginatedData.forEach(function(row, index) {
+                const tr = document.createElement("tr");
+                const globalIndex = start + index + 1;
+                tr.innerHTML = `
+                    <td>${globalIndex}</td>
+                    <td>${row[0] || ''}</td>
+                    <td>${row[1] || ''}</td>
+                    <td>${row[2] || ''}</td>
+                    <td>${row[3] ? `<a href="${row[3]}" target="_blank" class="download-link"><i class="fas fa-download"></i></a>` : ''}</td>
+                `;
+                tr.onclick = function() { showDetail(row, globalIndex); };
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("total-count").textContent = data.length;
+            renderPagination(data.length, page);
+            if (data.length > 0) showDetail(data[0], start + 1);
+        }
+
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
                 if (gapi.auth2) {
-                    gapi.auth2.getAuthInstance().signOut().then(() => {
+                    gapi.auth2.getAuthInstance().signOut().then(function() {
                         sessionStorage.clear();
                         window.location.href = "index.html";
                         showNotification("Đã đăng xuất!", 2000);
-                    }).catch(error => {
+                    }).catch(function(error) {
                         showNotification("Lỗi đăng xuất: " + error.message, 3000);
                         console.error("Lỗi đăng xuất:", error);
                     });
@@ -921,56 +944,23 @@
             }
         }
 
-        // Quay lại trang chủ
         function goBack() {
             window.location.href = "index.html";
             showNotification("Đã quay lại trang chủ!", 2000);
         }
 
-        // Chuyển đổi theme
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const themeIcon = document.querySelector('.theme-toggle i');
             if (document.body.classList.contains('dark-mode')) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-                if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'dark');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('theme', 'dark');
             } else {
-                themeIcon.classList.remove('fa-sun');
-                themeIcon.classList.add('fa-moon');
-                if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'light');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('theme', 'light');
             }
         }
 
-        // Render bảng dữ liệu
-        function renderTable(data, page = currentPage) {
-            if (!Array.isArray(data)) return;
-            const tbody = document.getElementById("table-body");
-            tbody.innerHTML = "";
-            const start = (page - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const paginatedData = data.slice(start, end);
-            paginatedData.forEach((row, index) => {
-                const globalIndex = start + index + 1;
-                const tr = document.createElement("tr");
-                let cells = [`<td>${globalIndex}</td>`];
-                row.slice(0, 4).forEach((cell, i) => {
-                    let value = cell || "";
-                    if (i === 3 && value) {
-                        value = `<a href="${value}" target="_blank" class="download-link"><i class="fas fa-download"></i></a>`;
-                    }
-                    cells.push(`<td>${value}</td>`);
-                });
-                tr.innerHTML = cells.join("");
-                tr.onclick = () => showDetail(row, globalIndex);
-                tbody.appendChild(tr);
-            });
-            document.getElementById("total-count").textContent = data.length;
-            renderPagination(data.length, page);
-            if (data.length > 0) showDetail(data[0], start + 1);
-        }
-
-        // Render phân trang
         function renderPagination(totalRows, currentPage) {
             const paginationDiv = document.getElementById("pagination");
             paginationDiv.innerHTML = `
@@ -980,23 +970,23 @@
             `;
         }
 
-        // Chuyển trang
         function changePage(newPage) {
             currentPage = newPage;
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
-            const filteredData = tableData.filter(row =>
-                row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
-            );
+            const filteredData = tableData.filter(function(row) {
+                return row.some(function(cell) {
+                    return cell && cell.toString().toLowerCase().includes(searchValue);
+                });
+            });
             renderTable(filteredData, currentPage);
             highlightLinks();
             document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Highlight các ô có link
         function highlightLinks() {
             const tableRows = document.querySelectorAll("#table-body tr");
-            tableRows.forEach(row => {
+            tableRows.forEach(function(row) {
                 const linkCell = row.cells[4];
                 if (linkCell && linkCell.textContent.trim() !== "") {
                     linkCell.classList.add("link-highlight");
@@ -1004,7 +994,6 @@
             });
         }
 
-        // Hiển thị chi tiết tài liệu
         function showDetail(row, index) {
             const detailBody = document.getElementById("detail-body");
             const headers = ["TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
@@ -1016,7 +1005,7 @@
                 html += '<p class="no-thumbnail">Không có thumbnail cho tài liệu này.</p>';
             }
             html += '</div><table class="detail-table">';
-            row.slice(0, 4).forEach((cell, i) => {
+            row.slice(0, 4).forEach(function(cell, i) {
                 let value = cell || "";
                 if (i === 3 && value) {
                     value = `<a href="${value}" target="_blank">Bản xem thử của tài liệu</a>`;
@@ -1027,18 +1016,17 @@
             html += "</table>";
             detailBody.innerHTML = html;
             const rows = document.querySelectorAll("#table-body tr");
-            rows.forEach(row => row.classList.remove("selected"));
+            rows.forEach(function(row) { row.classList.remove("selected"); });
             const selectedRowIndex = (index - 1) % rowsPerPage;
             if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
         }
 
-        // Xuất file Excel
         function exportToExcel() {
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
                 const headers = ["SỐ TT", "TÊN TÀI LIỆU", "NGÀY TẢI LÊN", "NGƯỜI TẢI LÊN", "LIÊN KẾT"];
-                const wsData = tableData.map((row, index) => {
+                const wsData = tableData.map(function(row, index) {
                     const rowData = { "SỐ TT": index + 1 };
-                    row.slice(0, 4).forEach((cell, i) => {
+                    row.slice(0, 4).forEach(function(cell, i) {
                         rowData[headers[i + 1]] = cell || "";
                     });
                     return rowData;
@@ -1051,7 +1039,6 @@
             }
         }
 
-        // In bảng
         function printTable() {
             const now = new Date();
             const printDateTime = now.toLocaleString('vi-VN', {
@@ -1094,27 +1081,30 @@
             win.print();
         }
 
-        // Làm mới dữ liệu
         function refreshData() {
             loadInitialData();
         }
 
-        // Debounce cho tìm kiếm
         function debounce(func, wait) {
             let timeout;
-            return function (...args) {
+            return function() {
+                const context = this;
+                const args = arguments;
                 clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
             };
         }
 
-        // Thiết lập tìm kiếm
         function setupSearch() {
-            document.getElementById("search-input").addEventListener("input", debounce(function () {
+            document.getElementById("search-input").addEventListener("input", debounce(function() {
                 const searchValue = this.value.trim().toLowerCase();
-                const filteredData = tableData.filter(row =>
-                    row.some(cell => cell?.toString().toLowerCase().includes(searchValue))
-                );
+                const filteredData = tableData.filter(function(row) {
+                    return row.some(function(cell) {
+                        return cell && cell.toString().toLowerCase().includes(searchValue);
+                    });
+                });
                 currentPage = 1;
                 renderTable(filteredData);
                 highlightLinks();
@@ -1122,34 +1112,32 @@
             }, 300));
         }
 
-        // Đồng bộ scroll
         function setupScrollSync() {
             const tableContainer = document.querySelector('.table-container');
             const detailPanel = document.getElementById("detail-panel");
             let isTableScrolling = false;
             let isDetailScrolling = false;
-            tableContainer.addEventListener('scroll', () => {
+            tableContainer.addEventListener('scroll', function() {
                 if (!isDetailScrolling) {
                     isTableScrolling = true;
                     detailPanel.scrollTop = tableContainer.scrollTop;
-                    setTimeout(() => { isTableScrolling = false; }, 100);
+                    setTimeout(function() { isTableScrolling = false; }, 100);
                 }
             });
-            detailPanel.addEventListener('scroll', () => {
+            detailPanel.addEventListener('scroll', function() {
                 if (!isTableScrolling) {
                     isDetailScrolling = true;
                     tableContainer.scrollTop = detailPanel.scrollTop;
-                    setTimeout(() => { isDetailScrolling = false; }, 100);
+                    setTimeout(function() { isDetailScrolling = false; }, 100);
                 }
             });
         }
 
-        // Hiển thị thông báo
-        function showNotification(message, duration = 3000) {
+        function showNotification(message, duration) {
             const notif = document.getElementById("notification");
             notif.textContent = message;
             notif.style.display = "block";
-            setTimeout(() => notif.style.display = "none", duration);
+            setTimeout(function() { notif.style.display = "none"; }, duration || 3000);
         }
     </script>
 </body>
