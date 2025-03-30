@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Cập nhật CSP để bao gồm cdnjs -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://cdnjs.cloudflare.com; object-src 'none';">
+    <!-- Cập nhật CSP để bao gồm style-src cho Font Awesome -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none';">
     <title>Tài Liệu - Chính Sách</title>
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -735,7 +735,7 @@
     <div id="notification"></div>
 
     <script>
-        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0uuhbcpsq.apps.googleusercontent.com';
+        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0u PIPELINE_IDuhbcpsq.apps.googleusercontent.com';
         const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y';
         const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q';
         const SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -762,7 +762,7 @@
                     updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
                 }).catch(function(error) {
                     console.error("Chi tiết lỗi khởi tạo:", error);
-                    showNotification("Lỗi khởi tạo Google API: " + (error.details || error.message || "Không xác định"), 5000);
+                    showNotification("Lỗi khởi tạo Google API: " + (error.error || error.details || error.message || "Không xác định"), 5000);
                 });
             });
         }
