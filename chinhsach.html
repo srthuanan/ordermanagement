@@ -803,21 +803,24 @@
         }
 
         // Khởi động khi DOM loaded
-        document.addEventListener("DOMContentLoaded", function () {
-            if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
-                showNotification("Vui lòng thay API_KEY trong code!", 5000);
-                return;
-            }
-            handleClientLoad();
-            setupSearch();
-            setupScrollSync();
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.querySelector('.theme-toggle i').classList.remove('fa-moon');
-                document.querySelector('.theme-toggle i').classList.add('fa-sun');
-            }
-        });
-
+document.addEventListener("DOMContentLoaded", function () {
+    if (!API_KEY || API_KEY === 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q') {
+        showNotification("Vui lòng thay API_KEY trong code!", 5000);
+        return;
+    }
+    handleClientLoad();
+    setupSearch();
+    setupScrollSync();
+    try {
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.remove('fa-moon');
+            document.querySelector('.theme-toggle i').classList.add('fa-sun');
+        }
+    } catch (e) {
+        console.warn("Không thể đọc theme từ localStorage:", e.message);
+    }
+});
         // Tải dữ liệu từ Google Drive
         function loadInitialData() {
             const spinner = document.querySelector('.loading-spinner');
@@ -930,20 +933,27 @@
         }
 
         // Chuyển đổi theme
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (document.body.classList.contains('dark-mode')) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeIcon.classList.remove('fa-sun');
-                themeIcon.classList.add('fa-moon');
-                localStorage.setItem('theme', 'light');
-            }
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (document.body.classList.contains('dark-mode')) {
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+        try {
+            localStorage.setItem('theme', 'dark');
+        } catch (e) {
+            console.warn("Không thể lưu theme vào localStorage:", e.message);
         }
-
+    } else {
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+        try {
+            localStorage.setItem('theme', 'light');
+        } catch (e) {
+            console.warn("Không thể lưu theme vào localStorage:", e.message);
+        }
+    }
+}
         // Render bảng dữ liệu
         function renderTable(data, page = currentPage) {
             const tbody = document.getElementById("table-body");
