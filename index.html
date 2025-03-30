@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Thêm Google API Client Library -->
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="616285478437-qh8p73ascdn7ijqhjknjko2e7m2fb7vf.apps.googleusercontent.com">
     <style>
         :root {
             --primary-color: #003087;
@@ -145,7 +148,7 @@
         }
         .hero-background {
             position: absolute;
-            top: 100;
+            top: 0;
             left: 0;
             width: 100%;
             height: 100%;
@@ -506,6 +509,40 @@
         body.dark-mode .spinner { border: 5px solid #2e3539; border-top: 5px solid var(--accent-color); }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Google Sign-In Button */
+        .google-signin-btn {
+            padding: 12px 25px;
+            background: #ffffff;
+            color: #4285f4;
+            border: 1px solid #4285f4;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -2px -2px 5px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .google-signin-btn:hover {
+            background: #4285f4;
+            color: #ffffff;
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.3);
+        }
+        body.dark-mode .google-signin-btn {
+            background: #2e3539;
+            color: #4285f4;
+            border: 1px solid #4285f4;
+        }
+        body.dark-mode .google-signin-btn:hover {
+            background: #4285f4;
+            color: #ffffff;
+        }
+
         /* Footer */
         footer {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -597,23 +634,24 @@
     <section class="internal-section" id="welcomeSection" data-aos="fade-up">
         <h3 data-lang="welcome-title">Chào Mừng Bạn!!!</h3>
         <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
-<div class="features-grid">
-    <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
-        <i class="fas fa-clipboard-list"></i>
-        <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
-        <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
-    </div>
-    <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
-        <i class="fas fa-car"></i>
-        <h4 data-lang="stock-title">Quản Lý Kho Xe</h4>
-        <p data-lang="stock-text">Kiểm tra và quản lý xe trong kho dễ dàng.</p>
-    </div>
-    <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
-        <i class="fas fa-handshake"></i>
-        <h4 data-lang="pairing-title">Hỗ Trợ Ghép Xe</h4>
-        <p data-lang="pairing-text">Tìm kiếm và ghép xe theo nhu cầu khách hàng.</p>
-    </div>
-</div>    </section>
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-clipboard-list"></i>
+                <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
+                <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-car"></i>
+                <h4 data-lang="stock-title">Quản Lý Kho Xe</h4>
+                <p data-lang="stock-text">Kiểm tra và quản lý xe trong kho dễ dàng.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <i class="fas fa-handshake"></i>
+                <h4 data-lang="pairing-title">Hỗ Trợ Ghép Xe</h4>
+                <p data-lang="pairing-text">Tìm kiếm và ghép xe theo nhu cầu khách hàng.</p>
+            </div>
+        </div>
+    </section>
 
     <!-- Dashboard Section -->
     <section class="dashboard-section" id="dashboard" data-aos="fade-up">
@@ -700,6 +738,9 @@
                     </div>
                     <button type="submit" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
                 </form>
+                <button class="google-signin-btn" onclick="signInWithGoogle()">
+                    <i class="fab fa-google"></i> Đăng nhập với Google
+                </button>
                 <div class="modal-links">
                     <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
                     <span onclick="showForm('forgotPasswordForm')" data-lang="forgot-password">Quên mật khẩu?</span>
@@ -789,7 +830,7 @@
         <div class="footer-content">
             <h4 data-lang="footer-title">VINFAST THUẬN AN</h4>
             <p data-lang="footer-address">Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương</p>
-            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8cefe4e3fbfef3e3e1f8e4f9ede2ede2ccebe1ede5e0a2efe3e1">[email protected]</a></p>
+            <p data-lang="footer-contact">Liên hệ: 0968275404 | Email: <a href="mailto:showroomthuanan@gmail.com">showroomthuanan@gmail.com</a></p>
             <div class="social-links">
                 <a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a>
                 <a href="#" target="_blank"><i class="fab fa-twitter"></i></a>
@@ -800,23 +841,23 @@
         </div>
     </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-        const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
-        const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
-        const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+<script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyfLUnwCGFiF73zLcxsszfhN2Wu2cYF6AsjEbQKfq2s0mv3Bs3Sbiz77le2Jcn7fCuy/exec";
+    const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+    const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
+    const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+    const CLIENT_ID = "616285478437-qh8p73ascdn7ijqhjknjko2e7m2fb7vf.apps.googleusercontent.com";
+    let gapiInited = false;
 
-        // Khởi tạo AOS
-        AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
+    // Khởi tạo AOS
+    AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
 
-        // Biến toàn cục
-        let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-        let currentUser = sessionStorage.getItem("currentUser") || "";
-        let userRole = sessionStorage.getItem("userRole") || "employee";
-        let language = localStorage.getItem("language") || "vi";
-        let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
-
+    // Biến toàn cục
+    let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+    let currentUser = sessionStorage.getItem("currentUser") || "";
+    let userRole = sessionStorage.getItem("userRole") || "employee";
+    let language = localStorage.getItem("language") || "vi";
+    let sessionStartTime = sessionStorage.getItem("sessionStartTime") || Date.now();
         // Dữ liệu dịch ngôn ngữ
         const translations = {
             vi: {
@@ -866,7 +907,10 @@
                 "sold-cars": "Danh Sách Xe Đã Bán",
                 "pairing-request": "Nhu Cầu Ghép Xe",
                 "pairing-list": "Danh Sách Ghép Xe",
-                "policy-docs": "Chính Sách & Tài Liệu"
+                "policy-docs": "Chính Sách & Tài Liệu",
+                "google-login": "Đăng nhập với Google",
+                "email-not-allowed": "Email này không được phép đăng nhập hoặc đăng ký!",
+                "google-api-error": "Không thể tải Google API. Vui lòng kiểm tra kết nối hoặc thử lại sau."
             },
             en: {
                 "hero-title": "VinFast Internal System",
@@ -915,7 +959,10 @@
                 "sold-cars": "List of Sold Vehicles",
                 "pairing-request": "Vehicle Pairing Requests",
                 "pairing-list": "Pairing List",
-                "policy-docs": "Policies & Documents"
+                "policy-docs": "Policies & Documents",
+                "google-login": "Sign in with Google",
+                "email-not-allowed": "This email is not allowed to login or register!",
+                "google-api-error": "Failed to load Google API. Please check your connection or try again later."
             }
         };
 
@@ -935,8 +982,264 @@
                 fetchRandomStockData();
                 fetchPairingRequests();
             }
+            // Đảm bảo Google API được tải trước khi gọi onLoad
+            const googleApiScript = document.querySelector('script[src="https://apis.google.com/js/platform.js"]');
+            googleApiScript.onload = () => {
+                onLoad();
+            };
+            googleApiScript.onerror = () => {
+                showAlert("Error", translations[language]["google-api-error"]);
+            };
         });
 
+        // Khởi tạo Google Auth
+        function onLoad() {
+            if (window.gapi) {
+                gapi.load('auth2', function() {
+                    gapi.auth2.init({
+                        client_id: CLIENT_ID,
+                        scope: 'profile email'
+                    }).then(() => {
+                        gapiInited = true;
+                        console.log("Google API đã sẵn sàng");
+                    }).catch(err => {
+                        console.error("Lỗi khi khởi tạo Google API:", err);
+                        showAlert("Error", translations[language]["google-api-error"]);
+                    });
+                });
+            } else {
+                showAlert("Error", translations[language]["google-api-error"]);
+            }
+        }
+
+        // Đăng nhập bằng Google
+async function signInWithGoogle() {
+        if (!window.gapi || !gapi.auth2) {
+            showAlert("Error", translations[language]["google-api-error"]);
+            return;
+        }
+        if (!gapiInited) {
+            showAlert("Error", "Google API chưa sẵn sàng. Vui lòng thử lại.");
+            return;
+        }
+
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        loadingOverlay.style.display = "flex";
+
+        try {
+            const googleAuth = gapi.auth2.getAuthInstance();
+            const googleUser = await googleAuth.signIn();
+
+            const profile = googleUser.getBasicProfile();
+            const idToken = googleUser.getAuthResponse().id_token;
+            const email = profile.getEmail();
+            const username = email.split('@')[0];
+
+            // Gửi thông tin tới backend mới
+            const response = await axios.post(API_URL, {
+                action: "googleLogin",
+                idToken: idToken,
+                username: username,
+                email: email
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = response.data;
+            if (result.success) {
+                isLoggedIn = true;
+                currentUser = result.username;
+                userRole = result.role || "employee";
+                sessionStorage.setItem("isLoggedIn", "true");
+                sessionStorage.setItem("currentUser", result.username);
+                sessionStorage.setItem("userRole", userRole);
+                sessionStorage.setItem("sessionStartTime", Date.now());
+                closeModal("loginModal");
+                showAlert("Success", translations[language]["login-success"]);
+                updateUI();
+                fetchTotalSoldCars();
+                fetchSoldCarsData();
+                fetchRandomStockData();
+                fetchPairingRequests();
+            } else {
+                showAlert("Error", result.message || translations[language]["email-not-allowed"]);
+            }
+        } catch (error) {
+            console.error("Lỗi khi đăng nhập với Google:", error);
+            showAlert("Error", translations[language]["server-error"]);
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
+
+    async function login(e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const loadingOverlay = document.getElementById("loadingOverlay");
+
+        if (!username || !password) {
+            showAlert("Error", translations[language]["fill-all-fields"]);
+            return;
+        }
+
+        loadingOverlay.style.display = "flex";
+        try {
+            const response = await axios.post(API_URL, { 
+                action: "login", 
+                username, 
+                password 
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = response.data;
+            if (result.success) {
+                isLoggedIn = true;
+                currentUser = result.username;
+                userRole = result.role || "employee";
+                sessionStorage.setItem("isLoggedIn", "true");
+                sessionStorage.setItem("currentUser", result.username);
+                sessionStorage.setItem("userRole", userRole);
+                sessionStorage.setItem("sessionStartTime", Date.now());
+                closeModal("loginModal");
+                showAlert("Success", translations[language]["login-success"]);
+                updateUI();
+                fetchTotalSoldCars();
+                fetchSoldCarsData();
+                fetchRandomStockData();
+                fetchPairingRequests();
+            } else {
+                showAlert("Error", result.message);
+            }
+        } catch (error) {
+            showAlert("Error", translations[language]["server-error"]);
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
+
+    async function changePassword(e) {
+        e.preventDefault();
+        const username = document.getElementById("changeUsername").value.trim();
+        const oldPassword = document.getElementById("oldPassword").value.trim();
+        const newPassword = document.getElementById("newPassword").value.trim();
+        const confirmPassword = document.getElementById("confirmPassword").value.trim();
+        const loadingOverlay = document.getElementById("loadingOverlay");
+
+        if (!username || !oldPassword || !newPassword || !confirmPassword) {
+            showAlert("Error", translations[language]["fill-all-fields"]);
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showAlert("Error", translations[language]["password-mismatch"]);
+            return;
+        }
+        if (newPassword.length < 6) {
+            showAlert("Error", translations[language]["password-length"]);
+            return;
+        }
+
+        loadingOverlay.style.display = "flex";
+        try {
+            const response = await axios.post(API_URL, { 
+                action: "changePassword", 
+                username, 
+                oldPassword, 
+                newPassword 
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = response.data;
+            if (result.success) {
+                closeModal("loginModal");
+                showAlert("Success", translations[language]["password-changed"]);
+            } else {
+                showAlert("Error", result.message);
+            }
+        } catch (error) {
+            showAlert("Error", translations[language]["server-error"]);
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
+
+    async function forgotPassword(e) {
+        e.preventDefault();
+        const email = document.getElementById("forgotEmail").value.trim();
+        const loadingOverlay = document.getElementById("loadingOverlay");
+
+        if (!email) {
+            showAlert("Error", translations[language]["fill-all-fields"]);
+            return;
+        }
+
+        loadingOverlay.style.display = "flex";
+        try {
+            const response = await axios.post(API_URL, { 
+                action: "forgotPassword", 
+                email 
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = response.data;
+            if (result.success) {
+                showResetPasswordWithOTPForm(result.username);
+                showAlert("Success", translations[language]["otp-sent"]);
+            } else {
+                showAlert("Error", result.message);
+            }
+        } catch (error) {
+            showAlert("Error", translations[language]["server-error"]);
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
+
+    async function resetPasswordWithOTP(e) {
+        e.preventDefault();
+        const username = document.getElementById("resetUsername").value.trim();
+        const otp = document.getElementById("resetOTP").value.trim();
+        const newPassword = document.getElementById("resetNewPassword").value.trim();
+        const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
+        const loadingOverlay = document.getElementById("loadingOverlay");
+
+        if (!username || !otp || !newPassword || !confirmPassword) {
+            showAlert("Error", translations[language]["fill-all-fields"]);
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showAlert("Error", translations[language]["password-mismatch"]);
+            return;
+        }
+        if (newPassword.length < 6) {
+            showAlert("Error", translations[language]["password-length"]);
+            return;
+        }
+
+        loadingOverlay.style.display = "flex";
+        try {
+            const response = await axios.post(API_URL, { 
+                action: "resetPassword", 
+                username, 
+                otp, 
+                newPassword 
+            }, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = response.data;
+            if (result.success) {
+                closeModal("loginModal");
+                showAlert("Success", translations[language]["password-reset-success"]);
+                showForm('loginForm');
+            } else {
+                showAlert("Error", result.message);
+            }
+        } catch (error) {
+            showAlert("Error", translations[language]["server-error"]);
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
         // Cập nhật giao diện
         function updateUI() {
             const heroSection = document.getElementById("heroSection");
@@ -972,22 +1275,20 @@
 
         // Lấy tổng số xe đã bán từ 12 tháng
         async function fetchTotalSoldCars() {
-            const loadingIndicator = document.getElementById("totalSoldCarsLoading");
+            const totalSoldCarsElement = document.getElementById("total-sold-cars");
             const cacheKey = "totalSoldCars";
             const cacheExpirationKey = "totalSoldCarsExpiration";
             const cacheDuration = 5 * 60 * 1000; // 5 phút
 
-            // Kiểm tra xem dữ liệu đã được lưu trong cache chưa
             const cachedTotal = localStorage.getItem(cacheKey);
             const cacheExpiration = localStorage.getItem(cacheExpirationKey);
 
             if (cachedTotal && cacheExpiration && Date.now() < parseInt(cacheExpiration)) {
-                // Sử dụng dữ liệu từ cache
-                document.getElementById("total-sold-cars").textContent = `${cachedTotal} xe`;
+                totalSoldCarsElement.textContent = `${cachedTotal} xe`;
                 return;
             }
 
-            loadingIndicator.style.display = "flex";
+            totalSoldCarsElement.textContent = "Đang tải...";
             const months = [
                 "January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December"
@@ -997,7 +1298,10 @@
             try {
                 const fetchPromises = months.map(month =>
                     fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) throw new Error(`Lỗi khi lấy dữ liệu tháng ${month}`);
+                            return response.json();
+                        })
                         .then(data => (data && data.length > 1 ? data.length - 1 : 0))
                         .catch(error => {
                             console.error(`Lỗi khi lấy dữ liệu tháng ${month}:`, error);
@@ -1008,17 +1312,14 @@
                 const results = await Promise.all(fetchPromises);
                 totalSoldCars = results.reduce((sum, count) => sum + count, 0);
 
-                // Lưu dữ liệu vào cache
                 localStorage.setItem(cacheKey, totalSoldCars);
                 localStorage.setItem(cacheExpirationKey, Date.now() + cacheDuration);
 
-                document.getElementById("total-sold-cars").textContent = `${totalSoldCars} xe`;
+                totalSoldCarsElement.textContent = `${totalSoldCars} xe`;
             } catch (error) {
                 console.error("Lỗi khi lấy tổng số xe đã bán:", error);
-                document.getElementById("total-sold-cars").textContent = "Lỗi tải dữ liệu";
+                totalSoldCarsElement.textContent = "Lỗi tải dữ liệu";
                 showAlert("Error", translations[language]["server-error"]);
-            } finally {
-                loadingIndicator.style.display = "none";
             }
         }
 
@@ -1033,12 +1334,10 @@
             const cacheExpirationKey = "soldCarsDataExpiration";
             const cacheDuration = 5 * 60 * 1000; // 5 phút
 
-            // Kiểm tra xem dữ liệu đã được lưu trong cache chưa
             const cachedData = localStorage.getItem(cacheKey);
             const cacheExpiration = localStorage.getItem(cacheExpirationKey);
 
             if (cachedData && cacheExpiration && Date.now() < parseInt(cacheExpiration)) {
-                // Sử dụng dữ liệu từ cache
                 const allSoldCars = JSON.parse(cachedData);
                 const randomData = getRandomRows(allSoldCars, 10);
                 table.classList.remove("loading");
@@ -1055,7 +1354,10 @@
             try {
                 const fetchPromises = months.map(month =>
                     fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) throw new Error(`Lỗi khi lấy dữ liệu tháng ${month}`);
+                            return response.json();
+                        })
                         .then(data => (data && data.length > 1 ? data.slice(1) : []))
                         .catch(error => {
                             console.error(`Lỗi khi lấy dữ liệu tháng ${month}:`, error);
@@ -1066,7 +1368,6 @@
                 const results = await Promise.all(fetchPromises);
                 allSoldCars = results.flat();
 
-                // Lưu dữ liệu vào cache
                 localStorage.setItem(cacheKey, JSON.stringify(allSoldCars));
                 localStorage.setItem(cacheExpirationKey, Date.now() + cacheDuration);
 
@@ -1127,6 +1428,7 @@
 
             try {
                 const response = await fetch(STOCK_API_URL);
+                if (!response.ok) throw new Error("Lỗi khi lấy dữ liệu kho xe");
                 const data = await response.json();
                 const stockData = data.slice(1);
 
@@ -1165,18 +1467,16 @@
 
             try {
                 const response = await fetch(PAIRING_REQUEST_API_URL);
+                if (!response.ok) throw new Error("Lỗi khi lấy dữ liệu yêu cầu ghép xe");
                 const data = await response.text();
                 const jsonData = JSON.parse(data);
 
-                // Sắp xếp dữ liệu theo thời gian nhập (mới nhất trước)
                 jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
-
-                // Lấy 10 yêu cầu mới nhất
                 const latestRequests = jsonData.slice(0, 10);
 
                 pairingTableBody.innerHTML = "";
                 if (latestRequests.length === 0) {
-                    pairingTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>';
+                    pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>';
                 } else {
                     latestRequests.forEach(row => {
                         const tr = document.createElement("tr");
@@ -1194,7 +1494,7 @@
                 table.classList.remove("loading");
             } catch (error) {
                 console.error("Lỗi khi lấy dữ liệu yêu cầu ghép xe:", error);
-                pairingTableBody.innerHTML = '<tr><td colspan="4">Lỗi tải dữ liệu</td></tr>';
+                pairingTableBody.innerHTML = '<tr><td colspan="3">Lỗi tải dữ liệu</td></tr>';
                 pairingCountElement.textContent = "Lỗi tải dữ liệu";
                 table.classList.remove("loading");
                 showAlert("Error", translations[language]["server-error"]);
@@ -1215,7 +1515,7 @@
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
+                const response = await axios.post(API_URL, { action: "login", username, password });
                 const result = response.data;
                 if (result.success) {
                     isLoggedIn = true;
@@ -1266,7 +1566,7 @@
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, null, { params: { action: "changePassword", username, oldPassword, newPassword } });
+                const response = await axios.post(API_URL, { action: "changePassword", username, oldPassword, newPassword });
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
@@ -1294,7 +1594,7 @@
 
             loadingOverlay.style.display = "flex";
             try {
-                const response = await axios.post(API_URL, null, { params: { action: "forgotPassword", email } });
+                const response = await axios.post(API_URL, { action: "forgotPassword", email });
                 const result = response.data;
                 if (result.success) {
                     showResetPasswordWithOTPForm(result.username);
