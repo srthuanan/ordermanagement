@@ -12,6 +12,7 @@
     <!-- Sử dụng Google Sign-In mới -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
+        /* CSS giữ nguyên như trong tài liệu gốc */
         :root {
             --primary-color: #003087;
             --secondary-color: #005eb8;
@@ -841,7 +842,8 @@
     </footer>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyywpVHLBFLqhxVIAOIoHAmd2sNhTVasBaeQxWGFChluiajdeHESMvEZMhKsyCe_eJO/exec";
+        // Cập nhật API_URL với Web App URL từ Google Apps Script đã triển khai
+        const API_URL = "https://script.google.com/macros/s/[YOUR_SCRIPT_ID]/exec"; // Thay [YOUR_SCRIPT_ID] bằng ID của Web App từ GAS
         const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
         const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
         const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
@@ -1008,7 +1010,7 @@
                 // Hiển thị cửa sổ đăng nhập Google
                 google.accounts.id.prompt((notification) => {
                     if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        showAlert("Error", "Không thể hiển thị cửa sổ đăng nhập Google. Vui lòng kiểm tra cài đặt trình duyệt.");
+                        showAlert("Error", translations[language]["google-api-error"]);
                         loadingOverlay.style.display = "none";
                     }
                 });
@@ -1264,7 +1266,7 @@
                     tr.innerHTML = `
                         <td>${row[0] || "N/A"}</td>
                         <td>${row[2] || "N/A"}</td>
-                        <td>${row[6] || "N/A"}</td>
+                        <td>${row[6] || "N/A"} </td>
                         <td>${row[5] || "N/A"}</td>
                     `;
                     stockTableBody.appendChild(tr);
@@ -1367,6 +1369,7 @@
                     showAlert("Error", result.message);
                 }
             } catch (error) {
+                console.error("Lỗi khi đăng nhập:", error);
                 showAlert("Error", translations[language]["server-error"]);
             } finally {
                 loadingOverlay.style.display = "none";
@@ -1411,15 +1414,16 @@
                     showAlert("Success", translations[language]["password-changed"]);
                 } else {
                     showAlert("Error", result.message);
-                }
+                           }
             } catch (error) {
+                console.error("Lỗi khi đổi mật khẩu:", error);
                 showAlert("Error", translations[language]["server-error"]);
             } finally {
                 loadingOverlay.style.display = "none";
             }
         }
 
-        // Quên mật khẩu
+        // Quên mật khẩu - Gửi OTP
         async function forgotPassword(e) {
             e.preventDefault();
             const email = document.getElementById("forgotEmail").value.trim();
@@ -1440,25 +1444,20 @@
                 });
                 const result = response.data;
                 if (result.success) {
-                    showResetPasswordWithOTPForm(result.username);
+                    showForm("resetPasswordWithOTPForm");
                     showAlert("Success", translations[language]["otp-sent"]);
                 } else {
                     showAlert("Error", result.message);
                 }
             } catch (error) {
+                console.error("Lỗi khi gửi OTP:", error);
                 showAlert("Error", translations[language]["server-error"]);
             } finally {
                 loadingOverlay.style.display = "none";
             }
         }
 
-        // Hiển thị form đặt lại mật khẩu với OTP
-        function showResetPasswordWithOTPForm(username) {
-            showForm('resetPasswordWithOTPForm');
-            document.getElementById("resetUsername").value = username;
-        }
-
-         // Đặt lại mật khẩu với OTP
+        // Đặt lại mật khẩu bằng OTP
         async function resetPasswordWithOTP(e) {
             e.preventDefault();
             const username = document.getElementById("resetUsername").value.trim();
@@ -1483,7 +1482,7 @@
             loadingOverlay.style.display = "flex";
             try {
                 const response = await axios.post(API_URL, { 
-                    action: "resetPassword", 
+                    action: "resetPasswordWithOTP", 
                     username, 
                     otp, 
                     newPassword 
@@ -1494,11 +1493,12 @@
                 if (result.success) {
                     closeModal("loginModal");
                     showAlert("Success", translations[language]["password-reset-success"]);
-                    showForm('loginForm');
+                    showForm("loginForm");
                 } else {
                     showAlert("Error", result.message);
                 }
             } catch (error) {
+                console.error("Lỗi khi đặt lại mật khẩu:", error);
                 showAlert("Error", translations[language]["server-error"]);
             } finally {
                 loadingOverlay.style.display = "none";
@@ -1514,42 +1514,25 @@
             sessionStorage.removeItem("currentUser");
             sessionStorage.removeItem("userRole");
             sessionStorage.removeItem("sessionStartTime");
+            localStorage.removeItem("totalSoldCars");
+            localStorage.removeItem("totalSoldCarsExpiration");
+            localStorage.removeItem("soldCarsData");
+            localStorage.removeItem("soldCarsDataExpiration");
             showAlert("Success", translations[language]["logout-success"]);
             updateUI();
         }
 
-        // Chuyển đổi ngôn ngữ
-        function toggleLanguage() {
-            language = language === "vi" ? "en" : "vi";
-            localStorage.setItem("language", language);
-            document.getElementById("languageBtn").textContent = language === "vi" ? "EN" : "VI";
-            updateLanguage();
-            updateUI();
-        }
-
-        // Cập nhật ngôn ngữ
-        function updateLanguage() {
-            document.querySelectorAll("[data-lang]").forEach(element => {
-                const key = element.getAttribute("data-lang");
-                element.textContent = translations[language][key] || element.textContent;
-            });
-            document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
-                const key = element.getAttribute("data-lang-placeholder");
-                element.placeholder = translations[language][key] || element.placeholder;
-            });
-        }
-
-        // Chuyển đổi chế độ tối/sáng
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            const darkModeBtnIcon = document.querySelector(".dark-mode-btn i");
-            if (document.body.classList.contains("dark-mode")) {
-                darkModeBtnIcon.classList.replace("fa-moon", "fa-sun");
-                localStorage.setItem("theme", "dark");
-            } else {
-                darkModeBtnIcon.classList.replace("fa-sun", "fa-moon");
-                localStorage.setItem("theme", "light");
-            }
+        // Hiển thị thông báo
+        function showAlert(title, message) {
+            const alertModal = document.getElementById("alertModal");
+            const alertTitle = document.getElementById("alertTitle");
+            const alertMessage = document.getElementById("alertMessage");
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            alertModal.style.display = "flex";
+            setTimeout(() => {
+                alertModal.querySelector(".modal-content").classList.add("active");
+            }, 50);
         }
 
         // Mở modal
@@ -1567,31 +1550,88 @@
             modal.querySelector(".modal-content").classList.remove("active");
             setTimeout(() => {
                 modal.style.display = "none";
-                showForm('loginForm'); // Reset về form đăng nhập mặc định
+                showForm("loginForm");
             }, 300);
         }
 
-        // Hiển thị form
+        // Hiển thị form trong modal
         function showForm(formId) {
-            document.querySelectorAll("#loginModal > .modal-content > div").forEach(form => {
-                form.style.display = "none";
+            const forms = ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"];
+            forms.forEach(form => {
+                const element = document.getElementById(form);
+                element.style.display = form === formId ? "block" : "none";
             });
-            document.getElementById(formId).style.display = "block";
         }
 
-        // Hiển thị thông báo
-        function showAlert(title, message) {
-            const alertModal = document.getElementById("alertModal");
-            document.getElementById("alertTitle").textContent = title;
-            document.getElementById("alertMessage").textContent = message;
-            openModal("alertModal");
+        // Chuyển đổi giao diện sáng/tối
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const darkModeBtnIcon = document.querySelector(".dark-mode-btn i");
+            if (document.body.classList.contains("dark-mode")) {
+                darkModeBtnIcon.classList.replace("fa-moon", "fa-sun");
+                localStorage.setItem("theme", "dark");
+            } else {
+                darkModeBtnIcon.classList.replace("fa-sun", "fa-moon");
+                localStorage.setItem("theme", "light");
+            }
         }
 
-        // Chuyển đổi menu trên mobile
+        // Chuyển đổi ngôn ngữ
+        function toggleLanguage() {
+            language = language === "vi" ? "en" : "vi";
+            localStorage.setItem("language", language);
+            document.getElementById("languageBtn").textContent = language === "vi" ? "EN" : "VI";
+            updateLanguage();
+            updateUI();
+        }
+
+        // Cập nhật ngôn ngữ
+        function updateLanguage() {
+            document.querySelectorAll("[data-lang]").forEach(element => {
+                const key = element.getAttribute("data-lang");
+                if (translations[language][key]) {
+                    element.textContent = translations[language][key];
+                }
+            });
+            document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
+                const key = element.getAttribute("data-lang-placeholder");
+                if (translations[language][key]) {
+                    element.placeholder = translations[language][key];
+                }
+            });
+        }
+
+        // Toggle menu trên thiết bị di động
         function toggleMenu() {
             const menu = document.getElementById("navMenu");
             menu.classList.toggle("active");
         }
+
+        // Xử lý sự kiện nhấn phím Esc để đóng modal
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeModal("loginModal");
+                closeModal("alertModal");
+            }
+        });
+
+        // Xử lý sự kiện click bên ngoài modal để đóng
+        window.addEventListener("click", (e) => {
+            const modals = document.querySelectorAll(".modal");
+            modals.forEach(modal => {
+                if (e.target === modal) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
+        // Xử lý liên kết menu để đánh dấu active
+        const menuLinks = document.querySelectorAll(".menu a");
+        menuLinks.forEach(link => {
+            if (link.href === window.location.href) {
+                link.classList.add("active");
+            }
+        });
     </script>
 </body>
 </html>
