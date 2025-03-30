@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Giữ nguyên CSS từ mã của bạn */
         .thumbnail-container {
             text-align: center;
             margin-bottom: 15px;
@@ -219,7 +218,7 @@
             transition: all 0.3s ease;
         }
         .search-container input:focus {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0 Purity);
             outline: none;
         }
         body.dark-mode .search-container input {
@@ -280,7 +279,7 @@
         body.dark-mode .export-btn, body.dark-mode .refresh-btn {
             background: #1a1a1a;
             color: #66b0ff;
-            box shadowing: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
         }
         body.dark-mode .refresh-btn {
             color: #28a745;
@@ -429,7 +428,7 @@
         }
         body.dark-mode .detail-panel {
             background: #1a1a1a;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 0, 0.5);
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
         }
         .detail-panel::-webkit-scrollbar {
             width: 8px;
@@ -669,30 +668,6 @@
             .detail-panel h3 {
                 font-size: 16px;
             }
-            .detail-table {
-                font-size: 11px;
-            }
-            .detail-table th, .detail-table td {
-                padding: 8px;
-            }
-            .pagination button {
-                padding: 8px 15px;
-                font-size: 11px;
-            }
-            .pagination span {
-                padding: 8px 15px;
-                font-size: 11px;
-            }
-            footer {
-                font-size: 9px;
-                padding: 6px 0;
-            }
-            #notification {
-                top: 10px;
-                right: 10px;
-                padding: 6px 12px;
-                font-size: 11px;
-            }
         }
     </style>
 </head>
@@ -758,10 +733,10 @@
 
     <script>
         // Cấu hình Google Drive API
-        const CLIENT_ID = '88481536708-kj2557ka1c9a733r7kia6cr87ba9a3pr.apps.googleusercontent.com'; // Thay bằng Client ID của bạn
-        const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y'; // Thay bằng Folder ID của bạn
-        const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q'; // Thay bằng API Key của bạn
-        const SCOPE = 'https://www.googleapis.com/auth/drive.file'; // Scope cho phép đọc và ghi
+        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0uuhbcpsq.apps.googleusercontent.com'; // Thay bằng Client ID thực tế
+        const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y'; // Thay bằng Folder ID thực tế
+        const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q'; // Thay bằng API Key thực tế
+        const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
         let tableData = [];
         let currentPage = 1;
@@ -770,6 +745,10 @@
 
         // Load Google API
         function handleClientLoad() {
+            if (typeof gapi === 'undefined') {
+                showNotification("Không thể tải Google API. Vui lòng kiểm tra kết nối!", 5000);
+                return;
+            }
             gapi.load('client:auth2', initClient);
         }
 
@@ -790,23 +769,23 @@
         }
 
         // Cập nhật trạng thái đăng nhập
-// Trong hàm updateSigninStatus
-function updateSigninStatus(isSignedIn) {
-    if (isSignedIn) {
-        token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-        if (!token) {
-            showNotification("Không thể lấy access token, vui lòng thử lại!", 3000);
-            return;
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+                if (!token) {
+                    showNotification("Không thể lấy access token, vui lòng thử lại!", 3000);
+                    return;
+                }
+                loadInitialData();
+            } else {
+                showNotification("Đang yêu cầu đăng nhập...", 2000);
+                gapi.auth2.getAuthInstance().signIn().catch(error => {
+                    showNotification("Lỗi đăng nhập: " + error.message, 3000);
+                    console.error("Lỗi đăng nhập:", error);
+                });
+            }
         }
-        loadInitialData();
-    } else {
-        showNotification("Đang yêu cầu đăng nhập...", 2000);
-        gapi.auth2.getAuthInstance().signIn().catch(error => {
-            showNotification("Lỗi đăng nhập: " + error.message, 3000);
-            console.error("Lỗi đăng nhập:", error);
-        });
-    }
-}
+
         // Khởi động khi DOM loaded
         document.addEventListener("DOMContentLoaded", function () {
             if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
@@ -816,14 +795,12 @@ function updateSigninStatus(isSignedIn) {
             handleClientLoad();
             setupSearch();
             setupScrollSync();
-            try {
+            if (typeof localStorage !== 'undefined') {
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
                     document.querySelector('.theme-toggle i').classList.remove('fa-moon');
                     document.querySelector('.theme-toggle i').classList.add('fa-sun');
                 }
-            } catch (e) {
-                console.warn("Không thể đọc theme từ localStorage:", e.message);
             }
         });
 
@@ -860,8 +837,10 @@ function updateSigninStatus(isSignedIn) {
                 spinner.style.display = 'none';
             }).catch(error => {
                 spinner.style.display = 'none';
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ Lỗi: ${error.message}</td></tr>`;
-                showNotification("Lỗi khi tải dữ liệu: " + error.message, 3000);
+                let errorMsg = "Lỗi khi tải dữ liệu: " + error.message;
+                if (error.status === 403) errorMsg = "Không có quyền truy cập thư mục!";
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
                 console.error("Lỗi tải dữ liệu:", error);
             });
         }
@@ -872,16 +851,17 @@ function updateSigninStatus(isSignedIn) {
                 showNotification("Vui lòng chọn file để tải lên!", 3000);
                 return;
             }
-            if (!token) {
-                showNotification("Token không hợp lệ, vui lòng đăng nhập lại!", 3000);
-                if (gapi.auth2 && gapi.auth2.getAuthInstance()) {
-                    gapi.auth2.getAuthInstance().signIn();
-                } else {
-                    showNotification("Google API chưa được khởi tạo!", 3000);
-                }
+            const file = files[0];
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            if (file.size > MAX_SIZE) {
+                showNotification("File quá lớn! Giới hạn là 10MB.", 3000);
                 return;
             }
-            const file = files[0];
+            if (!token || !gapi.auth2) {
+                showNotification("Vui lòng đăng nhập lại để tải file!", 3000);
+                gapi.auth2?.getAuthInstance().signIn();
+                return;
+            }
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
 
@@ -899,7 +879,10 @@ function updateSigninStatus(isSignedIn) {
                 headers: new Headers({ 'Authorization': 'Bearer ' + token }),
                 body: form
             }).then(response => {
-                if (!response.ok) throw new Error('Upload thất bại: ' + response.statusText);
+                if (!response.ok) {
+                    if (response.status === 401) throw new Error("Token không hợp lệ, vui lòng đăng nhập lại!");
+                    throw new Error('Upload thất bại: ' + response.statusText);
+                }
                 return response.json();
             }).then(data => {
                 spinner.style.display = 'none';
@@ -924,15 +907,17 @@ function updateSigninStatus(isSignedIn) {
 
         // Đăng xuất
         function logout() {
-            if (gapi.auth2) {
-                gapi.auth2.getAuthInstance().signOut().then(() => {
-                    sessionStorage.clear();
-                    window.location.href = "index.html";
-                    showNotification("Đã đăng xuất!", 2000);
-                }).catch(error => {
-                    showNotification("Lỗi đăng xuất: " + error.message, 3000);
-                    console.error("Lỗi đăng xuất:", error);
-                });
+            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+                if (gapi.auth2) {
+                    gapi.auth2.getAuthInstance().signOut().then(() => {
+                        sessionStorage.clear();
+                        window.location.href = "index.html";
+                        showNotification("Đã đăng xuất!", 2000);
+                    }).catch(error => {
+                        showNotification("Lỗi đăng xuất: " + error.message, 3000);
+                        console.error("Lỗi đăng xuất:", error);
+                    });
+                }
             }
         }
 
@@ -949,24 +934,17 @@ function updateSigninStatus(isSignedIn) {
             if (document.body.classList.contains('dark-mode')) {
                 themeIcon.classList.remove('fa-moon');
                 themeIcon.classList.add('fa-sun');
-                try {
-                    localStorage.setItem('theme', 'dark');
-                } catch (e) {
-                    console.warn("Không thể lưu theme vào localStorage:", e.message);
-                }
+                if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'dark');
             } else {
                 themeIcon.classList.remove('fa-sun');
                 themeIcon.classList.add('fa-moon');
-                try {
-                    localStorage.setItem('theme', 'light');
-                } catch (e) {
-                    console.warn("Không thể lưu theme vào localStorage:", e.message);
-                }
+                if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'light');
             }
         }
 
         // Render bảng dữ liệu
         function renderTable(data, page = currentPage) {
+            if (!Array.isArray(data)) return;
             const tbody = document.getElementById("table-body");
             tbody.innerHTML = "";
             const start = (page - 1) * rowsPerPage;
@@ -989,11 +967,7 @@ function updateSigninStatus(isSignedIn) {
             });
             document.getElementById("total-count").textContent = data.length;
             renderPagination(data.length, page);
-            if (data.length > 0) {
-                showDetail(data[0], start + 1);
-            } else {
-                document.getElementById("detail-body").innerHTML = "<p>Không có dữ liệu để hiển thị.</p>";
-            }
+            if (data.length > 0) showDetail(data[0], start + 1);
         }
 
         // Render phân trang
@@ -1037,7 +1011,7 @@ function updateSigninStatus(isSignedIn) {
             let html = '<div class="thumbnail-container">';
             if (row[4]) {
                 const thumbnailUrl = row[4].includes('=s') ? row[4].replace(/=s\d+/, '=s400') : row[4] + '=s400';
-                html += `<img src="${thumbnailUrl}" alt="Thumbnail của ${row[0]}">`;
+                html += `<img src="${thumbnailUrl}" alt="Thumbnail của ${row[0]}" loading="lazy">`;
             } else {
                 html += '<p class="no-thumbnail">Không có thumbnail cho tài liệu này.</p>';
             }
@@ -1081,13 +1055,8 @@ function updateSigninStatus(isSignedIn) {
         function printTable() {
             const now = new Date();
             const printDateTime = now.toLocaleString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
             });
             const table = document.getElementById("data-table");
             const printContent = `
