@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Cập nhật CSP để bao gồm style-src cho Font Awesome -->
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; object-src 'none';">
+    <!-- Cập nhật CSP để cho phép gọi GAS API -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://script.google.com; object-src 'none';">
     <title>Tài Liệu - Chính Sách</title>
-    <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -683,7 +682,7 @@
         <div class="navbar-controls">
             <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
             <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+            <!-- Bỏ nút đăng xuất vì không cần OAuth nữa -->
         </div>
     </div>
     <div class="main-container">
@@ -735,58 +734,15 @@
     <div id="notification"></div>
 
     <script>
-        const CLIENT_ID = '88481536708-qstsfup65156ou89p0h1v4m0u PIPELINE_IDuhbcpsq.apps.googleusercontent.com';
-        const FOLDER_ID = '1FjCiwfV7Ws5dRsTiSqdunMh-FrxJKH1y';
-        const API_KEY = 'AIzaSyDcX74I45bL8ABGaTP52CCi2hx6zFJn9_Q';
-        const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+        // Thay bằng URL của GAS Web App mà bạn đã triển khai
+        const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzZgsN6LrJBBqgFb0TLY-Q6zjq-i7otbiINqAoSB1ql3M97OS72lzNIO9K6JrWAEbrf/exec'; // Ví dụ: https://script.google.com/macros/s/abc123/exec
 
         let tableData = [];
         let currentPage = 1;
         const rowsPerPage = 15;
-        let token;
-
-        function handleClientLoad() {
-            if (typeof gapi === 'undefined') {
-                showNotification("Không thể tải Google API. Vui lòng kiểm tra kết nối!", 5000);
-                return;
-            }
-            gapi.load('client:auth2', function() {
-                gapi.client.init({
-                    apiKey: API_KEY,
-                    clientId: CLIENT_ID,
-                    scope: SCOPE,
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                }).then(function() {
-                    console.log("Google API khởi tạo thành công!");
-                    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-                    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-                }).catch(function(error) {
-                    console.error("Chi tiết lỗi khởi tạo:", error);
-                    showNotification("Lỗi khởi tạo Google API: " + (error.error || error.details || error.message || "Không xác định"), 5000);
-                });
-            });
-        }
-
-        function updateSigninStatus(isSignedIn) {
-            if (isSignedIn) {
-                token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-                console.log("Access Token:", token);
-                if (!token) {
-                    showNotification("Không thể lấy token, vui lòng thử lại!", 3000);
-                    return;
-                }
-                loadInitialData();
-            } else {
-                showNotification("Đang yêu cầu đăng nhập...", 2000);
-                gapi.auth2.getAuthInstance().signIn().catch(function(error) {
-                    showNotification("Lỗi đăng nhập: " + error.message, 3000);
-                    console.error("Lỗi đăng nhập:", error);
-                });
-            }
-        }
 
         document.addEventListener("DOMContentLoaded", function() {
-            handleClientLoad();
+            loadInitialData();
             setupSearch();
             setupScrollSync();
             const savedTheme = localStorage.getItem('theme');
@@ -796,53 +752,55 @@
             }
         });
 
+        // Tải danh sách file từ GAS
         function loadInitialData() {
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
-            
-            if (!token) {
-                showNotification("Vui lòng đăng nhập để tải dữ liệu!", 3000);
-                spinner.style.display = 'none';
-                return;
-            }
 
-            gapi.client.drive.files.list({
-                q: `'${FOLDER_ID}' in parents`,
-                fields: 'files(id, name, createdTime, owners(displayName), webViewLink, thumbnailLink)',
-                pageSize: 100
-            }).then(function(response) {
-                const files = response.result.files || [];
-                console.log("Dữ liệu từ Google Drive:", files);
-                if (!files.length) {
-                    document.getElementById("table-body").innerHTML = `<tr><td colspan="5">Thư mục trống hoặc không có quyền truy cập.</td></tr>`;
-                    showNotification("Không có dữ liệu trong thư mục!", 3000);
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: 'listFiles' })
+            })
+            .then(response => response.json())
+            .then(result => {
+                spinner.style.display = 'none';
+                if (result.status === 'success') {
+                    const files = result.data || [];
+                    console.log("Dữ liệu từ GAS:", files);
+                    if (!files.length) {
+                        document.getElementById("table-body").innerHTML = `<tr><td colspan="5">Thư mục trống hoặc không có quyền truy cập.</td></tr>`;
+                        showNotification("Không có dữ liệu trong thư mục!", 3000);
+                    } else {
+                        tableData = files.map(function(file) {
+                            return [
+                                file.name,
+                                new Date(file.createdTime).toLocaleString('vi-VN'),
+                                file.owner,
+                                file.webViewLink,
+                                file.thumbnailLink || ''
+                            ];
+                        });
+                        renderTable(tableData);
+                        highlightLinks();
+                        showNotification("Dữ liệu đã được tải thành công!", 2000);
+                    }
                 } else {
-                    tableData = files.map(function(file) {
-                        return [
-                            file.name,
-                            new Date(file.createdTime).toLocaleString('vi-VN'),
-                            file.owners[0].displayName,
-                            file.webViewLink,
-                            file.thumbnailLink || ''
-                        ];
-                    });
-                    renderTable(tableData);
-                    highlightLinks();
-                    showNotification("Dữ liệu đã được tải thành công!", 2000);
+                    document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${result.message}</td></tr>`;
+                    showNotification(result.message, 3000);
                 }
+            })
+            .catch(error => {
                 spinner.style.display = 'none';
-            }).catch(function(error) {
-                spinner.style.display = 'none';
-                let errorMsg = error.message || "Lỗi không xác định!";
-                if (error.status === 400) errorMsg = "Yêu cầu không hợp lệ, kiểm tra FOLDER_ID hoặc cấu hình OAuth!";
-                if (error.status === 403) errorMsg = "Không có quyền truy cập thư mục!";
-                if (error.status === 404) errorMsg = "Thư mục không tồn tại!";
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-                showNotification(errorMsg, 3000);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="5" style="color: red;">⚠️ Lỗi kết nối với GAS!</td></tr>`;
+                showNotification("Lỗi kết nối với GAS: " + error.message, 3000);
                 console.error("Lỗi tải dữ liệu:", error);
             });
         }
 
+        // Tải file lên Google Drive qua GAS
         function uploadFile(files) {
             if (!files || !files.length) {
                 showNotification("Vui lòng chọn file để tải lên!", 3000);
@@ -850,60 +808,63 @@
             }
 
             const file = files[0];
-            const MAX_SIZE = 10 * 1024 * 1024;
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
             if (file.size > MAX_SIZE) {
                 showNotification("File quá lớn! Giới hạn là 10MB.", 3000);
-                return;
-            }
-
-            if (!token) {
-                showNotification("Vui lòng đăng nhập lại để tải file!", 3000);
-                gapi.auth2.getAuthInstance().signIn();
                 return;
             }
 
             const spinner = document.querySelector('.loading-spinner');
             spinner.style.display = 'block';
 
-            const metadata = {
-                name: file.name,
-                mimeType: file.type,
-                parents: [FOLDER_ID]
-            };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', file);
+            // Đọc file dưới dạng Base64
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Content = event.target.result.split(',')[1]; // Lấy phần Base64 (bỏ header)
 
-            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Bearer ' + token }),
-                body: form
-            }).then(function(response) {
-                if (!response.ok) {
-                    return response.json().then(function(errorData) {
-                        throw new Error(errorData.error?.message || 'Upload thất bại: ' + response.statusText);
-                    });
-                }
-                return response.json();
-            }).then(function(data) {
+                fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'uploadFile',
+                        fileName: file.name,
+                        fileContent: base64Content
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    spinner.style.display = 'none';
+                    document.getElementById("file-upload").value = "";
+                    if (result.status === 'success') {
+                        const uploadedFile = result.data;
+                        tableData.unshift([
+                            uploadedFile.name,
+                            new Date(uploadedFile.createdTime).toLocaleString('vi-VN'),
+                            uploadedFile.owner,
+                            uploadedFile.webViewLink,
+                            uploadedFile.thumbnailLink || ''
+                        ]);
+                        renderTable(tableData);
+                        highlightLinks();
+                        showNotification("Tải lên thành công!", 2000);
+                    } else {
+                        showNotification("Lỗi khi tải lên: " + result.message, 3000);
+                    }
+                })
+                .catch(error => {
+                    spinner.style.display = 'none';
+                    document.getElementById("file-upload").value = "";
+                    showNotification("Lỗi khi tải lên: " + error.message, 3000);
+                    console.error("Lỗi upload:", error);
+                });
+            };
+            reader.onerror = function() {
                 spinner.style.display = 'none';
-                document.getElementById("file-upload").value = "";
-                tableData.unshift([
-                    data.name,
-                    new Date().toLocaleString('vi-VN'),
-                    gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile().getName(),
-                    `https://drive.google.com/file/d/${data.id}/view`,
-                    data.thumbnailLink || ''
-                ]);
-                renderTable(tableData);
-                highlightLinks();
-                showNotification("Tải lên thành công!", 2000);
-            }).catch(function(error) {
-                spinner.style.display = 'none';
-                document.getElementById("file-upload").value = "";
-                showNotification("Lỗi khi tải lên: " + error.message, 3000);
-                console.error("Lỗi upload:", error);
-            });
+                showNotification("Lỗi khi đọc file!", 3000);
+            };
+            reader.readAsDataURL(file);
         }
 
         function renderTable(data, page) {
@@ -932,21 +893,6 @@
             document.getElementById("total-count").textContent = data.length;
             renderPagination(data.length, page);
             if (data.length > 0) showDetail(data[0], start + 1);
-        }
-
-        function logout() {
-            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                if (gapi.auth2) {
-                    gapi.auth2.getAuthInstance().signOut().then(function() {
-                        sessionStorage.clear();
-                        window.location.href = "index.html";
-                        showNotification("Đã đăng xuất!", 2000);
-                    }).catch(function(error) {
-                        showNotification("Lỗi đăng xuất: " + error.message, 3000);
-                        console.error("Lỗi đăng xuất:", error);
-                    });
-                }
-            }
         }
 
         function goBack() {
