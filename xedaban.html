@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Giữ nguyên CSS từ mã trước đó */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Montserrat', sans-serif; 
@@ -44,7 +43,7 @@
             left: 0;
             width: 150px;
             height: 100vh;
-            background: #e0e5ec;
+            background: #003087;
             padding: 10px;
             padding-top: 30px;
             transition: width 0.3s ease;
@@ -52,34 +51,98 @@
             box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
         }
         .slidebar.collapsed { width: 40px; }
-        body.dark-mode .slidebar { background: #2c3e50; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
-        .slidebar .logo h1 { font-size: 16px; color: #003087; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 10px; transition: opacity 0.3s ease; }
-        body.dark-mode .slidebar .logo h1 { color: #ecf0f1; }
+        body.dark-mode .slidebar { 
+            background: #003087;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); 
+        }
+        .slidebar .logo h1 { 
+            font-size: 16px; 
+            color: #ecf0f1; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            transition: opacity 0.3s ease; 
+        }
         .slidebar.collapsed .logo h1 { opacity: 0; }
-        .slidebar .tabs { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: calc(100vh - 80px); scrollbar-width: thin; scrollbar-color: #003087 #e0e5ec; }
+        .slidebar .tabs { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            overflow-y: auto; 
+            max-height: calc(100vh - 80px); 
+            scrollbar-width: thin; 
+            scrollbar-color: #ecf0f1 #003087; 
+        }
         .slidebar .tabs::-webkit-scrollbar { width: 4px; }
-        .slidebar .tabs::-webkit-scrollbar-thumb { background: #003087; border-radius: 2px; }
-        .slidebar .tabs::-webkit-scrollbar-track { background: #e0e5ec; }
-        body.dark-mode .slidebar .tabs::-webkit-scrollbar-thumb { background: #003087; }
-        body.dark-mode .slidebar .tabs::-webkit-scrollbar-track { background: #2c3e50; }
-        .slidebar .tabs a { padding: 8px 10px; text-decoration: none; color: #003087; font-size: 12px; font-weight: 500; border-radius: 5px; background: #e0e5ec; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; text-align: left; }
-        .slidebar.collapsed .tabs a { padding: 8px; text-align: center; }
-        .slidebar .tabs a span { transition: opacity 0.3s ease; }
-        .slidebar.collapsed .tabs a span { opacity: 0; width: 0; }
-        .slidebar .tabs a:hover { color: #ecf0f1; background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
-        .slidebar .tabs a.active { color: #ecf0f1; background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); font-weight: 600; }
-        body.dark-mode .slidebar .tabs a { color: #ecf0f1; background: #2c3e50; }
-        body.dark-mode .slidebar .tabs a:hover, body.dark-mode .slidebar .tabs a.active { background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(50, 50, 50, 0.5); }
-        .toggle-btn { position: absolute; top: 10px; right: -12px; width: 24px; height: 24px; background: #003087; border: none; border-radius: 50%; color: #ecf0f1; font-size: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
-        .toggle-btn:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
-        body.dark-mode .toggle-btn { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .slidebar .tabs::-webkit-scrollbar-thumb { background: #ecf0f1; border-radius: 2px; }
+        .slidebar .tabs::-webkit-scrollbar-track { background: #003087; }
+        body.dark-mode .slidebar .tabs::-webkit-scrollbar-thumb { background: #ecf0f1; }
+        body.dark-mode .slidebar .tabs::-webkit-scrollbar-track { background: #003087; }
+        .slidebar .tabs a { 
+            padding: 10px 12px; 
+            text-decoration: none; 
+            color: #ecf0f1; 
+            font-size: 13px; 
+            font-weight: 500; 
+            border-radius: 6px; 
+            background: #0047A0;
+            transition: all 0.3s ease; 
+            text-align: left; 
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.1); 
+        }
+        .slidebar.collapsed .tabs a { 
+            padding: 10px; 
+            text-align: center; 
+        }
+        .slidebar .tabs a span { 
+            transition: opacity 0.3s ease; 
+        }
+        .slidebar.collapsed .tabs a span { 
+            opacity: 0; 
+            width: 0; 
+        }
+        .slidebar .tabs a:hover { 
+            color: #003087; 
+            background: #ecf0f1; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.8); 
+        }
+        .slidebar .tabs a.active { 
+            color: #003087; 
+            background: #ecf0f1; 
+            font-weight: 600; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.8); 
+        }
+        .toggle-btn { 
+            position: absolute; 
+            top: 10px; 
+            right: -12px; 
+            width: 24px; 
+            height: 24px; 
+            background: #ecf0f1; 
+            border: none; 
+            border-radius: 50%; 
+            color: #003087; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); 
+        }
+        .toggle-btn:hover { 
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); 
+        }
+        body.dark-mode .toggle-btn { 
+            background: #ecf0f1; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); 
+        }
         .navbar-controls { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1001; }
         .nav-btn, .theme-toggle { padding: 5px; border: none; border-radius: 5px; background: #003087; color: #ecf0f1; font-size: 12px; cursor: pointer; transition: all 0.3s ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
         .nav-btn:hover, .theme-toggle:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
         body.dark-mode .nav-btn, body.dark-mode .theme-toggle { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
         .main-container { margin-left: 150px; padding: 10px; margin-top: 30px; height: calc(100vh - 60px); transition: margin-left 0.3s ease; display: flex; flex-direction: column; gap: 5px; }
         .main-container.collapsed { margin-left: 40px; }
-        .grid-container { flex: 1; background: #e0e5ec; border-radius: 8px; padding: 10px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; gap: 5px; }
+        .grid-container { flex: 1; background: #e0e5ec; border-radius: 8px; padding: 10px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; gap: 5px; position: relative; }
         body.dark-mode .grid-container { background: #2c3e50; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
         .summary-cards { display: flex; gap: 5px; justify-content: center; }
         .summary-card { width: 140px; background: #e0e5ec; border-radius: 5px; padding: 5px; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 5px; }
@@ -103,7 +166,19 @@
         body.dark-mode .chart-container .download-btn { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
         .chart-container .download-btn:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
         .tables-section { display: flex; gap: 5px; flex: 1; min-height: 200px; }
-        .table-container { flex: 3; background: #e0e5ec; border-radius: 8px; padding: 5px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); overflow-x: auto; overflow-y: auto; }
+        .table-container { 
+            flex: 3; 
+            background: #e0e5ec; 
+            border-radius: 8px; 
+            padding: 5px; 
+            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); 
+            overflow-x: auto; 
+            overflow-y: auto; 
+        }
+        #total-tables .table-container:nth-child(2) { /* Bảng TVBH trong tab Total */
+            max-height: 250px; /* Giới hạn chiều cao */
+            overflow-y: auto; /* Bật thanh cuộn dọc */
+        }
         .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
         .table-container::-webkit-scrollbar-track { background: #e0e5ec; }
         .table-container::-webkit-scrollbar-thumb { background: #003087; border-radius: 3px; }
@@ -166,6 +241,24 @@
         body.dark-mode footer { background: #003087; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
         #notification { position: fixed; top: 35px; right: 80px; padding: 5px 10px; background: #003087; color: #ecf0f1; border-radius: 5px; display: none; z-index: 10001; font-size: 10px; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
         body.dark-mode #notification { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .loading { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 14px; 
+            color: #003087; 
+            background: #ecf0f1; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); 
+            z-index: 1000; 
+        }
+        body.dark-mode .loading { 
+            color: #ecf0f1; 
+            background: #2c3e50; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); 
+        }
     </style>
 </head>
 <body>
@@ -374,7 +467,9 @@
             document.getElementById("detail-panel").style.display = "block";
             document.getElementById("pagination").style.display = "flex";
 
-            // Kiểm tra cache trước
+            const gridContainer = document.getElementById("grid-container");
+            gridContainer.innerHTML += '<div class="loading">Đang tải dữ liệu...</div>';
+
             if (cachedData[sheetName]) {
                 fullData = cachedData[sheetName];
                 filteredMonthData = fullData;
@@ -382,12 +477,11 @@
                 updateMonthOverview(fullData);
                 renderTable(fullData);
                 showNotification(`Dữ liệu ${sheetName} từ cache (${fullData.length} đơn hàng)`, 2000);
+                gridContainer.querySelector('.loading').remove();
                 return;
             }
 
-            // Lấy dữ liệu từ API
             try {
-                showNotification(`Đang tải dữ liệu ${sheetName}...`, 1000);
                 const response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`, {
                     method: 'GET',
                     mode: 'cors',
@@ -398,7 +492,6 @@
                 
                 const data = await response.json();
 
-                // Kiểm tra dữ liệu trả về
                 if (!data) throw new Error("Dữ liệu trả về là null hoặc undefined");
                 if (!Array.isArray(data)) throw new Error("Dữ liệu không phải là mảng");
                 if (data.length === 0) {
@@ -424,6 +517,8 @@
                     showNotification(`Lỗi tải dữ liệu ${sheetName}: ${error.message}. Vui lòng kiểm tra API hoặc mạng!`, 5000);
                     document.getElementById("table-body").innerHTML = `<tr><td colspan="6">Lỗi: ${error.message}</td></tr>`;
                 }
+            } finally {
+                gridContainer.querySelector('.loading').remove();
             }
         }
 
@@ -436,9 +531,10 @@
             document.getElementById("detail-panel").style.display = "none";
             document.getElementById("pagination").style.display = "none";
 
-            let totalCarData = [], totalTvbhData = [], monthlyData = [], trendData = {};
-            showNotification("Đang tải dữ liệu tổng...", 1000);
+            const gridContainer = document.getElementById("grid-container");
+            gridContainer.innerHTML += '<div class="loading">Đang tải dữ liệu tổng...</div>';
 
+            let totalCarData = [], totalTvbhData = [], monthlyData = [], trendData = {};
             try {
                 const fetchPromises = months.map(async month => {
                     if (cachedData[month]) return cachedData[month];
@@ -479,6 +575,8 @@
                 showNotification(`Lỗi tải dữ liệu tổng: ${error.message}. Vui lòng kiểm tra API!`, 5000);
                 updateOverview([], [], 0);
                 renderTotalTables([], [], months.map(m => ({ month: m, count: 0 })), {});
+            } finally {
+                gridContainer.querySelector('.loading').remove();
             }
         }
 
