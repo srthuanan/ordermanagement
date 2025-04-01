@@ -11,836 +11,317 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Giữ nguyên CSS từ mã trước đó */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Montserrat', sans-serif; 
-            background: #f0f4f8; 
-            color: #1a1a1a; 
+            background: #e0e5ec; 
+            color: #2c3e50; 
             min-height: 100vh; 
             overflow-x: hidden; 
             transition: background 0.3s, color 0.3s; 
         }
-        body.dark-mode { background: #1a1a1a; color: #e0e0e0; }
-
-        .navbar { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 60px; 
-            background: linear-gradient(135deg, #003087 0%, #001f5b 100%);
-            display: flex; 
-            align-items: center; 
-            padding: 0 25px; 
-            z-index: 1000; 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        body.dark-mode .navbar { 
-            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); 
-        }
-        .navbar .logo h1 { 
-            font-size: 22px; 
-            color: #ffffff; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-        }
-        .navbar .tabs { 
-            display: flex; 
-            overflow-x: auto; 
-            white-space: nowrap; 
-            flex-grow: 1; 
-            margin-left: 20px; 
-            gap: 5px;
-        }
-        .navbar .tabs a { 
-            padding: 10px 15px; 
-            text-decoration: none; 
-            color: #e0e0e0; 
-            font-size: 13px; 
-            font-weight: 500; 
-            border-radius: 8px; 
-            transition: all 0.3s ease; 
-            background: transparent; 
-            position: relative; 
-        }
-        .navbar .tabs a::after { 
-            content: ''; 
-            position: absolute; 
-            bottom: 0; 
-            left: 50%; 
-            width: 0; 
-            height: 2px; 
-            background: #ffd700; 
-            transition: all 0.3s ease; 
-            transform: translateX(-50%); 
-        }
-        .navbar .tabs a:hover { 
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.1); 
-        }
-        .navbar .tabs a:hover::after { 
-            width: 50%; 
-        }
-        .navbar .tabs a.active { 
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.15); 
-            font-weight: 600; 
-        }
-        .navbar .tabs a.active::after { 
-            width: 50%; 
-        }
-        .navbar .tabs a.total-tab { 
-            background: #d4af37; 
-            color: #1a1a1a; 
-        }
-        .navbar .tabs a.total-tab:hover, 
-        .navbar .tabs a.total-tab.active { 
-            background: #ffd700; 
-            color: #1a1a1a; 
-        }
-        .navbar .tabs a.total-tab::after { 
-            background: #1a1a1a; 
-        }
-        body.dark-mode .navbar .tabs a { 
-            color: #b0b0b0; 
-        }
-        body.dark-mode .navbar .tabs a:hover { 
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.1); 
-        }
-        body.dark-mode .navbar .tabs a.active { 
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.15); 
-        }
-
-        .navbar-controls { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            margin-left: 20px; 
-        }
-        .nav-btn { 
-            padding: 8px; 
-            border: none; 
-            border-radius: 5px; 
-            background: rgba(255, 255, 255, 0.1); 
-            color: #ffffff; 
-            font-size: 14px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            width: 32px; 
-            height: 32px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
-        }
-        .nav-btn:hover { 
-            background: rgba(255, 255, 255, 0.2); 
-            transform: translateY(-1px); 
-        }
-        body.dark-mode .nav-btn { 
-            background: rgba(255, 255, 255, 0.05); 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
-        }
-        body.dark-mode .nav-btn:hover { 
-            background: rgba(255, 255, 255, 0.1); 
-        }
-        .nav-btn[data-tooltip]::after { 
-            content: attr(data-tooltip); 
-            position: absolute; 
-            top: -35px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: #333; 
-            color: #ffffff; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-size: 11px; 
-            white-space: nowrap; 
-            opacity: 0; 
-            transition: opacity 0.3s ease; 
-        }
-        .nav-btn:hover::after { opacity: 1; }
-        .theme-toggle { 
-            background: none; 
-            border: none; 
-            color: #ffffff; 
-            font-size: 16px; 
-            cursor: pointer; 
-            transition: transform 0.3s ease; 
-        }
-        .theme-toggle:hover { 
-            transform: scale(1.2); 
-        }
-
-        .main-container { 
-            display: flex; 
-            margin-top: 60px; 
-            padding: 20px; 
-            gap: 20px; 
-            height: calc(100vh - 80px); 
-        }
-        .grid-container { 
-            flex: 2; 
-            background: #f0f4f8; 
-            border-radius: 10px; 
-            padding: 15px; /* Giảm padding để gọn hơn */
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); 
-            transition: all 0.3s ease; 
-        }
-        .grid-container.full-width { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; /* Giảm gap để gọn hơn */
-        }
-        body.dark-mode .grid-container { 
-            background: #1a1a1a; 
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); 
-        }
-
-        .controls { display: none; } /* Ẩn controls vì không còn sử dụng */
-
-        .filter-controls { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            gap: 10px; 
-            margin-bottom: 10px; /* Giảm margin-bottom */
-        }
-        .filter-container { 
-            display: flex; 
-            gap: 10px; /* Giảm gap để gọn hơn */
-            align-items: center; 
-        }
-        .filter-container select { 
-            padding: 6px; /* Giảm padding để gọn hơn */
-            border: none; 
-            border-radius: 5px; 
-            font-size: 12px; 
-            background: #f0f4f8; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.8); 
-            transition: all 0.3s ease; 
-            width: 100%; 
-            max-width: 180px; /* Giảm max-width để gọn hơn */
-        }
-        body.dark-mode .filter-container select { 
-            background: #1a1a1a; 
-            color: #e0e0e0; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-
-        .button-group { 
-            display: flex; 
-            gap: 8px; /* Giảm gap để gọn hơn */
-        }
-        .export-btn { 
-            padding: 6px; /* Giảm padding để nhỏ hơn */
-            border: none; 
-            border-radius: 5px; 
-            background: #f0f4f8; 
-            color: #003087; 
-            font-size: 12px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            width: 28px; /* Giảm kích thước nút */
-            height: 28px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1), -2px -2px 6px rgba(255, 255, 255, 0.8); 
-        }
-        .export-btn:hover { 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.8); 
-            transform: translateY(1px); 
-        }
-        .refresh-btn { 
-            color: #28a745; 
-        }
-        body.dark-mode .export-btn { 
-            background: #1a1a1a; 
-            color: #66b0ff; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3), -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-        body.dark-mode .refresh-btn { 
-            color: #28a745; 
-        }
-        .export-btn[data-tooltip]::after { 
-            content: attr(data-tooltip); 
-            position: absolute; 
-            top: -30px; /* Điều chỉnh vị trí tooltip */
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: #333; 
-            color: #ffffff; 
-            padding: 4px 8px; 
-            border-radius: 5px; 
-            font-size: 10px; /* Giảm kích thước chữ tooltip */
-            white-space: nowrap; 
-            opacity: 0; 
-            transition: opacity 0.3s ease; 
-        }
-        .export-btn:hover::after { 
-            opacity: 1; 
-        }
-
-        .search-container { 
-            margin-bottom: 10px; /* Giảm margin-bottom */
-        }
-        .search-container input { 
-            padding: 6px 10px; /* Giảm padding để gọn hơn */
-            width: 100%; 
-            max-width: 220px; /* Giảm max-width để gọn hơn */
-            border: none; 
-            border-radius: 5px; 
-            font-size: 12px; 
-            background: #f0f4f8; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.8); 
-            transition: all 0.3s ease; 
-        }
-        .search-container input:focus { 
-            outline: none; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2), inset -2px -2px 6px rgba(255, 255, 255, 0.9); 
-        }
-        body.dark-mode .search-container input { 
-            background: #1a1a1a; 
-            color: #e0e0e0; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-
-        .table-container { 
-            max-height: calc(100vh - 200px); /* Điều chỉnh để phù hợp bố cục mới */
-            overflow-y: auto; 
-            overflow-x: auto; 
-            scroll-behavior: smooth; 
-        }
-        .total-section .table-container { 
-            max-height: 300px; 
-        }
-
-        .table-container::-webkit-scrollbar, 
-        .detail-panel::-webkit-scrollbar { 
-            width: 10px; /* Giảm kích thước scrollbar */
-            height: 10px; 
-        }
-        .table-container::-webkit-scrollbar-track, 
-        .detail-panel::-webkit-scrollbar-track { 
-            background: #f0f4f8; 
-            border-radius: 8px; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.8); 
-        }
-        body.dark-mode .table-container::-webkit-scrollbar-track, 
-        body.dark-mode .detail-panel::-webkit-scrollbar-track { 
-            background: #1a1a1a; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-        .table-container::-webkit-scrollbar-thumb, 
-        .detail-panel::-webkit-scrollbar-thumb { 
-            background: #005eb8; 
-            border-radius: 8px; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1), -2px -2px 6px rgba(255, 255, 255, 0.8); 
-        }
-        body.dark-mode .table-container::-webkit-scrollbar-thumb, 
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { 
-            background: #4a90e2; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3), -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-        .table-container::-webkit-scrollbar-thumb:hover, 
-        .detail-panel::-webkit-scrollbar-thumb:hover { 
-            background: #0044cc; 
-        }
-        body.dark-mode .table-container::-webkit-scrollbar-thumb:hover, 
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover { 
-            background: #357abd; 
-        }
-
-        table { 
-            width: 100%; 
-            min-width: 300px; 
-            border-collapse: collapse; 
-            font-size: 12px; 
-        }
-        th, td { 
-            padding: 8px; /* Giảm padding để gọn hơn */
-            text-align: left; 
-            border-bottom: 1px solid #e0e0e0; 
-        }
-        th { 
-            background: #f0f4f8; 
-            color: #003087; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            position: sticky; 
-            top: 0; 
-            z-index: 10; 
-        }
-        td { 
-            background: #ffffff; 
-            color: #1a1a1a; 
-        }
-        body.dark-mode th { 
-            background: #333; 
-            color: #66b0ff; 
-        }
-        body.dark-mode td { 
-            background: #222; 
-            color: #e0e0e0; 
-            border-bottom: 1px solid #555; 
-        }
-        .vin-highlight { 
-            background: #e6f0ff; 
-            font-weight: 700; 
-            color: #003087; 
-        }
-        body.dark-mode .vin-highlight { 
-            background: #4a6fa5; 
-            color: #ffffff; 
-        }
-        tbody tr:hover { 
-            background: #f5f7fa; 
-            cursor: pointer; 
-        }
-        body.dark-mode tbody tr:hover { 
-            background: #2a2a2a; 
-        }
-        tbody tr.selected { 
-            background: #cce5ff; 
-            font-weight: 700; 
-        }
-        body.dark-mode tbody tr.selected { 
-            background: #5a7fb5; 
-        }
-        .total-section table { 
-            border: none; 
-            border-radius: 8px; 
-            background: #ffffff; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-        }
-        body.dark-mode .total-section table { 
-            background: #222; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
-        }
-        .summary-row { 
-            font-weight: 700; 
-            background: #e6f0ff; 
-        }
-        body.dark-mode .summary-row { 
-            background: #4a6fa5; 
-        }
-
-        .overview-section { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 10px; 
-            background: #ffffff; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-            gap: 10px; 
-            font-size: 12px; 
-            margin-bottom: 10px; /* Giảm margin-bottom */
-        }
-        body.dark-mode .overview-section { 
-            background: #222; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
-        }
-        .overview-item { 
-            flex: 1; 
-            text-align: center; 
-            padding: 5px; 
-        }
-        .overview-item:last-child { 
-            border-right: none; 
-        }
-        body.dark-mode .overview-item { 
-            border-right: 1px solid #555; 
-        }
-        .overview-item span { 
-            font-weight: 700; 
-            color: #003087; 
-            display: block; 
-            margin-top: 3px; 
-        }
-        body.dark-mode .overview-item span { 
-            color: #66b0ff; 
-        }
-
-        #total-tables { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; /* Giảm gap để gọn hơn */
-        }
-        .total-content { 
-            display: flex; 
-            gap: 15px; /* Giảm gap để gọn hơn */
-            flex: 1; 
-        }
-        .charts-section { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; /* Giảm gap để gọn hơn */
-        }
-        .tables-section { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; /* Giảm gap để gọn hơn */
-        }
-        .total-section { 
-            background: #ffffff; 
-            border-radius: 8px; 
-            padding: 12px; /* Giảm padding để gọn hơn */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-        }
-        body.dark-mode .total-section { 
-            background: #222; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
-        }
-
-        .table-title { 
-            font-size: 14px; /* Giảm font-size */
-            font-weight: 700; 
-            color: #003087; 
-            margin-bottom: 8px; /* Giảm margin-bottom */
-            border-bottom: 2px solid #005eb8; 
-            padding-bottom: 4px; /* Giảm padding-bottom */
-        }
-        body.dark-mode .table-title { 
-            color: #66b0ff; 
-            border-bottom: 2px solid #66b0ff; 
-        }
-
-        .chart-container { 
-            position: relative; 
-            max-width: 100%; 
-            height: 180px; /* Giảm chiều cao để gọn hơn */
-            background: #ffffff; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
-        }
-        body.dark-mode .chart-container { 
-            background: #222; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
-        }
-        .chart-container .download-btn { 
-            position: absolute; 
-            top: 8px; 
-            right: 8px; 
-            padding: 5px; /* Giảm padding */
-            background: #28a745; 
-            color: #fff; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
-        }
-        .chart-container .download-btn:hover { 
-            background: #218838; 
-        }
-
-        .detail-panel { 
-            flex: 1; 
-            background: #f0f4f8; 
-            border-radius: 10px; 
-            padding: 15px; /* Giảm padding để gọn hơn */
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); 
-            max-height: calc(100vh - 80px); 
-            overflow-y: auto; 
-        }
-        body.dark-mode .detail-panel { 
-            background: #1a1a1a; 
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); 
-        }
-        .detail-panel h3 { 
-            font-size: 14px; /* Giảm font-size */
-            color: #003087; 
-            margin-bottom: 10px; /* Giảm margin-bottom */
-            font-weight: 700; 
-        }
-        body.dark-mode .detail-panel h3 { 
-            color: #66b0ff; 
-        }
-        .detail-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 12px; 
-        }
-        .detail-table th { 
-            background: #f0f4f8; 
-            color: #1a1a1a; 
-            text-align: left; 
-            padding: 8px; /* Giảm padding */
-            font-weight: 400; 
-        }
-        body.dark-mode .detail-table th { 
-            background: #333; 
-            color: #e0e0e0; 
-        }
-        .detail-table td { 
-            padding: 8px; /* Giảm padding */
-            border-bottom: 1px solid #e0e0e0; 
-        }
-        body.dark-mode .detail-table td { 
-            border-bottom: 1px solid #555; 
-            color: #e0e0e0; 
-        }
-
-        .pagination { 
-            display: flex; 
-            justify-content: center; 
-            gap: 8px; /* Giảm gap */
-            margin-top: 15px; /* Giảm margin-top */
-        }
-        .pagination button { 
-            padding: 6px 12px; /* Giảm padding */
-            border: none; 
-            border-radius: 5px; 
-            background: #005eb8; 
-            color: #ffffff; 
-            font-size: 12px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1), -2px -2px 6px rgba(255, 255, 255, 0.8); 
-        }
-        .pagination button:hover { 
-            background: #0044cc; 
-            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.8); 
-        }
-        body.dark-mode .pagination button { 
-            background: #4a90e2; 
-            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3), -2px -2px 6px rgba(50, 50, 50, 0.5); 
-        }
-        body.dark-mode .pagination button:hover { 
-            background: #357abd; 
-        }
-        .pagination span { 
-            padding: 6px 12px; /* Giảm padding */
-            font-size: 12px; 
-            color: #003087; 
-        }
-        body.dark-mode .pagination span { 
-            color: #66b0ff; 
-        }
-
-        footer { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: #003087; 
-            color: #ffffff; 
-            text-align: center; 
-            padding: 6px 0; /* Giảm padding */
-            font-size: 10px; 
-        }
-
-        #notification { 
-            position: fixed; 
-            top: 15px; 
-            right: 15px; 
-            padding: 6px 12px; /* Giảm padding */
-            background: #f0f4f8; 
-            color: #003087; 
-            border-radius: 5px; 
-            display: none; 
-            z-index: 10001; 
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8); 
-            font-size: 12px; 
-        }
-        body.dark-mode #notification { 
-            background: #1a1a1a; 
-            color: #66b0ff; 
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5); 
-        }
-        .total-section .chart-container.monthly-chart {
-            height: 230px; /* Giảm chiều cao */
-        }
-        .highlight-section {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px; /* Giảm gap */
-            margin-bottom: 15px; /* Giảm margin-bottom */
-            padding: 12px; /* Giảm padding */
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        body.dark-mode .highlight-section {
-            background: #222;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-        .highlight-item {
-            flex: 1;
-            padding: 8px; /* Giảm padding */
-            text-align: left;
-        }
-        .highlight-item h4 {
-            font-size: 13px; /* Giảm font-size */
-            color: #003087;
-            margin-bottom: 8px; /* Giảm margin-bottom */
+        body.dark-mode { background: #2c3e50; color: #ecf0f1; }
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #003087;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 12px;
             font-weight: 700;
+            text-transform: uppercase;
+            z-index: 999;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
         }
-        body.dark-mode .highlight-item h4 {
-            color: #66b0ff;
+        body.dark-mode header { background: #003087; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .slidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 150px;
+            height: 100vh;
+            background: #e0e5ec;
+            padding: 10px;
+            padding-top: 30px;
+            transition: width 0.3s ease;
+            z-index: 1000;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
         }
-        .highlight-item ul {
-            list-style: none;
-            padding: 0;
-        }
-        .highlight-item li {
-            font-size: 11px; /* Giảm font-size */
-            margin-bottom: 4px; /* Giảm margin-bottom */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .highlight-item li span:first-child {
-            font-weight: 500;
-        }
-        .highlight-item li span:last-child {
-            font-weight: 700;
-            color: #005eb8;
-        }
-        body.dark-mode .highlight-item li span:last-child {
-            color: #4a90e2;
-        }
+        .slidebar.collapsed { width: 40px; }
+        body.dark-mode .slidebar { background: #2c3e50; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .slidebar .logo h1 { font-size: 16px; color: #003087; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-align: center; margin-bottom: 10px; transition: opacity 0.3s ease; }
+        body.dark-mode .slidebar .logo h1 { color: #ecf0f1; }
+        .slidebar.collapsed .logo h1 { opacity: 0; }
+        .slidebar .tabs { display: flex; flex-direction: column; gap: 5px; overflow-y: auto; max-height: calc(100vh - 80px); scrollbar-width: thin; scrollbar-color: #003087 #e0e5ec; }
+        .slidebar .tabs::-webkit-scrollbar { width: 4px; }
+        .slidebar .tabs::-webkit-scrollbar-thumb { background: #003087; border-radius: 2px; }
+        .slidebar .tabs::-webkit-scrollbar-track { background: #e0e5ec; }
+        body.dark-mode .slidebar .tabs::-webkit-scrollbar-thumb { background: #003087; }
+        body.dark-mode .slidebar .tabs::-webkit-scrollbar-track { background: #2c3e50; }
+        .slidebar .tabs a { padding: 8px 10px; text-decoration: none; color: #003087; font-size: 12px; font-weight: 500; border-radius: 5px; background: #e0e5ec; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); transition: all 0.3s ease; text-align: left; }
+        .slidebar.collapsed .tabs a { padding: 8px; text-align: center; }
+        .slidebar .tabs a span { transition: opacity 0.3s ease; }
+        .slidebar.collapsed .tabs a span { opacity: 0; width: 0; }
+        .slidebar .tabs a:hover { color: #ecf0f1; background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .slidebar .tabs a.active { color: #ecf0f1; background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); font-weight: 600; }
+        body.dark-mode .slidebar .tabs a { color: #ecf0f1; background: #2c3e50; }
+        body.dark-mode .slidebar .tabs a:hover, body.dark-mode .slidebar .tabs a.active { background: #003087; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .toggle-btn { position: absolute; top: 10px; right: -12px; width: 24px; height: 24px; background: #003087; border: none; border-radius: 50%; color: #ecf0f1; font-size: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .toggle-btn:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .toggle-btn { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .navbar-controls { position: fixed; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 1001; }
+        .nav-btn, .theme-toggle { padding: 5px; border: none; border-radius: 5px; background: #003087; color: #ecf0f1; font-size: 12px; cursor: pointer; transition: all 0.3s ease; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .nav-btn:hover, .theme-toggle:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .main-container { margin-left: 150px; padding: 10px; margin-top: 30px; height: calc(100vh - 60px); transition: margin-left 0.3s ease; display: flex; flex-direction: column; gap: 5px; }
+        .main-container.collapsed { margin-left: 40px; }
+        .grid-container { flex: 1; background: #e0e5ec; border-radius: 8px; padding: 10px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); display: flex; flex-direction: column; gap: 5px; }
+        body.dark-mode .grid-container { background: #2c3e50; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .summary-cards { display: flex; gap: 5px; justify-content: center; }
+        .summary-card { width: 140px; background: #e0e5ec; border-radius: 5px; padding: 5px; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); display: flex; align-items: center; gap: 5px; }
+        body.dark-mode .summary-card { background: #2c3e50; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .summary-card .icon { font-size: 14px; color: #00a550; }
+        body.dark-mode .summary-card .icon { color: #00a550; }
+        .summary-card .info h3 { font-size: 10px; color: #7f8c8d; margin-bottom: 2px; }
+        body.dark-mode .summary-card .info h3 { color: #bdc3c7; }
+        .summary-card .info p { font-size: 12px; font-weight: 700; color: #2c3e50; }
+        body.dark-mode .summary-card .info p { color: #ecf0f1; }
+        .charts-section { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+        .chart-row { display: flex; gap: 5px; }
+        .chart-container { background: #e0e5ec; border-radius: 8px; padding: 10px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); position: relative; }
+        .chart-container.full-width { width: 100%; }
+        .chart-container.half-width { width: 50%; }
+        body.dark-mode .chart-container { background: #2c3e50; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .chart-container h3 { font-size: 12px; font-weight: 700; color: #2c3e50; margin-bottom: 5px; }
+        body.dark-mode .chart-container h3 { color: #ecf0f1; }
+        .chart-container canvas { height: 150px !important; }
+        .chart-container .download-btn { position: absolute; top: 10px; right: 10px; padding: 3px; background: #003087; color: #ecf0f1; border: none; border-radius: 3px; cursor: pointer; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .chart-container .download-btn { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .chart-container .download-btn:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .tables-section { display: flex; gap: 5px; flex: 1; min-height: 200px; }
+        .table-container { flex: 3; background: #e0e5ec; border-radius: 8px; padding: 5px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); overflow-x: auto; overflow-y: auto; }
+        .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-container::-webkit-scrollbar-track { background: #e0e5ec; }
+        .table-container::-webkit-scrollbar-thumb { background: #003087; border-radius: 3px; }
+        body.dark-mode .table-container { background: #2c3e50; scrollbar-color: #003087 #2c3e50; }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb { background: #003087; }
+        body.dark-mode .table-container::-webkit-scrollbar-track { background: #2c3e50; }
+        .table-container h3 { font-size: 12px; font-weight: 700; color: #2c3e50; margin-bottom: 5px; }
+        body.dark-mode .table-container h3 { color: #ecf0f1; }
+        table { width: 100%; min-width: 400px; border-collapse: collapse; font-size: 10px; }
+        th, td { padding: 3px 5px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        th:nth-child(1), td:nth-child(1) { width: 30px; }
+        th:nth-child(2), td:nth-child(2) { width: 50px; }
+        th:nth-child(3), td:nth-child(3) { width: 80px; }
+        th:nth-child(4), td:nth-child(4) { width: 90px; }
+        th:nth-child(5), td:nth-child(5) { width: 90px; }
+        th:nth-child(6), td:nth-child(6) { width: 80px; }
+        thead { position: sticky; top: 0; background: #003087; color: #ecf0f1; z-index: 1; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode thead { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        th { font-weight: 600; }
+        td { color: #2c3e50; border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+        body.dark-mode td { color: #ecf0f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        tbody tr:hover { background: rgba(0, 0, 0, 0.02); }
+        body.dark-mode tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .summary-row { font-weight: 700; background: rgba(0, 0, 0, 0.05); }
+        body.dark-mode .summary-row { background: rgba(255, 255, 255, 0.1); }
+        .month-data-container { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+        .filter-section { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: space-between; }
+        .filter-section input, .filter-section select { padding: 3px; border: none; border-radius: 5px; font-size: 10px; background: #e0e5ec; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); width: 90px; color: #003087; }
+        .filter-section input:focus, .filter-section select:focus { outline: none; }
+        body.dark-mode .filter-section input, body.dark-mode .filter-section select { background: #2c3e50; color: #ecf0f1; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .filter-section .button-group { display: flex; gap: 5px; justify-content: flex-end; }
+        .export-btn { padding: 3px; border: none; border-radius: 5px; background: #003087; color: #ecf0f1; font-size: 10px; cursor: pointer; transition: all 0.3s ease; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .export-btn:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .refresh-btn { color: #00a550; }
+        body.dark-mode .export-btn { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .detail-panel { flex: 2; min-width: 450px; max-width: 300px; background: #e0e5ec; border-radius: 8px; padding: 5px; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8); overflow-y: auto; }
+        body.dark-mode .detail-panel { background: #2c3e50; box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        .detail-panel::-webkit-scrollbar { width: 6px; }
+        .detail-panel::-webkit-scrollbar-track { background: #e0e5ec; }
+        .detail-panel::-webkit-scrollbar-thumb { background: #003087; border-radius: 3px; }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { background: #003087; }
+        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #2c3e50; }
+        .detail-panel h3 { font-size: 11px; color: #2c3e50; margin-bottom: 5px; font-weight: 700; }
+        body.dark-mode .detail-panel h3 { color: #ecf0f1; }
+        .detail-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .detail-table th, .detail-table td { padding: 4px 6px; text-align: left; border-bottom: 1px solid rgba(0, 0, 0, 0.05); }
+        .detail-table th { color: #2c3e50; font-weight: 600; width: 40%; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .detail-table th { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .detail-table td { background: #e0e5ec; color: #2c3e50; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .detail-table td { background: #2c3e50; color: #ecf0f1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .detail-table .vin-highlight { font-weight: 700; color: #00a550; }
+        body.dark-mode .detail-table .vin-highlight { color: #00a550; }
+        .pagination { display: flex; justify-content: center; gap: 5px; margin-top: 5px; }
+        .pagination button { padding: 3px 8px; border: none; border-radius: 5px; background: #003087; color: #ecf0f1; font-size: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        .pagination button:hover { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode .pagination button { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
+        .pagination span { padding: 3px 8px; font-size: 10px; color: #2c3e50; }
+        body.dark-mode .pagination span { color: #ecf0f1; }
+        footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #003087; color: #ecf0f1; text-align: center; padding: 5px 0; font-size: 8px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8); }
+        body.dark-mode footer { background: #003087; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5); }
+        #notification { position: fixed; top: 35px; right: 80px; padding: 5px 10px; background: #003087; color: #ecf0f1; border-radius: 5px; display: none; z-index: 10001; font-size: 10px; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1), -3px -3px 6px rgba(255, 255, 255, 0.8); }
+        body.dark-mode #notification { background: #003087; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(50, 50, 50, 0.5); }
     </style>
 </head>
 <body>
-    <div class="navbar">
+    <header>BÁO CÁO DOANH SỐ VINFAST THUẬN AN</header>
+    <div class="slidebar" id="slidebar">
         <div class="logo">
             <h1>VinFast Thuận An</h1>
         </div>
         <div class="tabs">
-            <a href="#" onclick="fetchSheetData('January', this)">Tháng 1</a>
-            <a href="#" onclick="fetchSheetData('February', this)">Tháng 2</a>
-            <a href="#" onclick="fetchSheetData('March', this)">Tháng 3</a>
-            <a href="#" onclick="fetchSheetData('April', this)">Tháng 4</a>
-            <a href="#" onclick="fetchSheetData('May', this)">Tháng 5</a>
-            <a href="#" onclick="fetchSheetData('June', this)">Tháng 6</a>
-            <a href="#" onclick="fetchSheetData('July', this)">Tháng 7</a>
-            <a href="#" onclick="fetchSheetData('August', this)">Tháng 8</a>
-            <a href="#" onclick="fetchSheetData('September', this)">Tháng 9</a>
-            <a href="#" onclick="fetchSheetData('October', this)">Tháng 10</a>
-            <a href="#" onclick="fetchSheetData('November', this)">Tháng 11</a>
-            <a href="#" onclick="fetchSheetData('December', this)">Tháng 12</a>
-            <a href="#" onclick="fetchTotalData(this)" class="total-tab active">Tổng</a>
+            <a href="#" onclick="fetchSheetData('January', this)"><span>Tháng 1</span></a>
+            <a href="#" onclick="fetchSheetData('February', this)"><span>Tháng 2</span></a>
+            <a href="#" onclick="fetchSheetData('March', this)"><span>Tháng 3</span></a>
+            <a href="#" onclick="fetchSheetData('April', this)"><span>Tháng 4</span></a>
+            <a href="#" onclick="fetchSheetData('May', this)"><span>Tháng 5</span></a>
+            <a href="#" onclick="fetchSheetData('June', this)"><span>Tháng 6</span></a>
+            <a href="#" onclick="fetchSheetData('July', this)"><span>Tháng 7</span></a>
+            <a href="#" onclick="fetchSheetData('August', this)"><span>Tháng 8</span></a>
+            <a href="#" onclick="fetchSheetData('September', this)"><span>Tháng 9</span></a>
+            <a href="#" onclick="fetchSheetData('October', this)"><span>Tháng 10</span></a>
+            <a href="#" onclick="fetchSheetData('November', this)"><span>Tháng 11</span></a>
+            <a href="#" onclick="fetchSheetData('December', this)"><span>Tháng 12</span></a>
+            <a href="#" onclick="fetchTotalData(this)" class="total-tab active"><span>Tổng</span></a>
         </div>
-        <div class="navbar-controls">
-            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
+        <button class="toggle-btn" onclick="toggleSlidebar()"><i class="fas fa-bars"></i></button>
     </div>
-    <div class="main-container">
+    <div class="navbar-controls">
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+    <div class="main-container" id="main-container">
         <div class="grid-container" id="grid-container">
-            <div class="controls" id="controls-section"></div>
             <div id="total-tables" style="display: none;">
-                <div class="overview-section">
-                    <div class="overview-item">Tổng số xe: <span id="total-cars">0</span></div>
-                    <div class="overview-item">Dòng xe bán chạy: <span id="top-car">-</span></div>
-                    <div class="overview-item">Tư vấn bán hàng: <span id="top-tvbh">-</span></div>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <i class="fas fa-car icon"></i>
+                        <div class="info">
+                            <h3>Tổng Số Xe</h3>
+                            <p id="total-cars">0</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-star icon"></i>
+                        <div class="info">
+                            <h3>Dòng Xe Bán Chạy</h3>
+                            <p id="top-car">-</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-user icon"></i>
+                        <div class="info">
+                            <h3>Tư Vấn Bán Hàng</h3>
+                            <p id="top-tvbh">-</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="highlight-section">
-                    <div class="highlight-item">
-                        <h4>Top 3 Dòng Xe</h4>
-                        <ul id="top-cars-list"></ul>
+                <div class="charts-section">
+                    <div class="chart-container full-width">
+                        <h3>Doanh Số Theo Tháng</h3>
+                        <canvas id="monthly-chart"></canvas>
+                        <button class="download-btn" onclick="downloadChart('monthly-chart', 'Biểu đồ Doanh Số Theo Tháng')"><i class="fas fa-download"></i></button>
                     </div>
-                    <div class="highlight-item">
-                        <h4>Top 3 Tư Vấn Bán Hàng</h4>
-                        <ul id="top-tvbh-list"></ul>
+                    <div class="chart-row">
+                        <div class="chart-container half-width">
+                            <h3>Tổng Hợp Theo Dòng Xe</h3>
+                            <canvas id="car-chart"></canvas>
+                            <button class="download-btn" onclick="downloadChart('car-chart', 'Biểu đồ Dòng Xe')"><i class="fas fa-download"></i></button>
+                        </div>
+                        <div class="chart-container half-width">
+                            <h3>Xu Hướng Dòng Xe Qua Các Tháng</h3>
+                            <canvas id="trend-chart"></canvas>
+                            <button class="download-btn" onclick="downloadChart('trend-chart', 'Biểu đồ Xu Hướng Dòng Xe')"><i class="fas fa-download"></i></button>
+                        </div>
                     </div>
                 </div>
-                <div class="total-content">
-                    <div class="charts-section">
-                        <div class="total-section">
-                            <div class="table-title">Doanh số theo tháng</div>
-                            <div class="chart-container monthly-chart">
-                                <canvas id="monthly-chart"></canvas>
-                                <button class="download-btn" onclick="downloadChart('monthly-chart', 'Biểu đồ Doanh Số Theo Tháng')"><i class="fas fa-download"></i></button>
+                <div class="tables-section">
+                    <div class="table-container">
+                        <h3>Danh Sách Dòng Xe</h3>
+                        <table id="total-car-table">
+                            <thead id="total-car-header"></thead>
+                            <tbody id="total-car-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-container">
+                        <h3>Danh Sách Tư Vấn Bán Hàng</h3>
+                        <table id="total-tvbh-table">
+                            <thead id="total-tvbh-header"></thead>
+                            <tbody id="total-tvbh-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="month-data" style="display: flex; flex-direction: row; gap: 5px; height: 100%;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <i class="fas fa-car icon"></i>
+                            <div class="info">
+                                <h3>Tổng Số Xe</h3>
+                                <p id="month-total-cars">0</p>
                             </div>
                         </div>
-                        <div class="total-section">
-                            <div class="table-title">Tổng hợp theo dòng xe</div>
-                            <div class="chart-container">
-                                <canvas id="car-chart"></canvas>
-                                <button class="download-btn" onclick="downloadChart('car-chart', 'Biểu đồ Dòng Xe')"><i class="fas fa-download"></i></button>
+                        <div class="summary-card">
+                            <i class="fas fa-star icon"></i>
+                            <div class="info">
+                                <h3>Dòng Xe Bán Chạy</h3>
+                                <p id="month-top-car">-</p>
                             </div>
                         </div>
-                        <div class="total-section">
-                            <div class="table-title">Tổng hợp theo tư vấn bán hàng</div>
-                            <div class="chart-container">
-                                <canvas id="tvbh-chart"></canvas>
-                                <button class="download-btn" onclick="downloadChart('tvbh-chart', 'Biểu đồ Tư Vấn Bán Hàng')"><i class="fas fa-download"></i></button>
+                        <div class="summary-card">
+                            <i class="fas fa-user icon"></i>
+                            <div class="info">
+                                <h3>Tư Vấn Bán Hàng</h3>
+                                <p id="month-top-tvbh">-</p>
                             </div>
                         </div>
                     </div>
-                    <div class="tables-section">
-                        <div class="total-section">
-                            <div class="table-title">Danh sách dòng xe</div>
-                            <div class="table-container">
-                                <table id="total-car-table">
-                                    <thead id="total-car-header"></thead>
-                                    <tbody id="total-car-body"></tbody>
+                    <div class="month-data-container">
+                        <div class="filter-section">
+                            <div>
+                                <input type="text" id="search-input" placeholder="Tìm theo tên..." oninput="applyFilters()">
+                                <select id="car-filter" onchange="applyFilters()">
+                                    <option value="">Lọc theo Dòng Xe</option>
+                                </select>
+                                <select id="tvbh-filter" onchange="applyFilters()">
+                                    <option value="">Lọc theo Tư Vấn BH</option>
+                                </select>
+                            </div>
+                            <div class="button-group">
+                                <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                                <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                                <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                            </div>
+                        </div>
+                        <div class="tables-section">
+                            <div class="table-container" id="table-container">
+                                <table id="data-table">
+                                    <thead id="table-header"></thead>
+                                    <tbody id="table-body"></tbody>
+                                </table>
+                            </div>
+                            <div class="detail-panel" id="detail-panel">
+                                <h3>Chi Tiết Đơn Hàng</h3>
+                                <table id="detail-body" class="detail-table">
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>
-                        <div class="total-section">
-                            <div class="table-title">Danh sách tư vấn bán hàng</div>
-                            <div class="table-container">
-                                <table id="total-tvbh-table">
-                                    <thead id="total-tvbh-header"></thead>
-                                    <tbody id="total-tvbh-body"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="pagination" id="pagination">
+                        <button onclick="changePage(-1)" id="prev-btn">Trước</button>
+                        <span id="page-info">Trang 1</span>
+                        <button onclick="changePage(1)" id="next-btn">Sau</button>
                     </div>
                 </div>
             </div>
-            <div id="month-data">
-                <div class="overview-section" id="month-overview" style="display: none;">
-                    <div class="overview-item">Tổng số xe: <span id="month-total-cars">0</span></div>
-                    <div class="overview-item">Dòng xe bán chạy: <span id="month-top-car">-</span></div>
-                    <div class="overview-item">Tư vấn bán hàng: <span id="month-top-tvbh">-</span></div>
-                </div>
-                <div class="search-container">
-                    <input type="text" id="search-input" placeholder="Tìm theo tên, VIN..." oninput="applyFilters()">
-                </div>
-                <div class="filter-controls">
-                    <div class="filter-container">
-                        <select id="car-filter" onchange="applyFilters()">
-                            <option value="">Lọc theo Dòng Xe</option>
-                        </select>
-                        <select id="tvbh-filter" onchange="applyFilters()">
-                            <option value="">Lọc theo Tư Vấn Bán Hàng</option>
-                        </select>
-                    </div>
-                    <div class="button-group">
-                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
-                    </div>
-                </div>
-                <div class="table-container" id="table-container">
-                    <table id="data-table">
-                        <thead id="table-header"></thead>
-                        <tbody id="table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="pagination" id="pagination">
-                <button onclick="changePage(-1)" id="prev-btn">Trước</button>
-                <span id="page-info">Trang 1</span>
-                <button onclick="changePage(1)" id="next-btn">Sau</button>
-            </div>
-        </div>
-        <div class="detail-panel" id="detail-panel">
-            <h3>Chi Tiết Đơn Hàng</h3>
-            <div id="detail-body"></div>
         </div>
     </div>
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
@@ -848,20 +329,20 @@
 
     <script>
         let currentPage = 1;
-        const rowsPerPage = 15;
+        const rowsPerPage = 20;
         let fullData = [], fullTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
         let currentSheet = "Total";
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        let carChart, tvbhChart, monthlyChart;
+        let carChart, monthlyChart, trendChart;
         let cachedData = {};
 
-        document.body.style.zoom = "80%";
+        document.body.style.zoom = "100%";
 
         document.addEventListener("DOMContentLoaded", () => {
-            if (sessionStorage.getItem("isLoggedIn") !== "true") window.location.href = "index.html";
-            else {
+            if (sessionStorage.getItem("isLoggedIn") !== "true") {
+                window.location.href = "index.html";
+            } else {
                 fetchTotalData(document.querySelector('.tabs a.total-tab'));
-                setupEventListeners();
             }
         });
 
@@ -876,63 +357,73 @@
 
         function goBack() { window.location.href = "index.html"; showNotification("Đã quay lại trang chủ!", 2000); }
         function logout() { sessionStorage.clear(); window.location.href = "index.html"; showNotification("Đã đăng xuất!", 2000); }
+        function toggleSlidebar() {
+            document.getElementById("slidebar").classList.toggle("collapsed");
+            document.getElementById("main-container").classList.toggle("collapsed");
+        }
 
         if (localStorage.getItem('theme') === 'dark') toggleTheme();
 
-        function setupEventListeners() {
-            const tableContainer = document.getElementById("table-container");
-            const detailPanel = document.getElementById("detail-panel");
-
-            tableContainer.addEventListener('scroll', () => {
-                detailPanel.scrollTop = tableContainer.scrollTop;
-            });
-            detailPanel.addEventListener('scroll', () => {
-                tableContainer.scrollTop = detailPanel.scrollTop;
-            });
-        }
-
-        function updateControls() {
-            const controlsSection = document.getElementById("controls-section");
-            controlsSection.innerHTML = ""; // Không cần nội dung trong controls-section
-        }
-
-        async function fetchSheetData(sheetName, element) {
+        async function fetchSheetData(sheetName, element, retries = 3) {
             currentSheet = sheetName;
             currentPage = 1;
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             document.getElementById("total-tables").style.display = "none";
-            document.getElementById("month-data").style.display = "block";
-            document.getElementById("month-overview").style.display = "flex";
+            document.getElementById("month-data").style.display = "flex";
             document.getElementById("detail-panel").style.display = "block";
-            document.getElementById("grid-container").classList.remove("full-width");
             document.getElementById("pagination").style.display = "flex";
-            updateControls();
 
+            // Kiểm tra cache trước
             if (cachedData[sheetName]) {
                 fullData = cachedData[sheetName];
                 filteredMonthData = fullData;
                 updateFilters(fullData);
                 updateMonthOverview(fullData);
                 renderTable(fullData);
+                showNotification(`Dữ liệu ${sheetName} từ cache (${fullData.length} đơn hàng)`, 2000);
                 return;
             }
 
+            // Lấy dữ liệu từ API
             try {
-                const response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`);
-                if (!response.ok) throw new Error("Không thể kết nối server");
+                showNotification(`Đang tải dữ liệu ${sheetName}...`, 1000);
+                const response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+
+                if (!response.ok) throw new Error(`Server trả về lỗi ${response.status}: ${response.statusText}`);
+                
                 const data = await response.json();
-                cachedData[sheetName] = data;
-                sessionStorage.setItem(sheetName, JSON.stringify(data));
-                fullData = data;
+
+                // Kiểm tra dữ liệu trả về
+                if (!data) throw new Error("Dữ liệu trả về là null hoặc undefined");
+                if (!Array.isArray(data)) throw new Error("Dữ liệu không phải là mảng");
+                if (data.length === 0) {
+                    showNotification(`Không có dữ liệu cho ${sheetName}`, 3000);
+                    fullData = [];
+                } else {
+                    fullData = data;
+                    cachedData[sheetName] = fullData;
+                    sessionStorage.setItem(sheetName, JSON.stringify(fullData));
+                    showNotification(`Dữ liệu ${sheetName} đã tải thành công (${fullData.length} đơn hàng)`, 2000);
+                }
+
                 filteredMonthData = fullData;
                 updateFilters(fullData);
                 updateMonthOverview(fullData);
                 renderTable(fullData);
-                showNotification(`Dữ liệu ${sheetName} đã cập nhật! (${data.length} đơn hàng)`, 2000);
             } catch (error) {
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="7">Lỗi: ${error.message}</td></tr>`;
-                showNotification("Lỗi tải dữ liệu!", 3000);
+                console.error(`Lỗi khi tải ${sheetName}:`, error);
+                if (retries > 0) {
+                    showNotification(`Thử lại ${sheetName} (${retries} lần còn lại)...`, 1000);
+                    setTimeout(() => fetchSheetData(sheetName, element, retries - 1), 1000);
+                } else {
+                    showNotification(`Lỗi tải dữ liệu ${sheetName}: ${error.message}. Vui lòng kiểm tra API hoặc mạng!`, 5000);
+                    document.getElementById("table-body").innerHTML = `<tr><td colspan="6">Lỗi: ${error.message}</td></tr>`;
+                }
             }
         }
 
@@ -941,64 +432,119 @@
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             document.getElementById("month-data").style.display = "none";
-            document.getElementById("month-overview").style.display = "none";
             document.getElementById("total-tables").style.display = "block";
             document.getElementById("detail-panel").style.display = "none";
-            document.getElementById("grid-container").classList.add("full-width");
             document.getElementById("pagination").style.display = "none";
-            updateControls();
 
-            let totalCarData = [], totalTvbhData = [], monthlyData = [];
-            const fetchPromises = months.map(async month => cachedData[month] || JSON.parse(sessionStorage.getItem(month)) || (await fetchMonthData(month)));
+            let totalCarData = [], totalTvbhData = [], monthlyData = [], trendData = {};
+            showNotification("Đang tải dữ liệu tổng...", 1000);
+
             try {
+                const fetchPromises = months.map(async month => {
+                    if (cachedData[month]) return cachedData[month];
+                    const cached = JSON.parse(sessionStorage.getItem(month));
+                    if (cached) return cached;
+                    return await fetchMonthData(month);
+                });
+
                 const results = await Promise.all(fetchPromises);
-                const allData = results.flat();
+                const allData = results.flat().filter(row => row && Array.isArray(row) && row.length > 0);
                 const validData = allData.filter(row => row[3] && row[3].trim() !== "");
+
+                if (validData.length === 0) {
+                    showNotification("Không có dữ liệu hợp lệ từ 12 tháng", 3000);
+                    updateOverview([], [], 0);
+                    renderTotalTables([], [], months.map(m => ({ month: m, count: 0 })), {});
+                    return;
+                }
+
                 totalCarData = aggregateData(validData, 3);
                 totalTvbhData = aggregateData(validData, 7);
                 monthlyData = months.map((month, idx) => ({
                     month: month,
-                    count: results[idx] ? results[idx].length : 0
+                    count: results[idx] && Array.isArray(results[idx]) ? results[idx].length : 0
                 }));
+                trendData = calculateTrendData(results);
+
                 fullData = totalCarData;
                 fullTvbhData = totalTvbhData;
                 filteredCarData = totalCarData;
                 filteredTvbhData = totalTvbhData;
+
                 updateOverview(totalCarData, totalTvbhData, validData.length);
-                renderHighlights(totalCarData, totalTvbhData);
-                renderTotalTables(totalCarData, totalTvbhData, monthlyData);
-                showNotification(`Dữ liệu tổng cập nhật! (${validData.length} đơn hàng)`, 2000);
+                renderTotalTables(totalCarData, totalTvbhData, monthlyData, trendData);
+                showNotification(`Dữ liệu tổng cập nhật thành công (${validData.length} đơn hàng)`, 2000);
             } catch (error) {
-                showNotification("Lỗi tải dữ liệu tổng!", 3000);
+                console.error("Lỗi tải dữ liệu tổng:", error);
+                showNotification(`Lỗi tải dữ liệu tổng: ${error.message}. Vui lòng kiểm tra API!`, 5000);
+                updateOverview([], [], 0);
+                renderTotalTables([], [], months.map(m => ({ month: m, count: 0 })), {});
             }
         }
 
         async function fetchMonthData(month) {
-            const response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${month}`);
-            const data = await response.json();
-            cachedData[month] = data;
-            sessionStorage.setItem(month, JSON.stringify(data));
-            return data;
+            try {
+                const response = await fetch(`https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${month}`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+
+                if (!response.ok) throw new Error(`Server trả về lỗi ${response.status}`);
+
+                const data = await response.json();
+
+                if (!data || !Array.isArray(data)) {
+                    console.warn(`Dữ liệu ${month} không hợp lệ:`, data);
+                    return [];
+                }
+
+                cachedData[month] = data;
+                sessionStorage.setItem(month, JSON.stringify(data));
+                return data;
+            } catch (error) {
+                console.error(`Lỗi tải ${month}:`, error);
+                showNotification(`Không tải được ${month}: ${error.message}`, 3000);
+                return [];
+            }
         }
 
         function aggregateData(data, index) {
             const stats = {};
-            data.forEach(row => { if (row[index]) stats[row[index]] = (stats[row[index]] || 0) + 1; });
+            data.forEach(row => {
+                if (row[index] && row[index].trim()) {
+                    stats[row[index]] = (stats[row[index]] || 0) + 1;
+                }
+            });
             return Object.entries(stats).map(([key, count], idx) => ({ index: idx + 1, key, count }));
+        }
+
+        function calculateTrendData(monthlyResults) {
+            const topCars = aggregateData(monthlyResults.flat(), 3).slice(0, 5).map(item => item.key);
+            const trendData = {};
+            topCars.forEach(car => {
+                trendData[car] = months.map((month, idx) => {
+                    const monthData = monthlyResults[idx] || [];
+                    return monthData.filter(row => row[3] === car).length;
+                });
+            });
+            return trendData;
         }
 
         function updateFilters(data) {
             const carFilter = document.getElementById("car-filter");
             const tvbhFilter = document.getElementById("tvbh-filter");
-            carFilter.innerHTML = '<option value="">Lọc theo Dòng Xe</option>' + Object.keys(Object.fromEntries(data.map(row => [row[3], true]))).filter(m => m).map(m => `<option value="${m}">${m}</option>`).join('');
-            tvbhFilter.innerHTML = '<option value="">Lọc theo Tư Vấn Bán Hàng</option>' + Object.keys(Object.fromEntries(data.map(row => [row[7], true]))).filter(t => t).map(t => `<option value="${t}">${t}</option>`).join('');
+            const uniqueCars = [...new Set(data.map(row => row[3]).filter(Boolean))];
+            const uniqueTvbh = [...new Set(data.map(row => row[7]).filter(Boolean))];
+            carFilter.innerHTML = '<option value="">Lọc theo Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}">${m}</option>`).join('');
+            tvbhFilter.innerHTML = '<option value="">Lọc theo Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}">${t}</option>`).join('');
         }
 
         function updateOverview(carData, tvbhData, totalCars) {
-            document.getElementById("total-cars").textContent = totalCars;
-            const topCar = carData.reduce((max, row) => row.count > max.count ? row : max, carData[0] || { key: "-", count: 0 });
+            document.getElementById("total-cars").textContent = totalCars || 0;
+            const topCar = carData.length > 0 ? carData.reduce((max, row) => row.count > max.count ? row : max, carData[0]) : { key: "-", count: 0 };
             document.getElementById("top-car").textContent = topCar.key;
-            const topTvbh = tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0] || { key: "-", count: 0 });
+            const topTvbh = tvbhData.length > 0 ? tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0]) : { key: "-", count: 0 };
             document.getElementById("top-tvbh").textContent = topTvbh.key;
         }
 
@@ -1006,134 +552,84 @@
             const totalCars = data.length;
             const carData = aggregateData(data, 3);
             const tvbhData = aggregateData(data, 7);
-            document.getElementById("month-total-cars").textContent = totalCars;
-            const topCar = carData.reduce((max, row) => row.count > max.count ? row : max, carData[0] || { key: "-", count: 0 });
+            document.getElementById("month-total-cars").textContent = totalCars || 0;
+            const topCar = carData.length > 0 ? carData.reduce((max, row) => row.count > max.count ? row : max, carData[0]) : { key: "-", count: 0 };
             document.getElementById("month-top-car").textContent = topCar.key;
-            const topTvbh = tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0] || { key: "-", count: 0 });
+            const topTvbh = tvbhData.length > 0 ? tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0]) : { key: "-", count: 0 };
             document.getElementById("month-top-tvbh").textContent = topTvbh.key;
         }
 
-        function renderHighlights(carData, tvbhData) {
-            const topCars = carData.sort((a, b) => b.count - a.count).slice(0, 3);
-            const topTvbh = tvbhData.sort((a, b) => b.count - a.count).slice(0, 3);
-
-            document.getElementById("top-cars-list").innerHTML = topCars.length ? 
-                topCars.map(car => `<li><span>${car.key}</span><span>${car.count} xe</span></li>`).join('') : 
-                '<li><span>Chưa có dữ liệu</span><span>0 xe</span></li>';
-            document.getElementById("top-tvbh-list").innerHTML = topTvbh.length ? 
-                topTvbh.map(tvbh => `<li><span>${tvbh.key}</span><span>${tvbh.count} xe</span></li>`).join('') : 
-                '<li><span>Chưa có dữ liệu</span><span>0 xe</span></li>';
-        }
-
         function renderTable(data) {
-            const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất"];
+            const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
             document.getElementById("table-header").innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
             const start = (currentPage - 1) * rowsPerPage;
             const paginatedData = data.slice(start, start + rowsPerPage);
-            document.getElementById("table-body").innerHTML = paginatedData.map((row, idx) => {
+            document.getElementById("table-body").innerHTML = paginatedData.length > 0 ? paginatedData.map((row, idx) => {
                 const isHighlight = (row[11]?.toLowerCase().includes("ưu tiên") || row[10]?.toLowerCase().includes("đặc biệt")) ? ' class="selected"' : '';
-                return `<tr${isHighlight} onclick="showDetail([${start + idx + 1}, '${row.slice(0, 1).concat(row.slice(2)).join("','")}'])">${[start + idx + 1, row[0], row[2], row[3], row[4], row[5], row[6]].map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
-            }).join('');
+                return `<tr${isHighlight} onclick="showDetail([${start + idx + 1}, '${row.slice(0, 1).concat(row.slice(2)).join("','")}'])">${[start + idx + 1, row[0], row[2], row[3], row[4], row[5]].map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
+            }).join('') : `<tr><td colspan="6">Không có dữ liệu</td></tr>`;
             updatePagination(data);
         }
 
-        function renderTotalTables(carData, tvbhData, monthlyData) {
+        function renderTotalTables(carData, tvbhData, monthlyData, trendData) {
             document.getElementById("total-car-header").innerHTML = "<tr><th>Dòng Xe</th><th>Tổng Số Lượng</th></tr>";
-            document.getElementById("total-car-body").innerHTML = carData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${carData.reduce((s, r) => s + r.count, 0)}</td></tr>`;
+            document.getElementById("total-car-body").innerHTML = carData.length > 0 ? carData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${carData.reduce((s, r) => s + r.count, 0)}</td></tr>` : `<tr><td colspan="2">Không có dữ liệu</td></tr>`;
             document.getElementById("total-tvbh-header").innerHTML = "<tr><th>Tư Vấn Bán Hàng</th><th>Tổng Số Lượng Xe</th></tr>";
-            document.getElementById("total-tvbh-body").innerHTML = tvbhData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${tvbhData.reduce((s, r) => s + r.count, 0)}</td></tr>`;
-            renderCharts(carData, tvbhData, monthlyData);
+            document.getElementById("total-tvbh-body").innerHTML = tvbhData.length > 0 ? tvbhData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${tvbhData.reduce((s, r) => s + r.count, 0)}</td></tr>` : `<tr><td colspan="2">Không có dữ liệu</td></tr>`;
+            renderCharts(carData, monthlyData, trendData);
         }
 
-        function renderCharts(carData, tvbhData, monthlyData) {
+        function renderCharts(carData, monthlyData, trendData) {
             const isDarkMode = document.body.classList.contains('dark-mode');
-            const colors = isDarkMode ? ['#66b0ff', '#4a90e2', '#357abd', '#1f5a95', '#2a7de1'] : ['#005eb8', '#003087', '#0044cc', '#002a5c', '#007bff'];
-            if (carChart) carChart.destroy();
-            if (tvbhChart) tvbhChart.destroy();
-            if (monthlyChart) monthlyChart.destroy();
+            const monthlyColors = '#003087';
+            const carColors = ['#003087', '#00a550', '#2c3e50', '#ecf0f1'];
+            const trendColors = ['#003087', '#00a550', '#2c3e50', '#ecf0f1'];
 
-            const totalCars = carData.reduce((sum, row) => sum + row.count, 0);
-            const totalTvbh = tvbhData.reduce((sum, row) => sum + row.count, 0);
+            if (carChart) carChart.destroy();
+            if (monthlyChart) monthlyChart.destroy();
+            if (trendChart) trendChart.destroy();
+
+            const totalCars = carData.reduce((sum, row) => sum + row.count, 0) || 1;
 
             monthlyChart = new Chart(document.getElementById('monthly-chart').getContext('2d'), {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: months,
                     datasets: [{
                         label: 'Số lượng xe',
                         data: monthlyData.map(m => m.count),
-                        borderColor: isDarkMode ? '#66b0ff' : '#003087',
-                        backgroundColor: 'rgba(0, 94, 184, 0.2)',
-                        fill: true,
-                        tension: 0.4
+                        backgroundColor: monthlyColors,
+                        borderColor: monthlyColors,
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe' } },
-                        x: { title: { display: true, text: 'Tháng' }, ticks: { color: isDarkMode ? '#fff' : '#1a1a1a' } }
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: isDarkMode ? '#ecf0f1' : '#2c3e50' }, ticks: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } },
+                        x: { title: { display: true, text: 'Tháng', color: isDarkMode ? '#ecf0f1' : '#2c3e50' }, ticks: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: context => `${context.raw} xe` } }
-                    }
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => `${context.raw} xe` } } }
                 }
             });
 
             carChart = new Chart(document.getElementById('car-chart').getContext('2d'), {
-                type: 'bar',
+                type: 'pie',
                 data: {
                     labels: carData.map(r => r.key),
-                    datasets: [{
-                        label: 'Số lượng xe',
-                        data: carData.map(r => r.count),
-                        backgroundColor: colors
-                    }]
+                    datasets: [{ label: 'Số lượng xe', data: carData.map(r => r.count), backgroundColor: carColors }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true },
-                        x: { ticks: { color: isDarkMode ? '#fff' : '#1a1a1a' } }
-                    },
                     plugins: {
-                        legend: { display: false },
+                        legend: { position: 'right', labels: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     const value = context.raw;
                                     const percentage = ((value / totalCars) * 100).toFixed(1);
-                                    return `${value} xe (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            tvbhChart = new Chart(document.getElementById('tvbh-chart').getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: tvbhData.map(r => r.key),
-                    datasets: [{
-                        label: 'Số lượng xe',
-                        data: tvbhData.map(r => r.count),
-                        backgroundColor: colors
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / totalTvbh) * 100).toFixed(1);
                                     return `${context.label}: ${value} xe (${percentage}%)`;
                                 }
                             }
@@ -1141,20 +637,46 @@
                     }
                 }
             });
+
+            trendChart = new Chart(document.getElementById('trend-chart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: Object.keys(trendData).map((car, idx) => ({
+                        label: car,
+                        data: trendData[car],
+                        borderColor: trendColors[idx % trendColors.length],
+                        backgroundColor: trendColors[idx % trendColors.length] + '33',
+                        fill: false,
+                        tension: 0.1
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: isDarkMode ? '#ecf0f1' : '#2c3e50' }, ticks: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } },
+                        x: { title: { display: true, text: 'Tháng', color: isDarkMode ? '#ecf0f1' : '#2c3e50' }, ticks: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } }
+                    },
+                    plugins: { legend: { position: 'top', labels: { color: isDarkMode ? '#ecf0f1' : '#2c3e50' } }, tooltip: { mode: 'index', intersect: false } }
+                }
+            });
         }
 
-        function updateChartColors() { 
-            if (currentSheet === "Total") renderCharts(filteredCarData, filteredTvbhData, monthlyData); 
+        function updateChartColors() {
+            if (currentSheet === "Total" && filteredCarData.length > 0) {
+                renderCharts(filteredCarData, monthlyData, trendData);
+            }
         }
 
-        function downloadChart(chartId, name) { 
-            html2canvas(document.getElementById(chartId)).then(canvas => { 
-                const link = document.createElement('a'); 
-                link.download = `${name}.png`; 
-                link.href = canvas.toDataURL('image/png'); 
-                link.click(); 
-                showNotification("Đã tải biểu đồ!", 2000); 
-            }); 
+        function downloadChart(chartId, name) {
+            html2canvas(document.getElementById(chartId)).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${name}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification("Đã tải biểu đồ!", 2000);
+            });
         }
 
         function applyFilters() {
@@ -1162,13 +684,12 @@
             const carFilter = document.getElementById("car-filter").value;
             const tvbhFilter = document.getElementById("tvbh-filter").value;
             const searchInput = document.getElementById("search-input").value.toLowerCase();
-            filteredMonthData = fullData.filter(row => 
-                (!carFilter || row[3] === carFilter) && 
-                (!tvbhFilter || row[7] === tvbhFilter) && 
+            filteredMonthData = fullData.filter(row =>
+                (!carFilter || row[3] === carFilter) &&
+                (!tvbhFilter || row[7] === tvbhFilter) &&
                 row.some(cell => cell?.toString().toLowerCase().includes(searchInput))
             );
             currentPage = 1;
-            updateMonthOverview(filteredMonthData);
             renderTable(filteredMonthData);
         }
 
@@ -1203,31 +724,43 @@
         function printTable() {
             if (currentSheet === "Total") return;
             const now = new Date().toLocaleString('vi-VN');
-            const printContent = `<h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2><p>Hotline: 1900 232389</p><p>In lúc: ${now}</p>${document.getElementById("data-table").outerHTML}`;
+            const printContent = `<h2 style="color: #2c3e50;">VINFAST MĐ AN PHÚ</h2><p>Hotline: 1900 232389</p><p>In lúc: ${now}</p>${document.getElementById("data-table").outerHTML}`;
             const win = window.open('', '', 'width=800,height=600');
-            win.document.write(`<html><head><title>In danh sách</title><style>body { font-family: 'Montserrat', sans-serif; } table { border-collapse: collapse; } th, td { border: 1px solid #000; padding: 8px; } th { background: #003087; color: #fff; }</style></head><body>${printContent}</body></html>`);
+            win.document.write(`<html><head><title>In danh sách</title><style>body { font-family: 'Montserrat', sans-serif; } table { border-collapse: collapse; } th, td { border: 1px solid #000; padding: 3px 5px; font-size: 10px; } th { background: #003087; color: #ecf0f1; }</style></head><body>${printContent}</body></html>`);
             win.document.close();
             win.print();
         }
 
         function showDetail(data) {
             if (currentSheet === "Total") return;
-            const columnNames = ["TÊN KHÁCH HÀNG", "SỐ ĐƠN HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "TƯ VẤN BÁN HÀNG", "VIN", "CHÍNH SÁCH"];
-            document.getElementById("detail-body").innerHTML = "<table class='detail-table'>" + columnNames.map((name, i) => `<tr><th>${name}</th><td${i === 7 ? ' class="vin-highlight"' : ''}>${data[i + 1] ?? ""}${i === 7 ? ` <button onclick="navigator.clipboard.writeText('${data[i + 1]}'); showNotification('Đã sao chép VIN!', 2000)">Sao chép</button>` : ''}</td></tr>`).join('') + "</table>";
+            const labels = ["Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "CS"];
+            const rowData = data.slice(1);
+            const tbody = document.querySelector("#detail-body tbody");
+            tbody.innerHTML = labels.map((label, i) => {
+                const value = rowData[i] || '';
+                const isVin = i === 7;
+                return `
+                    <tr>
+                        <th>${label}</th>
+                        <td${isVin ? ' class="vin-highlight"' : ''}>${value}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function showNotification(message, duration = 2000) {
             const notif = document.getElementById("notification");
             notif.textContent = message;
             notif.style.display = "block";
-            setTimeout(() => notif.style.display = "none", duration);
+            clearTimeout(notif.timeout);
+            notif.timeout = setTimeout(() => notif.style.display = "none", duration);
         }
 
         function updatePagination(data) {
             if (currentSheet === "Total") return;
-            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(data.length / rowsPerPage)}`;
+            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(data.length / rowsPerPage) || 1}`;
             document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = currentPage === Math.ceil(data.length / rowsPerPage);
+            document.getElementById("next-btn").disabled = currentPage === Math.ceil(data.length / rowsPerPage) || data.length === 0;
         }
     </script>
 </body>
