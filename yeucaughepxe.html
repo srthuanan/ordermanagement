@@ -57,7 +57,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             background: var(--background);
             color: var(--text-color);
             min-height: 100vh;
@@ -1037,9 +1037,12 @@ document.addEventListener("DOMContentLoaded", () => {
 function formatDateTime(dtString) {
     const d = new Date(dtString);
     const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0'); // Tháng bắt đầu từ 0, nên +1
+    const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 function formatDateForFilter(dtString) {
     const d = new Date(dtString);
@@ -1269,30 +1272,57 @@ function confirmSubmit() {
         return;
     }
 
-    // Hiển thị modal loading trước khi gửi
-    showLoadingModal("Đang Gửi Dữ Liệu", "Đang gửi yêu cầu lên Google Sheets, vui lòng chờ...");
+    showLoadingModal("Đang Gửi Dữ Liệu", "Đang gửi yêu cầu, vui lòng chờ...");
 
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString();
 
-    fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
+    // Chuẩn bị dữ liệu cho Telegram
+    const botToken = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628"; // Bot Token của bạn
+    const chatId = "5812034168"; // Chat ID của bạn
+    const ngayCoc = formatDateTime(formData["ngay_coc"]); // Ngày cọc từ form
+    const ngayGui = formatDateTime(new Date()); // Ngày gửi là thời điểm hiện tại
+
+    const telegramMessage = `<b>✅ YÊU CẦU GHÉP XE MỚI</b>\n` +
+        `Tư vấn bán hàng: ${formData["ten_ban_hang"]}\n` +
+        `Dòng xe: ${formData["dong_xe"]}\n` +
+        `Phiên bản: ${formData["phien_ban"]}\n` +
+        `Ngoại thất: ${formData["ngoai_that"]}\n` +
+        `Nội thất: ${formData["noi_that"]}\n` +
+        `Số đơn hàng: ${formData["so_don_hang"]}\n` +
+        `Khách hàng: ${formData["ten_khach_hang"]}\n` +
+        `Ngày cọc: ${ngayCoc}\n` +
+        `Ngày gửi: ${ngayGui}`;
+
+    // Gửi tin nhắn Telegram
+    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: "POST",
-        mode: "no-cors", // Lưu ý: Nên chuyển sang "cors" nếu server hỗ trợ
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: telegramMessage,
+            parse_mode: "HTML"
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Lỗi gửi Telegram");
+        return fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+        });
     })
     .then(() => {
-        // Đóng modal loading khi gửi thành công
         closeModal("loading-modal");
-        fetchHistory(); // Cập nhật dữ liệu
+        fetchHistory(); // Cập nhật dữ liệu lịch sử
         document.getElementById("vinfast-form").reset();
         document.getElementById("success-modal").style.display = "flex";
         setTimeout(() => closeModal("success-modal"), 3000);
     })
     .catch(error => {
-        // Đóng modal loading và hiển thị lỗi nếu thất bại
         closeModal("loading-modal");
-        showNotification("Đã có lỗi khi gửi yêu cầu: " + error.message, 3000);
+        showNotification("Đã có lỗi: " + error.message, 3000);
     });
 }
 function showDetail(index) {
