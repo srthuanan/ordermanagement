@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ghép Xe Thuận An</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            /* Light mode variables - Neomorphism */
             --background: #e0e5ec;
             --text-color: #2c3e50;
             --container-bg: #e0e5ec;
@@ -34,7 +33,6 @@
         }
 
         [data-theme="dark"] {
-            /* Dark mode variables - Neomorphism */
             --background: #2c3e50;
             --text-color: #e0e5ec;
             --container-bg: #2c3e50;
@@ -61,24 +59,25 @@
             min-height: 100vh;
             overflow-x: hidden;
             transition: background 0.3s ease, color 0.3s ease;
+            font-size: 12px; /* Giảm kích thước font mặc định */
         }
 
-        /* Navbar giữ màu VinFast */
+        /* Navbar */
         .navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 60px;
+            height: 50px; /* Giảm chiều cao navbar */
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             z-index: 1000;
         }
         .navbar .logo h1 {
-            font-size: 18px;
+            font-size: 16px; /* Giảm kích thước logo */
             color: #ffffff;
             font-weight: 700;
             text-transform: uppercase;
@@ -88,17 +87,17 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            gap: 15px;
+            gap: 10px;
             transition: all 0.3s ease;
         }
         .navbar .tabs a {
-            padding: 10px 15px;
+            padding: 8px 12px; /* Giảm padding */
             text-decoration: none;
             color: #ffffff;
-            font-size: 12px;
+            font-size: 12px; /* Giảm kích thước chữ */
             font-weight: 700;
             transition: all 0.3s ease;
-            border-radius: 20px;
+            border-radius: 15px;
             background: rgba(255, 255, 255, 0.1);
             box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.2), inset -2px -2px 5px rgba(0, 0, 0, 0.2);
         }
@@ -109,21 +108,20 @@
         .navbar-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             margin-left: auto;
         }
         .nav-btn {
-            position: relative;
-            padding: 8px;
+            padding: 6px;
             border: none;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             color: #ffffff;
-            font-size: 14px;
+            font-size: 12px; /* Giảm kích thước icon */
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -136,14 +134,14 @@
         .nav-btn[data-tooltip]::after {
             content: attr(data-tooltip);
             position: absolute;
-            top: -35px;
+            top: -30px;
             left: 50%;
             transform: translateX(-50%);
             background: #333;
             color: #ffffff;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 5px;
-            font-size: 11px;
+            font-size: 10px;
             white-space: nowrap;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -153,10 +151,10 @@
         .nav-btn[data-tooltip]::before {
             content: '';
             position: absolute;
-            top: -8px;
+            top: -6px;
             left: 50%;
             transform: translateX(-50%);
-            border: 4px solid transparent;
+            border: 3px solid transparent;
             border-top-color: #333;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -175,57 +173,54 @@
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 20px;
+            font-size: 16px; /* Giảm kích thước icon */
             cursor: pointer;
             transition: transform 0.3s ease;
         }
         .theme-toggle:hover {
-            transform: scale(1.2);
-        }
-        [data-theme="dark"] .theme-toggle {
-            color: #ffffff;
+            transform: scale(1.1);
         }
         .hamburger {
             display: none;
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 24px;
+            font-size: 20px; /* Giảm kích thước icon */
             cursor: pointer;
-            margin-right: 15px;
+            margin-right: 10px;
         }
 
-        /* Neomorphism Main Container */
+        /* Main Container */
         .main-container {
             display: flex;
             flex-direction: column;
-            margin-top: 70px;
+            margin-top: 60px; /* Giảm khoảng cách với navbar */
             padding: 10px;
             gap: 10px;
-            min-height: calc(100vh - 90px);
+            min-height: calc(100vh - 80px);
             transition: opacity 0.3s ease;
         }
         .form-container {
             background: var(--container-bg);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 15px;
+            padding: 12px; /* Giảm padding */
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
         }
         .form-container h2 {
-            font-size: 16px;
+            font-size: 14px; /* Giảm kích thước tiêu đề */
             color: #005eb8;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             font-weight: 700;
         }
         .form-container form {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
         .form-container input {
-            padding: 10px 15px;
+            padding: 8px 12px; /* Giảm padding */
             border: none;
-            border-radius: 15px;
-            font-size: 12px;
+            border-radius: 10px;
+            font-size: 12px; /* Giảm kích thước chữ */
             background: var(--container-bg);
             color: var(--text-color);
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
@@ -236,12 +231,12 @@
             outline: none;
         }
         .form-container button {
-            padding: 10px 20px;
+            padding: 8px 15px; /* Giảm padding */
             border: none;
-            border-radius: 15px;
+            border-radius: 10px;
             background: #005eb8;
             color: #ffffff;
-            font-size: 12px;
+            font-size: 12px; /* Giảm kích thước chữ */
             font-weight: 700;
             cursor: pointer;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -253,8 +248,8 @@
         }
         .grid-container {
             background: var(--container-bg);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 15px;
+            padding: 12px; /* Giảm padding */
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
             overflow: hidden;
         }
@@ -263,27 +258,27 @@
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             gap: 10px;
         }
         .search-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             width: 100%;
         }
         .search-container input, .search-container select {
-            padding: 10px 15px;
+            padding: 8px 12px; /* Giảm padding */
             border: none;
-            border-radius: 15px;
-            font-size: 12px;
+            border-radius: 10px;
+            font-size: 12px; /* Giảm kích thước chữ */
             background: var(--container-bg);
             color: var(--text-color);
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
             transition: all 0.3s ease;
             flex: 1;
-            min-width: 120px;
+            min-width: 100px;
         }
         .search-container input:focus, .search-container select:focus {
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -291,21 +286,20 @@
         }
         .export-btn-container {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
         .export-btn, .refresh-btn {
-            position: relative;
-            padding: 10px;
+            padding: 8px; /* Giảm padding */
             border: none;
             border-radius: 50%;
             background: var(--container-bg);
             color: #005eb8;
-            font-size: 14px;
+            font-size: 12px; /* Giảm kích thước icon */
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -314,70 +308,19 @@
         .export-btn:hover, .refresh-btn:hover {
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
-        .export-btn[data-tooltip]::after, .refresh-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: #ffffff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .export-btn[data-tooltip]::before, .refresh-btn[data-tooltip]::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-top-color: #333;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-        .export-btn:hover::after, .export-btn:hover::before, .refresh-btn:hover::after, .refresh-btn:hover::before {
-            opacity: 1;
-        }
-        [data-theme="dark"] .export-btn[data-tooltip]::after, [data-theme="dark"] .refresh-btn[data-tooltip]::after {
-            background: #66b0ff;
-        }
-        [data-theme="dark"] .export-btn[data-tooltip]::before, [data-theme="dark"] .refresh-btn[data-tooltip]::before {
-            border-top-color: #66b0ff;
-        }
         .table-wrapper {
-            max-height: calc(100% - 120px);
+            max-height: calc(100% - 100px);
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #005eb8 var(--container-bg);
         }
-        .table-wrapper::-webkit-scrollbar {
-            width: 8px;
-        }
-        .table-wrapper::-webkit-scrollbar-track {
-            background: var(--container-bg);
-            border-radius: 10px;
-            box-shadow: inset 0 0 5px var(--shadow-dark);
-        }
-        .table-wrapper::-webkit-scrollbar-thumb {
-            background: #005eb8;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px var(--shadow-dark);
-        }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 8px; /* Giảm kích thước chữ trong bảng */
         }
         th, td {
-            padding: 10px;
+            padding: 6px; /* Giảm padding */
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
@@ -411,8 +354,8 @@
         }
         .modal-content {
             background: var(--modal-bg);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 15px;
+            padding: 10px; /* Giảm padding */
             max-width: 90%;
             width: 100%;
             max-height: 90vh;
@@ -422,50 +365,22 @@
         }
         .modal-content h2 {
             color: #005eb8;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-        .success-modal-content, .loading-modal-content {
-            text-align: center;
-            max-width: 300px;
-        }
-        .success-modal-content i, .loading-modal-content i {
-            font-size: 36px;
-            margin-bottom: 15px;
-        }
-        .success-modal-content i {
-            color: #16a34a;
-        }
-        .loading-modal-content i {
-            color: #005eb8;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            margin-bottom: 12px;
+            font-size: 12px; /* Giảm kích thước tiêu đề */
         }
         .detail-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 10px; /* Giảm kích thước chữ */
         }
-        .detail-table th {
-            background: var(--container-bg);
-            color: var(--modal-text);
-            text-align: left;
-            padding: 10px;
-            font-weight: 400;
-            box-shadow: none;
-        }
-        .detail-table td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-color);
+        .detail-table th, .detail-table td {
+            padding: 6px; /* Giảm padding */
         }
         .modal-btn {
-            padding: 10px 20px;
+            padding: 6px 13px; /* Giảm padding */
             border: none;
-            border-radius: 15px;
-            font-size: 12px;
+            border-radius: 10px;
+            font-size: 10px; /* Giảm kích thước chữ */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -487,40 +402,40 @@
         }
         .summary-section {
             background: var(--summary-bg);
-            border-radius: 15px;
-            padding: 10px;
-            margin-bottom: 15px;
+            border-radius: 10px;
+            padding: 8px; /* Giảm padding */
+            margin-bottom: 12px;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
         .summary-section h3 {
-            font-size: 14px;
+            font-size: 11px; /* Giảm kích thước tiêu đề */
             color: #005eb8;
             margin-bottom: 8px;
             font-weight: 700;
         }
         .summary-section p {
-            font-size: 12px;
+            font-size: 10px; /* Giảm kích thước chữ */
             color: var(--text-color);
-            margin: 5px 0;
+            margin: 4px 0;
         }
         .chart-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 12px;
         }
         .chart-card {
             flex: 1;
-            min-width: 300px;
+            min-width: 250px;
             background: var(--chart-bg);
-            border-radius: 15px;
-            padding: 15px;
+            border-radius: 10px;
+            padding: 10px; /* Giảm padding */
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
         .chart-card h3 {
-            font-size: 14px;
+            font-size: 11px; /* Giảm kích thước tiêu đề */
             color: #005eb8;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 700;
         }
         canvas {
@@ -535,83 +450,82 @@
             background: var(--footer-bg);
             color: var(--footer-text);
             text-align: center;
-            padding: 8px 0;
-            font-size: 10px;
+            padding: 6px 0;
+            font-size: 8px; /* Giảm kích thước chữ */
         }
 
         /* Responsive Design */
         @media (min-width: 768px) {
-            .navbar { height: 80px; padding: 0 40px; }
-            .navbar .logo h1 { font-size: 24px; }
-            .navbar .tabs { gap: 20px; }
-            .navbar .tabs a { padding: 14px 20px; font-size: 14px; }
+            .navbar { height: 60px; padding: 0 20px; }
+            .navbar .logo h1 { font-size: 18px; }
+            .navbar .tabs { gap: 12px; }
+            .navbar .tabs a { padding: 10px 15px; font-size: 13px; }
             .main-container {
                 flex-direction: row;
-                margin-top: 100px;
-                padding: 20px 40px;
-                gap: 20px;
-                height: calc(100vh - 120px);
+                margin-top: 70px;
+                padding: 15px 20px;
+                gap: 12px;
+                height: calc(100vh - 90px);
             }
-            .form-container { flex: 1; padding: 20px; border-radius: 20px; }
-            .form-container h2 { font-size: 20px; margin-bottom: 20px; }
-            .form-container input { padding: 12px 20px; font-size: 14px; border-radius: 15px; }
-            .form-container button { padding: 12px 25px; font-size: 14px; border-radius: 15px; }
-            .grid-container { flex: 2; padding: 20px; border-radius: 20px; }
-            .controls { flex-wrap: nowrap; gap: 20px; }
+            .form-container { flex: 1; padding: 15px; }
+            .form-container h2 { font-size: 16px; margin-bottom: 15px; }
+            .form-container input { padding: 10px 15px; font-size: 13px; }
+            .form-container button { padding: 10px 20px; font-size: 13px; }
+            .grid-container { flex: 2; padding: 15px; }
+            .controls { flex-wrap: nowrap; gap: 12px; }
             .search-container { width: auto; }
-            .search-container input, .search-container select { padding: 12px 20px; font-size: 14px; border-radius: 15px; }
-            .export-btn, .refresh-btn { padding: 12px; font-size: 16px; border-radius: 50%; }
-            .table-wrapper { max-height: calc(100% - 120px); }
-            table { font-size: 14px; }
-            th, td { padding: 15px; }
-            .modal-content { max-width: 600px; padding: 20px; border-radius: 20px; }
-            .modal-content h2 { font-size: 20px; margin-bottom: 20px; }
-            .success-modal-content, .loading-modal-content { max-width: 400px; }
-            .success-modal-content i, .loading-modal-content i { font-size: 48px; margin-bottom: 20px; }
-            .detail-table { font-size: 14px; }
-            .detail-table th, .detail-table td { padding: 12px; }
-            .modal-btn { padding: 12px 25px; font-size: 14px; border-radius: 15px; }
-            .summary-section { padding: 15px; margin-bottom: 20px; border-radius: 15px; }
-            .summary-section h3 { font-size: 16px; margin-bottom: 10px; }
-            .summary-section p { font-size: 14px; }
-            .chart-card { padding: 20px; }
-            .chart-card h3 { font-size: 16px; margin-bottom: 15px; }
-            footer { padding: 10px 0; font-size: 12px; }
+            .search-container input, .search-container select { padding: 10px 15px; font-size: 13px; }
+            .export-btn, .refresh-btn { padding: 10px; font-size: 13px; width: 34px; height: 34px; }
+            .table-wrapper { max-height: calc(100% - 110px); }
+            table { font-size: 13px; }
+            th, td { padding: 10px; }
+            .modal-content { max-width: 500px; padding: 15px; }
+            .modal-content h2 { font-size: 16px; margin-bottom: 15px; }
+            .detail-table { font-size: 13px; }
+            .detail-table th, .detail-table td { padding: 10px; }
+            .modal-btn { padding: 10px 20px; font-size: 13px; }
+            .summary-section { padding: 12px; margin-bottom: 15px; }
+            .summary-section h3 { font-size: 14px; margin-bottom: 10px; }
+            .summary-section p { font-size: 13px; }
+            .chart-card { padding: 15px; }
+            .chart-card h3 { font-size: 14px; margin-bottom: 10px; }
+            footer { padding: 8px 0; font-size: 11px; }
         }
 
-        /* Mobile Table to List */
         @media (max-width: 767px) {
             .hamburger { display: block; }
+            .navbar { height: 50px; }
             .navbar .tabs {
                 display: none;
                 flex-direction: column;
                 position: fixed;
-                top: 60px;
+                top: 50px;
                 left: 0;
                 width: 100%;
                 background: linear-gradient(135deg, #003087, #005eb8);
                 padding: 10px 0;
                 transform: translateX(0);
-                gap: 10px;
+                gap: 8px;
             }
             .navbar .tabs.active { display: flex; }
-            .navbar .tabs a { padding: 12px 20px; font-size: 14px; text-align: center; }
+            .navbar .tabs a { padding: 8px 15px; font-size: 12px; text-align: center; }
+            .main-container { margin-top: 60px; padding: 8px; }
             table { display: block; }
             thead { display: none; }
             tbody, tr { display: block; }
             tr {
-                margin-bottom: 10px;
-                border-radius: 15px;
+                margin-bottom: 8px;
+                border-radius: 10px;
                 background: var(--table-row-bg);
-                padding: 10px;
+                padding: 8px;
                 box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
             }
             td {
                 display: flex;
                 justify-content: space-between;
-                padding: 5px 10px;
+                padding: 6px 8px;
                 border: none;
-                font-size: 12px;
+                font-size: 11px;
             }
             td:before {
                 content: attr(data-label);
@@ -646,7 +560,6 @@
 </div>
 
 <div class="main-container">
-    <!-- Form Ghép Xe (Chủ đạo) -->
     <div class="form-container" id="form-section">
         <h2>Thêm Yêu Cầu Ghép Xe</h2>
         <form id="vinfast-form" onsubmit="previewForm(event)">
@@ -662,7 +575,6 @@
         </form>
     </div>
 
-    <!-- Lịch Sử -->
     <div class="grid-container" id="history-section">
         <div class="summary-section">
             <h3>Tổng Quan</h3>
@@ -706,7 +618,6 @@
         </div>
     </div>
 
-    <!-- Thống Kê Chi Tiết -->
     <div class="grid-container hidden" id="detailed-stats-section">
         <div class="summary-section">
             <h3>Tổng Quan Chi Tiết</h3>
@@ -769,7 +680,6 @@
     © 2025 VinFast Minh Đạo Thuận An
 </footer>
 
-<!-- Preview Modal -->
 <div class="modal" id="preview-modal">
     <div class="modal-content">
         <h2>Xác Nhận Thông Tin</h2>
@@ -781,7 +691,6 @@
     </div>
 </div>
 
-<!-- Detail Modal -->
 <div class="modal" id="detail-modal">
     <div class="modal-content">
         <h2>Chi Tiết Yêu Cầu</h2>
@@ -792,7 +701,6 @@
     </div>
 </div>
 
-<!-- Success Modal -->
 <div class="modal" id="success-modal">
     <div class="modal-content success-modal-content">
         <i class="fas fa-check-circle"></i>
@@ -804,7 +712,6 @@
     </div>
 </div>
 
-<!-- Loading Modal -->
 <div class="modal" id="loading-modal">
     <div class="modal-content loading-modal-content">
         <i class="fas fa-spinner"></i>
@@ -956,7 +863,6 @@ function populateFilters(data) {
     const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean);
     const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean);
 
-    // Populate filters for history tab
     const carFilter = document.getElementById("filter-car");
     carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
     cars.forEach(car => {
@@ -969,7 +875,6 @@ function populateFilters(data) {
         advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
     });
 
-    // Populate filters for detailed stats tab
     const detailedCarFilter = document.getElementById("detailed-filter-car");
     detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
     cars.forEach(car => {
@@ -1151,7 +1056,6 @@ function prepareDetailedStats(data) {
 
     detailedStatsData = Object.values(statsMap);
 
-    // Update summary for detailed stats
     const totalRequests = data.length;
     const totalCarTypes = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).length;
     const totalAdvisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).length;
@@ -1265,7 +1169,6 @@ function updateChartColors() {
 function renderCharts(data) {
     const colors = getChartColors();
 
-    // Chart 1: Số lượng yêu cầu theo dòng xe (Biểu đồ cột)
     const byCar = {};
     data.forEach(row => {
         const car = row["Dòng xe"] || "Không xác định";
@@ -1305,7 +1208,6 @@ function renderCharts(data) {
         }
     });
 
-    // Chart 2: Số lượng yêu cầu theo dòng xe kèm phiên bản (Biểu đồ cột)
     const byCarVersion = {};
     data.forEach(row => {
         const car = row["Dòng xe"] || "Không xác định";
@@ -1347,7 +1249,6 @@ function renderCharts(data) {
         }
     });
 
-    // Chart 3: Phân bố yêu cầu theo tư vấn viên (Biểu đồ tròn)
     const byAdvisor = {};
     data.forEach(row => {
         const advisor = row["Tên tư vấn bán hàng"] || "Không xác định";
@@ -1412,7 +1313,6 @@ function switchTab(tab, element) {
     }
 }
 
-// Placeholder functions for missing dependencies
 function fetchSheetData(sheetName, element) {
     console.log(`Fetching data for ${sheetName}`);
 }
