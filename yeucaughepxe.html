@@ -313,7 +313,7 @@
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
         .table-wrapper {
-            max-height: calc(100% - 100px);
+            max-height: calc(100vh - 250px);
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #005eb8 var(--container-bg);
@@ -337,9 +337,17 @@
             top: 0;
             z-index: 10;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            cursor: pointer;
         }
         td {
             background: var(--table-row-bg);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 150px;
+        }
+        td[title]:hover {
+            cursor: pointer;
         }
         tbody tr:hover {
             background: var(--table-row-hover);
@@ -496,6 +504,21 @@
             padding: 6px 0;
             font-size: 8px;
         }
+        .notification {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: #28a745;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
+            animation-delay: 0s, calc(var(--duration) - 0.3s);
+        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
         /* Responsive Design */
         @media (min-width: 768px) {
@@ -519,7 +542,7 @@
             .search-container { width: auto; }
             .search-container input, .search-container select { padding: 10px 15px; font-size: 13px; }
             .export-btn, .refresh-btn { padding: 10px; font-size: 13px; width: 34px; height: 34px; }
-            .table-wrapper { max-height: calc(100% - 110px); }
+            .table-wrapper { max-height: calc(100vh - 260px); }
             table { font-size: 13px; }
             th, td { padding: 10px; }
             .modal-content { max-width: 500px; padding: 20px; }
@@ -571,6 +594,7 @@
                 padding: 6px 8px;
                 border: none;
                 font-size: 11px;
+                max-width: none;
             }
             td:before {
                 content: attr(data-label);
@@ -579,6 +603,7 @@
                 flex: 1;
             }
             td:last-child { border-bottom: none; }
+            td:nth-child(7), td:nth-child(8), th:nth-child(7), th:nth-child(8) { display: none; }
         }
     </style>
 </head>
@@ -599,6 +624,7 @@
         <button class="theme-toggle" onclick="toggleTheme()" title="Chuyển đổi chế độ sáng/tối">
             <i class="fas fa-moon" id="theme-icon"></i>
         </button>
+        <button class="nav-btn" onclick="toggleAutoRefresh()" data-tooltip="Tự động làm mới"><i class="fas fa-redo"></i></button>
         <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
         <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
     </div>
@@ -610,26 +636,26 @@
         <form id="vinfast-form" onsubmit="previewForm(event)">
             <select name="ten_ban_hang" required>
                 <option value="" disabled selected>Chọn tư vấn bán hàng</option>
-                <option value="Đinh Trọng Nhân">Đinh Trọng Nhân</option>
-                <option value="Lê Mai Anh">Lê Mai Anh</option>
-                <option value="Lý Kim Vinh">Lý Kim Vinh</option>
-                <option value="Nguyễn Anh Tuấn">Nguyễn Anh Tuấn</option>
-                <option value="Nguyễn Hoàng Phúc">Nguyễn Hoàng Phúc</option>
-                <option value="Nguyễn Thiện Thảo">Nguyễn Thiện Thảo</option>
-                <option value="Nguyễn Trần Hoàng Thanh">Nguyễn Trần Hoàng Thanh</option>
-                <option value="Phạm Trọng Huy">Phạm Trọng Huy</option>
-                <option value="Tất Bách Tường">Tất Bách Tường</option>
-                <option value="Thành Ngọc Vinh">Thành Ngọc Vinh</option>
-                <option value="Trần Thị Nguyệt Bạch">Trần Thị Nguyệt Bạch</option>
-                <option value="Võ Minh Tuấn">Võ Minh Tuấn</option>
-                <option value="Vũ Thị Trang">Vũ Thị Trang</option>
-                <option value="Trần Danh Phương">Trần Danh Phương</option>
-                <option value="Bùi Anh Tài">Bùi Anh Tài</option>
-                <option value="Nguyễn Hoàng Thạch">Nguyễn Hoàng Thạch</option>
-                <option value="Nguyễn Phương Lâm">Nguyễn Phương Lâm</option>
+                <option value="ĐINH TRỌNG NHÂN">ĐINH TRỌNG NHÂN</option>
+                <option value="LÊ MAI ANH">LÊ MAI ANH</option>
+                <option value="LÝ KIM VINH">LÝ KIM VINH</option>
+                <option value="NGUYỄN ANH TUẤN">NGUYỄN ANH TUẤN</option>
+                <option value="NGUYỄN HOÀNG PHÚC">NGUYỄN HOÀNG PHÚC</option>
+                <option value="NGUYỄN THIỆN THẢO">NGUYỄN THIỆN THẢO</option>
+                <option value="NGUYỄN TRẦN HOÀNG THANH">NGUYỄN TRẦN HOÀNG THANH</option>
+                <option value="PHẠM TRỌNG HUY">PHẠM TRỌNG HUY</option>
+                <option value="TẤT BÁCH TƯỜNG">TẤT BÁCH TƯỜNG</option>
+                <option value="THÀNH NGỌC VINH">THÀNH NGỌC VINH</option>
+                <option value="TRẦN THỊ NGUYỆT BẠCH">TRẦN THỊ NGUYỆT BẠCH</option>
+                <option value="VÕ MINH TUẤN">VÕ MINH TUẤN</option>
+                <option value="VŨ THỊ TRANG">VŨ THỊ TRANG</option>
+                <option value="TRẦN DANH PHƯƠNG">TRẦN DANH PHƯƠNG</option>
+                <option value="BÙI ANH TÀI">BÙI ANH TÀI</option>
+                <option value="NGUYỄN HOÀNG THẠCH">NGUYỄN HOÀNG THẠCH</option>
+                <option value="NGUYỄN PHƯƠNG LÂM">NGUYỄN PHƯƠNG LÂM</option>
             </select>
             <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
-<select name="dong_xe" required onchange="restrictVersion(this)">
+            <select name="dong_xe" required onchange="restrictVersion(this)">
                 <option value="" disabled selected>Chọn dòng xe</option>
                 <option value="VF 3">VF 3</option>
                 <option value="VF 5">VF 5</option>
@@ -653,51 +679,51 @@
                 <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
                 <option value="Base">Base</option>
             </select>
-<select name="ngoai_that" required>
-    <option value="" disabled selected>Chọn ngoại thất</option>
-    <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
-    <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
-    <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
-    <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
-    <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
-    <option value="Jet Black (CE11)">Jet Black (CE11)</option>
-    <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
-    <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
-    <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
-    <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
-    <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
-    <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
-    <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
-    <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
-    <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
-    <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
-    <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
-    <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
-    <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
-    <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
-    <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
-    <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
-    <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
-    <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
-    <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
-    <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
-    <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
-    <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
-    <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
-    <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
-    <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
-    <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
-    <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
-    <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
-    <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
-</select>
-<select name="noi_that" required>
-    <option value="" disabled selected>Chọn nội thất</option>
-    <option value="Black">Black</option>
-    <option value="Brown">Brown</option>
-    <option value="Beige">Beige</option>
-</select>         
-<input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
+            <select name="ngoai_that" required>
+                <option value="" disabled selected>Chọn ngoại thất</option>
+                <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
+                <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
+                <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
+                <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
+                <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
+                <option value="Jet Black (CE11)">Jet Black (CE11)</option>
+                <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
+                <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
+                <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
+                <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
+                <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
+                <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
+                <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
+                <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
+                <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
+                <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
+                <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
+                <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
+                <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
+                <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
+                <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
+                <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
+                <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
+                <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
+                <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
+                <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
+                <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
+                <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
+                <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
+                <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
+                <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
+                <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
+                <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
+                <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
+                <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
+            </select>
+            <select name="noi_that" required>
+                <option value="" disabled selected>Chọn nội thất</option>
+                <option value="Black">Black</option>
+                <option value="Brown">Brown</option>
+                <option value="Beige">Beige</option>
+            </select>         
+            <input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
             <input name="ngay_coc" type="datetime-local" required/>
             <button type="submit">Xác Nhận</button>
         </form>
@@ -712,7 +738,7 @@
         </div>
         <div class="controls">
             <div class="search-container">
-                <input type="text" id="search-box" oninput="filterHistory()" placeholder="Tìm kiếm...">
+                <input type="text" id="search-box" placeholder="Tìm kiếm...">
                 <select id="filter-car" onchange="filterHistory()">
                     <option value="">Tất cả dòng xe</option>
                 </select>
@@ -725,20 +751,21 @@
                 <span>Tổng số đơn: <span id="total-don-count">0</span></span>
                 <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
                 <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                <button class="export-btn" onclick="exportToPDF()" data-tooltip="Xuất PDF"><i class="fas fa-file-pdf"></i></button>
             </div>
         </div>
         <div class="table-wrapper">
             <table id="history-table">
                 <thead id="table-header">
                     <tr>
-                        <th>STT</th>
-                        <th>Tư Vấn Bán Hàng</th>
-                        <th>Tên Khách Hàng</th>
-                        <th>Số Đơn Hàng</th>
-                        <th>Dòng Xe</th>
-                        <th>Phiên Bản</th>
-                        <th>Ngoại Thất</th>
-                        <th>Nội Thất</th>
+                        <th onclick="sortTable('STT')">STT</th>
+                        <th onclick="sortTable('Tên tư vấn bán hàng')">Tư Vấn Bán Hàng</th>
+                        <th onclick="sortTable('Tên khách hàng')">Tên Khách Hàng</th>
+                        <th onclick="sortTable('Số đơn hàng')">Số Đơn Hàng</th>
+                        <th onclick="sortTable('Dòng xe')">Dòng Xe</th>
+                        <th onclick="sortTable('Phiên bản')">Phiên Bản</th>
+                        <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
+                        <th onclick="sortTable('Nội thất')">Nội Thất</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
@@ -769,7 +796,7 @@
         </div>
         <div class="controls">
             <div class="search-container">
-                <input type="text" id="detailed-search-box" oninput="filterDetailedStats()" placeholder="Tìm kiếm...">
+                <input type="text" id="detailed-search-box" placeholder="Tìm kiếm...">
                 <select id="detailed-filter-car" onchange="filterDetailedStats()">
                     <option value="">Tất cả dòng xe</option>
                 </select>
@@ -860,7 +887,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
         setupSearch();
         setupScrollSync();
-        setInterval(() => fetchSheetData(currentSheet, document.querySelector('.tabs a.active')), 60000);
+        fetchHistory();
     }
 });
 
@@ -877,6 +904,7 @@ function goBack() {
 
 let historyData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
+let autoRefreshInterval;
 const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 const labelMap = {
     ten_ban_hang: "Tên tư vấn bán hàng",
@@ -895,7 +923,6 @@ function toggleTheme() {
     const currentTheme = document.body.getAttribute("data-theme");
     const newTheme = currentTheme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", newTheme);
-    
     const themeIcon = document.getElementById("theme-icon");
     if (newTheme === "dark") {
         themeIcon.classList.remove("fa-moon");
@@ -904,7 +931,6 @@ function toggleTheme() {
         themeIcon.classList.remove("fa-sun");
         themeIcon.classList.add("fa-moon");
     }
-    
     localStorage.setItem("theme", newTheme);
     updateChartColors();
 }
@@ -921,7 +947,6 @@ document.addEventListener("DOMContentLoaded", () => {
         themeIcon.classList.remove("fa-sun");
         themeIcon.classList.add("fa-moon");
     }
-    fetchHistory();
 });
 
 function formatDateTime(dtString) {
@@ -935,6 +960,9 @@ function formatDateForFilter(dtString) {
 }
 
 function showLoadingModal(title, message) {
+    const activeTab = document.querySelector('.tabs a.active').getAttribute('onclick').includes('history');
+    if (!activeTab) return;
+
     const modal = document.getElementById("loading-modal");
     document.getElementById("loading-title").textContent = title;
     document.getElementById("loading-message").textContent = message;
@@ -952,9 +980,15 @@ function closeModal(modalId) {
 }
 
 function fetchHistory() {
-    showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+    const activeTab = document.querySelector('.tabs a.active').getAttribute('onclick').includes('history');
+    if (activeTab) {
+        showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+    }
     fetch(historyURL)
-        .then(res => res.text())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            return res.text();
+        })
         .then(txt => {
             const json = JSON.parse(txt);
             historyData = json;
@@ -963,22 +997,28 @@ function fetchHistory() {
             renderSummary(json);
             prepareDetailedStats(json);
             renderDetailedStats(detailedStatsData);
-            renderCharts(json);
-            closeModal("loading-modal");
+            if (activeTab) closeModal("loading-modal");
         })
         .catch(error => {
-            document.getElementById("loading-title").textContent = "Lỗi Tải Dữ Liệu";
-            document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
-            document.getElementById("loading-close-btn").style.display = "block";
-            console.error("Lỗi khi tải dữ liệu:", error);
-            showNotification("Không thể tải dữ liệu. Vui lòng thử lại!", 3000);
+            if (activeTab) {
+                document.getElementById("loading-title").textContent = "Lỗi Tải Dữ Liệu";
+                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
+                document.getElementById("loading-close-btn").style.display = "block";
+            }
+            showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
         });
 }
 
 function refreshData() {
-    showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
+    const activeTab = document.querySelector('.tabs a.active').getAttribute('onclick').includes('history');
+    if (activeTab) {
+        showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
+    }
     fetch(historyURL)
-        .then(res => res.text())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            return res.text();
+        })
         .then(txt => {
             const json = JSON.parse(txt);
             historyData = json;
@@ -987,16 +1027,18 @@ function refreshData() {
             renderSummary(json);
             prepareDetailedStats(json);
             renderDetailedStats(detailedStatsData);
-            renderCharts(json);
-            closeModal("loading-modal");
-            showNotification("Dữ liệu đã được làm mới!", 2000);
+            if (activeTab) {
+                closeModal("loading-modal");
+                showNotification("Dữ liệu đã được làm mới!", 2000);
+            }
         })
         .catch(error => {
-            document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
-            document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
-            document.getElementById("loading-close-btn").style.display = "block";
-            console.error("Lỗi khi làm mới dữ liệu:", error);
-            showNotification("Không thể làm mới dữ liệu. Vui lòng thử lại!", 3000);
+            if (activeTab) {
+                document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
+                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
+                document.getElementById("loading-close-btn").style.display = "block";
+            }
+            showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000);
         });
 }
 
@@ -1006,27 +1048,19 @@ function populateFilters(data) {
 
     const carFilter = document.getElementById("filter-car");
     carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-    cars.forEach(car => {
-        carFilter.innerHTML += `<option value="${car}">${car}</option>`;
-    });
+    cars.forEach(car => carFilter.innerHTML += `<option value="${car}">${car}</option>`);
 
     const advisorFilter = document.getElementById("filter-advisor");
     advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-    advisors.forEach(advisor => {
-        advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
-    });
+    advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
 
     const detailedCarFilter = document.getElementById("detailed-filter-car");
     detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-    cars.forEach(car => {
-        detailedCarFilter.innerHTML += `<option value="${car}">${car}</option>`;
-    });
+    cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}">${car}</option>`);
 
     const detailedAdvisorFilter = document.getElementById("detailed-filter-advisor");
     detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-    advisors.forEach(advisor => {
-        detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`;
-    });
+    advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
 }
 
 function renderSummary(data) {
@@ -1049,18 +1083,6 @@ function renderSummary(data) {
 }
 
 function renderHistory(data) {
-    document.getElementById("table-header").innerHTML = `
-        <tr>
-            <th>STT</th>
-            <th>Tư Vấn Bán Hàng</th>
-            <th>Tên Khách Hàng</th>
-            <th>Số Đơn Hàng</th>
-            <th>Dòng Xe</th>
-            <th>Phiên Bản</th>
-            <th>Ngoại Thất</th>
-            <th>Nội Thất</th>
-        </tr>
-    `;
     const tbody = document.getElementById("table-body");
     if (!data.length) {
         tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
@@ -1068,18 +1090,26 @@ function renderHistory(data) {
     }
     let content = data.map((row, i) => `
         <tr onclick="showDetail(${i})">
-            <td data-label="STT">${i + 1}</td>
-            <td data-label="Tên TVBH">${row["Tên tư vấn bán hàng"] || ""}</td>
-            <td data-label="Tên KH">${row["Tên khách hàng"] || ""}</td>
-            <td data-label="Số Đơn Hàng">${row["Số đơn hàng"] || ""}</td>
-            <td data-label="Dòng Xe">${row["Dòng xe"] || ""}</td>
-            <td data-label="Phiên Bản">${row["Phiên bản"] || ""}</td>
-            <td data-label="Ngoại Thất">${row["Ngoại thất"] || ""}</td>
-            <td data-label="Nội Thất">${row["Nội thất"] || ""}</td>
+            <td data-label="STT" title="${i + 1}">${i + 1}</td>
+            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || ""}</td>
+            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || ""}</td>
+            <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}">${row["Số đơn hàng"] || ""}</td>
+            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || ""}</td>
+            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || ""}</td>
+            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}">${row["Ngoại thất"] || ""}</td>
+            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || ""}</td>
         </tr>
     `).join("");
     tbody.innerHTML = content;
     document.getElementById("total-don-count").textContent = data.length;
+}
+
+function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
 }
 
 function filterHistory() {
@@ -1095,8 +1125,16 @@ function filterHistory() {
         const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
         return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
     });
-
     renderHistory(filtered);
+}
+
+function sortTable(column) {
+    const sorted = [...historyData].sort((a, b) => {
+        const valA = column === "STT" ? historyData.indexOf(a) + 1 : (a[column] || "");
+        const valB = column === "STT" ? historyData.indexOf(b) + 1 : (b[column] || "");
+        return valA > valB ? 1 : -1;
+    });
+    renderHistory(sorted);
 }
 
 function exportToExcel() {
@@ -1106,9 +1144,20 @@ function exportToExcel() {
     XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
 }
 
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.autoTable({ html: '#history-table' });
+    doc.save('lich_su_ghep_xe.pdf');
+}
+
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
+    if (!form.checkValidity()) {
+        showNotification("Vui lòng điền đầy đủ và đúng định dạng!", 3000);
+        return;
+    }
     const inputs = form.querySelectorAll("input, select");
     formData = {}; orderId = "";
     let html = "";
@@ -1128,9 +1177,12 @@ function previewForm(e) {
 }
 
 function confirmSubmit() {
+    if (historyData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
+        showNotification("Số đơn hàng đã tồn tại!", 3000);
+        closeModal("preview-modal");
+        return;
+    }
     closeModal("preview-modal");
-    showLoadingModal("Đang Gửi Yêu Cầu...", "Vui lòng chờ trong giây lát.");
-
     formData["thoi_gian_nhap"] = new Date().toISOString();
     fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
         method: "POST",
@@ -1138,16 +1190,12 @@ function confirmSubmit() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
     }).then(() => {
-        closeModal("loading-modal");
         fetchHistory();
         document.getElementById("vinfast-form").reset();
         document.getElementById("success-modal").style.display = "flex";
         setTimeout(() => closeModal("success-modal"), 3000);
     }).catch(error => {
-        document.getElementById("loading-title").textContent = "Lỗi Gửi Yêu Cầu";
-        document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
-        document.getElementById("loading-close-btn").style.display = "block";
-        console.error("Lỗi khi gửi yêu cầu:", error);
+        showNotification("Đã có lỗi khi gửi yêu cầu: " + error.message, 3000);
     });
 }
 
@@ -1168,7 +1216,6 @@ function showDetail(index) {
 
 function prepareDetailedStats(data) {
     const statsMap = {};
-
     data.forEach(row => {
         const car = row["Dòng xe"] || "Không xác định";
         const version = row["Phiên bản"] || "Không xác định";
@@ -1179,28 +1226,16 @@ function prepareDetailedStats(data) {
 
         const key = `${car}|${version}|${exterior}|${interior}|${advisor}|${date}`;
         if (!statsMap[key]) {
-            statsMap[key] = {
-                car: car,
-                version: version,
-                exterior: exterior,
-                interior: interior,
-                advisor: advisor,
-                date: date,
-                count: 0
-            };
+            statsMap[key] = { car, version, exterior, interior, advisor, date, count: 0 };
         }
         statsMap[key].count += 1;
     });
 
     detailedStatsData = Object.values(statsMap);
 
-    const totalRequests = data.length;
-    const totalCarTypes = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).length;
-    const totalAdvisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).length;
-
-    document.getElementById("detailed-total").textContent = totalRequests;
-    document.getElementById("detailed-car-types").textContent = totalCarTypes;
-    document.getElementById("detailed-advisors").textContent = totalAdvisors;
+    document.getElementById("detailed-total").textContent = data.length;
+    document.getElementById("detailed-car-types").textContent = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).length;
+    document.getElementById("detailed-advisors").textContent = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).length;
 }
 
 function renderDetailedStats(data) {
@@ -1209,16 +1244,15 @@ function renderDetailedStats(data) {
         tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
         return;
     }
-
     let content = data.map((row, i) => `
         <tr>
             <td data-label="STT">${i + 1}</td>
-            <td data-label="Dòng Xe">${row.car}</td>
-            <td data-label="Phiên Bản">${row.version}</td>
-            <td data-label="Ngoại Thất">${row.exterior}</td>
-            <td data-label="Nội Thất">${row.interior}</td>
-            <td data-label="Tư Vấn Bán Hàng">${row.advisor}</td>
-            <td data-label="Ngày Cọc">${row.date}</td>
+            <td data-label="Dòng Xe" title="${row.car}">${row.car}</td>
+            <td data-label="Phiên Bản" title="${row.version}">${row.version}</td>
+            <td data-label="Ngoại Thất" title="${row.exterior}">${row.exterior}</td>
+            <td data-label="Nội Thất" title="${row.interior}">${row.interior}</td>
+            <td data-label="Tư Vấn Bán Hàng" title="${row.advisor}">${row.advisor}</td>
+            <td data-label="Ngày Cọc" title="${row.date}">${row.date}</td>
             <td data-label="Số Lượng Yêu Cầu">${row.count}</td>
         </tr>
     `).join("");
@@ -1246,7 +1280,6 @@ function filterDetailedStats() {
         const matchesDate = !selectedDate || row.date.includes(selectedDate);
         return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
     });
-
     renderDetailedStats(filtered);
 }
 
@@ -1293,11 +1326,8 @@ function updateChartColors() {
     }
     if (advisorChart) {
         advisorChart.data.datasets[0].backgroundColor = [
-            'rgba(0, 94, 184, 0.8)',
-            'rgba(0, 48, 135, 0.8)',
-            'rgba(0, 120, 215, 0.8)',
-            'rgba(0, 70, 160, 0.8)',
-            'rgba(0, 150, 240, 0.8)'
+            'rgba(0, 94, 184, 0.8)', 'rgba(0, 48, 135, 0.8)', 'rgba(0, 120, 215, 0.8)',
+            'rgba(0, 70, 160, 0.8)', 'rgba(0, 150, 240, 0.8)'
         ];
         advisorChart.options.plugins.legend.labels.color = colors.textColor;
         advisorChart.update();
@@ -1312,17 +1342,14 @@ function renderCharts(data) {
         const car = row["Dòng xe"] || "Không xác định";
         byCar[car] = (byCar[car] || 0) + 1;
     });
-    const carLabels = Object.keys(byCar);
-    const carData = Object.values(byCar);
-
     if (carChart) carChart.destroy();
     carChart = new Chart(document.getElementById("car-chart"), {
         type: 'bar',
         data: {
-            labels: carLabels,
+            labels: Object.keys(byCar),
             datasets: [{
                 label: 'Số lượng yêu cầu',
-                data: carData,
+                data: Object.values(byCar),
                 backgroundColor: colors.backgroundColor,
                 borderColor: colors.borderColor,
                 borderWidth: 1
@@ -1331,39 +1358,25 @@ function renderCharts(data) {
         options: {
             responsive: true,
             scales: {
-                x: {
-                    title: { display: true, text: 'Dòng Xe', color: colors.textColor },
-                    grid: { color: colors.gridColor },
-                    ticks: { color: colors.textColor }
-                },
-                y: {
-                    title: { display: true, text: 'Số Lượng', color: colors.textColor },
-                    beginAtZero: true,
-                    grid: { color: colors.gridColor },
-                    ticks: { color: colors.textColor }
-                }
+                x: { title: { display: true, text: 'Dòng Xe', color: colors.textColor }, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } },
+                y: { title: { display: true, text: 'Số Lượng', color: colors.textColor }, beginAtZero: true, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } }
             }
         }
     });
 
     const byCarVersion = {};
     data.forEach(row => {
-        const car = row["Dòng xe"] || "Không xác định";
-        const version = row["Phiên bản"] || "Không xác định";
-        const key = `${car} - ${version}`;
+        const key = `${row["Dòng xe"] || "Không xác định"} - ${row["Phiên bản"] || "Không xác định"}`;
         byCarVersion[key] = (byCarVersion[key] || 0) + 1;
     });
-    const carVersionLabels = Object.keys(byCarVersion);
-    const carVersionData = Object.values(byCarVersion);
-
     if (carVersionChart) carVersionChart.destroy();
     carVersionChart = new Chart(document.getElementById("car-version-chart"), {
         type: 'bar',
         data: {
-            labels: carVersionLabels,
+            labels: Object.keys(byCarVersion),
             datasets: [{
                 label: 'Số lượng yêu cầu',
-                data: carVersionData,
+                data: Object.values(byCarVersion),
                 backgroundColor: colors.backgroundColor,
                 borderColor: colors.borderColor,
                 borderWidth: 1
@@ -1372,17 +1385,8 @@ function renderCharts(data) {
         options: {
             responsive: true,
             scales: {
-                x: {
-                    title: { display: true, text: 'Dòng Xe - Phiên Bản', color: colors.textColor },
-                    grid: { color: colors.gridColor },
-                    ticks: { color: colors.textColor, autoSkip: false, maxRotation: 45, minRotation: 45 }
-                },
-                y: {
-                    title: { display: true, text: 'Số Lượng', color: colors.textColor },
-                    beginAtZero: true,
-                    grid: { color: colors.gridColor },
-                    ticks: { color: colors.textColor }
-                }
+                x: { title: { display: true, text: 'Dòng Xe - Phiên Bản', color: colors.textColor }, grid: { color: colors.gridColor }, ticks: { color: colors.textColor, autoSkip: false, maxRotation: 45, minRotation: 45 } },
+                y: { title: { display: true, text: 'Số Lượng', color: colors.textColor }, beginAtZero: true, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } }
             }
         }
     });
@@ -1392,35 +1396,21 @@ function renderCharts(data) {
         const advisor = row["Tên tư vấn bán hàng"] || "Không xác định";
         byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
     });
-    const advisorLabels = Object.keys(byAdvisor);
-    const advisorData = Object.values(byAdvisor);
-
     if (advisorChart) advisorChart.destroy();
     advisorChart = new Chart(document.getElementById("advisor-chart"), {
         type: 'pie',
         data: {
-            labels: advisorLabels,
+            labels: Object.keys(byAdvisor),
             datasets: [{
                 label: 'Phân bố yêu cầu',
-                data: advisorData,
-                backgroundColor: [
-                    'rgba(0, 94, 184, 0.8)',
-                    'rgba(0, 48, 135, 0.8)',
-                    'rgba(0, 120, 215, 0.8)',
-                    'rgba(0, 70, 160, 0.8)',
-                    'rgba(0, 150, 240, 0.8)'
-                ],
+                data: Object.values(byAdvisor),
+                backgroundColor: ['rgba(0, 94, 184, 0.8)', 'rgba(0, 48, 135, 0.8)', 'rgba(0, 120, 215, 0.8)', 'rgba(0, 70, 160, 0.8)', 'rgba(0, 150, 240, 0.8)'],
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: { color: colors.textColor }
-                }
-            }
+            plugins: { legend: { position: 'top', labels: { color: colors.textColor } } }
         }
     });
 }
@@ -1428,7 +1418,6 @@ function renderCharts(data) {
 function switchTab(tab, element) {
     document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
-    
     const mainContainer = document.querySelector('.main-container');
     mainContainer.style.opacity = '0';
     setTimeout(() => {
@@ -1441,7 +1430,7 @@ function switchTab(tab, element) {
             renderSummary(historyData);
         } else if (tab === "detailed-stats") {
             renderDetailedStats(detailedStatsData);
-            renderCharts(historyData);
+            if (!carChart) renderCharts(historyData);
         }
         mainContainer.style.opacity = '1';
     }, 300);
@@ -1455,21 +1444,49 @@ function fetchSheetData(sheetName, element) {
     console.log(`Fetching data for ${sheetName}`);
 }
 
+// Tiếp tục từ setupSearch()
 function setupSearch() {
-    console.log("Search setup placeholder");
+    document.getElementById("search-box").addEventListener("input", debounce(filterHistory, 300));
+    document.getElementById("detailed-search-box").addEventListener("input", debounce(filterDetailedStats, 300));
 }
 
 function setupScrollSync() {
-    console.log("Scroll sync setup placeholder");
-}
-
-function showNotification(message, duration) {
-    console.log(`${message} - Duration: ${duration}ms`);
+    const tableWrapper = document.querySelector('.table-wrapper');
+    tableWrapper.addEventListener('scroll', () => {
+        const scrollLeft = tableWrapper.scrollLeft;
+        document.querySelectorAll('.table-wrapper').forEach(wrapper => {
+            wrapper.scrollLeft = scrollLeft;
+        });
+    });
 }
 
 function toggleMenu() {
-    document.querySelector('.navbar .tabs').classList.toggle('active');
+    const tabs = document.querySelector('.navbar .tabs');
+    tabs.classList.toggle('active');
 }
+
+function toggleAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        showNotification("Tự động làm mới đã tắt!", 2000);
+    } else {
+        autoRefreshInterval = setInterval(refreshData, 300000); // Làm mới mỗi 5 phút
+        showNotification("Tự động làm mới đã bật (5 phút/lần)!", 2000);
+    }
+    const refreshBtn = document.querySelector('.nav-btn[data-tooltip="Tự động làm mới"] i');
+    refreshBtn.classList.toggle('fa-spin');
+}
+
+function showNotification(message, duration) {
+    const notification = document.createElement("div");
+    notification.className = "notification";
+    notification.textContent = message;
+    notification.style.setProperty("--duration", `${duration}ms`);
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), duration);
+}
+
 function restrictVersion(select) {
     const versionSelect = document.querySelector('select[name="phien_ban"]');
     if (select.value === "VF 3") {
@@ -1480,6 +1497,29 @@ function restrictVersion(select) {
         versionSelect.value = ""; // Đặt lại giá trị mặc định
     }
 }
+
+// Xử lý sự kiện khi tải trang
+document.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.setAttribute("data-theme", savedTheme);
+    const themeIcon = document.getElementById("theme-icon");
+    if (savedTheme === "dark") {
+        themeIcon.classList.remove("fa-moon");
+        themeIcon.classList.add("fa-sun");
+    } else {
+        themeIcon.classList.remove("fa-sun");
+        themeIcon.classList.add("fa-moon");
+    }
+    
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "index.html";
+    } else {
+        fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
+        setupSearch();
+        setupScrollSync();
+        fetchHistory();
+    }
+});
 </script>
 </body>
 </html>
