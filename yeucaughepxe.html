@@ -30,6 +30,8 @@
             --chart-bg: #e0e5ec;
             --footer-bg: #003087;
             --footer-text: #ffffff;
+            --success-bg: #e0e5ec;
+            --loading-bg: #e0e5ec;
         }
 
         [data-theme="dark"] {
@@ -49,6 +51,8 @@
             --chart-bg: #2c3e50;
             --footer-bg: #005eb8;
             --footer-text: #e0e5ec;
+            --success-bg: #34495e;
+            --loading-bg: #34495e;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,7 +63,7 @@
             min-height: 100vh;
             overflow-x: hidden;
             transition: background 0.3s ease, color 0.3s ease;
-            font-size: 12px; /* Giảm kích thước font mặc định */
+            font-size: 12px;
         }
 
         /* Navbar */
@@ -68,7 +72,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 50px; /* Giảm chiều cao navbar */
+            height: 50px;
             background: linear-gradient(135deg, #003087, #005eb8);
             display: flex;
             align-items: center;
@@ -77,7 +81,7 @@
             z-index: 1000;
         }
         .navbar .logo h1 {
-            font-size: 16px; /* Giảm kích thước logo */
+            font-size: 16px;
             color: #ffffff;
             font-weight: 700;
             text-transform: uppercase;
@@ -91,10 +95,10 @@
             transition: all 0.3s ease;
         }
         .navbar .tabs a {
-            padding: 8px 12px; /* Giảm padding */
+            padding: 8px 12px;
             text-decoration: none;
             color: #ffffff;
-            font-size: 12px; /* Giảm kích thước chữ */
+            font-size: 12px;
             font-weight: 700;
             transition: all 0.3s ease;
             border-radius: 15px;
@@ -117,7 +121,7 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             color: #ffffff;
-            font-size: 12px; /* Giảm kích thước icon */
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             width: 30px;
@@ -173,7 +177,7 @@
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 16px; /* Giảm kích thước icon */
+            font-size: 16px;
             cursor: pointer;
             transition: transform 0.3s ease;
         }
@@ -185,7 +189,7 @@
             background: none;
             border: none;
             color: #ffffff;
-            font-size: 20px; /* Giảm kích thước icon */
+            font-size: 20px;
             cursor: pointer;
             margin-right: 10px;
         }
@@ -194,7 +198,7 @@
         .main-container {
             display: flex;
             flex-direction: column;
-            margin-top: 60px; /* Giảm khoảng cách với navbar */
+            margin-top: 60px;
             padding: 10px;
             gap: 10px;
             min-height: calc(100vh - 80px);
@@ -203,11 +207,11 @@
         .form-container {
             background: var(--container-bg);
             border-radius: 15px;
-            padding: 12px; /* Giảm padding */
+            padding: 12px;
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
         }
         .form-container h2 {
-            font-size: 14px; /* Giảm kích thước tiêu đề */
+            font-size: 14px;
             color: #005eb8;
             margin-bottom: 12px;
             font-weight: 700;
@@ -216,27 +220,27 @@
             display: grid;
             gap: 8px;
         }
-        .form-container input {
-            padding: 8px 12px; /* Giảm padding */
+        .form-container input, .form-container select {
+            padding: 8px 12px;
             border: none;
             border-radius: 10px;
-            font-size: 12px; /* Giảm kích thước chữ */
+            font-size: 12px;
             background: var(--container-bg);
             color: var(--text-color);
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
             transition: all 0.3s ease;
         }
-        .form-container input:focus {
+        .form-container input:focus, .form-container select:focus {
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
             outline: none;
         }
         .form-container button {
-            padding: 8px 15px; /* Giảm padding */
+            padding: 8px 15px;
             border: none;
             border-radius: 10px;
             background: #005eb8;
             color: #ffffff;
-            font-size: 12px; /* Giảm kích thước chữ */
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -249,7 +253,7 @@
         .grid-container {
             background: var(--container-bg);
             border-radius: 15px;
-            padding: 12px; /* Giảm padding */
+            padding: 12px;
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
             overflow: hidden;
         }
@@ -269,10 +273,10 @@
             width: 100%;
         }
         .search-container input, .search-container select {
-            padding: 8px 12px; /* Giảm padding */
+            padding: 8px 12px;
             border: none;
             border-radius: 10px;
-            font-size: 12px; /* Giảm kích thước chữ */
+            font-size: 12px;
             background: var(--container-bg);
             color: var(--text-color);
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
@@ -290,12 +294,12 @@
             align-items: center;
         }
         .export-btn, .refresh-btn {
-            padding: 8px; /* Giảm padding */
+            padding: 8px;
             border: none;
             border-radius: 50%;
             background: var(--container-bg);
             color: #005eb8;
-            font-size: 12px; /* Giảm kích thước icon */
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             width: 30px;
@@ -317,10 +321,10 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8px; /* Giảm kích thước chữ trong bảng */
+            font-size: 8px;
         }
         th, td {
-            padding: 6px; /* Giảm padding */
+            padding: 6px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
@@ -342,6 +346,8 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
+
+        /* Modal Styles */
         .modal {
             position: fixed;
             inset: 0;
@@ -351,47 +357,70 @@
             justify-content: center;
             z-index: 1000;
             padding: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .modal-content {
             background: var(--modal-bg);
             border-radius: 15px;
-            padding: 10px; /* Giảm padding */
-            max-width: 90%;
+            padding: 15px;
+            max-width: 400px;
             width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
             color: var(--modal-text);
+            position: relative;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .modal-content h2 {
             color: #005eb8;
-            margin-bottom: 12px;
-            font-size: 12px; /* Giảm kích thước tiêu đề */
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 700;
         }
-        .detail-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px; /* Giảm kích thước chữ */
+        .modal-content p {
+            font-size: 12px;
+            margin-bottom: 15px;
         }
-        .detail-table th, .detail-table td {
-            padding: 6px; /* Giảm padding */
+        .modal-content i {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        .success-modal-content i {
+            color: #28a745;
+        }
+        .loading-modal-content i {
+            color: #005eb8;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .modal-btn {
-            padding: 6px 13px; /* Giảm padding */
+            padding: 8px 20px;
             border: none;
             border-radius: 10px;
-            font-size: 10px; /* Giảm kích thước chữ */
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
         .modal-btn.primary {
-            background: var(--container-bg);
-            color: #005eb8;
+            background: linear-gradient(135deg, #003087, #005eb8);
+            color: #ffffff;
         }
         .modal-btn.primary:hover {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            background: linear-gradient(135deg, #005eb8, #003087);
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.2);
         }
         .modal-btn.secondary {
             background: var(--container-bg);
@@ -400,21 +429,35 @@
         .modal-btn.secondary:hover {
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
+        .success-modal-content {
+            background: var(--success-bg);
+        }
+        .loading-modal-content {
+            background: var(--loading-bg);
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        .detail-table th, .detail-table td {
+            padding: 6px;
+        }
         .summary-section {
             background: var(--summary-bg);
             border-radius: 10px;
-            padding: 8px; /* Giảm padding */
+            padding: 8px;
             margin-bottom: 12px;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
         .summary-section h3 {
-            font-size: 11px; /* Giảm kích thước tiêu đề */
+            font-size: 11px;
             color: #005eb8;
             margin-bottom: 8px;
             font-weight: 700;
         }
         .summary-section p {
-            font-size: 10px; /* Giảm kích thước chữ */
+            font-size: 10px;
             color: var(--text-color);
             margin: 4px 0;
         }
@@ -429,11 +472,11 @@
             min-width: 250px;
             background: var(--chart-bg);
             border-radius: 10px;
-            padding: 10px; /* Giảm padding */
+            padding: 10px;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
         }
         .chart-card h3 {
-            font-size: 11px; /* Giảm kích thước tiêu đề */
+            font-size: 11px;
             color: #005eb8;
             margin-bottom: 8px;
             font-weight: 700;
@@ -451,7 +494,7 @@
             color: var(--footer-text);
             text-align: center;
             padding: 6px 0;
-            font-size: 8px; /* Giảm kích thước chữ */
+            font-size: 8px;
         }
 
         /* Responsive Design */
@@ -469,7 +512,7 @@
             }
             .form-container { flex: 1; padding: 15px; }
             .form-container h2 { font-size: 16px; margin-bottom: 15px; }
-            .form-container input { padding: 10px 15px; font-size: 13px; }
+            .form-container input, .form-container select { padding: 10px 15px; font-size: 13px; }
             .form-container button { padding: 10px 20px; font-size: 13px; }
             .grid-container { flex: 2; padding: 15px; }
             .controls { flex-wrap: nowrap; gap: 12px; }
@@ -479,11 +522,13 @@
             .table-wrapper { max-height: calc(100% - 110px); }
             table { font-size: 13px; }
             th, td { padding: 10px; }
-            .modal-content { max-width: 500px; padding: 15px; }
-            .modal-content h2 { font-size: 16px; margin-bottom: 15px; }
+            .modal-content { max-width: 500px; padding: 20px; }
+            .modal-content h2 { font-size: 18px; margin-bottom: 15px; }
+            .modal-content p { font-size: 14px; }
+            .modal-content i { font-size: 50px; }
             .detail-table { font-size: 13px; }
             .detail-table th, .detail-table td { padding: 10px; }
-            .modal-btn { padding: 10px 20px; font-size: 13px; }
+            .modal-btn { padding: 10px 25px; font-size: 14px; }
             .summary-section { padding: 12px; margin-bottom: 15px; }
             .summary-section h3 { font-size: 14px; margin-bottom: 10px; }
             .summary-section p { font-size: 13px; }
@@ -563,13 +608,96 @@
     <div class="form-container" id="form-section">
         <h2>Thêm Yêu Cầu Ghép Xe</h2>
         <form id="vinfast-form" onsubmit="previewForm(event)">
-            <input name="ten_ban_hang" placeholder="Tên tư vấn bán hàng" required/>
+            <select name="ten_ban_hang" required>
+                <option value="" disabled selected>Chọn tư vấn bán hàng</option>
+                <option value="Đinh Trọng Nhân">Đinh Trọng Nhân</option>
+                <option value="Lê Mai Anh">Lê Mai Anh</option>
+                <option value="Lý Kim Vinh">Lý Kim Vinh</option>
+                <option value="Nguyễn Anh Tuấn">Nguyễn Anh Tuấn</option>
+                <option value="Nguyễn Hoàng Phúc">Nguyễn Hoàng Phúc</option>
+                <option value="Nguyễn Thiện Thảo">Nguyễn Thiện Thảo</option>
+                <option value="Nguyễn Trần Hoàng Thanh">Nguyễn Trần Hoàng Thanh</option>
+                <option value="Phạm Trọng Huy">Phạm Trọng Huy</option>
+                <option value="Tất Bách Tường">Tất Bách Tường</option>
+                <option value="Thành Ngọc Vinh">Thành Ngọc Vinh</option>
+                <option value="Trần Thị Nguyệt Bạch">Trần Thị Nguyệt Bạch</option>
+                <option value="Võ Minh Tuấn">Võ Minh Tuấn</option>
+                <option value="Vũ Thị Trang">Vũ Thị Trang</option>
+                <option value="Trần Danh Phương">Trần Danh Phương</option>
+                <option value="Bùi Anh Tài">Bùi Anh Tài</option>
+                <option value="Nguyễn Hoàng Thạch">Nguyễn Hoàng Thạch</option>
+                <option value="Nguyễn Phương Lâm">Nguyễn Phương Lâm</option>
+            </select>
             <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
-            <input name="dong_xe" placeholder="Dòng xe" required/>
-            <input name="phien_ban" placeholder="Phiên bản" required/>
-            <input name="ngoai_that" placeholder="Ngoại thất" required/>
-            <input name="noi_that" placeholder="Nội thất" required/>
-            <input name="so_don_hang" placeholder="Số đơn hàng" required/>
+<select name="dong_xe" required onchange="restrictVersion(this)">
+                <option value="" disabled selected>Chọn dòng xe</option>
+                <option value="VF 3">VF 3</option>
+                <option value="VF 5">VF 5</option>
+                <option value="VF 6">VF 6</option>
+                <option value="VF 7">VF 7</option>
+                <option value="VF 8">VF 8</option>
+                <option value="VF 9">VF 9</option>
+                <option value="HERIO">HERIO</option>
+                <option value="NERIO">NERIO</option>
+                <option value="LIMO">LIMO</option>
+                <option value="MINIO">MINIO</option>
+            </select>
+            <select name="phien_ban" required>
+                <option value="" disabled selected>Chọn phiên bản</option>
+                <option value="Plus">Plus</option>
+                <option value="Eco">Eco</option>
+                <option value="Plus_Metal">Plus_Metal</option>
+                <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
+                <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
+                <option value="Eco_3ZONES">Eco_3ZONES</option>
+                <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
+                <option value="Base">Base</option>
+            </select>
+<select name="ngoai_that" required>
+    <option value="" disabled selected>Chọn ngoại thất</option>
+    <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
+    <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
+    <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
+    <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
+    <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
+    <option value="Jet Black (CE11)">Jet Black (CE11)</option>
+    <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
+    <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
+    <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
+    <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
+    <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
+    <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
+    <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
+    <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
+    <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
+    <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
+    <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
+    <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
+    <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
+    <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
+    <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
+    <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
+    <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
+    <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
+    <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
+    <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
+    <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
+    <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
+    <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
+    <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
+    <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
+    <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
+    <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
+    <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
+    <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
+</select>
+<select name="noi_that" required>
+    <option value="" disabled selected>Chọn nội thất</option>
+    <option value="Black">Black</option>
+    <option value="Brown">Brown</option>
+    <option value="Beige">Beige</option>
+</select>         
+<input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
             <input name="ngay_coc" type="datetime-local" required/>
             <button type="submit">Xác Nhận</button>
         </form>
@@ -814,7 +942,17 @@ function showLoadingModal(title, message) {
     modal.style.display = "flex";
 }
 
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.style.opacity = "0";
+    setTimeout(() => {
+        modal.style.display = "none";
+        modal.style.opacity = "1";
+    }, 300);
+}
+
 function fetchHistory() {
+    showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
     fetch(historyURL)
         .then(res => res.text())
         .then(txt => {
@@ -826,16 +964,19 @@ function fetchHistory() {
             prepareDetailedStats(json);
             renderDetailedStats(detailedStatsData);
             renderCharts(json);
+            closeModal("loading-modal");
         })
         .catch(error => {
+            document.getElementById("loading-title").textContent = "Lỗi Tải Dữ Liệu";
+            document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
+            document.getElementById("loading-close-btn").style.display = "block";
             console.error("Lỗi khi tải dữ liệu:", error);
             showNotification("Không thể tải dữ liệu. Vui lòng thử lại!", 3000);
         });
 }
 
 function refreshData() {
-    showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
-    
+    showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
     fetch(historyURL)
         .then(res => res.text())
         .then(txt => {
@@ -851,7 +992,7 @@ function refreshData() {
             showNotification("Dữ liệu đã được làm mới!", 2000);
         })
         .catch(error => {
-            document.getElementById("loading-title").textContent = "Lỗi Tải Dữ Liệu";
+            document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
             document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
             document.getElementById("loading-close-btn").style.display = "block";
             console.error("Lỗi khi làm mới dữ liệu:", error);
@@ -968,7 +1109,7 @@ function exportToExcel() {
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
-    const inputs = form.querySelectorAll("input");
+    const inputs = form.querySelectorAll("input, select");
     formData = {}; orderId = "";
     let html = "";
 
@@ -986,10 +1127,6 @@ function previewForm(e) {
     document.getElementById("preview-modal").style.display = "flex";
 }
 
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = "none";
-}
-
 function confirmSubmit() {
     closeModal("preview-modal");
     showLoadingModal("Đang Gửi Yêu Cầu...", "Vui lòng chờ trong giây lát.");
@@ -1005,6 +1142,7 @@ function confirmSubmit() {
         fetchHistory();
         document.getElementById("vinfast-form").reset();
         document.getElementById("success-modal").style.display = "flex";
+        setTimeout(() => closeModal("success-modal"), 3000);
     }).catch(error => {
         document.getElementById("loading-title").textContent = "Lỗi Gửi Yêu Cầu";
         document.getElementById("loading-message").textContent = "Đã có lỗi xảy ra. Vui lòng thử lại.";
@@ -1331,6 +1469,16 @@ function showNotification(message, duration) {
 
 function toggleMenu() {
     document.querySelector('.navbar .tabs').classList.toggle('active');
+}
+function restrictVersion(select) {
+    const versionSelect = document.querySelector('select[name="phien_ban"]');
+    if (select.value === "VF 3") {
+        versionSelect.value = "Base"; // Đặt phiên bản thành "Base"
+        versionSelect.disabled = true; // Vô hiệu hóa dropdown "Phiên bản"
+    } else {
+        versionSelect.disabled = false; // Kích hoạt lại dropdown "Phiên bản"
+        versionSelect.value = ""; // Đặt lại giá trị mặc định
+    }
 }
 </script>
 </body>
