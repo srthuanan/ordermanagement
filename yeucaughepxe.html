@@ -604,8 +604,8 @@
                 <thead id="table-header">
                     <tr>
                         <th>STT</th>
-                        <th>Tên TVBH</th>
-                        <th>Tên KH</th>
+                        <th>Tư Vấn Bán Hàng</th>
+                        <th>Tên Khách Hàng</th>
                         <th>Số Đơn Hàng</th>
                         <th>Dòng Xe</th>
                         <th>Phiên Bản</th>
@@ -911,8 +911,8 @@ function renderHistory(data) {
     document.getElementById("table-header").innerHTML = `
         <tr>
             <th>STT</th>
-            <th>Tên TVBH</th>
-            <th>Tên KH</th>
+            <th>Tư Vấn Bán Hàng</th>
+            <th>Tên Khách Hàng</th>
             <th>Số Đơn Hàng</th>
             <th>Dòng Xe</th>
             <th>Phiên Bản</th>
@@ -1079,7 +1079,7 @@ function renderDetailedStats(data) {
             <td data-label="Phiên Bản">${row.version}</td>
             <td data-label="Ngoại Thất">${row.exterior}</td>
             <td data-label="Nội Thất">${row.interior}</td>
-            <td data-label="Tư Vấn Viên">${row.advisor}</td>
+            <td data-label="Tư Vấn Bán Hàng">${row.advisor}</td>
             <td data-label="Ngày Cọc">${row.date}</td>
             <td data-label="Số Lượng Yêu Cầu">${row.count}</td>
         </tr>
