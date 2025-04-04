@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Giữ nguyên toàn bộ CSS từ mã gốc */
         :root {
             --background: #e0e5ec;
             --text-color: #2c3e50;
@@ -355,161 +356,161 @@
             transition: background 0.3s ease;
         }
 
-/* Modal Styles */
-.modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 10px;
-    animation: fadeIn 0.3s ease;
-}
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 10px;
+            animation: fadeIn 0.3s ease;
+        }
 
-.modal-content {
-    background: var(--modal-bg);
-    border-radius: 15px;
-    padding: 20px;
-    max-width: 500px;
-    width: 100%;
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-    color: var(--modal-text);
-    position: relative;
-    animation: slideUp 0.3s ease;
-}
+        .modal-content {
+            background: var(--modal-bg);
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+            color: var(--modal-text);
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
 
-.modal-header h2 {
-    color: #005eb8;
-    font-size: 18px;
-    font-weight: 700;
-}
+        .modal-header h2 {
+            color: #005eb8;
+            font-size: 18px;
+            font-weight: 700;
+        }
 
-.modal-close-btn {
-    background: none;
-    border: none;
-    color: #7f8c8d;
-    font-size: 18px;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
 
-.modal-close-btn:hover {
-    color: #005eb8;
-}
+        .modal-close-btn:hover {
+            color: #005eb8;
+        }
 
-.modal-body {
-    max-height: 60vh;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #005eb8 var(--modal-bg);
-    font-size: 13px;
-}
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #005eb8 var(--modal-bg);
+            font-size: 13px;
+        }
 
-.modal-body .detail-item, .modal-body div {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 15px;
-    background: var(--container-bg);
-    border-radius: 10px;
-    margin-bottom: 8px;
-    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+        .modal-body .detail-item, .modal-body div {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: var(--container-bg);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
 
-.modal-body .detail-item:hover, .modal-body div:hover {
-    transform: translateY(-2px);
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-}
+        .modal-body .detail-item:hover, .modal-body div:hover {
+            transform: translateY(-2px);
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
 
-.modal-body .detail-item strong, .modal-body div strong {
-    font-weight: 700;
-    color: #005eb8;
-    flex: 1;
-    min-width: 120px;
-}
+        .modal-body .detail-item strong, .modal-body div strong {
+            font-weight: 700;
+            color: #005eb8;
+            flex: 1;
+            min-width: 120px;
+        }
 
-.modal-body .detail-item span, .modal-body div span {
-    flex: 2;
-    color: var(--text-color);
-    word-break: break-word;
-}
+        .modal-body .detail-item span, .modal-body div span {
+            flex: 2;
+            color: var(--text-color);
+            word-break: break-word;
+        }
 
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 15px;
-}
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
 
-.modal-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-}
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
 
-.modal-btn.primary {
-    background: linear-gradient(135deg, #003087, #005eb8);
-    color: #ffffff;
-}
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #003087, #005eb8);
+            color: #ffffff;
+        }
 
-.modal-btn.primary:hover {
-    background: linear-gradient(135deg, #005eb8, #003087);
-    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.2);
-}
+        .modal-btn.primary:hover {
+            background: linear-gradient(135deg, #005eb8, #003087);
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.2);
+        }
 
-.modal-btn.secondary {
-    background: var(--container-bg);
-    color: #7f8c8d;
-}
+        .modal-btn.secondary {
+            background: var(--container-bg);
+            color: #7f8c8d;
+        }
 
-.modal-btn.secondary:hover {
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-}
+        .modal-btn.secondary:hover {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
 
-.success-modal-content {
-    background: var(--success-bg);
-    text-align: center;
-}
+        .success-modal-content {
+            background: var(--success-bg);
+            text-align: center;
+        }
 
-.loading-modal-content {
-    background: var(--loading-bg);
-    text-align: center;
-}
+        .loading-modal-content {
+            background: var(--loading-bg);
+            text-align: center;
+        }
 
-/* Responsive */
-@media (max-width: 767px) {
-    .modal-content {
-        max-width: 90%;
-        padding: 15px;
-    }
-    .modal-body .detail-item, .modal-body div {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 8px 12px;
-    }
-    .modal-body .detail-item strong, .modal-body div strong {
-        min-width: 0;
-        margin-bottom: 4px;
-    }
-    .modal-btn {
-        padding: 8px 15px;
-        font-size: 12px;
-    }
-}
+        /* Responsive */
+        @media (max-width: 767px) {
+            .modal-content {
+                max-width: 90%;
+                padding: 15px;
+            }
+            .modal-body .detail-item, .modal-body div {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 8px 12px;
+            }
+            .modal-body .detail-item strong, .modal-body div strong {
+                min-width: 0;
+                margin-bottom: 4px;
+            }
+            .modal-btn {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+        }
         .detail-table {
             width: 100%;
             border-collapse: collapse;
@@ -721,7 +722,6 @@
                 <option value="NGUYỄN HOÀNG THẠCH">NGUYỄN HOÀNG THẠCH</option>
                 <option value="NGUYỄN PHƯƠNG LÂM">NGUYỄN PHƯƠNG LÂM</option>
                 <option value="PHẠM THÀNH NHÂN">PHẠM THÀNH NHÂN</option>
-
             </select>
             <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
             <select name="dong_xe" required onchange="restrictVersion(this)">
@@ -784,7 +784,7 @@
                 <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
                 <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
                 <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
-                <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
+                <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>              
             </select>
             <select name="noi_that" required>
                 <option value="" disabled selected>Chọn nội thất</option>
@@ -813,8 +813,7 @@
                 </select>
                 <select id="filter-advisor" onchange="filterHistory()">
                     <option value="">Tất cả tư vấn viên</option>
-                </select>
-                <input type="date" id="filter-date" onchange="filterHistory()">
+                </select>                <input type="date" id="filter-date" onchange="filterHistory()">
             </div>
             <div class="export-btn-container">
                 <span>Tổng số đơn: <span id="total-don-count">0</span></span>
@@ -835,6 +834,7 @@
                         <th onclick="sortTable('Phiên bản')">Phiên Bản</th>
                         <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
                         <th onclick="sortTable('Nội thất')">Nội Thất</th>
+                        <th onclick="sortTable('Trạng thái')">Trạng Thái</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
@@ -963,20 +963,18 @@
             <button class="modal-btn primary" id="loading-close-btn" onclick="closeModal('loading-modal')" style="display: none;">Đóng</button>
         </div>
     </div>
-</div><script>
-// Kiểm tra trạng thái đăng nhập khi tải trang
+</div>
+<script>
 document.addEventListener("DOMContentLoaded", function () {
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
         window.location.href = "index.html";
     } else {
-        fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
+        fetchHistory();
         setupSearch();
         setupScrollSync();
-        fetchHistory();
     }
 });
 
-// Thêm hàm đăng xuất
 function logout() {
     sessionStorage.clear();
     window.location.href = "index.html";
@@ -990,7 +988,9 @@ function goBack() {
 let historyData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
-const historyURL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzTQ41XMA6pr7zub0Lj6UC8gXJK4Gms3rSc2mIKWk18iH9y9Y-FDYSj96F9YIGl3XyO/exec";
+const TELEGRAM_BOT_TOKEN = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628";
+const TELEGRAM_CHAT_ID = "5812034168";
 const labelMap = {
     ten_ban_hang: "Tên tư vấn bán hàng",
     ten_khach_hang: "Tên khách hàng",
@@ -1000,37 +1000,40 @@ const labelMap = {
     noi_that: "Nội thất",
     so_don_hang: "Số đơn hàng",
     ngay_coc: "Ngày cọc",
-    thoi_gian_nhap: "Thời gian nhập"
+    thoi_gian_nhap: "Thời gian nhập",
+    trang_thai: "Trạng thái"
 };
 
-// Theme toggle functionality
 function toggleTheme() {
     const currentTheme = document.body.getAttribute("data-theme");
     const newTheme = currentTheme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", newTheme);
     const themeIcon = document.getElementById("theme-icon");
-    if (newTheme === "dark") {
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-    } else {
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
+    if (themeIcon) {
+        if (newTheme === "dark") {
+            themeIcon.classList.remove("fa-moon");
+            themeIcon.classList.add("fa-sun");
+        } else {
+            themeIcon.classList.remove("fa-sun");
+            themeIcon.classList.add("fa-moon");
+        }
     }
     localStorage.setItem("theme", newTheme);
     updateChartColors();
 }
 
-// Load theme from localStorage
 document.addEventListener("DOMContentLoaded", () => {
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.setAttribute("data-theme", savedTheme);
     const themeIcon = document.getElementById("theme-icon");
-    if (savedTheme === "dark") {
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-    } else {
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
+    if (themeIcon) {
+        if (savedTheme === "dark") {
+            themeIcon.classList.remove("fa-moon");
+            themeIcon.classList.add("fa-sun");
+        } else {
+            themeIcon.classList.remove("fa-sun");
+            themeIcon.classList.add("fa-moon");
+        }
     }
 });
 
@@ -1044,90 +1047,95 @@ function formatDateTime(dtString) {
     const seconds = String(d.getSeconds()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
+
 function formatDateForFilter(dtString) {
     const d = new Date(dtString);
     return d.toISOString().split('T')[0];
 }
 
-// Hàm hiển thị modal loading (đã có sẵn, chỉ cần tái sử dụng)
 function showLoadingModal(title, message) {
     const modal = document.getElementById("loading-modal");
-    document.getElementById("loading-title").textContent = title;
-    document.getElementById("loading-message").textContent = message;
-    document.getElementById("loading-close-btn").style.display = "none";
-    modal.style.display = "flex";
+    if (modal) {
+        document.getElementById("loading-title").textContent = title;
+        document.getElementById("loading-message").textContent = message;
+        const closeBtn = document.getElementById("loading-close-btn");
+        if (closeBtn) closeBtn.style.display = "none";
+        modal.style.display = "flex";
+    }
 }
 
-// Hàm đóng modal (đã có sẵn)
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    modal.style.opacity = "0";
-    setTimeout(() => {
-        modal.style.display = "none";
-        modal.style.opacity = "1";
-    }, 300);
+    if (modal) {
+        modal.style.opacity = "0";
+        setTimeout(() => {
+            modal.style.display = "none";
+            modal.style.opacity = "1";
+        }, 300);
+    }
 }
+
 function fetchHistory() {
-    const activeTab = document.querySelector('.tabs a.active').getAttribute('onclick').includes('history');
+    const activeTab = document.querySelector('.tabs a.active')?.getAttribute('onclick')?.includes('history') || false;
     if (activeTab) {
         showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
     }
-    fetch(historyURL)
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            return res.text();
-        })
-        .then(txt => {
-            const json = JSON.parse(txt);
-            historyData = json;
-            populateFilters(json);
-            renderHistory(json);
-            renderSummary(json);
-            prepareDetailedStats(json);
-            renderDetailedStats(detailedStatsData);
-            if (activeTab) closeModal("loading-modal");
-        })
-        .catch(error => {
-            if (activeTab) {
-                document.getElementById("loading-title").textContent = "Lỗi Tải Dữ Liệu";
-                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
-                document.getElementById("loading-close-btn").style.display = "block";
-            }
+    fetch(apiURL)
+    .then(response => response.json())
+    .then(data => {
+        historyData = data;
+        if (activeTab) closeModal("loading-modal");
+        renderHistory(historyData);
+        renderSummary(historyData);
+        populateFilters(historyData);
+        prepareDetailedStats(historyData);
+        renderDetailedStats(detailedStatsData);
+    })
+    .catch(error => {
+        if (activeTab) {
+            const titleEl = document.getElementById("loading-title");
+            const msgEl = document.getElementById("loading-message");
+            const closeBtn = document.getElementById("loading-close-btn");
+            if (titleEl) titleEl.textContent = "Lỗi Tải Dữ Liệu";
+            if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
+            if (closeBtn) closeBtn.style.display = "block";
+        } else {
             showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
-        });
+        }
+    });
 }
 
 function refreshData() {
-    const activeTab = document.querySelector('.tabs a.active').getAttribute('onclick').includes('history');
+    const activeTab = document.querySelector('.tabs a.active')?.getAttribute('onclick')?.includes('history') || false;
     if (activeTab) {
         showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
     }
-    fetch(historyURL)
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            return res.text();
-        })
-        .then(txt => {
-            const json = JSON.parse(txt);
-            historyData = json;
-            populateFilters(json);
-            renderHistory(json);
-            renderSummary(json);
-            prepareDetailedStats(json);
-            renderDetailedStats(detailedStatsData);
-            if (activeTab) {
-                closeModal("loading-modal");
-                showNotification("Dữ liệu đã được làm mới!", 2000);
-            }
-        })
-        .catch(error => {
-            if (activeTab) {
-                document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
-                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
-                document.getElementById("loading-close-btn").style.display = "block";
-            }
+    fetch(apiURL)
+    .then(response => response.json())
+    .then(data => {
+        historyData = data;
+        if (activeTab) {
+            closeModal("loading-modal");
+            showNotification("Dữ liệu đã được làm mới!", 2000);
+        }
+        renderHistory(historyData);
+        renderSummary(historyData);
+        populateFilters(historyData);
+        prepareDetailedStats(historyData);
+        renderDetailedStats(detailedStatsData);
+    })
+    .catch(error => {
+        if (activeTab) {
+            const titleEl = document.getElementById("loading-title");
+            const msgEl = document.getElementById("loading-message");
+            const closeBtn = document.getElementById("loading-close-btn");
+            if (titleEl) titleEl.textContent = "Lỗi Làm Mới";
+            if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
+            if (closeBtn) closeBtn.style.display = "block";
+        } else {
             showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000);
-        });
+        }
+    });
 }
 
 function populateFilters(data) {
@@ -1135,20 +1143,28 @@ function populateFilters(data) {
     const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean);
 
     const carFilter = document.getElementById("filter-car");
-    carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-    cars.forEach(car => carFilter.innerHTML += `<option value="${car}">${car}</option>`);
+    if (carFilter) {
+        carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
+        cars.forEach(car => carFilter.innerHTML += `<option value="${car}">${car}</option>`);
+    }
 
     const advisorFilter = document.getElementById("filter-advisor");
-    advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-    advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+    if (advisorFilter) {
+        advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
+        advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+    }
 
     const detailedCarFilter = document.getElementById("detailed-filter-car");
-    detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-    cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}">${car}</option>`);
+    if (detailedCarFilter) {
+        detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
+        cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}">${car}</option>`);
+    }
 
     const detailedAdvisorFilter = document.getElementById("detailed-filter-advisor");
-    detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-    advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+    if (detailedAdvisorFilter) {
+        detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
+        advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+    }
 }
 
 function renderSummary(data) {
@@ -1165,15 +1181,21 @@ function renderSummary(data) {
     const topCar = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
     const topAdvisor = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
 
-    document.getElementById("summary-total").textContent = total;
-    document.getElementById("summary-top-car").textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
-    document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
+    const totalEl = document.getElementById("summary-total");
+    const topCarEl = document.getElementById("summary-top-car");
+    const topAdvisorEl = document.getElementById("summary-top-advisor");
+
+    if (totalEl) totalEl.textContent = total;
+    if (topCarEl) topCarEl.textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
+    if (topAdvisorEl) topAdvisorEl.textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
 }
 
 function renderHistory(data) {
     const tbody = document.getElementById("table-body");
+    if (!tbody) return;
+
     if (!data.length) {
-        tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='9'>Không có dữ liệu</td></tr>";
         return;
     }
     let content = data.map((row, i) => `
@@ -1186,10 +1208,13 @@ function renderHistory(data) {
             <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || ""}</td>
             <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}">${row["Ngoại thất"] || ""}</td>
             <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || ""}</td>
+            <td data-label="Trạng Thái" title="${row["Trạng thái"] || ""}">${row["Trạng thái"] || ""}</td>
         </tr>
     `).join("");
     tbody.innerHTML = content;
-    document.getElementById("total-don-count").textContent = data.length;
+
+    const totalDonCount = document.getElementById("total-don-count");
+    if (totalDonCount) totalDonCount.textContent = data.length;
 }
 
 function debounce(func, delay) {
@@ -1201,10 +1226,17 @@ function debounce(func, delay) {
 }
 
 function filterHistory() {
-    const keyword = document.getElementById("search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("filter-car").value;
-    const selectedAdvisor = document.getElementById("filter-advisor").value;
-    const selectedDate = document.getElementById("filter-date").value;
+    const searchBox = document.getElementById("search-box");
+    const carFilter = document.getElementById("filter-car");
+    const advisorFilter = document.getElementById("filter-advisor");
+    const dateFilter = document.getElementById("filter-date");
+
+    if (!searchBox || !carFilter || !advisorFilter || !dateFilter) return;
+
+    const keyword = searchBox.value.toLowerCase();
+    const selectedCar = carFilter.value;
+    const selectedAdvisor = advisorFilter.value;
+    const selectedDate = dateFilter.value;
 
     const filtered = historyData.filter(row => {
         const matchesKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
@@ -1226,6 +1258,10 @@ function sortTable(column) {
 }
 
 function exportToExcel() {
+    if (typeof XLSX === "undefined") {
+        showNotification("Thư viện XLSX chưa được tải!", 3000);
+        return;
+    }
     const ws = XLSX.utils.json_to_sheet(historyData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "yeucaughep");
@@ -1233,6 +1269,10 @@ function exportToExcel() {
 }
 
 function exportToPDF() {
+    if (typeof jsPDF === "undefined") {
+        showNotification("Thư viện jsPDF chưa được tải!", 3000);
+        return;
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.autoTable({ html: '#history-table' });
@@ -1242,7 +1282,7 @@ function exportToPDF() {
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
-    if (!form.checkValidity()) {
+    if (!form || !form.checkValidity()) {
         showNotification("Vui lòng điền đầy đủ và đúng định dạng!", 3000);
         return;
     }
@@ -1260,11 +1300,35 @@ function previewForm(e) {
         }
     });
 
-    document.getElementById("preview-content").innerHTML = html;
-    document.getElementById("preview-modal").style.display = "flex";
+    const previewContent = document.getElementById("preview-content");
+    const previewModal = document.getElementById("preview-modal");
+    if (previewContent && previewModal) {
+        previewContent.innerHTML = html;
+        previewModal.style.display = "flex";
+    }
 }
 
-// Hàm gửi dữ liệu với loading
+async function sendTelegramNotification(message) {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const payload = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: "HTML"
+    };
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error("Gửi thông báo Telegram thất bại");
+        console.log("Thông báo Telegram đã được gửi!");
+    } catch (error) {
+        console.error("Lỗi gửi thông báo Telegram:", error);
+        showNotification(`Không thể gửi thông báo Telegram: ${error.message}`, 5000);
+    }
+}
+
 function confirmSubmit() {
     if (historyData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng đã tồn tại!", 3000);
@@ -1273,342 +1337,316 @@ function confirmSubmit() {
     }
 
     showLoadingModal("Đang Gửi Dữ Liệu", "Đang gửi yêu cầu, vui lòng chờ...");
-
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString();
+    formData["trang_thai"] = "Chưa ghép";
 
-    // Chuẩn bị dữ liệu cho Telegram
-    const botToken = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628"; // Bot Token của bạn
-    const chatId = "5812034168"; // Chat ID của bạn
-    const ngayCoc = formatDateTime(formData["ngay_coc"]); // Ngày cọc từ form
-    const ngayGui = formatDateTime(new Date()); // Ngày gửi là thời điểm hiện tại
-
-    const telegramMessage = `<b>✅ YÊU CẦU GHÉP XE MỚI</b>\n` +
-        `Tư vấn bán hàng: ${formData["ten_ban_hang"]}\n` +
-        `Dòng xe: ${formData["dong_xe"]}\n` +
-        `Phiên bản: ${formData["phien_ban"]}\n` +
-        `Ngoại thất: ${formData["ngoai_that"]}\n` +
-        `Nội thất: ${formData["noi_that"]}\n` +
-        `Số đơn hàng: ${formData["so_don_hang"]}\n` +
-        `Khách hàng: ${formData["ten_khach_hang"]}\n` +
-        `Ngày cọc: ${ngayCoc}\n` +
-        `Ngày gửi: ${ngayGui}`;
-
-    // Gửi tin nhắn Telegram
-    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    fetch(apiURL, {
         method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: telegramMessage,
-            parse_mode: "HTML"
-        })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Lỗi gửi Telegram");
-        return fetch("https://script.google.com/macros/s/AKfycbxC8MGkO4dWYNhg4GYDWs_uPr_DFuqhLjztrXpzgvYhdINHF1Rxwpx7vZHoixd3nOmZ6w/exec", {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        });
+        body: JSON.stringify(formData),
+        redirect: "follow"
     })
     .then(() => {
+        // Lưu ý: Với no-cors, không thể kiểm tra response, giả định thành công
         closeModal("loading-modal");
-        fetchHistory(); // Cập nhật dữ liệu lịch sử
-        document.getElementById("vinfast-form").reset();
-        document.getElementById("success-modal").style.display = "flex";
-        setTimeout(() => closeModal("success-modal"), 3000);
+        fetchHistory();
+        const form = document.getElementById("vinfast-form");
+        if (form) form.reset();
+        const successModal = document.getElementById("success-modal");
+        if (successModal) {
+            successModal.style.display = "flex";
+            setTimeout(() => closeModal("success-modal"), 3000);
+        }
+
+        const ngayCoc = formatDateTime(formData["ngay_coc"]);
+        const ngayGui = formatDateTime(new Date());
+        const telegramMessage = `<b>✅ YÊU CẦU GHÉP XE MỚI</b>\n` +
+            `Tư vấn bán hàng: ${formData["ten_ban_hang"]}\n` +
+            `Dòng xe: ${formData["dong_xe"]}\n` +
+            `Phiên bản: ${formData["phien_ban"]}\n` +
+            `Ngoại thất: ${formData["ngoai_that"]}\n` +
+            `Nội thất: ${formData["noi_that"]}\n` +
+            `Số đơn hàng: ${formData["so_don_hang"]}\n` +
+            `Khách hàng: ${formData["ten_khach_hang"]}\n` +
+            `Ngày cọc: ${ngayCoc}\n` +
+            `Ngày gửi: ${ngayGui}`;
+        sendTelegramNotification(telegramMessage);
     })
     .catch(error => {
         closeModal("loading-modal");
-        showNotification("Đã có lỗi: " + error.message, 3000);
+        showNotification(`Lỗi khi gửi dữ liệu: ${error.message}`, 5000);
     });
 }
+
 function showDetail(index) {
     const row = historyData[index];
-    const modal = document.getElementById("detail-modal");
-    const content = document.getElementById("detail-content");
+    if (!row) return;
+
     let html = "";
-
-    Object.entries(row).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(row)) {
         const label = labelMap[key] || key;
-        const formattedValue = (key === "ngay_coc" || key === "thoi_gian_nhap" || key === "ngay_ghep") 
-            ? formatDateTime(value) 
-            : value;
-        html += `
-            <div class="detail-item">
-                <strong>${label}:</strong>
-                <span>${formattedValue || "Không có"}</span>
-            </div>
-        `;
-    });
-
-    content.innerHTML = html;
-    modal.style.display = "flex";
+        const formattedValue = key === "Ngày cọc" || key === "Thời gian nhập" ? formatDateTime(value) : value;
+        html += `<div><strong>${label}:</strong> <span>${formattedValue || "Chưa có dữ liệu"}</span></div>`;
+    }
+    const detailContent = document.getElementById("detail-content");
+    const detailModal = document.getElementById("detail-modal");
+    if (detailContent && detailModal) {
+        detailContent.innerHTML = html;
+        detailModal.style.display = "flex";
+    }
 }
+
 function prepareDetailedStats(data) {
-    const statsMap = {};
+    const statsMap = new Map();
     data.forEach(row => {
-        const car = row["Dòng xe"] || "Không xác định";
-        const version = row["Phiên bản"] || "Không xác định";
-        const exterior = row["Ngoại thất"] || "Không xác định";
-        const interior = row["Nội thất"] || "Không xác định";
-        const advisor = row["Tên tư vấn bán hàng"] || "Không xác định";
-        const date = row["Ngày cọc"] ? formatDateTime(row["Ngày cọc"]) : "Không xác định";
-
-        const key = `${car}|${version}|${exterior}|${interior}|${advisor}|${date}`;
-        if (!statsMap[key]) {
-            statsMap[key] = { car, version, exterior, interior, advisor, date, count: 0 };
+        const key = `${row["Dòng xe"]}|${row["Phiên bản"]}|${row["Ngoại thất"]}|${row["Nội thất"]}|${row["Tên tư vấn bán hàng"]}|${row["Ngày cọc"]}`;
+        if (statsMap.has(key)) {
+            statsMap.get(key).count += 1;
+        } else {
+            statsMap.set(key, {
+                dong_xe: row["Dòng xe"],
+                phien_ban: row["Phiên bản"],
+                ngoai_that: row["Ngoại thất"],
+                noi_that: row["Nội thất"],
+                tu_van_vien: row["Tên tư vấn bán hàng"],
+                ngay_coc: row["Ngày cọc"],
+                count: 1
+            });
         }
-        statsMap[key].count += 1;
     });
-
-    detailedStatsData = Object.values(statsMap);
-
-    document.getElementById("detailed-total").textContent = data.length;
-    document.getElementById("detailed-car-types").textContent = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).length;
-    document.getElementById("detailed-advisors").textContent = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).length;
+    detailedStatsData = Array.from(statsMap.values());
+    renderCharts(detailedStatsData);
 }
 
 function renderDetailedStats(data) {
     const tbody = document.getElementById("detailed-stats-body");
+    if (!tbody) return;
+
     if (!data.length) {
         tbody.innerHTML = "<tr><td colspan='8'>Không có dữ liệu</td></tr>";
         return;
     }
     let content = data.map((row, i) => `
         <tr>
-            <td data-label="STT">${i + 1}</td>
-            <td data-label="Dòng Xe" title="${row.car}">${row.car}</td>
-            <td data-label="Phiên Bản" title="${row.version}">${row.version}</td>
-            <td data-label="Ngoại Thất" title="${row.exterior}">${row.exterior}</td>
-            <td data-label="Nội Thất" title="${row.interior}">${row.interior}</td>
-            <td data-label="Tư Vấn Bán Hàng" title="${row.advisor}">${row.advisor}</td>
-            <td data-label="Ngày Cọc" title="${row.date}">${row.date}</td>
-            <td data-label="Số Lượng Yêu Cầu">${row.count}</td>
+            <td>${i + 1}</td>
+            <td>${row.dong_xe || ""}</td>
+            <td>${row.phien_ban || ""}</td>
+            <td>${row.ngoai_that || ""}</td>
+            <td>${row.noi_that || ""}</td>
+            <td>${row.tu_van_vien || ""}</td>
+            <td>${row.ngay_coc ? formatDateTime(row.ngay_coc) : ""}</td>
+            <td>${row.count}</td>
         </tr>
     `).join("");
     tbody.innerHTML = content;
-    document.getElementById("detailed-row-count").textContent = data.length;
+
+    const rowCountEl = document.getElementById("detailed-row-count");
+    const totalEl = document.getElementById("detailed-total");
+    const carTypesEl = document.getElementById("detailed-car-types");
+    const advisorsEl = document.getElementById("detailed-advisors");
+
+    if (rowCountEl) rowCountEl.textContent = data.length;
+    if (totalEl) totalEl.textContent = historyData.length;
+    if (carTypesEl) carTypesEl.textContent = [...new Set(data.map(row => row.dong_xe))].length;
+    if (advisorsEl) advisorsEl.textContent = [...new Set(data.map(row => row.tu_van_vien))].length;
 }
 
 function filterDetailedStats() {
-    const keyword = document.getElementById("detailed-search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("detailed-filter-car").value;
-    const selectedAdvisor = document.getElementById("detailed-filter-advisor").value;
-    const selectedDate = document.getElementById("detailed-filter-date").value;
+    const searchBox = document.getElementById("detailed-search-box");
+    const carFilter = document.getElementById("detailed-filter-car");
+    const advisorFilter = document.getElementById("detailed-filter-advisor");
+    const dateFilter = document.getElementById("detailed-filter-date");
+
+    if (!searchBox || !carFilter || !advisorFilter || !dateFilter) return;
+
+    const keyword = searchBox.value.toLowerCase();
+    const selectedCar = carFilter.value;
+    const selectedAdvisor = advisorFilter.value;
+    const selectedDate = dateFilter.value;
 
     const filtered = detailedStatsData.filter(row => {
-        const matchesKeyword = (
-            row.car.toLowerCase().includes(keyword) ||
-            row.version.toLowerCase().includes(keyword) ||
-            row.exterior.toLowerCase().includes(keyword) ||
-            row.interior.toLowerCase().includes(keyword) ||
-            row.advisor.toLowerCase().includes(keyword) ||
-            row.date.toLowerCase().includes(keyword)
-        );
-        const matchesCar = !selectedCar || row.car === selectedCar;
-        const matchesAdvisor = !selectedAdvisor || row.advisor === selectedAdvisor;
-        const matchesDate = !selectedDate || row.date.includes(selectedDate);
+        const matchesKeyword = Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
+        const matchesCar = !selectedCar || row.dong_xe === selectedCar;
+        const matchesAdvisor = !selectedAdvisor || row.tu_van_vien === selectedAdvisor;
+        const matchesDate = !selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate);
         return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
     });
     renderDetailedStats(filtered);
+    renderCharts(filtered);
+}
+
+function renderCharts(data) {
+    if (typeof Chart === "undefined") {
+        showNotification("Thư viện Chart.js chưa được tải!", 3000);
+        return;
+    }
+
+    const carData = {};
+    const carVersionData = {};
+    const advisorData = {};
+    data.forEach(row => {
+        carData[row.dong_xe] = (carData[row.dong_xe] || 0) + row.count;
+        const carVersionKey = `${row.dong_xe} - ${row.phien_ban}`;
+        carVersionData[carVersionKey] = (carVersionData[carVersionKey] || 0) + row.count;
+        advisorData[row.tu_van_vien] = (advisorData[row.tu_van_vien] || 0) + row.count;
+    });
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { size: 12 } } } },
+        scales: { y: { beginAtZero: true, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+    };
+
+    const carChartCanvas = document.getElementById("car-chart");
+    if (carChartCanvas) {
+        if (carChart) carChart.destroy();
+        carChart = new Chart(carChartCanvas, {
+            type: "bar",
+            data: {
+                labels: Object.keys(carData),
+                datasets: [{
+                    label: "Số lượng",
+                    data: Object.values(carData),
+                    backgroundColor: "#005eb8"
+                }]
+            },
+            options: chartOptions
+        });
+    }
+
+    const carVersionChartCanvas = document.getElementById("car-version-chart");
+    if (carVersionChartCanvas) {
+        if (carVersionChart) carVersionChart.destroy();
+        carVersionChart = new Chart(carVersionChartCanvas, {
+            type: "bar",
+            data: {
+                labels: Object.keys(carVersionData),
+                datasets: [{
+                    label: "Số lượng",
+                    data: Object.values(carVersionData),
+                    backgroundColor: "#003087"
+                }]
+            },
+            options: chartOptions
+        });
+    }
+
+    const advisorChartCanvas = document.getElementById("advisor-chart");
+    if (advisorChartCanvas) {
+        if (advisorChart) advisorChart.destroy();
+        advisorChart = new Chart(advisorChartCanvas, {
+            type: "pie",
+            data: {
+                labels: Object.keys(advisorData),
+                datasets: [{
+                    label: "Số lượng",
+                    data: Object.values(advisorData),
+                    backgroundColor: ["#003087", "#005eb8", "#34495e", "#7f8c8d", "#66b0ff"]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: "top", labels: { font: { size: 12 } } } }
+            }
+        });
+    }
+}
+
+function updateChartColors() {
+    const isDark = document.body.getAttribute("data-theme") === "dark";
+    const bgColor = isDark ? "#34495e" : "#005eb8";
+    const borderColor = isDark ? "#66b0ff" : "#003087";
+    if (carChart) {
+        carChart.data.datasets[0].backgroundColor = bgColor;
+        carChart.data.datasets[0].borderColor = borderColor;
+        carChart.update();
+    }
+    if (carVersionChart) {
+        carVersionChart.data.datasets[0].backgroundColor = bgColor;
+        carVersionChart.data.datasets[0].borderColor = borderColor;
+        carVersionChart.update();
+    }
+    if (advisorChart) {
+        advisorChart.data.datasets[0].backgroundColor = isDark
+            ? ["#34495e", "#66b0ff", "#7f8c8d", "#005eb8", "#003087"]
+            : ["#003087", "#005eb8", "#34495e", "#7f8c8d", "#66b0ff"];
+        advisorChart.update();
+    }
 }
 
 function exportDetailedStatsToExcel() {
-    const ws = XLSX.utils.json_to_sheet(detailedStatsData);
+    if (typeof XLSX === "undefined") {
+        showNotification("Thư viện XLSX chưa được tải!", 3000);
+        return;
+    }
+    const ws = XLSX.utils.json_to_sheet(detailedStatsData.map(row => ({
+        "Dòng Xe": row.dong_xe,
+        "Phiên Bản": row.phien_ban,
+        "Ngoại Thất": row.ngoai_that,
+        "Nội Thất": row.noi_that,
+        "Tư Vấn Viên": row.tu_van_vien,
+        "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "",
+        "Số Lượng": row.count
+    })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "thongkechitiet");
     XLSX.writeFile(wb, "thong_ke_chi_tiet.xlsx");
 }
 
-function getChartColors() {
-    const isDark = document.body.getAttribute("data-theme") === "dark";
-    return {
-        backgroundColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 94, 184, 0.2)",
-        borderColor: isDark ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 94, 184, 1)",
-        textColor: isDark ? "#e0e5ec" : "#2c3e50",
-        gridColor: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)"
-    };
-}
-
-function updateChartColors() {
-    const colors = getChartColors();
-    if (carChart) {
-        carChart.data.datasets[0].backgroundColor = colors.backgroundColor;
-        carChart.data.datasets[0].borderColor = colors.borderColor;
-        carChart.options.scales.x.title.color = colors.textColor;
-        carChart.options.scales.y.title.color = colors.textColor;
-        carChart.options.scales.x.grid.color = colors.gridColor;
-        carChart.options.scales.y.grid.color = colors.gridColor;
-        carChart.options.scales.x.ticks.color = colors.textColor;
-        carChart.options.scales.y.ticks.color = colors.textColor;
-        carChart.update();
-    }
-    if (carVersionChart) {
-        carVersionChart.data.datasets[0].backgroundColor = colors.backgroundColor;
-        carVersionChart.data.datasets[0].borderColor = colors.borderColor;
-        carVersionChart.options.scales.x.title.color = colors.textColor;
-        carVersionChart.options.scales.y.title.color = colors.textColor;
-        carVersionChart.options.scales.x.grid.color = colors.gridColor;
-        carVersionChart.options.scales.y.grid.color = colors.gridColor;
-        carVersionChart.options.scales.x.ticks.color = colors.textColor;
-        carVersionChart.options.scales.y.ticks.color = colors.textColor;
-        carVersionChart.update();
-    }
-    if (advisorChart) {
-        advisorChart.data.datasets[0].backgroundColor = [
-            'rgba(0, 94, 184, 0.8)', 'rgba(0, 48, 135, 0.8)', 'rgba(0, 120, 215, 0.8)',
-            'rgba(0, 70, 160, 0.8)', 'rgba(0, 150, 240, 0.8)'
-        ];
-        advisorChart.options.plugins.legend.labels.color = colors.textColor;
-        advisorChart.update();
-    }
-}
-
-function renderCharts(data) {
-    const colors = getChartColors();
-
-    const byCar = {};
-    data.forEach(row => {
-        const car = row["Dòng xe"] || "Không xác định";
-        byCar[car] = (byCar[car] || 0) + 1;
-    });
-    if (carChart) carChart.destroy();
-    carChart = new Chart(document.getElementById("car-chart"), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(byCar),
-            datasets: [{
-                label: 'Số lượng yêu cầu',
-                data: Object.values(byCar),
-                backgroundColor: colors.backgroundColor,
-                borderColor: colors.borderColor,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: { title: { display: true, text: 'Dòng Xe', color: colors.textColor }, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } },
-                y: { title: { display: true, text: 'Số Lượng', color: colors.textColor }, beginAtZero: true, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } }
-            }
-        }
-    });
-
-    const byCarVersion = {};
-    data.forEach(row => {
-        const key = `${row["Dòng xe"] || "Không xác định"} - ${row["Phiên bản"] || "Không xác định"}`;
-        byCarVersion[key] = (byCarVersion[key] || 0) + 1;
-    });
-    if (carVersionChart) carVersionChart.destroy();
-    carVersionChart = new Chart(document.getElementById("car-version-chart"), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(byCarVersion),
-            datasets: [{
-                label: 'Số lượng yêu cầu',
-                data: Object.values(byCarVersion),
-                backgroundColor: colors.backgroundColor,
-                borderColor: colors.borderColor,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: { title: { display: true, text: 'Dòng Xe - Phiên Bản', color: colors.textColor }, grid: { color: colors.gridColor }, ticks: { color: colors.textColor, autoSkip: false, maxRotation: 45, minRotation: 45 } },
-                y: { title: { display: true, text: 'Số Lượng', color: colors.textColor }, beginAtZero: true, grid: { color: colors.gridColor }, ticks: { color: colors.textColor } }
-            }
-        }
-    });
-
-    const byAdvisor = {};
-    data.forEach(row => {
-        const advisor = row["Tên tư vấn bán hàng"] || "Không xác định";
-        byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-    });
-    if (advisorChart) advisorChart.destroy();
-    advisorChart = new Chart(document.getElementById("advisor-chart"), {
-        type: 'pie',
-        data: {
-            labels: Object.keys(byAdvisor),
-            datasets: [{
-                label: 'Phân bố yêu cầu',
-                data: Object.values(byAdvisor),
-                backgroundColor: ['rgba(0, 94, 184, 0.8)', 'rgba(0, 48, 135, 0.8)', 'rgba(0, 120, 215, 0.8)', 'rgba(0, 70, 160, 0.8)', 'rgba(0, 150, 240, 0.8)'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top', labels: { color: colors.textColor } } }
-        }
-    });
-}
-
 function switchTab(tab, element) {
-    document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-    element.classList.add('active');
-    const mainContainer = document.querySelector('.main-container');
-    mainContainer.style.opacity = '0';
-    setTimeout(() => {
-        document.getElementById("form-section").classList.toggle("hidden", tab !== "form");
-        document.getElementById("history-section").classList.toggle("hidden", tab !== "history");
-        document.getElementById("detailed-stats-section").classList.toggle("hidden", tab !== "detailed-stats");
+    document.querySelectorAll(".tabs a").forEach(a => a.classList.remove("active"));
+    element.classList.add("active");
+    const formSection = document.getElementById("form-section");
+    const historySection = document.getElementById("history-section");
+    const detailedStatsSection = document.getElementById("detailed-stats-section");
 
-        if (tab === "history") {
-            renderHistory(historyData);
-            renderSummary(historyData);
-        } else if (tab === "detailed-stats") {
-            renderDetailedStats(detailedStatsData);
-            if (!carChart) renderCharts(historyData);
-        }
-        mainContainer.style.opacity = '1';
-    }, 300);
+    if (formSection) formSection.classList.toggle("hidden", tab !== "form");
+    if (historySection) historySection.classList.toggle("hidden", tab !== "history");
+    if (detailedStatsSection) detailedStatsSection.classList.toggle("hidden", tab !== "detailed-stats");
 
-    if (window.innerWidth <= 767) {
-        document.querySelector('.navbar .tabs').classList.remove('active');
-    }
-}
-
-function fetchSheetData(sheetName, element) {
-    console.log(`Fetching data for ${sheetName}`);
-}
-
-// Tiếp tục từ setupSearch()
-function setupSearch() {
-    document.getElementById("search-box").addEventListener("input", debounce(filterHistory, 300));
-    document.getElementById("detailed-search-box").addEventListener("input", debounce(filterDetailedStats, 300));
-}
-
-function setupScrollSync() {
-    const tableWrapper = document.querySelector('.table-wrapper');
-    tableWrapper.addEventListener('scroll', () => {
-        const scrollLeft = tableWrapper.scrollLeft;
-        document.querySelectorAll('.table-wrapper').forEach(wrapper => {
-            wrapper.scrollLeft = scrollLeft;
-        });
-    });
+    if (tab === "history") fetchHistory();
+    if (tab === "detailed-stats") renderDetailedStats(detailedStatsData);
 }
 
 function toggleMenu() {
-    const tabs = document.querySelector('.navbar .tabs');
-    tabs.classList.toggle('active');
+    const tabs = document.querySelector(".tabs");
+    if (tabs) tabs.classList.toggle("active");
 }
 
 function toggleAutoRefresh() {
+    const button = document.querySelector(".nav-btn[data-tooltip='Tự động làm mới'] i");
+    if (!button) return;
+
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
-        showNotification("Tự động làm mới đã tắt!", 2000);
+        button.classList.remove("fa-spin");
+        showNotification("Đã tắt tự động làm mới", 2000);
     } else {
-        autoRefreshInterval = setInterval(refreshData, 300000); // Làm mới mỗi 5 phút
-        showNotification("Tự động làm mới đã bật (5 phút/lần)!", 2000);
+        autoRefreshInterval = setInterval(refreshData, 30000);
+        button.classList.add("fa-spin");
+        showNotification("Đã bật tự động làm mới (30s)", 2000);
     }
-    const refreshBtn = document.querySelector('.nav-btn[data-tooltip="Tự động làm mới"] i');
-    refreshBtn.classList.toggle('fa-spin');
+}
+
+function setupSearch() {
+    const searchBox = document.getElementById("search-box");
+    const detailedSearchBox = document.getElementById("detailed-search-box");
+    if (searchBox) searchBox.addEventListener("input", debounce(filterHistory, 300));
+    if (detailedSearchBox) detailedSearchBox.addEventListener("input", debounce(filterDetailedStats, 300));
+}
+
+function setupScrollSync() {
+    const tableWrapper = document.querySelector(".table-wrapper");
+    const header = document.getElementById("table-header");
+    if (tableWrapper && header) {
+        tableWrapper.addEventListener("scroll", () => {
+            header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
+        });
+    }
 }
 
 function showNotification(message, duration) {
@@ -1621,38 +1659,48 @@ function showNotification(message, duration) {
 }
 
 function restrictVersion(select) {
-    const versionSelect = document.querySelector('select[name="phien_ban"]');
-    if (select.value === "VF 3") {
-        versionSelect.value = "Base"; // Đặt phiên bản thành "Base"
-        versionSelect.disabled = true; // Vô hiệu hóa dropdown "Phiên bản"
-    } else {
-        versionSelect.disabled = false; // Kích hoạt lại dropdown "Phiên bản"
-        versionSelect.value = ""; // Đặt lại giá trị mặc định
-    }
+    const versionSelect = document.querySelector("select[name='phien_ban']");
+    if (!versionSelect || !select) return;
+
+    const car = select.value;
+    const options = {
+        "VF 3": ["Base"],
+        "VF 5": ["Plus"],
+        "VF 6": ["Eco", "Plus"],
+        "VF 7": ["Eco", "Plus"],
+        "VF 8": ["Eco", "Plus"],
+        "VF 9": ["Eco", "Plus"],
+        "HERIO": ["Plus_Metal", "Plus_CAP_Metal"],
+        "NERIO": ["Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES"],
+        "LIMO": ["Base"],
+        "MINIO": ["Base"]
+    };
+    const validVersions = options[car] || ["Plus", "Eco", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "Base"];
+    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
+    validVersions.forEach(version => {
+        versionSelect.innerHTML += `<option value="${version}">${version}</option>`;
+    });
 }
 
-// Xử lý sự kiện khi tải trang
-document.addEventListener("DOMContentLoaded", () => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.setAttribute("data-theme", savedTheme);
-    const themeIcon = document.getElementById("theme-icon");
-    if (savedTheme === "dark") {
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-    } else {
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
+function handleSubmissionError(error) {
+    closeModal("loading-modal");
+    const errorMessage = error.message.includes("network") 
+        ? "Lỗi kết nối mạng, vui lòng kiểm tra internet!" 
+        : `Lỗi không xác định: ${error.message}`;
+    showNotification(errorMessage, 5000);
+    console.error("Chi tiết lỗi:", error);
+}
+
+function validateFormData(formData) {
+    const requiredFields = ["ten_ban_hang", "ten_khach_hang", "dong_xe", "phien_ban", "so_don_hang", "ngay_coc"];
+    for (const field of requiredFields) {
+        if (!formData[field] || formData[field].trim() === "") {
+            showNotification(`Vui lòng điền đầy đủ ${labelMap[field] || field}!`, 3000);
+            return false;
+        }
     }
-    
-    if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "index.html";
-    } else {
-        fetchSheetData('Đã Ghép', document.querySelector('.tabs a:first-child'));
-        setupSearch();
-        setupScrollSync();
-        fetchHistory();
-    }
-});
+    return true;
+}
 </script>
 </body>
 </html>
