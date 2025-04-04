@@ -3,952 +3,673 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kho Xe - Showroom Thuận An</title>
+    <title>Kho Xe - VinFast Thuận An</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Giữ nguyên toàn bộ CSS từ file gốc */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: #f5f6f5; 
+            color: #2c3e50; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            transition: background 0.3s, color 0.3s; 
+            width: 100vw; 
+        }
+        body.dark-mode { 
+            background: #1a1a1a; 
+            color: #d9e1e8; 
         }
 
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: #f0f4f8;
-            color: #1a1a1a;
-            min-height: 100vh;
-            overflow-x: hidden;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        body.dark-mode {
-            background: #1a1a1a;
-            color: #e0e0e0;
-        }
-
-        .navbar {
+        /* Header */
+        header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 60px;
             background: #003087;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-            border-radius: 0 0 15px 15px;
-            z-index: 1000;
-        }
-
-        body.dark-mode .navbar {
-            background: #003087;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-        }
-
-        .navbar .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .navbar .logo h1 {
-            font-size: 20px;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        body.dark-mode .navbar .logo h1 {
-            color: #ffffff;
-        }
-
-        .navbar .tabs {
-            display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
-            flex-grow: 1;
-            margin-left: 10px;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .navbar .tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .navbar .tabs a {
-            position: relative;
-            padding: 10px 15px;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: 700;
-            background: #003087;
-            border-radius: 10px;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .navbar .tabs a:hover, .navbar .tabs a.active {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.1), inset -3px -3px 8px rgba(255, 255, 255, 0.8);
-            transform: translateY(2px);
-        }
-
-        body.dark-mode .navbar .tabs a {
-            background: #003087;
-            color: #ffffff;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
-        }
-
-        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active {
-            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.3), inset -3px -3px 8px rgba(50, 50, 50, 0.5);
-        }
-
-        .navbar-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-left: 10px;
-        }
-
-        .nav-btn {
-            position: relative;
-            padding: 8px;
-            border: none;
-            border-radius: 10px;
-            background: #003087;
-            color: #ffffff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-        }
-
-        .nav-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transform: translateY(2px);
-        }
-
-        body.dark-mode .nav-btn {
-            background: #003087;
-            color: #ffffff;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        body.dark-mode .nav-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        .nav-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: #ffffff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .nav-btn[data-tooltip]::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-top-color: #333;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-
-        .nav-btn:hover::after, .nav-btn:hover::before {
-            opacity: 1;
-        }
-
-        body.dark-mode .nav-btn[data-tooltip]::after {
-            background: #66b0ff;
-        }
-
-        body.dark-mode .nav-btn[data-tooltip]::before {
-            border-top-color: #66b0ff;
-        }
-
-        .theme-toggle, .language-toggle {
-            margin-left: 10px;
-            padding: 8px;
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        body.dark-mode .theme-toggle, body.dark-mode .language-toggle {
-            color: #ffffff;
-        }
-
-        .theme-toggle:hover, .language-toggle:hover {
-            transform: scale(1.2);
-        }
-
-        .main-container {
-            display: flex;
-            margin-top: 60px;
-            padding: 15px;
-            gap: 15px;
-            height: calc(100vh - 80px);
-        }
-
-        .grid-container {
-            flex: 2;
-            background: #f0f4f8;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        body.dark-mode .grid-container {
-            background: #1a1a1a;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .search-filter-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .search-container input {
-            padding: 10px 15px;
-            width: 100%;
-            max-width: 250px;
-            border: none;
-            border-radius: 10px;
-            background: #f0f4f8;
-            font-size: 12px;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        .search-container input:focus {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.15), inset -5px -5px 10px rgba(255, 255, 255, 0.9);
-            outline: none;
-        }
-
-        body.dark-mode .search-container input {
-            background: #1a1a1a;
-            color: #e0e0e0;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        .filter-container select {
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            background: #f0f4f8;
-            font-size: 12px;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        body.dark-mode .filter-container select {
-            background: #1a1a1a;
-            color: #e0e0e0;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        .total-count-container {
-            font-size: 14px;
-            font-weight: 700;
-            color: #003087;
-        }
-
-        body.dark-mode .total-count-container {
-            color: #66b0ff;
-        }
-
-        .export-btn-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .export-btn {
-            position: relative;
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            background: #f0f4f8;
-            color: #003087;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-        }
-
-        .export-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transform: translateY(2px);
-        }
-
-        .refresh-btn {
-            background: #f0f4f8;
-            color: #28a745;
-        }
-
-        .refresh-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-        }
-
-        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
-            background: #1a1a1a;
-            color: #66b0ff;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        body.dark-mode .refresh-btn {
-            color: #28a745;
-        }
-
-        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        .export-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: -35px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: #ffffff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .export-btn[data-tooltip]::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent;
-            border-top-color: #333;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-
-        .export-btn:hover::after, .export-btn:hover::before {
-            opacity: 1;
-        }
-
-        body.dark-mode .export-btn[data-tooltip]::after {
-            background: #66b0ff;
-        }
-
-        body.dark-mode .export-btn[data-tooltip]::before {
-            border-top-color: #66b0ff;
-        }
-
-        .table-container {
-            max-height: calc(100vh - 260px);
-            overflow-y: auto;
-            overflow-x: auto;
-            position: relative;
-            scroll-behavior: smooth;
-        }
-
-        .table-container::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .table-container::-webkit-scrollbar-track {
-            background: #f0f4f8;
-            border-radius: 10px;
-        }
-
-        .table-container::-webkit-scrollbar-thumb {
-            background: #003087;
-            border-radius: 10px;
-        }
-
-        .table-container::-webkit-scrollbar-thumb:hover {
-            background: #001f5f;
-        }
-
-        body.dark-mode .table-container::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-
-        body.dark-mode .table-container::-webkit-scrollbar-thumb {
-            background: #66b0ff;
-        }
-
-        body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
-            background: #4a90e2;
-        }
-
-        table {
-            width: 100%;
-            min-width: 600px;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        th, td {
-            padding: 6px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        th {
-            background: #000099;
             color: #FFFFFF;
-            font-weight: 700;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: 600;
             text-transform: uppercase;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
-            cursor: pointer;
+            z-index: 999;
+            box-shadow: 4px 4px 8px rgba(0, 48, 135, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        body.dark-mode header {
+            background: #00205B;
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
         }
 
-        th::after {
-            content: " ⇅";
-            font-size: 10px;
-        }
-
-        th.asc::after {
-            content: " ↑";
-        }
-
-        th.desc::after {
-            content: " ↓";
-        }
-
-        td {
-            background: #f0f4f8;
-            color: #1a1a1a;
-        }
-
-        body.dark-mode th {
-            background: #1a1a1a;
-            color: #66b0ff;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
-        }
-
-        body.dark-mode td {
-            background: #1a1a1a;
-            color: #e0e0e0;
-            border-bottom: 1px solid #555;
-        }
-
-        .highlight {
-            background: #e6f0ff;
-            font-weight: 700;
-            color: #003087;
-        }
-
-        body.dark-mode .highlight {
-            background: #4a6fa5;
-            color: #ffffff;
-        }
-
-        tbody tr:hover {
-            background: #e8eef4;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        body.dark-mode tbody tr:hover {
-            background: #222;
-        }
-
-        tbody tr.selected {
-            background: #cce5ff;
-            font-weight: 700;
-        }
-
-        body.dark-mode tbody tr.selected {
-            background: #5a7fb5;
-        }
-
-        .detail-panel {
-            flex: 1;
-            background: #f0f4f8;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-            max-height: calc(100vh - 80px);
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-
-        body.dark-mode .detail-panel {
-            background: #1a1a1a;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
-        }
-
-        .detail-panel::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .detail-panel::-webkit-scrollbar-track {
-            background: #f0f4f8;
-            border-radius: 10px;
-        }
-
-        .detail-panel::-webkit-scrollbar-thumb {
-            background: #003087;
-            border-radius: 10px;
-        }
-
-        .detail-panel::-webkit-scrollbar-thumb:hover {
-            background: #001f5f;
-        }
-
-        body.dark-mode .detail-panel::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
-            background: #66b0ff;
-        }
-
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb:hover {
-            background: #4a90e2;
-        }
-
-        .detail-panel h3 {
-            font-size: 18px;
-            color: #003087;
-            margin-bottom: 15px;
-            font-weight: 700;
-            position: sticky;
-            top: 0;
-            background: #f0f4f8;
-            z-index: 10;
-        }
-
-        body.dark-mode .detail-panel h3 {
-            color: #66b0ff;
-            background: #1a1a1a;
-        }
-
-        .detail-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        .detail-table th {
-            background: #f0f4f8;
-            color: #1a1a1a;
-            text-align: left;
-            padding: 10px;
-            font-weight: 400;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1), -3px -3px 8px rgba(255, 255, 255, 0.8);
-        }
-
-        body.dark-mode .detail-table th {
-            background: #1a1a1a;
-            color: #e0e0e0;
-            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3), -3px -3px 8px rgba(50, 50, 50, 0.5);
-        }
-
-        .detail-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        body.dark-mode .detail-table td {
-            border-bottom: 1px solid #555;
-            color: #e0e0e0;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .pagination button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 10px;
-            background: #f0f4f8;
-            color: #003087;
-            font-size: 12px;
-            cursor: pointer;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        .pagination button:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.1), inset -5px -5px 10px rgba(255, 255, 255, 0.8);
-            transform: translateY(2px);
-        }
-
-        body.dark-mode .pagination button {
-            background: #1a1a1a;
-            color: #66b0ff;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        body.dark-mode .pagination button:hover {
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(50, 50, 50, 0.5);
-        }
-
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination span {
-            padding: 10px 20px;
-            font-size: 12px;
-            color: #003087;
-        }
-
-        body.dark-mode .pagination span {
-            color: #66b0ff;
-        }
-
-        footer {
+        /* Slidebar */
+        .slidebar {
             position: fixed;
-            bottom: 0;
+            top: 0;
+            left: 0;
+            width: 150px;
+            height: 100vh;
+            background: #003087;
+            padding: 15px;
+            padding-top: 40px;
+            transition: width 0.3s ease;
+            z-index: 1000;
+            box-shadow: 4px 0 8px rgba(0, 48, 135, 0.6), -2px 0 8px rgba(255, 255, 255, 0.1);
+        }
+        .slidebar.collapsed { width: 50px; }
+        body.dark-mode .slidebar {
+            background: #00205B;
+            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4), -2px 0 8px rgba(255, 255, 255, 0.5);
+        }
+        .slidebar .logo h1 { 
+            font-size: 16px; 
+            color: #FFFFFF; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            transition: opacity 0.3s ease; 
+        }
+        .slidebar.collapsed .logo h1 { opacity: 0; }
+        .toggle-btn { 
+            position: absolute; 
+            top: 15px; 
+            right: -12px; 
+            width: 24px; 
+            height: 24px; 
+            background: #003087; 
+            border: none; 
+            border-radius: 50%; 
+            color: #FFFFFF; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); 
+        }
+        .toggle-btn:hover { 
+            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+        }
+        body.dark-mode .toggle-btn { 
+            background: #00205B; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+
+        /* Navbar controls */
+        .navbar-controls { 
+            position: fixed; 
+            top: 15px; 
+            right: 15px; 
+            display: flex; 
+            gap: 8px; 
+            z-index: 1001; 
+        }
+        .nav-btn, .theme-toggle { 
+            padding: 6px; 
+            border: none; 
+            border-radius: 50%; 
+            background: #FFFFFF; 
+            color: #2c3e50; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            width: 32px; 
+            height: 32px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .nav-btn Gollumhover, .theme-toggle:hover { 
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle { 
+            background: #3a3a3a; 
+            color: #d9e1e8; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+
+        /* Main container */
+        .main-container { 
+            background: #f5f6f5; 
+            margin-left: 150px; 
+            padding: 15px; 
+            margin-top: 40px; 
+            height: calc(100vh - 60px); 
+            transition: margin-left 0.3s ease; 
+            display: flex; 
+            gap: 10px; 
+            width: calc(100vw - 160px); 
+        }
+        .main-container.collapsed { 
+            margin-left: 50px; 
+            width: calc(100vw - 50px); 
+        }
+        .grid-container { 
+            flex: 1; 
+            background: #FFFFFF; 
+            border-radius: 12px; 
+            padding: 15px; 
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            width: 100%; 
+        }
+        body.dark-mode .grid-container { 
+            background: #2c2c2c; 
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        }
+
+        /* Filter section */
+        .filter-section { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding-bottom: 8px; 
+            width: 100%; 
+            position: relative; 
+        }
+        .filter-section input, .filter-section select { 
+            padding: 6px 10px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            background: #FFFFFF; 
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            width: 180px; 
+            color: #2c3e50; 
+        }
+        .filter-section input:focus, .filter-section select:focus { outline: none; }
+        body.dark-mode .filter-section input, body.dark-mode .filter-section select { 
+            background: #3a3a3a; 
+            color: #d9e1e8; 
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .filter-section .button-group { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+        }
+        .export-btn { 
+            padding: 6px; 
+            border: none; 
+            border-radius: 50%; 
+            background: #FFFFFF; 
+            color: #2c3e50; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            width: 32px; 
+            height: 32px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .export-btn:hover { 
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .refresh-btn { 
+            background: #FFFFFF; 
+            color: #00a550; 
+        }
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn { 
+            background: #3a3a3a; 
+            color: #d9e1e8; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .refresh-btn { color: #00a550; }
+        .total-vehicles { 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            color: #2c3e50; 
+            background: #f5f6f5; 
+            border-radius: 8px; 
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .total-vehicles { 
+            color: #d9e1e8; 
+            background: #2c2c2c; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+
+        /* Tables section */
+        .tables-section { 
+            display: flex; 
+            gap: 10px; 
+            flex: 1; 
+            min-height: 360px; 
+            width: 100%; 
+        }
+        .table-container { 
+            flex: 0 0 75%; 
+            background: #FFFFFF; 
+            border-radius: 12px; 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: calc(100vh - 150px); 
+            position: relative; 
+        }
+        body.dark-mode .table-container { 
+            background: #2c2c2c; 
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        }
+        .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-container::-webkit-scrollbar-track { background: #f5f6f5; }
+        .table-container::-webkit-scrollbar-thumb { 
+            background: #d9e1e8; 
+            border-radius: 3px; 
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-track { background: #1a1a1a; }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb { 
+            background: #555; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 11px; 
+            table-layout: fixed; 
+        }
+        th, td { 
+            padding: 8px 10px; 
+            text-align: left; 
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
+            white-space: normal; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+        }
+        th { 
+            font-weight: 600; 
+            background: #003087; 
+            color: #FFFFFF; 
+            position: sticky; 
+            top: 0; 
+            z-index: 2; 
+            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); 
+        }
+        body.dark-mode th { 
+            background: #00205B; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        td { color: #2c3e50; }
+        body.dark-mode td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
+        tbody tr:hover { 
+            background: #f0f0f0; 
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode tbody tr:hover { 
+            background: #3a3a3a; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        .highlight { font-weight: 600; color: #00a550; }
+
+        /* Column widths */
+        col:nth-child(1) { width: 8%; }
+        col:nth-child(2) { width: 11%; }
+        col:nth-child(3) { width: 13%; }
+        col:nth-child(4) { width: 18%; }
+        col:nth-child(5) { width: 10%; }
+        col:nth-child(6) { width: 16%; }
+        col:nth-child(7) { width: 12%; }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
             left: 0;
             width: 100%;
-            background: #003087;
-            color: #ffffff;
-            text-align: center;
-            padding: 8px 0;
-            font-size: 10px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.8);
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
         }
-
-        body.dark-mode footer {
-            background: #003087;
-            color: #ffffff;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(50, 50, 50, 0.5);
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
-
         .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .loading-spinner .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e0e0e0;
+            border: 4px solid #f3f3f3;
             border-top: 4px solid #003087;
             border-radius: 50%;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
         }
-
-        body.dark-mode .loading-spinner .spinner {
-            border: 4px solid #555;
-            border-top: 4px solid #66b0ff;
-        }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        #notification {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            padding: 8px 15px;
-            background: #f0f4f8;
-            color: #003087;
-            border-radius: 10px;
-            display: none;
-            z-index: 10001;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-            font-size: 12px;
+        body.dark-mode .loading-spinner {
+            border-top: 4px solid #00205B;
         }
 
-        body.dark-mode #notification {
-            background: #1a1a1a;
-            color: #66b0ff;
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(50, 50, 50, 0.5);
+        /* Detail panel */
+        .detail-panel { 
+            flex: 0 0 22%; 
+            min-width: 200px; 
+            background: #FFFFFF; 
+            border-radius: 12px; 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
+            overflow-y: auto; 
+        }
+        body.dark-mode .detail-panel { 
+            background: #2c2c2c; 
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        }
+        .detail-panel::-webkit-scrollbar { width: 6px; }
+        .detail-panel::-webkit-scrollbar-track { background: #f5f6f5; }
+        .detail-panel::-webkit-scrollbar-thumb { 
+            background: #d9e1e8; 
+            border-radius: 3px; 
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #1a1a1a; }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { 
+            background: #555; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        .detail-panel h3 { 
+            font-size: 14px; 
+            color: #2c3e50; 
+            margin-bottom: 10px; 
+            font-weight: 600; 
+        }
+        body.dark-mode .detail-panel h3 { color: #d9e1e8; }
+        .detail-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 11px; 
+        }
+        .detail-table th, .detail-table td { 
+            padding: 8px 10px; 
+            text-align: left; 
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
+            white-space: normal; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+        }
+        .detail-table th { 
+            color: #2c3e50; 
+            font-weight: 400; 
+            width: 50%; 
+            background: #f0f0f0; 
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .detail-table th { 
+            color: #d9e1e8; 
+            background: #3a3a3a; 
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        }
+        .detail-table td { color: #2c3e50; }
+        body.dark-mode .detail-table td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
+
+        /* Pagination */
+        .pagination { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            margin-top: 10px; 
+            width: 100%; 
+        }
+        .pagination button { 
+            padding: 6px 12px; 
+            border: none; 
+            border-radius: 8px; 
+            background: #FFFFFF; 
+            color: #2c3e50; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .pagination button:hover { 
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode .pagination button { 
+            background: #3a3a3a; 
+            color: #d9e1e8; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        .pagination span { 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            color: #2c3e50; 
+        }
+        body.dark-mode .pagination span { color: #d9e1e8; }
+
+        /* Footer */
+        footer { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            background: #003087; 
+            color: #FFFFFF; 
+            text-align: center; 
+            padding: 8px 0; 
+            font-size: 10px; 
+            box-shadow: 4px -4px 8px rgba(0, 48, 135, 0.6), -4px 4px 8px rgba(255, 255, 255, 0.1); 
+        }
+        body.dark-mode footer { 
+            background: #00205B; 
+            box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.4), -4px 4px 8px rgba(255, 255, 255, 0.5); 
         }
 
+        /* Notification */
+        #notification { 
+            position: fixed; 
+            top: 50px; 
+            right: 80px; 
+            padding: 8px 15px; 
+            background: #FFFFFF; 
+            color: #2c3e50; 
+            border-radius: 8px; 
+            display: none; 
+            z-index: 10001; 
+            font-size: 12px; 
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+        body.dark-mode #notification { 
+            background: #3a3a3a; 
+            color: #d9e1e8; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        }
+
+        /* Responsive for mobile */
         @media (max-width: 768px) {
-            .navbar {
-                padding: 0 10px;
-                height: 50px;
+            .slidebar {
+                width: 50px;
+                padding: 10px;
             }
-            .navbar .logo h1 {
-                font-size: 16px;
-            }
-            .navbar .tabs a {
-                padding: 8px 10px;
-                font-size: 10px;
-            }
-            .theme-toggle, .language-toggle {
-                font-size: 14px;
-                padding: 5px;
-            }
+            .slidebar .logo h1 { opacity: 0; }
             .main-container {
-                flex-direction: column;
-                padding: 10px;
-                margin-top: 50px;
-                height: calc(100vh - 70px);
-            }
-            .grid-container {
+                margin-left: 50px;
+                width: calc(100vw - 50px);
                 padding: 10px;
             }
-            .controls {
-                gap: 10px;
-            }
-            .search-filter-container {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .search-container input {
-                max-width: 100%;
-                font-size: 11px;
-                padding: 8px 12px;
-            }
-            .filter-container select {
-                width: 100%;
-                font-size: 11px;
-            }
-            .total-count-container {
-                font-size: 12px;
-            }
-            .export-btn-container {
-                align-items: center;
-                width: 100%;
-            }
-            .button-group {
-                gap: 10px;
-            }
-            .export-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 12px;
-            }
-            .table-container {
-                max-height: calc(100vh - 300px);
-            }
-            table {
-                font-size: 11px;
-            }
-            th, td {
-                padding: 5px;
-            }
-            .detail-panel {
-                margin-top: 15px;
-                max-height: calc(100vh - 260px);
-                padding: 10px;
-            }
-            .detail-panel h3 {
-                font-size: 16px;
-            }
-            .detail-table {
-                font-size: 11px;
-            }
-            .detail-table th, .detail-table td {
-                padding: 8px;
-            }
-            .pagination button {
-                padding: 8px 15px;
-                font-size: 11px;
-            }
-            .pagination span {
-                padding: 8px 15px;
-                font-size: 11px;
-            }
-            footer {
-                font-size: 9px;
-                padding: 6px 0;
-            }
-            #notification {
+            .navbar-controls {
                 top: 10px;
                 right: 10px;
-                padding: 6px 12px;
-                font-size: 11px;
+                gap: 5px;
             }
+            .nav-btn, .theme-toggle {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .filter-section input, .filter-section select {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            .filter-section .button-group {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .filter-section .total-vehicles {
+                width: 100%;
+                text-align: right;
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+            .tables-section {
+                flex-direction: column;
+                width: 100%;
+            }
+            .table-container {
+                flex: 1;
+                width: 100%;
+                max-height: 50vh;
+            }
+            .detail-panel {
+                flex: 1;
+                width: 100%;
+                min-width: 0;
+                max-height: 30vh;
+            }
+            #notification {
+                top: 60px;
+                right: 10px;
+                font-size: 10px;
+                padding: 6px 10px;
+            }
+            header, footer {
+                font-size: 12px;
+                padding: 8px 0;
+            }
+            col:nth-child(1) { width: 10%; }
+            col:nth-child(2) { width: 20%; }
+            col:nth-child(3) { width: 15%; }
+            col:nth-child(4) { width: 15%; }
+            col:nth-child(5) { width: 20%; }
+            col:nth-child(6) { width: 20%; }
+            col:nth-child(7) { width: 20%; }
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
+    <header>KHO XE VINFAST THUẬN AN</header>
+    <div class="slidebar" id="slidebar">
         <div class="logo">
             <h1>VinFast Thuận An</h1>
         </div>
-        <div class="tabs" id="navMenu"></div>
-        <div class="navbar-controls">
-            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-            <button class="language-toggle" onclick="toggleLanguage()" id="languageBtn">EN</button>
-            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
+        <button class="toggle-btn" onclick="toggleSlidebar()"><i class="fas fa-bars"></i></button>
     </div>
-
-    <div class="main-container">
+    <div class="navbar-controls">
+        <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
+        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+    <div class="main-container" id="main-container">
         <div class="grid-container">
-            <div class="controls">
-                <div class="search-filter-container">
-                    <div class="search-container">
-                        <input type="text" id="search-input" placeholder="Tìm kiếm..." data-lang-placeholder="search-inventory">
-                    </div>
-                    <div class="filter-container">
-                        <select id="filter-line" onchange="applyFilters()">
-                            <option value="">Tất cả dòng xe</option>
-                        </select>
-                        <select id="filter-status" onchange="applyFilters()">
-                            <option value="">Tất cả trạng thái</option>
-                        </select>
-                    </div>
-                    <div class="button-group">
-                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
-                        <div class="export-btn-container">
-                            <div class="total-count-container" id="total-count">
-                                Tổng số lượng: 0
-                            </div>
-                        </div>
-                    </div>
+            <div class="filter-section">
+                <div>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm...">
+                    <select id="filter-line" onchange="applyFilters()">
+                        <option value="">Tất cả dòng xe</option>
+                    </select>
+                    <select id="filter-status" onchange="applyFilters()">
+                        <option value="">Tất cả trạng thái</option>
+                    </select>
+                </div>
+                <div class="button-group">
+                    <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                    <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                    <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                    <span class="total-vehicles" id="total-vehicles">Tổng số xe: 0</span>
                 </div>
             </div>
-            <div class="table-container">
-                <table id="data-table">
-                    <thead id="table-head">
-                        <tr>
-                            <th id="sort-tt">SỐ TT</th>
-                            <th id="sort-line" data-lang="vehicle-line">DÒNG XE</th>
-                            <th id="sort-version" data-lang="vehicle-version">PHIÊN BẢN</th>
-                            <th id="sort-exterior" data-lang="vehicle-exterior">NGOẠI THẤT</th>
-                            <th id="sort-interior" data-lang="vehicle-interior">NỘI THẤT</th>
-                            <th id="sort-vin" data-lang="vehicle-vin">SỐ VIN</th>
-                            <th id="sort-status" data-lang="vehicle-status">TRẠNG THÁI</th>
-                            <th id="sort-date" data-lang="import-date">NGÀY NHẬP</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
+            <div class="tables-section">
+                <div class="table-container">
+                    <div class="loading-overlay" id="loading-overlay">
+                        <div class="loading-spinner"></div>
+                        <span style="margin-left: 10px; font-size: 14px; color: #2c3e50;">Đang tải dữ liệu...</span>
+                    </div>
+                    <table id="data-table">
+                        <colgroup>
+                            <col><col><col><col><col><col><col>
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>SỐ TT</th>
+                                <th>DÒNG XE</th>
+                                <th>PHIÊN BẢN</th>
+                                <th>NGOẠI THẤT</th>
+                                <th>NỘI THẤT</th>
+                                <th>SỐ VIN</th>
+                                <th>TRẠNG THÁI</th>
+                                <th>NGÀY NHẬP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+                <div class="detail-panel" id="detail-panel">
+                    <h3>Chi Tiết Xe</h3>
+                    <table id="detail-body" class="detail-table">
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="pagination" id="pagination"></div>
-        </div>
-
-        <div class="detail-panel" id="detail-panel">
-            <h3 data-lang="inventory-detail">Chi Tiết Xe Trong Kho</h3>
-            <canvas id="stats-chart" style="margin-bottom: 15px;"></canvas>
-            <div id="detail-body"></div>
+            <div class="pagination" id="pagination">
+                <button onclick="changePage(-1)" id="prev-btn">Trước</button>
+                <span id="page-info">Trang 1</span>
+                <button onclick="changePage(1)" id="next-btn">Sau</button>
+            </div>
         </div>
     </div>
-
-    <footer>
-        © 2025 VinFast Minh Đạo Thuận An
-    </footer>
-
-    <div class="loading-spinner">
-        <div class="spinner"></div>
-    </div>
-
+    <footer>© 2025 VinFast Thuận An</footer>
     <div id="notification"></div>
 
     <script>
         let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-        let currentUser = sessionStorage.getItem('currentUser') || '';
-        let userRole = sessionStorage.getItem('userRole') || 'employee';
         let tableData = [];
         let filteredData = [];
         let currentPage = 1;
-        const rowsPerPage = 15;
+        const rowsPerPage = 20;
         let language = localStorage.getItem('language') || 'vi';
-        let sortColumn = null;
-        let sortDirection = 'asc';
 
         const translations = {
             vi: {
-                "search-inventory": "Tìm kiếm xe...",
-                "vehicle-line": "DÒNG XE",
-                "vehicle-version": "PHIÊN BẢN",
-                "vehicle-exterior": "NGOẠI THẤT",
-                "vehicle-interior": "NỘI THẤT",
-                "vehicle-vin": "SỐ VIN",
-                "vehicle-status": "TRẠNG THÁI",
-                "import-date": "NGÀY NHẬP",
-                "inventory-detail": "Chi Tiết Xe Trong Kho",
-                "total-count": "Tổng số lượng"
+                "vehicle-line": "Dòng xe",
+                "vehicle-version": "Phiên bản",
+                "vehicle-exterior": "Ngoại thất",
+                "vehicle-interior": "Nội thất",
+                "vehicle-vin": "Số VIN",
+                "vehicle-status": "Trạng thái",
+                "import-date": "Ngày nhập",
+                "inventory-detail": "Chi Tiết Xe Trong Kho"
             },
             en: {
-                "search-inventory": "Search vehicles...",
-                "vehicle-line": "VEHICLE LINE",
-                "vehicle-version": "VERSION",
-                "vehicle-exterior": "EXTERIOR",
-                "vehicle-interior": "INTERIOR",
-                "vehicle-vin": "VIN NUMBER",
-                "vehicle-status": "STATUS",
-                "import-date": "IMPORT DATE",
-                "inventory-detail": "Vehicle Inventory Details",
-                "total-count": "Total Quantity"
+                "vehicle-line": "Vehicle Line",
+                "vehicle-version": "Version",
+                "vehicle-exterior": "Exterior",
+                "vehicle-interior": "Interior",
+                "vehicle-vin": "VIN Number",
+                "vehicle-status": "Status",
+                "import-date": "Import Date",
+                "inventory-detail": "Vehicle Inventory Details"
             }
         };
 
@@ -956,212 +677,104 @@
             if (!isLoggedIn) {
                 window.location.href = "index.html";
             } else {
-                updateUI();
-                updateLanguage();
                 loadInitialData();
                 setupSearch();
-                setupScrollSync();
-                setupSort();
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
-                    document.querySelector('.theme-toggle i').classList.remove('fa-moon');
-                    document.querySelector('.theme-toggle i').classList.add('fa-sun');
+                    document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
                 }
             }
         });
 
-        function updateUI() {
-            const menu = document.getElementById('navMenu');
-            if (!menu) return;
-            const khoXeLink = `
-                <a href="khoxe.html" class="active">${language === 'vi' ? 'Kho Xe' : 'Vehicle Inventory'}</a>
-            `;
-            menu.innerHTML = khoXeLink;
+        function showLoading() {
+            document.getElementById("loading-overlay").classList.add("active");
         }
 
-async function loadInitialData() {
-    const spinner = document.querySelector('.loading-spinner');
-    if (spinner) spinner.style.display = 'block';
-    const apiURL = "https://script.google.com/macros/s/AKfycbwCNUu8eeFYpg_Fx3txzbP0d3Rz3dTwak_vddLZxGZjdY94Ncr2jMoy7GgOBklycmy8/exec";
-
-    try {
-        const response = await axios.get(apiURL);
-        if (response.status !== 200) {
-            throw new Error(`Lỗi API: ${response.status}`);
-        }
-        // Kiểm tra xem response.data.khoxe có tồn tại và là mảng không
-        if (!response.data || !Array.isArray(response.data.khoxe)) {
-            throw new Error(language === 'vi' ? "Dữ liệu từ sheet kho xe không hợp lệ hoặc không tồn tại." : "Data from warehouse sheet is invalid or missing.");
-        }
-        tableData = response.data.khoxe.map(row => [
-            row["Dòng xe"] || "",
-            row["Phiên bản"] || "",
-            row["Ngoại thất"] || "",
-            row["Nội thất"] || "",
-            row["VIN"] || "",
-            row["Trạng thái"] || "",
-            row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleString('vi-VN') : ""
-        ]);
-        if (tableData.length === 0) {
-            throw new Error(language === 'vi' ? "Không có dữ liệu trong sheet kho xe." : "No data in warehouse sheet.");
-        }
-        sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-        filteredData = [...tableData];
-        applyFilters();
-        populateFilters();
-        renderChart();
-        updateTotalCount();
-        showNotification(language === 'vi' ? "Dữ liệu đã được tải thành công!" : "Data loaded successfully!", 2000);
-    } catch (error) {
-        console.error("Lỗi khi tải dữ liệu:", error);
-        let errorMsg = language === 'vi' ? "Không thể tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to load data. Please check your connection or API access.";
-        if (error.response) {
-            errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
-        } else if (error.message) {
-            errorMsg = error.message;
-        }
-        const tableBody = document.getElementById("table-body");
-        if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-        }
-        showNotification(errorMsg, 3000);
-    } finally {
-        if (spinner) spinner.style.display = 'none';
-    }
-}
-        function logout() {
-            sessionStorage.clear();
-            window.location.href = "index.html";
-            showNotification(language === 'vi' ? "Đã đăng xuất!" : "Logged out!", 2000);
+        function hideLoading() {
+            document.getElementById("loading-overlay").classList.remove("active");
         }
 
-        function goBack() {
-            window.location.href = "index.html";
-            showNotification(language === 'vi' ? "Đã quay lại trang chủ!" : "Returned to homepage!", 2000);
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (themeIcon) {
-                if (document.body.classList.contains('dark-mode')) {
-                    themeIcon.classList.remove('fa-moon');
-                    themeIcon.classList.add('fa-sun');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    themeIcon.classList.remove('fa-sun');
-                    themeIcon.classList.add('fa-moon');
-                    localStorage.setItem('theme', 'light');
-                }
+        async function loadInitialData() {
+            showLoading();
+            const apiURL = "https://script.google.com/macros/s/AKfycbwCNUu8eeFYpg_Fx3txzbP0d3Rz3dTwak_vddLZxGZjdY94Ncr2jMoy7GgOBklycmy8/exec";
+            try {
+                const response = await axios.get(apiURL);
+                if (!response.data || !Array.isArray(response.data.khoxe)) throw new Error("Invalid data");
+                tableData = response.data.khoxe.map(row => [
+                    row["Dòng xe"] || "",
+                    row["Phiên bản"] || "",
+                    row["Ngoại thất"] || "",
+                    row["Nội thất"] || "",
+                    row["VIN"] || "",
+                    row["Trạng thái"] || "",
+                    row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
+                ]);
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+                filteredData = [...tableData];
+                renderTable();
+                populateFilters();
+                showNotification(language === 'vi' ? "Dữ liệu đã được tải!" : "Data loaded!", 2000);
+            } catch (error) {
+                console.error(error);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="8">⚠️ Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+                showNotification(language === 'vi' ? "Lỗi tải dữ liệu!" : "Error loading data!", 3000);
+            } finally {
+                hideLoading();
             }
         }
 
-        function toggleLanguage() {
-            language = language === 'vi' ? 'en' : 'vi';
-            localStorage.setItem('language', language);
-            const languageBtn = document.getElementById('languageBtn');
-            if (languageBtn) {
-                languageBtn.textContent = language === 'vi' ? 'EN' : 'VI';
-            }
-            updateLanguage();
-            updateUI();
-            renderTable(filteredData);
-            renderChart();
-            updateTotalCount();
-        }
-
-        function updateLanguage() {
-            document.querySelectorAll('[data-lang]').forEach(element => {
-                const key = element.getAttribute('data-lang');
-                element.textContent = translations[language][key];
-            });
-            document.querySelectorAll('[data-lang-placeholder]').forEach(element => {
-                const key = element.getAttribute('data-lang-placeholder');
-                element.placeholder = translations[language][key];
-            });
-            updateTotalCount();
-        }
-
-        function updateTotalCount() {
-            const totalCountDiv = document.getElementById("total-count");
-            if (totalCountDiv) {
-                totalCountDiv.textContent = `${translations[language]["total-count"]}: ${filteredData.length}`;
-            }
-        }
-
-        function renderTable(data, page = currentPage) {
+        function renderTable() {
             const tbody = document.getElementById("table-body");
-            const paginationDiv = document.getElementById("pagination");
-
-            if (!tbody || !paginationDiv) return;
-
             tbody.innerHTML = "";
-            const start = (page - 1) * rowsPerPage;
+            const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
-            const paginatedData = data.slice(start, end);
+            const paginatedData = filteredData.slice(start, end);
 
-            if (!paginatedData || paginatedData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8">Không có dữ liệu</td></tr>`;
-                paginationDiv.innerHTML = "";
-                updateTotalCount();
-                return;
-            }
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const index = parseInt(entry.target.dataset.index);
-                        const row = paginatedData[index];
-                        const globalIndex = start + index + 1;
-                        const tr = document.createElement("tr");
-                        let cells = [`<td>${globalIndex}</td>`];
-                        row.forEach((cell, i) => {
-                            const className = (i === 4) ? ' class="highlight"' : ''; // VIN được highlight
-                            cells.push(`<td${className}>${cell || ""}</td>`);
-                        });
-                        tr.innerHTML = cells.join("");
-                        tr.onclick = () => showDetail(row, globalIndex);
-                        entry.target.replaceWith(tr);
-                        observer.unobserve(entry.target);
-                    }
-                });
-            }, { root: document.querySelector('.table-container'), threshold: 0.1 });
-
-            paginatedData.forEach((_, index) => {
-                const placeholder = document.createElement("tr");
-                placeholder.dataset.index = index;
-                placeholder.innerHTML = `<td colspan="8" style="height: 30px;"></td>`;
-                tbody.appendChild(placeholder);
-                observer.observe(placeholder);
+            paginatedData.forEach((row, index) => {
+                const globalIndex = start + index + 1;
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${globalIndex}</td>
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td class="highlight">${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+                `;
+                tr.onclick = () => showDetail(row, globalIndex);
+                tbody.appendChild(tr);
             });
 
-            renderPagination(data.length, page);
-            updateTotalCount();
-            if (data.length > 0) showDetail(data[0], start + 1);
+            updatePagination();
+            updateTotalVehicles();
+            if (paginatedData.length > 0) {
+                showDetail(paginatedData[0], start + 1);
+            } else {
+                document.querySelector("#detail-body tbody").innerHTML = "<tr><td colspan='2'>Không có dữ liệu để hiển thị.</td></tr>";
+            }
         }
 
-        function renderPagination(totalRows, currentPage) {
-            const paginationDiv = document.getElementById("pagination");
-            if (!paginationDiv) return;
-            paginationDiv.innerHTML = `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>${language === 'vi' ? "Trước" : "Previous"}</button>
-                <span>${language === 'vi' ? "Trang" : "Page"} ${currentPage} / ${Math.ceil(totalRows / rowsPerPage)}</span>
-                <button onclick="changePage(${currentPage + 1})" ${currentPage >= Math.ceil(totalRows / rowsPerPage) ? 'disabled' : ''}>${language === 'vi' ? "Sau" : "Next"}</button>
-            `;
+        function updatePagination() {
+            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(filteredData.length / rowsPerPage) || 1}`;
+            document.getElementById("prev-btn").disabled = currentPage === 1;
+            document.getElementById("next-btn").disabled = currentPage === Math.ceil(filteredData.length / rowsPerPage) || filteredData.length === 0;
         }
 
-        function changePage(newPage) {
-            currentPage = newPage;
-            renderTable(filteredData, currentPage);
-            const tableContainer = document.querySelector('.table-container');
-            const detailPanel = document.getElementById("detail-panel");
-            if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
-            if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
+        function updateTotalVehicles() {
+            document.getElementById("total-vehicles").textContent = `Tổng số xe: ${filteredData.length}`;
+        }
+
+        function changePage(delta) {
+            currentPage = Math.min(Math.max(1, currentPage + delta), Math.ceil(filteredData.length / rowsPerPage));
+            renderTable();
+            document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function showDetail(row, index) {
-            const detailBody = document.getElementById("detail-body");
-            if (!detailBody) return;
+            const detailBody = document.querySelector("#detail-body tbody");
             const headers = [
                 translations[language]["vehicle-line"],
                 translations[language]["vehicle-version"],
@@ -1171,242 +784,55 @@ async function loadInitialData() {
                 translations[language]["vehicle-status"],
                 translations[language]["import-date"]
             ];
-            let html = `<button onclick="copyDetail()" style="margin-bottom: 10px; padding: 5px 10px; background: #003087; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Copy</button>`;
-            html += "<table class='detail-table'>";
-            row.forEach((cell, i) => {
-                const className = (i === 4) ? ' class="highlight"' : ''; // VIN được highlight
-                html += `<tr><th>${headers[i]}</th><td${className}>${cell || ""}</td></tr>`;
-            });
-            html += "</table>";
-            detailBody.innerHTML = html;
-
-            const rows = document.querySelectorAll("#table-body tr");
-            rows.forEach(row => row.classList.remove("selected"));
-            const selectedRowIndex = (index - 1) % rowsPerPage;
-            if (rows[selectedRowIndex]) rows[selectedRowIndex].classList.add("selected");
-        }
-
-        function copyDetail() {
-            const detailBody = document.getElementById("detail-body");
-            const text = Array.from(detailBody.querySelectorAll('tr')).map(tr => {
-                const th = tr.querySelector('th').textContent;
-                const td = tr.querySelector('td').textContent;
-                return `${th}: ${td}`;
-            }).join('\n');
-            navigator.clipboard.writeText(text);
-            showNotification(language === 'vi' ? "Đã sao chép chi tiết!" : "Details copied!", 2000);
-        }
-
-        function exportToExcel() {
-            if (confirm(language === 'vi' ? "Bạn có muốn xuất danh sách này sang Excel không?" : "Do you want to export this list to Excel?")) {
-                const headers = [
-                    "SỐ TT",
-                    translations[language]["vehicle-line"],
-                    translations[language]["vehicle-version"],
-                    translations[language]["vehicle-exterior"],
-                    translations[language]["vehicle-interior"],
-                    translations[language]["vehicle-vin"],
-                    translations[language]["vehicle-status"],
-                    translations[language]["import-date"]
-                ];
-                const wsData = filteredData.map((row, index) => {
-                    const rowData = { "SỐ TT": index + 1 };
-                    row.forEach((cell, i) => rowData[headers[i + 1]] = cell || "");
-                    return rowData;
-                });
-                const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Kho Xe");
-                XLSX.writeFile(wb, `VinFast_Kho_Xe_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
-                showNotification(language === 'vi' ? "Đã xuất file thành công!" : "File exported successfully!", 2000);
-            }
-        }
-
-        function printTable() {
-            const now = new Date();
-            const printDateTime = now.toLocaleString(language === 'vi' ? 'vi-VN' : 'en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-
-            const table = document.getElementById("data-table");
-            if (!table) return;
-            const printContent = `
-                <div style="text-align: center;">
-                    <h2 style="color: #003087;">VINFAST MĐ AN PHÚ</h2>
-                    <p>Hotline: 1900 232389</p>
-                    <p>${language === 'vi' ? "In lúc" : "Printed at"}: ${printDateTime}</p>
-                    <p style="font-weight: 700;">${translations[language]["total-count"]}: ${filteredData.length}</p>
-                </div>
-                ${table.outerHTML}
-            `;
-
-            const win = window.open('', '', 'width=800,height=600');
-            win.document.write(`
-                <html>
-                <head>
-                    <title>${language === 'vi' ? "In danh sách Kho Xe" : "Print Vehicle Inventory List"}</title>
-                    <style>
-                        body { font-family: 'Montserrat', sans-serif; margin: 20px; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #000; padding: 8px; }
-                        th { background: #003087; color: #fff; }
-                        .highlight { background: #e6f0ff; font-weight: 700; color: #003087; }
-                        .selected { background: #cce5ff; font-weight: 700; }
-                        @media print {
-                            body { margin: 0; }
-                            table { page-break-inside: auto; }
-                            tr { page-break-inside: avoid; page-break-after: auto; }
-                        }
-                    </style>
-                </head>
-                <body>${printContent}</body>
-                </html>
-            `);
-            win.document.close();
-            win.print();
-        }
-
-async function refreshData() {
-    const spinner = document.querySelector('.loading-spinner');
-    if (spinner) spinner.style.display = 'block';
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) searchInput.value = "";
-    currentPage = 1;
-    const apiURL = "https://script.google.com/macros/s/AKfycbyAeNC4PjopIvO2UnAKaNCPI4iZzExgPk7z3sBepz0znIcTnkLOpPCV9DK487QbH8U9/exec";
-
-    try {
-        const response = await axios.get(apiURL);
-        if (response.status !== 200) {
-            throw new Error(`Lỗi API: ${response.status}`);
-        }
-        if (!response.data || !Array.isArray(response.data.khoxe)) {
-            throw new Error(language === 'vi' ? "Dữ liệu từ sheet kho xe không hợp lệ hoặc không tồn tại." : "Data from warehouse sheet is invalid or missing.");
-        }
-        tableData = response.data.khoxe.map(row => [
-            row["Dòng xe"] || "",
-            row["Phiên bản"] || "",
-            row["Ngoại thất"] || "",
-            row["Nội thất"] || "",
-            row["VIN"] || "",
-            row["Trạng thái"] || "",
-            row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleString('vi-VN') : ""
-        ]);
-        if (tableData.length === 0) {
-            throw new Error(language === 'vi' ? "Không có dữ liệu trong sheet kho xe." : "No data in warehouse sheet.");
-        }
-        sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-        filteredData = [...tableData];
-        applyFilters();
-        populateFilters();
-        renderChart();
-        updateTotalCount();
-        showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
-    } catch (error) {
-        console.error("Lỗi khi làm mới dữ liệu:", error);
-        let errorMsg = language === 'vi' ? "Không thể làm mới dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to refresh data. Please check your connection or API access.";
-        if (error.response) {
-            errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
-        } else if (error.message) {
-            errorMsg = error.message;
-        }
-        const tableBody = document.getElementById("table-body");
-        if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-        }
-        showNotification(errorMsg, 3000);
-    } finally {
-        if (spinner) spinner.style.display = 'none';
-    }
-}
-        function debounce(func, wait) {
-            let timeout;
-            return function (...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        function setupSearch() {
-            const searchInput = document.getElementById("search-input");
-            if (!searchInput) return;
-            searchInput.addEventListener("input", debounce(function () {
-                applyFilters();
-            }, 300));
-        }
-
-        function setupScrollSync() {
-            const tableContainer = document.querySelector('.table-container');
-            const detailPanel = document.getElementById("detail-panel");
-            if (!tableContainer || !detailPanel) return;
-            let isTableScrolling = false;
-            let isDetailScrolling = false;
-
-            tableContainer.addEventListener('scroll', () => {
-                if (!isDetailScrolling) {
-                    isTableScrolling = true;
-                    detailPanel.scrollTop = tableContainer.scrollTop;
-                    setTimeout(() => { isTableScrolling = false; }, 100);
-                }
-            });
-
-            detailPanel.addEventListener('scroll', () => {
-                if (!isTableScrolling) {
-                    isDetailScrolling = true;
-                    tableContainer.scrollTop = detailPanel.scrollTop;
-                    setTimeout(() => { isDetailScrolling = false; }, 100);
-                }
-            });
-        }
-
-        function setupSort() {
-            document.querySelectorAll('#table-head th').forEach((th, index) => {
-                th.addEventListener('click', () => sortTable(index === 0 ? 0 : index - 1));
-            });
-        }
-
-        function sortTable(columnIndex) {
-            if (sortColumn === columnIndex) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = columnIndex;
-                sortDirection = 'asc';
-            }
-
-            filteredData.sort((a, b) => {
-                const valA = a[columnIndex] || '';
-                const valB = b[columnIndex] || '';
-                if (sortDirection === 'asc') {
-                    return valA.toString().localeCompare(valB.toString());
+            let html = "";
+            headers.forEach((header, i) => {
+                let value = row[i] || "";
+                if (i === 4 && value) {
+                    html += `<tr><th>${header}</th><td class="highlight">${value}</td></tr>`;
                 } else {
-                    return valB.toString().localeCompare(valA.toString());
+                    html += `<tr><th>${header}</th><td>${value}</td></tr>`;
                 }
             });
-
-            renderTable(filteredData);
-            updateSortIndicators(columnIndex);
+            detailBody.innerHTML = html;
         }
 
-        function updateSortIndicators(columnIndex) {
-            document.querySelectorAll('#table-head th').forEach(th => {
-                th.classList.remove('asc', 'desc');
-            });
-            const th = document.getElementById(`sort-${['tt', 'line', 'version', 'exterior', 'interior', 'vin', 'status', 'date'][columnIndex]}`);
-            if (th) th.classList.add(sortDirection);
+        async function refreshData() {
+            showLoading();
+            const apiURL = "https://script.google.com/macros/s/AKfycbwCNUu8eeFYpg_Fx3txzbP0d3Rz3dTwak_vddLZxGZjdY94Ncr2jMoy7GgOBklycmy8/exec";
+            try {
+                const response = await axios.get(apiURL);
+                if (!response.data || !Array.isArray(response.data.khoxe)) throw new Error("Invalid data");
+                tableData = response.data.khoxe.map(row => [
+                    row["Dòng xe"] || "",
+                    row["Phiên bản"] || "",
+                    row["Ngoại thất"] || "",
+                    row["Nội thất"] || "",
+                    row["VIN"] || "",
+                    row["Trạng thái"] || "",
+                    row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
+                ]);
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+                filteredData = [...tableData];
+                document.getElementById("search-input").value = "";
+                document.getElementById("filter-line").value = "";
+                document.getElementById("filter-status").value = "";
+                renderTable();
+                populateFilters();
+                showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
+            } catch (error) {
+                console.error(error);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="8">⚠️ Lỗi làm mới dữ liệu: ${error.message}</td></tr>`;
+                showNotification(language === 'vi' ? "Lỗi làm mới dữ liệu!" : "Error refreshing data!", 3000);
+            } finally {
+                hideLoading();
+            }
         }
 
         function populateFilters() {
             const lineSelect = document.getElementById("filter-line");
             const statusSelect = document.getElementById("filter-status");
-
             const lines = [...new Set(tableData.map(row => row[0]))];
             const statuses = [...new Set(tableData.map(row => row[5]))];
-
             lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}">${line}</option>`).join('');
             statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}">${status}</option>`).join('');
         }
@@ -1421,55 +847,158 @@ async function refreshData() {
                        (!statusFilter || row[5] === statusFilter) &&
                        (!searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue)));
             });
-
-            if (sortColumn !== null) {
-                filteredData.sort((a, b) => {
-                    const valA = a[sortColumn] || '';
-                    const valB = b[sortColumn] || '';
-                    if (sortDirection === 'asc') {
-                        return valA.toString().localeCompare(valB.toString());
-                    } else {
-                        return valB.toString().localeCompare(valA.toString());
-                    }
-                });
-            }
-
             currentPage = 1;
-            renderTable(filteredData);
+            renderTable();
         }
 
-        function renderChart() {
-            const ctx = document.getElementById('stats-chart').getContext('2d');
-            const lines = [...new Set(filteredData.map(row => row[0]))];
-            const lineCounts = lines.map(line => filteredData.filter(row => row[0] === line).length);
+        function exportToExcel() {
+            if (confirm(language === 'vi' ? "Bạn có muốn xuất danh sách này sang Excel không?" : "Do you want to export this list to Excel?")) {
+                const headers = [
+                    "SỐ TT",
+                    translations[language]["vehicle-line"],
+                    translations[language]["vehicle-version"],
+                    translations[language]["vehicle-exterior"],
+                    translations[language]["vehicle-interior"],
+                    translations[language]["vehicle-vin"],
+                    translations[language]["vehicle-status"],
+                    translations[language]["import-date"]
+                ];
+                const exportData = filteredData.map((row, index) => {
+                    const rowData = { "SỐ TT": index + 1 };
+                    headers.slice(1).forEach((header, i) => rowData[header] = row[i] || "");
+                    return rowData;
+                });
+                const ws = XLSX.utils.json_to_sheet(exportData, { header: headers });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "KhoXe");
+                XLSX.writeFile(wb, `KhoXe_VinFast_ThuanAn_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                showNotification(language === 'vi' ? "Đã xuất file thành công!" : "File exported successfully!", 2000);
+            }
+        }
 
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: lines,
-                    datasets: [{
-                        label: language === 'vi' ? 'Số lượng theo dòng xe' : 'Quantity by vehicle line',
-                        data: lineCounts,
-                        backgroundColor: '#003087',
-                        borderColor: '#001f5f',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
+        function printTable() {
+            const now = new Date().toLocaleString('vi-VN');
+            let tableContent = `
+                <table>
+                    <colgroup>
+                        <col style="width: 50px;">
+                        <col style="width: 100px;">
+                        <col style="width: 80px;">
+                        <col style="width: 80px;">
+                        <col style="width: 100px;">
+                        <col style="width: 120px;">
+                        <col style="width: 80px;">
+                        <col style="width: 80px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>SỐ TT</th>
+                            <th>DÒNG XE</th>
+                            <th>PHIÊN BẢN</th>
+                            <th>NGOẠI THẤT</th>
+                            <th>NỘI THẤT</th>
+                            <th>SỐ VIN</th>
+                            <th>TRẠNG THÁI</th>
+                            <th>NGÀY NHẬP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            filteredData.forEach((row, index) => {
+                tableContent += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td>${row[2]}</td>
+                        <td>${row[3]}</td>
+                        <td class="highlight">${row[4]}</td>
+                        <td>${row[5]}</td>
+                        <td>${row[6]}</td>
+                    </tr>
+                `;
             });
+            tableContent += `
+                    </tbody>
+                </table>
+            `;
+            const printContent = `
+                <h2 style="color: #2c3e50;">KHO XE VINFAST THUẬN AN</h2>
+                <p>Hotline: 1900 232389</p>
+                <p>In lúc: ${now}</p>
+                <p>Tổng số xe: ${filteredData.length}</p>
+                ${tableContent}
+            `;
+            const win = window.open('', '', 'width=800,height=600');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>In danh sách kho xe VinFast</title>
+                    <style>
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                        th, td { border: 1px solid #ddd; padding: 8px 10px; font-size: 11px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
+                        th { background: #003087; color: #FFFFFF; }
+                        .highlight { font-weight: 600; color: #00a550; }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            win.document.close();
+            win.print();
         }
 
-        function showNotification(message, duration = 3000) {
+        function setupSearch() {
+            const searchInput = document.getElementById("search-input");
+            searchInput.addEventListener("input", debounce(function () {
+                applyFilters();
+            }, 300));
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function toggleSlidebar() {
+            document.getElementById("slidebar").classList.toggle("collapsed");
+            document.getElementById("main-container").classList.toggle("collapsed");
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+            showNotification(language === 'vi' ? "Đã đăng xuất!" : "Logged out!", 2000);
+        }
+
+        function goBack() {
+            window.location.href = "index.html";
+            showNotification(language === 'vi' ? "Đã quay lại trang chủ!" : "Returned to homepage!", 2000);
+        }
+
+        function showNotification(message, duration = 2000) {
             const notif = document.getElementById("notification");
-            if (!notif) return;
             notif.textContent = message;
             notif.style.display = "block";
-            setTimeout(() => notif.style.display = "none", duration);
+            clearTimeout(notif.timeout);
+            notif.timeout = setTimeout(() => notif.style.display = "none", duration);
         }
     </script>
 </body>
