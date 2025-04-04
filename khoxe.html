@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Giữ nguyên toàn bộ CSS từ file gốc */
         * {
             margin: 0;
             padding: 0;
@@ -859,22 +860,18 @@
                         <select id="filter-line" onchange="applyFilters()">
                             <option value="">Tất cả dòng xe</option>
                         </select>
-                        <select id="filter-warehouse" onchange="applyFilters()">
-                            <option value="">Tất cả kho</option>
-                        </select>
                         <select id="filter-status" onchange="applyFilters()">
                             <option value="">Tất cả trạng thái</option>
                         </select>
                     </div>
-
-                        <div class="button-group">
-                            <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                            <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                            <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button> 
-                    <div class="export-btn-container">
-                        <div class="total-count-container" id="total-count">
-                            Tổng số lượng: 0
-                        </div>
+                    <div class="button-group">
+                        <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                        <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
+                        <div class="export-btn-container">
+                            <div class="total-count-container" id="total-count">
+                                Tổng số lượng: 0
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -888,10 +885,9 @@
                             <th id="sort-version" data-lang="vehicle-version">PHIÊN BẢN</th>
                             <th id="sort-exterior" data-lang="vehicle-exterior">NGOẠI THẤT</th>
                             <th id="sort-interior" data-lang="vehicle-interior">NỘI THẤT</th>
-                            <th id="sort-order" data-lang="vehicle-order-id">MÃ XHĐ</th>
                             <th id="sort-vin" data-lang="vehicle-vin">SỐ VIN</th>
-                            <th id="sort-warehouse" data-lang="vehicle-warehouse">KHO</th>
                             <th id="sort-status" data-lang="vehicle-status">TRẠNG THÁI</th>
+                            <th id="sort-date" data-lang="import-date">NGÀY NHẬP</th>
                         </tr>
                     </thead>
                     <tbody id="table-body"></tbody>
@@ -936,10 +932,9 @@
                 "vehicle-version": "PHIÊN BẢN",
                 "vehicle-exterior": "NGOẠI THẤT",
                 "vehicle-interior": "NỘI THẤT",
-                "vehicle-order-id": "MÃ XHĐ",
                 "vehicle-vin": "SỐ VIN",
-                "vehicle-warehouse": "KHO",
                 "vehicle-status": "TRẠNG THÁI",
+                "import-date": "NGÀY NHẬP",
                 "inventory-detail": "Chi Tiết Xe Trong Kho",
                 "total-count": "Tổng số lượng"
             },
@@ -949,10 +944,9 @@
                 "vehicle-version": "VERSION",
                 "vehicle-exterior": "EXTERIOR",
                 "vehicle-interior": "INTERIOR",
-                "vehicle-order-id": "ORDER ID",
                 "vehicle-vin": "VIN NUMBER",
-                "vehicle-warehouse": "WAREHOUSE",
                 "vehicle-status": "STATUS",
+                "import-date": "IMPORT DATE",
                 "inventory-detail": "Vehicle Inventory Details",
                 "total-count": "Total Quantity"
             }
@@ -985,45 +979,56 @@
             menu.innerHTML = khoXeLink;
         }
 
-        async function loadInitialData() {
-            const spinner = document.querySelector('.loading-spinner');
-            if (spinner) spinner.style.display = 'block';
-            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
+async function loadInitialData() {
+    const spinner = document.querySelector('.loading-spinner');
+    if (spinner) spinner.style.display = 'block';
+    const apiURL = "https://script.google.com/macros/s/AKfycbwCNUu8eeFYpg_Fx3txzbP0d3Rz3dTwak_vddLZxGZjdY94Ncr2jMoy7GgOBklycmy8/exec";
 
-            try {
-                const response = await axios.get(apiURL);
-                if (response.status !== 200) {
-                    throw new Error(`Lỗi API: ${response.status}`);
-                }
-                tableData = response.data.slice(1); // Bỏ hàng tiêu đề
-                if (!Array.isArray(tableData) || tableData.length === 0) {
-                    throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
-                }
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                filteredData = [...tableData];
-                applyFilters();
-                populateFilters();
-                renderChart();
-                updateTotalCount();
-                showNotification(language === 'vi' ? "Dữ liệu đã được tải thành công!" : "Data loaded successfully!", 2000);
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu:", error);
-                let errorMsg = language === 'vi' ? "Không thể tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to load data. Please check your connection or API access.";
-                if (error.response) {
-                    errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
-                } else if (error.message) {
-                    errorMsg = error.message;
-                }
-                const tableBody = document.getElementById("table-body");
-                if (tableBody) {
-                    tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-                }
-                showNotification(errorMsg, 3000);
-            } finally {
-                if (spinner) spinner.style.display = 'none';
-            }
+    try {
+        const response = await axios.get(apiURL);
+        if (response.status !== 200) {
+            throw new Error(`Lỗi API: ${response.status}`);
         }
-
+        // Kiểm tra xem response.data.khoxe có tồn tại và là mảng không
+        if (!response.data || !Array.isArray(response.data.khoxe)) {
+            throw new Error(language === 'vi' ? "Dữ liệu từ sheet kho xe không hợp lệ hoặc không tồn tại." : "Data from warehouse sheet is invalid or missing.");
+        }
+        tableData = response.data.khoxe.map(row => [
+            row["Dòng xe"] || "",
+            row["Phiên bản"] || "",
+            row["Ngoại thất"] || "",
+            row["Nội thất"] || "",
+            row["VIN"] || "",
+            row["Trạng thái"] || "",
+            row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleString('vi-VN') : ""
+        ]);
+        if (tableData.length === 0) {
+            throw new Error(language === 'vi' ? "Không có dữ liệu trong sheet kho xe." : "No data in warehouse sheet.");
+        }
+        sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+        filteredData = [...tableData];
+        applyFilters();
+        populateFilters();
+        renderChart();
+        updateTotalCount();
+        showNotification(language === 'vi' ? "Dữ liệu đã được tải thành công!" : "Data loaded successfully!", 2000);
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu:", error);
+        let errorMsg = language === 'vi' ? "Không thể tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to load data. Please check your connection or API access.";
+        if (error.response) {
+            errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
+        } else if (error.message) {
+            errorMsg = error.message;
+        }
+        const tableBody = document.getElementById("table-body");
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+        }
+        showNotification(errorMsg, 3000);
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+    }
+}
         function logout() {
             sessionStorage.clear();
             window.location.href = "index.html";
@@ -1096,7 +1101,7 @@
             const paginatedData = data.slice(start, end);
 
             if (!paginatedData || paginatedData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9">Không có dữ liệu</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8">Không có dữ liệu</td></tr>`;
                 paginationDiv.innerHTML = "";
                 updateTotalCount();
                 return;
@@ -1111,7 +1116,7 @@
                         const tr = document.createElement("tr");
                         let cells = [`<td>${globalIndex}</td>`];
                         row.forEach((cell, i) => {
-                            const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
+                            const className = (i === 4) ? ' class="highlight"' : ''; // VIN được highlight
                             cells.push(`<td${className}>${cell || ""}</td>`);
                         });
                         tr.innerHTML = cells.join("");
@@ -1125,7 +1130,7 @@
             paginatedData.forEach((_, index) => {
                 const placeholder = document.createElement("tr");
                 placeholder.dataset.index = index;
-                placeholder.innerHTML = `<td colspan="9" style="height: 30px;"></td>`;
+                placeholder.innerHTML = `<td colspan="8" style="height: 30px;"></td>`;
                 tbody.appendChild(placeholder);
                 observer.observe(placeholder);
             });
@@ -1162,15 +1167,14 @@
                 translations[language]["vehicle-version"],
                 translations[language]["vehicle-exterior"],
                 translations[language]["vehicle-interior"],
-                translations[language]["vehicle-order-id"],
                 translations[language]["vehicle-vin"],
-                translations[language]["vehicle-warehouse"],
-                translations[language]["vehicle-status"]
+                translations[language]["vehicle-status"],
+                translations[language]["import-date"]
             ];
             let html = `<button onclick="copyDetail()" style="margin-bottom: 10px; padding: 5px 10px; background: #003087; color: #fff; border: none; border-radius: 5px; cursor: pointer;">Copy</button>`;
             html += "<table class='detail-table'>";
             row.forEach((cell, i) => {
-                const className = (i === 5 || i === 6) ? ' class="highlight"' : '';
+                const className = (i === 4) ? ' class="highlight"' : ''; // VIN được highlight
                 html += `<tr><th>${headers[i]}</th><td${className}>${cell || ""}</td></tr>`;
             });
             html += "</table>";
@@ -1201,10 +1205,9 @@
                     translations[language]["vehicle-version"],
                     translations[language]["vehicle-exterior"],
                     translations[language]["vehicle-interior"],
-                    translations[language]["vehicle-order-id"],
                     translations[language]["vehicle-vin"],
-                    translations[language]["vehicle-warehouse"],
-                    translations[language]["vehicle-status"]
+                    translations[language]["vehicle-status"],
+                    translations[language]["import-date"]
                 ];
                 const wsData = filteredData.map((row, index) => {
                     const rowData = { "SỐ TT": index + 1 };
@@ -1269,48 +1272,58 @@
             win.print();
         }
 
-        async function refreshData() {
-            const spinner = document.querySelector('.loading-spinner');
-            if (spinner) spinner.style.display = 'block';
-            const searchInput = document.getElementById("search-input");
-            if (searchInput) searchInput.value = "";
-            currentPage = 1;
-            const apiURL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
+async function refreshData() {
+    const spinner = document.querySelector('.loading-spinner');
+    if (spinner) spinner.style.display = 'block';
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+    currentPage = 1;
+    const apiURL = "https://script.google.com/macros/s/AKfycbyAeNC4PjopIvO2UnAKaNCPI4iZzExgPk7z3sBepz0znIcTnkLOpPCV9DK487QbH8U9/exec";
 
-            try {
-                const response = await axios.get(apiURL);
-                if (response.status !== 200) {
-                    throw new Error(`Lỗi API: ${response.status}`);
-                }
-                tableData = response.data.slice(1);
-                if (!Array.isArray(tableData) || tableData.length === 0) {
-                    throw new Error(language === 'vi' ? "Không có dữ liệu trong Google Sheet." : "No data in Google Sheet.");
-                }
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                filteredData = [...tableData];
-                applyFilters();
-                populateFilters();
-                renderChart();
-                updateTotalCount();
-                showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
-            } catch (error) {
-                console.error("Lỗi khi làm mới dữ liệu:", error);
-                let errorMsg = language === 'vi' ? "Không thể làm mới dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to refresh data. Please check your connection or API access.";
-                if (error.response) {
-                    errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
-                } else if (error.message) {
-                    errorMsg = error.message;
-                }
-                const tableBody = document.getElementById("table-body");
-                if (tableBody) {
-                    tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
-                }
-                showNotification(errorMsg, 3000);
-            } finally {
-                if (spinner) spinner.style.display = 'none';
-            }
+    try {
+        const response = await axios.get(apiURL);
+        if (response.status !== 200) {
+            throw new Error(`Lỗi API: ${response.status}`);
         }
-
+        if (!response.data || !Array.isArray(response.data.khoxe)) {
+            throw new Error(language === 'vi' ? "Dữ liệu từ sheet kho xe không hợp lệ hoặc không tồn tại." : "Data from warehouse sheet is invalid or missing.");
+        }
+        tableData = response.data.khoxe.map(row => [
+            row["Dòng xe"] || "",
+            row["Phiên bản"] || "",
+            row["Ngoại thất"] || "",
+            row["Nội thất"] || "",
+            row["VIN"] || "",
+            row["Trạng thái"] || "",
+            row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleString('vi-VN') : ""
+        ]);
+        if (tableData.length === 0) {
+            throw new Error(language === 'vi' ? "Không có dữ liệu trong sheet kho xe." : "No data in warehouse sheet.");
+        }
+        sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+        filteredData = [...tableData];
+        applyFilters();
+        populateFilters();
+        renderChart();
+        updateTotalCount();
+        showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
+    } catch (error) {
+        console.error("Lỗi khi làm mới dữ liệu:", error);
+        let errorMsg = language === 'vi' ? "Không thể làm mới dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập API." : "Unable to refresh data. Please check your connection or API access.";
+        if (error.response) {
+            errorMsg = `Lỗi API: ${error.response.status} - ${error.response.statusText}`;
+        } else if (error.message) {
+            errorMsg = error.message;
+        }
+        const tableBody = document.getElementById("table-body");
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="8" style="color: red;">⚠️ ${errorMsg}</td></tr>`;
+        }
+        showNotification(errorMsg, 3000);
+    } finally {
+        if (spinner) spinner.style.display = 'none';
+    }
+}
         function debounce(func, wait) {
             let timeout;
             return function (...args) {
@@ -1383,34 +1396,29 @@
             document.querySelectorAll('#table-head th').forEach(th => {
                 th.classList.remove('asc', 'desc');
             });
-            const th = document.getElementById(`sort-${['tt', 'line', 'version', 'exterior', 'interior', 'order', 'vin', 'warehouse', 'status'][columnIndex]}`);
+            const th = document.getElementById(`sort-${['tt', 'line', 'version', 'exterior', 'interior', 'vin', 'status', 'date'][columnIndex]}`);
             if (th) th.classList.add(sortDirection);
         }
 
         function populateFilters() {
             const lineSelect = document.getElementById("filter-line");
-            const warehouseSelect = document.getElementById("filter-warehouse");
             const statusSelect = document.getElementById("filter-status");
 
             const lines = [...new Set(tableData.map(row => row[0]))];
-            const warehouses = [...new Set(tableData.map(row => row[6]))];
-            const statuses = [...new Set(tableData.map(row => row[7]))];
+            const statuses = [...new Set(tableData.map(row => row[5]))];
 
             lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}">${line}</option>`).join('');
-            warehouseSelect.innerHTML = '<option value="">Tất cả kho</option>' + warehouses.map(wh => `<option value="${wh}">${wh}</option>`).join('');
             statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}">${status}</option>`).join('');
         }
 
         function applyFilters() {
             const lineFilter = document.getElementById("filter-line").value;
-            const warehouseFilter = document.getElementById("filter-warehouse").value;
             const statusFilter = document.getElementById("filter-status").value;
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
 
             filteredData = tableData.filter(row => {
                 return (!lineFilter || row[0] === lineFilter) &&
-                       (!warehouseFilter || row[6] === warehouseFilter) &&
-                       (!statusFilter || row[7] === statusFilter) &&
+                       (!statusFilter || row[5] === statusFilter) &&
                        (!searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue)));
             });
 
