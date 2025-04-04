@@ -6,13 +6,13 @@
     <title>Danh Sách Đơn Hàng Ghép Xe</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Roboto', sans-serif; 
-            background: #f5f6f5; /* Màu nền sáng mặc định */
+            background: #f5f6f5; 
             color: #2c3e50; 
             min-height: 100vh; 
             overflow-x: hidden; 
@@ -20,11 +20,11 @@
             width: 100vw; 
         }
         body.dark-mode { 
-            background: #1a1a1a; /* Màu nền tối */
+            background: #1a1a1a; 
             color: #d9e1e8; 
         }
         
-        /* Header với màu VinFast */
+        /* Header */
         header {
             position: fixed;
             top: 0;
@@ -46,7 +46,7 @@
             box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
         }
         
-        /* Slidebar với màu VinFast */
+        /* Slidebar */
         .slidebar {
             position: fixed;
             top: 0;
@@ -74,7 +74,6 @@
             margin-bottom: 20px; 
             transition: opacity 0.3s ease; 
         }
-        body.dark-mode .slidebar .logo h1 { color: #FFFFFF; }
         .slidebar.collapsed .logo h1 { opacity: 0; }
         .slidebar .tabs { 
             display: flex; 
@@ -110,13 +109,7 @@
         }
         body.dark-mode .slidebar .tabs a { 
             background: rgba(255, 255, 255, 0.05); 
-            color: #FFFFFF; 
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-        }
-        body.dark-mode .slidebar .tabs a:hover, 
-        body.dark-mode .slidebar .tabs a.active { 
-            background: rgba(255, 255, 255, 0.15); 
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         .toggle-btn { 
             position: absolute; 
@@ -138,7 +131,6 @@
         }
         body.dark-mode .toggle-btn { 
             background: #00205B; 
-            color: #FFFFFF; 
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         
@@ -166,7 +158,6 @@
             align-items: center; 
             justify-content: center; 
             box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-            position: relative; 
         }
         .nav-btn:hover, .theme-toggle:hover { 
             box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
@@ -176,29 +167,11 @@
             color: #d9e1e8; 
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
-        .nav-btn:hover::after, .theme-toggle:hover::after { 
-            content: attr(data-tooltip); 
-            position: absolute; 
-            top: 40px; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 12px; 
-            white-space: nowrap; 
-            z-index: 10; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-        }
-        body.dark-mode .nav-btn:hover::after, body.dark-mode .theme-toggle:hover::after { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-        }
         
         /* Main container */
         .main-container { 
-            background: #f5f6f5; /* Màu nền sáng */
-            margin-left: 135px; 
+            background: #f5f6f5; 
+            margin-left: 150px; 
             padding: 15px; 
             margin-top: 40px; 
             height: calc(100vh - 60px); 
@@ -273,7 +246,6 @@
             align-items: center; 
             justify-content: center; 
             box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-            position: relative; 
         }
         .export-btn:hover { 
             box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
@@ -288,24 +260,6 @@
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         body.dark-mode .refresh-btn { color: #00a550; }
-        .export-btn:hover::after { 
-            content: attr(data-tooltip); 
-            position: absolute; 
-            top: 40px; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 12px; 
-            white-space: nowrap; 
-            z-index: 10; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-        }
-        body.dark-mode .export-btn:hover::after { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
-        }
         
         /* Tables section */
         .tables-section { 
@@ -313,7 +267,7 @@
             gap: 10px; 
             flex: 1; 
             min-height: 360px; 
-            width: 105%; 
+            width: 100%; 
         }
         .table-container { 
             flex: 0 0 75%; 
@@ -367,7 +321,6 @@
         }
         body.dark-mode th { 
             background: #00205B; 
-            color: #FFFFFF; 
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         td { color: #2c3e50; }
@@ -382,7 +335,7 @@
         }
         .vin-highlight { font-weight: 600; color: #00a550; }
         
-        /* Điều chỉnh chiều rộng cột cho tab Chưa Ghép */
+        /* Column widths */
         .chua-ghep col:nth-child(1) { width: 5%; }
         .chua-ghep col:nth-child(2) { width: 15%; }
         .chua-ghep col:nth-child(3) { width: 10%; }
@@ -393,7 +346,6 @@
         .chua-ghep col:nth-child(8) { width: 25%; }
         .chua-ghep col:nth-child(n+9) { width: 0; display: none; }
         
-        /* Điều chỉnh chiều rộng cột cho tab Đã Ghép */
         .da-ghep col:nth-child(1) { width: 4%; }
         .da-ghep col:nth-child(2) { width: 10%; }
         .da-ghep col:nth-child(3) { width: 7%; }
@@ -401,11 +353,11 @@
         .da-ghep col:nth-child(5) { width: 10%; }
         .da-ghep col:nth-child(6) { width: 8%; }
         .da-ghep col:nth-child(7) { width: 10%; }
-        .da-ghep col:nth-child(8) { width: 15%; }
-        .da-ghep col:nth-child(9) { width: 15%; }
-        .da-ghep col:nth-child(10) { width: 9%; }
+        .da-ghep col:nth-child(8) { width: 14%; }
+        .da-ghep col:nth-child(9) { width: 16%; }
+        .da-ghep col:nth-child(10) { width: 10%; }
         .da-ghep col:nth-child(11) { width: 7%; }
-        .da-ghep col:nth-child(12) { width: 8%; }
+        .da-ghep col:nth-child(12) { width: 7%; }
         
         /* Loading overlay */
         .loading-overlay {
@@ -538,7 +490,7 @@
         }
         body.dark-mode .pagination span { color: #d9e1e8; }
         
-        /* Footer với màu VinFast */
+        /* Footer */
         footer { 
             position: fixed; 
             bottom: 0; 
@@ -576,7 +528,7 @@
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
 
-        /* Responsive cho điện thoại */
+        /* Responsive */
         @media (max-width: 768px) {
             .slidebar {
                 width: 50px;
@@ -969,7 +921,7 @@
                 <head>
                     <title>In danh sách VinFast - ${currentSheet}</title>
                     <style>
-                        body { font-family: 'Montserrat', sans-serif; margin: 20px; }
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; }
                         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
                         th, td { border: 1px solid #ddd; padding: 8px 10px; font-size: 11px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
                         th { background: #003087; color: #FFFFFF; }
