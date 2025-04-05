@@ -66,7 +66,7 @@
             font-size: 10px;
         }
 
-        /* Navbar */
+        /* Navbar styles unchanged */
         .navbar {
             position: fixed;
             top: 0;
@@ -194,7 +194,7 @@
             margin-right: 10px;
         }
 
-        /* Main Container */
+        /* Main Container styles unchanged */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -355,7 +355,7 @@
             transition: background 0.3s ease;
         }
 
-        /* Updated Modal Styles */
+        /* Optimized Modal Styles */
         .modal {
             position: fixed;
             inset: 0;
@@ -365,7 +365,12 @@
             justify-content: center;
             z-index: 1000;
             padding: 15px;
-            animation: fadeIn 0.3s ease;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
         }
         .modal-content {
             background: var(--modal-bg);
@@ -376,7 +381,11 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             color: var(--modal-text);
             position: relative;
-            animation: slideUp 0.3s ease;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .modal.active .modal-content {
+            transform: translateY(0);
         }
         .modal-header {
             display: flex;
@@ -389,6 +398,8 @@
             color: #005eb8;
             font-weight: 700;
             margin: 0;
+            text-align: center;
+            width: 100%;
         }
         .modal-close-btn {
             background: none;
@@ -405,9 +416,25 @@
             font-size: 12px;
             line-height: 1.5;
             max-height: 50vh;
+            overflow-y: hidden; /* Hide scrollbar by default */
+            scrollbar-width: none; /* Firefox */
+            text-align: center;
+        }
+        .modal-body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+        }
+        .modal-body.scrollable {
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #005eb8 var(--modal-bg);
+        }
+        .modal-body.scrollable::-webkit-scrollbar {
+            width: 6px;
+            display: block;
+        }
+        .modal-body.scrollable::-webkit-scrollbar-thumb {
+            background: #005eb8;
+            border-radius: 3px;
         }
         .modal-body .detail-item, .modal-body div {
             display: grid;
@@ -429,6 +456,14 @@
         .modal-body .detail-item span, .modal-body div span {
             color: var(--modal-text);
             word-break: break-word;
+        }
+        .modal-body p {
+            text-align: center;
+        }
+        .modal-body i {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
         .modal-footer {
             display: flex;
@@ -474,7 +509,7 @@
             color: #005eb8;
         }
 
-        /* Responsive */
+        /* Responsive styles unchanged */
         @media (max-width: 767px) {
             .modal-content {
                 max-width: 90%;
@@ -638,7 +673,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* Responsive Design */
+        /* Responsive Design unchanged */
         @media (min-width: 768px) {
             .navbar { height: 50px; padding: 0 15px; }
             .navbar .logo h1 { font-size: 16px; }
@@ -670,7 +705,7 @@
             .summary-section p { font-size: 11px; }
             .chart-card { padding: 12px; }
             .chart-card h3 { font-size: 12px; margin-bottom: 10px; }
- échot duoi: 6px 0; font-size: 9px; }
+            footer { padding: 6px 0; font-size: 9px; }
         }
     </style>
 </head>
@@ -834,7 +869,7 @@
                         <th onclick="sortTable('Phiên bản')">Phiên Bản</th>
                         <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
                         <th onclick="sortTable('Nội thất')">Nội Thất</th>
-                        <th onclick="sortTable('Trạng thái')">Trạng Thái</th>
+                        <th onclick="sortTable('Kết quả')">Trạng Thái</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
@@ -904,7 +939,7 @@
     © 2025 VinFast Minh Đạo Thuận An
 </footer>
 
-<!-- Updated Modal HTML -->
+<!-- Modal HTML unchanged -->
 <div class="modal" id="preview-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -935,7 +970,7 @@
 <div class="modal" id="success-modal">
     <div class="modal-content success-modal-content">
         <div class="modal-header">
-            <h2>Gửi Yêu Cầu Thành Công</h2>
+            <h2>Đã Gửi Dữ Liệu</h2>
         </div>
         <div class="modal-body">
             <i class="fas fa-check-circle text-4xl text-green-600 mb-4"></i>
@@ -986,20 +1021,24 @@ function goBack() {
 let historyData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
-const apiURL = "https://script.google.com/macros/s/AKfycbzTQ41XMA6pr7zub0Lj6UC8gXJK4Gms3rSc2mIKWk18iH9y9Y-FDYSj96F9YIGl3XyO/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxlmqiM4VDaTRq0CTQJhFfz1vl_Ez_e4YS8sJ0ZdNRnXbtdL8Du6dnBTaQ4zYb2uzIT/exec";
 const TELEGRAM_BOT_TOKEN = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628";
 const TELEGRAM_CHAT_ID = "5812034168";
 const labelMap = {
-    ten_ban_hang: "Tên tư vấn bán hàng",
-    ten_khach_hang: "Tên khách hàng",
-    dong_xe: "Dòng xe",
-    phien_ban: "Phiên bản",
-    ngoai_that: "Ngoại thất",
-    noi_that: "Nội thất",
-    so_don_hang: "Số đơn hàng",
-    ngay_coc: "Ngày cọc",
-    thoi_gian_nhap: "Thời gian nhập",
-    trang_thai: "Trạng thái"
+    "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
+    "ten_khach_hang": "Tên Khách Hàng",
+    "dong_xe": "Dòng Xe",
+    "phien_ban": "Phiên Bản",
+    "ngoai_that": "Ngoại Thất",
+    "noi_that": "Nội Thất",
+    "so_don_hang": "Số Đơn Hàng",
+    "ngay_coc": "Ngày Cọc",
+    "thoi_gian_nhap": "Thời Gian Nhập",
+    "trang_thai": "Trạng Thái",
+    "thoi_gian_ghep": "Thời Gian Ghép",
+    "so_ngay_ghep": "Số Ngày Ghép",
+    "ket_qua": "Kết Quả",
+    "VIN": "VIN"
 };
 
 function toggleTheme() {
@@ -1058,18 +1097,27 @@ function showLoadingModal(title, message) {
         document.getElementById("loading-message").textContent = message;
         const closeBtn = document.getElementById("loading-close-btn");
         if (closeBtn) closeBtn.style.display = "none";
-        modal.style.display = "flex";
+        modal.classList.add("active");
+        adjustModalScroll(modal);
     }
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.opacity = "0";
-        setTimeout(() => {
-            modal.style.display = "none";
-            modal.style.opacity = "1";
-        }, 300);
+        modal.classList.remove("active");
+    }
+}
+
+function adjustModalScroll(modal) {
+    const body = modal.querySelector(".modal-body");
+    if (!body) return;
+    const contentHeight = body.scrollHeight;
+    const maxHeight = parseInt(window.getComputedStyle(body).maxHeight);
+    if (contentHeight > maxHeight) {
+        body.classList.add("scrollable");
+    } else {
+        body.classList.remove("scrollable");
     }
 }
 
@@ -1081,7 +1129,7 @@ function fetchHistory() {
     fetch(apiURL)
     .then(response => response.json())
     .then(data => {
-        historyData = data;
+        historyData = data.yeucaughep || [];
         if (activeTab) closeModal("loading-modal");
         renderHistory(historyData);
         renderSummary(historyData);
@@ -1111,7 +1159,7 @@ function refreshData() {
     fetch(apiURL)
     .then(response => response.json())
     .then(data => {
-        historyData = data;
+        historyData = data.yeucaughep || [];
         if (activeTab) {
             closeModal("loading-modal");
             showNotification("Dữ liệu đã được làm mới!", 2000);
@@ -1166,7 +1214,14 @@ function populateFilters(data) {
 }
 
 function renderSummary(data) {
+    if (!Array.isArray(data)) {
+        console.error("renderSummary: Dữ liệu đầu vào không phải mảng", data);
+        return;
+    }
+
     const total = data.length;
+    const matched = data.filter(row => row["Trạng thái"] === "Đã ghép").length;
+    const pending = data.filter(row => row["Trạng thái"] === "Chưa ghép").length;
     const byCar = {};
     const byAdvisor = {};
     data.forEach(row => {
@@ -1180,10 +1235,14 @@ function renderSummary(data) {
     const topAdvisor = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
 
     const totalEl = document.getElementById("summary-total");
+    const matchedEl = document.getElementById("summary-matched");
+    const pendingEl = document.getElementById("summary-pending");
     const topCarEl = document.getElementById("summary-top-car");
     const topAdvisorEl = document.getElementById("summary-top-advisor");
 
     if (totalEl) totalEl.textContent = total;
+    if (matchedEl) matchedEl.textContent = matched;
+    if (pendingEl) pendingEl.textContent = pending;
     if (topCarEl) topCarEl.textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
     if (topAdvisorEl) topAdvisorEl.textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
 }
@@ -1196,19 +1255,23 @@ function renderHistory(data) {
         tbody.innerHTML = "<tr><td colspan='9'>Không có dữ liệu</td></tr>";
         return;
     }
-    let content = data.map((row, i) => `
-        <tr onclick="showDetail(${i})">
-            <td data-label="STT" title="${i + 1}">${i + 1}</td>
-            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || ""}</td>
-            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || ""}</td>
-            <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}">${row["Số đơn hàng"] || ""}</td>
-            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || ""}</td>
-            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || ""}</td>
-            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}">${row["Ngoại thất"] || ""}</td>
-            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || ""}</td>
-            <td data-label="Trạng Thái" title="${row["Trạng thái"] || ""}">${row["Trạng thái"] || ""}</td>
-        </tr>
-    `).join("");
+
+    let content = data.map((row, i) => {
+        const status = row["Kết quả"] || "Chưa tìm thấy VIN phù hợp";
+        return `
+            <tr onclick="showDetail(${i})">
+                <td data-label="STT" title="${i + 1}">${i + 1}</td>
+                <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || ""}</td>
+                <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || ""}</td>
+                <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}">${row["Số đơn hàng"] || ""}</td>
+                <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || ""}</td>
+                <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || ""}</td>
+                <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}">${row["Ngoại thất"] || ""}</td>
+                <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || ""}</td>
+                <td data-label="Trạng Thái" title="${status}">${status}</td>
+            </tr>
+        `;
+    }).join("");
     tbody.innerHTML = content;
 
     const totalDonCount = document.getElementById("total-don-count");
@@ -1302,7 +1365,8 @@ function previewForm(e) {
     const previewModal = document.getElementById("preview-modal");
     if (previewContent && previewModal) {
         previewContent.innerHTML = html;
-        previewModal.style.display = "flex";
+        previewModal.classList.add("active");
+        adjustModalScroll(previewModal);
     }
 }
 
@@ -1353,7 +1417,8 @@ function confirmSubmit() {
         if (form) form.reset();
         const successModal = document.getElementById("success-modal");
         if (successModal) {
-            successModal.style.display = "flex";
+            successModal.classList.add("active");
+            adjustModalScroll(successModal);
             setTimeout(() => closeModal("success-modal"), 3000);
         }
 
@@ -1384,14 +1449,15 @@ function showDetail(index) {
     let html = "";
     for (const [key, value] of Object.entries(row)) {
         const label = labelMap[key] || key;
-        const formattedValue = key === "Ngày cọc" || key === "Thời gian nhập" ? formatDateTime(value) : value;
+        const formattedValue = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép") ? formatDateTime(value) : value;
         html += `<div><strong>${label}:</strong> <span>${formattedValue || "Chưa có dữ liệu"}</span></div>`;
     }
     const detailContent = document.getElementById("detail-content");
     const detailModal = document.getElementById("detail-modal");
     if (detailContent && detailModal) {
         detailContent.innerHTML = html;
-        detailModal.style.display = "flex";
+        detailModal.classList.add("active");
+        adjustModalScroll(detailModal);
     }
 }
 
@@ -1525,84 +1591,106 @@ function renderCharts(data) {
         plugins: { 
             legend: { 
                 position: "bottom",
-                labels: { font: { size: 10 } },
-                maxHeight: 50 
+                labels: { font: { size: 10 } }
             } 
-        },
-        layout: {
-            padding: 5
         }
     };
 
-    const carChartCanvas = document.getElementById("car-chart");
-    if (carChartCanvas) {
-        if (carChart) carChart.destroy();
-        carChart = new Chart(carChartCanvas, {
-            type: "bar",
-            data: {
-                labels: Object.keys(carData),
-                datasets: [{
-                    label: "Số lượng",
-                    data: Object.values(carData),
-                    backgroundColor: "#005eb8"
-                }]
-            },
-            options: chartOptions
-        });
-    }
+    const theme = document.body.getAttribute("data-theme") || "light";
+    const chartColors = theme === "dark" ? {
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        borderColor: "#66b0ff",
+        textColor: "#e0e5ec"
+    } : {
+        backgroundColor: "rgba(0, 94, 184, 0.2)",
+        borderColor: "#005eb8",
+        textColor: "#2c3e50"
+    };
 
-    const carVersionChartCanvas = document.getElementById("car-version-chart");
-    if (carVersionChartCanvas) {
-        if (carVersionChart) carVersionChart.destroy();
-        carVersionChart = new Chart(carVersionChartCanvas, {
-            type: "bar",
-            data: {
-                labels: Object.keys(carVersionData),
-                datasets: [{
-                    label: "Số lượng",
-                    data: Object.values(carVersionData),
-                    backgroundColor: "#003087"
-                }]
-            },
-            options: chartOptions
-        });
-    }
+    if (carChart) carChart.destroy();
+    carChart = new Chart(document.getElementById("car-chart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(carData),
+            datasets: [{
+                label: "Số lượng",
+                data: Object.values(carData),
+                backgroundColor: chartColors.backgroundColor,
+                borderColor: chartColors.borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: chartOptions
+    });
 
-    const advisorChartCanvas = document.getElementById("advisor-chart");
-    if (advisorChartCanvas) {
-        if (advisorChart) advisorChart.destroy();
-        advisorChart = new Chart(advisorChartCanvas, {
-            type: "pie",
-            data: {
-                labels: Object.keys(advisorData),
-                datasets: [{
-                    label: "Số lượng",
-                    data: Object.values(advisorData),
-                    backgroundColor: ["#003087", "#005eb8", "#34495e", "#7f8c8d", "#66b0ff"]
-                }]
-            },
-            options: pieChartOptions
-        });
-    }
+    if (carVersionChart) carVersionChart.destroy();
+    carVersionChart = new Chart(document.getElementById("car-version-chart"), {
+        type: "bar",
+        data: {
+            labels: Object.keys(carVersionData),
+            datasets: [{
+                label: "Số lượng",
+                data: Object.values(carVersionData),
+                backgroundColor: chartColors.backgroundColor,
+                borderColor: chartColors.borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: chartOptions
+    });
+
+    if (advisorChart) advisorChart.destroy();
+    advisorChart = new Chart(document.getElementById("advisor-chart"), {
+        type: "pie",
+        data: {
+            labels: Object.keys(advisorData),
+            datasets: [{
+                data: Object.values(advisorData),
+                backgroundColor: [
+                    "rgba(0, 94, 184, 0.8)", "rgba(0, 135, 255, 0.8)", "rgba(102, 176, 255, 0.8)",
+                    "rgba(40, 167, 69, 0.8)", "rgba(255, 99, 132, 0.8)", "rgba(255, 159, 64, 0.8)"
+                ],
+                borderColor: chartColors.borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: pieChartOptions
+    });
 }
 
 function updateChartColors() {
-    const isDark = document.body.getAttribute("data-theme") === "dark";
-    const bgColor = isDark ? "#34495e" : "#005eb8";
-    const borderColor = isDark ? "#66b0ff" : "#003087";
+    const theme = document.body.getAttribute("data-theme") || "light";
+    const chartColors = theme === "dark" ? {
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        borderColor: "#66b0ff",
+        textColor: "#e0e5ec"
+    } : {
+        backgroundColor: "rgba(0, 94, 184, 0.2)",
+        borderColor: "#005eb8",
+        textColor: "#2c3e50"
+    };
+
     if (carChart) {
-        carChart.data.datasets[0].backgroundColor =bgColor;
-        carChart.data.datasets[0].borderColor = borderColor;
+        carChart.data.datasets[0].backgroundColor = chartColors.backgroundColor;
+        carChart.data.datasets[0].borderColor = chartColors.borderColor;
+        carChart.options.scales.x.ticks.color = chartColors.textColor;
+        carChart.options.scales.y.ticks.color = chartColors.textColor;
+        carChart.options.plugins.legend.labels.color = chartColors.textColor;
         carChart.update();
     }
+
     if (carVersionChart) {
-        carVersionChart.data.datasets[0].backgroundColor = bgColor;
-        carVersionChart.data.datasets[0].borderColor = borderColor;
+        carVersionChart.data.datasets[0].backgroundColor = chartColors.backgroundColor;
+        carVersionChart.data.datasets[0].borderColor = chartColors.borderColor;
+        carVersionChart.options.scales.x.ticks.color = chartColors.textColor;
+        carVersionChart.options.scales.y.ticks.color = chartColors.textColor;
+        carVersionChart.options.plugins.legend.labels.color = chartColors.textColor;
         carVersionChart.update();
     }
+
     if (advisorChart) {
-        advisorChart.data.datasets[0].backgroundColor = isDark 
-            ? ["#34495e", "#66b0ff", "#7f8c8d", "#005eb8", "#003087"]: ["#003087", "#005eb8", "#34495e", "#7f8c8d", "#66b0ff"];
+        advisorChart.data.datasets[0].borderColor = chartColors.borderColor;
+        advisorChart.options.plugins.legend.labels.color = chartColors.textColor;
         advisorChart.update();
     }
 }
@@ -1612,16 +1700,7 @@ function exportDetailedStatsToExcel() {
         showNotification("Thư viện XLSX chưa được tải!", 3000);
         return;
     }
-    const ws = XLSX.utils.json_to_sheet(detailedStatsData.map(row => ({
-        "STT": detailedStatsData.indexOf(row) + 1,
-        "Dòng Xe": row.dong_xe,
-        "Phiên Bản": row.phien_ban,
-        "Ngoại Thất": row.ngoai_that,
-        "Nội Thất": row.noi_that,
-        "Tư Vấn Viên": row.tu_van_vien,
-        "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "",
-        "Số Lượng Yêu Cầu": row.count
-    })));
+    const ws = XLSX.utils.json_to_sheet(detailedStatsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "thongkechitiet");
     XLSX.writeFile(wb, "thong_ke_chi_tiet.xlsx");
@@ -1632,26 +1711,6 @@ function setupSearch() {
     const detailedSearchBox = document.getElementById("detailed-search-box");
     if (searchBox) searchBox.addEventListener("input", debounce(filterHistory, 300));
     if (detailedSearchBox) detailedSearchBox.addEventListener("input", debounce(filterDetailedStats, 300));
-}
-
-function toggleAutoRefresh() {
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
-        showNotification("Tự động làm mới đã tắt!", 2000);
-    } else {
-        autoRefreshInterval = setInterval(() => refreshData(), 300000);
-        showNotification("Tự động làm mới mỗi 5 phút!", 2000);
-    }
-}
-
-function showNotification(message, duration) {
-    const notification = document.createElement("div");
-    notification.className = "notification";
-    notification.textContent = message;
-    notification.style.setProperty("--duration", `${duration}ms`);
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), duration);
 }
 
 function switchTab(tab, element) {
@@ -1668,25 +1727,48 @@ function switchTab(tab, element) {
     tabs.forEach(tab => tab.classList.remove("active"));
     if (element) element.classList.add("active");
 
-    if (tab === "history") {
-        renderHistory(historyData);
-        renderSummary(historyData);
-    } else if (tab === "detailed-stats") {
-        renderDetailedStats(detailedStatsData);
-        renderCharts(detailedStatsData);
-    }
+    if (tab === "history") fetchHistory();
+    if (tab === "detailed-stats") renderCharts(detailedStatsData);
 }
 
 function toggleMenu() {
-    const tabs = document.querySelector(".tabs");
+    const tabs = document.querySelector(".navbar .tabs");
     if (tabs) tabs.classList.toggle("active");
 }
 
-function restrictVersion(select) {
-    const versionSelect = document.querySelector('select[name="phien_ban"]');
-    if (!versionSelect) return;
+function toggleAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        showNotification("Tự động làm mới đã tắt!", 2000);
+    } else {
+        autoRefreshInterval = setInterval(refreshData, 30000);
+        showNotification("Tự động làm mới mỗi 30 giây!", 2000);
+    }
+}
 
-    const car = select.value;
+function setupScrollSync() {
+    const tableWrapper = document.querySelector(".table-wrapper");
+    if (tableWrapper) {
+        tableWrapper.addEventListener("scroll", () => {
+            const header = document.getElementById("table-header");
+            if (header) header.scrollLeft = tableWrapper.scrollLeft;
+        });
+    }
+}
+
+function showNotification(message, duration) {
+    const notification = document.createElement("div");
+    notification.className = "notification";
+    notification.textContent = message;
+    notification.style.setProperty("--duration", `${duration}ms`);
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), duration);
+}
+
+function restrictVersion(selectElement) {
+    const versionSelect = document.getElementsByName("phien_ban")[0];
+    const selectedCar = selectElement.value;
     const versionOptions = {
         "VF 3": ["Base"],
         "VF 5": ["Plus"],
@@ -1696,25 +1778,18 @@ function restrictVersion(select) {
         "VF 9": ["Eco", "Plus"],
         "HERIO": ["Plus_Metal", "Plus_CAP_Metal"],
         "NERIO": ["Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES"],
-        "LIMO": ["Base"],
-        "MINIO": ["Base"]
+        "LIMO": ["Eco", "Plus"],
+        "MINIO": ["Eco", "Plus"]
     };
 
-    const allowedVersions = versionOptions[car] || [];
     versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
+    const allowedVersions = versionOptions[selectedCar] || [];
     allowedVersions.forEach(version => {
-        versionSelect.innerHTML += `<option value="${version}">${version}</option>`;
+        const option = document.createElement("option");
+        option.value = version;
+        option.textContent = version;
+        versionSelect.appendChild(option);
     });
-}
-
-function setupScrollSync() {
-    const tableWrapper = document.querySelector(".table-wrapper");
-    const tableHeader = document.getElementById("table-header");
-    if (tableWrapper && tableHeader) {
-        tableWrapper.addEventListener("scroll", () => {
-            tableHeader.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
-        });
-    }
 }
 </script>
 </body>
