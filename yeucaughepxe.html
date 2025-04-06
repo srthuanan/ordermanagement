@@ -1122,35 +1122,41 @@ function adjustModalScroll(modal) {
 }
 
 function fetchHistory() {
-    const activeTab = document.querySelector('.tabs a.active')?.getAttribute('onclick')?.includes('history') || false;
-    if (activeTab) {
-        showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
-    }
-    fetch(apiURL)
-    .then(response => response.json())
+  console.log("Bắt đầu tải dữ liệu từ API...");
+  showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+
+  fetch(apiURL)
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      return response.json();
+    })
     .then(data => {
-        historyData = data.yeucaughep || [];
-        if (activeTab) closeModal("loading-modal");
-        renderHistory(historyData);
-        renderSummary(historyData);
-        populateFilters(historyData);
-        prepareDetailedStats(historyData);
-        renderDetailedStats(detailedStatsData);
+      console.log("Dữ liệu thô từ API:", data);
+
+      // Gộp dữ liệu từ "daghep" và "chuaghep" thành một mảng
+      const daghep = data.daghep || [];
+      const chuaghep = data.chuaghep || [];
+      historyData = [...daghep, ...chuaghep]; // Hợp nhất hai mảng
+
+      console.log("Dữ liệu đã xử lý:", historyData);
+
+      if (!historyData.length) {
+        console.warn("Không có dữ liệu trong historyData");
+      }
+
+      closeModal("loading-modal");
+      renderHistory(historyData);
+      renderSummary(historyData);
+      populateFilters(historyData);
+      prepareDetailedStats(historyData);
+      renderDetailedStats(detailedStatsData);
     })
     .catch(error => {
-        if (activeTab) {
-            const titleEl = document.getElementById("loading-title");
-            const msgEl = document.getElementById("loading-message");
-            const closeBtn = document.getElementById("loading-close-btn");
-            if (titleEl) titleEl.textContent = "Lỗi Tải Dữ Liệu";
-            if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
-            if (closeBtn) closeBtn.style.display = "block";
-        } else {
-            showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
-        }
+      console.error("Lỗi khi tải dữ liệu:", error);
+      closeModal("loading-modal");
+      showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
     });
 }
-
 function refreshData() {
     const activeTab = document.querySelector('.tabs a.active')?.getAttribute('onclick')?.includes('history') || false;
     if (activeTab) {
