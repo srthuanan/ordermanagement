@@ -696,7 +696,7 @@
 
         async function loadInitialData() {
             showLoading();
-            const apiURL = "https://script.google.com/macros/s/AKfycbwwzQ_pDrL-YSyJsWRPireVWOWCdO5fVfJC9ANnfhSNIgNxQpMIKoExnRXrdN2wzglhfQ/exec";
+            const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec";
             try {
                 const response = await axios.get(apiURL);
                 if (!response.data || !Array.isArray(response.data.khoxe)) throw new Error("Invalid data");
