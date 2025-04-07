@@ -51,7 +51,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 150px;
+            width: 140px;
             height: 100vh;
             background: #003087;
             padding: 15px;
@@ -171,7 +171,7 @@
         /* Main container */
         .main-container { 
             background: #f5f6f5; 
-            margin-left: 150px; 
+            margin-left: 140px; 
             padding: 15px; 
             margin-top: 40px; 
             height: calc(100vh - 60px); 
@@ -270,7 +270,7 @@
             width: 100%; 
         }
         .table-container { 
-            flex: 0 0 75%; 
+            flex: 0 0 80%; 
             background: #FFFFFF; 
             border-radius: 12px; 
             padding: 10px; 
@@ -286,7 +286,7 @@
         }
         .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
         .table-container::-webkit-scrollbar-track { background: #f5f6f5; }
-        .table-container seminalbar-thumb { 
+        .table-container::-webkit-scrollbar-thumb { 
             background: #d9e1e8; 
             border-radius: 3px; 
             box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
@@ -297,7 +297,7 @@
             box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
         }
         table { 
-            width: 100%; 
+            width: 120%; 
             border-collapse: collapse; 
             font-size: 11px; 
             table-layout: fixed; 
@@ -336,27 +336,28 @@
         .vin-highlight { font-weight: 600; color: #00a550; }
         
         /* Column widths */
-/* Column widths */
-.chua-ghep col:nth-child(1) { width: 5%; }  /* SỐ TT */
-.chua-ghep col:nth-child(2) { width: 15%; }
-.chua-ghep col:nth-child(3) { width: 25%; }
-.chua-ghep col:nth-child(4) { width: 10%; }
-.chua-ghep col:nth-child(5) { width: 12%; }
-.chua-ghep col:nth-child(6) { width: 18%; }
-.chua-ghep col:nth-child(7) { width: 10%; }
-.chua-ghep col:nth-child(8) { width: 15%; }
+        .chua-ghep col:nth-child(1) { width: 5%; }  /* SỐ TT */
+        .chua-ghep col:nth-child(2) { width: 15%; }
+        .chua-ghep col:nth-child(3) { width: 25%; }
+        .chua-ghep col:nth-child(4) { width: 10%; }
+        .chua-ghep col:nth-child(5) { width: 12%; }
+        .chua-ghep col:nth-child(6) { width: 18%; }
+        .chua-ghep col:nth-child(7) { width: 10%; }
+        .chua-ghep col:nth-child(8) { width: 15%; }
+/* Column widths for "Đã Ghép" */
 .da-ghep col:nth-child(1) { width: 4%; }   /* SỐ TT */
-.da-ghep col:nth-child(2) { width: 13%; }
-.da-ghep col:nth-child(3) { width: 18%; }
-.da-ghep col:nth-child(4) { width: 6%; }
-.da-ghep col:nth-child(5) { width: 9%; }
-.da-ghep col:nth-child(6) { width: 12%; }
-.da-ghep col:nth-child(7) { width: 6%; }
-.da-ghep col:nth-child(8) { width: 17%; }
-.da-ghep col:nth-child(9) { width: 16%; }
-.da-ghep col:nth-child(10) { width: 9%; }
-.da-ghep col:nth-child(11) { width: 8%; }
-        
+.da-ghep col:nth-child(2) { width: 10%; }  /* TƯ VẤN BÁN HÀNG */
+.da-ghep col:nth-child(3) { width: 15%; }  /* TÊN KHÁCH HÀNG */
+.da-ghep col:nth-child(4) { width: 6%; }   /* DÒNG XE */
+.da-ghep col:nth-child(5) { width: 6%; }   /* PHIÊN BẢN */
+.da-ghep col:nth-child(6) { width: 10%; }  /* NGOẠI THẤT */
+.da-ghep col:nth-child(7) { width: 6%; }   /* NỘI THẤT */
+.da-ghep col:nth-child(8) { width: 12%; }  /* SỐ ĐƠN HÀNG */
+.da-ghep col:nth-child(9) { width: 12%; }  /* SỐ VIN */
+.da-ghep col:nth-child(10) { width: 7%; }  /* NGÀY GHÉP */
+.da-ghep col:nth-child(11) { width: 6%; }  /* SỐ NGÀY */
+.da-ghep col:nth-child(12) { width: 7%; }  /* NGÀY XUẤT HÓA ĐƠN */
+
         /* Loading overlay */
         .loading-overlay {
             position: absolute;
@@ -395,7 +396,7 @@
         
         /* Detail panel */
         .detail-panel { 
-            flex: 0 0 22%; 
+            flex: 0 0 20%; 
             min-width: 200px; 
             background: #FFFFFF; 
             border-radius: 12px; 
@@ -595,8 +596,8 @@
             <h1>VinFast Thuận An</h1>
         </div>
         <div class="tabs">
-            <a href="#" onclick="switchTab('Sheet1', this)" class="active"><span>Đã Ghép</span></a>
-            <a href="#" onclick="switchTab('Sheet2', this)"><span>Chưa Ghép</span></a>
+            <a href="#" onclick="switchTab('daghep', this)" class="active"><span>Đã Ghép</span></a>
+            <a href="#" onclick="switchTab('chuaghep', this)"><span>Chưa Ghép</span></a>
         </div>
         <button class="toggle-btn" onclick="toggleSlidebar()"><i class="fas fa-bars"></i></button>
     </div>
@@ -623,13 +624,13 @@
                         <div class="loading-spinner"></div>
                         <span style="margin-left: 10px; font-size: 14px; color: #2c3e50;">Đang tải dữ liệu...</span>
                     </div>
-<table id="data-table">
-    <colgroup id="table-colgroup">
-        <col><col><col><col><col><col><col><col><col><col><col>
-    </colgroup>
-    <thead id="table-head"></thead>
-    <tbody id="table-body"></tbody>
-</table>
+                    <table id="data-table">
+                        <colgroup id="table-colgroup">
+                            <col><col><col><col><col><col><col><col><col><col><col><col>
+                        </colgroup>
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
                 </div>
                 <div class="detail-panel" id="detail-panel">
                     <h3>Chi Tiết Đơn Hàng</h3>
@@ -649,16 +650,36 @@
     <div id="notification"></div>
 
     <script>
-        let tableData = {};
-        let currentSheet = 'Sheet1';
+        let tableData = { daghep: [], chuaghep: [] }; // Khởi tạo mặc định
+        let currentSheet = 'daghep';
         let currentPage = 1;
         const rowsPerPage = 20;
+        let isDataLoaded = false; // Biến để kiểm tra trạng thái tải dữ liệu
 
         document.addEventListener("DOMContentLoaded", function () {
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
                 window.location.href = "index.html";
             } else {
-                loadInitialData();
+                // Kiểm tra dữ liệu trong sessionStorage trước
+                const storedDaghep = sessionStorage.getItem('daghep');
+                const storedChuaghep = sessionStorage.getItem('chuaghep');
+                if (storedDaghep && storedChuaghep) {
+                    try {
+                        tableData['daghep'] = JSON.parse(storedDaghep);
+                        tableData['chuaghep'] = JSON.parse(storedChuaghep);
+                        if (!Array.isArray(tableData['daghep']) || !Array.isArray(tableData['chuaghep'])) {
+                            throw new Error("Dữ liệu trong sessionStorage không hợp lệ");
+                        }
+                        isDataLoaded = true;
+                        renderTable(tableData[currentSheet]);
+                        highlightVinNumbers();
+                        updateTableHeader(currentSheet);
+                    } catch (error) {
+                        console.error("Lỗi khi parse dữ liệu từ sessionStorage:", error);
+                        tableData = { daghep: [], chuaghep: [] }; // Reset nếu dữ liệu không hợp lệ
+                    }
+                }
+                loadInitialData(); // Tải dữ liệu từ API
                 setupSearch();
                 const savedTheme = localStorage.getItem('theme');
                 if (savedTheme === 'dark') {
@@ -677,20 +698,23 @@
         }
 
         async function loadInitialData() {
-            const apiURL = "https://script.google.com/macros/s/AKfycbxXdp_aPbSuPLrrfVF8bxPN7O0niDTKXV07twVvdYJtLAO0ry5HLlOqUA9iCrRWSD3lbQ/exec"; // Cập nhật URL nếu cần
+            const apiURL = "https://script.google.com/macros/s/AKfycby3HoOoC-EPX_SKPC9XqqusIo__gnXuVQZ3mzldBZgR_dUCuo-1IAphkeqj_dvkHySBGA/exec";
             showLoading();
             try {
                 const response = await axios.get(apiURL);
-                tableData['Sheet1'] = response.data.Sheet1 || [];
-                tableData['Sheet2'] = response.data.Sheet2 || [];
-                sessionStorage.setItem('Sheet1', JSON.stringify(tableData['Sheet1']));
-                sessionStorage.setItem('Sheet2', JSON.stringify(tableData['Sheet2']));
+                console.log("Dữ liệu từ API:", response.data);
+                tableData['daghep'] = Array.isArray(response.data.daghep) ? response.data.daghep : [];
+                tableData['chuaghep'] = Array.isArray(response.data.chuaghep) ? response.data.chuaghep : [];
+                sessionStorage.setItem('daghep', JSON.stringify(tableData['daghep']));
+                sessionStorage.setItem('chuaghep', JSON.stringify(tableData['chuaghep']));
+                console.log("tableData sau khi gán:", tableData);
+                isDataLoaded = true;
                 renderTable(tableData[currentSheet]);
                 highlightVinNumbers();
                 showNotification("Dữ liệu đã được tải thành công!", 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="10">⚠️ ${errorMsg}</td></tr>`;
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="${currentSheet === 'daghep' ? 12 : 8}">⚠️ ${errorMsg}</td></tr>`;
                 showNotification(errorMsg, 3000);
             } finally {
                 hideLoading();
@@ -729,120 +753,152 @@
         }
 
         function switchTab(sheetName, element) {
+            if (!isDataLoaded) {
+                showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                return;
+            }
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
             currentSheet = sheetName;
             currentPage = 1;
-
-            if (tableData[sheetName] && tableData[sheetName].length > 0) {
+            if (tableData[sheetName] && Array.isArray(tableData[sheetName])) {
                 renderTable(tableData[sheetName]);
                 highlightVinNumbers();
                 updateTableHeader(sheetName);
             } else {
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="${sheetName === 'Sheet1' ? 11 : 8}">Không có dữ liệu cho ${sheetName === 'Sheet1' ? 'Đã Ghép' : 'Chưa Ghép'}</td></tr>`;
-                showNotification(`Không có dữ liệu cho ${sheetName === 'Sheet1' ? 'Đã Ghép' : 'Chưa Ghép'}`, 2000);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="${sheetName === 'daghep' ? 12 : 8}">Không có dữ liệu cho ${sheetName === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}</td></tr>`;
+                showNotification(`Không có dữ liệu cho ${sheetName === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}`, 2000);
             }
         }
 
-function updateTableHeader(sheetName) {
-    const thead = document.getElementById("table-head");
-    const colgroup = document.getElementById("table-colgroup");
-    colgroup.className = "";
-    if (sheetName === 'Sheet1') {
-        colgroup.classList.add('da-ghep');
-        thead.innerHTML = `
-            <tr>
-                <th>SỐ TT</th>
-                <th>TƯ VẤN BÁN HÀNG</th>
-                <th>TÊN KHÁCH HÀNG</th>
-                <th>DÒNG XE</th>
-                <th>PHIÊN BẢN</th>
-                <th>NGOẠI THẤT</th>
-                <th>NỘI THẤT</th>
-                <th>SỐ ĐƠN HÀNG</th>
-                <th>SỐ VIN</th>
-                <th>NGÀY GHÉP</th>
-                <th>SỐ NGÀY</th>
-            </tr>
-        `;
-    } else {
-        colgroup.classList.add('chua-ghep');
-        thead.innerHTML = `
-            <tr>
-                <th>SỐ TT</th>
-                <th>TƯ VẤN BÁN HÀNG</th>
-                <th>TÊN KHÁCH HÀNG</th>
-                <th>DÒNG XE</th>
-                <th>PHIÊN BẢN</th>
-                <th>NGOẠI THẤT</th>
-                <th>NỘI THẤT</th>
-                <th>SỐ ĐƠN HÀNG</th>
-            </tr>
-        `;
-    }
-}
-function renderTable(data, page = currentPage) {
-    const tbody = document.getElementById("table-body");
-    tbody.innerHTML = "";
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const paginatedData = data.slice(start, end);
+        function updateTableHeader(sheetName) {
+            const thead = document.getElementById("table-head");
+            const colgroup = document.getElementById("table-colgroup");
+            colgroup.className = "";
+            if (sheetName === 'daghep') {
+                colgroup.classList.add('da-ghep');
+                thead.innerHTML = `
+                    <tr>
+                        <th>SỐ TT</th>
+                        <th>TƯ VẤN BÁN HÀNG</th>
+                        <th>TÊN KHÁCH HÀNG</th>
+                        <th>DÒNG XE</th>
+                        <th>PHIÊN BẢN</th>
+                        <th>NGOẠI THẤT</th>
+                        <th>NỘI THẤT</th>
+                        <th>SỐ ĐƠN HÀNG</th>
+                        <th>SỐ VIN</th>
+                        <th>NGÀY GHÉP</th>
+                        <th>SỐ NGÀY</th>
+                        <th>NGÀY XUẤT HÓA ĐƠN</th>
+                    </tr>
+                `;
+            } else {
+                colgroup.classList.add('chua-ghep');
+                thead.innerHTML = `
+                    <tr>
+                        <th>SỐ TT</th>
+                        <th>TƯ VẤN BÁN HÀNG</th>
+                        <th>TÊN KHÁCH HÀNG</th>
+                        <th>DÒNG XE</th>
+                        <th>PHIÊN BẢN</th>
+                        <th>NGOẠI THẤT</th>
+                        <th>NỘI THẤT</th>
+                        <th>SỐ ĐƠN HÀNG</th>
+                    </tr>
+                `;
+            }
+        }
 
-    paginatedData.forEach((row, index) => {
-        const tr = document.createElement("tr");
-        let cells = [];
-        const globalIndex = start + index + 1; // Tạo SỐ TT tự động
+        function renderTable(data, page = currentPage) {
+            const tbody = document.getElementById("table-body");
+            tbody.innerHTML = "";
+            if (!Array.isArray(data)) {
+                console.error("Dữ liệu không phải là mảng:", data);
+                tbody.innerHTML = `<tr><td colspan="${currentSheet === 'daghep' ? 12 : 8}">Dữ liệu không hợp lệ</td></tr>`;
+                return;
+            }
 
-        if (currentSheet === 'Sheet1') {
-            cells.push(`<td>${globalIndex}</td>`); // Thêm SỐ TT
-            cells.push(`<td>${row["TƯ VẤN BÁN HÀNG"] || ""}</td>`);
-            cells.push(`<td>${row["TÊN KHÁCH HÀNG"] || ""}</td>`);
-            cells.push(`<td>${row["DÒNG XE"] || ""}</td>`);
-            cells.push(`<td>${row["PHIÊN BẢN"] || ""}</td>`);
-            cells.push(`<td>${row["NGOẠI THẤT"] || ""}</td>`);
-            cells.push(`<td>${row["NỘI THẤT"] || ""}</td>`);
-            cells.push(`<td>${row["SỐ ĐƠN HÀNG"] || ""}</td>`);
-            let vin = row["SỐ VIN"] || "";
-            cells.push(`<td>${vin}</td>`);
-            let ngayGhep = row["NGÀY GHÉP"] || "";
-            if (ngayGhep) {
-                const date = new Date(ngayGhep);
-                if (!isNaN(date)) {
-                    ngayGhep = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedData = data.slice(start, end);
+
+            paginatedData.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                let cells = [];
+                const globalIndex = start + index + 1;
+
+                if (currentSheet === 'daghep') {
+                    cells.push(`<td>${globalIndex}</td>`);
+                    cells.push(`<td>${row["Tên tư vấn bán hàng"] || ""}</td>`);
+                    cells.push(`<td>${row["Tên khách hàng"] || ""}</td>`);
+                    cells.push(`<td>${row["Dòng xe"] || ""}</td>`);
+                    cells.push(`<td>${row["Phiên bản"] || ""}</td>`);
+                    cells.push(`<td>${row["Ngoại thất"] || ""}</td>`);
+                    cells.push(`<td>${row["Nội thất"] || ""}</td>`);
+                    cells.push(`<td>${row["Số đơn hàng"] || ""}</td>`);
+                    let vin = row["VIN"] || "";
+                    cells.push(`<td>${vin}</td>`);
+                    let ngayGhep = row["Thời gian ghép"] || "";
+                    if (ngayGhep) {
+                        const date = new Date(ngayGhep);
+                        if (!isNaN(date)) {
+                            ngayGhep = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    }
+                    cells.push(`<td>${ngayGhep}</td>`);
+                    cells.push(`<td>${row["Số ngày ghép"] || ""}</td>`);
+                    let ngayXuatHoaDon = row["Ngày xuất hóa đơn"] || "";
+                    if (ngayXuatHoaDon) {
+                        const date = new Date(ngayXuatHoaDon);
+                        if (!isNaN(date)) {
+                            ngayXuatHoaDon = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    }
+                    cells.push(`<td>${ngayXuatHoaDon}</td>`);
+                } else {
+                    cells.push(`<td>${globalIndex}</td>`);
+                    cells.push(`<td>${row["Tên tư vấn bán hàng"] || ""}</td>`);
+                    cells.push(`<td>${row["Tên khách hàng"] || ""}</td>`);
+                    cells.push(`<td>${row["Dòng xe"] || ""}</td>`);
+                    cells.push(`<td>${row["Phiên bản"] || ""}</td>`);
+                    cells.push(`<td>${row["Ngoại thất"] || ""}</td>`);
+                    cells.push(`<td>${row["Nội thất"] || ""}</td>`);
+                    cells.push(`<td>${row["Số đơn hàng"] || ""}</td>`);
                 }
+
+                tr.innerHTML = cells.join("");
+                tr.onclick = () => showDetail(row);
+                tbody.appendChild(tr);
+            });
+
+            updatePagination(data);
+            if (data.length > 0) {
+                showDetail(data[0]);
+            } else {
+                document.getElementById("detail-body").innerHTML = "<tr><td colspan='2'>Không có dữ liệu để hiển thị.</td></tr>";
             }
-            cells.push(`<td>${ngayGhep}</td>`);
-            cells.push(`<td>${row["SỐ NGÀY GHÉP"] || ""}</td>`);
-        } else {
-            cells.push(`<td>${globalIndex}</td>`); // Thêm SỐ TT
-            cells.push(`<td>${row["TƯ VẤN BÁN HÀNG"] || ""}</td>`);
-            cells.push(`<td>${row["TÊN KHÁCH HÀNG"] || ""}</td>`);
-            cells.push(`<td>${row["DÒNG XE"] || ""}</td>`);
-            cells.push(`<td>${row["PHIÊN BẢN"] || ""}</td>`);
-            cells.push(`<td>${row["NGOẠI THẤT"] || ""}</td>`);
-            cells.push(`<td>${row["NỘI THẤT"] || ""}</td>`);
-            cells.push(`<td>${row["SỐ ĐƠN HÀNG"] || ""}</td>`);
         }
 
-        tr.innerHTML = cells.join("");
-        tr.onclick = () => showDetail(row);
-        tbody.appendChild(tr);
-    });
-
-    updatePagination(data);
-    if (data.length > 0) {
-        showDetail(data[0]);
-    } else {
-        document.getElementById("detail-body").innerHTML = "<tr><td colspan='2'>Không có dữ liệu để hiển thị.</td></tr>";
-    }
-}
         function updatePagination(data) {
+            if (!Array.isArray(data)) {
+                console.error("Dữ liệu không hợp lệ trong updatePagination:", data);
+                return;
+            }
             document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(data.length / rowsPerPage) || 1}`;
             document.getElementById("prev-btn").disabled = currentPage === 1;
             document.getElementById("next-btn").disabled = currentPage === Math.ceil(data.length / rowsPerPage) || data.length === 0;
         }
 
         function changePage(delta) {
+            if (!isDataLoaded) {
+                showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                return;
+            }
+            if (!tableData[currentSheet] || !Array.isArray(tableData[currentSheet])) {
+                console.error("Dữ liệu không hợp lệ trong changePage:", tableData[currentSheet]);
+                return;
+            }
             currentPage = Math.min(Math.max(1, currentPage + delta), Math.ceil(tableData[currentSheet].length / rowsPerPage));
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
             const filteredData = tableData[currentSheet].filter(row =>
@@ -854,129 +910,173 @@ function renderTable(data, page = currentPage) {
             document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-function highlightVinNumbers() {
-    const tableRows = document.querySelectorAll("#table-body tr");
-    tableRows.forEach(row => {
-        const vinCell = currentSheet === 'Sheet1' ? row.cells[8] : null; // Dịch sang phải 1 cột vì thêm SỐ TT
-        if (vinCell && vinCell.textContent.trim() !== "") {
-            vinCell.classList.add("vin-highlight");
+        function highlightVinNumbers() {
+            const tableRows = document.querySelectorAll("#table-body tr");
+            tableRows.forEach(row => {
+                const vinCell = currentSheet === 'daghep' ? row.cells[8] : null;
+                if (vinCell && vinCell.textContent.trim() !== "") {
+                    vinCell.classList.add("vin-highlight");
+                }
+            });
         }
-    });
-}
 
         function showDetail(row) {
             const detailBody = document.querySelector("#detail-body tbody");
-            let headers = currentSheet === 'Sheet1' 
-                ? ["TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY GHÉP"]
+            const headers = currentSheet === 'daghep' 
+                ? ["TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "NGÀY XUẤT HÓA ĐƠN"]
                 : ["TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG"];
-            let html = "";
+            let htmlContent = "";
             
-            headers.forEach((header) => {
-                let value = row[header] || "";
-                if (header === "SỐ VIN" && value) {
-                    html += `<tr><th>${header}</th><td class="vin-highlight">${value}</td></tr>`;
-                } else if (header === "NGÀY GHÉP" && value) {
-                    const date = new Date(value);
-                    if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    html += `<tr><th>${header}</th><td>${value}</td></tr>`;
-                } else {
-                    html += `<tr><th>${header}</th><td>${value}</td></tr>`;
+            headers.forEach(header => {
+                let cellValue = "";
+                if (header === "TƯ VẤN BÁN HÀNG") cellValue = row["Tên tư vấn bán hàng"] || "";
+                else if (header === "TÊN KHÁCH HÀNG") cellValue = row["Tên khách hàng"] || "";
+                else if (header === "DÒNG XE") cellValue = row["Dòng xe"] || "";
+                else if (header === "PHIÊN BẢN") cellValue = row["Phiên bản"] || "";
+                else if (header === "NGOẠI THẤT") cellValue = row["Ngoại thất"] || "";
+                else if (header === "NỘI THẤT") cellValue = row["Nội thất"] || "";
+                else if (header === "SỐ ĐƠN HÀNG") cellValue = row["Số đơn hàng"] || "";
+                else if (header === "SỐ VIN") cellValue = row["VIN"] || "";
+                else if (header === "NGÀY GHÉP") cellValue = row["Thời gian ghép"] || "";
+                else if (header === "SỐ NGÀY") cellValue = row["Số ngày ghép"] || "";
+                else if (header === "NGÀY XUẤT HÓA ĐƠN") cellValue = row["Ngày xuất hóa đơn"] || "";
+
+                if ((header === "NGÀY GHÉP" || header === "NGÀY XUẤT HÓA ĐƠN") && cellValue) {
+                    const parsedDate = new Date(cellValue);
+                    cellValue = !isNaN(parsedDate) 
+                        ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
+                        : cellValue;
                 }
+                const isVin = header === "SỐ VIN" && cellValue;
+                htmlContent += `
+                    <tr>
+                        <th>${header}</th>
+                        <td${isVin ? ' class="vin-highlight"' : ''}>${cellValue}</td>
+                    </tr>`;
             });
             
-            detailBody.innerHTML = html;
+            detailBody.innerHTML = htmlContent;
         }
 
-function exportToExcel() {
-    if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
-        const headers = currentSheet === 'Sheet1' 
-            ? ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY GHÉP"]
-            : ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG"];
-        const wsData = tableData[currentSheet].map((row, index) => {
-            const rowData = { "SỐ TT": index + 1 }; // Thêm SỐ TT tự động
-            headers.slice(1).forEach(header => {
-                let value = row[header] || "";
-                if (header === "NGÀY GHÉP" && value) {
-                    const date = new Date(value);
-                    if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                }
-                rowData[header] = value;
-            });
-            return rowData;
-        });
-        const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, currentSheet === 'Sheet1' ? 'Đã Ghép' : 'Chưa Ghép');
-        XLSX.writeFile(wb, `VinFast_Don_Hang_${currentSheet === 'Sheet1' ? 'Da_Ghep' : 'Chua_Ghep'}_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
-        showNotification("Đã xuất file thành công!", 2000);
-    }
-}
-function printTable() {
-    const now = new Date().toLocaleString('vi-VN');
-    const printContent = `
-        <h2 style="color: #2c3e50;">VINFAST MĐ AN PHÚ</h2>
-        <p>Hotline: 1900 232389</p>
-        <p>In lúc: ${now}</p>
-        ${document.getElementById("data-table").outerHTML}
-    `;
-    const win = window.open('', '', 'width=800,height=600');
-    win.document.write(`
-        <html>
-        <head>
-            <title>In danh sách VinFast - ${currentSheet === 'Sheet1' ? 'Đã Ghép' : 'Chưa Ghép'}</title>
-            <style>
-                body { font-family: 'Roboto', sans-serif; margin: 20px; }
-                table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                th, td { border: 1px solid #ddd; padding: 8px 10px; font-size: 11px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
-                th { background: #003087; color: #FFFFFF; }
-                .vin-highlight { font-weight: 600; color: #00a550; }
-                ${currentSheet === 'Sheet1' ? `
-                    colgroup col:nth-child(1) { width: 50px; }  /* SỐ TT */
-                    colgroup col:nth-child(2) { width: 100px; }
-                    colgroup col:nth-child(3) { width: 120px; }
-                    colgroup col:nth-child(4) { width: 80px; }
-                    colgroup col:nth-child(5) { width: 80px; }
-                    colgroup col:nth-child(6) { width: 100px; }
-                    colgroup col:nth-child(7) { width: 100px; }
-                    colgroup col:nth-child(8) { width: 120px; }
-                    colgroup col:nth-child(9) { width: 100px; }
-                    colgroup col:nth-child(10) { width: 80px; }
-                    colgroup col:nth-child(11) { width: 80px; }
-                ` : `
-                    colgroup col:nth-child(1) { width: 50px; }  /* SỐ TT */
-                    colgroup col:nth-child(2) { width: 120px; }
-                    colgroup col:nth-child(3) { width: 120px; }
-                    colgroup col:nth-child(4) { width: 80px; }
-                    colgroup col:nth-child(5) { width: 80px; }
-                    colgroup col:nth-child(6) { width: 120px; }
-                    colgroup col:nth-child(7) { width: 120px; }
-                    colgroup col:nth-child(8) { width: 120px; }
-                `}
-            </style>
-        </head>
-        <body>${printContent}</body>
-        </html>
-    `);
-    win.document.close();
-    win.print();
-}
+        function exportToExcel() {
+            if (!isDataLoaded) {
+                showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                return;
+            }
+            if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
+                const headers = currentSheet === 'daghep' 
+                    ? ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "NGÀY XUẤT HÓA ĐƠN"]
+                    : ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG"];
+                const wsData = tableData[currentSheet].map((row, index) => {
+                    const rowData = { "SỐ TT": index + 1 };
+                    headers.slice(1).forEach(header => {
+                        let value = "";
+                        if (header === "TƯ VẤN BÁN HÀNG") value = row["Tên tư vấn bán hàng"] || "";
+                        else if (header === "TÊN KHÁCH HÀNG") value = row["Tên khách hàng"] || "";
+                        else if (header === "DÒNG XE") value = row["Dòng xe"] || "";
+                        else if (header === "PHIÊN BẢN") value = row["Phiên bản"] || "";
+                        else if (header === "NGOẠI THẤT") value = row["Ngoại thất"] || "";
+                        else if (header === "NỘI THẤT") value = row["Nội thất"] || "";
+                        else if (header === "SỐ ĐƠN HÀNG") value = row["Số đơn hàng"] || "";
+                        else if (header === "SỐ VIN") value = row["VIN"] || "";
+                        else if (header === "NGÀY GHÉP") value = row["Thời gian ghép"] || "";
+                        else if (header === "SỐ NGÀY") value = row["Số ngày ghép"] || "";
+                        else if (header === "NGÀY XUẤT HÓA ĐƠN") value = row["Ngày xuất hóa đơn"] || "";
+
+                        if ((header === "NGÀY GHÉP" || header === "NGÀY XUẤT HÓA ĐƠN") && value) {
+                            const date = new Date(value);
+                            if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                        rowData[header] = value;
+                    });
+                    return rowData;
+                });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: headers });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép');
+                XLSX.writeFile(wb, `VinFast_Don_Hang_${currentSheet === 'daghep' ? 'Da_Ghep' : 'Chua_Ghep'}_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                showNotification("Đã xuất file thành công!", 2000);
+            }
+        }
+
+        function printTable() {
+            if (!isDataLoaded) {
+                showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                return;
+            }
+            const now = new Date().toLocaleString('vi-VN');
+            const printContent = `
+                <h2 style="color: #2c3e50;">VINFAST MĐ AN PHÚ</h2>
+                <p>Hotline: 1900 232389</p>
+                <p>In lúc: ${now}</p>
+                ${document.getElementById("data-table").outerHTML}
+            `;
+            const win = window.open('', '', 'width=800,height=600');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>In danh sách VinFast - ${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}</title>
+                    <style>
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                        th, td { border: 1px solid #ddd; padding: 8px 10px; font-size: 11px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
+                        th { background: #003087; color: #FFFFFF; }
+                        .vin-highlight { font-weight: 600; color: #00a550; }
+                        ${currentSheet === 'daghep' ? `
+                            colgroup col:nth-child(1) { width: 50px; }
+                            colgroup col:nth-child(2) { width: 100px; }
+                            colgroup col:nth-child(3) { width: 120px; }
+                            colgroup col:nth-child(4) { width: 80px; }
+                            colgroup col:nth-child(5) { width: 80px; }
+                            colgroup col:nth-child(6) { width: 100px; }
+                            colgroup col:nth-child(7) { width: 100px; }
+                            colgroup col:nth-child(8) { width: 120px; }
+                            colgroup col:nth-child(9) { width: 100px; }
+                            colgroup col:nth-child(10) { width: 80px; }
+                            colgroup col:nth-child(11) { width: 80px; }
+                            colgroup col:nth-child(12) { width: 80px; }
+                        ` : `
+                            colgroup col:nth-child(1) { width: 50px; }
+                            colgroup col:nth-child(2) { width: 120px; }
+                            colgroup col:nth-child(3) { width: 120px; }
+                            colgroup col:nth-child(4) { width: 80px; }
+                            colgroup col:nth-child(5) { width: 80px; }
+                            colgroup col:nth-child(6) { width: 120px; }
+                            colgroup col:nth-child(7) { width: 120px; }
+                            colgroup col:nth-child(8) { width: 120px; }
+                        `}
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            win.document.close();
+            win.print();
+        }
+
         async function refreshData() {
+            if (!isDataLoaded) {
+                showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                return;
+            }
             document.getElementById("search-input").value = "";
             currentPage = 1;
-            const apiURL = "https://script.google.com/macros/s/AKfycbxXdp_aPbSuPLrrfVF8bxPN7O0niDTKXV07twVvdYJtLAO0ry5HLlOqUA9iCrRWSD3lbQ/exec"; // Cập nhật URL nếu cần
+            const apiURL = "https://script.google.com/macros/s/AKfycby3HoOoC-EPX_SKPC9XqqusIo__gnXuVQZ3mzldBZgR_dUCuo-1IAphkeqj_dvkHySBGA/exec";
             showLoading();
             try {
                 const response = await axios.get(apiURL);
-                tableData['Sheet1'] = response.data.Sheet1 || [];
-                tableData['Sheet2'] = response.data.Sheet2 || [];
-                sessionStorage.setItem('Sheet1', JSON.stringify(tableData['Sheet1']));
-                sessionStorage.setItem('Sheet2', JSON.stringify(tableData['Sheet2']));
+                tableData['daghep'] = Array.isArray(response.data.daghep) ? response.data.daghep : [];
+                tableData['chuaghep'] = Array.isArray(response.data.chuaghep) ? response.data.chuaghep : [];
+                sessionStorage.setItem('daghep', JSON.stringify(tableData['daghep']));
+                sessionStorage.setItem('chuaghep', JSON.stringify(tableData['chuaghep']));
+                console.log("tableData sau khi làm mới:", tableData);
                 renderTable(tableData[currentSheet]);
                 highlightVinNumbers();
                 showNotification("Dữ liệu đã được làm mới!", 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
-document.getElementById("table-body").innerHTML = `<tr><td colspan="${currentSheet === 'Sheet1' ? 11 : 8}">⚠️ ${errorMsg}</td></tr>`;                showNotification(errorMsg, 3000);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="${currentSheet === 'daghep' ? 12 : 8}">⚠️ ${errorMsg}</td></tr>`;
+                showNotification(errorMsg, 3000);
             } finally {
                 hideLoading();
             }
@@ -993,6 +1093,14 @@ document.getElementById("table-body").innerHTML = `<tr><td colspan="${currentShe
 
         function setupSearch() {
             document.getElementById("search-input").addEventListener("input", debounce(function () {
+                if (!isDataLoaded) {
+                    showNotification("Đang tải dữ liệu, vui lòng chờ!", 2000);
+                    return;
+                }
+                if (!tableData[currentSheet] || !Array.isArray(tableData[currentSheet])) {
+                    console.error("Dữ liệu không hợp lệ trong setupSearch:", tableData[currentSheet]);
+                    return;
+                }
                 const searchValue = this.value.trim().toLowerCase();
                 const filteredData = tableData[currentSheet].filter(row =>
                     Object.values(row).some(cell => cell?.toString().toLowerCase().includes(searchValue))
