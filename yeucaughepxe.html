@@ -1021,7 +1021,7 @@ function goBack() {
 let historyData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
-const apiURL = "https://script.google.com/macros/s/AKfycbxs0Zj9smsKJnXu77mYvscqe-kS2c0OtdmRMHG0ulwhq_dt1GOAV-9In0GLQm54qliPxA/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const TELEGRAM_BOT_TOKEN = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628";
 const TELEGRAM_CHAT_ID = "5812034168";
 const labelMap = {
@@ -1409,37 +1409,30 @@ function confirmSubmit() {
     formData["thoi_gian_nhap"] = new Date().toISOString();
     formData["trang_thai"] = "Chưa ghép";
 
+    // Chuyển formData thành FormData để gửi đúng định dạng
+    const formDataToSend = new FormData();
+    for (const [key, value] of Object.entries(formData)) {
+        formDataToSend.append(key, value);
+    }
+
     fetch(apiURL, {
         method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-        redirect: "follow"
+        body: formDataToSend // Gửi dạng FormData thay vì JSON
     })
     .then(() => {
         closeModal("loading-modal");
         fetchHistory();
-        const form = document.getElementById("vinfast-form");
-        if (form) form.reset();
+        document.getElementById("vinfast-form").reset();
         const successModal = document.getElementById("success-modal");
         if (successModal) {
             successModal.classList.add("active");
             adjustModalScroll(successModal);
             setTimeout(() => closeModal("success-modal"), 3000);
         }
-
-        const ngayCoc = formatDateTime(formData["ngay_coc"]);
-        const ngayGui = formatDateTime(new Date());
         const telegramMessage = `<b>✅ YÊU CẦU GHÉP XE MỚI</b>\n` +
-            `Tư vấn bán hàng: ${formData["ten_ban_hang"]}\n` +
-            `Dòng xe: ${formData["dong_xe"]}\n` +
-            `Phiên bản: ${formData["phien_ban"]}\n` +
-            `Ngoại thất: ${formData["ngoai_that"]}\n` +
-            `Nội thất: ${formData["noi_that"]}\n` +
-            `Số đơn hàng: ${formData["so_don_hang"]}\n` +
-            `Khách hàng: ${formData["ten_khach_hang"]}\n` +
-            `Ngày cọc: ${ngayCoc}\n` +
-            `Ngày gửi: ${ngayGui}`;
+            Object.entries(formData)
+                .map(([key, value]) => `${labelMap[key] || key}: ${key === "ngay_coc" || key === "thoi_gian_nhap" ? formatDateTime(value) : value}`)
+                .join("\n");
         sendTelegramNotification(telegramMessage);
     })
     .catch(error => {
@@ -1447,7 +1440,6 @@ function confirmSubmit() {
         showNotification(`Lỗi khi gửi dữ liệu: ${error.message}`, 5000);
     });
 }
-
 function showDetail(index) {
     const row = historyData[index];
     if (!row) return;
@@ -1772,25 +1764,46 @@ function showNotification(message, duration) {
     setTimeout(() => notification.remove(), duration);
 }
 
-function restrictVersion(selectElement) {
-    const versionSelect = document.getElementsByName("phien_ban")[0];
-    const selectedCar = selectElement.value;
+function restrictVersion(select) {
+    const versionSelect = document.querySelector("select[name='phien_ban']");
+    if (!versionSelect) return;
+
+    const car = select.value;
     const versionOptions = {
         "VF 3": ["Base"],
         "VF 5": ["Plus"],
         "VF 6": ["Eco", "Plus"],
         "VF 7": ["Eco", "Plus"],
-
+        "VF 8": ["Eco", "Plus"],
+        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
+        "HERIO": [""],
+        "NERIO": [""],
+        "LIMO": [""],
+        "MINIO": [""]
     };
 
-    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
-    const allowedVersions = versionOptions[selectedCar] || [];
-    allowedVersions.forEach(version => {
-        const option = document.createElement("option");
-        option.value = version;
-        option.textContent = version;
-        versionSelect.appendChild(option);
-    });
+    const availableVersions = versionOptions[car] || ["Plus", "Eco", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "Base"];
+    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>' + 
+        availableVersions.map(v => `<option value="${v}">${v}</option>`).join("");
+}
+
+function showNotification(message, duration) {
+    const notification = document.createElement("div");
+    notification.className = "notification";
+    notification.textContent = message;
+    notification.style.setProperty("--duration", `${duration}ms`);
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), duration);
+}
+
+function setupScrollSync() {
+    const tableWrapper = document.querySelector(".table-wrapper");
+    if (tableWrapper) {
+        tableWrapper.addEventListener("scroll", () => {
+            const header = document.getElementById("table-header");
+            if (header) header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
+        });
+    }
 }
 </script>
 </body>
