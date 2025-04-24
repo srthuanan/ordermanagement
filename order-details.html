@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Chi Tiết Đơn Hàng - VinFast Thuận An</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --background: #f1f5f9;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+            --accent-color: #003087;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --footer-bg: #003087;
+            --footer-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --background: #1e293b;
+            --text-color: #f1f5f9;
+            --card-bg: #334155;
+            --accent-color: #3b82f6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            --footer-bg: #005eb8;
+            --footer-text: #f1f5f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            min-height: 100vh;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 56px;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .navbar .logo h1 {
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .navbar-controls {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-container {
+            margin-top: 64px;
+            padding: 16px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .order-details-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .order-details-container h2 {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 16px;
+            color: var(--accent-color);
+        }
+
+        .detail-group {
+            margin-bottom: 16px;
+        }
+
+        .detail-group h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+            padding-left: 8px;
+            border-left: 4px solid #D4A017;
+        }
+
+        .order-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .order-table {
+            border: 1px solid #4b5563;
+        }
+
+        .order-table th,
+        .order-table td {
+            padding: 14px 16px;
+            text-align: left;
+            border-right: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        [data-theme="dark"] .order-table th,
+        [data-theme="dark"] .order-table td {
+            border-right: 1px solid #4b5563;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        .order-table th:last-child,
+        .order-table td:last-child {
+            border-right: none;
+        }
+
+        .order-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .order-table th {
+            background: linear-gradient(to bottom, var(--accent-color), #004aad);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .order-table td {
+            color: var(--text-color);
+            font-size: 14px;
+            background: var(--card-bg);
+        }
+
+        /* Định dạng riêng cho cột "Thông Tin" */
+        .order-table td:first-child {
+            font-weight: 600;
+            color: #1e40af; /* Xanh đậm cho light theme */
+            background: #f0f5ff; /* Nền xanh rất nhạt */
+        }
+
+        [data-theme="dark"] .order-table td:first-child {
+            color: #93c5fd; /* Xanh sáng cho dark theme */
+            background: #1e293b; /* Nền tối hơn */
+        }
+
+        .order-table tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+
+        [data-theme="dark"] .order-table tr:nth-child(even) td {
+            background: #2d3748;
+        }
+
+        .order-table tr:hover td {
+            background: #e0e7ff;
+            transition: background 0.2s ease;
+        }
+
+        [data-theme="dark"] .order-table tr:hover td {
+            background: #4b5e8e;
+        }
+
+        .order-table .vin-highlight {
+            font-weight: 700;
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        [data-theme="dark"] .order-table .vin-highlight {
+            background: #1e3a8a;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .back-btn {
+            background: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .pdf-btn {
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 12px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            background: #16a34a;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 2000;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
+            animation-delay: 0s, calc(var(--duration) - 0.3s);
+        }
+
+        .notification.error {
+            background: #dc2626;
+        }
+
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        @media (max-width: 768px) {
+            .main-container { padding: 12px; }
+            .button-container { flex-direction: column; }
+            .action-btn { width: 100%; }
+            .order-table th,
+            .order-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            .order-table th {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>VinFast Thuận An</h1>
+        </div>
+        <div class="navbar-controls">
+            <button class="nav-btn" onclick="toggleTheme()" title="Đổi giao diện">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="nav-btn" onclick="goBack()" title="Quay lại">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="order-details-container">
+            <h2>Chi Tiết Đơn Hàng</h2>
+            <div id="order-details">
+                <div class="detail-group">
+                    <h3>Thông Tin Đơn Hàng</h3>
+                    <table class="order-table">
+                        <thead>
+                            <tr>
+                                <th>Thông Tin</th>
+                                <th>Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody class="detail-group-items"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="button-container">
+                <button class="action-btn back-btn" onclick="goBack()">Quay Lại</button>
+                <button class="action-btn pdf-btn" onclick="exportToPDF()">Tải PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <span>© 2025 VinFast Minh Đạo Thuận An | Hotline: 1900 1234</span>
+    </footer>
+
+    <script>
+        const labelMap = {
+            "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
+            "ten_khach_hang": "Tên Khách Hàng",
+            "dong_xe": "Dòng Xe",
+            "phien_ban": "Phiên Bản",
+            "ngoai_that": "Ngoại Thất",
+            "noi_that": "Nội Thất",
+            "so_don_hang": "Số Đơn Hàng",
+            "ngay_coc": "Ngày Cọc",
+            "thoi_gian_nhap": "Thời Gian Nhập",
+            "trang_thai": "Trạng Thái",
+            "thoi_gian_ghep": "Thời Gian Ghép",
+            "so_ngay_ghep": "Số Ngày Ghép",
+            "ket_qua": "Kết Quả",
+            "VIN": "VIN"
+        };
+
+        function formatDateTime(dtString) {
+            if (!dtString) return "Chưa có dữ liệu";
+            const d = new Date(dtString);
+            if (isNaN(d.getTime())) return "Dữ liệu không hợp lệ";
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const seconds = String(d.getSeconds()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function goBack() {
+            window.location.href = "yeucaughepxe.html";
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute("data-theme") || "light";
+            const newTheme = currentTheme === "light" ? "dark" : "light";
+            document.body.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        }
+
+        function showNotification(message, duration, isError = false) {
+            const notification = document.createElement("div");
+            notification.className = `notification ${isError ? 'error' : ''}`;
+            notification.textContent = message;
+            notification.style.setProperty("--duration", `${duration}ms`);
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), duration);
+        }
+
+        function exportToPDF() {
+            if (typeof window.jspdf === "undefined" || typeof html2canvas === "undefined") {
+                showNotification("Không thể tải thư viện jsPDF hoặc html2canvas. Vui lòng kiểm tra kết nối mạng!", 5000, true);
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            const element = document.getElementById("order-details");
+
+            if (!element || element.innerHTML.trim() === "") {
+                showNotification("Không tìm thấy nội dung đơn hàng để xuất PDF!", 5000, true);
+                return;
+            }
+
+            const orderDetails = JSON.parse(sessionStorage.getItem("orderDetails"));
+            if (!orderDetails) {
+                showNotification("Dữ liệu đơn hàng không hợp lệ!", 5000, true);
+                return;
+            }
+
+            const tempContainer = document.createElement("div");
+            tempContainer.style.background = "var(--card-bg)";
+            tempContainer.style.borderRadius = "12px";
+            tempContainer.style.padding = "24px";
+            tempContainer.style.boxShadow = "var(--shadow)";
+            tempContainer.style.maxWidth = "800px";
+            tempContainer.style.margin = "0 auto";
+            tempContainer.style.fontFamily = "'Roboto', sans-serif";
+            tempContainer.innerHTML = `
+                <h2 style="font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 16px; color: var(--accent-color);">Chi Tiết Đơn Hàng</h2>
+                ${element.innerHTML}
+            `;
+            document.body.appendChild(tempContainer);
+
+            html2canvas(tempContainer, {
+                scale: 3,
+                useCORS: true,
+                logging: false,
+                backgroundColor: null,
+                width: tempContainer.offsetWidth,
+                height: tempContainer.offsetHeight
+            }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png", 1.0);
+                const imgWidth = 190;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let position = 10;
+
+                doc.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+
+                const orderNumber = orderDetails.so_don_hang?.replace(/[^a-zA-Z0-9-_]/g, "_") || "chi_tiet_don_hang";
+                doc.save(`chi_tiet_don_hang_${orderNumber}.pdf`);
+                showNotification("Đã tải file PDF thành công!", 3000);
+
+                document.body.removeChild(tempContainer);
+            }).catch(error => {
+                console.error("Lỗi khi xuất PDF:", error);
+                showNotification(`Lỗi khi xuất PDF: ${error.message}`, 5000, true);
+                document.body.removeChild(tempContainer);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const orderDetails = JSON.parse(sessionStorage.getItem("orderDetails"));
+            const orderDetailsContainer = document.querySelector("#order-details .detail-group-items");
+
+            if (!orderDetails) {
+                orderDetailsContainer.innerHTML = "<tr><td colspan='2'>Không tìm thấy thông tin đơn hàng.</td></tr>";
+                showNotification("Không tìm thấy dữ liệu đơn hàng!", 5000, true);
+                return;
+            }
+
+            let html = "";
+            for (const [key, value] of Object.entries(orderDetails)) {
+                const label = labelMap[key] || key;
+                const formattedValue = (key === "ngay_coc" || key === "thoi_gian_nhap" || key === "thoi_gian_ghep")
+                    ? formatDateTime(value)
+                    : (value || "Chưa có dữ liệu");
+                const isVIN = key === "VIN";
+                html += `
+                    <tr>
+                        <td>${label}</td>
+                        <td ${isVIN ? 'class="vin-highlight"' : ''}>${formattedValue}</td>
+                    </tr>
+                `;
+            }
+            orderDetailsContainer.innerHTML = html;
+
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.body.setAttribute("data-theme", savedTheme);
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93546a5e2c16c024',t:'MTc0NTQ4NTI4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
