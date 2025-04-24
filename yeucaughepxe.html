@@ -1412,7 +1412,6 @@ function confirmSubmit() {
     formData["thoi_gian_nhap"] = new Date().toISOString();
     formData["trang_thai"] = "Chưa ghép";
 
-    // Chuyển formData thành FormData để gửi đúng định dạng
     const formDataToSend = new FormData();
     for (const [key, value] of Object.entries(formData)) {
         formDataToSend.append(key, value);
@@ -1420,24 +1419,55 @@ function confirmSubmit() {
 
     fetch(apiURL, {
         method: "POST",
-        body: formDataToSend // Gửi dạng FormData thay vì JSON
+        body: formDataToSend
     })
         .then(() => {
+            // Lấy lại lịch sử để lấy thông tin đơn hàng vừa gửi
+            return fetch(apiURL).then(response => response.json());
+        })
+        .then(data => {
             closeModal("loading-modal");
-            showNotification("Dữ liệu đã được gửi thành công!", 3000); // Added notification
-            fetchHistory();
             document.getElementById("vinfast-form").reset();
-            const successModal = document.getElementById("success-modal");
-            if (successModal) {
-                successModal.classList.add("active");
-                adjustModalScroll(successModal);
-                setTimeout(() => closeModal("success-modal"), 3000);
-            }
+
+            // Gộp dữ liệu từ daghep và chuaghep
+            const daghep = data.daghep || [];
+            const chuaghep = data.chuaghep || [];
+            historyData = [...daghep, ...chuaghep];
+
+            // Tìm đơn hàng vừa gửi
+            const submittedOrder = historyData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
+
+            // Lưu chi tiết đơn hàng vào sessionStorage
+            sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
+
+            // Hiển thị thông báo ngắn gọn trước khi chuyển hướng
+            showNotification("Dữ liệu đã được gửi thành công! Đang chuyển đến chi tiết đơn hàng...", 2000);
+
+            // Cập nhật lịch sử và thống kê trước khi chuyển hướng
+            renderHistory(historyData);
+            renderSummary(historyData);
+            populateFilters(historyData);
+            prepareDetailedStats(historyData);
+            renderDetailedStats(detailedStatsData);
+
+            // Tự động chuyển hướng đến trang chi tiết đơn hàng
+            setTimeout(() => {
+                window.location.href = "order-details.html";
+            }, 2000); // Chờ 2 giây để người dùng thấy thông báo
         })
         .catch(error => {
             closeModal("loading-modal");
             showNotification(`Lỗi khi gửi dữ liệu: ${error.message}`, 5000);
         });
+}
+
+function showNotification(message, duration) {
+    const notification = document.createElement("div");
+    notification.className = "notification";
+    notification.textContent = message;
+    notification.style.setProperty("--duration", `${duration}ms`);
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), duration);
 }
 function showDetail(index) {
     const row = historyData[index];
