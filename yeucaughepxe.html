@@ -1022,8 +1022,6 @@ let historyData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
-const TELEGRAM_BOT_TOKEN = "7893951100:AAFaQubB9NVXPgVnNmkJOVhwkM2XOKtu628";
-const TELEGRAM_CHAT_ID = "5812034168";
 const labelMap = {
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
     "ten_khach_hang": "Tên Khách Hàng",
@@ -1122,72 +1120,73 @@ function adjustModalScroll(modal) {
 }
 
 function fetchHistory() {
-  console.log("Bắt đầu tải dữ liệu từ API...");
-  showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+    console.log("Bắt đầu tải dữ liệu từ API...");
+    showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
 
-  fetch(apiURL)
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      return response.json();
-    })
-    .then(data => {
-      console.log("Dữ liệu thô từ API:", data);
+    fetch(apiURL)
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Dữ liệu thô từ API:", data);
 
-      // Gộp dữ liệu từ "daghep" và "chuaghep" thành một mảng
-      const daghep = data.daghep || [];
-      const chuaghep = data.chuaghep || [];
-      historyData = [...daghep, ...chuaghep]; // Hợp nhất hai mảng
+            // Gộp dữ liệu từ "daghep" và "chuaghep" thành một mảng
+            const daghep = data.daghep || [];
+            const chuaghep = data.chuaghep || [];
+            historyData = [...daghep, ...chuaghep]; // Hợp nhất hai mảng
 
-      console.log("Dữ liệu đã xử lý:", historyData);
+            console.log("Dữ liệu đã xử lý:", historyData);
 
-      if (!historyData.length) {
-        console.warn("Không có dữ liệu trong historyData");
-      }
+            if (!historyData.length) {
+                console.warn("Không có dữ liệu trong historyData");
+            }
 
-      closeModal("loading-modal");
-      renderHistory(historyData);
-      renderSummary(historyData);
-      populateFilters(historyData);
-      prepareDetailedStats(historyData);
-      renderDetailedStats(detailedStatsData);
-    })
-    .catch(error => {
-      console.error("Lỗi khi tải dữ liệu:", error);
-      closeModal("loading-modal");
-      showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
-    });
+            closeModal("loading-modal");
+            renderHistory(historyData);
+            renderSummary(historyData);
+            populateFilters(historyData);
+            prepareDetailedStats(historyData);
+            renderDetailedStats(detailedStatsData);
+        })
+        .catch(error => {
+            console.error("Lỗi khi tải dữ liệu:", error);
+            closeModal("loading-modal");
+            showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
+        });
 }
+
 function refreshData() {
     const activeTab = document.querySelector('.tabs a.active')?.getAttribute('onclick')?.includes('history') || false;
     if (activeTab) {
         showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
     }
     fetch(apiURL)
-    .then(response => response.json())
-    .then(data => {
-        historyData = data.yeucaughep || [];
-        if (activeTab) {
-            closeModal("loading-modal");
-            showNotification("Dữ liệu đã được làm mới!", 2000);
-        }
-        renderHistory(historyData);
-        renderSummary(historyData);
-        populateFilters(historyData);
-        prepareDetailedStats(historyData);
-        renderDetailedStats(detailedStatsData);
-    })
-    .catch(error => {
-        if (activeTab) {
-            const titleEl = document.getElementById("loading-title");
-            const msgEl = document.getElementById("loading-message");
-            const closeBtn = document.getElementById("loading-close-btn");
-            if (titleEl) titleEl.textContent = "Lỗi Làm Mới";
-            if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
-            if (closeBtn) closeBtn.style.display = "block";
-        } else {
-            showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000);
-        }
-    });
+        .then(response => response.json())
+        .then(data => {
+            historyData = data.yeucaughep || [];
+            if (activeTab) {
+                closeModal("loading-modal");
+                showNotification("Dữ liệu đã được làm mới!", 2000);
+            }
+            renderHistory(historyData);
+            renderSummary(historyData);
+            populateFilters(historyData);
+            prepareDetailedStats(historyData);
+            renderDetailedStats(detailedStatsData);
+        })
+        .catch(error => {
+            if (activeTab) {
+                const titleEl = document.getElementById("loading-title");
+                const msgEl = document.getElementById("loading-message");
+                const closeBtn = document.getElementById("loading-close-btn");
+                if (titleEl) titleEl.textContent = "Lỗi Làm Mới";
+                if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
+                if (closeBtn) closeBtn.style.display = "block";
+            } else {
+                showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000);
+            }
+        });
 }
 
 function populateFilters(data) {
@@ -1285,6 +1284,7 @@ function renderHistory(data) {
     const totalDonCount = document.getElementById("total-don-count");
     if (totalDonCount) totalDonCount.textContent = data.length;
 }
+
 function showDetailByOrder(orderNumber) {
     // Tìm bản ghi trong historyData dựa trên Số đơn hàng
     const row = historyData.find(row => row["Số đơn hàng"] === orderNumber);
@@ -1307,6 +1307,7 @@ function showDetailByOrder(orderNumber) {
         adjustModalScroll(detailModal);
     }
 }
+
 function debounce(func, delay) {
     let timeout;
     return function (...args) {
@@ -1399,27 +1400,6 @@ function previewForm(e) {
     }
 }
 
-async function sendTelegramNotification(message) {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const payload = {
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: "HTML"
-    };
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error("Gửi thông báo Telegram thất bại");
-        console.log("Thông báo Telegram đã được gửi!");
-    } catch (error) {
-        console.error("Lỗi gửi thông báo Telegram:", error);
-        showNotification(`Không thể gửi thông báo Telegram: ${error.message}`, 5000);
-    }
-}
-
 function confirmSubmit() {
     if (historyData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng đã tồn tại!", 3000);
@@ -1442,26 +1422,22 @@ function confirmSubmit() {
         method: "POST",
         body: formDataToSend // Gửi dạng FormData thay vì JSON
     })
-    .then(() => {
-        closeModal("loading-modal");
-        fetchHistory();
-        document.getElementById("vinfast-form").reset();
-        const successModal = document.getElementById("success-modal");
-        if (successModal) {
-            successModal.classList.add("active");
-            adjustModalScroll(successModal);
-            setTimeout(() => closeModal("success-modal"), 3000);
-        }
-        const telegramMessage = `<b>✅ YÊU CẦU GHÉP XE MỚI</b>\n` +
-            Object.entries(formData)
-                .map(([key, value]) => `${labelMap[key] || key}: ${key === "ngay_coc" || key === "thoi_gian_nhap" ? formatDateTime(value) : value}`)
-                .join("\n");
-        sendTelegramNotification(telegramMessage);
-    })
-    .catch(error => {
-        closeModal("loading-modal");
-        showNotification(`Lỗi khi gửi dữ liệu: ${error.message}`, 5000);
-    });
+        .then(() => {
+            closeModal("loading-modal");
+            showNotification("Dữ liệu đã được gửi thành công!", 3000); // Added notification
+            fetchHistory();
+            document.getElementById("vinfast-form").reset();
+            const successModal = document.getElementById("success-modal");
+            if (successModal) {
+                successModal.classList.add("active");
+                adjustModalScroll(successModal);
+                setTimeout(() => closeModal("success-modal"), 3000);
+            }
+        })
+        .catch(error => {
+            closeModal("loading-modal");
+            showNotification(`Lỗi khi gửi dữ liệu: ${error.message}`, 5000);
+        });
 }
 function showDetail(index) {
     const row = historyData[index];
@@ -1773,7 +1749,7 @@ function setupScrollSync() {
     if (tableWrapper) {
         tableWrapper.addEventListener("scroll", () => {
             const header = document.getElementById("table-header");
-            if (header) header.scrollLeft = tableWrapper.scrollLeft;
+            if (header) header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
         });
     }
 }
@@ -1788,45 +1764,45 @@ function showNotification(message, duration) {
 }
 
 function restrictVersion(select) {
-    const versionSelect = document.querySelector("select[name='phien_ban']");
-    if (!versionSelect) return;
+    const versionSelect = document.querySelector('select[name="phien_ban"]');
+    if (!versionSelect) {
+        console.error("Không tìm thấy select[name='phien_ban']");
+        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000);
+        return;
+    }
 
     const car = select.value;
-    const versionOptions = {
+    console.log(`Dòng xe được chọn: ${car}`);
+
+    const versions = {
         "VF 3": ["Base"],
         "VF 5": ["Plus"],
         "VF 6": ["Eco", "Plus"],
         "VF 7": ["Eco", "Plus"],
         "VF 8": ["Eco", "Plus"],
         "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
-        "HERIO": [""],
-        "NERIO": [""],
-        "LIMO": [""],
-        "MINIO": [""]
+        "HERIO": ["HERIO"],
+        "NERIO": ["NERIO"],
+        "LIMO": ["LIMO"],
+        "MINIO": ["MINIO"]
     };
 
-    const availableVersions = versionOptions[car] || ["Plus", "Eco", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "Base"];
-    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>' + 
-        availableVersions.map(v => `<option value="${v}">${v}</option>`).join("");
-}
+    const availableVersions = versions[car] || ["Base", "Eco", "Plus"];
+    console.log(`Các phiên bản khả dụng: ${availableVersions}`);
 
-function showNotification(message, duration) {
-    const notification = document.createElement("div");
-    notification.className = "notification";
-    notification.textContent = message;
-    notification.style.setProperty("--duration", `${duration}ms`);
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), duration);
-}
-
-function setupScrollSync() {
-    const tableWrapper = document.querySelector(".table-wrapper");
-    if (tableWrapper) {
-        tableWrapper.addEventListener("scroll", () => {
-            const header = document.getElementById("table-header");
-            if (header) header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
+    // Xóa danh sách cũ và tạo danh sách mới
+    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
+    if (availableVersions.length === 0) {
+        console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
+        showNotification(`Không có phiên bản nào cho dòng xe ${car}!`, 3000);
+    } else {
+        availableVersions.forEach(version => {
+            versionSelect.innerHTML += `<option value="${version}">${version}</option>`;
         });
     }
+
+    // Kiểm tra xem danh sách có được tạo đúng không
+    console.log(`Nội dung select sau khi cập nhật: ${versionSelect.innerHTML}`);
 }
 </script>
 </body>
