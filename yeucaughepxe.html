@@ -1264,8 +1264,10 @@ function renderHistory(data) {
 
     let content = data.map((row, i) => {
         const status = row["Kết quả"] || "Chưa tìm thấy VIN phù hợp";
+        // Sử dụng Số đơn hàng làm định danh
+        const orderNumber = row["Số đơn hàng"] || `row-${i}`;
         return `
-            <tr onclick="showDetail(${i})">
+            <tr onclick="showDetailByOrder('${orderNumber}')">
                 <td data-label="STT" title="${i + 1}">${i + 1}</td>
                 <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || ""}</td>
                 <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || ""}</td>
@@ -1283,7 +1285,28 @@ function renderHistory(data) {
     const totalDonCount = document.getElementById("total-don-count");
     if (totalDonCount) totalDonCount.textContent = data.length;
 }
+function showDetailByOrder(orderNumber) {
+    // Tìm bản ghi trong historyData dựa trên Số đơn hàng
+    const row = historyData.find(row => row["Số đơn hàng"] === orderNumber);
+    if (!row) {
+        showNotification("Không tìm thấy dữ liệu cho đơn hàng này!", 3000);
+        return;
+    }
 
+    let html = "";
+    for (const [key, value] of Object.entries(row)) {
+        const label = labelMap[key] || key;
+        const formattedValue = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép") ? formatDateTime(value) : value;
+        html += `<div><strong>${label}:</strong> <span>${formattedValue || "Chưa có dữ liệu"}</span></div>`;
+    }
+    const detailContent = document.getElementById("detail-content");
+    const detailModal = document.getElementById("detail-modal");
+    if (detailContent && detailModal) {
+        detailContent.innerHTML = html;
+        detailModal.classList.add("active");
+        adjustModalScroll(detailModal);
+    }
+}
 function debounce(func, delay) {
     let timeout;
     return function (...args) {
