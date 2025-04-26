@@ -733,105 +733,85 @@
 </div>
 
 <div class="main-container">
-    <div class="form-container" id="form-section">
-        <h2>Thêm Yêu Cầu Ghép Xe</h2>
-        <form id="vinfast-form" onsubmit="previewForm(event)">
-            <select name="ten_ban_hang" required>
-                <option value="" disabled selected>Chọn tư vấn bán hàng</option>
-                <option value="ĐINH TRỌNG NHÂN">ĐINH TRỌNG NHÂN</option>
-                <option value="LÊ MAI ANH">LÊ MAI ANH</option>
-                <option value="LÝ KIM VINH">LÝ KIM VINH</option>
-                <option value="NGUYỄN ANH TUẤN">NGUYỄN ANH TUẤN</option>
-                <option value="NGUYỄN HOÀNG PHÚC">NGUYỄN HOÀNG PHÚC</option>
-                <option value="NGUYỄN THIỆN THẢO">NGUYỄN THIỆN THẢO</option>
-                <option value="NGUYỄN TRẦN HOÀNG THANH">NGUYỄN TRẦN HOÀNG THANH</option>
-                <option value="PHẠM TRỌNG HUY">PHẠM TRỌNG HUY</option>
-                <option value="TẤT BÁCH TƯỜNG">TẤT BÁCH TƯỜNG</option>
-                <option value="THÀNH NGỌC VINH">THÀNH NGỌC VINH</option>
-                <option value="TRẦN THỊ NGUYỆT BẠCH">TRẦN THỊ NGUYỆT BẠCH</option>
-                <option value="VÕ MINH TUẤN">VÕ MINH TUẤN</option>
-                <option value="VŨ THỊ TRANG">VŨ THỊ TRANG</option>
-                <option value="TRẦN DANH PHƯƠNG">TRẦN DANH PHƯƠNG</option>
-                <option value="BÙI ANH TÀI">BÙI ANH TÀI</option>
-                <option value="NGUYỄN HOÀNG THẠCH">NGUYỄN HOÀNG THẠCH</option>
-                <option value="NGUYỄN PHƯƠNG LÂM">NGUYỄN PHƯƠNG LÂM</option>
-                <option value="PHẠM THÀNH NHÂN">PHẠM THÀNH NHÂN</option>
-            </select>
-            <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
-            <select name="dong_xe" required onchange="restrictVersion(this)">
-                <option value="" disabled selected>Chọn dòng xe</option>
-                <option value="VF 3">VF 3</option>
-                <option value="VF 5">VF 5</option>
-                <option value="VF 6">VF 6</option>
-                <option value="VF 7">VF 7</option>
-                <option value="VF 8">VF 8</option>
-                <option value="VF 9">VF 9</option>
-                <option value="HERIO">HERIO</option>
-                <option value="NERIO">NERIO</option>
-                <option value="LIMO">LIMO</option>
-                <option value="MINIO">MINIO</option>
-            </select>
-            <select name="phien_ban" required>
-                <option value="" disabled selected>Chọn phiên bản</option>
-                <option value="Plus">Plus</option>
-                <option value="Eco">Eco</option>
-                <option value="Plus_Metal">Plus_Metal</option>
-                <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
-                <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
-                <option value="Eco_3ZONES">Eco_3ZONES</option>
-                <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
-                <option value="Base">Base</option>
-            </select>
-            <select name="ngoai_that" required>
-                <option value="" disabled selected>Chọn ngoại thất</option>
-                <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
-                <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
-                <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
-                <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
-                <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
-                <option value="Jet Black (CE11)">Jet Black (CE11)</option>
-                <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
-                <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
-                <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
-                <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
-                <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
-                <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
-                <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
-                <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
-                <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
-                <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
-                <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
-                <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
-                <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
-                <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
-                <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
-                <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
-                <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
-                <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
-                <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
-                <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
-                <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
-                <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
-                <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
-                <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
-                <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
-                <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
-                <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
-                <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
-                <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>              
-            </select>
-            <select name="noi_that" required>
-                <option value="" disabled selected>Chọn nội thất</option>
-                <option value="Black">Black</option>
-                <option value="Brown">Brown</option>
-                <option value="Beige">Beige</option>
-            </select>         
-            <input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
-            <input name="ngay_coc" type="datetime-local" required/>
-            <button type="submit">Xác Nhận</button>
-        </form>
-    </div>
-
+<div class="form-container" id="form-section">
+    <h2>Thêm Yêu Cầu Ghép Xe</h2>
+    <form id="vinfast-form" onsubmit="previewForm(event)">
+        <label for="ten_ban_hang">Tên Tư Vấn Bán Hàng:</label>
+        <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" />
+        <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
+        <select name="dong_xe" required onchange="restrictVersion(this)">
+            <option value="" disabled selected>Chọn dòng xe</option>
+            <option value="VF 3">VF 3</option>
+            <option value="VF 5">VF 5</option>
+            <option value="VF 6">VF 6</option>
+            <option value="VF 7">VF 7</option>
+            <option value="VF 8">VF 8</option>
+            <option value="VF 9">VF 9</option>
+            <option value="HERIO">HERIO</option>
+            <option value="NERIO">NERIO</option>
+            <option value="LIMO">LIMO</option>
+            <option value="MINIO">MINIO</option>
+        </select>
+        <select name="phien_ban" required>
+            <option value="" disabled selected>Chọn phiên bản</option>
+            <option value="Plus">Plus</option>
+            <option value="Eco">Eco</option>
+            <option value="Plus_Metal">Plus_Metal</option>
+            <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
+            <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
+            <option value="Eco_3ZONES">Eco_3ZONES</option>
+            <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
+            <option value="Base">Base</option>
+        </select>
+        <select name="ngoai_that" required>
+            <option value="" disabled selected>Chọn ngoại thất</option>
+            <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
+            <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
+            <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
+            <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
+            <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
+            <option value="Jet Black (CE11)">Jet Black (CE11)</option>
+            <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
+            <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
+            <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
+            <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
+            <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
+            <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
+            <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
+            <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
+            <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
+            <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
+            <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
+            <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
+            <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
+            <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
+            <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
+            <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
+            <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
+            <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
+            <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
+            <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
+            <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
+            <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
+            <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
+            <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
+            <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
+            <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
+            <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
+            <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
+            <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
+        </select>
+        <select name="noi_that" required>
+            <option value="" disabled selected>Chọn nội thất</option>
+            <option value="Black">Black</option>
+            <option value="Brown">Brown</option>
+            <option value="Beige">Beige</option>
+        </select>
+        <input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
+        <input name="ngay_coc" type="datetime-local" required/>
+        <button type="submit">Xác Nhận</button>
+    </form>
+</div>
     <div class="grid-container" id="history-section">
         <div class="summary-section">
             <h3>Tổng Quan</h3>
@@ -1002,6 +982,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
         window.location.href = "index.html";
     } else {
+        // Điền tên tư vấn viên từ sessionStorage vào trường ten_ban_hang
+        const consultantInput = document.getElementById("ten_ban_hang");
+        if (consultantInput) {
+            consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+        }
         fetchHistory();
         setupSearch();
         setupScrollSync();
@@ -1164,7 +1149,7 @@ function refreshData() {
     fetch(apiURL)
         .then(response => response.json())
         .then(data => {
-            historyData = data.yeucaughep || [];
+            historyData = [...(data.daghep || []), ...(data.chuaghep || [])];
             if (activeTab) {
                 closeModal("loading-modal");
                 showNotification("Dữ liệu đã được làm mới!", 2000);
@@ -1214,7 +1199,7 @@ function populateFilters(data) {
     const detailedAdvisorFilter = document.getElementById("detailed-filter-advisor");
     if (detailedAdvisorFilter) {
         detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-        advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+        advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
     }
 }
 
@@ -1263,7 +1248,6 @@ function renderHistory(data) {
 
     let content = data.map((row, i) => {
         const status = row["Kết quả"] || "Chưa tìm thấy VIN phù hợp";
-        // Sử dụng Số đơn hàng làm định danh
         const orderNumber = row["Số đơn hàng"] || `row-${i}`;
         return `
             <tr onclick="showDetailByOrder('${orderNumber}')">
@@ -1286,7 +1270,6 @@ function renderHistory(data) {
 }
 
 function showDetailByOrder(orderNumber) {
-    // Tìm bản ghi trong historyData dựa trên Số đơn hàng
     const row = historyData.find(row => row["Số đơn hàng"] === orderNumber);
     if (!row) {
         showNotification("Không tìm thấy dữ liệu cho đơn hàng này!", 3000);
@@ -1422,38 +1405,36 @@ function confirmSubmit() {
         body: formDataToSend
     })
         .then(() => {
-            // Lấy lại lịch sử để lấy thông tin đơn hàng vừa gửi
             return fetch(apiURL).then(response => response.json());
         })
         .then(data => {
             closeModal("loading-modal");
             document.getElementById("vinfast-form").reset();
+            // Điền lại tên tư vấn viên sau khi reset form
+            const consultantInput = document.getElementById("ten_ban_hang");
+            if (consultantInput) {
+                consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+            }
 
-            // Gộp dữ liệu từ daghep và chuaghep
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
             historyData = [...daghep, ...chuaghep];
 
-            // Tìm đơn hàng vừa gửi
             const submittedOrder = historyData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
 
-            // Lưu chi tiết đơn hàng vào sessionStorage
             sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
 
-            // Hiển thị thông báo ngắn gọn trước khi chuyển hướng
             showNotification("Dữ liệu đã được gửi thành công! Đang chuyển đến chi tiết đơn hàng...", 2000);
 
-            // Cập nhật lịch sử và thống kê trước khi chuyển hướng
             renderHistory(historyData);
             renderSummary(historyData);
             populateFilters(historyData);
             prepareDetailedStats(historyData);
             renderDetailedStats(detailedStatsData);
 
-            // Tự động chuyển hướng đến trang chi tiết đơn hàng
             setTimeout(() => {
                 window.location.href = "order-details.html";
-            }, 2000); // Chờ 2 giây để người dùng thấy thông báo
+            }, 2000);
         })
         .catch(error => {
             closeModal("loading-modal");
@@ -1461,14 +1442,6 @@ function confirmSubmit() {
         });
 }
 
-function showNotification(message, duration) {
-    const notification = document.createElement("div");
-    notification.className = "notification";
-    notification.textContent = message;
-    notification.style.setProperty("--duration", `${duration}ms`);
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), duration);
-}
 function showDetail(index) {
     const row = historyData[index];
     if (!row) return;
@@ -1820,7 +1793,6 @@ function restrictVersion(select) {
     const availableVersions = versions[car] || ["Base", "Eco", "Plus"];
     console.log(`Các phiên bản khả dụng: ${availableVersions}`);
 
-    // Xóa danh sách cũ và tạo danh sách mới
     versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
     if (availableVersions.length === 0) {
         console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
@@ -1831,7 +1803,6 @@ function restrictVersion(select) {
         });
     }
 
-    // Kiểm tra xem danh sách có được tạo đúng không
     console.log(`Nội dung select sau khi cập nhật: ${versionSelect.innerHTML}`);
 }
 </script>
