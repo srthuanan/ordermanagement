@@ -992,48 +992,79 @@
             }
         }
 
-        async function login(e) {
-            e.preventDefault();
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const loginButton = document.getElementById("loginButton");
+async function login(e) {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const loginButton = document.getElementById("loginButton");
 
-            if (!username || !password) {
-                showAlert("Error", translations[language]["fill-all-fields"]);
-                return;
-            }
+    // Ánh xạ username đến tên tư vấn viên
+    const userToConsultantMap = {
+        'admin': 'PHẠM THÀNH NHÂN',
+        'bachttn': 'TRẦN THỊ NGUYỆT BẠCH',
+        'taiba': 'BÙI ANH TÀI',
+        'anhlm': 'LÊ MAI ANH',
+        'tuanvm': 'VÕ MINH TUẤN',
+        'ngoclt': 'THÀNH NGỌC VINH',
+        'vinhtn': 'LÝ KIM VINH',
+        'thaont': 'NGUYỄN THIỆN THẢO',
+        'tuanna': 'NGUYỄN ANH TUẤN',
+        'nhandt': 'ĐINH TRỌNG NHÂN',
+        'thanhnth': 'NGUYỄN TRẦN HOÀNG THANH',
+        'phucnh': 'NGUYỄN HOÀNG PHÚC',
+        'phuongtd': 'TRẦN DANH PHƯƠNG',
+        'thachnh': 'NGUYỄN HOÀNG THẠCH',
+        'tuongtb': 'TẤT BÁCH TƯỜNG',
+        'vinhlk': 'LÝ KIM VINH',
+        'trangvt': 'VŨ THỊ TRANG',
+        'huypt': 'PHẠM TRỌNG HUY',
+        'lamnp': 'NGUYỄN PHƯƠNG LÂM'
+    };
 
-            loginButton.classList.add("loading");
-            loginButton.disabled = true;
+    if (!username || !password) {
+        showAlert("Error", translations[language]["fill-all-fields"]);
+        return;
+    }
 
-            try {
-                const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
-                const result = response.data;
-                if (result.success) {
-                    isLoggedIn = true;
-                    currentUser = result.username;
-                    userRole = result.role || "employee";
-                    sessionStorage.setItem("isLoggedIn", "true");
-                    sessionStorage.setItem("currentUser", result.username);
-                    sessionStorage.setItem("userRole", userRole);
-                    closeModal("loginModal");
-                    showAlert("Success", translations[language]["login-success"]);
-                    updateUI();
-                    fetchTotalSoldCars();
-                    fetchSoldCarsData();
-                    fetchRandomStockData();
-                    fetchPairingRequests();
-                } else {
-                    showAlert("Error", result.message);
-                }
-            } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
-            } finally {
+    loginButton.classList.add("loading");
+    loginButton.disabled = true;
+
+    try {
+        const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
+        const result = response.data;
+        if (result.success) {
+            isLoggedIn = true;
+            currentUser = result.username;
+            userRole = result.role || "employee";
+            sessionStorage.setItem("isLoggedIn", "true");
+            sessionStorage.setItem("currentUser", result.username);
+            sessionStorage.setItem("userRole", userRole);
+            // Lưu currentConsultant dựa trên ánh xạ
+            if (userToConsultantMap[username]) {
+                sessionStorage.setItem("currentConsultant", userToConsultantMap[username]);
+            } else {
+                showAlert("Error", "Tên tư vấn viên không tìm thấy cho tài khoản này!");
                 loginButton.classList.remove("loading");
                 loginButton.disabled = false;
+                return;
             }
+            closeModal("loginModal");
+            showAlert("Success", translations[language]["login-success"]);
+            updateUI();
+            fetchTotalSoldCars();
+            fetchSoldCarsData();
+            fetchRandomStockData();
+            fetchPairingRequests();
+        } else {
+            showAlert("Error", result.message);
         }
-
+    } catch (error) {
+        showAlert("Error", translations[language]["server-error"]);
+    } finally {
+        loginButton.classList.remove("loading");
+        loginButton.disabled = false;
+    }
+}
         async function changePassword(e) {
             e.preventDefault();
             const username = document.getElementById("changeUsername").value.trim();
