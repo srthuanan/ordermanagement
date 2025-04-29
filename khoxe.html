@@ -124,7 +124,7 @@
             justify-content: center; 
             box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
-        .nav-btn Gollumhover, .theme-toggle:hover { 
+        .nav-btn:hover, .theme-toggle:hover { 
             box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         body.dark-mode .nav-btn, body.dark-mode .theme-toggle { 
@@ -168,53 +168,59 @@
         /* Filter section */
         .filter-section { 
             display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px; 
+            flex-wrap: nowrap; 
+            gap: 6px; 
             align-items: center; 
             justify-content: space-between; 
-            padding-bottom: 8px; 
+            padding-bottom: 6px; 
             width: 100%; 
-            position: relative; 
+        }
+        .filter-group { 
+            display: flex; 
+            flex-wrap: nowrap; 
+            gap: 6px; 
+            align-items: center; 
         }
         .filter-section input, .filter-section select { 
-            padding: 6px 10px; 
+            padding: 4px 6px; 
             border: none; 
-            border-radius: 8px; 
-            font-size: 12px; 
+            border-radius: 5px; 
+            font-size: 10px; 
             background: #FFFFFF; 
-            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
-            width: 180px; 
+            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
+            width: 120px; 
+            height: 26px; 
             color: #2c3e50; 
         }
         .filter-section input:focus, .filter-section select:focus { outline: none; }
         body.dark-mode .filter-section input, body.dark-mode .filter-section select { 
             background: #3a3a3a; 
             color: #d9e1e8; 
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.4), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: inset 2px 2px 3px rgba(0, 0, 0, 0.4), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
         .filter-section .button-group { 
             display: flex; 
-            gap: 8px; 
+            gap: 5px; 
             align-items: center; 
         }
         .export-btn { 
-            padding: 6px; 
+            padding: 3px; 
             border: none; 
             border-radius: 50%; 
             background: #FFFFFF; 
             color: #2c3e50; 
-            font-size: 12px; 
+            font-size: 10px; 
             cursor: pointer; 
             transition: all 0.3s ease; 
-            width: 32px; 
-            height: 32px; 
+            width: 26px; 
+            height: 26px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
         .export-btn:hover { 
-            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
         .refresh-btn { 
             background: #FFFFFF; 
@@ -223,21 +229,21 @@
         body.dark-mode .export-btn, body.dark-mode .refresh-btn { 
             background: #3a3a3a; 
             color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
         body.dark-mode .refresh-btn { color: #00a550; }
         .total-vehicles { 
-            padding: 6px 12px; 
-            font-size: 12px; 
+            padding: 4px 8px; 
+            font-size: 10px; 
             color: #2c3e50; 
             background: #f5f6f5; 
-            border-radius: 8px; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            border-radius: 5px; 
+            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
         body.dark-mode .total-vehicles { 
             color: #d9e1e8; 
             background: #2c2c2c; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); 
         }
 
         /* Tables section */
@@ -308,10 +314,7 @@
             background: #f0f0f0; 
             box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
         }
-        body.dark-mode tbody tr:hover { 
-            background: #3a3a3a; 
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
-        }
+        body.dark-mode tbody tr:hover { background: #3a3a3a; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
         .highlight { font-weight: 600; color: #00a550; }
 
         /* Column widths */
@@ -517,11 +520,16 @@
             .filter-section {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 8px;
+                gap: 5px;
+            }
+            .filter-group {
+                flex-direction: column;
+                width: 100%;
+                gap: 5px;
             }
             .filter-section input, .filter-section select {
                 width: 100%;
-                margin-bottom: 5px;
+                margin-bottom: 3px;
             }
             .filter-section .button-group {
                 width: 100%;
@@ -530,8 +538,8 @@
             .filter-section .total-vehicles {
                 width: 100%;
                 text-align: right;
-                padding: 4px 8px;
-                font-size: 10px;
+                padding: 3px 6px;
+                font-size: 9px;
             }
             .tables-section {
                 flex-direction: column;
@@ -584,10 +592,16 @@
     <div class="main-container" id="main-container">
         <div class="grid-container">
             <div class="filter-section">
-                <div>
+                <div class="filter-group">
                     <input type="text" id="search-input" placeholder="Tìm kiếm...">
                     <select id="filter-line" onchange="applyFilters()">
                         <option value="">Tất cả dòng xe</option>
+                    </select>
+                    <select id="filter-version" onchange="applyFilters()">
+                        <option value="">Tất cả phiên bản</option>
+                    </select>
+                    <select id="filter-exterior" onchange="applyFilters()">
+                        <option value="">Tất cả ngoại thất</option>
                     </select>
                     <select id="filter-status" onchange="applyFilters()">
                         <option value="">Tất cả trạng thái</option>
@@ -815,6 +829,8 @@
                 filteredData = [...tableData];
                 document.getElementById("search-input").value = "";
                 document.getElementById("filter-line").value = "";
+                document.getElementById("filter-version").value = "";
+                document.getElementById("filter-exterior").value = "";
                 document.getElementById("filter-status").value = "";
                 renderTable();
                 populateFilters();
@@ -830,20 +846,30 @@
 
         function populateFilters() {
             const lineSelect = document.getElementById("filter-line");
+            const versionSelect = document.getElementById("filter-version");
+            const exteriorSelect = document.getElementById("filter-exterior");
             const statusSelect = document.getElementById("filter-status");
             const lines = [...new Set(tableData.map(row => row[0]))];
+            const versions = [...new Set(tableData.map(row => row[1]))];
+            const exteriors = [...new Set(tableData.map(row => row[2]))];
             const statuses = [...new Set(tableData.map(row => row[5]))];
             lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}">${line}</option>`).join('');
+            versionSelect.innerHTML = '<option value="">Tất cả phiên bản</option>' + versions.map(version => `<option value="${version}">${version}</option>`).join('');
+            exteriorSelect.innerHTML = '<option value="">Tất cả ngoại thất</option>' + exteriors.map(exterior => `<option value="${exterior}">${exterior}</option>`).join('');
             statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}">${status}</option>`).join('');
         }
 
         function applyFilters() {
             const lineFilter = document.getElementById("filter-line").value;
+            const versionFilter = document.getElementById("filter-version").value;
+            const exteriorFilter = document.getElementById("filter-exterior").value;
             const statusFilter = document.getElementById("filter-status").value;
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
 
             filteredData = tableData.filter(row => {
                 return (!lineFilter || row[0] === lineFilter) &&
+                       (!versionFilter || row[1] === versionFilter) &&
+                       (!exteriorFilter || row[2] === exteriorFilter) &&
                        (!statusFilter || row[5] === statusFilter) &&
                        (!searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue)));
             });
