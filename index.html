@@ -883,7 +883,7 @@
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
-            <a href="danhsach.html" data-lang="pairing-list" class="active"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="danhsach.html" data-lang="pairing-list"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
             <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
@@ -1134,7 +1134,7 @@
         let userRole = sessionStorage.getItem("userRole") || "employee"; 
         let language = localStorage.getItem("language") || "vi"; 
 
-        // Đối tượng chứa các bản dịch (giữ nguyên)
+        // Đối tượng chứa các bản dịch
         const translations = {
             vi: {
                 "hero-title": "Hệ Thống Quản Lý Đơn Hàng",
@@ -1242,22 +1242,19 @@
         function showToast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`; // type can be 'success', 'error', 'info'
+            toast.className = `toast ${type}`; 
             
-            let iconClass = 'fas fa-info-circle'; // default icon
+            let iconClass = 'fas fa-info-circle'; 
             if (type === 'success') iconClass = 'fas fa-check-circle';
             if (type === 'error') iconClass = 'fas fa-times-circle';
 
             toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
             container.appendChild(toast);
 
-            // Animate in
             setTimeout(() => toast.classList.add('show'), 10);
 
-            // Auto-dismiss
             setTimeout(() => {
                 toast.classList.remove('show');
-                // Remove from DOM after animation
                 toast.addEventListener('transitionend', () => toast.remove());
             }, duration);
         }
@@ -1266,7 +1263,7 @@
         function showSkeletonLoading(tableBodyId, columns, rows = 3) {
             const tableBody = document.getElementById(tableBodyId);
             if (!tableBody) return;
-            tableBody.innerHTML = ''; // Clear previous content
+            tableBody.innerHTML = ''; 
             for (let i = 0; i < rows; i++) {
                 const tr = document.createElement('tr');
                 tr.className = 'skeleton-row';
@@ -1286,11 +1283,34 @@
             tableBody.innerHTML = `<tr><td colspan="${columns}" class="empty-state">${translations[language][messageKey]}</td></tr>`;
         }
 
+        // --- Set Active Sidebar Link ---
+        function setActiveSidebarLink() {
+            const navLinks = document.querySelectorAll("#navMenu a");
+            // Lấy tên file hiện tại, ví dụ "Index.html", "khoxe.html"
+            // Nếu URL là "/" (root), coi như là "Index.html"
+            const currentPageFile = window.location.pathname.split("/").pop() || "Index.html"; 
+
+            navLinks.forEach(link => link.classList.remove("active"));
+
+            let linkToActivate = Array.from(navLinks).find(link => link.getAttribute('href') === currentPageFile);
+
+            // Nếu không có link nào khớp trực tiếp (ví dụ đang ở Index.html)
+            // và người dùng đã đăng nhập, thì kích hoạt link "DS Ghép Xe" làm mặc định
+            if (!linkToActivate && (currentPageFile === "Index.html" || currentPageFile === "") && isLoggedIn) {
+                linkToActivate = document.querySelector('#navMenu a[href="danhsach.html"]');
+            }
+            
+            // Chỉ kích hoạt link nếu nó đang được hiển thị
+            if (linkToActivate && linkToActivate.style.display !== 'none') {
+                linkToActivate.classList.add("active");
+            }
+        }
 
         // Chạy khi DOM đã tải xong
         document.addEventListener("DOMContentLoaded", () => {
             updateUIBasedOnLogin(); 
             updateLanguage(); 
+            // setActiveSidebarLink(); // Đã được gọi trong updateUIBasedOnLogin
             if (localStorage.getItem("theme") === "dark") {
                 document.body.classList.add("dark-mode");
                 const icon = document.querySelector(".theme-toggle i");
@@ -1334,7 +1354,7 @@
                     const userDisplayName = sessionStorage.getItem("currentConsultant") || currentUser; 
                     welcomeTitle.textContent = language === 'vi' ? `Chào mừng ${userDisplayName}!` : `Welcome ${userDisplayName}!`;
                 }
-                dashboard.style.display = "block"; // Phải là block để grid hoạt động
+                dashboard.style.display = "block"; 
                 logoutBtn.style.display = "flex"; 
                 navMenuLinks.forEach(link => link.style.display = "flex");
                 
@@ -1371,6 +1391,7 @@
                     localStorage.setItem('sidebarState', 'collapsed'); 
                 }
             }
+            setActiveSidebarLink(); // Gọi hàm này để cập nhật link active
         }
         
         function fetchDashboardData() {
@@ -1406,7 +1427,7 @@
             const tableBodyId = "sold-cars-table-body";
             const tableBody = document.getElementById(tableBodyId);
             if (!tableBody) return;
-            showSkeletonLoading(tableBodyId, 3); // 3 columns
+            showSkeletonLoading(tableBodyId, 3); 
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             let allSoldCars = [];
@@ -1442,9 +1463,8 @@
         }
 
         function displaySoldCarsData(data, tableBodyElement) {
-            tableBodyElement.innerHTML = ""; // Clear skeleton or previous
+            tableBodyElement.innerHTML = ""; 
             if (!data || data.length === 0) {
-                // Empty state will be handled by the caller if needed
                 return;
             }
             data.forEach(row => {
@@ -1462,14 +1482,14 @@
             if (!stockTableBody || !stockCountElement) return;
             
             stockCountElement.textContent = translations[language]["loading-data"];
-            showSkeletonLoading(tableBodyId, 4); // 4 columns
+            showSkeletonLoading(tableBodyId, 4); 
 
             try {
                 const response = await axios.get(STOCK_API_URL);
                 const data = response.data;
                 const stockData = data.slice(1); 
                 const randomRows = getRandomRows(stockData, 5); 
-                stockTableBody.innerHTML = ""; // Clear skeleton
+                stockTableBody.innerHTML = ""; 
                 if (randomRows.length === 0) {
                      showEmptyState(tableBodyId, 4);
                 } else {
@@ -1494,12 +1514,12 @@
             if(!pairingTableBody || !pairingCountElement) return;
 
             pairingCountElement.textContent = translations[language]["loading-data"];
-            showSkeletonLoading(tableBodyId, 3); // 3 columns
+            showSkeletonLoading(tableBodyId, 3); 
 
             try {
                 const response = await axios.get(PAIRING_REQUEST_API_URL);
                 const jsonData = response.data; 
-                pairingTableBody.innerHTML = ""; // Clear skeleton
+                pairingTableBody.innerHTML = ""; 
                 if (jsonData && Array.isArray(jsonData)) {
                     jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
                     const latestRequests = jsonData.slice(0, 5); 
@@ -1567,9 +1587,10 @@
                     } else {
                         sessionStorage.setItem("currentConsultant", result.username); 
                     }
-                    isLoggedIn = true;
-                    currentUser = result.username;
-                    userRole = result.role || "employee";
+                    isLoggedIn = true; // Cập nhật biến cục bộ
+                    currentUser = result.username; // Cập nhật biến cục bộ
+                    userRole = result.role || "employee"; // Cập nhật biến cục bộ
+
 
                     closeModal("loginModal");
                     showToast(translations[language]["login-success"], 'success');
@@ -1694,7 +1715,7 @@
             currentUser = "";   
             userRole = "employee"; 
             localStorage.removeItem('sidebarState'); 
-            updateUIBasedOnLogin();
+            updateUIBasedOnLogin(); // This will also call setActiveSidebarLink
             showToast(translations[language]["logout-success"], 'info');
         }
 
@@ -1725,8 +1746,6 @@
             if (!modal) return;
             const content = modal.querySelector(".modal-content");
             modal.style.display = "flex";
-            // Trigger reflow to ensure transition is applied
-            // void modal.offsetWidth; // Not always needed with timeout
             setTimeout(() => {
                 if (content) content.classList.add("active");
             }, 10); 
@@ -1742,7 +1761,7 @@
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 300); // Match transition duration
+            }, 300); 
         }
         
         function resetModalToLogin() {
@@ -1752,19 +1771,6 @@
                 loginFormElement.querySelector('form')?.reset();
             }
         }
-
-        // showAlert is now replaced by showToast for most cases.
-        // If a modal alert is still needed for very critical messages, it can be kept.
-        // For now, I'll comment it out as showToast is preferred.
-        /*
-        function showAlert(title, message) {
-            const alertTitle = document.getElementById("alertTitle");
-            const alertMessage = document.getElementById("alertMessage");
-            if (alertTitle) alertTitle.textContent = title;
-            if (alertMessage) alertMessage.textContent = message;
-            openModal("alertModal"); // Assuming alertModal still exists
-        }
-        */
 
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
@@ -1782,10 +1788,10 @@
             const langBtn = document.getElementById("languageBtn");
             if (langBtn) langBtn.textContent = language === "vi" ? "EN" : "VI";
             updateLanguage();
-            // Re-fetch dashboard data if it's visible and language changes, to update "Đang tải..." etc.
             if (isLoggedIn && document.getElementById('dashboard').style.display !== 'none') {
-                fetchDashboardData();
+                fetchDashboardData(); // Cập nhật lại dữ liệu dashboard (ví dụ: "Đang tải...")
             }
+             setActiveSidebarLink(); // Cập nhật lại active link nếu ngôn ngữ thay đổi text
         }
 
         function updateLanguage() {
@@ -1818,7 +1824,6 @@
                     element.placeholder = translations[language][key];
                 }
             });
-            // Update empty states if they are currently visible
             document.querySelectorAll('.data-table td.empty-state').forEach(td => {
                 const messageKey = td.dataset.emptyMessageKey || "no-data";
                 td.textContent = translations[language][messageKey];
