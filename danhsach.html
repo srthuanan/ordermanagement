@@ -33,8 +33,8 @@
             background: #003087;
             color: #FFFFFF;
             text-align: center;
-            padding: 10px 0;
-            font-size: 14px;
+            padding: 10px 0; /* Default padding */
+            font-size: 14px; /* Default font size */
             font-weight: 600;
             text-transform: uppercase;
             z-index: 999;
@@ -55,8 +55,8 @@
             height: 100vh;
             background: #003087;
             padding: 15px;
-            padding-top: 40px; /* Adjusted for header height */
-            transition: width 0.3s ease;
+            padding-top: 50px; /* Adjusted for default header height */
+            transition: width 0.3s ease, padding-top 0.3s ease;
             z-index: 1000; 
             box-shadow: 4px 0 8px rgba(0, 48, 135, 0.6), -2px 0 8px rgba(255, 255, 255, 0.1);
         }
@@ -80,7 +80,7 @@
             flex-direction: column; 
             gap: 10px; 
             overflow-y: auto; 
-            max-height: calc(100vh - 100px); 
+            max-height: calc(100vh - 100px); /* Adjusted based on padding-top */
         }
         .slidebar .tabs a { 
             padding: 10px 12px; 
@@ -153,8 +153,8 @@
         /* Navbar controls */
         .navbar-controls { 
             position: fixed; 
-            top: 8px; 
-            right: 15px; 
+            top: 8px; /* Default top */
+            right: 15px; /* Default right */
             display: flex; 
             gap: 8px; 
             z-index: 1001; 
@@ -165,11 +165,11 @@
             border-radius: 50%; 
             background: rgba(255,255,255,0.2); 
             color: #FFFFFF; 
-            font-size: 14px; 
+            font-size: 14px; /* Default font size */
             cursor: pointer; 
             transition: all 0.3s ease; 
-            width: 28px; 
-            height: 28px; 
+            width: 28px; /* Default width */
+            height: 28px; /* Default height */
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -204,10 +204,10 @@
         .main-container { 
             background: #f5f6f5; 
             margin-left: 140px; 
-            padding: 15px; 
-            margin-top: 40px; 
-            height: calc(100vh - 60px); 
-            transition: margin-left 0.3s ease; 
+            padding: 15px; /* Default padding */
+            margin-top: 40px; /* Default margin-top (approx header height) */
+            height: calc(100vh - 40px - 36px); /* Default height (headerH - footerH) */
+            transition: margin-left 0.3s ease, height 0.3s ease, margin-top 0.3s ease, padding 0.3s ease; 
             display: flex; 
             gap: 10px; 
             width: calc(100vw - 140px); 
@@ -229,6 +229,7 @@
             flex-direction: column; 
             gap: 10px; 
             width: 100%; 
+            overflow: hidden; /* Prevent grid container itself from causing body scroll */
         }
         body.dark-mode .grid-container { 
             background: #2c2c2c; 
@@ -246,10 +247,10 @@
             width: 100%; 
         }
         .filter-section input { 
-            padding: 6px 10px; 
+            padding: 6px 10px; /* Default padding */
             border: none; 
             border-radius: 8px; 
-            font-size: 12px; 
+            font-size: 12px; /* Default font size */
             background: #FFFFFF; 
             box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
             width: 180px; 
@@ -272,11 +273,11 @@
             border-radius: 50%; 
             background: #FFFFFF; 
             color: #2c3e50; 
-            font-size: 12px; 
+            font-size: 12px; /* Default font size */
             cursor: pointer; 
             transition: all 0.3s ease; 
-            width: 32px; 
-            height: 32px; 
+            width: 32px; /* Default width */
+            height: 32px; /* Default height */
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -299,20 +300,21 @@
         .tables-section { 
             display: flex; 
             gap: 10px; 
-            flex: 1; 
-            min-height: 360px; 
+            flex: 1; /* Allows this section to grow and fill grid-container */
+            min-height: 0; /* Crucial for flex children that need to scroll */
             width: 100%; 
         }
         .table-container { 
-            flex: 0 0 80%; 
+            flex: 0 0 80%; /* Default flex basis */
             background: #FFFFFF; 
             border-radius: 12px; 
             padding: 10px; 
             box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
-            overflow-x: auto; 
-            overflow-y: auto; 
-            max-height: calc(100vh - 200px); 
+            overflow: auto; /* Handles both x and y scroll */
+            max-height: calc(100vh - 220px); /* Default max-height */
             position: relative; 
+            display: flex; /* To allow table to stretch if needed or for loading overlay */
+            flex-direction: column; /* Stack table and loading overlay */
         }
         body.dark-mode .table-container { 
             background: #2c2c2c; 
@@ -331,13 +333,13 @@
             box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
         }
         table { 
-            width: 120%; 
+            width: 120%; /* Allows table to be wider than container for horizontal scroll */
             border-collapse: collapse; 
-            font-size: 11px; 
+            font-size: 11px; /* Default font size */
             table-layout: fixed; 
         }
         th, td { 
-            padding: 8px 10px; 
+            padding: 8px 10px; /* Default padding */
             text-align: left; 
             border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
             white-space: normal; 
@@ -369,42 +371,38 @@
         }
         .vin-highlight { font-weight: 600; color: #00a550; }
         
-        /* START: Updated Column widths */
-        .chua-ghep col:nth-child(1) { width: 4%; }  /* SỐ TT */
-        .chua-ghep col:nth-child(2) { width: 15%; } /* TƯ VẤN BÁN HÀNG */
-        .chua-ghep col:nth-child(3) { width: 20%; } /* TÊN KHÁCH HÀNG */
-        .chua-ghep col:nth-child(4) { width: 10%; } /* DÒNG XE */
-        .chua-ghep col:nth-child(5) { width: 12%; } /* PHIÊN BẢN */
-        .chua-ghep col:nth-child(6) { width: 20%; } /* NGOẠI THẤT */
-        .chua-ghep col:nth-child(7) { width: 8%; }  /* NỘI THẤT */
-        .chua-ghep col:nth-child(8) { width: 11%; } /* SỐ ĐƠN HÀNG */
+        /* Column widths - these are percentages of the table's total width (which is 120% of container) */
+        .chua-ghep col:nth-child(1) { width: 4%; }
+        .chua-ghep col:nth-child(2) { width: 15%; }
+        .chua-ghep col:nth-child(3) { width: 20%; }
+        .chua-ghep col:nth-child(4) { width: 10%; }
+        .chua-ghep col:nth-child(5) { width: 12%; }
+        .chua-ghep col:nth-child(6) { width: 20%; }
+        .chua-ghep col:nth-child(7) { width: 8%; }
+        .chua-ghep col:nth-child(8) { width: 11%; }
 
-        .da-ghep col:nth-child(1) { width: 3%; }   /* SỐ TT */
-        .da-ghep col:nth-child(2) { width: 10%; }  /* TƯ VẤN BÁN HÀNG */
-        .da-ghep col:nth-child(3) { width: 13%; }  /* TÊN KHÁCH HÀNG */
-        .da-ghep col:nth-child(4) { width: 6%; }   /* DÒNG XE */
-        .da-ghep col:nth-child(5) { width: 6%; }   /* PHIÊN BẢN */
-        .da-ghep col:nth-child(6) { width: 11%; }  /* NGOẠI THẤT */
-        .da-ghep col:nth-child(7) { width: 6%; }   /* NỘI THẤT */
-        .da-ghep col:nth-child(8) { width: 13%; }  /* SỐ ĐƠN HÀNG */
-        .da-ghep col:nth-child(9) { width: 11%; }  /* SỐ VIN */
-        .da-ghep col:nth-child(10) { width: 7%; }  /* NGÀY GHÉP */
-        .da-ghep col:nth-child(11) { width: 5%; }  /* SỐ NGÀY */
-        .da-ghep col:nth-child(12) { width: 9%; }  /* NGÀY XUẤT HÓA ĐƠN */
-        /* END: Updated Column widths */
+        .da-ghep col:nth-child(1) { width: 3%; }
+        .da-ghep col:nth-child(2) { width: 10%; }
+        .da-ghep col:nth-child(3) { width: 13%; }
+        .da-ghep col:nth-child(4) { width: 6%; }
+        .da-ghep col:nth-child(5) { width: 6%; }
+        .da-ghep col:nth-child(6) { width: 11%; }
+        .da-ghep col:nth-child(7) { width: 6%; }
+        .da-ghep col:nth-child(8) { width: 13%; }
+        .da-ghep col:nth-child(9) { width: 11%; }
+        .da-ghep col:nth-child(10) { width: 7%; }
+        .da-ghep col:nth-child(11) { width: 5%; }
+        .da-ghep col:nth-child(12) { width: 9%; }
 
         /* Loading overlay */
         .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; /* Changed from absolute to cover table area if table shrinks */
+            top: 0; left: 0; right: 0; bottom: 0; /* Cover entire parent */
             background: rgba(255, 255, 255, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 10; /* Ensure it's above the table but below sticky header if header had higher z-index */
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease;
@@ -432,17 +430,23 @@
         body.dark-mode .loading-spinner {
             border-top: 4px solid #005eb8; 
         }
-        
+        #loading-overlay span { /* For the "Đang tải dữ liệu..." text */
+             margin-left: 10px; font-size: 14px; color: #2c3e50;
+        }
+        body.dark-mode #loading-overlay span {
+            color: #d9e1e8;
+        }
+
         /* Detail panel */
         .detail-panel { 
-            flex: 0 0 20%; 
+            flex: 0 0 20%; /* Default flex basis */
             min-width: 200px; 
             background: #FFFFFF; 
             border-radius: 12px; 
             padding: 10px; 
             box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
             overflow-y: auto; 
-            max-height: calc(100vh - 200px); 
+            max-height: calc(100vh - 220px); /* Default max-height */
         }
         body.dark-mode .detail-panel { 
             background: #2c2c2c; 
@@ -461,13 +465,13 @@
             box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
         }
         .detail-panel h3 { 
-            font-size: 14px; 
+            font-size: 14px; /* Default font size */
             color: #2c3e50; 
-            margin-bottom: 10px; 
+            margin-bottom: 10px; /* Default margin */
             font-weight: 600; 
             text-align: center;
             border-bottom: 1px solid rgba(163, 177, 198, 0.3);
-            padding-bottom: 8px;
+            padding-bottom: 8px; /* Default padding */
         }
         body.dark-mode .detail-panel h3 { 
             color: #d9e1e8; 
@@ -476,10 +480,10 @@
         .detail-table { 
             width: 100%; 
             border-collapse: collapse; 
-            font-size: 11px; 
+            font-size: 11px; /* Default font size */
         }
         .detail-table th, .detail-table td { 
-            padding: 8px 10px; 
+            padding: 8px 10px; /* Default padding */
             text-align: left; 
             border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
             white-space: normal; 
@@ -508,14 +512,15 @@
             gap: 10px; 
             margin-top: 10px; 
             width: 100%; 
+            padding-bottom: 5px; /* Added padding for mobile */
         }
         .pagination button { 
-            padding: 6px 12px; 
+            padding: 6px 12px; /* Default padding */
             border: none; 
             border-radius: 8px; 
             background: #FFFFFF; 
             color: #2c3e50; 
-            font-size: 12px; 
+            font-size: 12px; /* Default font size */
             cursor: pointer; 
             transition: all 0.3s ease; 
             box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
@@ -533,8 +538,8 @@
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         .pagination span { 
-            padding: 6px 12px; 
-            font-size: 12px; 
+            padding: 6px 12px; /* Default padding */
+            font-size: 12px; /* Default font size */
             color: #2c3e50; 
             display: flex;
             align-items: center;
@@ -550,8 +555,8 @@
             background: #003087; 
             color: #FFFFFF; 
             text-align: center; 
-            padding: 8px 0; 
-            font-size: 10px; 
+            padding: 8px 0; /* Default padding */
+            font-size: 10px; /* Default font size */
             box-shadow: 4px -4px 8px rgba(0, 48, 135, 0.6), -4px 4px 8px rgba(255, 255, 255, 0.1); 
             z-index: 999; 
         }
@@ -563,15 +568,15 @@
         /* Notification */
         #notification { 
             position: fixed; 
-            top: 50px; 
-            right: 15px; 
-            padding: 8px 15px; 
+            top: 50px; /* Default top */
+            right: 15px; /* Default right */
+            padding: 8px 15px; /* Default padding */
             background: #FFFFFF; 
             color: #2c3e50; 
             border-radius: 8px; 
             display: none; 
             z-index: 10001; 
-            font-size: 12px; 
+            font-size: 12px; /* Default font size */
             box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
         }
         body.dark-mode #notification { 
@@ -582,69 +587,146 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            header { 
+                font-size: 11px; /* Mobile: Adjusted font size */
+                padding: 8px 0; /* Mobile: Adjusted padding */
+                /* Approx height: 11px font + 16px padding = 27px. Let's say 30px for calculations. */
+            }
             .slidebar {
                 width: 50px;
-                padding: 10px;
-                padding-top: 50px; 
+                padding: 8px; /* Mobile: Adjusted padding */
+                padding-top: 40px; /* Mobile: header height (30px) + 10px spacing */
             }
             .slidebar .logo h1 { display: none; }
             .slidebar .tabs a span { display: none; }
-            .slidebar .tabs a { justify-content: center; }
+            .slidebar .tabs a { justify-content: center; padding: 8px; }
             .slidebar .tabs a i { margin-right: 0; }
+            .slidebar .tabs { max-height: calc(100vh - 70px); /* Adjusted for new padding-top */ }
 
-            .main-container {
-                margin-left: 50px;
-                width: calc(100vw - 50px);
-                padding: 10px;
-                margin-top: 40px; 
-                height: calc(100vh - 60px); 
-            }
+
             .navbar-controls {
-                top: 6px; 
-                right: 10px;
-                gap: 5px;
+                top: 4px; /* Mobile: Adjusted top */
+                right: 8px; /* Mobile: Adjusted right */
+                gap: 4px; /* Mobile: Smaller gap */
             }
             .nav-btn, .theme-toggle {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
+                width: 26px; /* Mobile: Slightly smaller */
+                height: 26px; /* Mobile: Slightly smaller */
+                font-size: 11px; /* Mobile: Smaller icon */
             }
+            
+            /* Mobile: Adjusted main container to account for new header/footer heights */
+            .main-container {
+                margin-left: 50px; /* Width of collapsed sidebar */
+                width: calc(100vw - 50px);
+                padding: 8px; /* Mobile: Reduced padding */
+                margin-top: 30px; /* Mobile: New header height */
+                height: calc(100vh - 30px - 24px); /* Mobile: headerH (30px) - footerH (24px) */
+            }
+            .grid-container {
+                padding: 8px; /* Mobile: Reduced padding */
+                gap: 8px;
+            }
+
             .filter-section {
                 flex-direction: column;
                 align-items: stretch; 
+                padding-bottom: 8px; /* Mobile: Consistent padding */
             }
             .filter-section input {
                 width: 100%;
-                margin-bottom: 10px;
+                margin-bottom: 8px; /* Mobile: Spacing */
+                padding: 8px 10px; /* Mobile: Adjusted padding */
+                font-size: 13px; /* Mobile: Legible font size */
             }
             .filter-section .button-group {
-                justify-content: flex-start; 
+                justify-content: space-around; /* Distribute buttons nicely */
                 width: 100%;
+                gap: 5px;
             }
+            .export-btn { /* Apply to all buttons in group for consistency */
+                width: auto; /* Allow text to determine width */
+                min-width: 30px; /* Ensure tap target */
+                height: 30px; 
+                font-size: 12px; /* Mobile: Font size for button icons */
+                padding: 0 8px; /* Horizontal padding for buttons with text/icons */
+                border-radius: 6px; /* Slightly smaller radius */
+            }
+            .export-btn i { font-size: 13px; } /* Ensure icon size is good */
+
+
             .tables-section {
                 flex-direction: column;
                 width: 100%;
                 min-height: 0; 
+                gap: 8px; /* Space between table and detail panel */
+                flex: 1; /* Ensure it takes available vertical space */
             }
             .table-container {
-                flex: 1; 
+                flex: 1 1 60%; /* Grow and shrink, basis 60% of tables-section height */
                 width: 100%;
-                max-height: 45vh; 
+                max-height: none; /* Let flexbox handle height distribution */
+                /* overflow: auto; is already set and crucial */
+                padding: 8px; /* Mobile: Padding inside container */
             }
             .detail-panel {
-                flex: 1; 
+                flex: 1 1 40%; /* Grow and shrink, basis 40% of tables-section height */
                 width: 100%;
                 min-width: 0;
-                max-height: 30vh; 
+                max-height: none; /* Let flexbox handle height distribution */
+                /* overflow-y: auto; is already set */
+                padding: 8px; /* Mobile: Padding inside panel */
             }
+
+            table { /* Main data table */
+                font-size: 9.5px; /* Mobile: Smaller font for more data, relies on H-scroll */
+            }
+            th, td { /* Main data table cells */
+                padding: 6px 7px; /* Mobile: Reduced padding */
+            }
+            
+            #loading-overlay span {
+                font-size: 12px; /* Mobile: Loading text size */
+                margin-left: 8px;
+            }
+
+            .detail-panel h3 { 
+                font-size: 12px; /* Mobile: Title size */
+                margin-bottom: 6px; 
+                padding-bottom: 5px;
+            }
+            .detail-table { 
+                font-size: 10px; /* Mobile: Detail table font size */
+            }
+            .detail-table th, .detail-table td { 
+                padding: 5px 7px; /* Mobile: Detail table cell padding */
+            }
+
+            .pagination { 
+                margin-top: 8px; 
+                gap: 5px; /* Mobile: Smaller gap */
+            }
+            .pagination button { 
+                padding: 6px 10px; /* Mobile: Button padding */
+                font-size: 11px; /* Mobile: Button font size */
+            }
+            .pagination span { 
+                padding: 6px 8px; /* Mobile: Text padding */
+                font-size: 11px; /* Mobile: Text font size */
+            }
+            
+            footer { 
+                font-size: 9px; /* Mobile: Footer font size */
+                padding: 6px 0; /* Mobile: Footer padding */
+                /* Approx height: 9px font + 12px padding = 21px. Let's say 24px. */
+            }
+
             #notification {
-                top: 50px; 
-                right: 10px;
-                font-size: 10px;
-                padding: 6px 10px;
+                top: 35px; /* Mobile: Below new header */
+                right: 8px; /* Mobile: Adjusted position */
+                font-size: 10px; /* Mobile: Notification font size */
+                padding: 6px 10px; /* Mobile: Notification padding */
             }
-            header { font-size: 12px; padding: 10px 0; }
-            footer { font-size: 10px; padding: 8px 0; }
         }
     </style>
 </head>
@@ -741,6 +823,12 @@
             loadInitialData(); 
             setupSearch();
             updateSidebarToggleIcon(); 
+            // Initial check for sidebar state based on screen width
+            if (window.innerWidth <= 768) {
+                if (!document.getElementById("slidebar").classList.contains("collapsed")) {
+                     toggleSlidebar(); // Collapse if not already on mobile
+                }
+            }
         });
 
         function showLoading() {
@@ -859,10 +947,10 @@
             const slidebar = document.getElementById("slidebar");
             const toggleIcon = document.querySelector("#sidebar-toggle-btn i");
             if (slidebar.classList.contains("collapsed")) {
-                toggleIcon.classList.remove("fa-times");
+                toggleIcon.classList.remove("fa-times"); // Should be fa-bars when collapsed
                 toggleIcon.classList.add("fa-bars");
             } else {
-                toggleIcon.classList.remove("fa-bars");
+                toggleIcon.classList.remove("fa-bars"); // Should be fa-times when expanded
                 toggleIcon.classList.add("fa-times");
             }
         }
@@ -897,8 +985,8 @@
 
             if (sheetName === 'daghep') {
                 colgroup.classList.add('da-ghep');
-                // Add col elements for 'da-ghep'
-                ['3%', '12%', '14%', '6%', '6%', '11%', '6%', '13%', '11%', '7%', '4%', '7%'].forEach(width => {
+                // These percentages are relative to the table's total width (120% of container)
+                ['3%', '10%', '13%', '6%', '6%', '11%', '6%', '13%', '11%', '7%', '5%', '9%'].forEach(width => {
                     const col = document.createElement('col');
                     col.style.width = width;
                     colgroup.appendChild(col);
@@ -921,8 +1009,7 @@
                 `;
             } else { 
                 colgroup.classList.add('chua-ghep');
-                // Add col elements for 'chua-ghep'
-                 ['4%', '15%', '20%', '8%', '10%', '15%', '8%', '15%'].forEach(width => {
+                 ['4%', '15%', '20%', '10%', '12%', '20%', '8%', '11%'].forEach(width => {
                     const col = document.createElement('col');
                     col.style.width = width;
                     colgroup.appendChild(col);
@@ -966,7 +1053,8 @@
                 const formatDate = (dateString) => {
                     if (!dateString) return "";
                     const date = new Date(dateString);
-                    return !isNaN(date) ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : dateString;
+                    // Check if date is valid and not Jan 1, 1970 (which can happen for bad string to date conversions)
+                    return !isNaN(date) && date.getFullYear() > 1900 ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (dateString || "");
                 };
 
                 if (currentSheet === 'daghep') {
@@ -1002,10 +1090,9 @@
             });
 
             updatePagination(dataToDisplay); 
-            // No need to call highlightVinNumbers here as it's done via class in cellsHTML
 
             if (paginatedData.length > 0) {
-                showDetail(paginatedData[0]);
+                showDetail(paginatedData[0]); // Show detail for the first row of the current page
             } else {
                  document.getElementById("detail-body").innerHTML = "<tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr>";
             }
@@ -1016,7 +1103,7 @@
             const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
             document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
             document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = currentPage === totalPages;
+            document.getElementById("next-btn").disabled = currentPage === totalPages || totalPages === 0;
         }
 
         function changePage(delta) {
@@ -1033,20 +1120,6 @@
                 document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
-
-        function highlightVinNumbers() { // This function might be redundant if class is applied directly in renderTable
-            const tableRows = document.querySelectorAll("#table-body tr");
-            tableRows.forEach(row => {
-                if (currentSheet === 'daghep' && row.cells.length > 8) { 
-                    const vinCell = row.cells[8]; 
-                    if (vinCell && vinCell.textContent.trim() !== "") {
-                        vinCell.classList.add("vin-highlight");
-                    } else if (vinCell) {
-                        vinCell.classList.remove("vin-highlight");
-                    }
-                }
-            });
-        }
         
         function showDetail(row) { 
             const detailBody = document.querySelector("#detail-body tbody");
@@ -1056,14 +1129,14 @@
             }
 
             const headersMap = {
-                "Tên tư vấn bán hàng": "Tên tư vấn bán hàng",
-                "Tên khách hàng": "Tên khách hàng",
+                "Tên tư vấn bán hàng": "Tư vấn BH",
+                "Tên khách hàng": "Khách hàng",
                 "Dòng xe": "Dòng xe",
                 "Phiên bản": "Phiên bản",
                 "Ngoại thất": "Ngoại thất",
                 "Nội thất": "Nội thất",
                 "Số đơn hàng": "Số đơn hàng",
-                "VIN": "VIN", 
+                "VIN": "Số VIN", 
                 "Thời gian ghép": "Ngày Ghép", 
                 "Số ngày ghép": "Số Ngày", 
                 "Ngày xuất hóa đơn": "Ngày Xuất HĐ" 
@@ -1080,9 +1153,9 @@
 
                 if ((dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn") && cellValue) {
                     const parsedDate = new Date(cellValue);
-                    cellValue = !isNaN(parsedDate) 
+                     cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900
                         ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) 
-                        : cellValue; 
+                        : (cellValue || ""); 
                 }
                 const isVin = dataKey === "VIN" && cellValue;
                 htmlContent += `
@@ -1124,7 +1197,8 @@
                             let value = row[dataKeyMap[i]] || "";
                             if ((dataKeyMap[i] === "Thời gian ghép" || dataKeyMap[i] === "Ngày xuất hóa đơn") && value) {
                                 const date = new Date(value);
-                                if (!isNaN(date)) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                if (!isNaN(date) && date.getFullYear() > 1900) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                else value = value || ""; // keep original if not valid date
                             }
                             rowData[header] = value;
                         }
@@ -1153,12 +1227,14 @@
             const tableToPrint = document.createElement('table');
             tableToPrint.style.width = "100%";
             tableToPrint.style.borderCollapse = "collapse";
-            tableToPrint.style.tableLayout = "fixed";
+            tableToPrint.style.tableLayout = "fixed"; // Important for print column widths
 
             const colgroupElement = document.createElement('colgroup');
+            // Define approximate fixed widths for printing. These might need fine-tuning.
+            // The sum of these widths should roughly match common paper widths (e.g., A4 landscape ~277mm usable width)
             const printColWidths = currentSheet === 'daghep' 
-                ? ['30px', '80px', '105px', '45px', '45px', '90px', '50px', '110px', '90px', '55px', '40px', '70px']
-                : ['30px', '110px', '150px', '75px', '90px', '150px', '60px', '85px'];
+                ? ['20px', '70px', '90px', '45px', '45px', '80px', '50px', '90px', '90px', '55px', '35px', '55px'] // Total ~725px
+                : ['25px', '90px', '120px', '70px', '80px', '100px', '60px', '80px']; // Total ~625px
             
             printColWidths.forEach(width => {
                 const col = document.createElement('col');
@@ -1175,7 +1251,7 @@
             const formatDate = (dateString) => {
                 if (!dateString) return "";
                 const date = new Date(dateString);
-                return !isNaN(date) ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : dateString;
+                return !isNaN(date) && date.getFullYear() > 1900 ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (dateString || "");
             };
 
             currentDisplayData.forEach((row, index) => {
@@ -1213,7 +1289,7 @@
                     td.textContent = cellData;
                     if (currentSheet === 'daghep' && cellIndex === 8 && cellData) { 
                         td.style.fontWeight = '600';
-                        td.style.color = '#00a550';
+                        td.style.color = '#00a550'; // Vin highlight color
                     }
                     tr.appendChild(td);
                 });
@@ -1223,25 +1299,28 @@
 
             const now = new Date().toLocaleString('vi-VN');
             const printContent = `
-                <div style="text-align:center;">
-                    <h2 style="color: #2c3e50; margin-bottom: 5px;">VINFAST MINH ĐẠO THUẬN AN</h2>
-                    <p style="margin: 2px 0;">Hotline: 1900 232389</p>
-                    <p style="margin: 2px 0;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP' : 'ĐƠN HÀNG CHƯA GHÉP'}</p>
-                    <p style="margin: 2px 0;">In lúc: ${now}</p>
+                <div style="text-align:center; margin-bottom: 15px;">
+                    <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 14pt;">VINFAST MINH ĐẠO THUẬN AN</h2>
+                    <p style="margin: 2px 0; font-size: 9pt;">Hotline: 1900 232389</p>
+                    <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE'}</p>
+                    <p style="margin: 2px 0; font-size: 8pt;">In lúc: ${now}</p>
                 </div>
                 ${tableToPrint.outerHTML}
             `;
-            const win = window.open('', '', 'width=1123,height=794'); // A4 Landscape approx
+            // A4 Landscape is 297mm wide. Usable width around 277mm after margins.
+            // 1pt = 0.3527mm. So 277mm is ~785pt.
+            // The column widths should sum up to something less than this.
+            const win = window.open('', '', 'width=1123,height=794'); 
             win.document.write(`
                 <html>
                 <head>
                     <title>In Danh Sách - ${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}</title>
                     <style>
-                        body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 9pt; } /* Smaller font for print */
-                        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 15px; }
-                        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
-                        th { background: #e0e0e0; color: #000; font-weight: bold; }
-                        /* Column widths for print are now set by colgroup in JS */
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; } /* Smaller base font for print */
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
+                        th, td { border: 1px solid #333; padding: 3px 4px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top;}
+                        th { background: #e0e0e0; color: #000; font-weight: bold; font-size: 7.5pt; }
+                        td { font-size: 7.5pt; }
                         @page { size: A4 landscape; margin: 1cm; } 
                     </style>
                 </head>
@@ -1252,7 +1331,7 @@
             setTimeout(() => {
                 win.print();
                 win.close();
-            }, 500);
+            }, 500); // Timeout to allow content to load in the new window
         }
 
 
@@ -1312,6 +1391,21 @@
                 notif.style.display = "none";
             }, duration);
         }
+
+        // Handle window resize to toggle sidebar if needed
+        window.addEventListener('resize', debounce(() => {
+            if (window.innerWidth <= 768) {
+                if (!document.getElementById("slidebar").classList.contains("collapsed")) {
+                    // toggleSlidebar(); // Only collapse if it was expanded on mobile
+                }
+            } else {
+                // Optional: expand sidebar if it was collapsed and screen is now larger
+                // if (document.getElementById("slidebar").classList.contains("collapsed")) {
+                //    toggleSlidebar();
+                // }
+            }
+        }, 200));
+
     </script>
 </body>
 </html>
