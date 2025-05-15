@@ -317,7 +317,7 @@
         body.dark-mode tbody tr:hover { background: #3a3a3a; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Darker grey hover, adjusted inset shadow */ }
         .highlight { font-weight: 600; color: #00a550; /* Green highlight */ }
 
-        /* Column widths */
+        /* Desktop Column widths */
         col:nth-child(1) { width: 8%; }  /* SỐ TT */
         col:nth-child(2) { width: 11%; } /* DÒNG XE */
         col:nth-child(3) { width: 13%; } /* PHIÊN BẢN */
@@ -325,7 +325,8 @@
         col:nth-child(5) { width: 10%; } /* NỘI THẤT */
         col:nth-child(6) { width: 16%; } /* SỐ VIN */
         col:nth-child(7) { width: 12%; } /* TRẠNG THÁI */
-        /* Ngày nhập is the 8th column */
+        col:nth-child(8) { width: 12%; } /* NGÀY NHẬP */
+
 
         /* Loading overlay */
         .loading-overlay {
@@ -609,7 +610,7 @@
                 flex: 1;
                 width: 100%;
                 max-height: 45vh; /* Adjust height allocation */
-                padding: 8px; /* Slightly less padding inside container */
+                padding: 5px; /* Reduced padding for more content space */
                 box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.4); /* Softer shadow */
             }
             body.dark-mode .table-container {
@@ -617,10 +618,11 @@
             }
 
             table {
-                font-size: 11.5px; /* Slightly larger font for table content */
+                font-size: 10.5px; /* Slightly smaller font for table content to fit more */
             }
             th, td {
-                padding: 10px 8px; /* More vertical padding in cells */
+                padding: 8px 5px; /* More vertical padding in cells, less horizontal */
+                white-space: nowrap; /* Prevent wrapping to keep rows compact, rely on horizontal scroll */
             }
             th {
                  box-shadow: 2px 2px 4px rgba(0, 48, 135, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.05); /* Softer shadow */
@@ -650,6 +652,7 @@
             }
             .detail-table th, .detail-table td {
                 padding: 9px 8px;
+                white-space: normal; /* Allow wrapping in detail view */
             }
              .detail-table th {
                 box-shadow: inset 1px 1px 2px rgba(163, 177, 198, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.4);
@@ -700,16 +703,15 @@
                 box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.3), -2px 2px 4px rgba(255, 255, 255, 0.3);
             }
 
-            /* Mobile Column widths - prioritize VIN, Status, Line, Version */
-            col:nth-child(1) { width: 10%; }  /* SỐ TT - Narrower */
-            col:nth-child(2) { width: 20%; } /* DÒNG XE */
-            col:nth-child(3) { width: 20%; } /* PHIÊN BẢN */
-            col:nth-child(4) { width: 0%; display: none; } /* NGOẠI THẤT - Hidden on mobile for simplicity */
-            col:nth-child(5) { width: 0%; display: none; } /* NỘI THẤT - Hidden on mobile for simplicity */
-            col:nth-child(6) { width: 30%; } /* SỐ VIN - Wider */
-            col:nth-child(7) { width: 20%; } /* TRẠNG THÁI */
-            /* Ngày nhập is the 8th column, will take remaining space or also be hidden if too cluttered */
-            /* To hide Ngày nhập as well: col:nth-child(8) { width: 0%; display: none; } */
+            /* Mobile Column widths - All columns visible, adjust percentages */
+            col:nth-child(1) { width: 8%; display: table-column;}  /* SỐ TT */
+            col:nth-child(2) { width: 15%; display: table-column;} /* DÒNG XE */
+            col:nth-child(3) { width: 15%; display: table-column;} /* PHIÊN BẢN */
+            col:nth-child(4) { width: 15%; display: table-column;} /* NGOẠI THẤT - Visible */
+            col:nth-child(5) { width: 15%; display: table-column;} /* NỘI THẤT - Visible */
+            col:nth-child(6) { width: 17%; display: table-column;} /* SỐ VIN */
+            col:nth-child(7) { width: 15%; display: table-column;} /* TRẠNG THÁI */
+            col:nth-child(8) { width: 15%; display: table-column;} /* NGÀY NHẬP - Visible */
         }
     </style>
 </head>
@@ -759,7 +761,8 @@
                     </div>
                     <table id="data-table">
                         <colgroup>
-                            <col><col><col><col><col><col><col><col> </colgroup>
+                            <col><col><col><col><col><col><col><col>
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>SỐ TT</th>
@@ -905,16 +908,10 @@
                 paginatedData.forEach((row, index) => {
                     const globalIndex = start + index + 1;
                     const tr = document.createElement("tr");
+                    // Ensure all 8 columns are rendered
                     tr.innerHTML = `
                         <td>${globalIndex}</td>
-                        <td>${row[0]}</td>
-                        <td>${row[1]}</td>
-                        <td>${row[2]}</td>
-                        <td>${row[3]}</td>
-                        <td class="highlight">${row[4]}</td>
-                        <td>${row[5]}</td>
-                        <td>${row[6]}</td>
-                    `;
+                        <td>${row[0] || ''}</td> <td>${row[1] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td class="highlight">${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> `;
                     tr.onclick = () => showDetail(row, globalIndex);
                     tbody.appendChild(tr);
                 });
@@ -967,10 +964,7 @@
             ];
             let html = "";
             headers.forEach((header, i) => {
-                // Skip hidden columns on mobile for the detail view as well
-                if (window.innerWidth <= 768 && (i === 2 || i === 3)) { // Ngoại thất, Nội thất
-                    return;
-                }
+                // No longer skip columns for mobile in detail view
                 let value = row[i] || (language === 'vi' ? "N/A" : "N/A");
                 if (i === 4 && value && value !== "N/A") { // VIN
                     html += `<tr><th>${header}</th><td class="highlight">${value}</td></tr>`;
@@ -983,8 +977,7 @@
 
         async function refreshData() {
             showLoading();
-            // Replace with your actual API endpoint
-            const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec"; // Example API
+            const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec"; 
             try {
                 const response = await axios.get(apiURL);
                  if (!response.data || !Array.isArray(response.data.khoxe)) {
@@ -1000,17 +993,16 @@
                     row["Trạng thái"] || "",
                     row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); // Update cache
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); 
                 filteredData = [...tableData];
-                // Reset filters
                 document.getElementById("search-input").value = "";
                 document.getElementById("filter-line").value = "";
                 document.getElementById("filter-version").value = "";
                 document.getElementById("filter-exterior").value = "";
                 document.getElementById("filter-status").value = "";
-                currentPage = 1; // Reset to first page
+                currentPage = 1; 
                 renderTable();
-                populateFilters(); // Repopulate filters with potentially new data
+                populateFilters(); 
                 showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
             } catch (error) {
                 console.error("Lỗi làm mới dữ liệu:", error);
@@ -1027,7 +1019,6 @@
             const exteriorSelect = document.getElementById("filter-exterior");
             const statusSelect = document.getElementById("filter-status");
 
-            // Preserve current values if they exist
             const currentLine = lineSelect.value;
             const currentVersion = versionSelect.value;
             const currentExterior = exteriorSelect.value;
@@ -1059,7 +1050,7 @@
                 const matchesStatus = !statusFilter || row[5] === statusFilter;
                 return matchesSearch && matchesLine && matchesVersion && matchesExterior && matchesStatus;
             });
-            currentPage = 1; // Reset to first page after filtering
+            currentPage = 1; 
             renderTable();
         }
 
@@ -1077,7 +1068,6 @@
                 ];
                 const exportData = filteredData.map((row, index) => {
                     const rowData = { "SỐ TT": index + 1 };
-                    // Use original headers for mapping
                     rowData[translations['vi']["vehicle-line"]] = row[0] || "";
                     rowData[translations['vi']["vehicle-version"]] = row[1] || "";
                     rowData[translations['vi']["vehicle-exterior"]] = row[2] || "";
@@ -1088,7 +1078,6 @@
                     return rowData;
                 });
 
-                // Create worksheet with translated headers
                 const ws = XLSX.utils.json_to_sheet(exportData, { header: headers });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "KhoXe");
@@ -1105,7 +1094,9 @@
                         <col style="width: 40px;">
                         <col style="width: 100px;">
                         <col style="width: 100px;">
-                        <col style="width: 80px;"> <col style="width: 80px;"> <col style="width: 120px;">
+                        <col style="width: 80px;"> 
+                        <col style="width: 80px;"> 
+                        <col style="width: 120px;">
                         <col style="width: 80px;">
                         <col style="width: 80px;">
                     </colgroup>
@@ -1148,19 +1139,19 @@
                 <p>Tổng số xe: ${filteredData.length}</p>
                 ${tableContent}
             `;
-            const win = window.open('', '', 'width=1000,height=700'); // Wider for print
+            const win = window.open('', '', 'width=1000,height=700'); 
             win.document.write(`
                 <html>
                 <head>
                     <title>In danh sách kho xe VinFast</title>
                     <style>
                         body { font-family: 'Roboto', sans-serif; margin: 20px; color: #2c3e50; }
-                        table { width: 100%; border-collapse: collapse; table-layout: auto; } /* auto for print */
+                        table { width: 100%; border-collapse: collapse; table-layout: auto; } 
                         th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 10px; white-space: nowrap; }
                         th { background: #003087; color: #FFFFFF; font-weight: 600;}
                         .highlight { font-weight: 600; color: #00a550; }
                         @media print {
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } /* Ensure background colors print */
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
                             th { background-color: #003087 !important; color: #FFFFFF !important; }
                         }
                     </style>
@@ -1169,7 +1160,6 @@
                 </html>
             `);
             win.document.close();
-            // Delay print to ensure content is loaded
             setTimeout(() => {
                 win.print();
                 win.close();
@@ -1210,7 +1200,6 @@
         }
 
         function toggleSlidebar() {
-            // This function might be less relevant if sidebar is hidden on mobile
             if (window.innerWidth > 768) {
                 document.getElementById("slidebar").classList.toggle("collapsed");
                 document.getElementById("main-container").classList.toggle("collapsed");
@@ -1219,12 +1208,12 @@
 
         function logout() {
             sessionStorage.clear();
-            window.location.href = "index.html"; // Assuming index.html is your login page
+            window.location.href = "index.html"; 
             showNotification(language === 'vi' ? "Đã đăng xuất!" : "Logged out!", 2000);
         }
 
         function goBack() {
-            window.location.href = "index.html"; // Assuming index.html is your main/previous page
+            window.location.href = "index.html"; 
             showNotification(language === 'vi' ? "Đã quay lại!" : "Returned!", 2000);
         }
 
@@ -1232,25 +1221,17 @@
             const notif = document.getElementById("notification");
             notif.textContent = message;
             notif.style.display = "block";
-            // Clear previous timeout if any
             if (notif.timeout) clearTimeout(notif.timeout);
             notif.timeout = setTimeout(() => {
                 notif.style.display = "none";
             }, duration);
         }
 
-        // Adjust layout on resize
         window.addEventListener('resize', () => {
-            if (window.innerWidth <= 768) {
-                if (!document.getElementById("slidebar").classList.contains("collapsed")) {
-                     // document.getElementById("slidebar").classList.add("collapsed"); // Keep it hidden
-                     // document.getElementById("main-container").classList.add("collapsed");
-                }
-            } else {
-                 // Optionally restore sidebar if it was programmatically collapsed
-                 // and user resizes to desktop view.
-            }
-            renderTable(); // Re-render table to adjust columns if necessary
+            // No specific action needed here for now as column visibility is handled by CSS
+            // and renderTable will be called if data structure changes.
+            // We might re-render if column definitions need to change drastically based on width,
+            // but for now, CSS handles visibility and overflow.
         });
 
     </script>
