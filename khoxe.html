@@ -291,7 +291,7 @@
             padding: 8px 10px;
             text-align: left;
             border-bottom: 1px solid rgba(163, 177, 198, 0.3); /* Light border */
-            white-space: normal;
+            white-space: normal; /* Allow text wrapping by default */
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
@@ -622,7 +622,9 @@
             }
             th, td {
                 padding: 8px 5px; /* More vertical padding in cells, less horizontal */
-                white-space: nowrap; /* Prevent wrapping to keep rows compact, rely on horizontal scroll */
+                white-space: normal; /* MODIFIED: Allow text wrapping in cells */
+                word-wrap: break-word; /* Ensure long words break */
+                overflow-wrap: break-word; /* Ensure long words break */
             }
             th {
                  box-shadow: 2px 2px 4px rgba(0, 48, 135, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.05); /* Softer shadow */
@@ -703,15 +705,15 @@
                 box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.3), -2px 2px 4px rgba(255, 255, 255, 0.3);
             }
 
-            /* Mobile Column widths - All columns visible, adjust percentages */
-            col:nth-child(1) { width: 8%; display: table-column;}  /* SỐ TT */
+            /* Mobile Column widths - Adjusted for better balance with text wrapping */
+            col:nth-child(1) { width: 10%; display: table-column;}  /* SỐ TT */
             col:nth-child(2) { width: 15%; display: table-column;} /* DÒNG XE */
             col:nth-child(3) { width: 15%; display: table-column;} /* PHIÊN BẢN */
-            col:nth-child(4) { width: 15%; display: table-column;} /* NGOẠI THẤT - Visible */
-            col:nth-child(5) { width: 15%; display: table-column;} /* NỘI THẤT - Visible */
-            col:nth-child(6) { width: 17%; display: table-column;} /* SỐ VIN */
+            col:nth-child(4) { width: 15%; display: table-column;} /* NGOẠI THẤT */
+            col:nth-child(5) { width: 15%; display: table-column;} /* NỘI THẤT */
+            col:nth-child(6) { width: 15%; display: table-column;} /* SỐ VIN - Adjusted */
             col:nth-child(7) { width: 15%; display: table-column;} /* TRẠNG THÁI */
-            col:nth-child(8) { width: 15%; display: table-column;} /* NGÀY NHẬP - Visible */
+            col:nth-child(8) { width: 15%; display: table-column;} /* NGÀY NHẬP */
         }
     </style>
 </head>
@@ -911,7 +913,14 @@
                     // Ensure all 8 columns are rendered
                     tr.innerHTML = `
                         <td>${globalIndex}</td>
-                        <td>${row[0] || ''}</td> <td>${row[1] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td class="highlight">${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> `;
+                        <td>${row[0] || ''}</td>
+                        <td>${row[1] || ''}</td>
+                        <td>${row[2] || ''}</td>
+                        <td>${row[3] || ''}</td>
+                        <td class="highlight">${row[4] || ''}</td>
+                        <td>${row[5] || ''}</td>
+                        <td>${row[6] || ''}</td>
+                    `;
                     tr.onclick = () => showDetail(row, globalIndex);
                     tbody.appendChild(tr);
                 });
@@ -964,7 +973,6 @@
             ];
             let html = "";
             headers.forEach((header, i) => {
-                // No longer skip columns for mobile in detail view
                 let value = row[i] || (language === 'vi' ? "N/A" : "N/A");
                 if (i === 4 && value && value !== "N/A") { // VIN
                     html += `<tr><th>${header}</th><td class="highlight">${value}</td></tr>`;
@@ -1228,10 +1236,6 @@
         }
 
         window.addEventListener('resize', () => {
-            // No specific action needed here for now as column visibility is handled by CSS
-            // and renderTable will be called if data structure changes.
-            // We might re-render if column definitions need to change drastically based on width,
-            // but for now, CSS handles visibility and overflow.
         });
 
     </script>
