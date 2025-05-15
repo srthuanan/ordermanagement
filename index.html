@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Showroom Thuận An</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23003087'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='60' fill='white' font-family='Arial'>V</text></svg>" type="image/svg+xml">
-
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,15 +11,15 @@
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
         :root {
-            --primary-color: #003087;
-            --primary-color-darker: #00205b;
-            --primary-color-lighter: #0040c1;
-            --background-light: #f5f6fa;
-            --text-light: #2c3e50;
-            --background-dark: #1a1a2e;
-            --text-dark: #d9e1e8;
-            --card-bg-light: #fff;
-            --card-bg-dark: #2a2a3e;
+            --primary-color: #003087; /* Màu xanh đậm VinFast */
+            --primary-color-darker: #00205b; /* Đậm hơn cho gradient và hover */
+            --primary-color-lighter: #0040c1; /* Nhạt hơn cho gradient và hover */
+            --background-light: #f5f6fa; /* Nền sáng */
+            --text-light: #2c3e50; /* Màu chữ trên nền sáng */
+            --background-dark: #1a1a2e; /* Nền tối */
+            --text-dark: #d9e1e8; /* Màu chữ trên nền tối */
+            --card-bg-light: #fff; /* Nền card sáng */
+            --card-bg-dark: #2a2a3e; /* Nền card tối */
             --shadow-light-outer: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5);
             --shadow-dark-outer: 10px 10px 20px rgba(0, 0, 0, 0.3), -10px -10px 20px rgba(255, 255, 255, 0.1);
             --shadow-light-inner: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.5);
@@ -34,7 +32,7 @@
             background: var(--background-light); 
             color: var(--text-light); 
             min-height: 100vh; 
-            overflow-x: hidden; 
+            overflow-x: hidden; /* Ngăn cuộn ngang */
             transition: background 0.3s, color 0.3s; 
         }
         body.dark-mode { 
@@ -43,24 +41,24 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; } /* Thu nhỏ scrollbar */
         ::-webkit-scrollbar-track {
             background: var(--background-light);
-            border-radius: 5px;
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+            border-radius: 4px; /* Bo tròn track */
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode ::-webkit-scrollbar-track {
-            background: var(--card-bg-dark); 
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2), inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+            background: var(--card-bg-dark);
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.1);
         }
         ::-webkit-scrollbar-thumb {
             background: var(--primary-color);
-            border-radius: 5px;
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.3);
+            border-radius: 4px; /* Bo tròn thumb */
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.3);
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-color-lighter);
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.4);
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(255, 255, 255, 0.4);
         }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
@@ -73,167 +71,140 @@
             background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter));
             color: #fff;
             text-align: center;
-            padding: 12px 0;
-            font-size: 16px;
+            padding: 10px 0; /* Giảm padding cho mobile */
+            font-size: 14px; /* Giảm font size cho mobile */
             font-weight: 600;
             text-transform: uppercase;
             z-index: 999;
-            box-shadow: 8px 8px 16px rgba(0, 48, 135, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 48, 135, 0.2); /* Đơn giản hóa shadow */
         }
         body.dark-mode header { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
 
         /* Sidebar */
         .sidebar {
             position: fixed;
-            top: 0;
+            top: 0; /* Sidebar bắt đầu từ đỉnh */
             left: 0;
-            width: 190px; 
+            width: 200px; /* Tăng nhẹ chiều rộng */
             height: 100vh;
             background: linear-gradient(180deg, var(--primary-color), var(--primary-color-darker));
-            padding: 20px;
-            padding-top: 60px; 
-            transition: width 0.3s ease;
+            padding: 15px; /* Giảm padding */
+            padding-top: 50px; /* Khoảng cách với header */
+            transition: width 0.3s ease, transform 0.3s ease; /* Thêm transform cho mobile */
             z-index: 1000;
-            box-shadow: 10px 10px 20px rgba(0, 48, 135, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.1);
-            overflow-x: hidden; 
+            box-shadow: 5px 0 15px rgba(0, 48, 135, 0.3); /* Đơn giản hóa shadow */
+            display: flex;
+            flex-direction: column;
         }
-        .sidebar.collapsed { 
-            width: 60px; 
-        }
+        .sidebar.collapsed { width: 60px; }
         body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
-        
         .sidebar .logo {
             text-align: center;
-            margin-bottom: 30px;
-            overflow: hidden; 
+            margin-bottom: 25px; /* Tăng margin bottom */
         }
         .sidebar .logo h1 { 
-            font-size: 24px; 
+            font-size: 22px; /* Giảm font size */
             color: #fff; 
             font-weight: 600; 
-            white-space: nowrap; 
-            transition: opacity 0.2s ease, transform 0.2s ease; 
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            opacity: 1;
-            transform: translateX(0);
+            transition: opacity 0.3s ease, font-size 0.3s ease; 
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-        .sidebar.collapsed .logo h1 { 
-            opacity: 0; 
-            transform: translateX(-20px); 
-        }
-
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; } /* Ẩn hoàn toàn khi collapsed */
         .sidebar .menu { 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; 
+            gap: 8px; /* Giảm gap */
+            overflow-y: auto; /* Cho phép cuộn nếu menu dài */
+            flex-grow: 1; /* Cho phép menu chiếm không gian còn lại */
         }
         .sidebar .menu a { 
-            padding: 12px 15px; 
+            padding: 10px 12px; /* Giảm padding */
             text-decoration: none; 
             color: #fff; 
-            font-size: 14px; 
+            font-size: 13px; /* Giảm font size */
             font-weight: 500; 
-            border-radius: 10px; 
-            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 8px; /* Giảm border radius */
+            background: rgba(255, 255, 255, 0.08); 
             transition: all 0.3s ease; 
             display: flex; 
             align-items: center; 
-            gap: 12px; 
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.2);
-            white-space: nowrap; 
-            overflow: hidden; 
+            gap: 10px; /* Giảm gap */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.15);
         }
-        /* START: Sửa lỗi hiển thị icon khi sidebar thu gọn */
         .sidebar.collapsed .menu a { 
-            width: 38px;  /* Kích thước nút khi thu gọn, đủ cho icon và chút không gian */
-            height: 38px; /* Giữ cho nút vuông vắn */
-            padding: 0;   /* Bỏ padding của thẻ <a> */
-            justify-content: center; /* Căn giữa icon bên trong thẻ <a> */
-            margin: 0 auto; /* Căn giữa chính nút <a> trong không gian của nó */
+            padding: 10px; 
+            justify-content: center; 
         }
-        /* END: Sửa lỗi hiển thị icon khi sidebar thu gọn */
         .sidebar .menu a i { 
-            font-size: 16px; 
-            min-width: 16px; 
+            font-size: 15px; /* Giảm font size icon */
+            width: 20px; /* Đảm bảo icon có không gian cố định */
             text-align: center;
-            /* Đảm bảo icon luôn hiện rõ */
-            opacity: 1; 
-            transform: none;
-            transition: none; /* Bỏ transition riêng cho icon nếu có */
         }
         .sidebar .menu a span { 
-            transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s; 
-            opacity: 1;
-            transform: translateX(0);
-            display: inline-block; 
+            transition: opacity 0.2s ease, max-width 0.3s ease; /* Thêm max-width transition */
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 100px; /* Giới hạn chiều rộng ban đầu */
         }
-        .sidebar.collapsed .menu a span { 
-            opacity: 0; 
-            width: 0; 
-            transform: translateX(-10px); 
-            pointer-events: none; 
-            margin-left: -1000px; /* Đẩy text ra xa để không chiếm không gian vô hình */
-        }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
         .sidebar .menu a:hover { 
-            background: rgba(255, 255, 255, 0.25); 
+            background: rgba(255, 255, 255, 0.2); 
             box-shadow: var(--shadow-light-inner);
         }
         .sidebar .menu a.active { 
-            background: rgba(255, 255, 255, 0.35); 
+            background: rgba(255, 255, 255, 0.3); 
             font-weight: 600; 
-            box-shadow: inset 6px 6px 12px rgba(0, 0, 0, 0.4), inset -6px -6px 12px rgba(255, 255, 255, 0.2);
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.15);
         }
         .toggle-btn { 
             position: absolute; 
-            top: 18px; 
-            right: -12px; 
-            width: 28px; 
-            height: 28px; 
+            top: 12px; /* Điều chỉnh vị trí */
+            right: -15px; /* Điều chỉnh vị trí */
+            width: 30px; /* Tăng kích thước */
+            height: 30px; /* Tăng kích thước */
             background: var(--primary-color); 
             border: none; 
             border-radius: 50%; 
             color: #fff; 
             font-size: 14px; 
             cursor: pointer; 
-            transition: all 0.3s ease, transform 0.3s ease; 
-            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.2); 
+            transition: all 0.3s ease; 
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.25), -3px -3px 6px rgba(255, 255, 255, 0.15); 
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1001; 
+            z-index: 1001; /* Đảm bảo nút toggle ở trên */
         }
-        
         .toggle-btn:hover { 
             background: var(--primary-color-lighter); 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.3); 
-            transform: scale(1.1);
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
         /* Navbar Controls */
         .navbar-controls { 
             position: fixed; 
-            top: 15px; 
-            right: 15px; 
+            top: 10px; /* Điều chỉnh vị trí */
+            right: 10px; /* Điều chỉnh vị trí */
             display: flex; 
-            gap: 10px; 
+            gap: 8px; /* Giảm gap */
             z-index: 1001; 
         }
         .nav-btn, .theme-toggle, .language-btn { 
-            padding: 8px; 
+            padding: 0; /* Bỏ padding, dùng width/height và flex */
             border: none; 
             border-radius: 50%; 
             background: var(--card-bg-light); 
             color: var(--text-light); 
-            font-size: 16px; 
+            font-size: 14px; /* Giảm font size */
             cursor: pointer; 
             transition: all 0.3s ease; 
-            width: 36px; 
-            height: 36px; 
+            width: 32px; /* Giảm kích thước */
+            height: 32px; /* Giảm kích thước */
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
         }
         .nav-btn:hover, .theme-toggle:hover, .language-btn:hover { 
             background: #e9ecef; 
@@ -255,29 +226,28 @@
 
         /* Main Content */
         .main-content { 
-            margin-left: 190px; 
-            padding: 20px; 
-            padding-top: 70px; 
-            min-height: calc(100vh - 50px); 
+            margin-left: 200px; /* Phù hợp với sidebar width mới */
+            padding: 15px; /* Giảm padding */
+            margin-top: 45px; /* Phù hợp với header padding mới */
+            min-height: calc(100vh - 45px - 30px); /* Trừ header và footer */
             transition: margin-left 0.3s ease; 
+            padding-bottom: 45px; /* Để footer không che nội dung */
         }
-        .main-content.collapsed { 
-            margin-left: 60px; 
-        }
+        .main-content.collapsed { margin-left: 60px; }
 
         /* Hero Section */
         .hero { 
             background: url('https://otodien.vn/wp-content/uploads/2024/08/hinh-anh-xe-vinfast-vf5-plus-1024x519.webp') no-repeat center center;
             background-size: cover;
-            border-radius: 12px; 
-            padding: 30px; 
-            margin-bottom: 20px; 
+            border-radius: 10px; /* Giảm border radius */
+            padding: 20px; /* Giảm padding */
+            margin-bottom: 15px; /* Giảm margin */
             position: relative;
-            min-height: 300px;
+            min-height: 250px; /* Giảm min-height */
             box-shadow: var(--shadow-light-outer);
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: flex-end; /* Đẩy nội dung xuống dưới */
             align-items: center;
             text-align: center;
         }
@@ -288,31 +258,31 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(0.3px);
-            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.35); /* Tăng độ tối overlay */
+            backdrop-filter: blur(0.5px); /* Tăng nhẹ blur */
+            border-radius: 10px; /* Phù hợp với hero */
             z-index: 1;
         }
         .hero .hero-content {
             position: relative;
             z-index: 2;
-            padding-top: 60px;
-            padding-bottom: 30px;
+            padding-top: 40px; /* Giảm padding top */
+            padding-bottom: 20px; /* Giảm padding bottom */
         }
         .hero h2, .hero p, .hero .login-btn { color: #fff; }
-        .hero h2 { font-size: 40px; font-weight: 600; margin-bottom: 15px; }
-        .hero p { font-size: 20px; margin-bottom: 20px; }
+        .hero h2 { font-size: 28px; font-weight: 600; margin-bottom: 10px; } /* Giảm font size, margin */
+        .hero p { font-size: 16px; margin-bottom: 15px; } /* Giảm font size, margin */
         .hero .login-btn { 
-            padding: 10px 25px; 
+            padding: 10px 20px; /* Điều chỉnh padding */
             background: white; 
             color: var(--primary-color); 
             border: none; 
-            border-radius: 10px; 
-            font-size: 16px; 
+            border-radius: 8px; /* Giảm border radius */
+            font-size: 14px; /* Giảm font size */
             font-weight: 600; 
             cursor: pointer; 
             transition: all 0.3s ease; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2), -4px -4px 8px rgba(255, 255, 255, 0.4); 
         }
         .hero .login-btn:hover { 
             background: var(--primary-color-lighter); 
@@ -323,28 +293,28 @@
         /* Internal Section */
         .internal-section { 
             background: var(--card-bg-light); 
-            border-radius: 12px; 
-            padding: 20px; 
+            border-radius: 10px; 
+            padding: 15px; 
             box-shadow: var(--shadow-light-outer); 
             text-align: center; 
-            margin-bottom: 20px; 
+            margin-bottom: 15px; 
         }
         body.dark-mode .internal-section { 
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
         }
-        .internal-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 15px; }
-        .internal-section p { font-size: 14px; margin-bottom: 20px; }
+        .internal-section h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+        .internal-section p { font-size: 13px; margin-bottom: 15px; }
         .features-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Giảm minmax */
+            gap: 12px; /* Giảm gap */
         }
         .feature-card { 
             background: var(--card-bg-light); 
-            padding: 15px; 
-            border-radius: 10px; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
+            padding: 12px; 
+            border-radius: 8px; 
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
             transition: all 0.3s ease; 
         }
         .feature-card:hover { 
@@ -357,33 +327,33 @@
         body.dark-mode .feature-card:hover {
             box-shadow: var(--shadow-dark-inner);
         }
-        .feature-card i { font-size: 24px; color: var(--primary-color); margin-bottom: 15px; }
-        .feature-card h4 { font-size: 16px; margin-bottom: 10px; }
+        .feature-card i { font-size: 22px; color: var(--primary-color); margin-bottom: 10px; }
+        .feature-card h4 { font-size: 15px; margin-bottom: 8px; }
         .feature-card p { font-size: 12px; }
 
         /* Dashboard Section */
         .dashboard-section { 
             display: none; 
             background: var(--card-bg-light); 
-            border-radius: 12px; 
-            padding: 20px; 
+            border-radius: 10px; 
+            padding: 15px; 
             box-shadow: var(--shadow-light-outer); 
         }
         body.dark-mode .dashboard-section { 
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
         }
-        .dashboard-section h3 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-align: center; }
+        .dashboard-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; text-align: center; }
         .dashboard-content { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Giảm minmax */
+            gap: 12px; 
         }
         .dashboard-card { 
             background: var(--card-bg-light); 
-            padding: 15px; 
-            border-radius: 10px; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
+            padding: 12px; 
+            border-radius: 8px; 
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
             transition: all 0.3s ease; 
         }
         .dashboard-card:hover { 
@@ -396,20 +366,20 @@
          body.dark-mode .dashboard-card:hover {
             box-shadow: var(--shadow-dark-inner);
         }
-        .dashboard-card h4 { font-size: 16px; margin-bottom: 10px; }
-        .dashboard-card p { font-size: 12px; margin-bottom: 10px; }
-        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+        .dashboard-card h4 { font-size: 15px; margin-bottom: 8px; }
+        .dashboard-card p { font-size: 12px; margin-bottom: 8px; }
+        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px; }
         body.dark-mode .dashboard-card a { color: var(--primary-color-lighter); }
         .dashboard-card a:hover { text-decoration: underline; }
 
         /* Table Styles */
         .table-container { 
-            max-height: 250px; 
+            max-height: 220px; /* Giảm max-height */
             overflow-y: auto; 
-            margin-bottom: 15px; 
-            border-radius: 10px; 
+            margin-bottom: 12px; 
+            border-radius: 8px; 
             background: var(--card-bg-light); 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
             transition: all 0.3s ease;
         }
         body.dark-mode .table-container { 
@@ -419,15 +389,15 @@
         .data-table { 
             width: 100%; 
             border-collapse: collapse; 
-            font-size: 13px; 
+            font-size: 12px; /* Giảm font size */
         }
         .data-table th, .data-table td { 
-            padding: 12px 15px; 
+            padding: 10px 12px; /* Giảm padding */
             text-align: left; 
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06); 
         }
         body.dark-mode .data-table th, body.dark-mode .data-table td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
         .data-table th { 
             background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
@@ -437,16 +407,16 @@
             top: 0; 
             z-index: 2; 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px; /* Giảm letter spacing */
             box-shadow: var(--shadow-light-inner);
         }
         body.dark-mode .data-table th { 
             background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); 
             box-shadow: var(--shadow-dark-inner);
         }
-        .data-table tr { transition: all 0.3s ease; }
-        .data-table tr:hover { background: rgba(0, 48, 135, 0.05); }
-        body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .data-table tr { transition: all 0.2s ease; } /* Tăng tốc độ transition */
+        .data-table tr:hover { background: rgba(0, 48, 135, 0.04); }
+        body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.04); }
 
         /* Modal */
         .modal { 
@@ -456,21 +426,22 @@
             left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0, 0, 0, 0.6); 
+            background: rgba(0, 0, 0, 0.65); /* Tăng độ mờ background */
             z-index: 1001; 
             align-items: center; 
             justify-content: center; 
-            padding: 15px; 
+            padding: 10px; /* Thêm padding cho màn hình nhỏ */
+            backdrop-filter: blur(3px); /* Thêm hiệu ứng blur cho nền */
         }
         .modal-content { 
             background: var(--card-bg-light); 
-            padding: 25px; 
-            border-radius: 12px; 
-            max-width: 450px; 
+            padding: 20px; /* Giảm padding */
+            border-radius: 10px; 
+            max-width: 400px; /* Giảm max-width */
             width: 100%; 
             box-shadow: var(--shadow-light-outer); 
-            transform: scale(0.9); 
-            transition: transform 0.3s ease; 
+            transform: scale(0.95); /* Điều chỉnh scale ban đầu */
+            transition: transform 0.25s ease-out; /* Tăng tốc độ transition */
             position: relative; 
         }
         .modal-content.active { transform: scale(1); }
@@ -478,36 +449,36 @@
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
         }
-        .modal-content h2 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-align: center; }
-        .modal-content p { font-size: 14px; text-align: center; margin-bottom: 20px; }
+        .modal-content h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; text-align: center; }
+        .modal-content p { font-size: 13px; text-align: center; margin-bottom: 15px; }
         
         .modal-content label {
             display: block;
-            font-size: 13px;
+            font-size: 12px; /* Giảm font size */
             font-weight: 500;
             color: var(--text-light); 
-            margin-bottom: 6px; 
+            margin-bottom: 5px; /* Giảm margin */
             text-align: left;
         }
         body.dark-mode .modal-content label {
             color: var(--text-dark);
         }
 
-        .input-group { margin-bottom: 15px; position: relative; }
+        .input-group { margin-bottom: 12px; position: relative; }
         .input-group .input-icon { 
             position: absolute; 
             top: 50%; 
-            left: 12px; 
+            left: 10px; 
             transform: translateY(-50%); 
             color: var(--primary-color); 
-            font-size: 14px; 
+            font-size: 13px; 
             z-index: 1; 
         }
         .modal-content input { 
-            padding: 12px 12px 12px 40px; 
+            padding: 10px 10px 10px 35px; /* Điều chỉnh padding */
             border: none; 
-            border-radius: 10px; 
-            font-size: 14px; 
+            border-radius: 8px; 
+            font-size: 13px; 
             width: 100%; 
             background: var(--background-light); 
             color: var(--text-light); 
@@ -520,18 +491,18 @@
         }
         .modal-content input:focus { 
             outline: none; 
-            box-shadow: 5px 5px 10px rgba(0, 48, 135, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.7); 
+            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.25), -3px -3px 6px rgba(255, 255, 255, 0.6); 
         }
         body.dark-mode .modal-content input:focus {
-            box-shadow: 5px 5px 10px rgba(0, 64, 193, 0.4), -5px -5px 10px rgba(255, 255, 255, 0.2);
+            box-shadow: 3px 3px 6px rgba(0, 64, 193, 0.35), -3px -3px 6px rgba(255, 255, 255, 0.15);
         }
         .modal-content button { 
-            padding: 12px; 
+            padding: 10px; /* Điều chỉnh padding */
             background: var(--primary-color); 
             color: #fff; 
             border: none; 
-            border-radius: 10px; 
-            font-size: 14px; 
+            border-radius: 8px; 
+            font-size: 13px; 
             font-weight: 600; 
             cursor: pointer; 
             width: 100%; 
@@ -540,8 +511,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.2);
+            gap: 6px; /* Giảm gap */
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25), -4px -4px 8px rgba(255, 255, 255, 0.15);
         }
         .modal-content button:hover { 
             background: var(--primary-color-lighter); 
@@ -565,30 +536,31 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px; 
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.5); 
+            width: 18px; /* Giảm kích thước spinner */
+            height: 18px; /* Giảm kích thước spinner */
+            border: 2px solid rgba(255, 255, 255, 0.4); 
             border-top-color: #fff; 
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.7s linear infinite; /* Tăng tốc độ spin */
         }
 
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
-        .modal-links span { font-size: 12px; color: var(--primary-color); cursor: pointer; }
+        .modal-links { display: flex; justify-content: space-between; margin-top: 12px; }
+        .modal-links span { font-size: 11px; color: var(--primary-color); cursor: pointer; } /* Giảm font size */
         body.dark-mode .modal-links span { color: var(--primary-color-lighter); }
         .modal-links span:hover { text-decoration: underline; }
         .close { 
             position: absolute; 
-            top: 15px; 
-            right: 15px; 
-            font-size: 20px; 
+            top: 10px; /* Điều chỉnh vị trí */
+            right: 10px; /* Điều chỉnh vị trí */
+            font-size: 18px; /* Giảm font size */
             color: var(--text-light); 
             cursor: pointer; 
             transition: color 0.3s;
+            padding: 5px; /* Thêm padding để dễ click hơn */
         }
         body.dark-mode .close { color: var(--text-dark); }
         .close:hover { color: var(--primary-color); }
@@ -604,58 +576,153 @@
             background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
             color: #fff; 
             text-align: center; 
-            padding: 10px 0; 
-            font-size: 12px; 
-            box-shadow: 8px 8px 16px rgba(0, 48, 135, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.2); 
+            padding: 8px 0; /* Giảm padding */
+            font-size: 11px; /* Giảm font size */
+            box-shadow: 0 -4px 12px rgba(0, 48, 135, 0.2); /* Đơn giản hóa shadow */
+            z-index: 998; /* Đảm bảo footer ở dưới header/sidebar */
         }
         body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
         footer .social-links a { 
             color: #fff; 
-            font-size: 16px; 
-            margin: 0 10px; 
+            font-size: 14px; /* Giảm font size */
+            margin: 0 8px; /* Giảm margin */
             transition: all 0.3s ease; 
         }
         footer .social-links a:hover { color: #e9ecef; }
 
-        /* Responsive */
-        @media (max-width: 900px) { 
-            .dashboard-content { grid-template-columns: 1fr; }
-            .hero h2 { font-size: 28px; } 
-            .hero p { font-size: 16px; } 
-            .hero .login-btn { font-size: 14px; padding: 8px 20px; }
+        /* Hamburger Menu for Mobile - initially hidden */
+        .mobile-menu-btn {
+            display: none; /* Hidden by default, shown in media query */
+            position: fixed;
+            top: 8px; /* Align with other navbar controls */
+            left: 10px;
+            z-index: 1002; /* Above sidebar */
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4);
+            align-items: center;
+            justify-content: center;
         }
-        @media (max-width: 480px) { 
-            .navbar-controls { gap: 5px; }
-            .nav-btn, .theme-toggle, .language-btn { width: 32px; height: 32px; font-size: 14px; }
-            .modal-content { padding: 20px; } 
-            .modal-content h2 { font-size: 18px; }
-            .modal-content p { font-size: 13px; }
-            .modal-content input { padding: 10px 10px 10px 35px; font-size: 13px; }
-            .modal-content button { padding: 10px; font-size: 13px; }
-            .hero h2 { font-size: 22px; }
-            .hero p { font-size: 14px; }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+
+
+        /* Responsive */
+        @media (max-width: 900px) { /* Tablet and smaller */
+            .sidebar { 
+                transform: translateX(-100%); /* Hide sidebar off-screen */
+                width: 220px; /* Set a fixed width when it slides in */
+            }
+            .sidebar.open {
+                transform: translateX(0); /* Show sidebar */
+            }
+            .sidebar.collapsed { /* When manually collapsed on desktop, then screen shrinks */
+                transform: translateX(-100%);
+            }
+            .sidebar .logo h1, .sidebar .menu a span { opacity: 1; max-width: 100px; font-size: 22px; } /* Ensure text is visible when open */
+            
+            .main-content { 
+                margin-left: 0; /* Full width when sidebar is hidden */
+                padding-left: 15px; /* Consistent padding */
+                padding-right: 15px;
+            }
+            .main-content.sidebar-open { /* Push content when sidebar is open on mobile */
+                 margin-left: 0; /* Content doesn't shift, sidebar overlays */
+            }
+            .main-content.collapsed { margin-left: 0; } /* No effect from desktop collapsed state */
+
+            .toggle-btn { display: none; } /* Hide desktop toggle button */
+            .mobile-menu-btn { display: flex; } /* Show mobile hamburger button */
+
+            .dashboard-content { grid-template-columns: 1fr; } /* Stack dashboard cards */
+            .hero h2 { font-size: 24px; } 
+            .hero p { font-size: 15px; } 
+            .hero .login-btn { font-size: 13px; padding: 9px 18px; }
+            header { padding: 12px 0; font-size: 15px;}
+        }
+
+        @media (max-width: 480px) { /* Small mobile */
+            header { padding: 10px 0; font-size: 13px; }
+            .navbar-controls { gap: 5px; top: 8px; right: 8px;}
+            .nav-btn, .theme-toggle, .language-btn, .mobile-menu-btn { 
+                width: 30px; 
+                height: 30px; 
+                font-size: 13px; 
+            }
+            .mobile-menu-btn { left: 8px; top: 9px;}
+
+            .main-content { padding: 10px; margin-top: 40px; padding-bottom: 40px; }
+            
+            .hero { min-height: 200px; padding: 15px; }
+            .hero h2 { font-size: 20px; margin-bottom: 8px; }
+            .hero p { font-size: 13px; margin-bottom: 12px; }
+            .hero .login-btn { font-size: 12px; padding: 8px 15px; }
+            .hero .hero-content { padding-top: 30px; padding-bottom: 15px;}
+
+
+            .internal-section h3 { font-size: 18px; }
+            .internal-section p { font-size: 12px; }
+            .features-grid { grid-template-columns: 1fr; gap: 10px; } /* Stack feature cards */
+            .feature-card { padding: 10px; }
+            .feature-card i { font-size: 20px; margin-bottom: 8px; }
+            .feature-card h4 { font-size: 14px; }
+
+            .dashboard-section h3 { font-size: 17px; }
+            .dashboard-card h4 { font-size: 14px; }
+            .dashboard-card p, .dashboard-card a { font-size: 11px; }
+
+            .modal-content { padding: 15px; max-width: calc(100% - 20px); } 
+            .modal-content h2 { font-size: 17px; }
+            .modal-content p { font-size: 12px; }
+            .modal-content input { padding: 9px 9px 9px 30px; font-size: 12px; }
+            .input-group .input-icon { font-size: 12px; left: 8px; }
+            .modal-content button { padding: 9px; font-size: 12px; }
+            .modal-links span { font-size: 10px; }
+            .close { top: 8px; right: 8px; font-size: 16px; }
+
+            .data-table { font-size: 11px; }
+            .data-table th, .data-table td { padding: 8px 10px; }
+
+            footer { padding: 7px 0; font-size: 10px; }
         }
     </style>
 </head>
 <body>
     <header>SHOWROOM VINFAST THUẬN AN</header>
+
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <h1>VinFast</h1> </div>
-        <div class="menu" id="navMenu">
-            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side"></i><span>Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt"></i><span>Ghép Xe</span></a>
-            <a href="danhsach.html" data-lang="pairing-list" class="active"><i class="fas fa-clipboard-check"></i><span>DS Ghép</span></a>
-            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract"></i><span>Tài Liệu</span></a>
+            <h1>VinFast Thuận An</h1>
         </div>
-        <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="menu" id="navMenu">
+            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-lang="pairing-list" class="active"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
+        </div>
+        <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
     </div>
+
     <div class="navbar-controls">
-        <button class="theme-toggle" onclick="toggleDarkMode()" data-tooltip="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
-        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn" data-tooltip="Đổi ngôn ngữ">EN</button>
-        <button class="nav-btn" onclick="logout()" id="logoutBtn" style="display: none;" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="theme-toggle" onclick="toggleDarkMode()" data-tooltip="Chuyển đổi giao diện" aria-label="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
+        <button class="language-btn" onclick="toggleLanguage()" id="languageBtn" data-tooltip="Đổi ngôn ngữ" aria-label="Đổi ngôn ngữ">EN</button>
+        <button class="nav-btn" onclick="logout()" id="logoutBtn" style="display: none;" data-tooltip="Đăng xuất" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
     </div>
+
     <div class="main-content" id="main-content">
         <section class="hero" id="heroSection" data-aos="fade-up">
             <div class="hero-content">
@@ -665,7 +732,7 @@
             </div>
         </section>
         <section class="internal-section" id="welcomeSection" data-aos="fade-up">
-            <h3 data-lang="welcome-title">HỆ THỐNG NỘI BỘ</h3> 
+            <h3 data-lang="welcome-title">HỆ THỐNG NỘI BỘ</h3>
             <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
             <div class="features-grid">
                 <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
@@ -745,7 +812,7 @@
     </div>
     <div id="loginModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></span>
+            <span class="close" onclick="closeModal('loginModal')" aria-label="Đóng"><i class="fas fa-times"></i></span>
             <div id="loginForm">
                 <h2 data-lang="login-title">Đăng Nhập</h2>
                 <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận An</p>
@@ -868,7 +935,7 @@
     </div>
     <div id="alertModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('alertModal')"><i class="fas fa-times"></i></span>
+            <span class="close" onclick="closeModal('alertModal')" aria-label="Đóng"><i class="fas fa-times"></i></span>
             <h2 id="alertTitle"></h2>
             <p id="alertMessage"></p>
             <button onclick="closeModal('alertModal')"><span class="button-text" data-lang="ok-btn">OK</span></button>
@@ -888,7 +955,7 @@
         const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 
         // Khởi tạo AOS (Animate On Scroll)
-        AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
+        AOS.init({ duration: 1000, easing: "ease-out-quad", once: true }); // Điều chỉnh AOS
 
         // Khai báo các biến trạng thái toàn cục
         let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
@@ -942,10 +1009,10 @@
                 "otp-sent": "OTP đã được gửi đến email của bạn!",
                 "password-reset-success": "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.",
                 "stock": "Kho Xe",
-                "sold-cars": "Xe Đã Bán", 
-                "pairing-request": "Ghép Xe", 
-                "pairing-list": "DS Ghép", 
-                "policy-docs": "Tài Liệu" 
+                "sold-cars": "Xe Đã Bán", // Sửa lại cho ngắn gọn hơn
+                "pairing-request": "Ghép Xe", // Sửa lại cho ngắn gọn hơn
+                "pairing-list": "DS Ghép Xe", // Sửa lại cho ngắn gọn hơn
+                "policy-docs": "Chính Sách" // Sửa lại cho ngắn gọn hơn
             },
             en: {
                 "hero-title": "Order Management System",
@@ -990,11 +1057,11 @@
                 "password-changed": "Password changed successfully!",
                 "otp-sent": "OTP has been sent to your email!",
                 "password-reset-success": "Password reset successful! Please login again.",
-                "stock": "Stock", 
-                "sold-cars": "Sold Cars", 
-                "pairing-request": "Pairing", 
-                "pairing-list": "Pair List", 
-                "policy-docs": "Docs" 
+                "stock": "Inventory", // Shorter
+                "sold-cars": "Sold Cars", // Shorter
+                "pairing-request": "Pairing", // Shorter
+                "pairing-list": "Pairing List", 
+                "policy-docs": "Policies" // Shorter
             }
         };
 
@@ -1013,23 +1080,31 @@
             if (isLoggedIn) {
                 fetchDashboardData();
             }
-            window.addEventListener('resize', handleResize); 
+            // Add event listener for clicking outside sidebar on mobile
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+                if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
+                    if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+                        sidebar.classList.remove('open');
+                        document.getElementById("main-content").classList.remove("sidebar-open");
+                    }
+                }
+            });
         });
 
-        // Cập nhật giao diện dựa trên trạng thái đăng nhập và kích thước màn hình
+        // Cập nhật giao diện dựa trên trạng thái đăng nhập
         function updateUIBasedOnLogin() {
             const heroSection = document.getElementById("heroSection");
             const welcomeSection = document.getElementById("welcomeSection");
             const dashboard = document.getElementById("dashboard");
             const logoutBtn = document.getElementById("logoutBtn");
-            const navMenu = document.getElementById("navMenu");
+            const navMenuLinks = document.querySelectorAll("#navMenu a"); // Lấy tất cả link trong menu
             const welcomeTitle = welcomeSection.querySelector('[data-lang="welcome-title"]');
             const sidebar = document.getElementById("sidebar");
-            const mainContent = document.getElementById("main-content");
-            const toggleButtonIcon = document.querySelector(".toggle-btn i");
 
-            isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-            currentUser = sessionStorage.getItem("currentUser") || "";
+            isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true"; 
+            currentUser = sessionStorage.getItem("currentUser") || "";    
 
             if (isLoggedIn && currentUser) {
                 heroSection.style.display = "none";
@@ -1039,92 +1114,33 @@
                     welcomeTitle.textContent = language === 'vi' ? `Chào mừng ${userDisplayName}!` : `Welcome ${userDisplayName}!`;
                 }
                 dashboard.style.display = "block";
-                if(navMenu) navMenu.style.display = "flex"; 
-                if(logoutBtn) logoutBtn.style.display = "flex"; 
-
-                if (window.innerWidth <= 900) { 
-                    sidebar.classList.add("collapsed");
-                    mainContent.classList.add("collapsed");
-                    if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
-                } else { 
-                    if (!sidebar.classList.contains("manually-collapsed")) {
-                         sidebar.classList.remove("collapsed");
-                         mainContent.classList.remove("collapsed");
-                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
-                    } else {
-                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
-                    }
+                logoutBtn.style.display = "flex"; 
+                // Hiển thị menu cho người dùng đã đăng nhập
+                navMenuLinks.forEach(link => link.style.display = "flex");
+                if (window.innerWidth > 900) { // Chỉ áp dụng collapsed cho desktop
+                    sidebar.classList.remove("collapsed"); // Mở sidebar khi đăng nhập trên desktop
+                     document.getElementById("main-content").classList.remove("collapsed");
                 }
 
-            } else { 
+            } else {
                 heroSection.style.display = "flex"; 
                 welcomeSection.style.display = "block"; 
                  if (welcomeTitle) { 
                     welcomeTitle.textContent = language === 'vi' ? "HỆ THỐNG NỘI BỘ" : "INTERNAL SYSTEM";
                 }
                 dashboard.style.display = "none";
-                if(navMenu) navMenu.style.display = "none"; 
-                if(logoutBtn) logoutBtn.style.display = "none"; 
-                
-                sidebar.classList.remove("collapsed");
-                sidebar.classList.remove("manually-collapsed"); 
-                mainContent.classList.remove("collapsed");
-                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
+                logoutBtn.style.display = "none"; 
+                // Ẩn menu khi chưa đăng nhập
+                navMenuLinks.forEach(link => link.style.display = "none");
+                if (window.innerWidth <= 900) {
+                    sidebar.classList.remove("open"); // Đảm bảo sidebar đóng trên mobile khi logout
+                } else {
+                    sidebar.classList.add("collapsed"); // Thu gọn sidebar khi logout trên desktop
+                    document.getElementById("main-content").classList.add("collapsed");
+                }
             }
         }
         
-        // Hàm xử lý khi thay đổi kích thước cửa sổ
-        function handleResize() {
-            const sidebar = document.getElementById("sidebar");
-            const mainContent = document.getElementById("main-content");
-            const toggleButtonIcon = document.querySelector(".toggle-btn i");
-            const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
-
-            if (isLoggedIn) {
-                if (window.innerWidth <= 900) { 
-                    if (!sidebar.classList.contains("collapsed")) {
-                        sidebar.classList.add("collapsed");
-                        mainContent.classList.add("collapsed");
-                        if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars";
-                    }
-                } else { 
-                    if (!sidebar.classList.contains("manually-collapsed")) {
-                        if (sidebar.classList.contains("collapsed")) { 
-                           sidebar.classList.remove("collapsed");
-                           mainContent.classList.remove("collapsed");
-                           if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
-                        }
-                    } else { 
-                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
-                    }
-                }
-            } else {
-                sidebar.classList.remove("collapsed"); 
-                mainContent.classList.remove("collapsed");
-                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
-            }
-        }
-
-        // Hàm toggle sidebar thủ công
-        function toggleSidebar() {
-            const sidebar = document.getElementById("sidebar");
-            const mainContent = document.getElementById("main-content");
-            const toggleButtonIcon = document.querySelector(".toggle-btn i");
-
-            sidebar.classList.toggle("collapsed");
-            mainContent.classList.toggle("collapsed");
-
-            if (sidebar.classList.contains("collapsed")) {
-                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars";
-                if (window.innerWidth > 900) { 
-                    sidebar.classList.add("manually-collapsed");
-                }
-            } else {
-                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
-                sidebar.classList.remove("manually-collapsed"); 
-            }
-        }
-
         // Hàm tổng hợp để tải dữ liệu cho dashboard
         function fetchDashboardData() {
             fetchTotalSoldCars();
@@ -1445,6 +1461,23 @@
             showAlert("Thông báo", translations[language]["logout-success"]);
         }
 
+        // Chuyển đổi trạng thái sidebar cho DESKTOP
+        function toggleSidebarDesktop() {
+            if (window.innerWidth > 900) { // Chỉ hoạt động trên desktop
+                document.getElementById("sidebar").classList.toggle("collapsed");
+                document.getElementById("main-content").classList.toggle("collapsed");
+            }
+        }
+
+        // Chuyển đổi trạng thái sidebar cho MOBILE
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("open");
+            // Không cần thay đổi margin của main-content vì sidebar sẽ overlay
+            // document.getElementById("main-content").classList.toggle("sidebar-open"); 
+        }
+
+
         // Mở modal
         function openModal(id) {
             const modal = document.getElementById(id);
@@ -1467,7 +1500,7 @@
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 300); 
+            }, 250); // Giảm thời gian chờ cho phù hợp với transition mới
         }
         
         // Reset modal về form đăng nhập
@@ -1526,7 +1559,12 @@
                         welcomeTitleElement.textContent = language === 'vi' ? "HỆ THỐNG NỘI BỘ" : "INTERNAL SYSTEM";
                     }
                 } else if (translations[language] && translations[language][key] !== undefined) { 
-                    element.textContent = translations[language][key];
+                    // Kiểm tra nếu là menu item, chỉ cập nhật text của span bên trong
+                    if (element.parentElement && element.parentElement.classList.contains('menu') && element.querySelector('span')) {
+                        element.querySelector('span').textContent = translations[language][key];
+                    } else {
+                        element.textContent = translations[language][key];
+                    }
                 }
             });
             document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
@@ -1535,6 +1573,17 @@
                     element.placeholder = translations[language][key];
                 }
             });
+            // Cập nhật lại tiêu đề các card trong dashboard
+            if (isLoggedIn) {
+                const stockCardTitle = document.querySelector('.dashboard-card [data-lang="stock"]');
+                if(stockCardTitle) stockCardTitle.textContent = translations[language]["stock"];
+
+                const soldCarsCardTitle = document.querySelector('.dashboard-card [data-lang="sold-cars"]');
+                 if(soldCarsCardTitle) soldCarsCardTitle.textContent = translations[language]["sold-cars"];
+                
+                const pairingRequestCardTitle = document.querySelector('.dashboard-card [data-lang="pairing-request"]');
+                if(pairingRequestCardTitle) pairingRequestCardTitle.textContent = translations[language]["pairing-request"];
+            }
         }
 
         // Hiển thị form cụ thể trong modal
