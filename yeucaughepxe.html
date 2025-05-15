@@ -32,8 +32,7 @@
     --footer-text: #ffffff;
     --success-bg: #e6ffe6;
     --loading-bg: #f5f5f5;
-    --no-data-text-color: #7f8c8d; /* Màu cho chữ "không có dữ liệu" */
-    /* Thêm các biến màu mới nếu cần cho Enhanced Modal Styles */
+    --no-data-text-color: #7f8c8d;
     --primary-text-color: #004a7c;
     --primary-text-color-dark: #a9cce3;
     --scroll-to-top-bg: #005eb8;
@@ -51,8 +50,6 @@
     --border-color: #34495e;
     --shadow-light: rgba(255, 255, 255, 0.1);
     --shadow-dark: rgba(0, 0, 0, 0.5);
-    /* --modal-bg: #34495e; -- Sẽ bị ghi đè bởi Enhanced Modal Styles */
-    /* --modal-text: #e0e5ec; -- Sẽ bị ghi đè bởi Enhanced Modal Styles */
     --summary-bg: #2c3e50;
     --chart-bg: #2c3e50;
     --footer-bg: #005eb8;
@@ -72,7 +69,7 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     transition: background 0.3s ease, color 0.3s ease;
-    font-size: 10px;
+    font-size: 10px; /* Base font size, can be adjusted in media queries */
 }
 
 /* Navbar styles */
@@ -81,7 +78,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 40px;
+    height: 40px; /* Default height */
     background: linear-gradient(135deg, #003087, #005eb8);
     display: flex;
     align-items: center;
@@ -90,7 +87,7 @@ body {
     z-index: 1000;
 }
 .navbar .logo h1 {
-    font-size: 14px;
+    font-size: 14px; /* Default font size */
     color: #ffffff;
     font-weight: 700;
     text-transform: uppercase;
@@ -104,10 +101,10 @@ body {
     transition: all 0.3s ease;
 }
 .navbar .tabs a {
-    padding: 6px 10px;
+    padding: 6px 10px; /* Default padding */
     text-decoration: none;
     color: #ffffff;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     font-weight: 700;
     transition: all 0.3s ease;
     border-radius: 15px;
@@ -130,11 +127,11 @@ body {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     cursor: pointer;
     transition: all 0.3s ease;
-    width: 25px;
-    height: 25px;
+    width: 25px; /* Default size */
+    height: 25px; /* Default size */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,7 +144,7 @@ body {
 .nav-btn[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    top: -30px; /* Adjusted for smaller navbar */
+    top: -30px; 
     left: 50%;
     transform: translateX(-50%);
     background: #333;
@@ -164,7 +161,7 @@ body {
 .nav-btn[data-tooltip]::before {
     content: '';
     position: absolute;
-    top: -6px; /* Adjusted for smaller navbar */
+    top: -6px;
     left: 50%;
     transform: translateX(-50%);
     border: 3px solid transparent;
@@ -176,25 +173,21 @@ body {
 .nav-btn:hover::after, .nav-btn:hover::before {
     opacity: 1;
 }
-[data-theme="dark"] .nav-btn[data-tooltip]::after {
-    background: #66b0ff; /* Softer blue for dark theme tooltip */
-}
-[data-theme="dark"] .nav-btn[data-tooltip]::before {
-    border-top-color: #66b0ff; /* Softer blue for dark theme tooltip arrow */
-}
+[data-theme="dark"] .nav-btn[data-tooltip]::after { background: #66b0ff; }
+[data-theme="dark"] .nav-btn[data-tooltip]::before { border-top-color: #66b0ff; }
+
 .theme-toggle {
     background: none;
     border: none;
     color: #ffffff;
-    font-size: 16px; /* Slightly smaller for compact navbar */
+    font-size: 16px; 
     cursor: pointer;
     transition: transform 0.3s ease;
 }
-.theme-toggle:hover {
-    transform: scale(1.1);
-}
+.theme-toggle:hover { transform: scale(1.1); }
+
 .hamburger {
-    display: none; /* Hidden by default, shown in media query */
+    display: none; 
     background: none;
     border: none;
     color: #ffffff;
@@ -206,21 +199,22 @@ body {
 /* Main Container styles */
 .main-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Default for mobile */
     margin-top: 50px; /* Space for fixed navbar */
-    padding: 8px;
-    gap: 8px;
+    padding: 8px; /* Default padding */
+    gap: 8px; /* Default gap */
     min-height: calc(100vh - 70px); /* Full height minus navbar and footer */
-    transition: opacity 0.3s ease; /* Smooth transition for tab switching */
+    transition: opacity 0.3s ease; 
 }
-.form-container {
+.form-container, .grid-container {
     background: var(--container-bg);
     border-radius: 15px;
-    padding: 10px;
+    padding: 10px; /* Default padding */
     box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    width: 100%; /* Full width on mobile */
 }
 .form-container h2 {
-    font-size: 12px;
+    font-size: 12px; /* Default font size */
     color: #005eb8;
     margin-bottom: 10px;
     font-weight: 700;
@@ -230,14 +224,15 @@ body {
     gap: 8px;
 }
 .form-container input, .form-container select {
-    padding: 6px 10px;
+    padding: 6px 10px; /* Default padding */
     border: none;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     background: var(--container-bg);
     color: var(--text-color);
     box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
     transition: all 0.3s ease;
+    width: 100%; /* Ensure inputs take full width of their grid cell */
 }
 .form-container input:focus, .form-container select:focus {
     box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -245,43 +240,33 @@ body {
 }
 .form-container .form-buttons {
     display: flex;
-    gap: 8px; /* Khoảng cách giữa các nút */
-    justify-content: flex-start; /* Căn các nút về bên trái */
+    gap: 8px; 
+    justify-content: flex-start; 
 }
 
 .form-container button {
-    padding: 6px 12px;
+    padding: 6px 12px; /* Default padding */
     border: none;
     border-radius: 10px;
     color: #ffffff;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     font-weight: 700;
     cursor: pointer;
     box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
     transition: all 0.3s ease;
 }
-.form-container button[type="submit"] {
-    background: #005eb8; /* Màu chính cho nút Xác Nhận */
-}
+.form-container button[type="submit"] { background: #005eb8; }
 .form-container button[type="submit"]:hover {
     background: #003087;
     box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
 }
-.form-container button.danger { /* Kiểu cho nút Xóa Nháp */
-    background: #e74c3c; /* Màu đỏ */
-}
+.form-container button.danger { background: #e74c3c; }
 .form-container button.danger:hover {
-    background: #c0392b; /* Màu đỏ đậm hơn khi hover */
+    background: #c0392b;
     box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
 }
 
-.grid-container {
-    background: var(--container-bg);
-    border-radius: 15px;
-    padding: 10px;
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-    overflow: hidden; /* Prevents content from spilling out */
-}
+.grid-container { overflow: hidden; }
 .controls {
     display: flex;
     flex-wrap: wrap;
@@ -292,22 +277,22 @@ body {
 }
 .search-container {
     display: flex;
-    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    flex-wrap: wrap; 
     gap: 8px;
     align-items: center;
-    width: 100%; /* Take full width on small screens */
+    width: 100%; 
 }
 .search-container input, .search-container select {
-    padding: 6px 10px;
+    padding: 6px 10px; /* Default padding */
     border: none;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     background: var(--container-bg);
     color: var(--text-color);
     box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
     transition: all 0.3s ease;
-    flex: 1; /* Allow inputs to grow */
-    min-width: 100px; /* Minimum width for inputs */
+    flex: 1; 
+    min-width: 100px; 
 }
 .search-container input:focus, .search-container select:focus {
     box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
@@ -317,18 +302,22 @@ body {
     display: flex;
     gap: 8px;
     align-items: center;
+    width: 100%; /* Full width on mobile for better spacing */
+    justify-content: space-between; /* Distribute buttons */
 }
+.export-btn-container span { font-size: 9px; }
+
 .export-btn, .refresh-btn {
     padding: 8px;
     border: none;
     border-radius: 50%;
     background: var(--container-bg);
     color: #005eb8;
-    font-size: 10px;
+    font-size: 10px; /* Default font size */
     cursor: pointer;
     transition: all 0.3s ease;
-    width: 25px; /* Fixed width */
-    height: 25px; /* Fixed height */
+    width: 25px; 
+    height: 25px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -338,20 +327,21 @@ body {
     box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
 }
 .table-wrapper {
-    max-height: calc(100vh - 230px); /* Adjust based on other elements */
-    overflow-y: auto; /* Cho phép cuộn dọc */
-    overflow-x: auto; /* Cho phép cuộn ngang khi cần */
+    max-height: calc(100vh - 230px); 
+    overflow-y: auto; 
+    overflow-x: auto; 
     scrollbar-width: thin;
     scrollbar-color: #005eb8 var(--container-bg);
+    width: 100%; /* Ensure wrapper takes full width */
 }
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 7px; /* Smaller font for mobile */
-    min-width: 600px; /* Đảm bảo bảng có chiều rộng tối thiểu để cuộn ngang nếu cần */
+    font-size: 10px; /* Adjusted for mobile, can be larger on desktop */
+    min-width: 600px; /* Ensures horizontal scroll on desktop if content overflows */
 }
 th, td {
-    padding: 4px; /* Reduced padding for mobile */
+    padding: 6px; /* Adjusted for mobile */
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -365,631 +355,300 @@ th {
     z-index: 10;
     box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
     cursor: pointer;
+    font-size: 9px; /* Slightly smaller for mobile header */
 }
 td {
     background: var(--table-row-bg);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 120px; /* Limit width to prevent overflow */
+    max-width: 120px; 
 }
-td[title]:hover { /* Tooltip for truncated text */
-    cursor: pointer;
-}
+td[title]:hover { cursor: pointer; }
 tbody tr:hover {
     background: var(--table-row-hover);
     cursor: pointer;
     transition: background 0.3s ease;
 }
-.table-placeholder td { /* Kiểu cho thông báo tải/không có dữ liệu trong bảng */
+.table-placeholder td { 
     text-align: center;
     padding: 16px;
     font-size: 10px;
     color: var(--no-data-text-color);
 }
-.table-placeholder .fas {
-    margin-right: 8px;
-}
+.table-placeholder .fas { margin-right: 8px; }
 
 
-/* Optimized Modal Styles (Original) */
+/* Modal Styles (Enhanced) */
 .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-    display: none; /* Hidden by default */
-    align-items: center;
-    justify-content: center;
-    z-index: 1000; /* Ensure modal is on top */
-    padding: 15px; /* Padding around modal content */
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); 
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000; padding: 15px; opacity: 0; transition: opacity 0.3s ease;
 }
-.modal.active {
-    display: flex; /* Show when active */
-    opacity: 1;
-}
-/* Original .modal-content and other modal styles are here... */
-/* They will be overridden by "Enhanced Modal Styles" below if selectors match */
-.modal-content { /* Original style, might be overridden */
-    background: var(--modal-bg);
-    border-radius: 12px;
-    padding: 20px;
-    max-width: 450px;
-    width: 100%;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    color: var(--modal-text);
-    position: relative;
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
-}
-.modal.active .modal-content { /* Original style */
-    transform: translateY(0);
-}
-.modal-header { /* Original style */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-.modal-header h2 { /* Original style */
-    font-size: 16px;
-    color: #005eb8;
-    font-weight: 700;
-    margin: 0;
-    text-align: center;
-    width: 100%;
-}
-.modal-close-btn { /* Original style */
-    background: none;
-    border: none;
-    color: var(--modal-text);
-    font-size: 18px;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-.modal-close-btn:hover { /* Original style */
-    color: #005eb8;
-}
-.modal-body { /* Original style */
-    font-size: 12px;
-    line-height: 1.5;
-    max-height: 50vh;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    text-align: center;
-}
-.modal-body::-webkit-scrollbar { /* Original style */
-    display: none;
-}
-.modal-body.scrollable { /* Original style */
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #005eb8 var(--modal-bg);
-}
-.modal-body.scrollable::-webkit-scrollbar { /* Original style */
-    width: 6px;
-    display: block;
-}
-.modal-body.scrollable::-webkit-scrollbar-thumb { /* Original style */
-    background: #005eb8;
-    border-radius: 3px;
-}
-.modal-body .detail-item, .modal-body div { /* Original style */
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 10px;
-    padding: 10px;
-    background: rgba(0,0,0,0.02);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    transition: background 0.2s ease;
-}
-.modal-body .detail-item:hover, .modal-body div:hover { /* Original style */
-    background: rgba(0,0,0,0.05);
-}
-.modal-body .detail-item strong, .modal-body div strong { /* Original style */
-    font-weight: 700;
-    color: #005eb8;
-}
-.modal-body .detail-item span, .modal-body div span { /* Original style */
-    color: var(--modal-text);
-    word-break: break-word;
-}
-.modal-body .detail-item.highlight strong { /* Original style */
-     color: var(--modal-text);
-}
-.modal-body .detail-item.highlight span { /* Original style */
-    color: #005eb8;
-    font-weight: bold;
-}
-[data-theme="dark"] .modal-body .detail-item.highlight span { /* Original style */
-    color: #66b0ff;
-}
-.modal-body p { /* Original style */
-    text-align: center;
-}
-.modal-body i { /* Original style */
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-.modal-footer { /* Original style */
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-.modal-btn { /* Original style */
-    padding: 8px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.modal-btn.primary { /* Original style */
-    background: #005eb8;
-    color: #ffffff;
-}
-.modal-btn.primary:hover { /* Original style */
-    background: #003087;
-}
-.modal-btn.secondary { /* Original style */
-    background: rgba(0,0,0,0.1);
-    color: var(--modal-text);
-}
-.modal-btn.secondary:hover { /* Original style */
-    background: rgba(0,0,0,0.2);
-}
+.modal.active { display: flex; opacity: 1; }
 
-/* --- Enhanced Modal Styles --- */
-/* These styles will enhance or override the .modal-content, .modal-header, etc. from above */
-
-/* General Modal Refinements */
 .modal-content {
-    background: var(--modal-bg); /* Keep variable for theme switching, but specific themes below will override */
-    border-radius: 16px; /* Slightly larger radius for a softer look */
-    padding: 25px 30px; /* Increase padding */
-    max-width: 500px; /* Adjust as needed */
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Softer, more diffused shadow */
-    border: 1px solid rgba(0,0,0,0.05); /* Subtle border for definition */
-    /* color and transition are inherited or defined in .modal or specific elements */
+    background: var(--modal-bg); border-radius: 16px; 
+    padding: 20px 25px; /* Adjusted padding for mobile */
+    max-width: 90%; /* More width on mobile */
+    width: 100%; 
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); 
+    border: 1px solid rgba(0,0,0,0.05);
+    position: relative; transform: translateY(20px); transition: transform 0.3s ease;
 }
+.modal.active .modal-content { transform: translateY(0); }
 
-[data-theme="light"] .modal-content {
-    background: #fdfdfd; /* A very light, soft white for light theme */
-    border-color: #efefef;
-    color: #2c3e50; /* Ensuring text color for light theme */
-}
+[data-theme="light"] .modal-content { background: #fdfdfd; border-color: #efefef; color: #2c3e50; }
+[data-theme="dark"] .modal-content { background: #28313e; border-color: #3a4552; color: #e0e5ec; }
 
-[data-theme="dark"] .modal-content {
-    background: #28313e; /* A richer dark blue/grey for dark theme */
-    border-color: #3a4552;
-    color: #e0e5ec; /* Ensuring text color for dark theme */
-}
-
-/* Modal Header */
 .modal-header {
-    border-bottom: 1px solid var(--border-color); /* Keep a subtle separator */
-    padding-bottom: 15px; /* Adjust spacing */
-    margin-bottom: 20px; /* Increase space below header */
-    /* display, justify-content, align-items are inherited from original .modal-header */
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color); 
+    padding-bottom: 12px; /* Adjusted padding */
+    margin-bottom: 15px; /* Adjusted margin */
 }
-
 .modal-header h2 {
-    font-size: 18px; /* Slightly larger title */
-    color: var(--primary-text-color, #004a7c); /* Use a primary text color, can be themed */
-    font-weight: 600; /* Semi-bold for a refined look */
-    /* margin, text-align, width inherited or default */
+    font-size: 16px; /* Adjusted for mobile */
+    color: var(--primary-text-color, #004a7c); 
+    font-weight: 600; margin: 0; text-align: center; width: 100%;
 }
-
-[data-theme="dark"] .modal-header h2 {
-    color: var(--primary-text-color-dark, #a9cce3);
-}
+[data-theme="dark"] .modal-header h2 { color: var(--primary-text-color-dark, #a9cce3); }
 
 .modal-close-btn {
-    color: var(--text-color); /* Will be overridden by theme-specific .modal-content color if not specific enough */
-    font-size: 20px; /* Slightly larger close icon */
-    transition: color 0.3s ease, transform 0.3s ease;
-    /* background, border, cursor inherited */
+    background: none; border: none; 
+    color: var(--text-color); 
+    font-size: 18px; /* Adjusted for mobile */
+    cursor: pointer; transition: color 0.3s ease, transform 0.3s ease;
 }
-[data-theme="light"] .modal-close-btn { /* Ensuring close button color in light theme */
-    color: #2c3e50;
-}
-[data-theme="dark"] .modal-close-btn { /* Ensuring close button color in dark theme */
-    color: #e0e5ec;
-}
+[data-theme="light"] .modal-close-btn { color: #2c3e50; }
+[data-theme="dark"] .modal-close-btn { color: #e0e5ec; }
+.modal-close-btn:hover { color: #e74c3c !important; transform: rotate(90deg); }
 
-
-.modal-close-btn:hover {
-    color: #e74c3c !important; /* A common hover color for close buttons, !important to ensure override if needed */
-    transform: rotate(90deg); /* Add a subtle interaction */
+.modal-body { 
+    font-size: 11px; /* Adjusted for mobile */
+    line-height: 1.5; max-height: 60vh; /* Increased max-height for mobile */
+    overflow-y: hidden; scrollbar-width: none; text-align: left; /* Align text left */
 }
-
-/* Modal Body - Detail Items */
-.modal-body .detail-item, .modal-body div { /* Assuming 'div' here also refers to detail items */
-    display: grid;
-    grid-template-columns: 150px 1fr; /* Adjust label width as needed */
-    gap: 8px 15px; /* Row gap and column gap */
-    padding: 12px 0; /* Vertical padding, remove horizontal to align with modal-content padding */
-    background: transparent; /* Remove individual item backgrounds for a cleaner look */
-    border-radius: 0; /* Remove border-radius if individual backgrounds are removed */
-    margin-bottom: 0; /* Overriding previous margin-bottom */
-    border-bottom: 1px dashed var(--border-color); /* Subtle dashed separator */
-    transition: none; /* Remove hover effect if background is transparent */
+.modal-body::-webkit-scrollbar { display: none; }
+.modal-body.scrollable { 
+    overflow-y: auto; scrollbar-width: thin; 
+    scrollbar-color: #005eb8 var(--modal-bg); 
 }
+.modal-body.scrollable::-webkit-scrollbar { width: 6px; display: block; }
+.modal-body.scrollable::-webkit-scrollbar-thumb { background: #005eb8; border-radius: 3px; }
 
-.modal-body .detail-item:last-child, .modal-body div:last-child {
-    border-bottom: none; /* No border for the last item */
+.modal-body .detail-item, .modal-body div { 
+    display: grid; 
+    grid-template-columns: 1fr; /* Single column for mobile */
+    gap: 6px 10px; /* Adjusted gap */
+    padding: 8px 0; /* Adjusted padding */
+    background: transparent; border-radius: 0; margin-bottom: 0;
+    border-bottom: 1px dashed var(--border-color); 
+    transition: none; 
 }
+.modal-body .detail-item:last-child, .modal-body div:last-child { border-bottom: none; }
 
 .modal-body .detail-item strong, .modal-body div strong {
-    font-weight: 500; /* Medium weight for labels */
-    color: var(--text-color); /* Standard text color for labels, will be themed by body */
-    opacity: 0.8; /* Slightly subdued labels */
+    font-weight: 500; color: var(--text-color); opacity: 0.8;
 }
 [data-theme="light"] .modal-body .detail-item strong { color: #2c3e50; opacity: 0.7;}
 [data-theme="dark"] .modal-body .detail-item strong { color: #e0e5ec; opacity: 0.7;}
 
+.modal-body .detail-item.highlight strong { /* No change needed, handled by theme */ }
+[data-theme="light"] .modal-body .detail-item.highlight strong { color: #004a7c; opacity: 1; }
+[data-theme="dark"] .modal-body .detail-item.highlight strong { color: #a9cce3; opacity: 1; }
 
-/* Highlighted items for emphasis (e.g., Status, VIN) */
-.modal-body .detail-item.highlight strong {
-    /* color: var(--modal-text); Or your primary accent color */
-    /* opacity: 1; */
-    /* Let specific theme styles handle this */
-}
-[data-theme="light"] .modal-body .detail-item.highlight strong {
-    color: #004a7c;
-    opacity: 1;
-}
-[data-theme="dark"] .modal-body .detail-item.highlight strong {
-    color: #a9cce3;
-    opacity: 1;
-}
-
-
-.modal-body .detail-item.highlight span {
-    color: #005eb8; /* Main accent color for light theme */
-    font-weight: 600; /* Make highlighted value bolder */
-}
-
-[data-theme="dark"] .modal-body .detail-item.highlight span {
-    color: #79b6f2; /* Lighter accent for dark theme */
-}
+.modal-body .detail-item.highlight span { color: #005eb8; font-weight: 600; }
+[data-theme="dark"] .modal-body .detail-item.highlight span { color: #79b6f2; }
 
 .modal-body .detail-item span, .modal-body div span {
-    /* color: var(--modal-text); -- themed by .modal-content */
-    font-size: 13px; /* Slightly larger value text */
-    word-break: break-word; /* inherited */
+    font-size: 12px; /* Adjusted for mobile */
+    word-break: break-word; 
 }
 [data-theme="light"] .modal-body .detail-item span, [data-theme="light"] .modal-body div span { color: #2c3e50; }
 [data-theme="dark"] .modal-body .detail-item span, [data-theme="dark"] .modal-body div span { color: #e0e5ec; }
 
-
-/* Modal Footer */
 .modal-footer {
-    padding-top: 20px; /* More space above footer buttons */
-    border-top: 1px solid var(--border-color); /* Separator for footer */
-    margin-top: 25px;
-    /* display, justify-content, gap inherited */
+    display: flex; justify-content: flex-end; gap: 8px; /* Adjusted gap */
+    padding-top: 15px; /* Adjusted padding */
+    border-top: 1px solid var(--border-color); 
+    margin-top: 20px; /* Adjusted margin */
 }
-
 .modal-btn {
-    padding: 10px 25px; /* Larger padding for buttons */
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500; /* Medium weight */
-    text-transform: uppercase; /* Uppercase for a more formal look, optional */
-    letter-spacing: 0.5px; /* Add some letter spacing */
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: none; /* Overriding previous border if any */
-    cursor: pointer; /* inherited */
+    padding: 8px 18px; /* Adjusted for mobile */
+    border-radius: 8px; font-size: 12px; /* Adjusted for mobile */
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
+    transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: none; cursor: pointer; 
 }
+.modal-btn.primary { background: #005eb8; color: #ffffff; }
+.modal-btn.primary:hover { background: #004a7c; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transform: translateY(-1px); }
+.modal-btn.secondary { background: transparent; border: 1px solid var(--border-color); }
+[data-theme="light"] .modal-btn.secondary { color: #005eb8; border-color: #005eb8; }
+[data-theme="dark"] .modal-btn.secondary { color: #79b6f2; border-color: #79b6f2; }
+.modal-btn.secondary:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
+[data-theme="light"] .modal-btn.secondary:hover { background: rgba(0, 94, 184, 0.1); border-color: #004a7c; }
+[data-theme="dark"] .modal-btn.secondary:hover { background: rgba(121, 182, 242, 0.15); border-color: #a9cce3; }
 
-.modal-btn.primary {
-    background: #005eb8; /* Your primary button color */
-    color: #ffffff;
-}
-
-.modal-btn.primary:hover {
-    background: #004a7c; /* Darker shade on hover */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    transform: translateY(-1px); /* Subtle lift effect */
-}
-
-.modal-btn.secondary {
-    background: transparent;
-    /* color: var(--modal-text); -- Will be themed */
-    border: 1px solid var(--border-color);
-}
-[data-theme="light"] .modal-btn.secondary {
-    color: #005eb8; /* Primary color for text */
-    border-color: #005eb8;
-}
-[data-theme="dark"] .modal-btn.secondary {
-    color: #79b6f2; /* Lighter primary for text */
-    border-color: #79b6f2;
-}
-
-.modal-btn.secondary:hover {
-    /* background: rgba(0,0,0,0.05); -- themed below */
-    /* border-color: var(--modal-text); -- themed below */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
-}
-[data-theme="light"] .modal-btn.secondary:hover {
-    background: rgba(0, 94, 184, 0.1); /* Light primary accent hover */
-    border-color: #004a7c;
-}
-[data-theme="dark"] .modal-btn.secondary:hover {
-    background: rgba(121, 182, 242, 0.15); /* Lighter primary accent hover */
-    border-color: #a9cce3;
-}
+.modal-body.scrollable::-webkit-scrollbar-thumb { background: #005eb8; border-radius: 3px; }
+.modal-body.scrollable::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-thumb { background: #79b6f2; }
+[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
 
 
-/* Ensuring scrollbar aesthetics if content overflows */
-.modal-body.scrollable::-webkit-scrollbar-thumb {
-    background: #005eb8; /* Or your primary accent color */
-    border-radius: 3px;
-}
-.modal-body.scrollable::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.05); /* Subtle track */
-}
-[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-thumb {
-    background: #79b6f2; /* Lighter for dark theme */
-}
-[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.05);
-}
+.success-modal-content { background: var(--success-bg); text-align: center; }
+.success-modal-content .modal-header h2 { color: #2e7d32; }
+.loading-modal-content { background: var(--loading-bg); text-align: center; }
+.loading-modal-content .modal-header h2 { color: #005eb8; }
 
-/* --- End of Enhanced Modal Styles --- */
 
-.success-modal-content { /* Specific styling for success modal */
-    background: var(--success-bg);
-    text-align: center;
-}
-.success-modal-content .modal-header h2 {
-    color: #2e7d32; /* Green for success */
-}
-.loading-modal-content { /* Specific styling for loading modal */
-    background: var(--loading-bg);
-    text-align: center;
-}
-.loading-modal-content .modal-header h2 {
-    color: #005eb8; /* Blue for loading */
-}
-
-/* Responsive styles */
+/* Responsive styles for mobile (max-width: 767px) */
 @media (max-width: 767px) {
-     .modal-content { /* This will also apply to enhanced modal on mobile */
-        max-width: 90%; /* More width on small screens */
-        padding: 15px; /* Adjust padding for mobile if enhanced padding is too much */
-    }
-    .modal-header h2 { /* Applies to enhanced modal on mobile */
-        font-size: 16px; /* Revert to slightly smaller for mobile if 18px is too big */
-    }
-    .modal-body { /* Applies to enhanced modal on mobile */
-        font-size: 11px;
-    }
-     .modal-body .detail-item, .modal-body div { /* Single column for details on mobile */
-        grid-template-columns: 1fr; /* Override for mobile */
-        padding: 8px 0; /* Adjust padding for mobile */
-    }
-    .modal-btn { /* Applies to enhanced modal on mobile */
-        padding: 8px 18px; /* Adjust padding for mobile */
-        font-size: 12px;
-    }
-    .navbar {
-        height: 40px; /* Adjust navbar height for mobile */
-    }
+    .navbar { height: 40px; }
+    .navbar .logo h1 { font-size: 12px; } /* Smaller logo text */
     .navbar .tabs {
-        display: none; /* Hide tabs by default on mobile */
-        flex-direction: column;
-        position: fixed;
-        top: 40px; /* Position below navbar */
-        left: 0;
-        width: 100%;
+        display: none; 
+        flex-direction: column; position: fixed; top: 40px; 
+        left: 0; width: 100%;
         background: linear-gradient(135deg, #003087, #005eb8);
-        padding: 10px 0;
-        transform: translateX(0); /* Reset transform */
-        gap: 8px;
+        padding: 8px 0; /* Reduced padding */
+        transform: translateX(0); gap: 6px; /* Reduced gap */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Add shadow for dropdown */
     }
-    .navbar .tabs.active {
-        display: flex; /* Show tabs when hamburger is clicked */
-    }
-    .navbar .tabs a {
-        padding: 6px 12px;
-        font-size: 10px;
-        text-align: center;
-    }
-    .hamburger {
-        display: block; /* Show hamburger on mobile */
-    }
-    .main-container {
-        margin-top: 50px; /* Adjust margin for mobile navbar */
-        padding: 6px;
-    }
-    /* Table responsiveness for mobile */
-    .table-wrapper {
-        max-height: calc(100vh - 200px); /* Adjust for mobile */
-    }
-    table { /* Stack table cells on mobile */
-        display: block;
-         min-width: 0; /* Reset min-width for stacked layout */
-    }
-    thead {
-        display: none; /* Hide table header on mobile */
-    }
-    tbody, tr { /* td will be handled below */
-        display: block;
-    }
+    .navbar .tabs.active { display: flex; }
+    .navbar .tabs a { padding: 8px 10px; font-size: 11px; text-align: center; } /* Adjusted padding and font */
+    .hamburger { display: block; }
+
+    .main-container { margin-top: 40px; padding: 6px; gap: 6px; }
+    .form-container, .grid-container { padding: 8px; border-radius: 10px; } /* Smaller padding and radius */
+    .form-container h2 { font-size: 11px; margin-bottom: 8px; }
+    .form-container input, .form-container select { padding: 8px 10px; font-size: 11px; } /* Slightly larger for touch */
+    .form-container button { padding: 8px 12px; font-size: 11px; }
+
+    .controls { flex-direction: column; align-items: stretch; } /* Stack controls */
+    .search-container { flex-direction: column; align-items: stretch; } /* Stack search inputs */
+    .search-container input, .search-container select { min-width: 0; } /* Allow full stretch */
+    .export-btn-container { justify-content: space-around; margin-top: 8px; } /* Space out export buttons */
+    .export-btn, .refresh-btn { width: 30px; height: 30px; font-size: 12px; } /* Slightly larger touch targets */
+    
+    .table-wrapper { max-height: calc(100vh - 280px); /* Adjust based on other elements on mobile */ }
+    table { display: block; min-width: 0; font-size: 9px; } /* Stack table, smaller font */
+    thead { display: none; }
+    tbody, tr { display: block; }
     tr {
-        margin-bottom: 8px;
-        border-radius: 10px;
-        background: var(--table-row-bg);
-        padding: 8px;
+        margin-bottom: 8px; border-radius: 10px;
+        background: var(--table-row-bg); padding: 10px; /* More padding inside each "card" */
         box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
     }
     td {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline; /* Align items on their baseline */
-        padding: 4px 6px;
-        border: none;
-        font-size: 9px;
-        max-width: none;
-        white-space: normal;
-        text-overflow: clip;
+        display: flex; justify-content: space-between; align-items: baseline; 
+        padding: 5px 0; /* Vertical padding, no horizontal as it's handled by tr */
+        border: none; font-size: 10px; /* Slightly larger font for readability */
+        max-width: none; white-space: normal; text-overflow: clip;
     }
     td:before {
-        content: attr(data-label);
-        font-weight: 700;
-        color: #005eb8;
-        padding-right: 8px; /* More space */
-        white-space: nowrap; /* Keep label on one line if possible */
-        flex-shrink: 0; /* Prevent label from shrinking */
+        content: attr(data-label); font-weight: 700; color: #005eb8;
+        padding-right: 10px; /* More space for label */
+        white-space: nowrap; flex-shrink: 0;
     }
-    td span { /* The actual value wrapped in a span */
-        text-align: right;
-        word-break: break-word; /* Allow long values to break */
-        flex-grow: 1; /* Allow value to take remaining space */
-        min-width: 0; /* Allow value to shrink if needed */
-    }
-    td:last-child {
-        border-bottom: none;
-    }
+    td span { text-align: right; word-break: break-word; flex-grow: 1; min-width: 0; }
+    td:last-child { border-bottom: none; }
+
+    .summary-section { padding: 8px; }
+    .summary-section h3 { font-size: 11px; }
+    .summary-section p { font-size: 10px; }
+
+    .chart-container { flex-direction: column; } /* Stack charts */
+    .chart-card { min-width: 0; padding: 10px; } /* Full width for chart cards */
+    .chart-card h3 { font-size: 11px; }
+    canvas { max-height: 180px; } /* Adjust chart height for mobile */
+
+    .notification { top: 50px; right: 10px; padding: 8px 15px; font-size: 11px; }
+    #scrollToTopBtn { bottom: 15px; right: 15px; padding: 8px 10px; font-size: 14px; }
 }
-.detail-table { /* Styles for tables within modals or detailed views */
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10px;
-}
-.detail-table th, .detail-table td {
-    padding: 6px;
-}
+
+.detail-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.detail-table th, .detail-table td { padding: 6px; }
+
 .summary-section {
-    background: var(--summary-bg);
-    border-radius: 10px;
-    padding: 8px;
-    margin-bottom: 10px;
+    background: var(--summary-bg); border-radius: 10px; padding: 8px;
+    margin-bottom: 10px; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+}
+.summary-section h3 { font-size: 10px; color: #005eb8; margin-bottom: 8px; font-weight: 700; }
+.summary-section p { font-size: 9px; color: var(--text-color); margin: 4px 0; }
+
+.chart-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.chart-card {
+    flex: 1; min-width: 200px; background: var(--chart-bg);
+    border-radius: 10px; padding: 8px; 
     box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    position: relative; 
 }
-.summary-section h3 {
-    font-size: 10px;
-    color: #005eb8;
-    margin-bottom: 8px;
-    font-weight: 700;
+.chart-card h3 { font-size: 10px; color: #005eb8; margin-bottom: 8px; font-weight: 700; }
+.chart-no-data { 
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: var(--no-data-text-color); font-size: 10px; text-align: center;
 }
-.summary-section p {
-    font-size: 9px;
-    color: var(--text-color);
-    margin: 4px 0;
-}
-.chart-container { /* Container for charts */
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.chart-card { /* Individual chart card */
-    flex: 1;
-    min-width: 200px; /* Minimum width for chart cards */
-    background: var(--chart-bg);
-    border-radius: 10px;
-    padding: 8px;
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    position: relative; /* For positioning no-data message */
-}
-.chart-card h3 {
-    font-size: 10px;
-    color: #005eb8;
-    margin-bottom: 8px;
-    font-weight: 700;
-}
-.chart-no-data { /* Message when chart has no data */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--no-data-text-color);
-    font-size: 10px;
-    text-align: center;
-}
-canvas { /* Ensure canvas is responsive */
-    max-width: 100%;
-    max-height: 150px; /* Limit height for smaller charts */
-    height: auto;
-}
+canvas { max-width: 100%; max-height: 150px; height: auto; }
+
 footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--footer-bg);
-    color: var(--footer-text);
-    text-align: center;
-    padding: 4px 0;
-    font-size: 7px;
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: var(--footer-bg); color: var(--footer-text);
+    text-align: center; padding: 4px 0; font-size: 7px;
+    z-index: 990; /* Ensure it's above content but below modals/navbar */
 }
-.notification { /* Styling for notifications */
-    position: fixed;
-    top: 60px; /* Position below navbar */
-    right: 20px;
-    background: #28a745; /* Green for success */
-    color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 2000; /* Ensure notification is on top */
+.notification { 
+    position: fixed; top: 60px; right: 20px;
+    background: #28a745; color: #ffffff;
+    padding: 10px 20px; border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 2000; 
     animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
-    animation-delay: 0s, calc(var(--duration) - 0.3s); /* Control duration with CSS variable */
+    animation-delay: 0s, calc(var(--duration) - 0.3s); 
 }
-.notification.error { /* Red for error notifications */
-    background: #e74c3c;
-}
+.notification.error { background: #e74c3c; }
 @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* Responsive Design for larger screens */
 @media (min-width: 768px) {
+    body { font-size: 11px; } /* Base font size for desktop */
     .navbar { height: 50px; padding: 0 15px; }
     .navbar .logo h1 { font-size: 16px; }
-    .navbar .tabs { gap: 12px; }
+    .navbar .tabs { display: flex; flex-direction: row; position: absolute; top: auto; left: 50%; transform: translateX(-50%); background: transparent; padding: 0; box-shadow: none; gap: 12px; }
     .navbar .tabs a { padding: 8px 12px; font-size: 11px; }
+    .hamburger { display: none; } /* Hide hamburger on desktop */
+
     .main-container {
-        flex-direction: row; /* Side-by-side layout for form and grid */
-        margin-top: 60px;
-        padding: 10px 15px;
-        gap: 12px;
-        height: calc(100vh - 80px); /* Adjust height for larger navbar/footer */
+        flex-direction: row; 
+        margin-top: 60px; padding: 10px 15px; gap: 12px;
+        min-height: calc(100vh - 80px); 
     }
-    .form-container { flex: 1; padding: 15px; } /* Form takes 1 part */
+    .form-container { flex: 1; padding: 15px; max-width: 400px; /* Limit form width on desktop */ } 
     .form-container h2 { font-size: 14px; margin-bottom: 15px; }
     .form-container input, .form-container select { padding: 8px 12px; font-size: 11px; }
     .form-container button { padding: 8px 15px; font-size: 11px; }
-    .grid-container { flex: 2; padding: 15px; } /* Grid takes 2 parts */
+    
+    .grid-container { flex: 2; padding: 15px; } 
     .controls { flex-wrap: nowrap; gap: 12px; }
-    .search-container { width: auto; } /* Search container takes available space */
-    .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; }
+    .search-container { width: auto; flex-direction: row; } 
+    .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; min-width: 150px; }
+    .export-btn-container { width: auto; justify-content: flex-end; } /* Align to right on desktop */
     .export-btn, .refresh-btn { padding: 10px; font-size: 11px; width: 30px; height: 30px; }
-    .table-wrapper { max-height: calc(100vh - 240px); } /* Adjust table height */
-    table { font-size: 11px; min-width: 600px; } /* Larger font for desktop */
-    th, td { padding: 8px; white-space: nowrap; } /* More padding for desktop */
+    
+    .table-wrapper { max-height: calc(100vh - 240px); } 
+    table { font-size: 11px; min-width: 600px; display: table; } 
+    th, td { padding: 8px; white-space: nowrap; font-size: 10px; } 
+    th { font-size: 10px; }
 
-     /* Revert mobile table stacking for desktop */
     thead { display: table-header-group; }
     tbody {display: table-row-group;}
-    tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; }
-    td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } /* Reset align-items */
-    td:before { display: none; } /* Hide mobile labels */
-    td span { text-align: left; flex-grow: 0; min-width: auto; } /* Reset text alignment and flex properties for value span */
-    td:last-child { border-bottom: 1px solid var(--border-color); } /* Ensure this is for table cells */
-    tbody tr:last-child td { border-bottom: none; } /* Ensure last row cells have no bottom border */
+    tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; background: var(--table-row-bg); }
+    td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } 
+    td:before { display: none; } 
+    td span { text-align: left; flex-grow: 0; min-width: auto; } 
+    td:last-child { border-bottom: 1px solid var(--border-color); } 
+    tbody tr:hover { background: var(--table-row-hover); }
+    tbody tr:last-child td { border-bottom: none; } 
 
 
     .detail-table { font-size: 11px; }
@@ -999,33 +658,28 @@ footer {
     .summary-section p { font-size: 11px; }
     .chart-card { padding: 12px; }
     .chart-card h3 { font-size: 12px; margin-bottom: 10px; }
-    canvas { max-height: 200px; } /* Larger charts on desktop */
+    canvas { max-height: 200px; } 
     footer { padding: 6px 0; font-size: 9px; }
-}
-.hidden { display: none !important; } /* Utility class to hide elements */
 
-/* Scroll to Top Button Styles */
+    .modal-content { max-width: 500px; padding: 25px 30px; } /* Desktop modal size */
+    .modal-header h2 { font-size: 18px; }
+    .modal-body { font-size: 13px; }
+    .modal-body .detail-item, .modal-body div { grid-template-columns: 150px 1fr; padding: 12px 0; }
+    .modal-btn { padding: 10px 25px; font-size: 13px; }
+}
+.hidden { display: none !important; } 
+
 #scrollToTopBtn {
-    display: none; /* Ẩn theo mặc định */
-    position: fixed;
-    bottom: 20px; /* Khoảng cách với đáy */
-    right: 30px; /* Khoảng cách với lề phải */
-    z-index: 999; /* Đảm bảo nút nổi lên trên các phần tử khác */
-    border: none;
-    outline: none;
-    background-color: var(--scroll-to-top-bg);
-    color: white;
-    cursor: pointer;
-    padding: 10px 12px; /* Kích thước nút */
-    border-radius: 50%; /* Bo tròn thành hình tròn */
-    font-size: 16px; /* Kích thước icon */
+    display: none; position: fixed; bottom: 20px; right: 30px; z-index: 999; 
+    border: none; outline: none; background-color: var(--scroll-to-top-bg);
+    color: white; cursor: pointer; padding: 10px 12px; 
+    border-radius: 50%; font-size: 16px; 
     box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.19);
     transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
 }
-
 #scrollToTopBtn:hover {
     background-color: var(--scroll-to-top-hover-bg);
-    transform: scale(1.1); /* Hiệu ứng phóng to nhẹ khi hover */
+    transform: scale(1.1); 
 }
 
     </style>
@@ -1135,7 +789,7 @@ footer {
         </div>
     </form>
 </div>
-    <div class="grid-container" id="history-section"> <div class="summary-section">
+    <div class="grid-container hidden" id="history-section"> <div class="summary-section">
             <h3>Tổng Quan</h3>
             <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
             <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
@@ -1317,17 +971,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-
-        // Khôi phục dữ liệu nháp form trước
         loadFormDraft();
-
-        // Thiết lập trạng thái hiển thị ban đầu và tải dữ liệu
-        // Gọi switchTab để thiết lập đúng tab active và các section hiển thị
-        switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
-
-        // Tải dữ liệu lịch sử (nếu history-section được hiển thị bởi switchTab)
-        fetchHistory();
-
+        switchTab('form', document.querySelector('.tabs a[onclick*="form"]')); 
+        fetchHistory(); // Fetch initial data for history and detailed stats
         setupSearch();
         setupScrollSync();
         const savedTheme = localStorage.getItem("theme") || "light";
@@ -1336,14 +982,13 @@ document.addEventListener("DOMContentLoaded", function () {
         if (themeIcon) {
             themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
         }
-        // Khởi tạo nút cuộn lên đầu trang
         initScrollToTopButton();
     }
 });
 
 function logout() {
     sessionStorage.clear();
-    localStorage.removeItem('vinfastFormDraft'); // Xóa nháp khi đăng xuất
+    localStorage.removeItem('vinfastFormDraft'); 
     window.location.href = "index.html";
     showNotification("Đã đăng xuất!", 2000);
 }
@@ -1357,38 +1002,26 @@ let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN";
-const FORM_DRAFT_KEY = 'vinfastFormDraft'; // Key cho localStorage
+const FORM_DRAFT_KEY = 'vinfastFormDraft'; 
 
-const labelMap = { // Dùng chủ yếu cho form preview và có thể cho API nếu key khác nhau
-    "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
-    "ten_khach_hang": "Tên Khách Hàng",
-    "dong_xe": "Dòng Xe",
-    "phien_ban": "Phiên Bản",
-    "ngoai_that": "Ngoại Thất",
-    "noi_that": "Nội Thất",
-    "so_don_hang": "Số Đơn Hàng",
-    "ngay_coc": "Ngày Cọc",
-    "thoi_gian_nhap": "Thời Gian Nhập",
-    "trang_thai": "Trạng Thái", // Trạng thái ban đầu khi gửi form
-    "thoi_gian_ghep": "Thời Gian Ghép",
-    "so_ngay_ghep": "Số Ngày Ghép",
-    "ket_qua": "Kết Quả", // Trạng thái từ API (trong globalHistoryData)
-    "VIN": "VIN" // VIN từ API (trong globalHistoryData)
+const labelMap = { 
+    "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
+    "dong_xe": "Dòng Xe", "phien_ban": "Phiên Bản", "ngoai_that": "Ngoại Thất",
+    "noi_that": "Nội Thất", "so_don_hang": "Số Đơn Hàng", "ngay_coc": "Ngày Cọc",
+    "thoi_gian_nhap": "Thời Gian Nhập", "trang_thai": "Trạng Thái", 
+    "thoi_gian_ghep": "Thời Gian Ghép", "so_ngay_ghep": "Số Ngày Ghép",
+    "ket_qua": "Kết Quả", "VIN": "VIN"
 };
 
-// --- Chức năng lưu và tải nháp form ---
 function saveFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (!form) return;
     const currentFormData = {};
     const inputs = form.querySelectorAll("input:not([readonly]), select");
     inputs.forEach(input => {
-        if (input.name) {
-            currentFormData[input.name] = input.value;
-        }
+        if (input.name) currentFormData[input.name] = input.value;
     });
     localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(currentFormData));
-    console.log("Đã lưu nháp form:", currentFormData);
 }
 
 function loadFormDraft() {
@@ -1407,7 +1040,6 @@ function loadFormDraft() {
             }
         });
         showNotification("Đã khôi phục dữ liệu nháp.", 2000);
-        console.log("Đã tải nháp form:", parsedData);
     }
 }
 
@@ -1416,31 +1048,22 @@ function clearFormDraft() {
     if (form) {
         const inputsToReset = form.querySelectorAll("input:not([readonly]), select");
         inputsToReset.forEach(input => {
-            if (input.type === 'select-one') {
-                input.selectedIndex = 0;
-            } else {
-                input.value = "";
-            }
+            if (input.type === 'select-one') input.selectedIndex = 0;
+            else input.value = "";
         });
         const dongXeSelect = form.elements['dong_xe'];
-        if (dongXeSelect) {
-            restrictVersion(dongXeSelect);
-        }
+        if (dongXeSelect) restrictVersion(dongXeSelect);
     }
     localStorage.removeItem(FORM_DRAFT_KEY);
     showNotification("Đã xóa dữ liệu nháp.", 2000);
-    console.log("Đã xóa nháp form.");
 }
-
 
 function toggleTheme() {
     const currentTheme = document.body.getAttribute("data-theme");
     const newTheme = currentTheme === "dark" ? "light" : "dark";
     document.body.setAttribute("data-theme", newTheme);
     const themeIcon = document.getElementById("theme-icon");
-    if (themeIcon) {
-        themeIcon.className = newTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
-    }
+    if (themeIcon) themeIcon.className = newTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
     localStorage.setItem("theme", newTheme);
     updateChartColors();
 }
@@ -1449,20 +1072,13 @@ function formatDateTime(dtString) {
     if (!dtString) return "";
     const d = new Date(dtString);
     if (isNaN(d.getTime())) return dtString;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
 }
 
 function formatDateForFilter(dtString) {
     if (!dtString) return "";
     const d = new Date(dtString);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString().split('T')[0];
+    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
 }
 
 function showLoadingModal(title, message) {
@@ -1479,21 +1095,13 @@ function showLoadingModal(title, message) {
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove("active");
-    }
+    if (modal) modal.classList.remove("active");
 }
 
 function adjustModalScroll(modal) {
     const body = modal.querySelector(".modal-body");
     if (!body) return;
-    const contentHeight = body.scrollHeight;
-    const maxHeight = parseInt(window.getComputedStyle(body).maxHeight);
-    if (contentHeight > maxHeight) {
-        body.classList.add("scrollable");
-    } else {
-        body.classList.remove("scrollable");
-    }
+    body.classList.toggle("scrollable", body.scrollHeight > parseInt(window.getComputedStyle(body).maxHeight));
 }
 
 function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
@@ -1503,16 +1111,12 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i>${message}</td></tr>`;
 }
 
-
 function fetchHistory() {
-    console.log("Bắt đầu tải dữ liệu từ API cho bảng lịch sử...");
     setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
-    // Chỉ đặt placeholder cho detailed-stats-body nếu tab đó đang active hoặc sẽ active
     const detailedStatsSection = document.getElementById('detailed-stats-section');
     if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
         setTablePlaceholder("detailed-stats-body", "Đang tải dữ liệu thống kê...", "fas fa-spinner fa-spin");
     }
-
 
     fetch(apiURL)
         .then(response => {
@@ -1520,26 +1124,22 @@ function fetchHistory() {
             return response.json();
         })
         .then(data => {
-            console.log("Dữ liệu thô từ API:", data);
-
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep];
-
-            console.log("Dữ liệu toàn cục đã xử lý:", globalHistoryData);
+            globalHistoryData = [...daghep, ...chuaghep].reverse(); // Reverse here for newest first globally
 
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+            // Data is already reversed, no need to reverse again in renderHistory or filterHistory
 
-            renderHistory(dataForHistoryTable); // Luôn render bảng lịch sử
-            renderSummary(globalHistoryData);
-            populateFilters(globalHistoryData);
-            prepareDetailedStats(globalHistoryData);
+            renderHistory(dataForHistoryTable); 
+            renderSummary(globalHistoryData); // Summary uses the full reversed data
+            populateFilters(globalHistoryData); // Filters use the full reversed data
+            prepareDetailedStats(globalHistoryData); // Detailed stats prep uses full reversed data
 
-            // Nếu tab thống kê chi tiết đang hoạt động, render nội dung của nó
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                filterDetailedStats();
+                filterDetailedStats(); // This will use the already reversed detailedStatsData
             }
         })
         .catch(error => {
@@ -1550,38 +1150,23 @@ function fetchHistory() {
             }
         });
 }
+
 function refreshData() {
     const activeTabLink = document.querySelector('.tabs a.active');
-    let activeTabName = '';
-    if (activeTabLink) {
-        const onclickAttr = activeTabLink.getAttribute('onclick');
-        if (onclickAttr) {
-            const match = onclickAttr.match(/switchTab\('([^']+)'/);
-            if (match) activeTabName = match[1];
-        }
-    }
-
-    // Hiển thị modal tải toàn trang nếu đang ở tab Lịch sử hoặc Thống kê chi tiết
-    // Hoặc nếu tab form đang active (vì history cũng hiển thị cùng form)
+    let activeTabName = activeTabLink?.getAttribute('onclick')?.match(/switchTab\('([^']+)'/)?.[1] || '';
     const shouldShowLoadingModal = activeTabName === 'history' || activeTabName === 'detailed-stats' || activeTabName === 'form';
 
-    if (shouldShowLoadingModal) {
-        showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
-    }
-
+    if (shouldShowLoadingModal) showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
 
     fetch(apiURL)
         .then(response => response.json())
         .then(data => {
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep];
+            globalHistoryData = [...daghep, ...chuaghep].reverse(); // Reverse here
 
-            if (shouldShowLoadingModal) {
-                closeModal("loading-modal");
-            }
+            if (shouldShowLoadingModal) closeModal("loading-modal");
             showNotification("Dữ liệu đã được làm mới!", 2000);
-
 
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
@@ -1600,17 +1185,13 @@ function refreshData() {
         .catch(error => {
             console.error("Lỗi khi làm mới dữ liệu:", error);
             if (shouldShowLoadingModal) {
-                const titleEl = document.getElementById("loading-title");
-                const msgEl = document.getElementById("loading-message");
-                const closeBtn = document.getElementById("loading-close-btn");
-                if (titleEl) titleEl.textContent = "Lỗi Làm Mới";
-                if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
-                if (closeBtn) closeBtn.style.display = "block";
+                document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
+                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
+                document.getElementById("loading-close-btn").style.display = "block";
             } else {
                  showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000, true);
             }
-            // Hiển thị lỗi trong bảng nếu tab đó đang active
-             if (activeTabName === 'form' || activeTabName === 'history') { // Vì history hiển thị cùng form
+            if (activeTabName === 'form' || activeTabName === 'history') {
                 setTablePlaceholder("table-body", `Lỗi làm mới: ${error.message}`, "fas fa-exclamation-triangle text-red-600");
             }
             if (activeTabName === 'detailed-stats') {
@@ -1623,767 +1204,444 @@ function populateFilters(data) {
     const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).sort();
     const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).sort();
 
-    const carFilter = document.getElementById("filter-car");
-    if (carFilter) {
-        const currentValue = carFilter.value;
-        carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-        cars.forEach(car => carFilter.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
-    }
-
-    const advisorFilter = document.getElementById("filter-advisor");
-    if (advisorFilter) {
-        const currentValue = advisorFilter.value;
-        advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-        advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
-    }
-
-    const detailedCarFilter = document.getElementById("detailed-filter-car");
-    if (detailedCarFilter) {
-        const currentValue = detailedCarFilter.value;
-        detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-        cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
-    }
-
-    const detailedAdvisorFilter = document.getElementById("detailed-filter-advisor");
-    if (detailedAdvisorFilter) {
-        const currentValue = detailedAdvisorFilter.value;
-        detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-        advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
-    }
+    ['filter-car', 'detailed-filter-car'].forEach(id => {
+        const filterEl = document.getElementById(id);
+        if (filterEl) {
+            const currentValue = filterEl.value;
+            filterEl.innerHTML = '<option value="">Tất cả dòng xe</option>';
+            cars.forEach(car => filterEl.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
+        }
+    });
+    ['filter-advisor', 'detailed-filter-advisor'].forEach(id => {
+        const filterEl = document.getElementById(id);
+        if (filterEl) {
+            const currentValue = filterEl.value;
+            filterEl.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
+            advisors.forEach(advisor => filterEl.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
+        }
+    });
 }
 
-function renderSummary(data) {
-    if (!Array.isArray(data)) {
-        console.error("renderSummary: Dữ liệu đầu vào không phải mảng", data);
-        return;
-    }
-
+function renderSummary(data) { // data is already reversed (newest first)
+    if (!Array.isArray(data)) return;
     const total = data.length;
-    const byCar = {};
-    const byAdvisor = {};
+    const byCar = {}, byAdvisor = {};
     data.forEach(row => {
-        const car = row["Dòng xe"];
-        const advisor = row["Tên tư vấn bán hàng"];
+        const car = row["Dòng xe"], advisor = row["Tên tư vấn bán hàng"];
         if (car) byCar[car] = (byCar[car] || 0) + 1;
         if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
     });
-
     const topCarEntry = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
     const topAdvisorEntry = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
 
-    const totalEl = document.getElementById("summary-total");
-    const topCarEl = document.getElementById("summary-top-car");
-    const topAdvisorEl = document.getElementById("summary-top-advisor");
-
-    if (totalEl) totalEl.textContent = total;
-    if (topCarEl) topCarEl.textContent = topCarEntry ? `${topCarEntry[0]} (${topCarEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
-    if (topAdvisorEl) topAdvisorEl.textContent = topAdvisorEntry ? `${topAdvisorEntry[0]} (${topAdvisorEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
+    document.getElementById("summary-total").textContent = total;
+    document.getElementById("summary-top-car").textContent = topCarEntry ? `${topCarEntry[0]} (${topCarEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
+    document.getElementById("summary-top-advisor").textContent = topAdvisorEntry ? `${topAdvisorEntry[0]} (${topAdvisorEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
 }
 
-function renderHistory(dataToRender) {
+function renderHistory(dataToRender) { // dataToRender is already reversed and filtered
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
-
     if (!dataToRender || dataToRender.length === 0) {
         setTablePlaceholder("table-body", "Không có dữ liệu phù hợp.", "fas fa-folder-open");
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
-
-    let content = dataToRender.map((row, i) => {
-        const status = row["Kết quả"] || "Chưa tìm thấy VIN phù hợp";
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
-        return `
-            <tr onclick="showDetailByOrder('${orderNumber}')">
-                <td data-label="STT"><span>${i + 1}</span></td>
-                <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || ""}</span></td>
-                <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || ""}</span></td>
-                <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}"><span>${row["Số đơn hàng"] || ""}</span></td>
-                <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || ""}</span></td>
-                <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || ""}</span></td>
-                <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span>${row["Ngoại thất"] || ""}</span></td>
-                <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || ""}</span></td>
-                <td data-label="Trạng Thái" title="${status}"><span>${status}</span></td>
-            </tr>
-        `;
-    }).join("");
-    tbody.innerHTML = content;
-
-    const totalDonCount = document.getElementById("total-don-count");
-    if (totalDonCount) totalDonCount.textContent = dataToRender.length;
+    // STT is now 1 for the first item in the potentially filtered & paginated (but already reversed) list
+    tbody.innerHTML = dataToRender.map((row, i) => `
+        <tr onclick="showDetailByOrder('${row["Số đơn hàng"] || `temp-id-${i}`}')">
+            <td data-label="STT"><span>${i + 1}</span></td>
+            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || ""}</span></td>
+            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || ""}</span></td>
+            <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}"><span>${row["Số đơn hàng"] || ""}</span></td>
+            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || ""}</span></td>
+            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || ""}</span></td>
+            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span>${row["Ngoại thất"] || ""}</span></td>
+            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || ""}</span></td>
+            <td data-label="Trạng Thái" title="${row["Kết quả"] || "Chưa tìm thấy VIN"}"><span>${row["Kết quả"] || "Chưa tìm thấy VIN"}</span></td>
+        </tr>
+    `).join("");
+    document.getElementById("total-don-count").textContent = dataToRender.length;
 }
 
-
-/**
- * Hiển thị chi tiết đơn hàng trong modal.
- * - Cập nhật tiêu đề modal với số đơn hàng.
- * - Hiển thị thông tin theo thứ tự ưu tiên và làm nổi bật "Kết quả", "VIN".
- * - Các trường ngày tháng được định dạng lại.
- * @param {string} orderNumber Số đơn hàng để tìm và hiển thị chi tiết.
- */
 function showDetailByOrder(orderNumber) {
-    const modalTitleElement = document.getElementById("detail-modal-title");
-    if (modalTitleElement) {
-        modalTitleElement.textContent = "Chi Tiết Đơn Hàng"; // <-- ĐÃ THAY ĐỔI Ở ĐÂY
-    }
-
-    const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber);
+    document.getElementById("detail-modal-title").textContent = "Chi Tiết Đơn Hàng";
+    const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber); // globalHistoryData is reversed
     if (!row) {
-        console.warn("showDetailByOrder: Không tìm thấy chi tiết đơn hàng với số đơn hàng:", orderNumber);
-        const detailContent = document.getElementById("detail-content");
-        if (detailContent) {
-            detailContent.innerHTML = `<p class="text-red-500">Không tìm thấy dữ liệu chi tiết cho đơn hàng ${orderNumber}.</p>`;
-        }
-        const detailModal = document.getElementById("detail-modal");
-        if (detailModal) {
-            detailModal.classList.add("active");
-            adjustModalScroll(detailModal);
-        }
-        showNotification("Không tìm thấy dữ liệu chi tiết cho đơn hàng này!", 3000, true);
+        document.getElementById("detail-content").innerHTML = `<p class="text-red-500">Không tìm thấy dữ liệu.</p>`;
+        document.getElementById("detail-modal").classList.add("active");
+        adjustModalScroll(document.getElementById("detail-modal"));
+        showNotification("Không tìm thấy dữ liệu chi tiết!", 3000, true);
         return;
     }
-
     let html = "";
-    const displayedKeys = new Set();
-
     const fieldOrder = [
-        { key: "Kết quả", highlight: true },
-        { key: "VIN", highlight: true },
-        { key: "Số đơn hàng", highlight: false },
-        { key: "Tên khách hàng", highlight: false },
-        { key: "Tên tư vấn bán hàng", highlight: false },
-        { key: "Dòng xe", highlight: false },
-        { key: "Phiên bản", highlight: false },
-        { key: "Ngoại thất", highlight: false },
-        { key: "Nội thất", highlight: false },
-        { key: "Ngày cọc", highlight: false },
-        { key: "Thời gian nhập", highlight: false },
-        { key: "Thời gian ghép", highlight: false },
-        { key: "Số ngày ghép", highlight: false }
+        { key: "Kết quả", highlight: true }, { key: "VIN", highlight: true },
+        { key: "Số đơn hàng" }, { key: "Tên khách hàng" }, { key: "Tên tư vấn bán hàng" },
+        { key: "Dòng xe" }, { key: "Phiên bản" }, { key: "Ngoại thất" }, { key: "Nội thất" },
+        { key: "Ngày cọc" }, { key: "Thời gian nhập" }, { key: "Thời gian ghép" }, { key: "Số ngày ghép" }
     ];
-
+    const displayedKeys = new Set();
     fieldOrder.forEach(field => {
         if (row.hasOwnProperty(field.key)) {
-            const label = field.key;
-            const value = row[field.key];
-            const formattedValue = (field.key === "Ngày cọc" || field.key === "Thời gian nhập" || field.key === "Thời gian ghép")
-                                   ? formatDateTime(value)
-                                   : (value !== null && typeof value !== 'undefined' ? String(value) : "Chưa có dữ liệu");
-            const highlightClass = field.highlight && (value !== null && typeof value !== 'undefined' && String(value).trim() !== "" && String(value).toLowerCase() !== "chưa có dữ liệu") ? " highlight" : "";
+            const value = row[field.key], label = labelMap[field.key] || field.key;
+            const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(field.key)) ? formatDateTime(value) : (value ?? "Chưa có dữ liệu");
+            const highlightClass = field.highlight && value && String(value).toLowerCase() !== "chưa có dữ liệu" ? " highlight" : "";
             html += `<div class="detail-item${highlightClass}"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
             displayedKeys.add(field.key);
         }
     });
-
-    for (const [key, value] of Object.entries(row)) {
+    Object.entries(row).forEach(([key, value]) => {
         if (!displayedKeys.has(key)) {
-            const label = key;
-            const formattedValue = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép")
-                                   ? formatDateTime(value)
-                                   : (value !== null && typeof value !== 'undefined' ? String(value) : "Chưa có dữ liệu");
+            const label = labelMap[key] || key;
+            const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(key)) ? formatDateTime(value) : (value ?? "Chưa có dữ liệu");
             html += `<div class="detail-item"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
         }
-    }
-
-    const detailContent = document.getElementById("detail-content");
-    const detailModal = document.getElementById("detail-modal");
-    if (detailContent && detailModal) {
-        detailContent.innerHTML = html || "<p>Không có thông tin chi tiết để hiển thị.</p>";
-        detailModal.classList.add("active");
-        adjustModalScroll(detailModal);
-    }
+    });
+    document.getElementById("detail-content").innerHTML = html || "<p>Không có thông tin.</p>";
+    document.getElementById("detail-modal").classList.add("active");
+    adjustModalScroll(document.getElementById("detail-modal"));
 }
-function filterHistory() {
-    const searchBox = document.getElementById("search-box");
-    const carFilter = document.getElementById("filter-car");
-    const advisorFilterDropdown = document.getElementById("filter-advisor");
-    const dateFilter = document.getElementById("filter-date");
 
-    if (!searchBox || !carFilter || !advisorFilterDropdown || !dateFilter) return;
-
-    const keyword = searchBox.value.toLowerCase();
-    const selectedCar = carFilter.value;
-    const selectedAdvisor = advisorFilterDropdown.value;
-    const selectedDate = dateFilter.value;
-
+function filterHistory() { // globalHistoryData is already reversed
+    const keyword = document.getElementById("search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("filter-car").value;
+    const selectedAdvisor = document.getElementById("filter-advisor").value;
+    const selectedDate = document.getElementById("filter-date").value;
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
 
-    let baseDataForFilter;
-    if (isAdmin) {
-        baseDataForFilter = globalHistoryData;
-    } else {
-        baseDataForFilter = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    }
-
-    const filtered = baseDataForFilter.filter(row => {
-        const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-        const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
-        const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
-        const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
-
-        return matchesKeyword && matchesCar && matchesAdvisorFromDropdown && matchesDate;
-    });
-    renderHistory(filtered);
+    let baseDataForFilter = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+    
+    const filtered = baseDataForFilter.filter(row => 
+        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
+        (!selectedCar || row["Dòng xe"] === selectedCar) &&
+        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
+        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
+    );
+    renderHistory(filtered); // Render the already sorted (reversed) and now filtered data
 }
 
 let lastSortColumn = '';
-let lastSortDirection = 'asc';
+let lastSortDirection = 'asc'; // Default to ascending for the first click
 
-function sortTable(columnName) {
-    // Giả sử columnName là tên hiển thị tiếng Việt của cột
-    const dataKey = columnName;
-
+function sortTable(columnName) { // Data is already reversed (newest first) by default
+    const dataKey = columnName; // Assuming columnName is the direct key in data objects
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
+    let baseDataForSort = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+    
+    // Apply current filters before sorting
+    const keyword = document.getElementById("search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("filter-car").value;
+    const selectedAdvisor = document.getElementById("filter-advisor").value;
+    const selectedDate = document.getElementById("filter-date").value;
 
-    const searchBox = document.getElementById("search-box");
-    const carFilter = document.getElementById("filter-car");
-    const advisorFilterDropdown = document.getElementById("filter-advisor");
-    const dateFilter = document.getElementById("filter-date");
-
-    const keyword = searchBox ? searchBox.value.toLowerCase() : "";
-    const selectedCar = carFilter ? carFilter.value : "";
-    const selectedAdvisor = advisorFilterDropdown ? advisorFilterDropdown.value : "";
-    const selectedDate = dateFilter ? dateFilter.value : "";
-
-    let baseDataForSort;
-    if (isAdmin) {
-        baseDataForSort = globalHistoryData;
-    } else {
-        baseDataForSort = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    }
-
-    let dataToSort = baseDataForSort.filter(row => {
-        const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-        const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
-        const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
-        const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
-        return matchesKeyword && matchesCar && matchesAdvisorFromDropdown && matchesDate;
-    });
-
+    let dataToSort = baseDataForSort.filter(row => 
+        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
+        (!selectedCar || row["Dòng xe"] === selectedCar) &&
+        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
+        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
+    );
 
     if (lastSortColumn === dataKey) {
         lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        lastSortDirection = 'asc';
+        lastSortDirection = 'asc'; // Default to asc for a new column
     }
     lastSortColumn = dataKey;
 
     dataToSort.sort((a, b) => {
-        let valA, valB;
-        if (dataKey === "STT") {
-             valA = dataToSort.indexOf(a);
-             valB = dataToSort.indexOf(b);
-        } else {
-            valA = a[dataKey] || "";
-            valB = b[dataKey] || "";
-        }
+        let valA = a[dataKey] ?? ""; // Use ?? for nullish coalescing
+        let valB = b[dataKey] ?? "";
 
-        // Xử lý ngày tháng cho cột "Ngày cọc" và các cột ngày khác nếu có
         if (dataKey === "Ngày cọc" || dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép") {
-            valA = new Date(a[dataKey] || 0).getTime();
+            valA = new Date(a[dataKey] || 0).getTime(); // Handle potential null/undefined dates
             valB = new Date(b[dataKey] || 0).getTime();
         }
+        // For STT, we sort based on its current visual order if it's the primary sort key
+        // However, since data is already reversed, STT sorting might be less intuitive.
+        // If we want STT to sort 1,2,3... then we need to sort the *original* index.
+        // For now, let's sort STT as numbers if it's clicked.
+        if (dataKey === "STT") { // STT is not a direct data field, it's visual.
+            // If we want to sort by the visual STT, we'd need to re-evaluate.
+            // For now, if STT is clicked, it might not do much meaningful as data is already reversed.
+            // Let's assume STT sorting should respect the current visual order (which is newest first).
+            // So, if sorting STT 'asc', it should show 1, 2, 3... (newest items).
+            // If 'desc', it should show N, N-1... (oldest items from the current view).
+            // This is tricky because STT is assigned during render.
+            // Let's make STT sorting do nothing for now to avoid confusion with reversed data.
+            return 0; 
+        }
 
 
-        if (typeof valA === 'number' && typeof valB === 'number' && dataKey !== "STT") {
+        if (typeof valA === 'number' && typeof valB === 'number') {
             return lastSortDirection === 'asc' ? valA - valB : valB - valA;
         }
         valA = String(valA).toLowerCase();
         valB = String(valB).toLowerCase();
-
         if (valA < valB) return lastSortDirection === 'asc' ? -1 : 1;
         if (valA > valB) return lastSortDirection === 'asc' ? 1 : -1;
         return 0;
     });
-
     renderHistory(dataToSort);
 }
 
-
-function exportToExcel() {
-    if (typeof XLSX === "undefined") {
-        showNotification("Thư viện XLSX chưa được tải!", 3000, true);
-        return;
-    }
+function exportToExcel() { // Data is already reversed (newest first)
+    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa tải!", 3000, true);
+    
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
+    let baseDataForExport = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
 
-    const searchBox = document.getElementById("search-box");
-    const carFilter = document.getElementById("filter-car");
-    const advisorFilterDropdown = document.getElementById("filter-advisor");
-    const dateFilter = document.getElementById("filter-date");
+    const keyword = document.getElementById("search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("filter-car").value;
+    const selectedAdvisor = document.getElementById("filter-advisor").value;
+    const selectedDate = document.getElementById("filter-date").value;
 
-    const keyword = searchBox ? searchBox.value.toLowerCase() : "";
-    const selectedCar = carFilter ? carFilter.value : "";
-    const selectedAdvisor = advisorFilterDropdown ? advisorFilterDropdown.value : "";
-    const selectedDate = dateFilter ? dateFilter.value : "";
+    let dataToExport = baseDataForExport.filter(row => 
+        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
+        (!selectedCar || row["Dòng xe"] === selectedCar) &&
+        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
+        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
+    );
 
-    let baseDataForExport;
-    if (isAdmin) {
-        baseDataForExport = globalHistoryData;
-    } else {
-        baseDataForExport = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    }
-
-    let dataToExport = baseDataForExport.filter(row => {
-        const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-        const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
-        const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
-        const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
-        return matchesKeyword && matchesCar && matchesAdvisorFromDropdown && matchesDate;
-    });
-
-
-    if (!dataToExport || dataToExport.length === 0) {
-        showNotification("Không có dữ liệu để xuất.", 3000, true);
-        return;
-    }
-    // Sử dụng trực tiếp các key tiếng Việt từ globalHistoryData nếu chúng nhất quán
-    // Hoặc định nghĩa một map cho header nếu cần
-    const headers = [
-        "Tên tư vấn bán hàng", "Tên khách hàng", "Số đơn hàng", "Dòng xe", "Phiên bản",
-        "Ngoại thất", "Nội thất", "Ngày cọc", "Thời gian nhập", "Kết quả", "VIN",
-        "Thời gian ghép", "Số ngày ghép"
-    ];
-
-    const dataWithFormattedHeaders = dataToExport.map(row => {
-        const newRow = {};
-        headers.forEach(header => {
+    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu để xuất.", 3000, true);
+    
+    const headers = ["STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số đơn hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Ngày cọc", "Thời gian nhập", "Kết quả", "VIN", "Thời gian ghép", "Số ngày ghép"];
+    const dataWithFormattedHeaders = dataToExport.map((row, index) => { // STT based on reversed and filtered list
+        const newRow = {"STT": index + 1};
+        headers.slice(1).forEach(header => { // Skip STT as it's added
             const value = row[header];
-            if (header === "Ngày cọc" || header === "Thời gian nhập" || header === "Thời gian ghép") {
-                newRow[header] = formatDateTime(value);
-            } else {
-                newRow[header] = value !== null && typeof value !== 'undefined' ? value : "";
-            }
+            if (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(header)) newRow[header] = formatDateTime(value);
+            else newRow[header] = value ?? "";
         });
         return newRow;
     });
 
-
     const ws = XLSX.utils.json_to_sheet(dataWithFormattedHeaders, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "LichSuGhepXe");
-    XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
+    XLSX.writeFile(wb, "lich_su_ghep_xe_moi_nhat_dau.xlsx");
     showNotification("Đã xuất Excel thành công!", 2000);
 }
 
 function exportToPDF() {
-    if (typeof jsPDF === "undefined" || typeof html2canvas === "undefined") {
-        showNotification("Thư viện jsPDF hoặc html2canvas chưa được tải!", 3000, true);
-        return;
-    }
+    if (typeof jsPDF === "undefined" || typeof html2canvas === "undefined") return showNotification("Thư viện PDF chưa tải!", 3000, true);
     const { jsPDF } = window.jspdf;
     const table = document.getElementById('history-table');
-    if (!table) {
-        showNotification("Không tìm thấy bảng dữ liệu để xuất PDF.", 3000, true);
-        return;
-    }
+    if (!table) return showNotification("Không tìm thấy bảng dữ liệu.", 3000, true);
 
-    showLoadingModal("Đang Xuất PDF...", "Vui lòng chờ trong giây lát.");
-
+    showLoadingModal("Đang Xuất PDF...", "Vui lòng chờ...");
     html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('l', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-
-        const ratio = canvasWidth / canvasHeight;
-        let imgWidth = pdfWidth - 20;
-        let imgHeight = imgWidth / ratio;
-
-        if (imgHeight > pdfHeight - 20) {
-            imgHeight = pdfHeight - 20;
-            imgWidth = imgHeight * ratio;
-        }
-
-        const x = (pdfWidth - imgWidth) / 2;
-        const y = 10;
-
-        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-        pdf.save('lich_su_ghep_xe.pdf');
+        const pdfWidth = pdf.internal.pageSize.getWidth(), pdfHeight = pdf.internal.pageSize.getHeight();
+        const ratio = canvas.width / canvas.height;
+        let imgWidth = pdfWidth - 20, imgHeight = imgWidth / ratio;
+        if (imgHeight > pdfHeight - 20) { imgHeight = pdfHeight - 20; imgWidth = imgHeight * ratio; }
+        pdf.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, 10, imgWidth, imgHeight);
+        pdf.save('lich_su_ghep_xe_moi_nhat_dau.pdf');
         closeModal('loading-modal');
         showNotification("Đã xuất PDF thành công!", 2000);
     }).catch(err => {
-        console.error("Lỗi khi tạo PDF:", err);
         closeModal('loading-modal');
-        showNotification("Lỗi khi xuất PDF: " + err.message, 4000, true);
+        showNotification("Lỗi xuất PDF: " + err.message, 4000, true);
     });
 }
-
 
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
     if (!form || !form.checkValidity()) {
-        showNotification("Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc!", 3000, true);
-        form.reportValidity();
-        return;
+        showNotification("Vui lòng điền đủ thông tin!", 3000, true);
+        form.reportValidity(); return;
     }
-    const inputs = form.querySelectorAll("input, select");
-    formData = {};
-    let html = "";
-
-    inputs.forEach(input => {
+    formData = {}; let html = "";
+    form.querySelectorAll("input, select").forEach(input => {
         if (input.name) {
             formData[input.name] = input.value;
-            // Sử dụng labelMap để lấy tên hiển thị tiếng Việt cho form preview
             const displayName = labelMap[input.name] || input.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const value = input.type === "datetime-local" ? formatDateTime(input.value) : (input.value || "Chưa nhập");
             html += `<div class="detail-item"><strong>${displayName}:</strong> <span>${value}</span></div>`;
         }
     });
-
-    const previewContent = document.getElementById("preview-content");
-    const previewModal = document.getElementById("preview-modal");
-    if (previewContent && previewModal) {
-        previewContent.innerHTML = html;
-        previewModal.classList.add("active");
-        adjustModalScroll(previewModal);
-    }
+    document.getElementById("preview-content").innerHTML = html;
+    document.getElementById("preview-modal").classList.add("active");
+    adjustModalScroll(document.getElementById("preview-modal"));
 }
 
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
-        showNotification("Số đơn hàng đã tồn tại! Vui lòng kiểm tra lại.", 3000, true);
-        closeModal("preview-modal");
-        return;
+        showNotification("Số đơn hàng đã tồn tại!", 3000, true);
+        closeModal("preview-modal"); return;
     }
-
-    showLoadingModal("Đang Gửi Dữ Liệu", "Đang gửi yêu cầu, vui lòng chờ...");
+    showLoadingModal("Đang Gửi Dữ Liệu", "Vui lòng chờ...");
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString();
-    formData["trang_thai"] = "Chưa ghép"; // Trạng thái ban đầu khi gửi form
-
+    formData["trang_thai"] = "Chưa ghép";
     const formDataToSend = new FormData();
-    for (const [key, value] of Object.entries(formData)) {
-        formDataToSend.append(key, value);
-    }
+    Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
 
-    fetch(apiURL, {
-        method: "POST",
-        body: formDataToSend
-    })
-    .then(response => {
-        if (!response.ok) {
-             return response.text().then(text => { throw new Error(`Lỗi máy chủ khi gửi: ${response.status} ${text || response.statusText}`) });
-        }
-        return response.json();
-    })
-    .then(postResponse => {
-        console.log("Phản hồi từ POST:", postResponse);
-        return fetch(apiURL).then(res => {
-            if (!res.ok) {
-                 return res.text().then(text => { throw new Error(`Lỗi máy chủ khi tải lại dữ liệu: ${res.status} ${text || res.statusText}`) });
+    fetch(apiURL, { method: "POST", body: formDataToSend })
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi gửi: ${response.status} ${text}`) }))
+        .then(() => fetch(apiURL)) // Fetch again to get the latest data including the new submission
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi tải lại: ${response.status} ${text}`) }))
+        .then(updatedData => {
+            closeModal("loading-modal");
+            clearFormDraft();
+            document.getElementById("vinfast-form").reset();
+            document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
+
+            const daghep = updatedData.daghep || [];
+            const chuaghep = updatedData.chuaghep || [];
+            globalHistoryData = [...daghep, ...chuaghep].reverse(); // Reverse after fetching new data
+
+            const submittedOrder = globalHistoryData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
+            sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
+            showNotification("Gửi thành công! Chuyển trang chi tiết...", 2000);
+
+            const currentUser = sessionStorage.getItem("currentConsultant");
+            const isAdmin = currentUser === ADMIN_USER;
+            let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+            
+            renderHistory(dataForHistoryTable);
+            renderSummary(globalHistoryData);
+            populateFilters(globalHistoryData);
+            prepareDetailedStats(globalHistoryData);
+            if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
+                filterDetailedStats();
             }
-            return res.json();
+            setTimeout(() => window.location.href = "order-details.html", 2000);
+        })
+        .catch(error => {
+            closeModal("loading-modal");
+            showNotification(`Lỗi: ${error.message}`, 5000, true);
         });
-    })
-    .then(updatedData => {
-        closeModal("loading-modal");
-        clearFormDraft();
-        document.getElementById("vinfast-form").reset();
-        const consultantInput = document.getElementById("ten_ban_hang");
-        if (consultantInput) {
-            consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
-        }
-
-
-        const daghep = updatedData.daghep || [];
-        const chuaghep = updatedData.chuaghep || [];
-        globalHistoryData = [...daghep, ...chuaghep];
-
-        const submittedOrder = globalHistoryData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
-        sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
-
-        showNotification("Dữ liệu đã được gửi thành công! Đang chuyển đến chi tiết đơn hàng...", 2000);
-
-        const currentUser = sessionStorage.getItem("currentConsultant");
-        const isAdmin = currentUser === ADMIN_USER;
-        let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-
-        renderHistory(dataForHistoryTable);
-        renderSummary(globalHistoryData);
-        populateFilters(globalHistoryData);
-        prepareDetailedStats(globalHistoryData);
-        if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
-            filterDetailedStats();
-        }
-
-        setTimeout(() => {
-            window.location.href = "order-details.html";
-        }, 2000);
-    })
-    .catch(error => {
-        console.error("Lỗi trong quá trình gửi hoặc tải lại dữ liệu:", error);
-        closeModal("loading-modal");
-        showNotification(`Lỗi: ${error.message}`, 5000, true);
-    });
 }
 
-
-function prepareDetailedStats(data) {
+function prepareDetailedStats(data) { // data is already reversed (newest first)
     const statsMap = new Map();
     data.forEach(row => {
-        const dongXe = row["Dòng xe"] || "N/A";
-        const phienBan = row["Phiên bản"] || "N/A";
-        const ngoaiThat = row["Ngoại thất"] || "N/A";
-        const noiThat = row["Nội thất"] || "N/A";
-        const tuVanVien = row["Tên tư vấn bán hàng"] || "N/A";
-        const ngayCoc = row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A";
-
-        const key = `${dongXe}|${phienBan}|${ngoaiThat}|${noiThat}|${tuVanVien}|${ngayCoc}`;
-
-        if (statsMap.has(key)) {
-            statsMap.get(key).count += 1;
-        } else {
-            statsMap.set(key, {
-                dong_xe: dongXe,
-                phien_ban: phienBan,
-                ngoai_that: ngoaiThat,
-                noi_that: noiThat,
-                tu_van_vien: tuVanVien,
-                ngay_coc: row["Ngày cọc"],
-                count: 1
-            });
-        }
+        const key = `${row["Dòng xe"] || "N/A"}|${row["Phiên bản"] || "N/A"}|${row["Ngoại thất"] || "N/A"}|${row["Nội thất"] || "N/A"}|${row["Tên tư vấn bán hàng"] || "N/A"}|${row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A"}`;
+        if (statsMap.has(key)) statsMap.get(key).count++;
+        else statsMap.set(key, {
+            dong_xe: row["Dòng xe"] || "N/A", phien_ban: row["Phiên bản"] || "N/A",
+            ngoai_that: row["Ngoại thất"] || "N/A", noi_that: row["Nội thất"] || "N/A",
+            tu_van_vien: row["Tên tư vấn bán hàng"] || "N/A", ngay_coc: row["Ngày cọc"], count: 1
+        });
     });
-    detailedStatsData = Array.from(statsMap.values());
+    detailedStatsData = Array.from(statsMap.values()); // This will be implicitly newest first due to globalHistoryData order
 }
 
-function renderDetailedStats(dataToRender) {
+function renderDetailedStats(dataToRender) { // dataToRender is already sorted/filtered
     const tbody = document.getElementById("detailed-stats-body");
     if (!tbody) return;
-
     if (!dataToRender || dataToRender.length === 0) {
-        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê chi tiết.", "fas fa-chart-pie");
-        document.getElementById("detailed-row-count").textContent = 0;
-        return;
+        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê.", "fas fa-chart-pie");
+        document.getElementById("detailed-row-count").textContent = 0; return;
     }
-    let content = dataToRender.map((row, i) => `
+    tbody.innerHTML = dataToRender.map((row, i) => `
         <tr>
             <td data-label="STT"><span>${i + 1}</span></td>
-            <td data-label="Dòng Xe"><span>${row.dong_xe || ""}</span></td>
-            <td data-label="Phiên Bản"><span>${row.phien_ban || ""}</span></td>
-            <td data-label="Ngoại Thất"><span>${row.ngoai_that || ""}</span></td>
-            <td data-label="Nội Thất"><span>${row.noi_that || ""}</span></td>
-            <td data-label="Tư Vấn Viên"><span>${row.tu_van_vien || ""}</span></td>
+            <td data-label="Dòng Xe"><span>${row.dong_xe}</span></td>
+            <td data-label="Phiên Bản"><span>${row.phien_ban}</span></td>
+            <td data-label="Ngoại Thất"><span>${row.ngoai_that}</span></td>
+            <td data-label="Nội Thất"><span>${row.noi_that}</span></td>
+            <td data-label="Tư Vấn Viên"><span>${row.tu_van_vien}</span></td>
             <td data-label="Ngày Cọc"><span>${row.ngay_coc ? formatDateTime(row.ngay_coc) : ""}</span></td>
             <td data-label="Số Lượng"><span>${row.count}</span></td>
         </tr>
     `).join("");
-    tbody.innerHTML = content;
-
-    const rowCountEl = document.getElementById("detailed-row-count");
-    const totalEl = document.getElementById("detailed-total");
-    const carTypesEl = document.getElementById("detailed-car-types");
-    const advisorsEl = document.getElementById("detailed-advisors");
-
-    if (rowCountEl) rowCountEl.textContent = dataToRender.length;
-    if (totalEl) totalEl.textContent = globalHistoryData.length;
-    if (carTypesEl) carTypesEl.textContent = [...new Set(globalHistoryData.map(r => r["Dòng xe"]))].filter(Boolean).length;
-    if (advisorsEl) advisorsEl.textContent = [...new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]))].filter(Boolean).length;
+    document.getElementById("detailed-row-count").textContent = dataToRender.length;
+    document.getElementById("detailed-total").textContent = globalHistoryData.length;
+    document.getElementById("detailed-car-types").textContent = [...new Set(globalHistoryData.map(r => r["Dòng xe"]))].filter(Boolean).length;
+    document.getElementById("detailed-advisors").textContent = [...new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]))].filter(Boolean).length;
 }
 
-function filterDetailedStats() {
-    const searchBox = document.getElementById("detailed-search-box");
-    const carFilter = document.getElementById("detailed-filter-car");
-    const advisorFilter = document.getElementById("detailed-filter-advisor");
-    const dateFilter = document.getElementById("detailed-filter-date");
+function filterDetailedStats() { // detailedStatsData is already newest first implicitly
+    const keyword = document.getElementById("detailed-search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("detailed-filter-car").value;
+    const selectedAdvisor = document.getElementById("detailed-filter-advisor").value;
+    const selectedDate = document.getElementById("detailed-filter-date").value;
 
-    if (!searchBox || !carFilter || !advisorFilter || !dateFilter) return;
-
-    const keyword = searchBox.value.toLowerCase();
-    const selectedCar = carFilter.value;
-    const selectedAdvisor = advisorFilter.value;
-    const selectedDate = dateFilter.value;
-
-    const filtered = detailedStatsData.filter(row => {
-        const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-        const matchesCar = !selectedCar || row.dong_xe === selectedCar;
-        const matchesAdvisor = !selectedAdvisor || row.tu_van_vien === selectedAdvisor;
-        const matchesDate = !selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate);
-        return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
-    });
+    const filtered = detailedStatsData.filter(row => 
+        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
+        (!selectedCar || row.dong_xe === selectedCar) &&
+        (!selectedAdvisor || row.tu_van_vien === selectedAdvisor) &&
+        (!selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate))
+    );
     renderDetailedStats(filtered);
-    renderCharts(filtered);
+    renderCharts(filtered); // Charts will also reflect newest first if data source is sorted
 }
 
-function renderCharts(dataForCharts) {
-    if (typeof Chart === "undefined") {
-        showNotification("Thư viện Chart.js chưa được tải!", 3000, true);
-        return;
-    }
-
-    const carData = {};
-    const carVersionData = {};
-    const advisorData = {};
+function renderCharts(dataForCharts) { // dataForCharts is already sorted/filtered
+    if (typeof Chart === "undefined") return showNotification("Chart.js chưa tải!", 3000, true);
+    const carData = {}, carVersionData = {}, advisorData = {};
     dataForCharts.forEach(row => {
         if (row.dong_xe && row.dong_xe !== "N/A") carData[row.dong_xe] = (carData[row.dong_xe] || 0) + row.count;
-
-        const carVersionKey = (row.dong_xe && row.dong_xe !== "N/A" && row.phien_ban && row.phien_ban !== "N/A")
-                            ? `${row.dong_xe} - ${row.phien_ban}`
-                            : null;
+        const carVersionKey = (row.dong_xe && row.dong_xe !== "N/A" && row.phien_ban && row.phien_ban !== "N/A") ? `${row.dong_xe} - ${row.phien_ban}` : null;
         if (carVersionKey) carVersionData[carVersionKey] = (carVersionData[carVersionKey] || 0) + row.count;
-
         if (row.tu_van_vien && row.tu_van_vien !== "N/A") advisorData[row.tu_van_vien] = (advisorData[row.tu_van_vien] || 0) + row.count;
     });
 
     const theme = document.body.getAttribute("data-theme") || "light";
-    const chartColors = theme === "dark" ?
-        { grid: 'rgba(255, 255, 255, 0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102, 176, 255, 0.2)", border: "#66b0ff" } :
-        { grid: 'rgba(0, 0, 0, 0.1)', ticks: '#2c3e50', legend: '#2c3e50', bg: "rgba(0, 94, 184, 0.2)", border: "#005eb8" };
+    const chartColors = theme === "dark" ? 
+        { grid: 'rgba(255,255,255,0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102,176,255,0.2)", border: "#66b0ff" } :
+        { grid: 'rgba(0,0,0,0.1)', ticks: '#2c3e50', legend: '#2c3e50', bg: "rgba(0,94,184,0.2)", border: "#005eb8" };
+    const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 } } };
+    const barOptions = { ...baseOptions, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid }, maxTicksLimit: 5 }, x: { ticks: { font: { size: 8 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } } }, layout: { padding: 5 } };
+    const pieOptions = { ...baseOptions };
 
+    [carChart, carVersionChart, advisorChart].forEach(chart => chart?.destroy());
 
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 }
-        },
-        scales: {
-            y: { beginAtZero: true, ticks: { font: { size: 8 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid }, maxTicksLimit: 5 },
-            x: { ticks: { font: { size: 8 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } }
-        },
-        layout: { padding: 5 }
-    };
-
-    const pieChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: "bottom", labels: { font: { size: 10 }, color: chartColors.legend } }
+    const createChart = (ctxId, noDataId, type, data, labels, options) => {
+        const ctx = document.getElementById(ctxId), noDataEl = document.getElementById(noDataId);
+        if (ctx && labels.length > 0) {
+            if(noDataEl) noDataEl.style.display = "none"; ctx.style.display = "block";
+            return new Chart(ctx, { type, data: { labels, datasets: [{ label: "Số lượng", data, backgroundColor: type === 'pie' ? ["#005eb8", "#0087ff", "#66b0ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"] : chartColors.bg, borderColor: chartColors.border, borderWidth: 1 }] }, options });
+        } else if (ctx) {
+            if(noDataEl) noDataEl.style.display = "block"; ctx.style.display = "none"; ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
         }
+        return null;
     };
-    if (carChart) carChart.destroy();
-    if (carVersionChart) carVersionChart.destroy();
-    if (advisorChart) advisorChart.destroy();
-
-    const carChartCtx = document.getElementById("car-chart");
-    const carChartNoData = document.getElementById("car-chart-no-data");
-    if (carChartCtx && Object.keys(carData).length > 0) {
-        if(carChartNoData) carChartNoData.style.display = "none";
-        carChartCtx.style.display = "block";
-        carChart = new Chart(carChartCtx, {
-            type: "bar",
-            data: {
-                labels: Object.keys(carData),
-                datasets: [{ label: "Số lượng", data: Object.values(carData), backgroundColor: chartColors.bg, borderColor: chartColors.border, borderWidth: 1 }]
-            },
-            options: chartOptions
-        });
-    } else if (carChartCtx) {
-         if(carChartNoData) carChartNoData.style.display = "block";
-         carChartCtx.style.display = "none";
-         carChartCtx.getContext('2d').clearRect(0, 0, carChartCtx.width, carChartCtx.height);
-    }
-
-
-    const carVersionCtx = document.getElementById("car-version-chart");
-    const carVersionChartNoData = document.getElementById("car-version-chart-no-data");
-     if (carVersionCtx && Object.keys(carVersionData).length > 0) {
-        if(carVersionChartNoData) carVersionChartNoData.style.display = "none";
-        carVersionCtx.style.display = "block";
-        carVersionChart = new Chart(carVersionCtx, {
-            type: "bar",
-            data: {
-                labels: Object.keys(carVersionData),
-                datasets: [{ label: "Số lượng", data: Object.values(carVersionData), backgroundColor: chartColors.bg, borderColor: chartColors.border, borderWidth: 1 }]
-            },
-            options: chartOptions
-        });
-    } else if (carVersionCtx) {
-        if(carVersionChartNoData) carVersionChartNoData.style.display = "block";
-        carVersionCtx.style.display = "none";
-        carVersionCtx.getContext('2d').clearRect(0, 0, carVersionCtx.width, carVersionCtx.height);
-    }
-
-    const advisorCtx = document.getElementById("advisor-chart");
-    const advisorChartNoData = document.getElementById("advisor-chart-no-data");
-    if (advisorCtx && Object.keys(advisorData).length > 0) {
-        if(advisorChartNoData) advisorChartNoData.style.display = "none";
-        advisorCtx.style.display = "block";
-        advisorChart = new Chart(advisorCtx, {
-            type: "pie",
-            data: {
-                labels: Object.keys(advisorData),
-                datasets: [{
-                    data: Object.values(advisorData),
-                    backgroundColor: ["#005eb8", "#0087ff", "#66b0ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"],
-                    borderColor: chartColors.border,
-                    borderWidth: 1
-                }]
-            },
-            options: pieChartOptions
-        });
-    } else if (advisorCtx) {
-        if(advisorChartNoData) advisorChartNoData.style.display = "block";
-        advisorCtx.style.display = "none";
-        advisorCtx.getContext('2d').clearRect(0, 0, advisorCtx.width, advisorCtx.height);
-    }
+    carChart = createChart("car-chart", "car-chart-no-data", "bar", Object.values(carData), Object.keys(carData), barOptions);
+    carVersionChart = createChart("car-version-chart", "car-version-chart-no-data", "bar", Object.values(carVersionData), Object.keys(carVersionData), barOptions);
+    advisorChart = createChart("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
 }
 
 function updateChartColors() {
     const activeTabLink = document.querySelector('.tabs a.active');
-    let activeTabName = '';
-    if (activeTabLink) {
-        const onclickAttr = activeTabLink.getAttribute('onclick');
-        if (onclickAttr) {
-            const match = onclickAttr.match(/switchTab\('([^']+)'/);
-            if (match) activeTabName = match[1];
-        }
-    }
-    if (activeTabName === 'detailed-stats') {
-        filterDetailedStats();
-    }
+    if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats')) filterDetailedStats();
 }
 
-function exportDetailedStatsToExcel() {
-    if (typeof XLSX === "undefined") {
-        showNotification("Thư viện XLSX chưa được tải!", 3000, true);
-        return;
-    }
-    const searchBox = document.getElementById("detailed-search-box");
-    const carFilter = document.getElementById("detailed-filter-car");
-    const advisorFilter = document.getElementById("detailed-filter-advisor");
-    const dateFilter = document.getElementById("detailed-filter-date");
+function exportDetailedStatsToExcel() { // detailedStatsData is already newest first implicitly
+    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa tải!", 3000, true);
+    const keyword = document.getElementById("detailed-search-box").value.toLowerCase();
+    const selectedCar = document.getElementById("detailed-filter-car").value;
+    const selectedAdvisor = document.getElementById("detailed-filter-advisor").value;
+    const selectedDate = document.getElementById("detailed-filter-date").value;
 
-    const keyword = searchBox ? searchBox.value.toLowerCase() : "";
-    const selectedCar = carFilter ? carFilter.value : "";
-    const selectedAdvisor = advisorFilter ? advisorFilter.value : "";
-    const selectedDate = dateFilter ? dateFilter.value : "";
-
-    const dataToExport = detailedStatsData.filter(row => {
-        const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
-        const matchesCar = !selectedCar || row.dong_xe === selectedCar;
-        const matchesAdvisor = !selectedAdvisor || row.tu_van_vien === selectedAdvisor;
-        const matchesDate = !selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate);
-        return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
-    });
-
-    if (!dataToExport || dataToExport.length === 0) {
-        showNotification("Không có dữ liệu thống kê để xuất.", 3000, true);
-        return;
-    }
-    const formattedForExcel = dataToExport.map(row => ({
-        "Dòng Xe": row.dong_xe,
-        "Phiên Bản": row.phien_ban,
-        "Ngoại Thất": row.ngoai_that,
-        "Nội Thất": row.noi_that,
-        "Tư Vấn Viên": row.tu_van_vien,
-        "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "",
-        "Số Lượng Yêu Cầu": row.count
+    const dataToExport = detailedStatsData.filter(row => 
+        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
+        (!selectedCar || row.dong_xe === selectedCar) &&
+        (!selectedAdvisor || row.tu_van_vien === selectedAdvisor) &&
+        (!selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate))
+    );
+    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", 3000, true);
+    
+    const formattedForExcel = dataToExport.map((row, index) => ({ // Add STT here
+        "STT": index + 1,
+        "Dòng Xe": row.dong_xe, "Phiên Bản": row.phien_ban, "Ngoại Thất": row.ngoai_that,
+        "Nội Thất": row.noi_that, "Tư Vấn Viên": row.tu_van_vien,
+        "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "", "Số Lượng Yêu Cầu": row.count
     }));
-
-    const ws = XLSX.utils.json_to_sheet(formattedForExcel);
+    const headers = ["STT", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "Tư Vấn Viên", "Ngày Cọc", "Số Lượng Yêu Cầu"];
+    const ws = XLSX.utils.json_to_sheet(formattedForExcel, {header: headers}); // Ensure headers are in order
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "ThongKeChiTiet");
-    XLSX.writeFile(wb, "thong_ke_chi_tiet.xlsx");
-    showNotification("Đã xuất Thống kê chi tiết ra Excel!", 2000);
+    XLSX.writeFile(wb, "thong_ke_chi_tiet_moi_nhat_dau.xlsx");
+    showNotification("Đã xuất Thống kê chi tiết!", 2000);
 }
 
 function setupSearch() {
@@ -2394,49 +1652,21 @@ function setupSearch() {
 }
 
 function switchTab(tabName, element) {
-    // Deactivate all tabs and hide all sections first
-    const tabs = document.querySelectorAll(".navbar .tabs a");
-    tabs.forEach(tabLink => tabLink.classList.remove("active"));
-    const allSections = ["form-section", "history-section", "detailed-stats-section"];
-    allSections.forEach(sectionId => {
-        const el = document.getElementById(sectionId);
-        if (el) el.classList.add("hidden");
-    });
-
-    // Activate the clicked tab
+    document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
+    ["form-section", "history-section", "detailed-stats-section"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
     if (element) element.classList.add("active");
 
-    // Show sections based on the tabName
     if (tabName === 'form') {
-        const formSection = document.getElementById('form-section');
-        if (formSection) formSection.classList.remove('hidden');
-        const historySection = document.getElementById('history-section');
-        if (historySection) historySection.classList.remove('hidden');
-    } else if (tabName === 'history') {
-        const historySection = document.getElementById('history-section');
-        if (historySection) historySection.classList.remove('hidden');
-    } else if (tabName === 'detailed-stats') {
-        const detailedStatsSection = document.getElementById('detailed-stats-section');
-        if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
-    }
+        document.getElementById('form-section')?.classList.remove('hidden');
+        document.getElementById('history-section')?.classList.remove('hidden'); // Show history with form
+        // If history data isn't loaded yet (e.g. first load directly to form tab), fetch it.
+        if (!globalHistoryData || globalHistoryData.length === 0) fetchHistory(); else filterHistory();
 
-    // Specific logic for fetching/filtering data when a tab becomes active
-    if (tabName === "history") {
-        if (!globalHistoryData || globalHistoryData.length === 0) {
-            // fetchHistory will be called from DOMContentLoaded for initial load if form tab is active
-            // Or if history tab is directly switched to and data is not present.
-            // This check prevents redundant calls if history is already populated.
-             if (document.getElementById('history-section').classList.contains('hidden')) {
-                // This case should not happen if logic is correct, but as a safeguard.
-                fetchHistory();
-            } else {
-                filterHistory();
-            }
-        } else {
-            filterHistory();
-        }
-    } else if (tabName === "detailed-stats") {
-        // Ensure data is prepared before filtering/rendering charts for detailed stats
+    } else if (tabName === 'history') {
+        document.getElementById('history-section')?.classList.remove('hidden');
+        if (!globalHistoryData || globalHistoryData.length === 0) fetchHistory(); else filterHistory();
+    } else if (tabName === 'detailed-stats') {
+        document.getElementById('detailed-stats-section')?.classList.remove('hidden');
         if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
             prepareDetailedStats(globalHistoryData);
         }
@@ -2444,332 +1674,72 @@ function switchTab(tabName, element) {
     }
 }
 
-
 function toggleMenu() {
-    const tabs = document.querySelector(".navbar .tabs");
-    if (tabs) tabs.classList.toggle("active");
+    document.querySelector(".navbar .tabs")?.classList.toggle("active");
 }
 
 function toggleAutoRefresh() {
-    const refreshButtonIcon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
+    const icon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
     if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
+        clearInterval(autoRefreshInterval); autoRefreshInterval = null;
         showNotification("Tự động làm mới đã tắt!", 2000);
-        if(refreshButtonIcon) {
-            refreshButtonIcon.classList.remove('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '';
-        }
+        if(icon) { icon.classList.remove('fa-spin'); icon.parentElement.style.color = ''; }
     } else {
         autoRefreshInterval = setInterval(refreshData, 30000);
         showNotification("Tự động làm mới mỗi 30 giây!", 2000);
-        if(refreshButtonIcon) {
-            refreshButtonIcon.classList.add('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '#34D399'; // Màu xanh lá cây cho biết đang hoạt động
-        }
+        if(icon) { icon.classList.add('fa-spin'); icon.parentElement.style.color = '#34D399'; }
     }
 }
 
 function setupScrollSync() {
-    const tableWrappers = document.querySelectorAll(".table-wrapper");
-    tableWrappers.forEach(tableWrapper => {
-        const header = tableWrapper.querySelector("thead");
-        if (tableWrapper && header) {
-            tableWrapper.addEventListener("scroll", () => {
-                header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
-            });
-        }
+    document.querySelectorAll(".table-wrapper").forEach(wrapper => {
+        const header = wrapper.querySelector("thead");
+        if (wrapper && header) wrapper.addEventListener("scroll", () => header.style.transform = `translateX(-${wrapper.scrollLeft}px)`);
     });
 }
 
-
 function showNotification(message, duration, isError = false) {
     const notification = document.createElement("div");
-    notification.className = "notification";
-    if (isError) {
-        notification.classList.add("error");
-    }
+    notification.className = `notification${isError ? ' error' : ''}`;
     notification.textContent = message;
     notification.style.setProperty("--duration", `${duration}ms`);
     document.body.appendChild(notification);
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, duration);
+    setTimeout(() => notification.remove(), duration);
 }
 
 function restrictVersion(select, savedVersionValue = null) {
     const versionSelect = document.querySelector('select[name="phien_ban"]');
-    if (!versionSelect) {
-        console.error("Không tìm thấy select[name='phien_ban']");
-        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
-        return;
-    }
-
+    if (!versionSelect) return showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
     const car = select.value;
-    console.log(`Dòng xe được chọn: ${car}`);
-
-    const versions = {
-        "VF 3": ["Base"],
-        "VF 5": ["Plus"],
-        "VF 6": ["Eco", "Plus"],
-        "VF 7": ["Eco", "Plus"],
-        "VF 8": ["Eco", "Plus"],
-        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
-        "HERIO": ["HERIO"],
-        "NERIO": ["NERIO"],
-        "LIMO": ["LIMO"],
-        "MINIO": ["MINIO"]
-    };
-
+    const versions = { "VF 3": ["Base"], "VF 5": ["Plus"], "VF 6": ["Eco", "Plus"], "VF 7": ["Eco", "Plus"], "VF 8": ["Eco", "Plus"], "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"], "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"] };
     const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
     const availableVersions = versions[car] || allPossibleVersions;
-    console.log(`Các phiên bản khả dụng: ${availableVersions}`);
-
-    const targetVersionValue = savedVersionValue !== null ? savedVersionValue : versionSelect.value;
+    const targetVersionValue = savedVersionValue ?? versionSelect.value;
     versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
-
     let foundSelected = false;
-    if (availableVersions.length > 0) {
-        availableVersions.forEach(version => {
-            const selectedAttr = (version === targetVersionValue) ? " selected" : "";
-            if (version === targetVersionValue) foundSelected = true;
-            versionSelect.innerHTML += `<option value="${version}"${selectedAttr}>${version}</option>`;
-        });
-    } else {
-         console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
-    }
-
-    if (foundSelected) {
-        versionSelect.value = targetVersionValue;
-    } else {
-        versionSelect.value = "";
-    }
-
-    if (versionSelect.value === "") {
-        const placeholderOption = versionSelect.querySelector('option[value=""]');
-        if (placeholderOption) {
-            placeholderOption.selected = true;
-        }
-    }
-
-    console.log(`Nội dung select phiên bản sau khi cập nhật: ${versionSelect.innerHTML}`);
-    console.log(`Giá trị được chọn của phiên bản: ${versionSelect.value}`);
+    availableVersions.forEach(version => {
+        const selectedAttr = (version === targetVersionValue) ? " selected" : "";
+        if (version === targetVersionValue) foundSelected = true;
+        versionSelect.innerHTML += `<option value="${version}"${selectedAttr}>${version}</option>`;
+    });
+    versionSelect.value = foundSelected ? targetVersionValue : "";
+    if (versionSelect.value === "") versionSelect.querySelector('option[value=""]')?.setAttribute('selected', 'true');
 }
 
-// --- Chức năng Nút Cuộn Lên Đầu Trang ---
 function initScrollToTopButton() {
-    const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-
-    if (!scrollToTopBtn) return;
-
-    // Hiển thị nút khi cuộn xuống 200px từ đầu trang
-    window.onscroll = function() {scrollFunction()};
-
-    function scrollFunction() {
-        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-            scrollToTopBtn.style.display = "block";
-            scrollToTopBtn.style.opacity = "1";
-        } else {
-            scrollToTopBtn.style.opacity = "0";
-            // Đợi hiệu ứng mờ hoàn tất rồi mới ẩn hẳn để tránh giật cục
-            setTimeout(() => {
-                 if (!(document.body.scrollTop > 200 || document.documentElement.scrollTop > 200)) {
-                    scrollToTopBtn.style.display = "none";
-                 }
-            }, 300); // Phải khớp với thời gian transition opacity
-        }
-    }
+    const btn = document.getElementById("scrollToTopBtn");
+    if (!btn) return;
+    window.onscroll = () => {
+        const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200;
+        btn.style.display = show ? "block" : "none";
+        btn.style.opacity = show ? "1" : "0";
+    };
 }
-
-// Khi người dùng nhấp vào nút, cuộn lên đầu tài liệu một cách mượt mà
-function scrollToTop() {
-    window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
-// --- Hàm Debounce ---
+function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
 function debounce(func, delay) {
     let timeoutId;
-    return function(...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            func.apply(this, args);
-        }, delay);
-    };
+    return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); };
 }
-
-function switchTab(tabName, element) {
-    // Deactivate all tabs and hide all sections first
-    const tabs = document.querySelectorAll(".navbar .tabs a");
-    tabs.forEach(tabLink => tabLink.classList.remove("active"));
-    const allSections = ["form-section", "history-section", "detailed-stats-section"];
-    allSections.forEach(sectionId => {
-        const el = document.getElementById(sectionId);
-        if (el) el.classList.add("hidden");
-    });
-
-    // Activate the clicked tab
-    if (element) element.classList.add("active");
-
-    // Show sections based on the tabName
-    if (tabName === 'form') {
-        const formSection = document.getElementById('form-section');
-        if (formSection) formSection.classList.remove('hidden');
-        const historySection = document.getElementById('history-section');
-        if (historySection) historySection.classList.remove('hidden');
-    } else if (tabName === 'history') {
-        const historySection = document.getElementById('history-section');
-        if (historySection) historySection.classList.remove('hidden');
-    } else if (tabName === 'detailed-stats') {
-        const detailedStatsSection = document.getElementById('detailed-stats-section');
-        if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
-    }
-
-    // Specific logic for fetching/filtering data when a tab becomes active
-    if (tabName === "history") {
-        if (!globalHistoryData || globalHistoryData.length === 0) {
-            // fetchHistory will be called from DOMContentLoaded for initial load if form tab is active
-            // Or if history tab is directly switched to and data is not present.
-            // This check prevents redundant calls if history is already populated.
-             if (document.getElementById('history-section').classList.contains('hidden')) {
-                // This case should not happen if logic is correct, but as a safeguard.
-                fetchHistory();
-            } else {
-                filterHistory();
-            }
-        } else {
-            filterHistory();
-        }
-    } else if (tabName === "detailed-stats") {
-        // Ensure data is prepared before filtering/rendering charts for detailed stats
-        if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
-            prepareDetailedStats(globalHistoryData);
-        }
-        filterDetailedStats();
-    }
-}
-
-
-function toggleMenu() {
-    const tabs = document.querySelector(".navbar .tabs");
-    if (tabs) tabs.classList.toggle("active");
-}
-
-function toggleAutoRefresh() {
-    const refreshButtonIcon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
-        showNotification("Tự động làm mới đã tắt!", 2000);
-        if(refreshButtonIcon) {
-            refreshButtonIcon.classList.remove('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '';
-        }
-    } else {
-        autoRefreshInterval = setInterval(refreshData, 30000);
-        showNotification("Tự động làm mới mỗi 30 giây!", 2000);
-        if(refreshButtonIcon) {
-            refreshButtonIcon.classList.add('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '#34D399'; // Màu xanh lá cây cho biết đang active
-        }
-    }
-}
-
-function setupScrollSync() {
-    const tableWrappers = document.querySelectorAll(".table-wrapper");
-    tableWrappers.forEach(tableWrapper => {
-        const header = tableWrapper.querySelector("thead");
-        if (tableWrapper && header) {
-            tableWrapper.addEventListener("scroll", () => {
-                header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
-            });
-        }
-    });
-}
-
-
-function showNotification(message, duration, isError = false) {
-    const notification = document.createElement("div");
-    notification.className = "notification";
-    if (isError) {
-        notification.classList.add("error");
-    }
-    notification.textContent = message;
-    notification.style.setProperty("--duration", `${duration}ms`);
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, duration);
-}
-
-function restrictVersion(select, savedVersionValue = null) {
-    const versionSelect = document.querySelector('select[name="phien_ban"]');
-    if (!versionSelect) {
-        console.error("Không tìm thấy select[name='phien_ban']");
-        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
-        return;
-    }
-
-    const car = select.value;
-    console.log(`Dòng xe được chọn: ${car}`);
-
-    // Danh sách phiên bản cho từng dòng xe
-    const versions = {
-        "VF 3": ["Base"],
-        "VF 5": ["Plus"],
-        "VF 6": ["Eco", "Plus"],
-        "VF 7": ["Eco", "Plus"],
-        "VF 8": ["Eco", "Plus"],
-        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
-        "HERIO": ["HERIO"], // Giả sử tên phiên bản giống tên dòng xe nếu là loại đặc thù
-        "NERIO": ["NERIO"],
-        "LIMO": ["LIMO"],
-        "MINIO": ["MINIO"]
-    };
-
-    // Tất cả các phiên bản có thể có để fallback nếu dòng xe không có trong 'versions'
-    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
-    const availableVersions = versions[car] || allPossibleVersions; // Nếu không tìm thấy dòng xe, hiển thị tất cả
-    console.log(`Các phiên bản khả dụng: ${availableVersions}`);
-
-    // Giữ lại giá trị phiên bản đang được chọn (nếu có và hợp lệ) hoặc giá trị đã lưu (khi tải nháp)
-    const targetVersionValue = savedVersionValue !== null ? savedVersionValue : versionSelect.value;
-    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; // Xóa các option cũ, thêm lại placeholder
-    
-    let foundSelected = false;
-    if (availableVersions.length > 0) {
-        availableVersions.forEach(version => {
-            const selectedAttr = (version === targetVersionValue) ? " selected" : "";
-            if (version === targetVersionValue) foundSelected = true;
-            versionSelect.innerHTML += `<option value="${version}"${selectedAttr}>${version}</option>`;
-        });
-    } else {
-         // Trường hợp này ít xảy ra nếu allPossibleVersions được định nghĩa đúng
-         console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
-    }
-    
-    // Nếu giá trị mục tiêu (targetVersionValue) vẫn hợp lệ và tìm thấy trong danh sách mới, chọn nó
-    if (foundSelected) {
-        versionSelect.value = targetVersionValue;
-    } else {
-        versionSelect.value = ""; // Nếu không, reset về placeholder
-    }
-    
-    // Đảm bảo placeholder được chọn nếu không có giá trị nào hợp lệ
-    if (versionSelect.value === "") {
-        const placeholderOption = versionSelect.querySelector('option[value=""]');
-        if (placeholderOption) {
-            placeholderOption.selected = true;
-        }
-    }
-
-    console.log(`Nội dung select phiên bản sau khi cập nhật: ${versionSelect.innerHTML}`);
-    console.log(`Giá trị được chọn của phiên bản: ${versionSelect.value}`);
-}
-// Hoàn thành thẻ script và body, html
 </script>
 </body>
 </html>
