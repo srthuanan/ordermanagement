@@ -1621,7 +1621,7 @@ function confirmSubmit() {
                 filterDetailedStats();
             }
             // Không tự động chuyển trang nữa, để người dùng đóng modal success
-            // setTimeout(() => window.location.href = "order-details.html", 2000); 
+            setTimeout(() => window.location.href = "order-details.html", 2000); 
         })
         .catch(error => {
             closeModal("loading-modal");
