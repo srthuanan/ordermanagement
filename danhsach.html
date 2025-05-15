@@ -382,11 +382,11 @@
         .da-ghep col:nth-child(1) { width: 3%; }   /* SỐ TT */
         .da-ghep col:nth-child(2) { width: 10%; }  /* TƯ VẤN BÁN HÀNG */
         .da-ghep col:nth-child(3) { width: 13%; }  /* TÊN KHÁCH HÀNG */
-        .da-ghep col:nth-child(4) { width: 7%; }   /* DÒNG XE */
-        .da-ghep col:nth-child(5) { width: 7%; }   /* PHIÊN BẢN */
+        .da-ghep col:nth-child(4) { width: 6%; }   /* DÒNG XE */
+        .da-ghep col:nth-child(5) { width: 6%; }   /* PHIÊN BẢN */
         .da-ghep col:nth-child(6) { width: 11%; }  /* NGOẠI THẤT */
         .da-ghep col:nth-child(7) { width: 6%; }   /* NỘI THẤT */
-        .da-ghep col:nth-child(8) { width: 11%; }  /* SỐ ĐƠN HÀNG */
+        .da-ghep col:nth-child(8) { width: 13%; }  /* SỐ ĐƠN HÀNG */
         .da-ghep col:nth-child(9) { width: 11%; }  /* SỐ VIN */
         .da-ghep col:nth-child(10) { width: 7%; }  /* NGÀY GHÉP */
         .da-ghep col:nth-child(11) { width: 5%; }  /* SỐ NGÀY */
@@ -898,7 +898,7 @@
             if (sheetName === 'daghep') {
                 colgroup.classList.add('da-ghep');
                 // Add col elements for 'da-ghep'
-                ['3%', '10%', '13%', '7%', '7%', '11%', '6%', '11%', '11%', '7%', '5%', '9%'].forEach(width => {
+                ['3%', '12%', '14%', '6%', '6%', '11%', '6%', '13%', '11%', '7%', '4%', '7%'].forEach(width => {
                     const col = document.createElement('col');
                     col.style.width = width;
                     colgroup.appendChild(col);
@@ -1157,7 +1157,7 @@
 
             const colgroupElement = document.createElement('colgroup');
             const printColWidths = currentSheet === 'daghep' 
-                ? ['30px', '80px', '105px', '55px', '55px', '90px', '50px', '90px', '90px', '55px', '40px', '70px']
+                ? ['30px', '80px', '105px', '45px', '45px', '90px', '50px', '110px', '90px', '55px', '40px', '70px']
                 : ['30px', '110px', '150px', '75px', '90px', '150px', '60px', '85px'];
             
             printColWidths.forEach(width => {
