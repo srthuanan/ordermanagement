@@ -32,6 +32,7 @@
             --footer-text: #ffffff;
             --success-bg: #e6ffe6;
             --loading-bg: #f5f5f5;
+            --no-data-text-color: #7f8c8d; /* Màu cho chữ "không có dữ liệu" */
         }
 
         [data-theme="dark"] {
@@ -53,6 +54,7 @@
             --footer-text: #e0e5ec;
             --success-bg: #2e7d32;
             --loading-bg: #455a64;
+            --no-data-text-color: #95a5a6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -234,11 +236,16 @@
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
             outline: none;
         }
+        .form-container .form-buttons {
+            display: flex;
+            gap: 8px; /* Khoảng cách giữa các nút */
+            justify-content: flex-start; /* Căn các nút về bên trái */
+        }
+
         .form-container button {
             padding: 6px 12px;
             border: none;
             border-radius: 10px;
-            background: #005eb8;
             color: #ffffff;
             font-size: 10px;
             font-weight: 700;
@@ -246,10 +253,21 @@
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
             transition: all 0.3s ease;
         }
-        .form-container button:hover {
+        .form-container button[type="submit"] {
+            background: #005eb8; /* Màu chính cho nút Xác Nhận */
+        }
+        .form-container button[type="submit"]:hover {
             background: #003087;
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
         }
+        .form-container button.danger { /* Kiểu cho nút Xóa Nháp */
+            background: #e74c3c; /* Màu đỏ */
+        }
+        .form-container button.danger:hover {
+            background: #c0392b; /* Màu đỏ đậm hơn khi hover */
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+        }
+
         .grid-container {
             background: var(--container-bg);
             border-radius: 15px;
@@ -314,7 +332,8 @@
         }
         .table-wrapper {
             max-height: calc(100vh - 230px); /* Adjust based on other elements */
-            overflow-y: auto;
+            overflow-y: auto; /* Cho phép cuộn dọc */
+            overflow-x: auto; /* Cho phép cuộn ngang khi cần */
             scrollbar-width: thin;
             scrollbar-color: #005eb8 var(--container-bg);
         }
@@ -322,6 +341,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 7px; /* Smaller font for mobile */
+            min-width: 600px; /* Đảm bảo bảng có chiều rộng tối thiểu để cuộn ngang nếu cần */
         }
         th, td {
             padding: 4px; /* Reduced padding for mobile */
@@ -354,6 +374,16 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
+        .table-placeholder td { /* Kiểu cho thông báo tải/không có dữ liệu trong bảng */
+            text-align: center;
+            padding: 16px;
+            font-size: 10px;
+            color: var(--no-data-text-color);
+        }
+        .table-placeholder .fas {
+            margin-right: 8px;
+        }
+
 
         /* Optimized Modal Styles */
         .modal {
@@ -559,14 +589,19 @@
                 margin-top: 50px; /* Adjust margin for mobile navbar */
                 padding: 6px;
             }
+            /* Table responsiveness for mobile */
+            .table-wrapper {
+                max-height: calc(100vh - 200px); /* Adjust for mobile */
+            }
             table { /* Stack table cells on mobile */
                 display: block;
+                 min-width: 0; /* Reset min-width for stacked layout */
             }
             thead {
                 display: none; /* Hide table header on mobile */
             }
-            tbody, tr {
-                display: block;
+            tbody, tr { /* td will be handled below */
+                display: block; 
             }
             tr {
                 margin-bottom: 8px;
@@ -576,26 +611,32 @@
                 box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
             }
             td {
-                display: flex; /* Use flex for label-value pairs */
-                justify-content: space-between;
+                display: flex; 
+                justify-content: space-between; 
+                align-items: baseline; /* Align items on their baseline */
                 padding: 4px 6px;
                 border: none;
                 font-size: 9px;
-                max-width: none; /* Allow full width for td */
+                max-width: none; 
+                white-space: normal; 
+                text-overflow: clip; 
             }
-            td:before { /* Add labels to table cells on mobile */
+            td:before { 
                 content: attr(data-label);
                 font-weight: 700;
                 color: #005eb8;
-                flex: 1;
+                padding-right: 8px; /* More space */
+                white-space: nowrap; /* Keep label on one line if possible */
+                flex-shrink: 0; /* Prevent label from shrinking */
+            }
+            td span { /* The actual value wrapped in a span */
+                text-align: right;
+                word-break: break-word; /* Allow long values to break */
+                flex-grow: 1; /* Allow value to take remaining space */
+                min-width: 0; /* Allow value to shrink if needed */
             }
             td:last-child {
                 border-bottom: none;
-            }
-            /* Hide less important columns on mobile for better readability */
-            td:nth-child(7), td:nth-child(8), /* Ngoại thất, Nội thất */
-            th:nth-child(7), th:nth-child(8) {
-                display: none;
             }
         }
         .detail-table { /* Styles for tables within modals or detailed views */
@@ -637,12 +678,22 @@
             border-radius: 10px;
             padding: 8px;
             box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            position: relative; /* For positioning no-data message */
         }
         .chart-card h3 {
             font-size: 10px;
             color: #005eb8;
             margin-bottom: 8px;
             font-weight: 700;
+        }
+        .chart-no-data { /* Message when chart has no data */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--no-data-text-color);
+            font-size: 10px;
+            text-align: center;
         }
         canvas { /* Ensure canvas is responsive */
             max-width: 100%;
@@ -673,6 +724,9 @@
             animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
             animation-delay: 0s, calc(var(--duration) - 0.3s); /* Control duration with CSS variable */
         }
+        .notification.error { /* Red for error notifications */
+            background: #e74c3c;
+        }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -701,13 +755,20 @@
             .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; }
             .export-btn, .refresh-btn { padding: 10px; font-size: 11px; width: 30px; height: 30px; }
             .table-wrapper { max-height: calc(100vh - 240px); } /* Adjust table height */
-            table { font-size: 11px; } /* Larger font for desktop */
-            th, td { padding: 8px; } /* More padding for desktop */
-             /* Show all columns on larger screens */
-            td:nth-child(7), td:nth-child(8),
-            th:nth-child(7), th:nth-child(8) {
-                display: table-cell;
-            }
+            table { font-size: 11px; min-width: 600px; } /* Larger font for desktop */
+            th, td { padding: 8px; white-space: nowrap; } /* More padding for desktop */
+            
+             /* Revert mobile table stacking for desktop */
+            thead { display: table-header-group; }
+            tbody {display: table-row-group;}
+            tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; }
+            td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } /* Reset align-items */
+            td:before { display: none; } /* Hide mobile labels */
+            td span { text-align: left; flex-grow: 0; min-width: auto; } /* Reset text alignment and flex properties for value span */
+            td:last-child { border-bottom: 1px solid var(--border-color); } 
+            tbody tr:last-child td { border-bottom: none; } 
+
+
             .detail-table { font-size: 11px; }
             .detail-table th, .detail-table td { padding: 8px; }
             .summary-section { padding: 10px; margin-bottom: 12px; }
@@ -749,8 +810,8 @@
     <form id="vinfast-form" onsubmit="previewForm(event)">
         <label for="ten_ban_hang">Tên Tư Vấn Bán Hàng:</label>
         <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" />
-        <input name="ten_khach_hang" placeholder="Tên khách hàng" required/>
-        <select name="dong_xe" required onchange="restrictVersion(this)">
+<input name="ten_khach_hang" placeholder="Tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()"/>
+        <select name="dong_xe" required onchange="restrictVersion(this); saveFormDraft()">
             <option value="" disabled selected>Chọn dòng xe</option>
             <option value="VF 3">VF 3</option>
             <option value="VF 5">VF 5</option>
@@ -763,7 +824,7 @@
             <option value="LIMO">LIMO</option>
             <option value="MINIO">MINIO</option>
         </select>
-        <select name="phien_ban" required>
+        <select name="phien_ban" required onchange="saveFormDraft()">
             <option value="" disabled selected>Chọn phiên bản</option>
             <option value="Plus">Plus</option>
             <option value="Eco">Eco</option>
@@ -773,8 +834,8 @@
             <option value="Eco_3ZONES">Eco_3ZONES</option>
             <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
             <option value="Base">Base</option>
-        </select>
-        <select name="ngoai_that" required>
+            </select>
+        <select name="ngoai_that" required onchange="saveFormDraft()">
             <option value="" disabled selected>Chọn ngoại thất</option>
             <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
             <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
@@ -812,15 +873,18 @@
             <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
             <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
         </select>
-        <select name="noi_that" required>
+        <select name="noi_that" required onchange="saveFormDraft()">
             <option value="" disabled selected>Chọn nội thất</option>
             <option value="Black">Black</option>
             <option value="Brown">Brown</option>
             <option value="Beige">Beige</option>
         </select>
-        <input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity('')"/>
-        <input name="ngay_coc" type="datetime-local" required/>
-        <button type="submit">Xác Nhận</button>
+        <input name="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity(''); saveFormDraft()"/>
+        <input name="ngay_coc" type="datetime-local" required oninput="saveFormDraft()"/>
+        <div class="form-buttons">
+            <button type="submit">Xác Nhận</button>
+            <button type="button" class="danger" onclick="clearFormDraft()">Xóa Nháp</button>
+        </div>
     </form>
 </div>
     <div class="grid-container" id="history-section"> <div class="summary-section">
@@ -862,7 +926,9 @@
                         <th onclick="sortTable('Kết quả')">Trạng Thái</th>
                     </tr>
                 </thead>
-                <tbody id="table-body"></tbody>
+                <tbody id="table-body">
+                    <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -877,14 +943,17 @@
             <div class="chart-card">
                 <h3>Số Lượng Yêu Cầu Theo Dòng Xe</h3>
                 <canvas id="car-chart"></canvas>
+                <div class="chart-no-data" id="car-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
             </div>
             <div class="chart-card">
                 <h3>Số Lượng Yêu Cầu Theo Dòng Xe Kèm Phiên Bản</h3>
                 <canvas id="car-version-chart"></canvas>
+                 <div class="chart-no-data" id="car-version-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
             </div>
             <div class="chart-card">
                 <h3>Phân Bố Yêu Cầu Theo Tư Vấn Viên</h3>
                 <canvas id="advisor-chart"></canvas>
+                 <div class="chart-no-data" id="advisor-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
             </div>
         </div>
         <div class="controls">
@@ -918,7 +987,9 @@
                         <th>Số Lượng Yêu Cầu</th>
                     </tr>
                 </thead>
-                <tbody id="detailed-stats-body"></tbody>
+                <tbody id="detailed-stats-body">
+                     <tr class="table-placeholder"><td colspan="8"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -994,10 +1065,17 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        // REMOVED: switchTab('form', document.querySelector('.tabs a[onclick*="form"]')); 
-        // This allows HTML default visibility (form + history) to take effect.
-        // Tab "Yêu Cầu Ghép Xe" is already active by HTML class.
+        
+        // Khôi phục dữ liệu nháp form trước
+        loadFormDraft();
+        
+        // Thiết lập trạng thái hiển thị ban đầu và tải dữ liệu
+        // Gọi switchTab để thiết lập đúng tab active và các section hiển thị
+        switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
+        
+        // Tải dữ liệu lịch sử (nếu history-section được hiển thị bởi switchTab)
         fetchHistory(); 
+
         setupSearch();
         setupScrollSync();
         const savedTheme = localStorage.getItem("theme") || "light";
@@ -1011,6 +1089,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function logout() {
     sessionStorage.clear();
+    localStorage.removeItem('vinfastFormDraft'); // Xóa nháp khi đăng xuất
     window.location.href = "index.html";
     showNotification("Đã đăng xuất!", 2000);
 }
@@ -1024,6 +1103,7 @@ let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; 
+const FORM_DRAFT_KEY = 'vinfastFormDraft'; // Key cho localStorage
 
 const labelMap = {
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
@@ -1041,6 +1121,63 @@ const labelMap = {
     "ket_qua": "Kết Quả",
     "VIN": "VIN"
 };
+
+// --- Chức năng lưu và tải nháp form ---
+function saveFormDraft() {
+    const form = document.getElementById("vinfast-form");
+    if (!form) return;
+    const currentFormData = {};
+    const inputs = form.querySelectorAll("input:not([readonly]), select"); 
+    inputs.forEach(input => {
+        if (input.name) {
+            currentFormData[input.name] = input.value;
+        }
+    });
+    localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(currentFormData));
+    console.log("Đã lưu nháp form:", currentFormData);
+}
+
+function loadFormDraft() {
+    const form = document.getElementById("vinfast-form");
+    if (!form) return;
+    const draftData = localStorage.getItem(FORM_DRAFT_KEY);
+    if (draftData) {
+        const parsedData = JSON.parse(draftData);
+        Object.keys(parsedData).forEach(key => {
+            const inputElement = form.elements[key];
+            if (inputElement) {
+                inputElement.value = parsedData[key];
+                if (key === 'dong_xe' && parsedData[key]) {
+                    restrictVersion(inputElement, parsedData['phien_ban']); 
+                }
+            }
+        });
+        showNotification("Đã khôi phục dữ liệu nháp.", 2000);
+        console.log("Đã tải nháp form:", parsedData);
+    }
+}
+
+function clearFormDraft() {
+    const form = document.getElementById("vinfast-form");
+    if (form) {
+        const inputsToReset = form.querySelectorAll("input:not([readonly]), select");
+        inputsToReset.forEach(input => {
+            if (input.type === 'select-one') {
+                input.selectedIndex = 0; 
+            } else {
+                input.value = "";
+            }
+        });
+        const dongXeSelect = form.elements['dong_xe'];
+        if (dongXeSelect) {
+            restrictVersion(dongXeSelect); 
+        }
+    }
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    showNotification("Đã xóa dữ liệu nháp.", 2000);
+    console.log("Đã xóa nháp form.");
+}
+
 
 function toggleTheme() {
     const currentTheme = document.body.getAttribute("data-theme");
@@ -1105,9 +1242,23 @@ function adjustModalScroll(modal) {
     }
 }
 
+function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
+    const tbody = document.getElementById(tableBodyId);
+    if (!tbody) return;
+    const colspan = tbody.previousElementSibling?.rows[0]?.cells.length || 9; 
+    tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i>${message}</td></tr>`;
+}
+
+
 function fetchHistory() {
-    console.log("Bắt đầu tải dữ liệu từ API...");
-    showLoadingModal("Đang Tải Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+    console.log("Bắt đầu tải dữ liệu từ API cho bảng lịch sử...");
+    setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
+    // Chỉ đặt placeholder cho detailed-stats-body nếu tab đó đang active hoặc sẽ active
+    const detailedStatsSection = document.getElementById('detailed-stats-section');
+    if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+        setTablePlaceholder("detailed-stats-body", "Đang tải dữ liệu thống kê...", "fas fa-spinner fa-spin");
+    }
+
 
     fetch(apiURL)
         .then(response => {
@@ -1119,44 +1270,32 @@ function fetchHistory() {
 
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep]; 
+            globalHistoryData = [...daghep, ...chuaghep];
 
             console.log("Dữ liệu toàn cục đã xử lý:", globalHistoryData);
 
-            if (!globalHistoryData.length) {
-                console.warn("Không có dữ liệu trong globalHistoryData");
-            }
-
-            closeModal("loading-modal");
-
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
-            let dataForHistoryTable;
-
-            if (isAdmin) {
-                dataForHistoryTable = globalHistoryData;
-            } else {
-                dataForHistoryTable = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            }
+            let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
             
-            renderHistory(dataForHistoryTable);
-            renderSummary(globalHistoryData); 
-            populateFilters(globalHistoryData); 
+            renderHistory(dataForHistoryTable); // Luôn render bảng lịch sử
+            renderSummary(globalHistoryData);
+            populateFilters(globalHistoryData);
             prepareDetailedStats(globalHistoryData); 
             
-            // If detailed stats tab is active (e.g. due to direct link or previous state), render its content
-            if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
-                renderDetailedStats(detailedStatsData); 
-                renderCharts(detailedStatsData); 
+            // Nếu tab thống kê chi tiết đang hoạt động, render nội dung của nó
+            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                filterDetailedStats(); 
             }
         })
         .catch(error => {
-            console.error("Lỗi khi tải dữ liệu:", error);
-            closeModal("loading-modal");
-            showNotification(`Không thể tải dữ liệu: ${error.message}`, 5000);
+            console.error("Lỗi khi tải dữ liệu lịch sử:", error);
+            setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle text-red-600");
+            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                 setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle text-red-600");
+            }
         });
 }
-
 function refreshData() {
     const activeTabLink = document.querySelector('.tabs a.active');
     let activeTabName = '';
@@ -1168,11 +1307,14 @@ function refreshData() {
         }
     }
     
-    const shouldShowLoading = activeTabName === 'history' || activeTabName === 'detailed-stats';
+    // Hiển thị modal tải toàn trang nếu đang ở tab Lịch sử hoặc Thống kê chi tiết
+    // Hoặc nếu tab form đang active (vì history cũng hiển thị cùng form)
+    const shouldShowLoadingModal = activeTabName === 'history' || activeTabName === 'detailed-stats' || activeTabName === 'form';
 
-    if (shouldShowLoading) {
+    if (shouldShowLoadingModal) {
         showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
     }
+
 
     fetch(apiURL)
         .then(response => response.json())
@@ -1181,28 +1323,29 @@ function refreshData() {
             const chuaghep = data.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep];
 
-            if (shouldShowLoading) {
+            if (shouldShowLoadingModal) {
                 closeModal("loading-modal");
-                showNotification("Dữ liệu đã được làm mới!", 2000);
             }
+            showNotification("Dữ liệu đã được làm mới!", 2000);
+
 
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
             
-            renderHistory(dataForHistoryTable); // Always update history data
+            renderHistory(dataForHistoryTable); 
             renderSummary(globalHistoryData); 
             populateFilters(globalHistoryData); 
             prepareDetailedStats(globalHistoryData); 
             
-            if (activeTabName === 'detailed-stats' || (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) ) {
-                renderDetailedStats(detailedStatsData);
-                renderCharts(detailedStatsData);
+            const detailedStatsSection = document.getElementById('detailed-stats-section');
+            if (activeTabName === 'detailed-stats' || (detailedStatsSection && !detailedStatsSection.classList.contains('hidden'))) {
+                filterDetailedStats(); 
             }
         })
         .catch(error => {
             console.error("Lỗi khi làm mới dữ liệu:", error);
-            if (shouldShowLoading) {
+            if (shouldShowLoadingModal) {
                 const titleEl = document.getElementById("loading-title");
                 const msgEl = document.getElementById("loading-message");
                 const closeBtn = document.getElementById("loading-close-btn");
@@ -1210,7 +1353,14 @@ function refreshData() {
                 if (msgEl) msgEl.textContent = `Lỗi: ${error.message}`;
                 if (closeBtn) closeBtn.style.display = "block";
             } else {
-                 showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000);
+                 showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000, true);
+            }
+            // Hiển thị lỗi trong bảng nếu tab đó đang active
+             if (activeTabName === 'form' || activeTabName === 'history') { // Vì history hiển thị cùng form
+                setTablePlaceholder("table-body", `Lỗi làm mới: ${error.message}`, "fas fa-exclamation-triangle text-red-600");
+            }
+            if (activeTabName === 'detailed-stats') {
+                 setTablePlaceholder("detailed-stats-body", `Lỗi làm mới: ${error.message}`, "fas fa-exclamation-triangle text-red-600");
             }
         });
 }
@@ -1221,26 +1371,30 @@ function populateFilters(data) {
 
     const carFilter = document.getElementById("filter-car");
     if (carFilter) {
+        const currentValue = carFilter.value;
         carFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-        cars.forEach(car => carFilter.innerHTML += `<option value="${car}">${car}</option>`);
+        cars.forEach(car => carFilter.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
     }
 
     const advisorFilter = document.getElementById("filter-advisor");
     if (advisorFilter) {
+        const currentValue = advisorFilter.value;
         advisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-        advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+        advisors.forEach(advisor => advisorFilter.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
     }
 
     const detailedCarFilter = document.getElementById("detailed-filter-car");
     if (detailedCarFilter) {
+        const currentValue = detailedCarFilter.value;
         detailedCarFilter.innerHTML = '<option value="">Tất cả dòng xe</option>';
-        cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}">${car}</option>`);
+        cars.forEach(car => detailedCarFilter.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
     }
 
     const detailedAdvisorFilter = document.getElementById("detailed-filter-advisor");
     if (detailedAdvisorFilter) {
+        const currentValue = detailedAdvisorFilter.value;
         detailedAdvisorFilter.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-        advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}">${advisor}</option>`);
+        advisors.forEach(advisor => detailedAdvisorFilter.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
     }
 }
 
@@ -1276,8 +1430,8 @@ function renderHistory(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
 
-    if (!dataToRender.length) {
-        tbody.innerHTML = "<tr><td colspan='9' class='text-center p-4'>Không có dữ liệu phù hợp</td></tr>";
+    if (!dataToRender || dataToRender.length === 0) {
+        setTablePlaceholder("table-body", "Không có dữ liệu phù hợp.", "fas fa-folder-open");
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
@@ -1287,15 +1441,15 @@ function renderHistory(dataToRender) {
         const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; 
         return `
             <tr onclick="showDetailByOrder('${orderNumber}')">
-                <td data-label="STT" title="${i + 1}">${i + 1}</td>
-                <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || ""}</td>
-                <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || ""}</td>
-                <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}">${row["Số đơn hàng"] || ""}</td>
-                <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || ""}</td>
-                <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || ""}</td>
-                <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}">${row["Ngoại thất"] || ""}</td>
-                <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || ""}</td>
-                <td data-label="Trạng Thái" title="${status}">${status}</td>
+                <td data-label="STT"><span>${i + 1}</span></td>
+                <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || ""}</span></td>
+                <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || ""}</span></td>
+                <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}"><span>${row["Số đơn hàng"] || ""}</span></td>
+                <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || ""}</span></td>
+                <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || ""}</span></td>
+                <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span>${row["Ngoại thất"] || ""}</span></td>
+                <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || ""}</span></td>
+                <td data-label="Trạng Thái" title="${status}"><span>${status}</span></td>
             </tr>
         `;
     }).join("");
@@ -1305,11 +1459,12 @@ function renderHistory(dataToRender) {
     if (totalDonCount) totalDonCount.textContent = dataToRender.length;
 }
 
+
 function showDetailByOrder(orderNumber) {
     const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber); 
     if (!row) {
         console.warn("Không tìm thấy chi tiết đơn hàng bằng số đơn hàng:", orderNumber);
-        showNotification("Không tìm thấy dữ liệu chi tiết cho đơn hàng này!", 3000);
+        showNotification("Không tìm thấy dữ liệu chi tiết cho đơn hàng này!", 3000, true);
         return;
     }
 
@@ -1380,14 +1535,7 @@ function sortTable(columnName) {
 
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    let dataToSort;
-
-    if (isAdmin) {
-        dataToSort = [...globalHistoryData]; 
-    } else {
-        dataToSort = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    }
-
+    
     const searchBox = document.getElementById("search-box");
     const carFilter = document.getElementById("filter-car");
     const advisorFilterDropdown = document.getElementById("filter-advisor");
@@ -1398,13 +1546,21 @@ function sortTable(columnName) {
     const selectedAdvisor = advisorFilterDropdown ? advisorFilterDropdown.value : "";
     const selectedDate = dateFilter ? dateFilter.value : "";
     
-    dataToSort = dataToSort.filter(row => {
+    let baseDataForSort;
+    if (isAdmin) {
+        baseDataForSort = globalHistoryData; 
+    } else {
+        baseDataForSort = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+    }
+
+    let dataToSort = baseDataForSort.filter(row => {
         const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
         const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
         const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
         const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
         return matchesKeyword && matchesCar && matchesAdvisorFromDropdown && matchesDate;
     });
+
 
     if (lastSortColumn === dataKey) {
         lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
@@ -1416,14 +1572,14 @@ function sortTable(columnName) {
     dataToSort.sort((a, b) => {
         let valA, valB;
         if (dataKey === "STT") { 
-            valA = globalHistoryData.indexOf(a);
-            valB = globalHistoryData.indexOf(b);
+             valA = dataToSort.indexOf(a); 
+             valB = dataToSort.indexOf(b);
         } else {
             valA = a[dataKey] || ""; 
             valB = b[dataKey] || "";
         }
         
-        if (typeof valA === 'number' && typeof valB === 'number') {
+        if (typeof valA === 'number' && typeof valB === 'number' && dataKey !== "STT") { 
             return lastSortDirection === 'asc' ? valA - valB : valB - valA;
         }
         valA = String(valA).toLowerCase(); 
@@ -1440,13 +1596,12 @@ function sortTable(columnName) {
 
 function exportToExcel() {
     if (typeof XLSX === "undefined") {
-        showNotification("Thư viện XLSX chưa được tải!", 3000);
+        showNotification("Thư viện XLSX chưa được tải!", 3000, true);
         return;
     }
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    let dataToExport;
-
+    
     const searchBox = document.getElementById("search-box");
     const carFilter = document.getElementById("filter-car");
     const advisorFilterDropdown = document.getElementById("filter-advisor");
@@ -1464,7 +1619,7 @@ function exportToExcel() {
         baseDataForExport = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     }
     
-    dataToExport = baseDataForExport.filter(row => {
+    let dataToExport = baseDataForExport.filter(row => {
         const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
         const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
         const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
@@ -1474,7 +1629,7 @@ function exportToExcel() {
 
 
     if (!dataToExport || dataToExport.length === 0) {
-        showNotification("Không có dữ liệu để xuất.", 3000);
+        showNotification("Không có dữ liệu để xuất.", 3000, true);
         return;
     }
     const exportHeaders = {
@@ -1495,15 +1650,20 @@ function exportToExcel() {
 
     const dataWithFormattedHeaders = dataToExport.map(row => {
         const newRow = {};
-        for (const key in row) {
-            if (exportHeaders[key]) { 
-                 newRow[exportHeaders[key]] = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép") ? formatDateTime(row[key]) : row[key];
-            } else if (labelMap[key]) { 
-                 newRow[labelMap[key]] = (key === "ngay_coc" || key === "thoi_gian_nhap" || key === "thoi_gian_ghep") ? formatDateTime(row[key]) : row[key];
-            } else { 
-                newRow[key] = row[key];
+        Object.keys(exportHeaders).forEach(originalKey => {
+            if (row.hasOwnProperty(originalKey)) {
+                 const formattedKey = exportHeaders[originalKey];
+                 newRow[formattedKey] = (originalKey === "Ngày cọc" || originalKey === "Thời gian nhập" || originalKey === "Thời gian ghép") 
+                                     ? formatDateTime(row[originalKey]) 
+                                     : row[originalKey];
+            } else if (labelMap[originalKey] && row.hasOwnProperty(Object.keys(labelMap).find(k => labelMap[k] === originalKey))) {
+                const internalKey = Object.keys(labelMap).find(k => labelMap[k] === originalKey);
+                const formattedKey = exportHeaders[originalKey];
+                 newRow[formattedKey] = (internalKey === "ngay_coc" || internalKey === "thoi_gian_nhap" || internalKey === "thoi_gian_ghep") 
+                                     ? formatDateTime(row[internalKey]) 
+                                     : row[internalKey];
             }
-        }
+        });
         return newRow;
     });
 
@@ -1517,27 +1677,28 @@ function exportToExcel() {
 
 function exportToPDF() {
     if (typeof jsPDF === "undefined" || typeof html2canvas === "undefined") {
-        showNotification("Thư viện jsPDF hoặc html2canvas chưa được tải!", 3000);
+        showNotification("Thư viện jsPDF hoặc html2canvas chưa được tải!", 3000, true);
         return;
     }
     const { jsPDF } = window.jspdf;
     const table = document.getElementById('history-table');
     if (!table) {
-        showNotification("Không tìm thấy bảng dữ liệu để xuất PDF.", 3000);
+        showNotification("Không tìm thấy bảng dữ liệu để xuất PDF.", 3000, true);
         return;
     }
     
     showLoadingModal("Đang Xuất PDF...", "Vui lòng chờ trong giây lát.");
 
-    html2canvas(table, { scale: 2, useCORS: true }).then(canvas => { 
+    html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight }).then(canvas => { 
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4'); 
+        const pdf = new jsPDF('l', 'mm', 'a4'); 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
+        
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
         
+        const ratio = canvasWidth / canvasHeight;
         let imgWidth = pdfWidth - 20; 
         let imgHeight = imgWidth / ratio;
 
@@ -1556,7 +1717,7 @@ function exportToPDF() {
     }).catch(err => {
         console.error("Lỗi khi tạo PDF:", err);
         closeModal('loading-modal');
-        showNotification("Lỗi khi xuất PDF: " + err.message, 4000);
+        showNotification("Lỗi khi xuất PDF: " + err.message, 4000, true);
     });
 }
 
@@ -1565,7 +1726,7 @@ function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
     if (!form || !form.checkValidity()) {
-        showNotification("Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc!", 3000);
+        showNotification("Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc!", 3000, true);
         form.reportValidity(); 
         return;
     }
@@ -1593,7 +1754,7 @@ function previewForm(e) {
 
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
-        showNotification("Số đơn hàng đã tồn tại! Vui lòng kiểm tra lại.", 3000);
+        showNotification("Số đơn hàng đã tồn tại! Vui lòng kiểm tra lại.", 3000, true);
         closeModal("preview-modal");
         return;
     }
@@ -1629,11 +1790,13 @@ function confirmSubmit() {
     })
     .then(updatedData => { 
         closeModal("loading-modal");
-        document.getElementById("vinfast-form").reset();
+        clearFormDraft(); 
+        document.getElementById("vinfast-form").reset(); 
         const consultantInput = document.getElementById("ten_ban_hang");
         if (consultantInput) { 
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
+
 
         const daghep = updatedData.daghep || [];
         const chuaghep = updatedData.chuaghep || [];
@@ -1653,8 +1816,7 @@ function confirmSubmit() {
         populateFilters(globalHistoryData);
         prepareDetailedStats(globalHistoryData);
         if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
-            renderDetailedStats(detailedStatsData);
-            renderCharts(detailedStatsData);
+            filterDetailedStats();
         }
         
         setTimeout(() => {
@@ -1664,7 +1826,7 @@ function confirmSubmit() {
     .catch(error => {
         console.error("Lỗi trong quá trình gửi hoặc tải lại dữ liệu:", error);
         closeModal("loading-modal");
-        showNotification(`Lỗi: ${error.message}`, 5000);
+        showNotification(`Lỗi: ${error.message}`, 5000, true);
     });
 }
 
@@ -1702,21 +1864,21 @@ function renderDetailedStats(dataToRender) {
     const tbody = document.getElementById("detailed-stats-body");
     if (!tbody) return;
 
-    if (!dataToRender.length) {
-        tbody.innerHTML = "<tr><td colspan='8' class='text-center p-4'>Không có dữ liệu thống kê chi tiết</td></tr>";
+    if (!dataToRender || dataToRender.length === 0) {
+        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê chi tiết.", "fas fa-chart-pie");
         document.getElementById("detailed-row-count").textContent = 0;
         return;
     }
     let content = dataToRender.map((row, i) => `
         <tr>
-            <td>${i + 1}</td>
-            <td>${row.dong_xe || ""}</td>
-            <td>${row.phien_ban || ""}</td>
-            <td>${row.ngoai_that || ""}</td>
-            <td>${row.noi_that || ""}</td>
-            <td>${row.tu_van_vien || ""}</td>
-            <td>${row.ngay_coc ? formatDateTime(row.ngay_coc) : ""}</td>
-            <td>${row.count}</td>
+            <td data-label="STT"><span>${i + 1}</span></td>
+            <td data-label="Dòng Xe"><span>${row.dong_xe || ""}</span></td>
+            <td data-label="Phiên Bản"><span>${row.phien_ban || ""}</span></td>
+            <td data-label="Ngoại Thất"><span>${row.ngoai_that || ""}</span></td>
+            <td data-label="Nội Thất"><span>${row.noi_that || ""}</span></td>
+            <td data-label="Tư Vấn Viên"><span>${row.tu_van_vien || ""}</span></td>
+            <td data-label="Ngày Cọc"><span>${row.ngay_coc ? formatDateTime(row.ngay_coc) : ""}</span></td>
+            <td data-label="Số Lượng"><span>${row.count}</span></td>
         </tr>
     `).join("");
     tbody.innerHTML = content;
@@ -1758,7 +1920,7 @@ function filterDetailedStats() {
 
 function renderCharts(dataForCharts) { 
     if (typeof Chart === "undefined") {
-        showNotification("Thư viện Chart.js chưa được tải!", 3000);
+        showNotification("Thư viện Chart.js chưa được tải!", 3000, true);
         return;
     }
 
@@ -1778,7 +1940,7 @@ function renderCharts(dataForCharts) {
     
     const theme = document.body.getAttribute("data-theme") || "light";
     const chartColors = theme === "dark" ? 
-        { grid: 'rgba(255, 255, 255, 0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(255, 255, 255, 0.05)", border: "#66b0ff" } :
+        { grid: 'rgba(255, 255, 255, 0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102, 176, 255, 0.2)", border: "#66b0ff" } : 
         { grid: 'rgba(0, 0, 0, 0.1)', ticks: '#2c3e50', legend: '#2c3e50', bg: "rgba(0, 94, 184, 0.2)", border: "#005eb8" };
 
 
@@ -1807,7 +1969,10 @@ function renderCharts(dataForCharts) {
     if (advisorChart) advisorChart.destroy();
 
     const carChartCtx = document.getElementById("car-chart");
+    const carChartNoData = document.getElementById("car-chart-no-data");
     if (carChartCtx && Object.keys(carData).length > 0) {
+        if(carChartNoData) carChartNoData.style.display = "none";
+        carChartCtx.style.display = "block";
         carChart = new Chart(carChartCtx, {
             type: "bar",
             data: {
@@ -1817,12 +1982,17 @@ function renderCharts(dataForCharts) {
             options: chartOptions
         });
     } else if (carChartCtx) { 
+         if(carChartNoData) carChartNoData.style.display = "block";
+         carChartCtx.style.display = "none";
          carChartCtx.getContext('2d').clearRect(0, 0, carChartCtx.width, carChartCtx.height);
     }
 
 
     const carVersionCtx = document.getElementById("car-version-chart");
+    const carVersionChartNoData = document.getElementById("car-version-chart-no-data");
      if (carVersionCtx && Object.keys(carVersionData).length > 0) {
+        if(carVersionChartNoData) carVersionChartNoData.style.display = "none";
+        carVersionCtx.style.display = "block";
         carVersionChart = new Chart(carVersionCtx, {
             type: "bar",
             data: {
@@ -1832,11 +2002,16 @@ function renderCharts(dataForCharts) {
             options: chartOptions
         });
     } else if (carVersionCtx) {
+        if(carVersionChartNoData) carVersionChartNoData.style.display = "block";
+        carVersionCtx.style.display = "none";
         carVersionCtx.getContext('2d').clearRect(0, 0, carVersionCtx.width, carVersionCtx.height);
     }
 
     const advisorCtx = document.getElementById("advisor-chart");
+    const advisorChartNoData = document.getElementById("advisor-chart-no-data");
     if (advisorCtx && Object.keys(advisorData).length > 0) {
+        if(advisorChartNoData) advisorChartNoData.style.display = "none";
+        advisorCtx.style.display = "block";
         advisorChart = new Chart(advisorCtx, {
             type: "pie",
             data: {
@@ -1844,13 +2019,15 @@ function renderCharts(dataForCharts) {
                 datasets: [{
                     data: Object.values(advisorData),
                     backgroundColor: ["#005eb8", "#0087ff", "#66b0ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"],
-                    borderColor: chartColors.border,
+                    borderColor: chartColors.border, 
                     borderWidth: 1
                 }]
             },
             options: pieChartOptions
         });
     } else if (advisorCtx) {
+        if(advisorChartNoData) advisorChartNoData.style.display = "block";
+        advisorCtx.style.display = "none";
         advisorCtx.getContext('2d').clearRect(0, 0, advisorCtx.width, advisorCtx.height);
     }
 }
@@ -1872,7 +2049,7 @@ function updateChartColors() {
 
 function exportDetailedStatsToExcel() {
     if (typeof XLSX === "undefined") {
-        showNotification("Thư viện XLSX chưa được tải!", 3000);
+        showNotification("Thư viện XLSX chưa được tải!", 3000, true);
         return;
     }
     const searchBox = document.getElementById("detailed-search-box");
@@ -1894,7 +2071,7 @@ function exportDetailedStatsToExcel() {
     });
     
     if (!dataToExport || dataToExport.length === 0) {
-        showNotification("Không có dữ liệu thống kê để xuất.", 3000);
+        showNotification("Không có dữ liệu thống kê để xuất.", 3000, true);
         return;
     }
     const formattedForExcel = dataToExport.map(row => ({
@@ -1922,23 +2099,52 @@ function setupSearch() {
 }
 
 function switchTab(tabName, element) {
-    const sections = ["form-section", "history-section", "detailed-stats-section"];
-    sections.forEach(sectionId => {
-        const el = document.getElementById(sectionId);
-        if (el) el.classList.add("hidden"); 
-    });
-
-    const activeSection = document.getElementById(`${tabName}-section`);
-    if (activeSection) activeSection.classList.remove("hidden"); 
-
+    // Deactivate all tabs and hide all sections first
     const tabs = document.querySelectorAll(".navbar .tabs a");
     tabs.forEach(tabLink => tabLink.classList.remove("active"));
+    const allSections = ["form-section", "history-section", "detailed-stats-section"];
+    allSections.forEach(sectionId => {
+        const el = document.getElementById(sectionId);
+        if (el) el.classList.add("hidden");
+    });
+
+    // Activate the clicked tab
     if (element) element.classList.add("active");
 
+    // Show sections based on the tabName
+    if (tabName === 'form') {
+        const formSection = document.getElementById('form-section');
+        if (formSection) formSection.classList.remove('hidden');
+        const historySection = document.getElementById('history-section'); 
+        if (historySection) historySection.classList.remove('hidden');
+    } else if (tabName === 'history') {
+        const historySection = document.getElementById('history-section');
+        if (historySection) historySection.classList.remove('hidden');
+    } else if (tabName === 'detailed-stats') {
+        const detailedStatsSection = document.getElementById('detailed-stats-section');
+        if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
+    }
+
+    // Specific logic for fetching/filtering data when a tab becomes active
     if (tabName === "history") {
-        filterHistory(); 
+        if (!globalHistoryData || globalHistoryData.length === 0) {
+            // fetchHistory will be called from DOMContentLoaded for initial load if form tab is active
+            // Or if history tab is directly switched to and data is not present.
+            // This check prevents redundant calls if history is already populated.
+             if (document.getElementById('history-section').classList.contains('hidden')) {
+                // This case should not happen if logic is correct, but as a safeguard.
+                fetchHistory();
+            } else {
+                filterHistory();
+            }
+        } else {
+            filterHistory(); 
+        }
     } else if (tabName === "detailed-stats") {
-        prepareDetailedStats(globalHistoryData); 
+        // Ensure data is prepared before filtering/rendering charts for detailed stats
+        if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
+            prepareDetailedStats(globalHistoryData);
+        }
         filterDetailedStats(); 
     }
 }
@@ -1957,38 +2163,37 @@ function toggleAutoRefresh() {
         showNotification("Tự động làm mới đã tắt!", 2000);
         if(refreshButtonIcon) {
             refreshButtonIcon.classList.remove('fa-spin');
-            refreshButtonIcon.parentElement.style.color = ''; // Reset color or set to default
+            refreshButtonIcon.parentElement.style.color = ''; 
         }
     } else {
         autoRefreshInterval = setInterval(refreshData, 30000); 
         showNotification("Tự động làm mới mỗi 30 giây!", 2000);
         if(refreshButtonIcon) {
             refreshButtonIcon.classList.add('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '#34D399'; // Example: Green color for active
+            refreshButtonIcon.parentElement.style.color = '#34D399'; 
         }
     }
 }
 
 function setupScrollSync() {
-    const tableWrapper = document.querySelector("#history-section .table-wrapper"); 
-    if (tableWrapper) {
-        tableWrapper.addEventListener("scroll", () => {
-            const header = document.getElementById("table-header");
-            if (header) header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
-        });
-    }
-    const detailedTableWrapper = document.querySelector("#detailed-stats-section .table-wrapper");
-    if (detailedTableWrapper) {
-         detailedTableWrapper.addEventListener("scroll", () => {
-            const detailedHeader = document.querySelector("#detailed-stats-table thead");
-            if (detailedHeader) detailedHeader.style.transform = `translateX(-${detailedTableWrapper.scrollLeft}px)`;
-        });
-    }
+    const tableWrappers = document.querySelectorAll(".table-wrapper"); 
+    tableWrappers.forEach(tableWrapper => {
+        const header = tableWrapper.querySelector("thead");
+        if (tableWrapper && header) {
+            tableWrapper.addEventListener("scroll", () => {
+                header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
+            });
+        }
+    });
 }
 
-function showNotification(message, duration) {
+
+function showNotification(message, duration, isError = false) {
     const notification = document.createElement("div");
     notification.className = "notification";
+    if (isError) {
+        notification.classList.add("error");
+    }
     notification.textContent = message;
     notification.style.setProperty("--duration", `${duration}ms`);
     document.body.appendChild(notification);
@@ -1999,11 +2204,11 @@ function showNotification(message, duration) {
     }, duration);
 }
 
-function restrictVersion(select) {
+function restrictVersion(select, savedVersionValue = null) {
     const versionSelect = document.querySelector('select[name="phien_ban"]');
     if (!versionSelect) {
         console.error("Không tìm thấy select[name='phien_ban']");
-        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000);
+        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
         return;
     }
 
@@ -2027,21 +2232,35 @@ function restrictVersion(select) {
     const availableVersions = versions[car] || allPossibleVersions; 
     console.log(`Các phiên bản khả dụng: ${availableVersions}`);
 
-    const currentVersionValue = versionSelect.value; 
-    versionSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
+    const targetVersionValue = savedVersionValue !== null ? savedVersionValue : versionSelect.value;
+    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; 
     
-    if (availableVersions.length === 0) {
-        console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
-    } else {
+    let foundSelected = false;
+    if (availableVersions.length > 0) {
         availableVersions.forEach(version => {
-            const selectedAttr = (version === currentVersionValue) ? " selected" : "";
+            const selectedAttr = (version === targetVersionValue) ? " selected" : "";
+            if (version === targetVersionValue) foundSelected = true;
             versionSelect.innerHTML += `<option value="${version}"${selectedAttr}>${version}</option>`;
         });
-        if (!availableVersions.includes(currentVersionValue)) { 
-            versionSelect.value = ""; 
+    } else {
+         console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
+    }
+    
+    if (foundSelected) {
+        versionSelect.value = targetVersionValue;
+    } else {
+        versionSelect.value = ""; 
+    }
+    
+    if (versionSelect.value === "") {
+        const placeholderOption = versionSelect.querySelector('option[value=""]');
+        if (placeholderOption) {
+            placeholderOption.selected = true;
         }
     }
-    console.log(`Nội dung select sau khi cập nhật: ${versionSelect.innerHTML}`);
+
+    console.log(`Nội dung select phiên bản sau khi cập nhật: ${versionSelect.innerHTML}`);
+    console.log(`Giá trị được chọn của phiên bản: ${versionSelect.value}`);
 }
 </script>
 </body>
