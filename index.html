@@ -11,19 +11,25 @@
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
         :root {
-            --primary-color: #003087; /* Màu xanh đậm VinFast */
-            --primary-color-darker: #00205b; /* Đậm hơn cho gradient và hover */
-            --primary-color-lighter: #0040c1; /* Nhạt hơn cho gradient và hover */
-            --background-light: #f5f6fa; /* Nền sáng */
-            --text-light: #2c3e50; /* Màu chữ trên nền sáng */
-            --background-dark: #1a1a2e; /* Nền tối */
-            --text-dark: #d9e1e8; /* Màu chữ trên nền tối */
-            --card-bg-light: #fff; /* Nền card sáng */
-            --card-bg-dark: #2a2a3e; /* Nền card tối */
-            --shadow-light-outer: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5);
-            --shadow-dark-outer: 10px 10px 20px rgba(0, 0, 0, 0.3), -10px -10px 20px rgba(255, 255, 255, 0.1);
-            --shadow-light-inner: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.5);
-            --shadow-dark-inner: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(255, 255, 255, 0.1);
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff; /* Màu xanh dương sáng hơn cho điểm nhấn */
+            --background-light: #f4f7fc; /* Nền sáng hơn một chút */
+            --text-light: #2c3e50;
+            --background-dark: #161b22; /* Nền tối GitHub-like */
+            --text-dark: #c9d1d9;   /* Màu chữ GitHub-like */
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e;  /* Nền card tối hơn */
+            --border-color-light: #e1e4e8;
+            --border-color-dark: #30363d;
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --skeleton-bg-light: #e0e0e0;
+            --skeleton-bg-dark: #3a3a4a;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,8 +38,8 @@
             background: var(--background-light); 
             color: var(--text-light); 
             min-height: 100vh; 
-            overflow-x: hidden; /* Ngăn cuộn ngang */
-            transition: background 0.3s, color 0.3s; 
+            overflow-x: hidden;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease; 
         }
         body.dark-mode { 
             background: var(--background-dark); 
@@ -41,24 +47,21 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; } 
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
             background: var(--background-light);
-            border-radius: 4px; 
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
         }
         body.dark-mode ::-webkit-scrollbar-track {
             background: var(--card-bg-dark);
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(255, 255, 255, 0.1);
         }
         ::-webkit-scrollbar-thumb {
             background: var(--primary-color);
-            border-radius: 4px; 
-            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background var(--transition-speed) ease;
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-color-lighter);
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), -3px -3px 6px rgba(255, 255, 255, 0.4);
         }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
@@ -68,7 +71,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter));
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: #fff;
             text-align: center;
             padding: 10px 0; 
@@ -76,9 +79,13 @@
             font-weight: 600;
             text-transform: uppercase;
             z-index: 999;
-            box-shadow: 0 4px 12px rgba(0, 48, 135, 0.2); 
+            box-shadow: var(--shadow-light-outer);
+            transition: background var(--transition-speed) ease;
         }
-        body.dark-mode header { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
+        body.dark-mode header { 
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); 
+            box-shadow: var(--shadow-dark-outer);
+        }
 
         /* Sidebar */
         .sidebar {
@@ -87,30 +94,34 @@
             left: 0;
             width: 200px; 
             height: 100vh;
-            background: linear-gradient(180deg, var(--primary-color), var(--primary-color-darker));
+            background: var(--primary-color-darker); /* Màu nền đậm hơn */
             padding: 15px; 
             padding-top: 50px; 
-            transition: width 0.3s ease, transform 0.3s ease; 
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease; 
             z-index: 1000;
-            box-shadow: 5px 0 15px rgba(0, 48, 135, 0.3); 
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1); 
             display: flex;
             flex-direction: column;
         }
         .sidebar.collapsed { 
             width: 60px; 
         }
-        body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
+        body.dark-mode .sidebar { 
+            background: var(--background-dark); /* Phù hợp với nền tối */
+            border-right: 1px solid var(--border-color-dark);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        }
         
         .sidebar .logo {
             text-align: center;
             margin-bottom: 25px; 
         }
         .sidebar .logo h1 { 
-            font-size: 22px; 
+            font-size: 20px; /* Nhỏ hơn một chút */
             color: #fff; 
             font-weight: 600; 
-            transition: opacity 0.3s ease, font-size 0.3s ease; 
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease; 
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         .sidebar.collapsed .logo h1 { 
             opacity: 0; 
@@ -127,28 +138,31 @@
         .sidebar .menu a { 
             padding: 10px 12px; 
             text-decoration: none; 
-            color: #fff; 
+            color: rgba(255,255,255,0.8); /* Màu chữ nhạt hơn */
             font-size: 13px; 
             font-weight: 500; 
-            border-radius: 8px; 
-            background: rgba(255, 255, 255, 0.08); 
-            transition: all 0.3s ease; 
+            border-radius: 6px; /* Bo tròn ít hơn */
+            background: transparent; /* Nền trong suốt ban đầu */
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease; 
             display: flex; 
             align-items: center; 
             gap: 10px; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.15);
+        }
+        body.dark-mode .sidebar .menu a {
+            color: var(--text-dark);
         }
         .sidebar.collapsed .menu a { 
             padding: 10px; 
             justify-content: center; 
         }
         .sidebar .menu a i { 
-            font-size: 15px; 
+            font-size: 16px; /* Icon to hơn một chút */
             width: 20px; 
             text-align: center;
+            transition: transform var(--transition-speed) ease;
         }
         .sidebar .menu a span { 
-            transition: opacity 0.2s ease, max-width 0.3s ease; 
+            transition: opacity 0.2s ease, max-width var(--transition-speed) ease; 
             white-space: nowrap;
             overflow: hidden;
             max-width: 100px; 
@@ -158,13 +172,27 @@
             max-width: 0; 
         }
         .sidebar .menu a:hover { 
-            background: rgba(255, 255, 255, 0.2); 
-            box-shadow: var(--shadow-light-inner);
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff;
+            padding-left: 15px; /* Hiệu ứng thụt vào khi hover */
+        }
+        .sidebar.collapsed .menu a:hover {
+            padding-left: 10px; /* Reset padding cho collapsed state */
+        }
+        .sidebar .menu a:hover i {
+            transform: scale(1.1); /* Icon lớn hơn khi hover */
+        }
+        body.dark-mode .sidebar .menu a:hover {
+            background: var(--primary-color-lighter);
+            color: #fff;
         }
         .sidebar .menu a.active { 
-            background: rgba(255, 255, 255, 0.3); 
+            background: var(--secondary-color); 
+            color: #fff; 
             font-weight: 600; 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.15);
+        }
+        body.dark-mode .sidebar .menu a.active {
+            background: var(--primary-color);
         }
         
         .toggle-btn { 
@@ -179,8 +207,8 @@
             color: #fff; 
             font-size: 14px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.25), -3px -3px 6px rgba(255, 255, 255, 0.15); 
+            transition: all var(--transition-speed) ease; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -188,7 +216,7 @@
         }
         .toggle-btn:hover { 
             background: var(--primary-color-lighter); 
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+            transform: scale(1.1);
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
@@ -202,24 +230,24 @@
             z-index: 1001; 
         }
         .nav-btn, .theme-toggle, .language-btn { 
-            padding: 0; 
             border: none; 
             border-radius: 50%; 
             background: var(--card-bg-light); 
             color: var(--text-light); 
             font-size: 14px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
+            transition: all var(--transition-speed) ease; 
             width: 32px; 
             height: 32px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
+            box-shadow: var(--shadow-light-outer);
         }
         .nav-btn:hover, .theme-toggle:hover, .language-btn:hover { 
             background: #e9ecef; 
-            box-shadow: var(--shadow-light-inner); 
+            transform: translateY(-2px); /* Hiệu ứng nổi lên */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
         body.dark-mode .nav-btn, 
         body.dark-mode .theme-toggle, 
@@ -231,17 +259,19 @@
         body.dark-mode .nav-btn:hover, 
         body.dark-mode .theme-toggle:hover, 
         body.dark-mode .language-btn:hover {
-            box-shadow: var(--shadow-dark-inner);
+            background: var(--primary-color-darker);
+            color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
 
         /* Main Content */
         .main-content { 
             margin-left: 200px; 
-            padding: 15px; 
+            padding: 20px; /* Tăng padding một chút */
             margin-top: 45px; 
             min-height: calc(100vh - 45px - 30px); 
-            transition: margin-left 0.3s ease; 
-            padding-bottom: 45px; 
+            transition: margin-left var(--transition-speed) ease; 
+            padding-bottom: 50px; /* Tăng padding bottom */
         }
         .main-content.collapsed { 
             margin-left: 60px; 
@@ -250,18 +280,20 @@
         /* Hero Section */
         .hero { 
             background: url('https://otodien.vn/wp-content/uploads/2024/08/hinh-anh-xe-vinfast-vf5-plus-1024x519.webp') no-repeat center center;
+            background-attachment: fixed; /* Hiệu ứng parallax nhẹ */
             background-size: cover;
-            border-radius: 10px; 
-            padding: 20px; 
-            margin-bottom: 15px; 
+            border-radius: 12px; /* Bo tròn nhiều hơn */
+            padding: 30px; 
+            margin-bottom: 20px; 
             position: relative;
-            min-height: 250px; 
+            min-height: 280px; 
             box-shadow: var(--shadow-light-outer);
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; 
+            justify-content: center; /* Căn giữa nội dung theo chiều dọc */
             align-items: center;
             text-align: center;
+            overflow: hidden; /* Để ::before không tràn */
         }
         .hero::before { 
             content: '';
@@ -270,173 +302,216 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.35); 
-            backdrop-filter: blur(0.5px); 
-            border-radius: 10px; 
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)); /* Gradient overlay */
+            border-radius: 12px; 
             z-index: 1;
         }
         .hero .hero-content {
             position: relative;
             z-index: 2;
-            padding-top: 40px; 
-            padding-bottom: 20px; 
         }
         .hero h2, .hero p, .hero .login-btn { color: #fff; }
-        .hero h2 { font-size: 28px; font-weight: 600; margin-bottom: 10px; } 
-        .hero p { font-size: 16px; margin-bottom: 15px; } 
+        .hero h2 { font-size: 32px; font-weight: 700; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); } 
+        .hero p { font-size: 18px; margin-bottom: 25px; text-shadow: 0 1px 3px rgba(0,0,0,0.2); } 
         .hero .login-btn { 
-            padding: 10px 20px; 
-            background: white; 
-            color: var(--primary-color); 
+            padding: 12px 25px; 
+            background: var(--secondary-color); 
+            color: #fff; 
             border: none; 
             border-radius: 8px; 
-            font-size: 14px; 
+            font-size: 15px; 
             font-weight: 600; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2), -4px -4px 8px rgba(255, 255, 255, 0.4); 
+            transition: all var(--transition-speed) ease; 
+            box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4); 
         }
         .hero .login-btn:hover { 
-            background: var(--primary-color-lighter); 
-            color: #fff; 
-            box-shadow: var(--shadow-light-inner); 
+            background: var(--primary-color); 
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 48, 135, 0.5); 
         }
 
-        /* Internal Section */
+        /* Internal Section & Feature Cards */
         .internal-section { 
-            background: var(--card-bg-light); 
+            background: transparent; /* Bỏ nền section, để nền body hiển thị */
             border-radius: 10px; 
-            padding: 15px; 
-            box-shadow: var(--shadow-light-outer); 
+            padding: 15px 0; /* Chỉ padding top/bottom */
             text-align: center; 
-            margin-bottom: 15px; 
+            margin-bottom: 20px; 
+            box-shadow: none; /* Bỏ shadow section */
         }
         body.dark-mode .internal-section { 
-            background: var(--card-bg-dark); 
-            box-shadow: var(--shadow-dark-outer); 
+            background: transparent; 
+            box-shadow: none;
         }
-        .internal-section h3 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
-        .internal-section p { font-size: 13px; margin-bottom: 15px; }
+        .internal-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 20px; color: var(--primary-color); }
+        body.dark-mode .internal-section h3 { color: var(--secondary-color); }
+        .internal-section p.section-subtitle { font-size: 14px; margin-bottom: 25px; color: var(--text-light); }
+        body.dark-mode .internal-section p.section-subtitle { color: var(--text-dark); opacity: 0.8; }
+
         .features-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 12px; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; /* Tăng gap */
         }
-        /* Updated CSS for feature-card as an <a> tag */
         .feature-card { 
             background: var(--card-bg-light); 
-            padding: 12px; 
-            border-radius: 8px; 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
-            transition: all 0.3s ease; 
-            display: block; /* Ensure <a> behaves as a block */
-            text-decoration: none; /* Remove link underline */
-            color: var(--text-light); /* Default text color */
+            padding: 20px; /* Tăng padding */
+            border-radius: 10px; 
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed) ease; 
+            display: block; 
+            text-decoration: none; 
+            color: var(--text-light); 
+            border: 1px solid var(--border-color-light);
         }
         body.dark-mode .feature-card { 
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
-            color: var(--text-dark); /* Text color in dark mode */
+            color: var(--text-dark); 
+            border: 1px solid var(--border-color-dark);
         }
         .feature-card:hover { 
-            box-shadow: var(--shadow-light-inner); 
-            /* Optionally, change background or text color on hover if desired */
-            /* background: #e9ecef; */
+            transform: translateY(-5px); /* Hiệu ứng nổi lên khi hover */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1);
         }
         body.dark-mode .feature-card:hover {
-            box-shadow: var(--shadow-dark-inner);
-            /* background: #3a3a5e; */
+             box-shadow: 0 8px 20px rgba(0,0,0,0.3), 0 3px 8px rgba(0,0,0,0.22);
+             border-color: var(--secondary-color);
         }
-        .feature-card i { font-size: 22px; color: var(--primary-color); margin-bottom: 10px; }
-        .feature-card h4 { font-size: 15px; margin-bottom: 8px; } /* Will inherit color from .feature-card */
-        .feature-card p { font-size: 12px; } /* Will inherit color from .feature-card */
+        .feature-card i { 
+            font-size: 28px; /* Icon to hơn */
+            color: var(--primary-color); 
+            margin-bottom: 15px; 
+            display: inline-block; /* Để transition hoạt động */
+            transition: transform var(--transition-speed) ease;
+        }
+        .feature-card:hover i {
+            transform: scale(1.15) rotate(-5deg); /* Hiệu ứng cho icon khi hover card */
+            color: var(--secondary-color);
+        }
+        body.dark-mode .feature-card i { color: var(--secondary-color); }
+        body.dark-mode .feature-card:hover i { color: var(--primary-color-lighter); }
+
+        .feature-card h4 { font-size: 16px; margin-bottom: 10px; font-weight: 600; }
+        .feature-card p { font-size: 13px; line-height: 1.6; }
 
         /* Dashboard Section */
         .dashboard-section { 
             display: none; 
-            background: var(--card-bg-light); 
-            border-radius: 10px; 
-            padding: 15px; 
-            box-shadow: var(--shadow-light-outer); 
+            padding: 20px; 
+            background: transparent; /* Bỏ nền section */
+            box-shadow: none; /* Bỏ shadow section */
         }
-        body.dark-mode .dashboard-section { 
-            background: var(--card-bg-dark); 
-            box-shadow: var(--shadow-dark-outer); 
-        }
-        .dashboard-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; text-align: center; }
+        .dashboard-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 20px; text-align: center; color: var(--primary-color); }
+        body.dark-mode .dashboard-section h3 { color: var(--secondary-color); }
+
         .dashboard-content { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 12px; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
         }
         .dashboard-card { 
             background: var(--card-bg-light); 
-            padding: 12px; 
-            border-radius: 8px; 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
-            transition: all 0.3s ease; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: var(--shadow-light-outer); 
+            transition: all var(--transition-speed) ease; 
+            border: 1px solid var(--border-color-light);
         }
         .dashboard-card:hover { 
-            box-shadow: var(--shadow-light-inner); 
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
         }
         body.dark-mode .dashboard-card { 
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
+            border: 1px solid var(--border-color-dark);
         }
          body.dark-mode .dashboard-card:hover {
-            box-shadow: var(--shadow-dark-inner);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            border-color: var(--primary-color-lighter);
         }
-        .dashboard-card h4 { font-size: 15px; margin-bottom: 8px; }
-        .dashboard-card p { font-size: 12px; margin-bottom: 8px; }
-        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px; }
+        .dashboard-card h4 { font-size: 17px; margin-bottom: 12px; font-weight: 600; color: var(--primary-color); }
+        body.dark-mode .dashboard-card h4 { color: var(--secondary-color); }
+        .dashboard-card p { font-size: 13px; margin-bottom: 10px; }
+        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 13px; transition: color var(--transition-speed) ease; }
         body.dark-mode .dashboard-card a { color: var(--primary-color-lighter); }
-        .dashboard-card a:hover { text-decoration: underline; }
+        .dashboard-card a:hover { text-decoration: underline; color: var(--secondary-color); }
+        body.dark-mode .dashboard-card a:hover { color: var(--primary-color); }
+
 
         /* Table Styles */
         .table-container { 
-            max-height: 220px; 
+            max-height: 230px; 
             overflow-y: auto; 
-            margin-bottom: 12px; 
+            margin-bottom: 15px; 
             border-radius: 8px; 
             background: var(--card-bg-light); 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light-inner); 
+            border: 1px solid var(--border-color-light);
+            transition: all var(--transition-speed) ease;
         }
         body.dark-mode .table-container { 
             background: var(--card-bg-dark); 
-            box-shadow: var(--shadow-dark-outer); 
+            box-shadow: var(--shadow-dark-inner); 
+            border: 1px solid var(--border-color-dark);
         }
         .data-table { 
             width: 100%; 
             border-collapse: collapse; 
-            font-size: 12px; 
+            font-size: 13px; 
         }
         .data-table th, .data-table td { 
-            padding: 10px 12px; 
+            padding: 12px 15px; 
             text-align: left; 
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06); 
+            border-bottom: 1px solid var(--border-color-light); 
         }
         body.dark-mode .data-table th, body.dark-mode .data-table td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid var(--border-color-dark);
         }
         .data-table th { 
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%); 
             color: #fff; 
             font-weight: 600; 
             position: sticky; 
             top: 0; 
             z-index: 2; 
             text-transform: uppercase;
-            letter-spacing: 0.3px; 
-            box-shadow: var(--shadow-light-inner);
+            letter-spacing: 0.5px; 
         }
         body.dark-mode .data-table th { 
-            background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); 
-            box-shadow: var(--shadow-dark-inner);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); 
         }
-        .data-table tr { transition: all 0.2s ease; } 
-        .data-table tr:hover { background: rgba(0, 48, 135, 0.04); }
-        body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.04); }
+        .data-table tr { transition: background-color 0.2s ease; } 
+        .data-table tr:hover { background: rgba(0, 48, 135, 0.05); }
+        body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .data-table td.empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+        body.dark-mode .data-table td.empty-state {
+            color: #888;
+        }
+        .skeleton-row td {
+            padding: 12px 15px;
+        }
+        .skeleton-row td div {
+            height: 1em;
+            background: linear-gradient(90deg, var(--skeleton-bg-light) 25%, #f0f0f0 50%, var(--skeleton-bg-light) 75%);
+            body.dark-mode & {
+                 background: linear-gradient(90deg, var(--skeleton-bg-dark) 25%, #4a4a5a 50%, var(--skeleton-bg-dark) 75%);
+            }
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+            border-radius: 4px;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
 
         /* Modal */
         .modal { 
@@ -446,100 +521,117 @@
             left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0, 0, 0, 0.65); 
-            z-index: 1001; 
+            background: rgba(0, 0, 0, 0.7); /* Tăng độ mờ */
+            z-index: 1002; /* Cao hơn sidebar */
             align-items: center; 
             justify-content: center; 
             padding: 10px; 
-            backdrop-filter: blur(3px); 
+            backdrop-filter: blur(4px); 
         }
         .modal-content { 
             background: var(--card-bg-light); 
-            padding: 20px; 
-            border-radius: 10px; 
-            max-width: 400px; 
+            padding: 25px; /* Tăng padding */
+            border-radius: 12px; 
+            max-width: 420px; 
             width: 100%; 
-            box-shadow: var(--shadow-light-outer); 
-            transform: scale(0.95); 
-            transition: transform 0.25s ease-out; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+            transform: translateY(-20px) scale(0.95); /* Hiệu ứng xuất hiện */
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out; 
             position: relative; 
         }
-        .modal-content.active { transform: scale(1); }
+        .modal-content.active { 
+            transform: translateY(0) scale(1); 
+            opacity: 1;
+        }
         body.dark-mode .modal-content { 
             background: var(--card-bg-dark); 
-            box-shadow: var(--shadow-dark-outer); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
         }
-        .modal-content h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; text-align: center; }
-        .modal-content p { font-size: 13px; text-align: center; margin-bottom: 15px; }
+        .modal-content h2 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-align: center; color: var(--primary-color); }
+        body.dark-mode .modal-content h2 { color: var(--secondary-color); }
+        .modal-content p.modal-subtitle { font-size: 14px; text-align: center; margin-bottom: 20px; }
         
         .modal-content label {
             display: block;
-            font-size: 12px; 
+            font-size: 13px; 
             font-weight: 500;
             color: var(--text-light); 
-            margin-bottom: 5px; 
+            margin-bottom: 6px; 
             text-align: left;
         }
         body.dark-mode .modal-content label {
             color: var(--text-dark);
         }
 
-        .input-group { margin-bottom: 12px; position: relative; }
+        .input-group { margin-bottom: 15px; position: relative; }
         .input-group .input-icon { 
             position: absolute; 
             top: 50%; 
-            left: 10px; 
+            left: 12px; 
             transform: translateY(-50%); 
             color: var(--primary-color); 
-            font-size: 13px; 
+            font-size: 14px; 
             z-index: 1; 
+            transition: color var(--transition-speed) ease;
         }
+        .modal-content input:focus + .input-icon { /* Sai, icon phải là sibling hoặc parent */
+             color: var(--secondary-color);
+        }
+        .input-group input:focus ~ .input-icon { /* Đúng nếu icon sau input */
+            color: var(--secondary-color);
+        }
+         .input-group:focus-within .input-icon { /* Cách tốt nhất */
+            color: var(--secondary-color);
+        }
+
         .modal-content input { 
-            padding: 10px 10px 10px 35px; 
-            border: none; 
+            padding: 12px 12px 12px 40px; 
+            border: 1px solid var(--border-color-light); 
             border-radius: 8px; 
-            font-size: 13px; 
+            font-size: 14px; 
             width: 100%; 
             background: var(--background-light); 
             color: var(--text-light); 
-            box-shadow: var(--shadow-light-inner); 
+            box-shadow: none; /* Bỏ shadow trong, dùng border */
+            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease;
         }
         body.dark-mode .modal-content input {
             background: var(--background-dark);
             color: var(--text-dark);
-            box-shadow: var(--shadow-dark-inner);
+            border: 1px solid var(--border-color-dark);
         }
         .modal-content input:focus { 
             outline: none; 
-            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.25), -3px -3px 6px rgba(255, 255, 255, 0.6); 
+            border-color: var(--primary-color);
+            background: #fff; /* Nền trắng khi focus */
         }
         body.dark-mode .modal-content input:focus {
-            box-shadow: 3px 3px 6px rgba(0, 64, 193, 0.35), -3px -3px 6px rgba(255, 255, 255, 0.15);
+            border-color: var(--secondary-color);
+            background: var(--card-bg-dark); /* Giữ nền card tối khi focus */
         }
         .modal-content button { 
-            padding: 10px; 
+            padding: 12px; 
             background: var(--primary-color); 
             color: #fff; 
             border: none; 
             border-radius: 8px; 
-            font-size: 13px; 
+            font-size: 14px; 
             font-weight: 600; 
             cursor: pointer; 
             width: 100%; 
-            transition: all 0.3s ease; 
+            transition: all var(--transition-speed) ease; 
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px; 
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.25), -4px -4px 8px rgba(255, 255, 255, 0.15);
+            gap: 8px; 
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
         }
         .modal-content button:hover { 
             background: var(--primary-color-lighter); 
-            box-shadow: var(--shadow-light-inner); 
-        }
-        body.dark-mode .modal-content button:hover {
-            box-shadow: var(--shadow-dark-inner);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);
         }
 
         .modal-content button .button-text,
@@ -556,34 +648,40 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 18px; 
-            height: 18px; 
-            border: 2px solid rgba(255, 255, 255, 0.4); 
+            width: 20px; 
+            height: 20px; 
+            border: 3px solid rgba(255, 255, 255, 0.5); 
             border-top-color: #fff; 
             border-radius: 50%;
-            animation: spin 0.7s linear infinite; 
+            animation: spin 0.8s linear infinite; 
         }
 
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        .modal-links { display: flex; justify-content: space-between; margin-top: 12px; }
-        .modal-links span { font-size: 11px; color: var(--primary-color); cursor: pointer; } 
+        .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
+        .modal-links span { font-size: 12px; color: var(--primary-color); cursor: pointer; transition: color var(--transition-speed) ease; }
         body.dark-mode .modal-links span { color: var(--primary-color-lighter); }
-        .modal-links span:hover { text-decoration: underline; }
+        .modal-links span:hover { text-decoration: underline; color: var(--secondary-color); }
+        body.dark-mode .modal-links span:hover { color: var(--primary-color); }
+
         .close { 
             position: absolute; 
-            top: 10px; 
-            right: 10px; 
-            font-size: 18px; 
+            top: 12px; 
+            right: 12px; 
+            font-size: 22px; /* To hơn */
             color: var(--text-light); 
             cursor: pointer; 
-            transition: color 0.3s;
+            transition: color var(--transition-speed) ease, transform var(--transition-speed) ease;
             padding: 5px; 
+            line-height: 1; /* Đảm bảo icon căn giữa */
         }
         body.dark-mode .close { color: var(--text-dark); }
-        .close:hover { color: var(--primary-color); }
+        .close:hover { 
+            color: var(--primary-color); 
+            transform: rotate(90deg); /* Hiệu ứng xoay khi hover */
+        }
         body.dark-mode .close:hover { color: var(--primary-color-lighter); }
 
 
@@ -593,24 +691,22 @@
             bottom: 0; 
             left: 0; 
             width: 100%; 
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
-            color: #fff; 
+            background: var(--card-bg-light); 
+            color: var(--text-light); 
             text-align: center; 
-            padding: 8px 0; 
-            font-size: 11px; 
-            box-shadow: 0 -4px 12px rgba(0, 48, 135, 0.2); 
+            padding: 10px 0; 
+            font-size: 12px; 
+            border-top: 1px solid var(--border-color-light);
             z-index: 998; 
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, border-top var(--transition-speed) ease;
         }
-        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
-        footer .social-links a { 
-            color: #fff; 
-            font-size: 14px; 
-            margin: 0 8px; 
-            transition: all 0.3s ease; 
+        body.dark-mode footer { 
+            background: var(--card-bg-dark); 
+            color: var(--text-dark); 
+            border-top: 1px solid var(--border-color-dark);
         }
-        footer .social-links a:hover { color: #e9ecef; }
 
-        /* Hamburger Menu for Mobile - initially hidden */
+        /* Hamburger Menu for Mobile */
         .mobile-menu-btn {
             display: none; 
             position: fixed;
@@ -619,28 +715,80 @@
             z-index: 1002; 
             background: var(--card-bg-light);
             color: var(--text-light);
-            border: none;
+            border: 1px solid var(--border-color-light);
             border-radius: 50%;
             width: 32px;
             height: 32px;
             font-size: 16px;
             cursor: pointer;
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4);
+            box-shadow: var(--shadow-light-outer);
             align-items: center;
             justify-content: center;
+            transition: all var(--transition-speed) ease;
+        }
+        .mobile-menu-btn:hover {
+            background: #e9ecef;
         }
         body.dark-mode .mobile-menu-btn {
             background: var(--card-bg-dark);
             color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
             box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover {
+            background: var(--primary-color-darker);
+            color: #fff;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1005; /* Cao nhất */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            padding: 12px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        body.dark-mode .toast {
+             background-color: var(--card-bg-light);
+             color: var(--text-light);
+             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast i {
+            font-size: 18px;
+        }
+        .toast.success i { color: #28a745; } /* Green */
+        .toast.error i { color: #dc3545; }   /* Red */
+        .toast.info i { color: #17a2b8; }    /* Blue */
+        .toast-message {
+            font-size: 14px;
         }
 
 
         /* Responsive */
-        @media (max-width: 900px) { /* Tablet and smaller */
+        @media (max-width: 900px) { 
             .sidebar { 
                 transform: translateX(-100%); 
                 width: 220px; 
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2); /* Shadow rõ hơn khi mở trên mobile */
             }
             .sidebar.open {
                 transform: translateX(0); 
@@ -653,13 +801,12 @@
                 max-width: 100px; 
             }
              .sidebar.open .logo h1 {
-                font-size: 22px; 
+                font-size: 20px; 
             }
             
             .main-content { 
                 margin-left: 0; 
-                padding-left: 15px; 
-                padding-right: 15px;
+                padding: 15px; /* Giảm padding cho mobile */
             }
             .main-content.collapsed { margin-left: 0; } 
 
@@ -667,13 +814,13 @@
             .mobile-menu-btn { display: flex; } 
 
             .dashboard-content { grid-template-columns: 1fr; } 
-            .hero h2 { font-size: 24px; } 
-            .hero p { font-size: 15px; } 
-            .hero .login-btn { font-size: 13px; padding: 9px 18px; }
+            .hero h2 { font-size: 26px; } 
+            .hero p { font-size: 16px; } 
+            .hero .login-btn { font-size: 14px; padding: 10px 20px; }
             header { padding: 12px 0; font-size: 15px;}
         }
 
-        @media (max-width: 480px) { /* Small mobile */
+        @media (max-width: 480px) { 
             header { padding: 10px 0; font-size: 13px; }
             .navbar-controls { gap: 5px; top: 8px; right: 8px;}
             .nav-btn, .theme-toggle, .language-btn, .mobile-menu-btn { 
@@ -685,37 +832,39 @@
 
             .main-content { padding: 10px; margin-top: 40px; padding-bottom: 40px; }
             
-            .hero { min-height: 200px; padding: 15px; }
-            .hero h2 { font-size: 20px; margin-bottom: 8px; }
-            .hero p { font-size: 13px; margin-bottom: 12px; }
-            .hero .login-btn { font-size: 12px; padding: 8px 15px; }
+            .hero { min-height: 220px; padding: 20px 15px; }
+            .hero h2 { font-size: 22px; margin-bottom: 10px; }
+            .hero p { font-size: 14px; margin-bottom: 15px; }
+            .hero .login-btn { font-size: 13px; padding: 9px 18px; }
             .hero .hero-content { padding-top: 30px; padding-bottom: 15px;}
 
 
-            .internal-section h3 { font-size: 18px; }
-            .internal-section p { font-size: 12px; }
-            .features-grid { grid-template-columns: 1fr; gap: 10px; } 
-            .feature-card { padding: 10px; }
-            .feature-card i { font-size: 20px; margin-bottom: 8px; }
-            .feature-card h4 { font-size: 14px; }
+            .internal-section h3 { font-size: 20px; }
+            .internal-section p.section-subtitle { font-size: 13px; margin-bottom: 20px; }
+            .features-grid { grid-template-columns: 1fr; gap: 15px; } 
+            .feature-card { padding: 15px; }
+            .feature-card i { font-size: 24px; margin-bottom: 12px; }
+            .feature-card h4 { font-size: 15px; }
 
-            .dashboard-section h3 { font-size: 17px; }
-            .dashboard-card h4 { font-size: 14px; }
-            .dashboard-card p, .dashboard-card a { font-size: 11px; }
+            .dashboard-section h3 { font-size: 18px; }
+            .dashboard-card h4 { font-size: 16px; }
+            .dashboard-card p, .dashboard-card a { font-size: 12px; }
 
-            .modal-content { padding: 15px; max-width: calc(100% - 20px); } 
-            .modal-content h2 { font-size: 17px; }
-            .modal-content p { font-size: 12px; }
-            .modal-content input { padding: 9px 9px 9px 30px; font-size: 12px; }
-            .input-group .input-icon { font-size: 12px; left: 8px; }
-            .modal-content button { padding: 9px; font-size: 12px; }
-            .modal-links span { font-size: 10px; }
-            .close { top: 8px; right: 8px; font-size: 16px; }
+            .modal-content { padding: 20px; max-width: calc(100% - 30px); } 
+            .modal-content h2 { font-size: 18px; }
+            .modal-content p.modal-subtitle { font-size: 13px; }
+            .modal-content input { padding: 10px 10px 10px 35px; font-size: 13px; }
+            .input-group .input-icon { font-size: 13px; left: 10px; }
+            .modal-content button { padding: 10px; font-size: 13px; }
+            .modal-links span { font-size: 11px; }
+            .close { top: 10px; right: 10px; font-size: 20px; }
 
-            .data-table { font-size: 11px; }
-            .data-table th, .data-table td { padding: 8px 10px; }
+            .data-table { font-size: 12px; }
+            .data-table th, .data-table td { padding: 10px 12px; }
 
-            footer { padding: 7px 0; font-size: 10px; }
+            footer { padding: 8px 0; font-size: 11px; }
+            .toast-container { bottom: 10px; right: 10px; width: calc(100% - 20px); }
+            .toast { width: 100%; }
         }
     </style>
 </head>
@@ -747,38 +896,38 @@
     </div>
 
     <div class="main-content" id="main-content">
-        <section class="hero" id="heroSection" data-aos="fade-up">
+        <section class="hero" id="heroSection" data-aos="fade-up" data-aos-duration="800">
             <div class="hero-content">
                 <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
                 <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
                 <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')"><i class="fas fa-sign-in-alt"></i> <span data-lang="login-btn" class="button-text">Đăng Nhập</span></button>
             </div>
         </section>
-        <section class="internal-section" id="welcomeSection" data-aos="fade-up">
+        <section class="internal-section" id="welcomeSection" data-aos="fade-up" data-aos-delay="200" data-aos-duration="800">
             <h3 data-lang="welcome-title">HỆ THỐNG NỘI BỘ</h3>
-            <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
+            <p class="section-subtitle" data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
             <div class="features-grid">
-                <a href="xedaban.html" class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <a href="xedaban.html" class="feature-card" data-aos="fade-up" data-aos-delay="300" data-aos-duration="700">
                     <i class="fas fa-clipboard-list"></i>
                     <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
                     <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
                 </a>
-                <a href="khoxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <a href="khoxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="400" data-aos-duration="700">
                     <i class="fas fa-car"></i>
                     <h4 data-lang="stock-title">Quản Lý Kho Xe</h4>
                     <p data-lang="stock-text">Kiểm tra và quản lý xe trong kho dễ dàng.</p>
                 </a>
-                <a href="yeucaughepxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <a href="yeucaughepxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="500" data-aos-duration="700">
                     <i class="fas fa-handshake"></i>
                     <h4 data-lang="pairing-title">Hỗ Trợ Ghép Xe</h4>
                     <p data-lang="pairing-text">Tìm kiếm và ghép xe theo nhu cầu khách hàng.</p>
                 </a>
             </div>
         </section>
-        <section class="dashboard-section" id="dashboard" data-aos="fade-up">
+        <section class="dashboard-section" id="dashboard" data-aos="fade-up" data-aos-delay="200" data-aos-duration="800">
             <h3 data-lang="dashboard-title">Bảng Điều Khiển</h3>
             <div class="dashboard-content">
-                <div class="dashboard-card">
+                <div class="dashboard-card" data-aos="fade-up" data-aos-delay="300">
                     <h4 data-lang="stock">Kho Xe</h4>
                     <p>Số lượng xe hiện tại: <strong id="currentStockCount">Đang tải...</strong></p>
                     <div class="table-container">
@@ -794,9 +943,9 @@
                             <tbody id="stockTableBody"></tbody>
                         </table>
                     </div>
-                    <p><a href="khoxe.html">Xem chi tiết</a></p>
+                    <p><a href="khoxe.html">Xem chi tiết <i class="fas fa-arrow-right fa-xs"></i></a></p>
                 </div>
-                <div class="dashboard-card">
+                <div class="dashboard-card" data-aos="fade-up" data-aos-delay="400">
                     <h4 data-lang="sold-cars">Danh Sách Xe Đã Bán</h4>
                     <p>Tổng số xe: <strong id="total-sold-cars">Đang tải...</strong></p>
                     <div class="table-container">
@@ -811,9 +960,9 @@
                             <tbody id="sold-cars-table-body"></tbody>
                         </table>
                     </div>
-                    <p><a href="xedaban.html">Xem chi tiết</a></p>
+                    <p><a href="xedaban.html">Xem chi tiết <i class="fas fa-arrow-right fa-xs"></i></a></p>
                 </div>
-                <div class="dashboard-card">
+                <div class="dashboard-card" data-aos="fade-up" data-aos-delay="500">
                     <h4 data-lang="pairing-request">Nhu Cầu Ghép Xe</h4>
                     <p>Yêu cầu đang chờ: <strong id="pairingRequestCount">Đang tải...</strong></p>
                     <div class="table-container">
@@ -828,17 +977,18 @@
                             <tbody id="pairingRequestTableBody"></tbody>
                         </table>
                     </div>
-                    <p><a href="yeucaughepxe.html">Xem chi tiết</a></p>
+                    <p><a href="yeucaughepxe.html">Xem chi tiết <i class="fas fa-arrow-right fa-xs"></i></a></p>
                 </div>
             </div>
         </section>
     </div>
+
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('loginModal')" aria-label="Đóng"><i class="fas fa-times"></i></span>
             <div id="loginForm">
                 <h2 data-lang="login-title">Đăng Nhập</h2>
-                <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận An</p>
+                <p class="modal-subtitle" data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận An</p>
                 <form onsubmit="login(event)">
                     <div>
                         <label for="username" data-lang="username">Tên đăng nhập</label>
@@ -863,7 +1013,7 @@
             </div>
             <div id="resetPasswordForm" style="display: none;">
                 <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
-                <p data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
+                <p class="modal-subtitle" data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
                 <form onsubmit="changePassword(event)">
                     <div>
                         <label for="changeUsername" data-lang="username">Tên đăng nhập</label>
@@ -901,7 +1051,7 @@
             </div>
             <div id="forgotPasswordForm" style="display: none;">
                 <h2 data-lang="forgot-password-title">Quên Mật Khẩu</h2>
-                <p data-lang="forgot-password-subtitle">Nhập email để nhận OTP đặt lại mật khẩu</p>
+                <p class="modal-subtitle" data-lang="forgot-password-subtitle">Nhập email để nhận OTP đặt lại mật khẩu</p>
                 <form onsubmit="forgotPassword(event)">
                     <div>
                         <label for="forgotEmail" data-lang="email">Email</label>
@@ -918,7 +1068,7 @@
             </div>
             <div id="resetPasswordWithOTPForm" style="display: none;">
                 <h2 data-lang="reset-password-otp-title">Đặt Lại Mật Khẩu</h2>
-                <p data-lang="reset-password-otp-subtitle">Nhập OTP và mật khẩu mới</p>
+                <p class="modal-subtitle" data-lang="reset-password-otp-subtitle">Nhập OTP và mật khẩu mới</p>
                 <form onsubmit="resetPasswordWithOTP(event)">
                     <div>
                         <label for="resetUsername" data-lang="username">Tên đăng nhập</label>
@@ -956,14 +1106,9 @@
             </div>
         </div>
     </div>
-    <div id="alertModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('alertModal')" aria-label="Đóng"><i class="fas fa-times"></i></span>
-            <h2 id="alertTitle"></h2>
-            <p id="alertMessage"></p>
-            <button onclick="closeModal('alertModal')"><span class="button-text" data-lang="ok-btn">OK</span></button>
-        </div>
-    </div>
+    
+    <div id="toastContainer" class="toast-container"></div>
+
     <footer>
         <div class="footer-content">
             <p>© 2025 VinFast Thuận An</p>
@@ -978,7 +1123,11 @@
         const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 
         // Khởi tạo AOS (Animate On Scroll)
-        AOS.init({ duration: 1000, easing: "ease-out-quad", once: true });
+        AOS.init({ 
+            duration: 700, // Thời gian animation ngắn hơn
+            easing: "ease-out-cubic", // Easing mượt hơn
+            once: true 
+        });
 
         // Khai báo các biến trạng thái toàn cục
         let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
@@ -986,7 +1135,7 @@
         let userRole = sessionStorage.getItem("userRole") || "employee"; 
         let language = localStorage.getItem("language") || "vi"; 
 
-        // Đối tượng chứa các bản dịch
+        // Đối tượng chứa các bản dịch (giữ nguyên)
         const translations = {
             vi: {
                 "hero-title": "Hệ Thống Quản Lý Đơn Hàng",
@@ -1035,7 +1184,9 @@
                 "sold-cars": "Xe Đã Bán", 
                 "pairing-request": "Ghép Xe", 
                 "pairing-list": "DS Ghép Xe", 
-                "policy-docs": "Chính Sách" 
+                "policy-docs": "Chính Sách",
+                "loading-data": "Đang tải dữ liệu...",
+                "no-data": "Không có dữ liệu để hiển thị."
             },
             en: {
                 "hero-title": "Order Management System",
@@ -1084,9 +1235,60 @@
                 "sold-cars": "Sold Cars", 
                 "pairing-request": "Pairing", 
                 "pairing-list": "Pairing List", 
-                "policy-docs": "Policies" 
+                "policy-docs": "Policies",
+                "loading-data": "Loading data...",
+                "no-data": "No data to display."
             }
         };
+        
+        // --- Toast Notification Function ---
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`; // type can be 'success', 'error', 'info'
+            
+            let iconClass = 'fas fa-info-circle'; // default icon
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            if (type === 'error') iconClass = 'fas fa-times-circle';
+
+            toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Auto-dismiss
+            setTimeout(() => {
+                toast.classList.remove('show');
+                // Remove from DOM after animation
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
+        
+        // --- Skeleton Loading for Tables ---
+        function showSkeletonLoading(tableBodyId, columns, rows = 3) {
+            const tableBody = document.getElementById(tableBodyId);
+            if (!tableBody) return;
+            tableBody.innerHTML = ''; // Clear previous content
+            for (let i = 0; i < rows; i++) {
+                const tr = document.createElement('tr');
+                tr.className = 'skeleton-row';
+                for (let j = 0; j < columns; j++) {
+                    const td = document.createElement('td');
+                    td.innerHTML = '<div></div>';
+                    tr.appendChild(td);
+                }
+                tableBody.appendChild(tr);
+            }
+        }
+
+        // --- Display Empty State in Table ---
+        function showEmptyState(tableBodyId, columns, messageKey = "no-data") {
+            const tableBody = document.getElementById(tableBodyId);
+            if (!tableBody) return;
+            tableBody.innerHTML = `<tr><td colspan="${columns}" class="empty-state">${translations[language][messageKey]}</td></tr>`;
+        }
+
 
         // Chạy khi DOM đã tải xong
         document.addEventListener("DOMContentLoaded", () => {
@@ -1135,7 +1337,7 @@
                     const userDisplayName = sessionStorage.getItem("currentConsultant") || currentUser; 
                     welcomeTitle.textContent = language === 'vi' ? `Chào mừng ${userDisplayName}!` : `Welcome ${userDisplayName}!`;
                 }
-                dashboard.style.display = "block";
+                dashboard.style.display = "block"; // Phải là block để grid hoạt động
                 logoutBtn.style.display = "flex"; 
                 navMenuLinks.forEach(link => link.style.display = "flex");
                 
@@ -1186,6 +1388,8 @@
             let totalSoldCars = 0;
             const totalSoldCarsElement = document.getElementById("total-sold-cars");
             if (!totalSoldCarsElement) return;
+            totalSoldCarsElement.textContent = translations[language]["loading-data"];
+
 
             try {
                 const fetchPromises = months.map(month =>
@@ -1202,8 +1406,11 @@
         }
 
         async function fetchSoldCarsDataForDashboard() {
-            const tableBody = document.getElementById("sold-cars-table-body");
+            const tableBodyId = "sold-cars-table-body";
+            const tableBody = document.getElementById(tableBodyId);
             if (!tableBody) return;
+            showSkeletonLoading(tableBodyId, 3); // 3 columns
+
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             let allSoldCars = [];
 
@@ -1217,8 +1424,11 @@
                 allSoldCars = results.flat();
                 const randomData = getRandomRows(allSoldCars, 5); 
                 displaySoldCarsData(randomData, tableBody);
+                if (randomData.length === 0) {
+                    showEmptyState(tableBodyId, 3);
+                }
             } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>`;
+                showEmptyState(tableBodyId, 3, "server-error");
             }
         }
         
@@ -1235,9 +1445,9 @@
         }
 
         function displaySoldCarsData(data, tableBodyElement) {
-            tableBodyElement.innerHTML = "";
+            tableBodyElement.innerHTML = ""; // Clear skeleton or previous
             if (!data || data.length === 0) {
-                tableBodyElement.innerHTML = `<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>`;
+                // Empty state will be handled by the caller if needed
                 return;
             }
             data.forEach(row => {
@@ -1249,18 +1459,22 @@
         }
 
         async function fetchRandomStockDataForDashboard() {
-            const stockTableBody = document.getElementById("stockTableBody");
+            const tableBodyId = "stockTableBody";
+            const stockTableBody = document.getElementById(tableBodyId);
             const stockCountElement = document.getElementById("currentStockCount");
             if (!stockTableBody || !stockCountElement) return;
+            
+            stockCountElement.textContent = translations[language]["loading-data"];
+            showSkeletonLoading(tableBodyId, 4); // 4 columns
 
             try {
                 const response = await axios.get(STOCK_API_URL);
                 const data = response.data;
                 const stockData = data.slice(1); 
                 const randomRows = getRandomRows(stockData, 5); 
-                stockTableBody.innerHTML = "";
+                stockTableBody.innerHTML = ""; // Clear skeleton
                 if (randomRows.length === 0) {
-                     stockTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>`;
+                     showEmptyState(tableBodyId, 4);
                 } else {
                     randomRows.forEach(row => {
                         const tr = document.createElement("tr");
@@ -1271,25 +1485,30 @@
                 }
                 stockCountElement.textContent = `${stockData.length} xe`;
             } catch (error) {
-                stockTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
+                showEmptyState(tableBodyId, 4, "server-error");
                 stockCountElement.textContent = "Lỗi tải";
             }
         }
 
         async function fetchPairingRequestsForDashboard() {
-            const pairingTableBody = document.getElementById("pairingRequestTableBody");
+            const tableBodyId = "pairingRequestTableBody";
+            const pairingTableBody = document.getElementById(tableBodyId);
             const pairingCountElement = document.getElementById("pairingRequestCount");
             if(!pairingTableBody || !pairingCountElement) return;
+
+            pairingCountElement.textContent = translations[language]["loading-data"];
+            showSkeletonLoading(tableBodyId, 3); // 3 columns
 
             try {
                 const response = await axios.get(PAIRING_REQUEST_API_URL);
                 const jsonData = response.data; 
+                pairingTableBody.innerHTML = ""; // Clear skeleton
                 if (jsonData && Array.isArray(jsonData)) {
                     jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
                     const latestRequests = jsonData.slice(0, 5); 
-                    pairingTableBody.innerHTML = "";
+                    
                     if (latestRequests.length === 0) {
-                        pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>';
+                        showEmptyState(tableBodyId, 3);
                     } else {
                         latestRequests.forEach(row => {
                             const tr = document.createElement("tr");
@@ -1303,11 +1522,11 @@
                     }
                     pairingCountElement.textContent = `${jsonData.length}`;
                 } else {
-                     pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Dữ liệu không hợp lệ</td></tr>';
+                     showEmptyState(tableBodyId, 3);
                      pairingCountElement.textContent = "0";
                 }
             } catch (error) {
-                pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
+                showEmptyState(tableBodyId, 3, "server-error");
                 pairingCountElement.textContent = "Lỗi tải";
             }
         }
@@ -1330,7 +1549,7 @@
             };
 
             if (!username || !password) {
-                showAlert("Lỗi", translations[language]["fill-all-fields"]);
+                showToast(translations[language]["fill-all-fields"], 'error');
                 return;
             }
 
@@ -1356,14 +1575,14 @@
                     userRole = result.role || "employee";
 
                     closeModal("loginModal");
-                    showAlert("Thành công", translations[language]["login-success"]);
+                    showToast(translations[language]["login-success"], 'success');
                     updateUIBasedOnLogin(); 
                     fetchDashboardData();   
                 } else {
-                    showAlert("Lỗi", result.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
+                    showToast(result.message || "Tên đăng nhập hoặc mật khẩu không đúng.", 'error');
                 }
             } catch (error) {
-                showAlert("Lỗi", translations[language]["server-error"]);
+                showToast(translations[language]["server-error"], 'error');
             } finally {
                 loginButton.classList.remove("loading");
                 loginButton.disabled = false;
@@ -1379,13 +1598,13 @@
             const button = e.target.querySelector('button[type="submit"]');
 
             if (!username || !oldPassword || !newPassword || !confirmPassword) {
-                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
+                showToast(translations[language]["fill-all-fields"], 'error'); return;
             }
             if (newPassword !== confirmPassword) {
-                showAlert("Lỗi", translations[language]["password-mismatch"]); return;
+                showToast(translations[language]["password-mismatch"], 'error'); return;
             }
             if (newPassword.length < 6) {
-                showAlert("Lỗi", translations[language]["password-length"]); return;
+                showToast(translations[language]["password-length"], 'error'); return;
             }
             
             button.classList.add("loading"); button.disabled = true;
@@ -1394,13 +1613,13 @@
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
-                    showAlert("Thành công", translations[language]["password-changed"]);
+                    showToast(translations[language]["password-changed"], 'success');
                     resetModalToLogin();
                 } else {
-                    showAlert("Lỗi", result.message || "Không thể đổi mật khẩu.");
+                    showToast(result.message || "Không thể đổi mật khẩu.", 'error');
                 }
             } catch (error) {
-                showAlert("Lỗi", translations[language]["server-error"]);
+                showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
             }
@@ -1412,7 +1631,7 @@
             const button = e.target.querySelector('button[type="submit"]');
 
             if (!email) {
-                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
+                showToast(translations[language]["fill-all-fields"], 'error'); return;
             }
             button.classList.add("loading"); button.disabled = true;
             try {
@@ -1420,12 +1639,12 @@
                 const result = response.data;
                 if (result.success) {
                     showResetPasswordWithOTPForm(result.username); 
-                    showAlert("Thành công", translations[language]["otp-sent"]);
+                    showToast(translations[language]["otp-sent"], 'success');
                 } else {
-                    showAlert("Lỗi", result.message || "Email không tồn tại hoặc có lỗi xảy ra.");
+                    showToast(result.message || "Email không tồn tại hoặc có lỗi xảy ra.", 'error');
                 }
             } catch (error) {
-                showAlert("Lỗi", translations[language]["server-error"]);
+                showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
             }
@@ -1446,13 +1665,13 @@
             const button = e.target.querySelector('button[type="submit"]');
 
             if (!username || !otp || !newPassword || !confirmPassword) {
-                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
+                showToast(translations[language]["fill-all-fields"], 'error'); return;
             }
             if (newPassword !== confirmPassword) {
-                showAlert("Lỗi", translations[language]["password-mismatch"]); return;
+                showToast(translations[language]["password-mismatch"], 'error'); return;
             }
             if (newPassword.length < 6) {
-                showAlert("Lỗi", translations[language]["password-length"]); return;
+                showToast(translations[language]["password-length"], 'error'); return;
             }
             button.classList.add("loading"); button.disabled = true;
             try {
@@ -1460,13 +1679,13 @@
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
-                    showAlert("Thành công", translations[language]["password-reset-success"]);
+                    showToast(translations[language]["password-reset-success"], 'success');
                     resetModalToLogin();
                 } else {
-                    showAlert("Lỗi", result.message || "OTP không đúng hoặc có lỗi xảy ra.");
+                    showToast(result.message || "OTP không đúng hoặc có lỗi xảy ra.", 'error');
                 }
             } catch (error) {
-                showAlert("Lỗi", translations[language]["server-error"]);
+                showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
             }
@@ -1479,7 +1698,7 @@
             userRole = "employee"; 
             localStorage.removeItem('sidebarState'); 
             updateUIBasedOnLogin();
-            showAlert("Thông báo", translations[language]["logout-success"]);
+            showToast(translations[language]["logout-success"], 'info');
         }
 
         function toggleSidebarDesktop() {
@@ -1509,6 +1728,8 @@
             if (!modal) return;
             const content = modal.querySelector(".modal-content");
             modal.style.display = "flex";
+            // Trigger reflow to ensure transition is applied
+            // void modal.offsetWidth; // Not always needed with timeout
             setTimeout(() => {
                 if (content) content.classList.add("active");
             }, 10); 
@@ -1524,7 +1745,7 @@
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 250); 
+            }, 300); // Match transition duration
         }
         
         function resetModalToLogin() {
@@ -1535,13 +1756,18 @@
             }
         }
 
+        // showAlert is now replaced by showToast for most cases.
+        // If a modal alert is still needed for very critical messages, it can be kept.
+        // For now, I'll comment it out as showToast is preferred.
+        /*
         function showAlert(title, message) {
             const alertTitle = document.getElementById("alertTitle");
             const alertMessage = document.getElementById("alertMessage");
             if (alertTitle) alertTitle.textContent = title;
             if (alertMessage) alertMessage.textContent = message;
-            openModal("alertModal");
+            openModal("alertModal"); // Assuming alertModal still exists
         }
+        */
 
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
@@ -1559,6 +1785,10 @@
             const langBtn = document.getElementById("languageBtn");
             if (langBtn) langBtn.textContent = language === "vi" ? "EN" : "VI";
             updateLanguage();
+            // Re-fetch dashboard data if it's visible and language changes, to update "Đang tải..." etc.
+            if (isLoggedIn && document.getElementById('dashboard').style.display !== 'none') {
+                fetchDashboardData();
+            }
         }
 
         function updateLanguage() {
@@ -1581,14 +1811,7 @@
                     if (element.parentElement && element.parentElement.classList.contains('menu') && element.querySelector('span')) {
                         element.querySelector('span').textContent = translations[language][key];
                     } else {
-                        // For feature cards, h4 and p are direct children with data-lang
-                        if (element.matches('.feature-card h4[data-lang]') || element.matches('.feature-card p[data-lang]')) {
-                             element.textContent = translations[language][key];
-                        } 
-                        // For other elements like buttons, dashboard card titles
-                        else if (!element.closest('.feature-card')) { // Avoid double-updating if already handled
-                           element.textContent = translations[language][key];
-                        }
+                         element.textContent = translations[language][key];
                     }
                 }
             });
@@ -1598,16 +1821,11 @@
                     element.placeholder = translations[language][key];
                 }
             });
-            if (isLoggedIn) { // Update dashboard card titles specifically if needed
-                const stockCardTitle = document.querySelector('.dashboard-card [data-lang="stock"]');
-                if(stockCardTitle && translations[language]["stock"]) stockCardTitle.textContent = translations[language]["stock"];
-
-                const soldCarsCardTitle = document.querySelector('.dashboard-card [data-lang="sold-cars"]');
-                 if(soldCarsCardTitle && translations[language]["sold-cars"]) soldCarsCardTitle.textContent = translations[language]["sold-cars"];
-                
-                const pairingRequestCardTitle = document.querySelector('.dashboard-card [data-lang="pairing-request"]');
-                if(pairingRequestCardTitle && translations[language]["pairing-request"]) pairingRequestCardTitle.textContent = translations[language]["pairing-request"];
-            }
+            // Update empty states if they are currently visible
+            document.querySelectorAll('.data-table td.empty-state').forEach(td => {
+                const messageKey = td.dataset.emptyMessageKey || "no-data";
+                td.textContent = translations[language][messageKey];
+            });
         }
 
         function showForm(formName) {
