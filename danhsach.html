@@ -396,13 +396,13 @@
 
         /* Loading overlay */
         .loading-overlay {
-            position: absolute; /* Changed from absolute to cover table area if table shrinks */
-            top: 0; left: 0; right: 0; bottom: 0; /* Cover entire parent */
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0; 
             background: rgba(255, 255, 255, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10; /* Ensure it's above the table but below sticky header if header had higher z-index */
+            z-index: 10; 
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease;
@@ -430,7 +430,7 @@
         body.dark-mode .loading-spinner {
             border-top: 4px solid #005eb8; 
         }
-        #loading-overlay span { /* For the "Đang tải dữ liệu..." text */
+        #loading-overlay span { 
              margin-left: 10px; font-size: 14px; color: #2c3e50;
         }
         body.dark-mode #loading-overlay span {
@@ -588,144 +588,139 @@
         /* Responsive */
         @media (max-width: 768px) {
             header { 
-                font-size: 11px; /* Mobile: Adjusted font size */
-                padding: 8px 0; /* Mobile: Adjusted padding */
-                /* Approx height: 11px font + 16px padding = 27px. Let's say 30px for calculations. */
+                font-size: 11px; 
+                padding: 8px 0; 
             }
             .slidebar {
                 width: 50px;
-                padding: 8px; /* Mobile: Adjusted padding */
-                padding-top: 40px; /* Mobile: header height (30px) + 10px spacing */
+                padding: 8px; 
+                padding-top: 40px; 
             }
             .slidebar .logo h1 { display: none; }
             .slidebar .tabs a span { display: none; }
             .slidebar .tabs a { justify-content: center; padding: 8px; }
             .slidebar .tabs a i { margin-right: 0; }
-            .slidebar .tabs { max-height: calc(100vh - 70px); /* Adjusted for new padding-top */ }
+            .slidebar .tabs { max-height: calc(100vh - 70px);  }
 
 
             .navbar-controls {
-                top: 4px; /* Mobile: Adjusted top */
-                right: 8px; /* Mobile: Adjusted right */
-                gap: 4px; /* Mobile: Smaller gap */
+                top: 4px; 
+                right: 8px; 
+                gap: 4px; 
             }
             .nav-btn, .theme-toggle {
-                width: 26px; /* Mobile: Slightly smaller */
-                height: 26px; /* Mobile: Slightly smaller */
-                font-size: 11px; /* Mobile: Smaller icon */
+                width: 26px; 
+                height: 26px; 
+                font-size: 11px; 
             }
             
-            /* Mobile: Adjusted main container to account for new header/footer heights */
             .main-container {
-                margin-left: 50px; /* Width of collapsed sidebar */
+                margin-left: 50px; 
                 width: calc(100vw - 50px);
-                padding: 8px; /* Mobile: Reduced padding */
-                margin-top: 30px; /* Mobile: New header height */
-                height: calc(100vh - 30px - 24px); /* Mobile: headerH (30px) - footerH (24px) */
+                padding: 8px; 
+                margin-top: 30px; 
+                height: calc(100vh - 30px - 24px); 
             }
             .grid-container {
-                padding: 8px; /* Mobile: Reduced padding */
+                padding: 8px; 
                 gap: 8px;
             }
 
             .filter-section {
                 flex-direction: column;
                 align-items: stretch; 
-                padding-bottom: 8px; /* Mobile: Consistent padding */
+                padding-bottom: 8px; 
             }
             .filter-section input {
                 width: 100%;
-                margin-bottom: 8px; /* Mobile: Spacing */
-                padding: 8px 10px; /* Mobile: Adjusted padding */
-                font-size: 13px; /* Mobile: Legible font size */
+                margin-bottom: 8px; 
+                padding: 8px 10px; 
+                font-size: 13px; 
             }
             .filter-section .button-group {
-                justify-content: space-around; /* Distribute buttons nicely */
+                justify-content: space-around; 
                 width: 100%;
                 gap: 5px;
             }
-            .export-btn { /* Apply to all buttons in group for consistency */
-                width: auto; /* Allow text to determine width */
-                min-width: 30px; /* Ensure tap target */
+            .export-btn { 
+                width: auto; 
+                min-width: 30px; 
                 height: 30px; 
-                font-size: 12px; /* Mobile: Font size for button icons */
-                padding: 0 8px; /* Horizontal padding for buttons with text/icons */
-                border-radius: 6px; /* Slightly smaller radius */
+                font-size: 12px; 
+                padding: 0 8px; 
+                border-radius: 6px; 
             }
-            .export-btn i { font-size: 13px; } /* Ensure icon size is good */
+            .export-btn i { font-size: 13px; } 
 
 
             .tables-section {
                 flex-direction: column;
                 width: 100%;
                 min-height: 0; 
-                gap: 8px; /* Space between table and detail panel */
-                flex: 1; /* Ensure it takes available vertical space */
+                gap: 8px; 
+                flex: 1; 
             }
             .table-container {
-                flex: 1 1 60%; /* Grow and shrink, basis 60% of tables-section height */
+                flex: 1 1 60%; 
                 width: 100%;
-                max-height: none; /* Let flexbox handle height distribution */
-                /* overflow: auto; is already set and crucial */
-                padding: 8px; /* Mobile: Padding inside container */
+                max-height: none; 
+                padding: 8px; 
             }
             .detail-panel {
-                flex: 1 1 40%; /* Grow and shrink, basis 40% of tables-section height */
+                flex: 1 1 40%; 
                 width: 100%;
                 min-width: 0;
-                max-height: none; /* Let flexbox handle height distribution */
-                /* overflow-y: auto; is already set */
-                padding: 8px; /* Mobile: Padding inside panel */
+                max-height: none; 
+                padding: 8px; 
             }
 
-            table { /* Main data table */
-                font-size: 9.5px; /* Mobile: Smaller font for more data, relies on H-scroll */
+            table { 
+                font-size: 9.5px; 
             }
-            th, td { /* Main data table cells */
-                padding: 6px 7px; /* Mobile: Reduced padding */
+            th, td { 
+                padding: 6px 7px; 
             }
             
             #loading-overlay span {
-                font-size: 12px; /* Mobile: Loading text size */
+                font-size: 12px; 
                 margin-left: 8px;
             }
 
             .detail-panel h3 { 
-                font-size: 12px; /* Mobile: Title size */
+                font-size: 12px; 
                 margin-bottom: 6px; 
                 padding-bottom: 5px;
             }
             .detail-table { 
-                font-size: 10px; /* Mobile: Detail table font size */
+                font-size: 10px; 
             }
             .detail-table th, .detail-table td { 
-                padding: 5px 7px; /* Mobile: Detail table cell padding */
+                padding: 5px 7px; 
             }
 
             .pagination { 
                 margin-top: 8px; 
-                gap: 5px; /* Mobile: Smaller gap */
+                gap: 5px; 
             }
             .pagination button { 
-                padding: 6px 10px; /* Mobile: Button padding */
-                font-size: 11px; /* Mobile: Button font size */
+                padding: 6px 10px; 
+                font-size: 11px; 
             }
             .pagination span { 
-                padding: 6px 8px; /* Mobile: Text padding */
-                font-size: 11px; /* Mobile: Text font size */
+                padding: 6px 8px; 
+                font-size: 11px; 
             }
             
             footer { 
-                font-size: 9px; /* Mobile: Footer font size */
-                padding: 6px 0; /* Mobile: Footer padding */
-                /* Approx height: 9px font + 12px padding = 21px. Let's say 24px. */
+                font-size: 9px; 
+                padding: 6px 0; 
             }
 
             #notification {
-                top: 35px; /* Mobile: Below new header */
-                right: 8px; /* Mobile: Adjusted position */
-                font-size: 10px; /* Mobile: Notification font size */
-                padding: 6px 10px; /* Mobile: Notification padding */
+                top: 35px; 
+                right: 8px; 
+                font-size: 10px; 
+                padding: 6px 10px; 
             }
         }
     </style>
@@ -856,7 +851,7 @@
                     }
                     console.log("Dữ liệu đã tải từ sessionStorage.");
                     isDataFullyLoaded = true;
-                    applyFiltersAndRenderCurrentTab();
+                    applyFiltersAndRenderCurrentTab(); // This will now sort newest first
                     loadedFromCache = true; 
                 } catch (error) {
                     console.error("Lỗi khi parse dữ liệu từ sessionStorage:", error);
@@ -877,7 +872,7 @@
                 
                 console.log("globalApiData sau khi cập nhật từ API:", globalApiData);
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab(); 
+                applyFiltersAndRenderCurrentTab(); // This will now sort newest first
                 if (!loadedFromCache) { 
                     showNotification("Dữ liệu đã được tải thành công!", 2000);
                 }
@@ -900,13 +895,14 @@
 
             let dataForSheet = globalApiData[currentSheet] ? [...globalApiData[currentSheet]] : []; 
 
+            // Filter by consultant if not admin
             const currentConsultant = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentConsultant === ADMIN_USER;
-
             if (!isAdmin && currentConsultant) {
                 dataForSheet = dataForSheet.filter(row => row["Tên tư vấn bán hàng"] === currentConsultant);
             }
 
+            // Filter by search input
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
             if (searchValue) {
                 dataForSheet = dataForSheet.filter(row =>
@@ -914,7 +910,9 @@
                 );
             }
             
-            currentDisplayData = dataForSheet; 
+            // Reverse the array to show newest data first
+            currentDisplayData = dataForSheet.reverse(); 
+            
             renderTable(currentDisplayData, currentPage); 
         }
 
@@ -947,10 +945,10 @@
             const slidebar = document.getElementById("slidebar");
             const toggleIcon = document.querySelector("#sidebar-toggle-btn i");
             if (slidebar.classList.contains("collapsed")) {
-                toggleIcon.classList.remove("fa-times"); // Should be fa-bars when collapsed
+                toggleIcon.classList.remove("fa-times"); 
                 toggleIcon.classList.add("fa-bars");
             } else {
-                toggleIcon.classList.remove("fa-bars"); // Should be fa-times when expanded
+                toggleIcon.classList.remove("fa-bars"); 
                 toggleIcon.classList.add("fa-times");
             }
         }
@@ -974,18 +972,17 @@
             document.getElementById("search-input").value = ""; 
 
             updateTableHeader(currentSheet); 
-            applyFiltersAndRenderCurrentTab(); 
+            applyFiltersAndRenderCurrentTab(); // This will now sort newest first
         }
 
         function updateTableHeader(sheetName) {
             const thead = document.getElementById("table-head");
             const colgroup = document.getElementById("table-colgroup");
-            colgroup.innerHTML = ""; // Clear existing cols
+            colgroup.innerHTML = ""; 
             colgroup.className = ""; 
 
             if (sheetName === 'daghep') {
                 colgroup.classList.add('da-ghep');
-                // These percentages are relative to the table's total width (120% of container)
                 ['3%', '10%', '13%', '6%', '6%', '11%', '6%', '13%', '11%', '7%', '5%', '9%'].forEach(width => {
                     const col = document.createElement('col');
                     col.style.width = width;
@@ -1048,12 +1045,16 @@
             paginatedData.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 let cellsHTML = "";
+                // STT is now based on the original index in the *reversed* full list for the current view
+                // So, if currentDisplayData has 100 items, the first item (newest) is 1, second is 2, etc.
+                // Then pagination slices this. So the `globalIndex` needs to reflect the position in the *paginated* slice
+                // of the already reversed list.
                 const globalIndex = start + index + 1; 
+
 
                 const formatDate = (dateString) => {
                     if (!dateString) return "";
                     const date = new Date(dateString);
-                    // Check if date is valid and not Jan 1, 1970 (which can happen for bad string to date conversions)
                     return !isNaN(date) && date.getFullYear() > 1900 ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (dateString || "");
                 };
 
@@ -1092,7 +1093,7 @@
             updatePagination(dataToDisplay); 
 
             if (paginatedData.length > 0) {
-                showDetail(paginatedData[0]); // Show detail for the first row of the current page
+                showDetail(paginatedData[0]); 
             } else {
                  document.getElementById("detail-body").innerHTML = "<tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr>";
             }
@@ -1174,12 +1175,13 @@
                 showNotification("Dữ liệu chưa tải xong để xuất.", 2000);
                 return;
             }
+            // currentDisplayData is already reversed (newest first)
             if (!currentDisplayData || currentDisplayData.length === 0) {
                 showNotification("Không có dữ liệu để xuất.", 2000);
                 return;
             }
 
-            if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}" sang Excel không?`)) {
+            if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}" (mới nhất lên đầu) sang Excel không?`)) {
                 const headers = currentSheet === 'daghep' 
                     ? ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG", "SỐ VIN", "NGÀY GHÉP", "SỐ NGÀY", "NGÀY XUẤT HÓA ĐƠN"]
                     : ["SỐ TT", "TƯ VẤN BÁN HÀNG", "TÊN KHÁCH HÀNG", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ ĐƠN HÀNG"];
@@ -1188,17 +1190,17 @@
                     ? ["STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn"]
                     : ["STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng"];
 
-                const wsData = currentDisplayData.map((row, index) => {
+                const wsData = currentDisplayData.map((row, index) => { // index here is 0 for the newest item
                     const rowData = {};
                     headers.forEach((header, i) => {
                         if (dataKeyMap[i] === "STT") {
-                            rowData[header] = index + 1;
+                            rowData[header] = index + 1; // STT will be 1 for the newest item
                         } else {
                             let value = row[dataKeyMap[i]] || "";
                             if ((dataKeyMap[i] === "Thời gian ghép" || dataKeyMap[i] === "Ngày xuất hóa đơn") && value) {
                                 const date = new Date(value);
                                 if (!isNaN(date) && date.getFullYear() > 1900) value = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                                else value = value || ""; // keep original if not valid date
+                                else value = value || ""; 
                             }
                             rowData[header] = value;
                         }
@@ -1219,6 +1221,7 @@
                 showNotification("Dữ liệu chưa tải xong để in.", 2000);
                 return;
             }
+            // currentDisplayData is already reversed (newest first)
              if (!currentDisplayData || currentDisplayData.length === 0) {
                 showNotification("Không có dữ liệu để in.", 2000);
                 return;
@@ -1227,14 +1230,12 @@
             const tableToPrint = document.createElement('table');
             tableToPrint.style.width = "100%";
             tableToPrint.style.borderCollapse = "collapse";
-            tableToPrint.style.tableLayout = "fixed"; // Important for print column widths
+            tableToPrint.style.tableLayout = "fixed"; 
 
             const colgroupElement = document.createElement('colgroup');
-            // Define approximate fixed widths for printing. These might need fine-tuning.
-            // The sum of these widths should roughly match common paper widths (e.g., A4 landscape ~277mm usable width)
             const printColWidths = currentSheet === 'daghep' 
-                ? ['20px', '70px', '90px', '45px', '45px', '80px', '50px', '90px', '90px', '55px', '35px', '55px'] // Total ~725px
-                : ['25px', '90px', '120px', '70px', '80px', '100px', '60px', '80px']; // Total ~625px
+                ? ['20px', '70px', '90px', '45px', '45px', '80px', '50px', '90px', '90px', '55px', '35px', '55px'] 
+                : ['25px', '90px', '120px', '70px', '80px', '100px', '60px', '80px']; 
             
             printColWidths.forEach(width => {
                 const col = document.createElement('col');
@@ -1254,12 +1255,12 @@
                 return !isNaN(date) && date.getFullYear() > 1900 ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (dateString || "");
             };
 
-            currentDisplayData.forEach((row, index) => {
+            currentDisplayData.forEach((row, index) => { // index here is 0 for the newest item
                 const tr = document.createElement("tr");
                 let cellsContent = [];
                  if (currentSheet === 'daghep') {
                     cellsContent = [
-                        index + 1,
+                        index + 1, // STT will be 1 for the newest item
                         row["Tên tư vấn bán hàng"] || "",
                         row["Tên khách hàng"] || "",
                         row["Dòng xe"] || "",
@@ -1274,7 +1275,7 @@
                     ];
                 } else { 
                     cellsContent = [
-                        index + 1,
+                        index + 1, // STT will be 1 for the newest item
                         row["Tên tư vấn bán hàng"] || "",
                         row["Tên khách hàng"] || "",
                         row["Dòng xe"] || "",
@@ -1289,7 +1290,7 @@
                     td.textContent = cellData;
                     if (currentSheet === 'daghep' && cellIndex === 8 && cellData) { 
                         td.style.fontWeight = '600';
-                        td.style.color = '#00a550'; // Vin highlight color
+                        td.style.color = '#00a550'; 
                     }
                     tr.appendChild(td);
                 });
@@ -1302,21 +1303,18 @@
                 <div style="text-align:center; margin-bottom: 15px;">
                     <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 14pt;">VINFAST MINH ĐẠO THUẬN AN</h2>
                     <p style="margin: 2px 0; font-size: 9pt;">Hotline: 1900 232389</p>
-                    <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE'}</p>
+                    <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE'} (Mới nhất lên đầu)</p>
                     <p style="margin: 2px 0; font-size: 8pt;">In lúc: ${now}</p>
                 </div>
                 ${tableToPrint.outerHTML}
             `;
-            // A4 Landscape is 297mm wide. Usable width around 277mm after margins.
-            // 1pt = 0.3527mm. So 277mm is ~785pt.
-            // The column widths should sum up to something less than this.
             const win = window.open('', '', 'width=1123,height=794'); 
             win.document.write(`
                 <html>
                 <head>
                     <title>In Danh Sách - ${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}</title>
                     <style>
-                        body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; } /* Smaller base font for print */
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; } 
                         table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
                         th, td { border: 1px solid #333; padding: 3px 4px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top;}
                         th { background: #e0e0e0; color: #000; font-weight: bold; font-size: 7.5pt; }
@@ -1331,7 +1329,7 @@
             setTimeout(() => {
                 win.print();
                 win.close();
-            }, 500); // Timeout to allow content to load in the new window
+            }, 500); 
         }
 
 
@@ -1350,7 +1348,7 @@
                 
                 console.log("globalApiData sau khi làm mới:", globalApiData);
                 isDataFullyLoaded = true; 
-                applyFiltersAndRenderCurrentTab(); 
+                applyFiltersAndRenderCurrentTab(); // This will now sort newest first
                 showNotification("Dữ liệu đã được làm mới thành công!", 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
@@ -1375,7 +1373,7 @@
                     return; 
                 }
                 currentPage = 1; 
-                applyFiltersAndRenderCurrentTab();
+                applyFiltersAndRenderCurrentTab(); // This will now sort newest first
             }, 300));
         }
 
@@ -1392,14 +1390,13 @@
             }, duration);
         }
 
-        // Handle window resize to toggle sidebar if needed
         window.addEventListener('resize', debounce(() => {
             if (window.innerWidth <= 768) {
                 if (!document.getElementById("slidebar").classList.contains("collapsed")) {
-                    // toggleSlidebar(); // Only collapse if it was expanded on mobile
+                    // toggleSlidebar(); 
                 }
             } else {
-                // Optional: expand sidebar if it was collapsed and screen is now larger
+                // Optional: expand sidebar
                 // if (document.getElementById("slidebar").classList.contains("collapsed")) {
                 //    toggleSlidebar();
                 // }
