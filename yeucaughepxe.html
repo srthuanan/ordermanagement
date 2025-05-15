@@ -13,773 +13,992 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root {
-            --background: #e0e5ec;
-            --text-color: #2c3e50;
-            --container-bg: #e0e5ec;
-            --table-header-bg: #d1d9e6;
-            --table-header-text: #2c3e50;
-            --table-row-bg: #e0e5ec;
-            --table-row-hover: #d1d9e6;
-            --border-color: #b3c0d1;
-            --shadow-light: rgba(255, 255, 255, 0.9);
-            --shadow-dark: rgba(0, 0, 0, 0.2);
-            --modal-bg: #ffffff;
-            --modal-text: #2c3e50;
-            --summary-bg: #e0e5ec;
-            --chart-bg: #e0e5ec;
-            --footer-bg: #003087;
-            --footer-text: #ffffff;
-            --success-bg: #e6ffe6;
-            --loading-bg: #f5f5f5;
-            --no-data-text-color: #7f8c8d; /* Màu cho chữ "không có dữ liệu" */
-        }
+ :root {
+    --background: #e0e5ec;
+    --text-color: #2c3e50;
+    --container-bg: #e0e5ec;
+    --table-header-bg: #d1d9e6;
+    --table-header-text: #2c3e50;
+    --table-row-bg: #e0e5ec;
+    --table-row-hover: #d1d9e6;
+    --border-color: #b3c0d1;
+    --shadow-light: rgba(255, 255, 255, 0.9);
+    --shadow-dark: rgba(0, 0, 0, 0.2);
+    --modal-bg: #ffffff;
+    --modal-text: #2c3e50;
+    --summary-bg: #e0e5ec;
+    --chart-bg: #e0e5ec;
+    --footer-bg: #003087;
+    --footer-text: #ffffff;
+    --success-bg: #e6ffe6;
+    --loading-bg: #f5f5f5;
+    --no-data-text-color: #7f8c8d; /* Màu cho chữ "không có dữ liệu" */
+    /* Thêm các biến màu mới nếu cần cho Enhanced Modal Styles */
+    --primary-text-color: #004a7c;
+    --primary-text-color-dark: #a9cce3;
+}
 
-        [data-theme="dark"] {
-            --background: #2c3e50;
-            --text-color: #e0e5ec;
-            --container-bg: #2c3e50;
-            --table-header-bg: #34495e;
-            --table-header-text: #e0e5ec;
-            --table-row-bg: #2c3e50;
-            --table-row-hover: #34495e;
-            --border-color: #34495e;
-            --shadow-light: rgba(255, 255, 255, 0.1);
-            --shadow-dark: rgba(0, 0, 0, 0.5);
-            --modal-bg: #34495e;
-            --modal-text: #e0e5ec;
-            --summary-bg: #2c3e50;
-            --chart-bg: #2c3e50;
-            --footer-bg: #005eb8;
-            --footer-text: #e0e5ec;
-            --success-bg: #2e7d32;
-            --loading-bg: #455a64;
-            --no-data-text-color: #95a5a6;
-        }
+[data-theme="dark"] {
+    --background: #2c3e50;
+    --text-color: #e0e5ec;
+    --container-bg: #2c3e50;
+    --table-header-bg: #34495e;
+    --table-header-text: #e0e5ec;
+    --table-row-bg: #2c3e50;
+    --table-row-hover: #34495e;
+    --border-color: #34495e;
+    --shadow-light: rgba(255, 255, 255, 0.1);
+    --shadow-dark: rgba(0, 0, 0, 0.5);
+    /* --modal-bg: #34495e; -- Sẽ bị ghi đè bởi Enhanced Modal Styles */
+    /* --modal-text: #e0e5ec; -- Sẽ bị ghi đè bởi Enhanced Modal Styles */
+    --summary-bg: #2c3e50;
+    --chart-bg: #2c3e50;
+    --footer-bg: #005eb8;
+    --footer-text: #e0e5ec;
+    --success-bg: #2e7d32;
+    --loading-bg: #455a64;
+    --no-data-text-color: #95a5a6;
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: var(--background);
-            color: var(--text-color);
-            min-height: 100vh;
-            overflow-x: hidden;
-            transition: background 0.3s ease, color 0.3s ease;
-            font-size: 10px;
-        }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--background);
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+    font-size: 10px;
+}
 
-        /* Navbar styles */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 40px;
-            background: linear-gradient(135deg, #003087, #005eb8);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-        }
-        .navbar .logo h1 {
-            font-size: 14px;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .navbar .tabs {
-            display: flex;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-        .navbar .tabs a {
-            padding: 6px 10px;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.2), inset -2px -2px 5px rgba(0, 0, 0, 0.2);
-        }
-        .navbar .tabs a:hover, .navbar .tabs a.active {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
-        }
-        .navbar-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-        }
-        .nav-btn {
-            padding: 6px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
-        }
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.2);
-        }
-        .nav-btn[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: -30px; /* Adjusted for smaller navbar */
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: #ffffff;
-            padding: 4px 8px;
-            border-radius: 5px;
-            font-size: 10px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .nav-btn[data-tooltip]::before {
-            content: '';
-            position: absolute;
-            top: -6px; /* Adjusted for smaller navbar */
-            left: 50%;
-            transform: translateX(-50%);
-            border: 3px solid transparent;
-            border-top-color: #333;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-        .nav-btn:hover::after, .nav-btn:hover::before {
-            opacity: 1;
-        }
-        [data-theme="dark"] .nav-btn[data-tooltip]::after {
-            background: #66b0ff; /* Softer blue for dark theme tooltip */
-        }
-        [data-theme="dark"] .nav-btn[data-tooltip]::before {
-            border-top-color: #66b0ff; /* Softer blue for dark theme tooltip arrow */
-        }
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 16px; /* Slightly smaller for compact navbar */
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-        .theme-toggle:hover {
-            transform: scale(1.1);
-        }
-        .hamburger {
-            display: none; /* Hidden by default, shown in media query */
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 20px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
+/* Navbar styles */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(135deg, #003087, #005eb8);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+.navbar .logo h1 {
+    font-size: 14px;
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.navbar .tabs {
+    display: flex;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+.navbar .tabs a {
+    padding: 6px 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.2), inset -2px -2px 5px rgba(0, 0, 0, 0.2);
+}
+.navbar .tabs a:hover, .navbar .tabs a.active {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
+}
+.navbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+.nav-btn {
+    padding: 6px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
+}
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.2);
+}
+.nav-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -30px; /* Adjusted for smaller navbar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+.nav-btn[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    top: -6px; /* Adjusted for smaller navbar */
+    left: 50%;
+    transform: translateX(-50%);
+    border: 3px solid transparent;
+    border-top-color: #333;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+.nav-btn:hover::after, .nav-btn:hover::before {
+    opacity: 1;
+}
+[data-theme="dark"] .nav-btn[data-tooltip]::after {
+    background: #66b0ff; /* Softer blue for dark theme tooltip */
+}
+[data-theme="dark"] .nav-btn[data-tooltip]::before {
+    border-top-color: #66b0ff; /* Softer blue for dark theme tooltip arrow */
+}
+.theme-toggle {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 16px; /* Slightly smaller for compact navbar */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
+.hamburger {
+    display: none; /* Hidden by default, shown in media query */
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 20px;
+    cursor: pointer;
+    margin-right: 10px;
+}
 
-        /* Main Container styles */
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            margin-top: 50px; /* Space for fixed navbar */
-            padding: 8px;
-            gap: 8px;
-            min-height: calc(100vh - 70px); /* Full height minus navbar and footer */
-            transition: opacity 0.3s ease; /* Smooth transition for tab switching */
-        }
-        .form-container {
-            background: var(--container-bg);
-            border-radius: 15px;
-            padding: 10px;
-            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-        }
-        .form-container h2 {
-            font-size: 12px;
-            color: #005eb8;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        .form-container form {
-            display: grid;
-            gap: 8px;
-        }
-        .form-container input, .form-container select {
-            padding: 6px 10px;
-            border: none;
-            border-radius: 10px;
-            font-size: 10px;
-            background: var(--container-bg);
-            color: var(--text-color);
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-            transition: all 0.3s ease;
-        }
-        .form-container input:focus, .form-container select:focus {
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            outline: none;
-        }
-        .form-container .form-buttons {
-            display: flex;
-            gap: 8px; /* Khoảng cách giữa các nút */
-            justify-content: flex-start; /* Căn các nút về bên trái */
-        }
+/* Main Container styles */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 50px; /* Space for fixed navbar */
+    padding: 8px;
+    gap: 8px;
+    min-height: calc(100vh - 70px); /* Full height minus navbar and footer */
+    transition: opacity 0.3s ease; /* Smooth transition for tab switching */
+}
+.form-container {
+    background: var(--container-bg);
+    border-radius: 15px;
+    padding: 10px;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+}
+.form-container h2 {
+    font-size: 12px;
+    color: #005eb8;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+.form-container form {
+    display: grid;
+    gap: 8px;
+}
+.form-container input, .form-container select {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 10px;
+    background: var(--container-bg);
+    color: var(--text-color);
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+}
+.form-container input:focus, .form-container select:focus {
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    outline: none;
+}
+.form-container .form-buttons {
+    display: flex;
+    gap: 8px; /* Khoảng cách giữa các nút */
+    justify-content: flex-start; /* Căn các nút về bên trái */
+}
 
-        .form-container button {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 10px;
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            transition: all 0.3s ease;
-        }
-        .form-container button[type="submit"] {
-            background: #005eb8; /* Màu chính cho nút Xác Nhận */
-        }
-        .form-container button[type="submit"]:hover {
-            background: #003087;
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-        }
-        .form-container button.danger { /* Kiểu cho nút Xóa Nháp */
-            background: #e74c3c; /* Màu đỏ */
-        }
-        .form-container button.danger:hover {
-            background: #c0392b; /* Màu đỏ đậm hơn khi hover */
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-        }
+.form-container button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+}
+.form-container button[type="submit"] {
+    background: #005eb8; /* Màu chính cho nút Xác Nhận */
+}
+.form-container button[type="submit"]:hover {
+    background: #003087;
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+.form-container button.danger { /* Kiểu cho nút Xóa Nháp */
+    background: #e74c3c; /* Màu đỏ */
+}
+.form-container button.danger:hover {
+    background: #c0392b; /* Màu đỏ đậm hơn khi hover */
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
 
-        .grid-container {
-            background: var(--container-bg);
-            border-radius: 15px;
-            padding: 10px;
-            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-            overflow: hidden; /* Prevents content from spilling out */
-        }
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 8px;
-        }
-        .search-container {
-            display: flex;
-            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
-            gap: 8px;
-            align-items: center;
-            width: 100%; /* Take full width on small screens */
-        }
-        .search-container input, .search-container select {
-            padding: 6px 10px;
-            border: none;
-            border-radius: 10px;
-            font-size: 10px;
-            background: var(--container-bg);
-            color: var(--text-color);
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-            transition: all 0.3s ease;
-            flex: 1; /* Allow inputs to grow */
-            min-width: 100px; /* Minimum width for inputs */
-        }
-        .search-container input:focus, .search-container select:focus {
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            outline: none;
-        }
-        .export-btn-container {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .export-btn, .refresh-btn {
-            padding: 8px;
-            border: none;
-            border-radius: 50%;
-            background: var(--container-bg);
-            color: #005eb8;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 25px; /* Fixed width */
-            height: 25px; /* Fixed height */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-        }
-        .export-btn:hover, .refresh-btn:hover {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-        }
-        .table-wrapper {
-            max-height: calc(100vh - 230px); /* Adjust based on other elements */
-            overflow-y: auto; /* Cho phép cuộn dọc */
-            overflow-x: auto; /* Cho phép cuộn ngang khi cần */
-            scrollbar-width: thin;
-            scrollbar-color: #005eb8 var(--container-bg);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 7px; /* Smaller font for mobile */
-            min-width: 600px; /* Đảm bảo bảng có chiều rộng tối thiểu để cuộn ngang nếu cần */
-        }
-        th, td {
-            padding: 4px; /* Reduced padding for mobile */
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-        th {
-            background: linear-gradient(135deg, #003087, #005eb8);
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            cursor: pointer;
-        }
-        td {
-            background: var(--table-row-bg);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 120px; /* Limit width to prevent overflow */
-        }
-        td[title]:hover { /* Tooltip for truncated text */
-            cursor: pointer;
-        }
-        tbody tr:hover {
-            background: var(--table-row-hover);
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        .table-placeholder td { /* Kiểu cho thông báo tải/không có dữ liệu trong bảng */
-            text-align: center;
-            padding: 16px;
-            font-size: 10px;
-            color: var(--no-data-text-color);
-        }
-        .table-placeholder .fas {
-            margin-right: 8px;
-        }
-
-
-        /* Optimized Modal Styles */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            z-index: 1000; /* Ensure modal is on top */
-            padding: 15px; /* Padding around modal content */
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal.active {
-            display: flex; /* Show when active */
-            opacity: 1;
-        }
-        .modal-content {
-            background: var(--modal-bg);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 450px; /* Max width for larger screens */
-            width: 100%; /* Full width on smaller screens */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            color: var(--modal-text);
-            position: relative;
-            transform: translateY(20px); /* Initial position for animation */
-            transition: transform 0.3s ease;
-        }
-        .modal.active .modal-content {
-            transform: translateY(0); /* Animate to final position */
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .modal-header h2 {
-            font-size: 16px;
-            color: #005eb8;
-            font-weight: 700;
-            margin: 0;
-            text-align: center;
-            width: 100%;
-        }
-        .modal-close-btn {
-            background: none;
-            border: none;
-            color: var(--modal-text);
-            font-size: 18px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        .modal-close-btn:hover {
-            color: #005eb8; /* Highlight on hover */
-        }
-        .modal-body {
-            font-size: 12px;
-            line-height: 1.5;
-            max-height: 50vh; /* Limit height to prevent overflow */
-            overflow-y: hidden; /* Hide scrollbar by default */
-            scrollbar-width: none; /* Firefox */
-            text-align: center; /* Center align text in modal body */
-        }
-        .modal-body::-webkit-scrollbar {
-            display: none; /* Chrome, Safari */
-        }
-        .modal-body.scrollable { /* Class to enable scrollbar when needed */
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #005eb8 var(--modal-bg);
-        }
-        .modal-body.scrollable::-webkit-scrollbar {
-            width: 6px;
-            display: block;
-        }
-        .modal-body.scrollable::-webkit-scrollbar-thumb {
-            background: #005eb8;
-            border-radius: 3px;
-        }
-        .modal-body .detail-item, .modal-body div { /* Styling for detail items */
-            display: grid;
-            grid-template-columns: 1fr 2fr; /* Two-column layout for details */
-            gap: 10px;
-            padding: 10px;
-            background: rgba(0,0,0,0.02); /* Subtle background for items */
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: background 0.2s ease;
-        }
-        .modal-body .detail-item:hover, .modal-body div:hover {
-            background: rgba(0,0,0,0.05); /* Slightly darker on hover */
-        }
-        .modal-body .detail-item strong, .modal-body div strong {
-            font-weight: 700;
-            color: #005eb8; /* Highlight labels */
-        }
-        .modal-body .detail-item span, .modal-body div span {
-            color: var(--modal-text);
-            word-break: break-word; /* Prevent long words from breaking layout */
-        }
-        .modal-body p {
-            text-align: center;
-        }
-        .modal-body i { /* Center icons in modal */
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end; /* Align buttons to the right */
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .modal-btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .modal-btn.primary {
-            background: #005eb8;
-            color: #ffffff;
-        }
-        .modal-btn.primary:hover {
-            background: #003087; /* Darker on hover */
-        }
-        .modal-btn.secondary {
-            background: rgba(0,0,0,0.1); /* Lighter background for secondary button */
-            color: var(--modal-text);
-        }
-        .modal-btn.secondary:hover {
-            background: rgba(0,0,0,0.2);
-        }
-        .success-modal-content { /* Specific styling for success modal */
-            background: var(--success-bg);
-            text-align: center;
-        }
-        .success-modal-content .modal-header h2 {
-            color: #2e7d32; /* Green for success */
-        }
-        .loading-modal-content { /* Specific styling for loading modal */
-            background: var(--loading-bg);
-            text-align: center;
-        }
-        .loading-modal-content .modal-header h2 {
-            color: #005eb8; /* Blue for loading */
-        }
-
-        /* Responsive styles */
-        @media (max-width: 767px) {
-             .modal-content {
-                max-width: 90%; /* More width on small screens */
-                padding: 15px;
-            }
-            .modal-header h2 {
-                font-size: 14px;
-            }
-            .modal-body {
-                font-size: 11px;
-            }
-             .modal-body .detail-item, .modal-body div { /* Single column for details on mobile */
-                grid-template-columns: 1fr;
-                padding: 8px;
-            }
-            .modal-btn {
-                padding: 6px 15px;
-                font-size: 11px;
-            }
-            .navbar {
-                height: 40px; /* Adjust navbar height for mobile */
-            }
-            .navbar .tabs {
-                display: none; /* Hide tabs by default on mobile */
-                flex-direction: column;
-                position: fixed;
-                top: 40px; /* Position below navbar */
-                left: 0;
-                width: 100%;
-                background: linear-gradient(135deg, #003087, #005eb8);
-                padding: 10px 0;
-                transform: translateX(0); /* Reset transform */
-                gap: 8px;
-            }
-            .navbar .tabs.active {
-                display: flex; /* Show tabs when hamburger is clicked */
-            }
-            .navbar .tabs a {
-                padding: 6px 12px;
-                font-size: 10px;
-                text-align: center;
-            }
-            .hamburger {
-                display: block; /* Show hamburger on mobile */
-            }
-            .main-container {
-                margin-top: 50px; /* Adjust margin for mobile navbar */
-                padding: 6px;
-            }
-            /* Table responsiveness for mobile */
-            .table-wrapper {
-                max-height: calc(100vh - 200px); /* Adjust for mobile */
-            }
-            table { /* Stack table cells on mobile */
-                display: block;
-                 min-width: 0; /* Reset min-width for stacked layout */
-            }
-            thead {
-                display: none; /* Hide table header on mobile */
-            }
-            tbody, tr { /* td will be handled below */
-                display: block; 
-            }
-            tr {
-                margin-bottom: 8px;
-                border-radius: 10px;
-                background: var(--table-row-bg);
-                padding: 8px;
-                box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            }
-            td {
-                display: flex; 
-                justify-content: space-between; 
-                align-items: baseline; /* Align items on their baseline */
-                padding: 4px 6px;
-                border: none;
-                font-size: 9px;
-                max-width: none; 
-                white-space: normal; 
-                text-overflow: clip; 
-            }
-            td:before { 
-                content: attr(data-label);
-                font-weight: 700;
-                color: #005eb8;
-                padding-right: 8px; /* More space */
-                white-space: nowrap; /* Keep label on one line if possible */
-                flex-shrink: 0; /* Prevent label from shrinking */
-            }
-            td span { /* The actual value wrapped in a span */
-                text-align: right;
-                word-break: break-word; /* Allow long values to break */
-                flex-grow: 1; /* Allow value to take remaining space */
-                min-width: 0; /* Allow value to shrink if needed */
-            }
-            td:last-child {
-                border-bottom: none;
-            }
-        }
-        .detail-table { /* Styles for tables within modals or detailed views */
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-        }
-        .detail-table th, .detail-table td {
-            padding: 6px;
-        }
-        .summary-section {
-            background: var(--summary-bg);
-            border-radius: 10px;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-        }
-        .summary-section h3 {
-            font-size: 10px;
-            color: #005eb8;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        .summary-section p {
-            font-size: 9px;
-            color: var(--text-color);
-            margin: 4px 0;
-        }
-        .chart-container { /* Container for charts */
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .chart-card { /* Individual chart card */
-            flex: 1;
-            min-width: 200px; /* Minimum width for chart cards */
-            background: var(--chart-bg);
-            border-radius: 10px;
-            padding: 8px;
-            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-            position: relative; /* For positioning no-data message */
-        }
-        .chart-card h3 {
-            font-size: 10px;
-            color: #005eb8;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        .chart-no-data { /* Message when chart has no data */
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--no-data-text-color);
-            font-size: 10px;
-            text-align: center;
-        }
-        canvas { /* Ensure canvas is responsive */
-            max-width: 100%;
-            max-height: 150px; /* Limit height for smaller charts */
-            height: auto;
-        }
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: var(--footer-bg);
-            color: var(--footer-text);
-            text-align: center;
-            padding: 4px 0;
-            font-size: 7px;
-        }
-        .notification { /* Styling for notifications */
-            position: fixed;
-            top: 60px; /* Position below navbar */
-            right: 20px;
-            background: #28a745; /* Green for success */
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 2000; /* Ensure notification is on top */
-            animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
-            animation-delay: 0s, calc(var(--duration) - 0.3s); /* Control duration with CSS variable */
-        }
-        .notification.error { /* Red for error notifications */
-            background: #e74c3c;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* Responsive Design for larger screens */
-        @media (min-width: 768px) {
-            .navbar { height: 50px; padding: 0 15px; }
-            .navbar .logo h1 { font-size: 16px; }
-            .navbar .tabs { gap: 12px; }
-            .navbar .tabs a { padding: 8px 12px; font-size: 11px; }
-            .main-container {
-                flex-direction: row; /* Side-by-side layout for form and grid */
-                margin-top: 60px;
-                padding: 10px 15px;
-                gap: 12px;
-                height: calc(100vh - 80px); /* Adjust height for larger navbar/footer */
-            }
-            .form-container { flex: 1; padding: 15px; } /* Form takes 1 part */
-            .form-container h2 { font-size: 14px; margin-bottom: 15px; }
-            .form-container input, .form-container select { padding: 8px 12px; font-size: 11px; }
-            .form-container button { padding: 8px 15px; font-size: 11px; }
-            .grid-container { flex: 2; padding: 15px; } /* Grid takes 2 parts */
-            .controls { flex-wrap: nowrap; gap: 12px; }
-            .search-container { width: auto; } /* Search container takes available space */
-            .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; }
-            .export-btn, .refresh-btn { padding: 10px; font-size: 11px; width: 30px; height: 30px; }
-            .table-wrapper { max-height: calc(100vh - 240px); } /* Adjust table height */
-            table { font-size: 11px; min-width: 600px; } /* Larger font for desktop */
-            th, td { padding: 8px; white-space: nowrap; } /* More padding for desktop */
-            
-             /* Revert mobile table stacking for desktop */
-            thead { display: table-header-group; }
-            tbody {display: table-row-group;}
-            tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; }
-            td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } /* Reset align-items */
-            td:before { display: none; } /* Hide mobile labels */
-            td span { text-align: left; flex-grow: 0; min-width: auto; } /* Reset text alignment and flex properties for value span */
-            td:last-child { border-bottom: 1px solid var(--border-color); } 
-            tbody tr:last-child td { border-bottom: none; } 
+.grid-container {
+    background: var(--container-bg);
+    border-radius: 15px;
+    padding: 10px;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    overflow: hidden; /* Prevents content from spilling out */
+}
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+}
+.search-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    gap: 8px;
+    align-items: center;
+    width: 100%; /* Take full width on small screens */
+}
+.search-container input, .search-container select {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 10px;
+    background: var(--container-bg);
+    color: var(--text-color);
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+    flex: 1; /* Allow inputs to grow */
+    min-width: 100px; /* Minimum width for inputs */
+}
+.search-container input:focus, .search-container select:focus {
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    outline: none;
+}
+.export-btn-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.export-btn, .refresh-btn {
+    padding: 8px;
+    border: none;
+    border-radius: 50%;
+    background: var(--container-bg);
+    color: #005eb8;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 25px; /* Fixed width */
+    height: 25px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+}
+.export-btn:hover, .refresh-btn:hover {
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+.table-wrapper {
+    max-height: calc(100vh - 230px); /* Adjust based on other elements */
+    overflow-y: auto; /* Cho phép cuộn dọc */
+    overflow-x: auto; /* Cho phép cuộn ngang khi cần */
+    scrollbar-width: thin;
+    scrollbar-color: #005eb8 var(--container-bg);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7px; /* Smaller font for mobile */
+    min-width: 600px; /* Đảm bảo bảng có chiều rộng tối thiểu để cuộn ngang nếu cần */
+}
+th, td {
+    padding: 4px; /* Reduced padding for mobile */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+th {
+    background: linear-gradient(135deg, #003087, #005eb8);
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    cursor: pointer;
+}
+td {
+    background: var(--table-row-bg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px; /* Limit width to prevent overflow */
+}
+td[title]:hover { /* Tooltip for truncated text */
+    cursor: pointer;
+}
+tbody tr:hover {
+    background: var(--table-row-hover);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.table-placeholder td { /* Kiểu cho thông báo tải/không có dữ liệu trong bảng */
+    text-align: center;
+    padding: 16px;
+    font-size: 10px;
+    color: var(--no-data-text-color);
+}
+.table-placeholder .fas {
+    margin-right: 8px;
+}
 
 
-            .detail-table { font-size: 11px; }
-            .detail-table th, .detail-table td { padding: 8px; }
-            .summary-section { padding: 10px; margin-bottom: 12px; }
-            .summary-section h3 { font-size: 12px; margin-bottom: 10px; }
-            .summary-section p { font-size: 11px; }
-            .chart-card { padding: 12px; }
-            .chart-card h3 { font-size: 12px; margin-bottom: 10px; }
-            canvas { max-height: 200px; } /* Larger charts on desktop */
-            footer { padding: 6px 0; font-size: 9px; }
-        }
-        .hidden { display: none !important; } /* Utility class to hide elements */
+/* Optimized Modal Styles (Original) */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensure modal is on top */
+    padding: 15px; /* Padding around modal content */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal.active {
+    display: flex; /* Show when active */
+    opacity: 1;
+}
+/* Original .modal-content and other modal styles are here... */
+/* They will be overridden by "Enhanced Modal Styles" below if selectors match */
+.modal-content { /* Original style, might be overridden */
+    background: var(--modal-bg);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 450px; 
+    width: 100%; 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    color: var(--modal-text);
+    position: relative;
+    transform: translateY(20px); 
+    transition: transform 0.3s ease;
+}
+.modal.active .modal-content { /* Original style */
+    transform: translateY(0); 
+}
+.modal-header { /* Original style */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.modal-header h2 { /* Original style */
+    font-size: 16px;
+    color: #005eb8;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+    width: 100%;
+}
+.modal-close-btn { /* Original style */
+    background: none;
+    border: none;
+    color: var(--modal-text);
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+.modal-close-btn:hover { /* Original style */
+    color: #005eb8; 
+}
+.modal-body { /* Original style */
+    font-size: 12px;
+    line-height: 1.5;
+    max-height: 50vh; 
+    overflow-y: hidden; 
+    scrollbar-width: none; 
+    text-align: center; 
+}
+.modal-body::-webkit-scrollbar { /* Original style */
+    display: none; 
+}
+.modal-body.scrollable { /* Original style */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #005eb8 var(--modal-bg);
+}
+.modal-body.scrollable::-webkit-scrollbar { /* Original style */
+    width: 6px;
+    display: block;
+}
+.modal-body.scrollable::-webkit-scrollbar-thumb { /* Original style */
+    background: #005eb8;
+    border-radius: 3px;
+}
+.modal-body .detail-item, .modal-body div { /* Original style */
+    display: grid;
+    grid-template-columns: 1fr 2fr; 
+    gap: 10px;
+    padding: 10px;
+    background: rgba(0,0,0,0.02); 
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background 0.2s ease;
+}
+.modal-body .detail-item:hover, .modal-body div:hover { /* Original style */
+    background: rgba(0,0,0,0.05); 
+}
+.modal-body .detail-item strong, .modal-body div strong { /* Original style */
+    font-weight: 700;
+    color: #005eb8; 
+}
+.modal-body .detail-item span, .modal-body div span { /* Original style */
+    color: var(--modal-text);
+    word-break: break-word; 
+}
+.modal-body .detail-item.highlight strong { /* Original style */
+     color: var(--modal-text); 
+}
+.modal-body .detail-item.highlight span { /* Original style */
+    color: #005eb8; 
+    font-weight: bold;
+}
+[data-theme="dark"] .modal-body .detail-item.highlight span { /* Original style */
+    color: #66b0ff; 
+}
+.modal-body p { /* Original style */
+    text-align: center;
+}
+.modal-body i { /* Original style */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.modal-footer { /* Original style */
+    display: flex;
+    justify-content: flex-end; 
+    gap: 10px;
+    margin-top: 20px;
+}
+.modal-btn { /* Original style */
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.modal-btn.primary { /* Original style */
+    background: #005eb8;
+    color: #ffffff;
+}
+.modal-btn.primary:hover { /* Original style */
+    background: #003087; 
+}
+.modal-btn.secondary { /* Original style */
+    background: rgba(0,0,0,0.1); 
+    color: var(--modal-text);
+}
+.modal-btn.secondary:hover { /* Original style */
+    background: rgba(0,0,0,0.2);
+}
+
+/* --- Enhanced Modal Styles --- */
+/* These styles will enhance or override the .modal-content, .modal-header, etc. from above */
+
+/* General Modal Refinements */
+.modal-content {
+    background: var(--modal-bg); /* Keep variable for theme switching, but specific themes below will override */
+    border-radius: 16px; /* Slightly larger radius for a softer look */
+    padding: 25px 30px; /* Increase padding */
+    max-width: 500px; /* Adjust as needed */
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); /* Softer, more diffused shadow */
+    border: 1px solid rgba(0,0,0,0.05); /* Subtle border for definition */
+    /* color and transition are inherited or defined in .modal or specific elements */
+}
+
+[data-theme="light"] .modal-content {
+    background: #fdfdfd; /* A very light, soft white for light theme */
+    border-color: #efefef;
+    color: #2c3e50; /* Ensuring text color for light theme */
+}
+
+[data-theme="dark"] .modal-content {
+    background: #28313e; /* A richer dark blue/grey for dark theme */
+    border-color: #3a4552;
+    color: #e0e5ec; /* Ensuring text color for dark theme */
+}
+
+/* Modal Header */
+.modal-header {
+    border-bottom: 1px solid var(--border-color); /* Keep a subtle separator */
+    padding-bottom: 15px; /* Adjust spacing */
+    margin-bottom: 20px; /* Increase space below header */
+    /* display, justify-content, align-items are inherited from original .modal-header */
+}
+
+.modal-header h2 {
+    font-size: 18px; /* Slightly larger title */
+    color: var(--primary-text-color, #004a7c); /* Use a primary text color, can be themed */
+    font-weight: 600; /* Semi-bold for a refined look */
+    /* margin, text-align, width inherited or default */
+}
+
+[data-theme="dark"] .modal-header h2 {
+    color: var(--primary-text-color-dark, #a9cce3);
+}
+
+.modal-close-btn {
+    color: var(--text-color); /* Will be overridden by theme-specific .modal-content color if not specific enough */
+    font-size: 20px; /* Slightly larger close icon */
+    transition: color 0.3s ease, transform 0.3s ease;
+    /* background, border, cursor inherited */
+}
+[data-theme="light"] .modal-close-btn { /* Ensuring close button color in light theme */
+    color: #2c3e50;
+}
+[data-theme="dark"] .modal-close-btn { /* Ensuring close button color in dark theme */
+    color: #e0e5ec;
+}
+
+
+.modal-close-btn:hover {
+    color: #e74c3c !important; /* A common hover color for close buttons, !important to ensure override if needed */
+    transform: rotate(90deg); /* Add a subtle interaction */
+}
+
+/* Modal Body - Detail Items */
+.modal-body .detail-item, .modal-body div { /* Assuming 'div' here also refers to detail items */
+    display: grid;
+    grid-template-columns: 150px 1fr; /* Adjust label width as needed */
+    gap: 8px 15px; /* Row gap and column gap */
+    padding: 12px 0; /* Vertical padding, remove horizontal to align with modal-content padding */
+    background: transparent; /* Remove individual item backgrounds for a cleaner look */
+    border-radius: 0; /* Remove border-radius if individual backgrounds are removed */
+    margin-bottom: 0; /* Overriding previous margin-bottom */
+    border-bottom: 1px dashed var(--border-color); /* Subtle dashed separator */
+    transition: none; /* Remove hover effect if background is transparent */
+}
+
+.modal-body .detail-item:last-child, .modal-body div:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+.modal-body .detail-item strong, .modal-body div strong {
+    font-weight: 500; /* Medium weight for labels */
+    color: var(--text-color); /* Standard text color for labels, will be themed by body */
+    opacity: 0.8; /* Slightly subdued labels */
+}
+[data-theme="light"] .modal-body .detail-item strong { color: #2c3e50; opacity: 0.7;}
+[data-theme="dark"] .modal-body .detail-item strong { color: #e0e5ec; opacity: 0.7;}
+
+
+/* Highlighted items for emphasis (e.g., Status, VIN) */
+.modal-body .detail-item.highlight strong {
+    /* color: var(--modal-text); Or your primary accent color */
+    /* opacity: 1; */
+    /* Let specific theme styles handle this */
+}
+[data-theme="light"] .modal-body .detail-item.highlight strong {
+    color: #004a7c; 
+    opacity: 1;
+}
+[data-theme="dark"] .modal-body .detail-item.highlight strong {
+    color: #a9cce3;
+    opacity: 1;
+}
+
+
+.modal-body .detail-item.highlight span {
+    color: #005eb8; /* Main accent color for light theme */
+    font-weight: 600; /* Make highlighted value bolder */
+}
+
+[data-theme="dark"] .modal-body .detail-item.highlight span {
+    color: #79b6f2; /* Lighter accent for dark theme */
+}
+
+.modal-body .detail-item span, .modal-body div span {
+    /* color: var(--modal-text); -- themed by .modal-content */
+    font-size: 13px; /* Slightly larger value text */
+    word-break: break-word; /* inherited */
+}
+[data-theme="light"] .modal-body .detail-item span, [data-theme="light"] .modal-body div span { color: #2c3e50; }
+[data-theme="dark"] .modal-body .detail-item span, [data-theme="dark"] .modal-body div span { color: #e0e5ec; }
+
+
+/* Modal Footer */
+.modal-footer {
+    padding-top: 20px; /* More space above footer buttons */
+    border-top: 1px solid var(--border-color); /* Separator for footer */
+    margin-top: 25px;
+    /* display, justify-content, gap inherited */
+}
+
+.modal-btn {
+    padding: 10px 25px; /* Larger padding for buttons */
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500; /* Medium weight */
+    text-transform: uppercase; /* Uppercase for a more formal look, optional */
+    letter-spacing: 0.5px; /* Add some letter spacing */
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: none; /* Overriding previous border if any */
+    cursor: pointer; /* inherited */
+}
+
+.modal-btn.primary {
+    background: #005eb8; /* Your primary button color */
+    color: #ffffff;
+}
+
+.modal-btn.primary:hover {
+    background: #004a7c; /* Darker shade on hover */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transform: translateY(-1px); /* Subtle lift effect */
+}
+
+.modal-btn.secondary {
+    background: transparent;
+    /* color: var(--modal-text); -- Will be themed */
+    border: 1px solid var(--border-color);
+}
+[data-theme="light"] .modal-btn.secondary {
+    color: #005eb8; /* Primary color for text */
+    border-color: #005eb8;
+}
+[data-theme="dark"] .modal-btn.secondary {
+    color: #79b6f2; /* Lighter primary for text */
+    border-color: #79b6f2;
+}
+
+.modal-btn.secondary:hover {
+    /* background: rgba(0,0,0,0.05); -- themed below */
+    /* border-color: var(--modal-text); -- themed below */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+[data-theme="light"] .modal-btn.secondary:hover {
+    background: rgba(0, 94, 184, 0.1); /* Light primary accent hover */
+    border-color: #004a7c;
+}
+[data-theme="dark"] .modal-btn.secondary:hover {
+    background: rgba(121, 182, 242, 0.15); /* Lighter primary accent hover */
+    border-color: #a9cce3;
+}
+
+
+/* Ensuring scrollbar aesthetics if content overflows */
+.modal-body.scrollable::-webkit-scrollbar-thumb {
+    background: #005eb8; /* Or your primary accent color */
+    border-radius: 3px;
+}
+.modal-body.scrollable::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05); /* Subtle track */
+}
+[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-thumb {
+    background: #79b6f2; /* Lighter for dark theme */
+}
+[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+}
+
+/* --- End of Enhanced Modal Styles --- */
+
+.success-modal-content { /* Specific styling for success modal */
+    background: var(--success-bg);
+    text-align: center;
+}
+.success-modal-content .modal-header h2 {
+    color: #2e7d32; /* Green for success */
+}
+.loading-modal-content { /* Specific styling for loading modal */
+    background: var(--loading-bg);
+    text-align: center;
+}
+.loading-modal-content .modal-header h2 {
+    color: #005eb8; /* Blue for loading */
+}
+
+/* Responsive styles */
+@media (max-width: 767px) {
+     .modal-content { /* This will also apply to enhanced modal on mobile */
+        max-width: 90%; /* More width on small screens */
+        padding: 15px; /* Adjust padding for mobile if enhanced padding is too much */
+    }
+    .modal-header h2 { /* Applies to enhanced modal on mobile */
+        font-size: 16px; /* Revert to slightly smaller for mobile if 18px is too big */
+    }
+    .modal-body { /* Applies to enhanced modal on mobile */
+        font-size: 11px;
+    }
+     .modal-body .detail-item, .modal-body div { /* Single column for details on mobile */
+        grid-template-columns: 1fr; /* Override for mobile */
+        padding: 8px 0; /* Adjust padding for mobile */
+    }
+    .modal-btn { /* Applies to enhanced modal on mobile */
+        padding: 8px 18px; /* Adjust padding for mobile */
+        font-size: 12px;
+    }
+    .navbar {
+        height: 40px; /* Adjust navbar height for mobile */
+    }
+    .navbar .tabs {
+        display: none; /* Hide tabs by default on mobile */
+        flex-direction: column;
+        position: fixed;
+        top: 40px; /* Position below navbar */
+        left: 0;
+        width: 100%;
+        background: linear-gradient(135deg, #003087, #005eb8);
+        padding: 10px 0;
+        transform: translateX(0); /* Reset transform */
+        gap: 8px;
+    }
+    .navbar .tabs.active {
+        display: flex; /* Show tabs when hamburger is clicked */
+    }
+    .navbar .tabs a {
+        padding: 6px 12px;
+        font-size: 10px;
+        text-align: center;
+    }
+    .hamburger {
+        display: block; /* Show hamburger on mobile */
+    }
+    .main-container {
+        margin-top: 50px; /* Adjust margin for mobile navbar */
+        padding: 6px;
+    }
+    /* Table responsiveness for mobile */
+    .table-wrapper {
+        max-height: calc(100vh - 200px); /* Adjust for mobile */
+    }
+    table { /* Stack table cells on mobile */
+        display: block;
+         min-width: 0; /* Reset min-width for stacked layout */
+    }
+    thead {
+        display: none; /* Hide table header on mobile */
+    }
+    tbody, tr { /* td will be handled below */
+        display: block;
+    }
+    tr {
+        margin-bottom: 8px;
+        border-radius: 10px;
+        background: var(--table-row-bg);
+        padding: 8px;
+        box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    }
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline; /* Align items on their baseline */
+        padding: 4px 6px;
+        border: none;
+        font-size: 9px;
+        max-width: none;
+        white-space: normal;
+        text-overflow: clip;
+    }
+    td:before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #005eb8;
+        padding-right: 8px; /* More space */
+        white-space: nowrap; /* Keep label on one line if possible */
+        flex-shrink: 0; /* Prevent label from shrinking */
+    }
+    td span { /* The actual value wrapped in a span */
+        text-align: right;
+        word-break: break-word; /* Allow long values to break */
+        flex-grow: 1; /* Allow value to take remaining space */
+        min-width: 0; /* Allow value to shrink if needed */
+    }
+    td:last-child {
+        border-bottom: none;
+    }
+}
+.detail-table { /* Styles for tables within modals or detailed views */
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+}
+.detail-table th, .detail-table td {
+    padding: 6px;
+}
+.summary-section {
+    background: var(--summary-bg);
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+}
+.summary-section h3 {
+    font-size: 10px;
+    color: #005eb8;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+.summary-section p {
+    font-size: 9px;
+    color: var(--text-color);
+    margin: 4px 0;
+}
+.chart-container { /* Container for charts */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.chart-card { /* Individual chart card */
+    flex: 1;
+    min-width: 200px; /* Minimum width for chart cards */
+    background: var(--chart-bg);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+    position: relative; /* For positioning no-data message */
+}
+.chart-card h3 {
+    font-size: 10px;
+    color: #005eb8;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+.chart-no-data { /* Message when chart has no data */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--no-data-text-color);
+    font-size: 10px;
+    text-align: center;
+}
+canvas { /* Ensure canvas is responsive */
+    max-width: 100%;
+    max-height: 150px; /* Limit height for smaller charts */
+    height: auto;
+}
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--footer-bg);
+    color: var(--footer-text);
+    text-align: center;
+    padding: 4px 0;
+    font-size: 7px;
+}
+.notification { /* Styling for notifications */
+    position: fixed;
+    top: 60px; /* Position below navbar */
+    right: 20px;
+    background: #28a745; /* Green for success */
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 2000; /* Ensure notification is on top */
+    animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
+    animation-delay: 0s, calc(var(--duration) - 0.3s); /* Control duration with CSS variable */
+}
+.notification.error { /* Red for error notifications */
+    background: #e74c3c;
+}
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Responsive Design for larger screens */
+@media (min-width: 768px) {
+    .navbar { height: 50px; padding: 0 15px; }
+    .navbar .logo h1 { font-size: 16px; }
+    .navbar .tabs { gap: 12px; }
+    .navbar .tabs a { padding: 8px 12px; font-size: 11px; }
+    .main-container {
+        flex-direction: row; /* Side-by-side layout for form and grid */
+        margin-top: 60px;
+        padding: 10px 15px;
+        gap: 12px;
+        height: calc(100vh - 80px); /* Adjust height for larger navbar/footer */
+    }
+    .form-container { flex: 1; padding: 15px; } /* Form takes 1 part */
+    .form-container h2 { font-size: 14px; margin-bottom: 15px; }
+    .form-container input, .form-container select { padding: 8px 12px; font-size: 11px; }
+    .form-container button { padding: 8px 15px; font-size: 11px; }
+    .grid-container { flex: 2; padding: 15px; } /* Grid takes 2 parts */
+    .controls { flex-wrap: nowrap; gap: 12px; }
+    .search-container { width: auto; } /* Search container takes available space */
+    .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; }
+    .export-btn, .refresh-btn { padding: 10px; font-size: 11px; width: 30px; height: 30px; }
+    .table-wrapper { max-height: calc(100vh - 240px); } /* Adjust table height */
+    table { font-size: 11px; min-width: 600px; } /* Larger font for desktop */
+    th, td { padding: 8px; white-space: nowrap; } /* More padding for desktop */
+
+     /* Revert mobile table stacking for desktop */
+    thead { display: table-header-group; }
+    tbody {display: table-row-group;}
+    tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; }
+    td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } /* Reset align-items */
+    td:before { display: none; } /* Hide mobile labels */
+    td span { text-align: left; flex-grow: 0; min-width: auto; } /* Reset text alignment and flex properties for value span */
+    td:last-child { border-bottom: 1px solid var(--border-color); } /* Ensure this is for table cells */
+    tbody tr:last-child td { border-bottom: none; } /* Ensure last row cells have no bottom border */
+
+
+    .detail-table { font-size: 11px; }
+    .detail-table th, .detail-table td { padding: 8px; }
+    .summary-section { padding: 10px; margin-bottom: 12px; }
+    .summary-section h3 { font-size: 12px; margin-bottom: 10px; }
+    .summary-section p { font-size: 11px; }
+    .chart-card { padding: 12px; }
+    .chart-card h3 { font-size: 12px; margin-bottom: 10px; }
+    canvas { max-height: 200px; } /* Larger charts on desktop */
+    footer { padding: 6px 0; font-size: 9px; }
+}
+.hidden { display: none !important; } /* Utility class to hide elements */
     </style>
 </head>
 <body>
@@ -901,7 +1120,7 @@
                 </select>
                 <select id="filter-advisor" onchange="filterHistory()">
                     <option value="">Tất cả tư vấn viên</option>
-                </select>                
+                </select>
                 <input type="date" id="filter-date" onchange="filterHistory()">
             </div>
             <div class="export-btn-container">
@@ -1016,8 +1235,7 @@
 <div class="modal" id="detail-modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Chi Tiết Yêu Cầu</h2>
-            <button class="modal-close-btn" onclick="closeModal('detail-modal')"><i class="fas fa-times"></i></button>
+            <h2 id="detail-modal-title">Chi Tiết Yêu Cầu</h2> <button class="modal-close-btn" onclick="closeModal('detail-modal')"><i class="fas fa-times"></i></button>
         </div>
         <div id="detail-content" class="modal-body"></div>
         <div class="modal-footer">
@@ -1065,16 +1283,16 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        
+
         // Khôi phục dữ liệu nháp form trước
         loadFormDraft();
-        
+
         // Thiết lập trạng thái hiển thị ban đầu và tải dữ liệu
         // Gọi switchTab để thiết lập đúng tab active và các section hiển thị
         switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
-        
+
         // Tải dữ liệu lịch sử (nếu history-section được hiển thị bởi switchTab)
-        fetchHistory(); 
+        fetchHistory();
 
         setupSearch();
         setupScrollSync();
@@ -1102,10 +1320,10 @@ let globalHistoryData = [], formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
-const ADMIN_USER = "PHẠM THÀNH NHÂN"; 
+const ADMIN_USER = "PHẠM THÀNH NHÂN";
 const FORM_DRAFT_KEY = 'vinfastFormDraft'; // Key cho localStorage
 
-const labelMap = {
+const labelMap = { // Dùng chủ yếu cho form preview và có thể cho API nếu key khác nhau
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
     "ten_khach_hang": "Tên Khách Hàng",
     "dong_xe": "Dòng Xe",
@@ -1115,11 +1333,11 @@ const labelMap = {
     "so_don_hang": "Số Đơn Hàng",
     "ngay_coc": "Ngày Cọc",
     "thoi_gian_nhap": "Thời Gian Nhập",
-    "trang_thai": "Trạng Thái",
+    "trang_thai": "Trạng Thái", // Trạng thái ban đầu khi gửi form
     "thoi_gian_ghep": "Thời Gian Ghép",
     "so_ngay_ghep": "Số Ngày Ghép",
-    "ket_qua": "Kết Quả",
-    "VIN": "VIN"
+    "ket_qua": "Kết Quả", // Trạng thái từ API (trong globalHistoryData)
+    "VIN": "VIN" // VIN từ API (trong globalHistoryData)
 };
 
 // --- Chức năng lưu và tải nháp form ---
@@ -1127,7 +1345,7 @@ function saveFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (!form) return;
     const currentFormData = {};
-    const inputs = form.querySelectorAll("input:not([readonly]), select"); 
+    const inputs = form.querySelectorAll("input:not([readonly]), select");
     inputs.forEach(input => {
         if (input.name) {
             currentFormData[input.name] = input.value;
@@ -1148,7 +1366,7 @@ function loadFormDraft() {
             if (inputElement) {
                 inputElement.value = parsedData[key];
                 if (key === 'dong_xe' && parsedData[key]) {
-                    restrictVersion(inputElement, parsedData['phien_ban']); 
+                    restrictVersion(inputElement, parsedData['phien_ban']);
                 }
             }
         });
@@ -1163,14 +1381,14 @@ function clearFormDraft() {
         const inputsToReset = form.querySelectorAll("input:not([readonly]), select");
         inputsToReset.forEach(input => {
             if (input.type === 'select-one') {
-                input.selectedIndex = 0; 
+                input.selectedIndex = 0;
             } else {
                 input.value = "";
             }
         });
         const dongXeSelect = form.elements['dong_xe'];
         if (dongXeSelect) {
-            restrictVersion(dongXeSelect); 
+            restrictVersion(dongXeSelect);
         }
     }
     localStorage.removeItem(FORM_DRAFT_KEY);
@@ -1194,7 +1412,7 @@ function toggleTheme() {
 function formatDateTime(dtString) {
     if (!dtString) return "";
     const d = new Date(dtString);
-    if (isNaN(d.getTime())) return dtString; 
+    if (isNaN(d.getTime())) return dtString;
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
@@ -1245,7 +1463,7 @@ function adjustModalScroll(modal) {
 function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
     const tbody = document.getElementById(tableBodyId);
     if (!tbody) return;
-    const colspan = tbody.previousElementSibling?.rows[0]?.cells.length || 9; 
+    const colspan = tbody.previousElementSibling?.rows[0]?.cells.length || 9;
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i>${message}</td></tr>`;
 }
 
@@ -1277,15 +1495,15 @@ function fetchHistory() {
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            
+
             renderHistory(dataForHistoryTable); // Luôn render bảng lịch sử
             renderSummary(globalHistoryData);
             populateFilters(globalHistoryData);
-            prepareDetailedStats(globalHistoryData); 
-            
+            prepareDetailedStats(globalHistoryData);
+
             // Nếu tab thống kê chi tiết đang hoạt động, render nội dung của nó
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                filterDetailedStats(); 
+                filterDetailedStats();
             }
         })
         .catch(error => {
@@ -1306,7 +1524,7 @@ function refreshData() {
             if (match) activeTabName = match[1];
         }
     }
-    
+
     // Hiển thị modal tải toàn trang nếu đang ở tab Lịch sử hoặc Thống kê chi tiết
     // Hoặc nếu tab form đang active (vì history cũng hiển thị cùng form)
     const shouldShowLoadingModal = activeTabName === 'history' || activeTabName === 'detailed-stats' || activeTabName === 'form';
@@ -1332,15 +1550,15 @@ function refreshData() {
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            
-            renderHistory(dataForHistoryTable); 
-            renderSummary(globalHistoryData); 
-            populateFilters(globalHistoryData); 
-            prepareDetailedStats(globalHistoryData); 
-            
+
+            renderHistory(dataForHistoryTable);
+            renderSummary(globalHistoryData);
+            populateFilters(globalHistoryData);
+            prepareDetailedStats(globalHistoryData);
+
             const detailedStatsSection = document.getElementById('detailed-stats-section');
             if (activeTabName === 'detailed-stats' || (detailedStatsSection && !detailedStatsSection.classList.contains('hidden'))) {
-                filterDetailedStats(); 
+                filterDetailedStats();
             }
         })
         .catch(error => {
@@ -1398,7 +1616,7 @@ function populateFilters(data) {
     }
 }
 
-function renderSummary(data) { 
+function renderSummary(data) {
     if (!Array.isArray(data)) {
         console.error("renderSummary: Dữ liệu đầu vào không phải mảng", data);
         return;
@@ -1426,7 +1644,7 @@ function renderSummary(data) {
     if (topAdvisorEl) topAdvisorEl.textContent = topAdvisorEntry ? `${topAdvisorEntry[0]} (${topAdvisorEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
 }
 
-function renderHistory(dataToRender) { 
+function renderHistory(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
 
@@ -1438,7 +1656,7 @@ function renderHistory(dataToRender) {
 
     let content = dataToRender.map((row, i) => {
         const status = row["Kết quả"] || "Chưa tìm thấy VIN phù hợp";
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; 
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
         return `
             <tr onclick="showDetailByOrder('${orderNumber}')">
                 <td data-label="STT"><span>${i + 1}</span></td>
@@ -1460,50 +1678,96 @@ function renderHistory(dataToRender) {
 }
 
 
+/**
+ * Hiển thị chi tiết đơn hàng trong modal.
+ * - Cập nhật tiêu đề modal với số đơn hàng.
+ * - Hiển thị thông tin theo thứ tự ưu tiên và làm nổi bật "Kết quả", "VIN".
+ * - Các trường ngày tháng được định dạng lại.
+ * @param {string} orderNumber Số đơn hàng để tìm và hiển thị chi tiết.
+ */
 function showDetailByOrder(orderNumber) {
-    const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber); 
+    const modalTitleElement = document.getElementById("detail-modal-title");
+    if (modalTitleElement) {
+        modalTitleElement.textContent = "Chi Tiết Đơn Hàng"; // <-- ĐÃ THAY ĐỔI Ở ĐÂY
+    }
+
+    const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber);
     if (!row) {
-        console.warn("Không tìm thấy chi tiết đơn hàng bằng số đơn hàng:", orderNumber);
+        console.warn("showDetailByOrder: Không tìm thấy chi tiết đơn hàng với số đơn hàng:", orderNumber);
+        const detailContent = document.getElementById("detail-content");
+        if (detailContent) {
+            detailContent.innerHTML = `<p class="text-red-500">Không tìm thấy dữ liệu chi tiết cho đơn hàng ${orderNumber}.</p>`;
+        }
+        const detailModal = document.getElementById("detail-modal");
+        if (detailModal) {
+            detailModal.classList.add("active");
+            adjustModalScroll(detailModal);
+        }
         showNotification("Không tìm thấy dữ liệu chi tiết cho đơn hàng này!", 3000, true);
         return;
     }
 
     let html = "";
+    const displayedKeys = new Set();
+
+    const fieldOrder = [
+        { key: "Kết quả", highlight: true },
+        { key: "VIN", highlight: true },
+        { key: "Số đơn hàng", highlight: false },
+        { key: "Tên khách hàng", highlight: false },
+        { key: "Tên tư vấn bán hàng", highlight: false },
+        { key: "Dòng xe", highlight: false },
+        { key: "Phiên bản", highlight: false },
+        { key: "Ngoại thất", highlight: false },
+        { key: "Nội thất", highlight: false },
+        { key: "Ngày cọc", highlight: false },
+        { key: "Thời gian nhập", highlight: false },
+        { key: "Thời gian ghép", highlight: false },
+        { key: "Số ngày ghép", highlight: false }
+    ];
+
+    fieldOrder.forEach(field => {
+        if (row.hasOwnProperty(field.key)) {
+            const label = field.key;
+            const value = row[field.key];
+            const formattedValue = (field.key === "Ngày cọc" || field.key === "Thời gian nhập" || field.key === "Thời gian ghép")
+                                   ? formatDateTime(value)
+                                   : (value !== null && typeof value !== 'undefined' ? String(value) : "Chưa có dữ liệu");
+            const highlightClass = field.highlight && (value !== null && typeof value !== 'undefined' && String(value).trim() !== "" && String(value).toLowerCase() !== "chưa có dữ liệu") ? " highlight" : "";
+            html += `<div class="detail-item${highlightClass}"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
+            displayedKeys.add(field.key);
+        }
+    });
+
     for (const [key, value] of Object.entries(row)) {
-        const label = labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        const formattedValue = (key === "ngay_coc" || key === "thoi_gian_nhap" || key === "thoi_gian_ghep") 
-                               ? formatDateTime(value) 
-                               : (value || "Chưa có dữ liệu");
-        html += `<div class="detail-item"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
+        if (!displayedKeys.has(key)) {
+            const label = key; 
+            const formattedValue = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép")
+                                   ? formatDateTime(value)
+                                   : (value !== null && typeof value !== 'undefined' ? String(value) : "Chưa có dữ liệu");
+            html += `<div class="detail-item"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
+        }
     }
+
     const detailContent = document.getElementById("detail-content");
     const detailModal = document.getElementById("detail-modal");
     if (detailContent && detailModal) {
-        detailContent.innerHTML = html;
+        detailContent.innerHTML = html || "<p>Không có thông tin chi tiết để hiển thị.</p>";
         detailModal.classList.add("active");
         adjustModalScroll(detailModal);
     }
 }
-
-function debounce(func, delay) {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
 function filterHistory() {
     const searchBox = document.getElementById("search-box");
     const carFilter = document.getElementById("filter-car");
-    const advisorFilterDropdown = document.getElementById("filter-advisor"); 
+    const advisorFilterDropdown = document.getElementById("filter-advisor");
     const dateFilter = document.getElementById("filter-date");
 
     if (!searchBox || !carFilter || !advisorFilterDropdown || !dateFilter) return;
 
     const keyword = searchBox.value.toLowerCase();
     const selectedCar = carFilter.value;
-    const selectedAdvisor = advisorFilterDropdown.value; 
+    const selectedAdvisor = advisorFilterDropdown.value;
     const selectedDate = dateFilter.value;
 
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -1511,7 +1775,7 @@ function filterHistory() {
 
     let baseDataForFilter;
     if (isAdmin) {
-        baseDataForFilter = globalHistoryData; 
+        baseDataForFilter = globalHistoryData;
     } else {
         baseDataForFilter = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     }
@@ -1521,21 +1785,22 @@ function filterHistory() {
         const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
         const matchesAdvisorFromDropdown = !selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor;
         const matchesDate = !selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate);
-        
+
         return matchesKeyword && matchesCar && matchesAdvisorFromDropdown && matchesDate;
     });
     renderHistory(filtered);
 }
 
 let lastSortColumn = '';
-let lastSortDirection = 'asc'; 
+let lastSortDirection = 'asc';
 
-function sortTable(columnName) { 
-    const dataKey = Object.keys(labelMap).find(key => labelMap[key] === columnName) || columnName;
+function sortTable(columnName) {
+    // Giả sử columnName là tên hiển thị tiếng Việt của cột
+    const dataKey = columnName;
 
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    
+
     const searchBox = document.getElementById("search-box");
     const carFilter = document.getElementById("filter-car");
     const advisorFilterDropdown = document.getElementById("filter-advisor");
@@ -1545,10 +1810,10 @@ function sortTable(columnName) {
     const selectedCar = carFilter ? carFilter.value : "";
     const selectedAdvisor = advisorFilterDropdown ? advisorFilterDropdown.value : "";
     const selectedDate = dateFilter ? dateFilter.value : "";
-    
+
     let baseDataForSort;
     if (isAdmin) {
-        baseDataForSort = globalHistoryData; 
+        baseDataForSort = globalHistoryData;
     } else {
         baseDataForSort = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     }
@@ -1571,18 +1836,25 @@ function sortTable(columnName) {
 
     dataToSort.sort((a, b) => {
         let valA, valB;
-        if (dataKey === "STT") { 
-             valA = dataToSort.indexOf(a); 
+        if (dataKey === "STT") {
+             valA = dataToSort.indexOf(a);
              valB = dataToSort.indexOf(b);
         } else {
-            valA = a[dataKey] || ""; 
+            valA = a[dataKey] || "";
             valB = b[dataKey] || "";
         }
-        
-        if (typeof valA === 'number' && typeof valB === 'number' && dataKey !== "STT") { 
+
+        // Xử lý ngày tháng cho cột "Ngày cọc" và các cột ngày khác nếu có
+        if (dataKey === "Ngày cọc" || dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép") {
+            valA = new Date(a[dataKey] || 0).getTime();
+            valB = new Date(b[dataKey] || 0).getTime();
+        }
+
+
+        if (typeof valA === 'number' && typeof valB === 'number' && dataKey !== "STT") {
             return lastSortDirection === 'asc' ? valA - valB : valB - valA;
         }
-        valA = String(valA).toLowerCase(); 
+        valA = String(valA).toLowerCase();
         valB = String(valB).toLowerCase();
 
         if (valA < valB) return lastSortDirection === 'asc' ? -1 : 1;
@@ -1601,7 +1873,7 @@ function exportToExcel() {
     }
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    
+
     const searchBox = document.getElementById("search-box");
     const carFilter = document.getElementById("filter-car");
     const advisorFilterDropdown = document.getElementById("filter-advisor");
@@ -1618,7 +1890,7 @@ function exportToExcel() {
     } else {
         baseDataForExport = globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     }
-    
+
     let dataToExport = baseDataForExport.filter(row => {
         const matchesKeyword = !keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword));
         const matchesCar = !selectedCar || row["Dòng xe"] === selectedCar;
@@ -1632,43 +1904,29 @@ function exportToExcel() {
         showNotification("Không có dữ liệu để xuất.", 3000, true);
         return;
     }
-    const exportHeaders = {
-        "Tên tư vấn bán hàng": "Tư Vấn Bán Hàng",
-        "Tên khách hàng": "Tên Khách Hàng",
-        "Số đơn hàng": "Số Đơn Hàng",
-        "Dòng xe": "Dòng Xe",
-        "Phiên bản": "Phiên Bản",
-        "Ngoại thất": "Ngoại Thất",
-        "Nội thất": "Nội Thất",
-        "Ngày cọc": "Ngày Cọc",
-        "Thời gian nhập": "Thời Gian Nhập",
-        "Kết quả": "Trạng Thái",
-        "VIN": "VIN",
-        "Thời gian ghép": "Thời Gian Ghép",
-        "Số ngày ghép": "Số Ngày Ghép"
-    };
+    // Sử dụng trực tiếp các key tiếng Việt từ globalHistoryData nếu chúng nhất quán
+    // Hoặc định nghĩa một map cho header nếu cần
+    const headers = [
+        "Tên tư vấn bán hàng", "Tên khách hàng", "Số đơn hàng", "Dòng xe", "Phiên bản",
+        "Ngoại thất", "Nội thất", "Ngày cọc", "Thời gian nhập", "Kết quả", "VIN",
+        "Thời gian ghép", "Số ngày ghép"
+    ];
 
     const dataWithFormattedHeaders = dataToExport.map(row => {
         const newRow = {};
-        Object.keys(exportHeaders).forEach(originalKey => {
-            if (row.hasOwnProperty(originalKey)) {
-                 const formattedKey = exportHeaders[originalKey];
-                 newRow[formattedKey] = (originalKey === "Ngày cọc" || originalKey === "Thời gian nhập" || originalKey === "Thời gian ghép") 
-                                     ? formatDateTime(row[originalKey]) 
-                                     : row[originalKey];
-            } else if (labelMap[originalKey] && row.hasOwnProperty(Object.keys(labelMap).find(k => labelMap[k] === originalKey))) {
-                const internalKey = Object.keys(labelMap).find(k => labelMap[k] === originalKey);
-                const formattedKey = exportHeaders[originalKey];
-                 newRow[formattedKey] = (internalKey === "ngay_coc" || internalKey === "thoi_gian_nhap" || internalKey === "thoi_gian_ghep") 
-                                     ? formatDateTime(row[internalKey]) 
-                                     : row[internalKey];
+        headers.forEach(header => {
+            const value = row[header];
+            if (header === "Ngày cọc" || header === "Thời gian nhập" || header === "Thời gian ghép") {
+                newRow[header] = formatDateTime(value);
+            } else {
+                newRow[header] = value !== null && typeof value !== 'undefined' ? value : "";
             }
         });
         return newRow;
     });
 
 
-    const ws = XLSX.utils.json_to_sheet(dataWithFormattedHeaders);
+    const ws = XLSX.utils.json_to_sheet(dataWithFormattedHeaders, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "LichSuGhepXe");
     XLSX.writeFile(wb, "lich_su_ghep_xe.xlsx");
@@ -1686,29 +1944,29 @@ function exportToPDF() {
         showNotification("Không tìm thấy bảng dữ liệu để xuất PDF.", 3000, true);
         return;
     }
-    
+
     showLoadingModal("Đang Xuất PDF...", "Vui lòng chờ trong giây lát.");
 
-    html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight }).then(canvas => { 
+    html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight }).then(canvas => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('l', 'mm', 'a4'); 
+        const pdf = new jsPDF('l', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        
+
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
-        
+
         const ratio = canvasWidth / canvasHeight;
-        let imgWidth = pdfWidth - 20; 
+        let imgWidth = pdfWidth - 20;
         let imgHeight = imgWidth / ratio;
 
-        if (imgHeight > pdfHeight - 20) { 
+        if (imgHeight > pdfHeight - 20) {
             imgHeight = pdfHeight - 20;
             imgWidth = imgHeight * ratio;
         }
-        
-        const x = (pdfWidth - imgWidth) / 2; 
-        const y = 10; 
+
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = 10;
 
         pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
         pdf.save('lich_su_ghep_xe.pdf');
@@ -1727,16 +1985,17 @@ function previewForm(e) {
     const form = document.getElementById("vinfast-form");
     if (!form || !form.checkValidity()) {
         showNotification("Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc!", 3000, true);
-        form.reportValidity(); 
+        form.reportValidity();
         return;
     }
     const inputs = form.querySelectorAll("input, select");
-    formData = {}; 
+    formData = {};
     let html = "";
 
     inputs.forEach(input => {
         if (input.name) {
             formData[input.name] = input.value;
+            // Sử dụng labelMap để lấy tên hiển thị tiếng Việt cho form preview
             const displayName = labelMap[input.name] || input.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const value = input.type === "datetime-local" ? formatDateTime(input.value) : (input.value || "Chưa nhập");
             html += `<div class="detail-item"><strong>${displayName}:</strong> <span>${value}</span></div>`;
@@ -1762,7 +2021,7 @@ function confirmSubmit() {
     showLoadingModal("Đang Gửi Dữ Liệu", "Đang gửi yêu cầu, vui lòng chờ...");
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString();
-    formData["trang_thai"] = "Chưa ghép"; 
+    formData["trang_thai"] = "Chưa ghép"; // Trạng thái ban đầu khi gửi form
 
     const formDataToSend = new FormData();
     for (const [key, value] of Object.entries(formData)) {
@@ -1773,13 +2032,13 @@ function confirmSubmit() {
         method: "POST",
         body: formDataToSend
     })
-    .then(response => { 
-        if (!response.ok) { 
+    .then(response => {
+        if (!response.ok) {
              return response.text().then(text => { throw new Error(`Lỗi máy chủ khi gửi: ${response.status} ${text || response.statusText}`) });
         }
-        return response.json(); 
+        return response.json();
     })
-    .then(postResponse => { 
+    .then(postResponse => {
         console.log("Phản hồi từ POST:", postResponse);
         return fetch(apiURL).then(res => {
             if (!res.ok) {
@@ -1788,19 +2047,19 @@ function confirmSubmit() {
             return res.json();
         });
     })
-    .then(updatedData => { 
+    .then(updatedData => {
         closeModal("loading-modal");
-        clearFormDraft(); 
-        document.getElementById("vinfast-form").reset(); 
+        clearFormDraft();
+        document.getElementById("vinfast-form").reset();
         const consultantInput = document.getElementById("ten_ban_hang");
-        if (consultantInput) { 
+        if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
 
 
         const daghep = updatedData.daghep || [];
         const chuaghep = updatedData.chuaghep || [];
-        globalHistoryData = [...daghep, ...chuaghep]; 
+        globalHistoryData = [...daghep, ...chuaghep];
 
         const submittedOrder = globalHistoryData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
         sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
@@ -1810,7 +2069,7 @@ function confirmSubmit() {
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
         let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-        
+
         renderHistory(dataForHistoryTable);
         renderSummary(globalHistoryData);
         populateFilters(globalHistoryData);
@@ -1818,7 +2077,7 @@ function confirmSubmit() {
         if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
             filterDetailedStats();
         }
-        
+
         setTimeout(() => {
             window.location.href = "order-details.html";
         }, 2000);
@@ -1831,7 +2090,7 @@ function confirmSubmit() {
 }
 
 
-function prepareDetailedStats(data) { 
+function prepareDetailedStats(data) {
     const statsMap = new Map();
     data.forEach(row => {
         const dongXe = row["Dòng xe"] || "N/A";
@@ -1839,10 +2098,10 @@ function prepareDetailedStats(data) {
         const ngoaiThat = row["Ngoại thất"] || "N/A";
         const noiThat = row["Nội thất"] || "N/A";
         const tuVanVien = row["Tên tư vấn bán hàng"] || "N/A";
-        const ngayCoc = row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A"; 
+        const ngayCoc = row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A";
 
         const key = `${dongXe}|${phienBan}|${ngoaiThat}|${noiThat}|${tuVanVien}|${ngayCoc}`;
-        
+
         if (statsMap.has(key)) {
             statsMap.get(key).count += 1;
         } else {
@@ -1852,7 +2111,7 @@ function prepareDetailedStats(data) {
                 ngoai_that: ngoaiThat,
                 noi_that: noiThat,
                 tu_van_vien: tuVanVien,
-                ngay_coc: row["Ngày cọc"], 
+                ngay_coc: row["Ngày cọc"],
                 count: 1
             });
         }
@@ -1860,7 +2119,7 @@ function prepareDetailedStats(data) {
     detailedStatsData = Array.from(statsMap.values());
 }
 
-function renderDetailedStats(dataToRender) { 
+function renderDetailedStats(dataToRender) {
     const tbody = document.getElementById("detailed-stats-body");
     if (!tbody) return;
 
@@ -1884,12 +2143,12 @@ function renderDetailedStats(dataToRender) {
     tbody.innerHTML = content;
 
     const rowCountEl = document.getElementById("detailed-row-count");
-    const totalEl = document.getElementById("detailed-total"); 
-    const carTypesEl = document.getElementById("detailed-car-types"); 
-    const advisorsEl = document.getElementById("detailed-advisors"); 
+    const totalEl = document.getElementById("detailed-total");
+    const carTypesEl = document.getElementById("detailed-car-types");
+    const advisorsEl = document.getElementById("detailed-advisors");
 
-    if (rowCountEl) rowCountEl.textContent = dataToRender.length; 
-    if (totalEl) totalEl.textContent = globalHistoryData.length; 
+    if (rowCountEl) rowCountEl.textContent = dataToRender.length;
+    if (totalEl) totalEl.textContent = globalHistoryData.length;
     if (carTypesEl) carTypesEl.textContent = [...new Set(globalHistoryData.map(r => r["Dòng xe"]))].filter(Boolean).length;
     if (advisorsEl) advisorsEl.textContent = [...new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]))].filter(Boolean).length;
 }
@@ -1915,10 +2174,10 @@ function filterDetailedStats() {
         return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
     });
     renderDetailedStats(filtered);
-    renderCharts(filtered); 
+    renderCharts(filtered);
 }
 
-function renderCharts(dataForCharts) { 
+function renderCharts(dataForCharts) {
     if (typeof Chart === "undefined") {
         showNotification("Thư viện Chart.js chưa được tải!", 3000, true);
         return;
@@ -1929,30 +2188,30 @@ function renderCharts(dataForCharts) {
     const advisorData = {};
     dataForCharts.forEach(row => {
         if (row.dong_xe && row.dong_xe !== "N/A") carData[row.dong_xe] = (carData[row.dong_xe] || 0) + row.count;
-        
-        const carVersionKey = (row.dong_xe && row.dong_xe !== "N/A" && row.phien_ban && row.phien_ban !== "N/A") 
-                            ? `${row.dong_xe} - ${row.phien_ban}` 
+
+        const carVersionKey = (row.dong_xe && row.dong_xe !== "N/A" && row.phien_ban && row.phien_ban !== "N/A")
+                            ? `${row.dong_xe} - ${row.phien_ban}`
                             : null;
         if (carVersionKey) carVersionData[carVersionKey] = (carVersionData[carVersionKey] || 0) + row.count;
-        
+
         if (row.tu_van_vien && row.tu_van_vien !== "N/A") advisorData[row.tu_van_vien] = (advisorData[row.tu_van_vien] || 0) + row.count;
     });
-    
+
     const theme = document.body.getAttribute("data-theme") || "light";
-    const chartColors = theme === "dark" ? 
-        { grid: 'rgba(255, 255, 255, 0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102, 176, 255, 0.2)", border: "#66b0ff" } : 
+    const chartColors = theme === "dark" ?
+        { grid: 'rgba(255, 255, 255, 0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102, 176, 255, 0.2)", border: "#66b0ff" } :
         { grid: 'rgba(0, 0, 0, 0.1)', ticks: '#2c3e50', legend: '#2c3e50', bg: "rgba(0, 94, 184, 0.2)", border: "#005eb8" };
 
 
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { 
-            legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 } 
+        plugins: {
+            legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 }
         },
-        scales: { 
-            y: { beginAtZero: true, ticks: { font: { size: 8 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid }, maxTicksLimit: 5 }, 
-            x: { ticks: { font: { size: 8 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } } 
+        scales: {
+            y: { beginAtZero: true, ticks: { font: { size: 8 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid }, maxTicksLimit: 5 },
+            x: { ticks: { font: { size: 8 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } }
         },
         layout: { padding: 5 }
     };
@@ -1960,8 +2219,8 @@ function renderCharts(dataForCharts) {
     const pieChartOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { 
-            legend: { position: "bottom", labels: { font: { size: 10 }, color: chartColors.legend } } 
+        plugins: {
+            legend: { position: "bottom", labels: { font: { size: 10 }, color: chartColors.legend } }
         }
     };
     if (carChart) carChart.destroy();
@@ -1981,7 +2240,7 @@ function renderCharts(dataForCharts) {
             },
             options: chartOptions
         });
-    } else if (carChartCtx) { 
+    } else if (carChartCtx) {
          if(carChartNoData) carChartNoData.style.display = "block";
          carChartCtx.style.display = "none";
          carChartCtx.getContext('2d').clearRect(0, 0, carChartCtx.width, carChartCtx.height);
@@ -2019,7 +2278,7 @@ function renderCharts(dataForCharts) {
                 datasets: [{
                     data: Object.values(advisorData),
                     backgroundColor: ["#005eb8", "#0087ff", "#66b0ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"],
-                    borderColor: chartColors.border, 
+                    borderColor: chartColors.border,
                     borderWidth: 1
                 }]
             },
@@ -2043,7 +2302,7 @@ function updateChartColors() {
         }
     }
     if (activeTabName === 'detailed-stats') {
-        filterDetailedStats(); 
+        filterDetailedStats();
     }
 }
 
@@ -2069,7 +2328,7 @@ function exportDetailedStatsToExcel() {
         const matchesDate = !selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate);
         return matchesKeyword && matchesCar && matchesAdvisor && matchesDate;
     });
-    
+
     if (!dataToExport || dataToExport.length === 0) {
         showNotification("Không có dữ liệu thống kê để xuất.", 3000, true);
         return;
@@ -2115,7 +2374,7 @@ function switchTab(tabName, element) {
     if (tabName === 'form') {
         const formSection = document.getElementById('form-section');
         if (formSection) formSection.classList.remove('hidden');
-        const historySection = document.getElementById('history-section'); 
+        const historySection = document.getElementById('history-section');
         if (historySection) historySection.classList.remove('hidden');
     } else if (tabName === 'history') {
         const historySection = document.getElementById('history-section');
@@ -2138,14 +2397,14 @@ function switchTab(tabName, element) {
                 filterHistory();
             }
         } else {
-            filterHistory(); 
+            filterHistory();
         }
     } else if (tabName === "detailed-stats") {
         // Ensure data is prepared before filtering/rendering charts for detailed stats
         if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
             prepareDetailedStats(globalHistoryData);
         }
-        filterDetailedStats(); 
+        filterDetailedStats();
     }
 }
 
@@ -2163,20 +2422,20 @@ function toggleAutoRefresh() {
         showNotification("Tự động làm mới đã tắt!", 2000);
         if(refreshButtonIcon) {
             refreshButtonIcon.classList.remove('fa-spin');
-            refreshButtonIcon.parentElement.style.color = ''; 
+            refreshButtonIcon.parentElement.style.color = '';
         }
     } else {
-        autoRefreshInterval = setInterval(refreshData, 30000); 
+        autoRefreshInterval = setInterval(refreshData, 30000);
         showNotification("Tự động làm mới mỗi 30 giây!", 2000);
         if(refreshButtonIcon) {
             refreshButtonIcon.classList.add('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '#34D399'; 
+            refreshButtonIcon.parentElement.style.color = '#34D399';
         }
     }
 }
 
 function setupScrollSync() {
-    const tableWrappers = document.querySelectorAll(".table-wrapper"); 
+    const tableWrappers = document.querySelectorAll(".table-wrapper");
     tableWrappers.forEach(tableWrapper => {
         const header = tableWrapper.querySelector("thead");
         if (tableWrapper && header) {
