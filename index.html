@@ -41,10 +41,10 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; } /* Thu nhỏ scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; } 
         ::-webkit-scrollbar-track {
             background: var(--background-light);
-            border-radius: 4px; /* Bo tròn track */
+            border-radius: 4px; 
             box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.1), inset -2px -2px 4px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode ::-webkit-scrollbar-track {
@@ -53,7 +53,7 @@
         }
         ::-webkit-scrollbar-thumb {
             background: var(--primary-color);
-            border-radius: 4px; /* Bo tròn thumb */
+            border-radius: 4px; 
             box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.3);
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -96,9 +96,8 @@
             display: flex;
             flex-direction: column;
         }
-        /* Style cho sidebar khi được thu gọn (collapsed) trên desktop */
         .sidebar.collapsed { 
-            width: 60px; /* Chiều rộng khi thu gọn */
+            width: 60px; 
         }
         body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
         
@@ -113,7 +112,6 @@
             transition: opacity 0.3s ease, font-size 0.3s ease; 
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
-        /* Ẩn logo text khi sidebar thu gọn */
         .sidebar.collapsed .logo h1 { 
             opacity: 0; 
             font-size: 0; 
@@ -140,14 +138,13 @@
             gap: 10px; 
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.15);
         }
-        /* Style cho menu item khi sidebar thu gọn: căn giữa icon */
         .sidebar.collapsed .menu a { 
             padding: 10px; 
             justify-content: center; 
         }
         .sidebar .menu a i { 
             font-size: 15px; 
-            width: 20px; /* Đảm bảo icon có không gian cố định, fa-fw cũng giúp việc này */
+            width: 20px; 
             text-align: center;
         }
         .sidebar .menu a span { 
@@ -156,10 +153,9 @@
             overflow: hidden;
             max-width: 100px; 
         }
-        /* Style cho phần chữ (span) của menu item khi sidebar thu gọn: ẩn chữ */
         .sidebar.collapsed .menu a span { 
             opacity: 0; 
-            max-width: 0; /* Quan trọng: thu gọn không gian của chữ */
+            max-width: 0; 
         }
         .sidebar .menu a:hover { 
             background: rgba(255, 255, 255, 0.2); 
@@ -238,7 +234,6 @@
             box-shadow: var(--shadow-dark-inner);
         }
 
-
         /* Main Content */
         .main-content { 
             margin-left: 200px; 
@@ -249,7 +244,7 @@
             padding-bottom: 45px; 
         }
         .main-content.collapsed { 
-            margin-left: 60px; /* Margin khi sidebar thu gọn trên desktop */
+            margin-left: 60px; 
         }
 
         /* Hero Section */
@@ -327,26 +322,34 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 12px; 
         }
+        /* Updated CSS for feature-card as an <a> tag */
         .feature-card { 
             background: var(--card-bg-light); 
             padding: 12px; 
             border-radius: 8px; 
             box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15), -4px -4px 8px rgba(255, 255, 255, 0.4); 
             transition: all 0.3s ease; 
-        }
-        .feature-card:hover { 
-            box-shadow: var(--shadow-light-inner); 
+            display: block; /* Ensure <a> behaves as a block */
+            text-decoration: none; /* Remove link underline */
+            color: var(--text-light); /* Default text color */
         }
         body.dark-mode .feature-card { 
             background: var(--card-bg-dark); 
             box-shadow: var(--shadow-dark-outer); 
+            color: var(--text-dark); /* Text color in dark mode */
+        }
+        .feature-card:hover { 
+            box-shadow: var(--shadow-light-inner); 
+            /* Optionally, change background or text color on hover if desired */
+            /* background: #e9ecef; */
         }
         body.dark-mode .feature-card:hover {
             box-shadow: var(--shadow-dark-inner);
+            /* background: #3a3a5e; */
         }
         .feature-card i { font-size: 22px; color: var(--primary-color); margin-bottom: 10px; }
-        .feature-card h4 { font-size: 15px; margin-bottom: 8px; }
-        .feature-card p { font-size: 12px; }
+        .feature-card h4 { font-size: 15px; margin-bottom: 8px; } /* Will inherit color from .feature-card */
+        .feature-card p { font-size: 12px; } /* Will inherit color from .feature-card */
 
         /* Dashboard Section */
         .dashboard-section { 
@@ -642,17 +645,15 @@
             .sidebar.open {
                 transform: translateX(0); 
             }
-            /* Khi sidebar desktop đang collapsed và màn hình thu nhỏ, nó vẫn bị ẩn */
             .sidebar.collapsed { 
                 transform: translateX(-100%);
             }
-            /* Khi sidebar mở trên mobile, đảm bảo text logo và menu hiển thị */
             .sidebar.open .logo h1, .sidebar.open .menu a span { 
                 opacity: 1; 
-                max-width: 100px; /* Hoặc giá trị đủ lớn để text hiển thị */
+                max-width: 100px; 
             }
              .sidebar.open .logo h1 {
-                font-size: 22px; /* Khôi phục font-size logo khi mở trên mobile */
+                font-size: 22px; 
             }
             
             .main-content { 
@@ -660,10 +661,6 @@
                 padding-left: 15px; 
                 padding-right: 15px;
             }
-             /* Không cần đẩy main-content khi sidebar overlay trên mobile
-            .main-content.sidebar-open { 
-                 margin-left: 0; 
-            }*/
             .main-content.collapsed { margin-left: 0; } 
 
             .toggle-btn { display: none; } 
@@ -761,21 +758,21 @@
             <h3 data-lang="welcome-title">HỆ THỐNG NỘI BỘ</h3>
             <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
             <div class="features-grid">
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <a href="xedaban.html" class="feature-card" data-aos="fade-up" data-aos-delay="100">
                     <i class="fas fa-clipboard-list"></i>
                     <h4 data-lang="orders-title">Quản Lý Đơn Hàng</h4>
                     <p data-lang="orders-text">Theo dõi và xử lý đơn hàng nhanh chóng.</p>
-                </div>
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                </a>
+                <a href="khoxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="200">
                     <i class="fas fa-car"></i>
                     <h4 data-lang="stock-title">Quản Lý Kho Xe</h4>
                     <p data-lang="stock-text">Kiểm tra và quản lý xe trong kho dễ dàng.</p>
-                </div>
-                <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                </a>
+                <a href="yeucaughepxe.html" class="feature-card" data-aos="fade-up" data-aos-delay="300">
                     <i class="fas fa-handshake"></i>
                     <h4 data-lang="pairing-title">Hỗ Trợ Ghép Xe</h4>
                     <p data-lang="pairing-text">Tìm kiếm và ghép xe theo nhu cầu khách hàng.</p>
-                </div>
+                </a>
             </div>
         </section>
         <section class="dashboard-section" id="dashboard" data-aos="fade-up">
@@ -1106,17 +1103,12 @@
             if (isLoggedIn) {
                 fetchDashboardData();
             }
-            // Add event listener for clicking outside sidebar on mobile
             document.addEventListener('click', function(event) {
                 const sidebar = document.getElementById('sidebar');
                 const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-                // Chỉ đóng sidebar nếu đang ở chế độ mobile (window.innerWidth <= 900)
-                // và sidebar đang mở (sidebar.classList.contains('open'))
-                // và click không nằm trong sidebar hoặc nút mở mobile menu
                 if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
                     if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
                         sidebar.classList.remove('open');
-                        // Không cần class 'sidebar-open' trên main-content nếu sidebar là overlay
                     }
                 }
             });
@@ -1131,7 +1123,7 @@
             const navMenuLinks = document.querySelectorAll("#navMenu a"); 
             const welcomeTitle = welcomeSection.querySelector('[data-lang="welcome-title"]');
             const sidebar = document.getElementById("sidebar");
-            const mainContent = document.getElementById("main-content"); // Thêm mainContent
+            const mainContent = document.getElementById("main-content"); 
 
             isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true"; 
             currentUser = sessionStorage.getItem("currentUser") || "";    
@@ -1148,8 +1140,6 @@
                 navMenuLinks.forEach(link => link.style.display = "flex");
                 
                 if (window.innerWidth > 900) { 
-                    // Trên desktop, nếu sidebar đã từng bị thu gọn, giữ nguyên trạng thái đó hoặc mở ra
-                    // Nếu muốn luôn mở khi login, bỏ check localStorage
                     if (localStorage.getItem('sidebarState') === 'collapsed') {
                         sidebar.classList.add("collapsed");
                         mainContent.classList.add("collapsed");
@@ -1158,13 +1148,12 @@
                         mainContent.classList.remove("collapsed");
                     }
                 } else {
-                    // Trên mobile, đảm bảo sidebar không có class 'collapsed' và 'open' khi mới login
                     sidebar.classList.remove("collapsed");
                     sidebar.classList.remove("open"); 
                     mainContent.classList.remove("collapsed");
                 }
 
-            } else { // Khi chưa đăng nhập
+            } else { 
                 heroSection.style.display = "flex"; 
                 welcomeSection.style.display = "block"; 
                  if (welcomeTitle) { 
@@ -1175,17 +1164,16 @@
                 navMenuLinks.forEach(link => link.style.display = "none");
                 
                 if (window.innerWidth <= 900) {
-                    sidebar.classList.remove("open"); // Đóng sidebar trên mobile
-                    sidebar.classList.remove("collapsed"); // Xóa class collapsed nếu có
+                    sidebar.classList.remove("open"); 
+                    sidebar.classList.remove("collapsed"); 
                 } else {
-                    sidebar.classList.add("collapsed"); // Thu gọn sidebar trên desktop
+                    sidebar.classList.add("collapsed"); 
                     mainContent.classList.add("collapsed");
-                    localStorage.setItem('sidebarState', 'collapsed'); // Lưu trạng thái thu gọn
+                    localStorage.setItem('sidebarState', 'collapsed'); 
                 }
             }
         }
         
-        // Hàm tổng hợp để tải dữ liệu cho dashboard
         function fetchDashboardData() {
             fetchTotalSoldCars();
             fetchSoldCarsDataForDashboard(); 
@@ -1193,7 +1181,6 @@
             fetchPairingRequestsForDashboard(); 
         }
 
-        // Tải tổng số xe đã bán
         async function fetchTotalSoldCars() {
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             let totalSoldCars = 0;
@@ -1214,7 +1201,6 @@
             }
         }
 
-        // Tải dữ liệu xe đã bán cho dashboard
         async function fetchSoldCarsDataForDashboard() {
             const tableBody = document.getElementById("sold-cars-table-body");
             if (!tableBody) return;
@@ -1236,7 +1222,6 @@
             }
         }
         
-        // Hàm tiện ích lấy các dòng ngẫu nhiên từ mảng
         function getRandomRows(array, count) {
             if (!array || array.length === 0) return [];
             if (array.length <= count) return [...array]; 
@@ -1249,7 +1234,6 @@
             return result;
         }
 
-        // Hiển thị dữ liệu xe đã bán
         function displaySoldCarsData(data, tableBodyElement) {
             tableBodyElement.innerHTML = "";
             if (!data || data.length === 0) {
@@ -1264,7 +1248,6 @@
             });
         }
 
-        // Tải dữ liệu kho xe ngẫu nhiên cho dashboard
         async function fetchRandomStockDataForDashboard() {
             const stockTableBody = document.getElementById("stockTableBody");
             const stockCountElement = document.getElementById("currentStockCount");
@@ -1293,7 +1276,6 @@
             }
         }
 
-        // Tải yêu cầu ghép xe cho dashboard
         async function fetchPairingRequestsForDashboard() {
             const pairingTableBody = document.getElementById("pairingRequestTableBody");
             const pairingCountElement = document.getElementById("pairingRequestCount");
@@ -1330,7 +1312,6 @@
             }
         }
 
-        // Xử lý đăng nhập
         async function login(e) {
             e.preventDefault();
             const username = document.getElementById("username").value.trim();
@@ -1389,7 +1370,6 @@
             }
         }
         
-        // Xử lý đổi mật khẩu
         async function changePassword(e) {
             e.preventDefault();
             const username = document.getElementById("changeUsername").value.trim();
@@ -1426,7 +1406,6 @@
             }
         }
 
-        // Xử lý quên mật khẩu
         async function forgotPassword(e) {
             e.preventDefault();
             const email = document.getElementById("forgotEmail").value.trim();
@@ -1452,14 +1431,12 @@
             }
         }
         
-        // Hiển thị form đặt lại mật khẩu với OTP
         function showResetPasswordWithOTPForm(username) {
             showForm('resetPasswordWithOTPForm');
             const resetUsernameInput = document.getElementById("resetUsername");
             if(resetUsernameInput) resetUsernameInput.value = username || ""; 
         }
 
-        // Xử lý đặt lại mật khẩu với OTP
         async function resetPasswordWithOTP(e) {
             e.preventDefault();
             const username = document.getElementById("resetUsername").value.trim();
@@ -1495,25 +1472,22 @@
             }
         }
 
-        // Xử lý đăng xuất
         function logout() {
             sessionStorage.clear(); 
             isLoggedIn = false; 
             currentUser = "";   
             userRole = "employee"; 
-            localStorage.removeItem('sidebarState'); // Xóa trạng thái sidebar khi logout
+            localStorage.removeItem('sidebarState'); 
             updateUIBasedOnLogin();
             showAlert("Thông báo", translations[language]["logout-success"]);
         }
 
-        // Chuyển đổi trạng thái sidebar cho DESKTOP
         function toggleSidebarDesktop() {
             if (window.innerWidth > 900) { 
                 const sidebar = document.getElementById("sidebar");
                 const mainContent = document.getElementById("main-content");
                 sidebar.classList.toggle("collapsed");
                 mainContent.classList.toggle("collapsed");
-                // Lưu trạng thái sidebar vào localStorage
                 if (sidebar.classList.contains("collapsed")) {
                     localStorage.setItem('sidebarState', 'collapsed');
                 } else {
@@ -1522,18 +1496,14 @@
             }
         }
 
-        // Chuyển đổi trạng thái sidebar cho MOBILE
         function toggleMobileSidebar() {
             const sidebar = document.getElementById("sidebar");
             sidebar.classList.toggle("open");
-            // Khi mở sidebar trên mobile, đảm bảo không có class 'collapsed'
             if (sidebar.classList.contains("open")) {
                 sidebar.classList.remove("collapsed");
             }
         }
 
-
-        // Mở modal
         function openModal(id) {
             const modal = document.getElementById(id);
             if (!modal) return;
@@ -1544,7 +1514,6 @@
             }, 10); 
         }
 
-        // Đóng modal
         function closeModal(id) {
             const modal = document.getElementById(id);
             if (!modal) return;
@@ -1558,7 +1527,6 @@
             }, 250); 
         }
         
-        // Reset modal về form đăng nhập
         function resetModalToLogin() {
             showForm("loginForm");
             const loginFormElement = document.getElementById("loginForm");
@@ -1567,7 +1535,6 @@
             }
         }
 
-        // Hiển thị thông báo tùy chỉnh
         function showAlert(title, message) {
             const alertTitle = document.getElementById("alertTitle");
             const alertMessage = document.getElementById("alertMessage");
@@ -1576,7 +1543,6 @@
             openModal("alertModal");
         }
 
-        // Chuyển đổi giao diện sáng/tối
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
             const icon = document.querySelector(".theme-toggle i");
@@ -1587,7 +1553,6 @@
             localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
         }
 
-        // Chuyển đổi ngôn ngữ
         function toggleLanguage() {
             language = language === "vi" ? "en" : "vi";
             localStorage.setItem("language", language);
@@ -1596,7 +1561,6 @@
             updateLanguage();
         }
 
-        // Cập nhật các yếu tố ngôn ngữ trên trang
         function updateLanguage() {
             document.querySelectorAll("[data-lang]").forEach(element => {
                 const key = element.getAttribute("data-lang");
@@ -1617,7 +1581,14 @@
                     if (element.parentElement && element.parentElement.classList.contains('menu') && element.querySelector('span')) {
                         element.querySelector('span').textContent = translations[language][key];
                     } else {
-                        element.textContent = translations[language][key];
+                        // For feature cards, h4 and p are direct children with data-lang
+                        if (element.matches('.feature-card h4[data-lang]') || element.matches('.feature-card p[data-lang]')) {
+                             element.textContent = translations[language][key];
+                        } 
+                        // For other elements like buttons, dashboard card titles
+                        else if (!element.closest('.feature-card')) { // Avoid double-updating if already handled
+                           element.textContent = translations[language][key];
+                        }
                     }
                 }
             });
@@ -1627,19 +1598,18 @@
                     element.placeholder = translations[language][key];
                 }
             });
-            if (isLoggedIn) {
+            if (isLoggedIn) { // Update dashboard card titles specifically if needed
                 const stockCardTitle = document.querySelector('.dashboard-card [data-lang="stock"]');
-                if(stockCardTitle) stockCardTitle.textContent = translations[language]["stock"];
+                if(stockCardTitle && translations[language]["stock"]) stockCardTitle.textContent = translations[language]["stock"];
 
                 const soldCarsCardTitle = document.querySelector('.dashboard-card [data-lang="sold-cars"]');
-                 if(soldCarsCardTitle) soldCarsCardTitle.textContent = translations[language]["sold-cars"];
+                 if(soldCarsCardTitle && translations[language]["sold-cars"]) soldCarsCardTitle.textContent = translations[language]["sold-cars"];
                 
                 const pairingRequestCardTitle = document.querySelector('.dashboard-card [data-lang="pairing-request"]');
-                if(pairingRequestCardTitle) pairingRequestCardTitle.textContent = translations[language]["pairing-request"];
+                if(pairingRequestCardTitle && translations[language]["pairing-request"]) pairingRequestCardTitle.textContent = translations[language]["pairing-request"];
             }
         }
 
-        // Hiển thị form cụ thể trong modal
         function showForm(formName) {
             ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(formId => {
                 const formElement = document.getElementById(formId);
