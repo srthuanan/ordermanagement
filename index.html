@@ -48,7 +48,7 @@
             box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode ::-webkit-scrollbar-track {
-            background: var(--card-bg-dark); /* Slightly different from body bg for contrast */
+            background: var(--card-bg-dark); 
             box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2), inset -3px -3px 6px rgba(255, 255, 255, 0.1);
         }
         ::-webkit-scrollbar-thumb {
@@ -85,27 +85,41 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 190px;
+            width: 190px; /* Default expanded width */
             height: 100vh;
             background: linear-gradient(180deg, var(--primary-color), var(--primary-color-darker));
             padding: 20px;
-            padding-top: 60px;
+            padding-top: 60px; /* Space for header */
             transition: width 0.3s ease;
             z-index: 1000;
             box-shadow: 10px 10px 20px rgba(0, 48, 135, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.1);
+            overflow-x: hidden; /* Hide text when collapsing */
         }
-        .sidebar.collapsed { width: 60px; }
+        .sidebar.collapsed { 
+            width: 60px; /* Collapsed width */
+        }
         body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
+        
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            overflow: hidden; /* Ensure logo text is clipped when sidebar collapses */
+        }
         .sidebar .logo h1 { 
-            font-size: 28px; 
+            font-size: 24px; /* Adjusted for better fit */
             color: #fff; 
             font-weight: 600; 
-            text-align: center; 
-            margin-bottom: 30px; 
-            transition: opacity 0.3s ease; 
+            white-space: nowrap; /* Prevent text wrapping */
+            transition: opacity 0.2s ease, transform 0.2s ease; 
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            opacity: 1;
+            transform: translateX(0);
         }
-        .sidebar.collapsed .logo h1 { opacity: 0; }
+        .sidebar.collapsed .logo h1 { 
+            opacity: 0; 
+            transform: translateX(-20px); /* Slight animation for text disappearing */
+        }
+
         .sidebar .menu { 
             display: flex; 
             flex-direction: column; 
@@ -124,11 +138,32 @@
             align-items: center; 
             gap: 12px; 
             box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.2);
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide text that overflows when collapsing */
         }
-        .sidebar.collapsed .menu a { padding: 12px; justify-content: center; }
-        .sidebar .menu a i { font-size: 16px; }
-        .sidebar .menu a span { transition: opacity 0.3s ease; }
-        .sidebar.collapsed .menu a span { opacity: 0; width: 0; }
+        .sidebar.collapsed .menu a { 
+            padding: 12px; 
+            justify-content: center; /* Center icon when collapsed */
+            width: 36px; /* Ensure button width matches icon + padding */
+            margin: 0 auto; /* Center the button itself */
+        }
+        .sidebar .menu a i { 
+            font-size: 16px; 
+            min-width: 16px; /* Ensure icon takes up space */
+            text-align: center;
+        }
+        .sidebar .menu a span { 
+            transition: opacity 0.2s ease, transform 0.2s ease; 
+            opacity: 1;
+            transform: translateX(0);
+            display: inline-block; /* Needed for transform */
+        }
+        .sidebar.collapsed .menu a span { 
+            opacity: 0; 
+            width: 0; /* Effectively hide text */
+            transform: translateX(-10px); /* Slight animation for text disappearing */
+            pointer-events: none; /* Prevent interaction with hidden text */
+        }
         .sidebar .menu a:hover { 
             background: rgba(255, 255, 255, 0.25); 
             box-shadow: var(--shadow-light-inner);
@@ -140,22 +175,30 @@
         }
         .toggle-btn { 
             position: absolute; 
-            top: 20px; 
+            top: 18px; /* Adjusted for better vertical alignment with header */
             right: -12px; 
-            width: 24px; 
-            height: 24px; 
+            width: 28px; /* Slightly larger */
+            height: 28px; 
             background: var(--primary-color); 
             border: none; 
             border-radius: 50%; 
             color: #fff; 
             font-size: 14px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
+            transition: all 0.3s ease, transform 0.3s ease; 
             box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.2); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001; /* Ensure it's above sidebar content */
+        }
+        .sidebar.collapsed .toggle-btn {
+            /* transform: translateX(0); */ /* Keep it in place relative to the collapsed sidebar edge */
         }
         .toggle-btn:hover { 
             background: var(--primary-color-lighter); 
             box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.3); 
+            transform: scale(1.1);
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
@@ -204,13 +247,15 @@
 
         /* Main Content */
         .main-content { 
-            margin-left: 220px; 
+            margin-left: 190px; /* Default margin for expanded sidebar */
             padding: 20px; 
-            margin-top: 50px; 
-            min-height: calc(100vh - 50px); 
+            padding-top: 70px; /* Increased padding-top to clear fixed header */
+            min-height: calc(100vh - 50px); /* Adjust if footer height changes */
             transition: margin-left 0.3s ease; 
         }
-        .main-content.collapsed { margin-left: 60px; }
+        .main-content.collapsed { 
+            margin-left: 60px; /* Margin for collapsed sidebar */
+        }
 
         /* Hero Section */
         .hero { 
@@ -569,19 +614,18 @@
         footer .social-links a:hover { color: #e9ecef; }
 
         /* Responsive */
-        @media (max-width: 900px) {
-            .sidebar { width: 60px; }
-            .sidebar .logo h1, .sidebar .menu a span { opacity: 0; }
-            .main-content { margin-left: 60px; }
+        @media (max-width: 900px) { /* Breakpoint for sidebar collapse */
+            /* Sidebar is handled by JS adding/removing .collapsed class */
+            /* .main-content margin is also handled by JS adding/removing .collapsed class */
             .dashboard-content { grid-template-columns: 1fr; }
-            .hero h2 { font-size: 28px; } /* Adjusted for smaller screens */
-            .hero p { font-size: 16px; } /* Adjusted for smaller screens */
+            .hero h2 { font-size: 28px; } 
+            .hero p { font-size: 16px; } 
             .hero .login-btn { font-size: 14px; padding: 8px 20px; }
         }
-        @media (max-width: 480px) {
+        @media (max-width: 480px) { /* Further adjustments for very small screens */
             .navbar-controls { gap: 5px; }
             .nav-btn, .theme-toggle, .language-btn { width: 32px; height: 32px; font-size: 14px; }
-            .modal-content { padding: 20px; } /* Slightly reduce padding on very small screens */
+            .modal-content { padding: 20px; } 
             .modal-content h2 { font-size: 18px; }
             .modal-content p { font-size: 13px; }
             .modal-content input { padding: 10px 10px 10px 35px; font-size: 13px; }
@@ -595,14 +639,13 @@
     <header>SHOWROOM VINFAST THUẬN AN</header>
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <h1>VinFast Thuận An</h1>
-        </div>
+            <h1>VinFast</h1> </div>
         <div class="menu" id="navMenu">
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side"></i><span>Danh Sách Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt"></i><span>Nhu cầu Ghép Xe</span></a>
-            <a href="danhsach.html" data-lang="pairing-list" class="active"><i class="fas fa-clipboard-check"></i><span>Danh Sách Ghép Xe</span></a>
-            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract"></i><span>Chính Sách & Tài Liệu</span></a>
+            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-lang="pairing-list" class="active"><i class="fas fa-clipboard-check"></i><span>DS Ghép</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract"></i><span>Tài Liệu</span></a>
         </div>
         <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     </div>
@@ -620,7 +663,7 @@
             </div>
         </section>
         <section class="internal-section" id="welcomeSection" data-aos="fade-up">
-            <h3 data-lang="welcome-title"></h3>
+            <h3 data-lang="welcome-title">HỆ THỐNG NỘI BỘ</h3>
             <p data-lang="welcome-text">Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.</p>
             <div class="features-grid">
                 <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
@@ -848,15 +891,14 @@
         // Khai báo các biến trạng thái toàn cục
         let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
         let currentUser = sessionStorage.getItem("currentUser") || "";
-        let userRole = sessionStorage.getItem("userRole") || "employee"; // Mặc định là employee
-        let language = localStorage.getItem("language") || "vi"; // Mặc định là tiếng Việt
+        let userRole = sessionStorage.getItem("userRole") || "employee"; 
+        let language = localStorage.getItem("language") || "vi"; 
 
         // Đối tượng chứa các bản dịch
         const translations = {
             vi: {
                 "hero-title": "Hệ Thống Quản Lý Đơn Hàng",
                 "hero-subtitle": "Chào mừng đến với Showroom Thuận An",
-                "welcome-title": `Chào mừng ${currentUser || 'bạn'}!`, // Thêm tên người dùng nếu đã đăng nhập
                 "welcome-text": "Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.",
                 "login-btn": "Đăng Nhập",
                 "login-title": "Đăng Nhập",
@@ -898,15 +940,14 @@
                 "otp-sent": "OTP đã được gửi đến email của bạn!",
                 "password-reset-success": "Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.",
                 "stock": "Kho Xe",
-                "sold-cars": "Danh Sách Xe Đã Bán",
-                "pairing-request": "Nhu Cầu Ghép Xe",
-                "pairing-list": "Danh Sách Ghép Xe",
-                "policy-docs": "Chính Sách & Tài Liệu"
+                "sold-cars": "Xe Đã Bán", // Shorter for menu
+                "pairing-request": "Ghép Xe", // Shorter for menu
+                "pairing-list": "DS Ghép", // Shorter for menu
+                "policy-docs": "Tài Liệu" // Shorter for menu
             },
             en: {
                 "hero-title": "Order Management System",
                 "hero-subtitle": "Welcome to Thuan An Showroom",
-                "welcome-title": `Welcome ${currentUser || 'Guest'}!`,
                 "welcome-text": "Efficiently manage sales, orders, and sold vehicles with the Thuan An internal system.",
                 "login-btn": "Login",
                 "login-title": "Login",
@@ -947,19 +988,18 @@
                 "password-changed": "Password changed successfully!",
                 "otp-sent": "OTP has been sent to your email!",
                 "password-reset-success": "Password reset successful! Please login again.",
-                "stock": "Vehicle Inventory",
-                "sold-cars": "List of Sold Vehicles",
-                "pairing-request": "Vehicle Pairing Requests",
-                "pairing-list": "Pairing List",
-                "policy-docs": "Policies & Documents"
+                "stock": "Stock", // Shorter
+                "sold-cars": "Sold Cars", // Shorter
+                "pairing-request": "Pairing", // Shorter
+                "pairing-list": "Pair List", // Shorter
+                "policy-docs": "Docs" // Shorter
             }
         };
 
         // Chạy khi DOM đã tải xong
         document.addEventListener("DOMContentLoaded", () => {
-            updateUIBasedOnLogin(); // Đổi tên hàm cho rõ ràng hơn
-            updateLanguage(); // Cập nhật ngôn ngữ ban đầu
-            // Kiểm tra và áp dụng theme đã lưu
+            updateUIBasedOnLogin(); 
+            updateLanguage(); 
             if (localStorage.getItem("theme") === "dark") {
                 document.body.classList.add("dark-mode");
                 const icon = document.querySelector(".theme-toggle i");
@@ -968,13 +1008,13 @@
                     icon.classList.add("fa-sun");
                 }
             }
-            // Nếu đã đăng nhập, tải dữ liệu cho dashboard
             if (isLoggedIn) {
                 fetchDashboardData();
             }
+            window.addEventListener('resize', handleResize); // Thêm event listener cho resize
         });
 
-        // Cập nhật giao diện dựa trên trạng thái đăng nhập
+        // Cập nhật giao diện dựa trên trạng thái đăng nhập và kích thước màn hình
         function updateUIBasedOnLogin() {
             const heroSection = document.getElementById("heroSection");
             const welcomeSection = document.getElementById("welcomeSection");
@@ -982,38 +1022,118 @@
             const logoutBtn = document.getElementById("logoutBtn");
             const navMenu = document.getElementById("navMenu");
             const welcomeTitle = welcomeSection.querySelector('[data-lang="welcome-title"]');
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            const toggleButtonIcon = document.querySelector(".toggle-btn i");
+
+            isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+            currentUser = sessionStorage.getItem("currentUser") || "";
 
             if (isLoggedIn && currentUser) {
                 heroSection.style.display = "none";
-                welcomeSection.style.display = "block"; // Hiển thị welcome section khi đã đăng nhập
-                if (welcomeTitle) { // Cập nhật tiêu đề chào mừng
-                    translations.vi["welcome-title"] = `Chào mừng ${currentUser}!`;
-                    translations.en["welcome-title"] = `Welcome ${currentUser}!`;
-                    welcomeTitle.textContent = translations[language]["welcome-title"];
+                welcomeSection.style.display = "block"; 
+                if (welcomeTitle) { 
+                    const userDisplayName = sessionStorage.getItem("currentConsultant") || currentUser; 
+                    welcomeTitle.textContent = language === 'vi' ? `Chào mừng ${userDisplayName}!` : `Welcome ${userDisplayName}!`;
                 }
                 dashboard.style.display = "block";
-                navMenu.style.display = "flex"; // Hiển thị menu điều hướng
-                logoutBtn.style.display = "flex"; // Hiển thị nút đăng xuất
-            } else {
-                heroSection.style.display = "flex"; // Sử dụng flex để căn giữa nội dung hero
-                welcomeSection.style.display = "block"; // Vẫn hiển thị welcome section khi chưa đăng nhập
-                 if (welcomeTitle) { // Đặt lại tiêu đề chào mừng mặc định
-                    translations.vi["welcome-title"] = "Hệ Thống Nội Bộ";
-                    translations.en["welcome-title"] = "Internal System";
-                    welcomeTitle.textContent = translations[language]["welcome-title"];
+                navMenu.style.display = "flex"; 
+                logoutBtn.style.display = "flex"; 
+
+                // Xử lý sidebar dựa trên kích thước màn hình
+                if (window.innerWidth <= 900) { // Màn hình nhỏ (mobile)
+                    sidebar.classList.add("collapsed");
+                    mainContent.classList.add("collapsed");
+                    if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
+                } else { // Màn hình lớn (desktop)
+                    // Để người dùng tự quyết định trạng thái sidebar trên desktop nếu đã từng thu gọn
+                    // Chỉ mở rộng mặc định nếu nó chưa bị thu gọn trước đó bởi người dùng
+                    if (!sidebar.classList.contains("manually-collapsed")) {
+                         sidebar.classList.remove("collapsed");
+                         mainContent.classList.remove("collapsed");
+                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
+                    } else {
+                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; // Giữ icon bars nếu người dùng tự thu gọn
+                    }
+                }
+
+            } else { // Chưa đăng nhập
+                heroSection.style.display = "flex"; 
+                welcomeSection.style.display = "block"; 
+                 if (welcomeTitle) { 
+                    welcomeTitle.textContent = language === 'vi' ? "HỆ THỐNG NỘI BỘ" : "INTERNAL SYSTEM";
                 }
                 dashboard.style.display = "none";
-                navMenu.style.display = "none"; // Ẩn menu điều hướng
-                logoutBtn.style.display = "none"; // Ẩn nút đăng xuất
+                navMenu.style.display = "none"; 
+                logoutBtn.style.display = "none"; 
+                
+                // Khi chưa đăng nhập, sidebar luôn mở rộng trên desktop và mobile (hoặc theo CSS mặc định)
+                sidebar.classList.remove("collapsed");
+                sidebar.classList.remove("manually-collapsed"); // Xóa trạng thái thu gọn thủ công
+                mainContent.classList.remove("collapsed");
+                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
             }
         }
         
+        // Hàm xử lý khi thay đổi kích thước cửa sổ
+        function handleResize() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            const toggleButtonIcon = document.querySelector(".toggle-btn i");
+            const isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
+
+            if (isLoggedIn) {
+                if (window.innerWidth <= 900) { // Chuyển sang mobile
+                    if (!sidebar.classList.contains("collapsed")) {
+                        sidebar.classList.add("collapsed");
+                        mainContent.classList.add("collapsed");
+                        if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars";
+                    }
+                } else { // Chuyển sang desktop
+                    // Nếu sidebar không bị người dùng thu gọn thủ công, thì mở ra
+                    if (!sidebar.classList.contains("manually-collapsed")) {
+                        if (sidebar.classList.contains("collapsed")) { // Chỉ mở nếu nó đang bị thu gọn (ví dụ từ mobile)
+                           sidebar.classList.remove("collapsed");
+                           mainContent.classList.remove("collapsed");
+                           if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
+                        }
+                    }
+                    // Nếu người dùng đã thu gọn thủ công trên desktop, để nguyên trạng thái đó
+                }
+            } else {
+                 // Khi chưa đăng nhập, đảm bảo sidebar không bị class collapsed nếu resize
+                sidebar.classList.remove("collapsed");
+                mainContent.classList.remove("collapsed");
+                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars";
+            }
+        }
+
+        // Hàm toggle sidebar thủ công
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            const toggleButtonIcon = document.querySelector(".toggle-btn i");
+
+            sidebar.classList.toggle("collapsed");
+            mainContent.classList.toggle("collapsed");
+
+            if (sidebar.classList.contains("collapsed")) {
+                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars";
+                if (window.innerWidth > 900) { // Nếu đang ở desktop và người dùng thu gọn
+                    sidebar.classList.add("manually-collapsed");
+                }
+            } else {
+                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
+                sidebar.classList.remove("manually-collapsed"); // Xóa trạng thái thu gọn thủ công khi mở ra
+            }
+        }
+
         // Hàm tổng hợp để tải dữ liệu cho dashboard
         function fetchDashboardData() {
             fetchTotalSoldCars();
-            fetchSoldCarsDataForDashboard(); // Đổi tên để tránh nhầm lẫn
-            fetchRandomStockDataForDashboard(); // Đổi tên
-            fetchPairingRequestsForDashboard(); // Đổi tên
+            fetchSoldCarsDataForDashboard(); 
+            fetchRandomStockDataForDashboard(); 
+            fetchPairingRequestsForDashboard(); 
         }
 
         // Tải tổng số xe đã bán
@@ -1034,7 +1154,6 @@
                 totalSoldCarsElement.textContent = `${totalSoldCars} xe`;
             } catch (error) {
                 totalSoldCarsElement.textContent = "Lỗi tải";
-                showAlert("Error", translations[language]["server-error"]);
             }
         }
 
@@ -1053,20 +1172,17 @@
                 );
                 const results = await Promise.all(fetchPromises);
                 allSoldCars = results.flat();
-                // Sắp xếp theo ngày bán mới nhất (giả sử cột ngày bán là cột cuối cùng hoặc có chỉ số cụ thể)
-                // Ví dụ: allSoldCars.sort((a, b) => new Date(b[DATE_COLUMN_INDEX]) - new Date(a[DATE_COLUMN_INDEX]));
-                const randomData = getRandomRows(allSoldCars, 5); // Hiển thị 5 dòng ngẫu nhiên
+                const randomData = getRandomRows(allSoldCars, 5); 
                 displaySoldCarsData(randomData, tableBody);
             } catch (error) {
                 tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>`;
-                showAlert("Error", translations[language]["server-error"]);
             }
         }
         
         // Hàm tiện ích lấy các dòng ngẫu nhiên từ mảng
         function getRandomRows(array, count) {
             if (!array || array.length === 0) return [];
-            if (array.length <= count) return [...array]; // Trả về bản sao của mảng nếu không đủ phần tử
+            if (array.length <= count) return [...array]; 
             const result = [];
             const indices = new Set();
             while (indices.size < count && indices.size < array.length) {
@@ -1085,7 +1201,6 @@
             }
             data.forEach(row => {
                 const tr = document.createElement("tr");
-                // Cập nhật chỉ số cột dựa trên cấu trúc thực tế của Google Sheet
                 tr.innerHTML = `
                     <td>${row[7] || "N/A"}</td> <td>${row[3] || "N/A"}</td> <td>${row[8] || "N/A"}</td> `;
                 tableBodyElement.appendChild(tr);
@@ -1101,8 +1216,8 @@
             try {
                 const response = await axios.get(STOCK_API_URL);
                 const data = response.data;
-                const stockData = data.slice(1); // Bỏ qua dòng tiêu đề
-                const randomRows = getRandomRows(stockData, 5); // Hiển thị 5 dòng ngẫu nhiên
+                const stockData = data.slice(1); 
+                const randomRows = getRandomRows(stockData, 5); 
                 stockTableBody.innerHTML = "";
                 if (randomRows.length === 0) {
                      stockTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>`;
@@ -1118,7 +1233,6 @@
             } catch (error) {
                 stockTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
                 stockCountElement.textContent = "Lỗi tải";
-                showAlert("Error", translations[language]["server-error"]);
             }
         }
 
@@ -1130,11 +1244,10 @@
 
             try {
                 const response = await axios.get(PAIRING_REQUEST_API_URL);
-                const jsonData = response.data; // Axios tự parse JSON
-                // Sắp xếp theo thời gian nhập mới nhất (giả sử có trường "Thời gian nhập")
+                const jsonData = response.data; 
                 if (jsonData && Array.isArray(jsonData)) {
                     jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
-                    const latestRequests = jsonData.slice(0, 5); // Hiển thị 5 yêu cầu mới nhất
+                    const latestRequests = jsonData.slice(0, 5); 
                     pairingTableBody.innerHTML = "";
                     if (latestRequests.length === 0) {
                         pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>';
@@ -1157,7 +1270,6 @@
             } catch (error) {
                 pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
                 pairingCountElement.textContent = "Lỗi tải";
-                showAlert("Error", translations[language]["server-error"]);
             }
         }
 
@@ -1191,26 +1303,24 @@
                 const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
                 const result = response.data;
                 if (result.success) {
-                    isLoggedIn = true;
-                    currentUser = result.username; // Lưu username đã chuẩn hóa từ server (nếu có)
-                    userRole = result.role || "employee";
                     sessionStorage.setItem("isLoggedIn", "true");
-                    sessionStorage.setItem("currentUser", currentUser);
-                    sessionStorage.setItem("userRole", userRole);
+                    sessionStorage.setItem("currentUser", result.username); 
+                    sessionStorage.setItem("userRole", result.role || "employee");
                     
-                    const consultantName = userToConsultantMap[username.toLowerCase()] || userToConsultantMap[currentUser.toLowerCase()];
+                    const consultantName = userToConsultantMap[result.username.toLowerCase()]; 
                     if (consultantName) {
                         sessionStorage.setItem("currentConsultant", consultantName);
                     } else {
-                         // Nếu không tìm thấy trong map, có thể dùng username làm tên tư vấn viên tạm thời hoặc báo lỗi
-                        sessionStorage.setItem("currentConsultant", currentUser); // Hoặc xử lý khác
-                        // showAlert("Cảnh báo", "Không tìm thấy tên tư vấn viên tương ứng, sử dụng username.");
+                        sessionStorage.setItem("currentConsultant", result.username); 
                     }
+                    isLoggedIn = true;
+                    currentUser = result.username;
+                    userRole = result.role || "employee";
 
                     closeModal("loginModal");
                     showAlert("Thành công", translations[language]["login-success"]);
-                    updateUIBasedOnLogin();
-                    fetchDashboardData();
+                    updateUIBasedOnLogin(); 
+                    fetchDashboardData();   
                 } else {
                     showAlert("Lỗi", result.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
                 }
@@ -1273,7 +1383,7 @@
                 const response = await axios.post(API_URL, null, { params: { action: "forgotPassword", email } });
                 const result = response.data;
                 if (result.success) {
-                    showResetPasswordWithOTPForm(result.username); // Truyền username nhận được từ server
+                    showResetPasswordWithOTPForm(result.username); 
                     showAlert("Thành công", translations[language]["otp-sent"]);
                 } else {
                     showAlert("Lỗi", result.message || "Email không tồn tại hoặc có lỗi xảy ra.");
@@ -1289,7 +1399,7 @@
         function showResetPasswordWithOTPForm(username) {
             showForm('resetPasswordWithOTPForm');
             const resetUsernameInput = document.getElementById("resetUsername");
-            if(resetUsernameInput) resetUsernameInput.value = username || ""; // Điền username nếu có
+            if(resetUsernameInput) resetUsernameInput.value = username || ""; 
         }
 
         // Xử lý đặt lại mật khẩu với OTP
@@ -1330,18 +1440,12 @@
 
         // Xử lý đăng xuất
         function logout() {
-            isLoggedIn = false;
-            currentUser = "";
-            userRole = "employee";
-            sessionStorage.clear(); // Xóa tất cả dữ liệu session
+            sessionStorage.clear(); 
+            isLoggedIn = false; 
+            currentUser = "";   
+            userRole = "employee"; 
             updateUIBasedOnLogin();
             showAlert("Thông báo", translations[language]["logout-success"]);
-        }
-
-        // Chuyển đổi trạng thái sidebar
-        function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("collapsed");
-            document.getElementById("main-content").classList.toggle("collapsed");
         }
 
         // Mở modal
@@ -1352,7 +1456,7 @@
             modal.style.display = "flex";
             setTimeout(() => {
                 if (content) content.classList.add("active");
-            }, 10); // Delay nhỏ để transition có hiệu lực
+            }, 10); 
         }
 
         // Đóng modal
@@ -1363,17 +1467,15 @@
             if (content) content.classList.remove("active");
             setTimeout(() => {
                 modal.style.display = "none";
-                // Nếu là loginModal, reset về form đăng nhập chính
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 300); // Thời gian khớp với transition
+            }, 300); 
         }
         
         // Reset modal về form đăng nhập
         function resetModalToLogin() {
             showForm("loginForm");
-            // Xóa các trường input trong form đăng nhập (tùy chọn)
             const loginFormElement = document.getElementById("loginForm");
             if (loginFormElement) {
                 loginFormElement.querySelector('form')?.reset();
@@ -1407,27 +1509,27 @@
             const langBtn = document.getElementById("languageBtn");
             if (langBtn) langBtn.textContent = language === "vi" ? "EN" : "VI";
             updateLanguage();
-            updateUIBasedOnLogin(); // Cập nhật lại tiêu đề chào mừng
         }
 
         // Cập nhật các yếu tố ngôn ngữ trên trang
         function updateLanguage() {
             document.querySelectorAll("[data-lang]").forEach(element => {
                 const key = element.getAttribute("data-lang");
-                if (translations[language] && translations[language][key] !== undefined) {
-                     // Xử lý trường hợp welcome-title đặc biệt
-                    if (key === "welcome-title") {
-                        const welcomeTitleElement = document.querySelector('#welcomeSection [data-lang="welcome-title"]');
-                        if (welcomeTitleElement) {
-                             if (isLoggedIn && currentUser) {
-                                welcomeTitleElement.textContent = language === 'vi' ? `Chào mừng ${currentUser}!` : `Welcome ${currentUser}!`;
-                            } else {
-                                welcomeTitleElement.textContent = language === 'vi' ? "Hệ Thống Nội Bộ" : "Internal System";
-                            }
-                        }
+                
+                if (key === "welcome-title") { 
+                    const welcomeTitleElement = element; 
+                    const currentLoggedInStatus = sessionStorage.getItem("isLoggedIn") === "true";
+                    const currentFullName = sessionStorage.getItem("currentConsultant");
+                    const currentUName = sessionStorage.getItem("currentUser");
+
+                    if (currentLoggedInStatus) {
+                        const userDisplayName = currentFullName || currentUName || (language === 'vi' ? 'Người dùng' : 'User');
+                        welcomeTitleElement.textContent = language === 'vi' ? `Chào mừng ${userDisplayName}!` : `Welcome ${userDisplayName}!`;
                     } else {
-                        element.textContent = translations[language][key];
+                        welcomeTitleElement.textContent = language === 'vi' ? "HỆ THỐNG NỘI BỘ" : "INTERNAL SYSTEM";
                     }
+                } else if (translations[language] && translations[language][key] !== undefined) { 
+                    element.textContent = translations[language][key];
                 }
             });
             document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
@@ -1438,14 +1540,12 @@
             });
         }
 
-
         // Hiển thị form cụ thể trong modal
         function showForm(formName) {
             ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(formId => {
                 const formElement = document.getElementById(formId);
                 if (formElement) {
                     formElement.style.display = formId === formName ? "block" : "none";
-                    // Reset form khi hiển thị (trừ form đăng nhập chính có thể giữ lại username)
                     if (formId !== 'loginForm' && formId === formName) {
                         formElement.querySelector('form')?.reset();
                     }
