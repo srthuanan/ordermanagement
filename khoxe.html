@@ -11,18 +11,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Roboto', sans-serif; 
-            background: #f5f6f5; 
-            color: #2c3e50; 
-            min-height: 100vh; 
-            overflow-x: hidden; 
-            transition: background 0.3s, color 0.3s; 
-            width: 100vw; 
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f5f6f5; /* Neumorphic background light */
+            color: #2c3e50; /* Dark blue-grey text */
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+            width: 100vw;
         }
-        body.dark-mode { 
-            background: #1a1a1a; 
-            color: #d9e1e8; 
+        body.dark-mode {
+            background: #1a1a1a; /* Dark background */
+            color: #d9e1e8; /* Light grey text */
         }
 
         /* Header */
@@ -31,7 +31,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            background: #003087;
+            background: #003087; /* VinFast Blue */
             color: #FFFFFF;
             text-align: center;
             padding: 10px 0;
@@ -39,12 +39,12 @@
             font-weight: 600;
             text-transform: uppercase;
             z-index: 999;
-            box-shadow: 4px 4px 8px rgba(0, 48, 135, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 4px 8px rgba(0, 48, 135, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.1); /* Neumorphic shadow */
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
         body.dark-mode header {
-            background: #00205B;
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+            background: #00205B; /* Darker VinFast Blue */
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Slidebar */
@@ -54,277 +54,278 @@
             left: 0;
             width: 150px;
             height: 100vh;
-            background: #003087;
+            background: #003087; /* VinFast Blue */
             padding: 15px;
-            padding-top: 40px;
+            padding-top: 40px; /* Adjusted for header height */
             transition: width 0.3s ease;
             z-index: 1000;
-            box-shadow: 4px 0 8px rgba(0, 48, 135, 0.6), -2px 0 8px rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 0 8px rgba(0, 48, 135, 0.6), -2px 0 8px rgba(255, 255, 255, 0.1); /* Neumorphic shadow */
         }
         .slidebar.collapsed { width: 50px; }
         body.dark-mode .slidebar {
-            background: #00205B;
-            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4), -2px 0 8px rgba(255, 255, 255, 0.5);
+            background: #00205B; /* Darker VinFast Blue */
+            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4), -2px 0 8px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
-        .slidebar .logo h1 { 
-            font-size: 16px; 
-            color: #FFFFFF; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-            text-align: center; 
-            margin-bottom: 20px; 
-            transition: opacity 0.3s ease; 
+        .slidebar .logo h1 {
+            font-size: 16px;
+            color: #FFFFFF;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: opacity 0.3s ease;
         }
         .slidebar.collapsed .logo h1 { opacity: 0; }
-        .toggle-btn { 
-            position: absolute; 
-            top: 15px; 
-            right: -12px; 
-            width: 24px; 
-            height: 24px; 
-            background: #003087; 
-            border: none; 
-            border-radius: 50%; 
-            color: #FFFFFF; 
-            font-size: 12px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); 
+        .toggle-btn {
+            position: absolute;
+            top: 15px;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            background: #003087; /* VinFast Blue */
+            border: none;
+            border-radius: 50%;
+            color: #FFFFFF;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); /* Neumorphic shadow */
         }
-        .toggle-btn:hover { 
-            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+        .toggle-btn:hover {
+            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); /* Inset shadow on hover */
         }
-        body.dark-mode .toggle-btn { 
-            background: #00205B; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .toggle-btn {
+            background: #00205B; /* Darker VinFast Blue */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Navbar controls */
-        .navbar-controls { 
-            position: fixed; 
-            top: 15px; 
-            right: 15px; 
-            display: flex; 
-            gap: 8px; 
-            z-index: 1001; 
+        .navbar-controls {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            z-index: 1001;
         }
-        .nav-btn, .theme-toggle { 
-            padding: 6px; 
-            border: none; 
-            border-radius: 50%; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            font-size: 14px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            width: 32px; 
-            height: 32px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        .nav-btn, .theme-toggle {
+            padding: 6px;
+            border: none;
+            border-radius: 50%;
+            background: #FFFFFF; /* White background for buttons */
+            color: #2c3e50; /* Dark blue-grey icon color */
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Neumorphic shadow */
         }
-        .nav-btn:hover, .theme-toggle:hover { 
-            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        .nav-btn:hover, .theme-toggle:hover {
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); /* Inset shadow on hover */
         }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle {
+            background: #3a3a3a; /* Dark grey background for buttons */
+            color: #d9e1e8; /* Light grey icon color */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Main container */
-        .main-container { 
-            background: #f5f6f5; 
-            margin-left: 150px; 
-            padding: 15px; 
-            margin-top: 40px; 
-            height: calc(100vh - 60px); 
-            transition: margin-left 0.3s ease; 
-            display: flex; 
-            gap: 10px; 
-            width: calc(100vw - 160px); 
+        .main-container {
+            background: #f5f6f5; /* Neumorphic background light */
+            margin-left: 150px;
+            padding: 15px;
+            margin-top: 40px; /* Adjusted for header height */
+            height: calc(100vh - 60px); /* Adjusted for header and footer */
+            transition: margin-left 0.3s ease;
+            display: flex;
+            gap: 10px;
+            width: calc(100vw - 160px); /* Adjusted for slidebar width */
         }
-        .main-container.collapsed { 
-            margin-left: 50px; 
-            width: calc(100vw - 50px); 
+        .main-container.collapsed {
+            margin-left: 50px;
+            width: calc(100vw - 50px); /* Adjusted for collapsed slidebar */
         }
-        .grid-container { 
-            flex: 1; 
-            background: #FFFFFF; 
-            border-radius: 12px; 
-            padding: 15px; 
-            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            width: 100%; 
+        .grid-container {
+            flex: 1;
+            background: #FFFFFF; /* White background for content area */
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
         }
-        body.dark-mode .grid-container { 
-            background: #2c2c2c; 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        body.dark-mode .grid-container {
+            background: #2c2c2c; /* Dark grey background for content area */
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); /* Adjusted inset shadow for dark mode */
         }
 
         /* Filter section */
-        .filter-section { 
-            display: flex; 
-            flex-wrap: nowrap; 
-            gap: 6px; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding-bottom: 6px; 
-            width: 100%; 
+        .filter-section {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 6px;
+            width: 100%;
         }
-        .filter-group { 
-            display: flex; 
-            flex-wrap: nowrap; 
-            gap: 6px; 
-            align-items: center; 
+        .filter-group {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            align-items: center;
         }
-        .filter-section input, .filter-section select { 
-            padding: 4px 6px; 
-            border: none; 
-            border-radius: 5px; 
-            font-size: 10px; 
-            background: #FFFFFF; 
-            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
-            width: 120px; 
-            height: 26px; 
-            color: #2c3e50; 
+        .filter-section input, .filter-section select {
+            padding: 4px 6px;
+            border: none;
+            border-radius: 5px;
+            font-size: 10px;
+            background: #FFFFFF; /* White background for inputs */
+            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
+            width: 120px;
+            height: 26px;
+            color: #2c3e50; /* Dark blue-grey text */
         }
         .filter-section input:focus, .filter-section select:focus { outline: none; }
-        body.dark-mode .filter-section input, body.dark-mode .filter-section select { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: inset 2px 2px 3px rgba(0, 0, 0, 0.4), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .filter-section input, body.dark-mode .filter-section select {
+            background: #3a3a3a; /* Dark grey background for inputs */
+            color: #d9e1e8; /* Light grey text */
+            box-shadow: inset 2px 2px 3px rgba(0, 0, 0, 0.4), inset -2px -2px 3px rgba(255, 255, 255, 0.5); /* Adjusted inset shadow for dark mode */
         }
-        .filter-section .button-group { 
-            display: flex; 
-            gap: 5px; 
-            align-items: center; 
+        .filter-section .button-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
         }
-        .export-btn { 
-            padding: 3px; 
-            border: none; 
-            border-radius: 50%; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            font-size: 10px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            width: 26px; 
-            height: 26px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        .export-btn {
+            padding: 3px;
+            border: none;
+            border-radius: 50%;
+            background: #FFFFFF; /* White background for buttons */
+            color: #2c3e50; /* Dark blue-grey icon color */
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); /* Neumorphic shadow */
         }
-        .export-btn:hover { 
-            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        .export-btn:hover {
+            box-shadow: inset 2px 2px 3px rgba(163, 177, 198, 0.6), inset -2px -2px 3px rgba(255, 255, 255, 0.5); /* Inset shadow on hover */
         }
-        .refresh-btn { 
-            background: #FFFFFF; 
-            color: #00a550; 
+        .refresh-btn {
+            background: #FFFFFF; /* White background */
+            color: #00a550; /* Green icon for refresh */
         }
-        body.dark-mode .export-btn, body.dark-mode .refresh-btn { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+            background: #3a3a3a; /* Dark grey background for buttons */
+            color: #d9e1e8; /* Light grey icon color */
+            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
-        body.dark-mode .refresh-btn { color: #00a550; }
-        .total-vehicles { 
-            padding: 4px 8px; 
-            font-size: 10px; 
-            color: #2c3e50; 
-            background: #f5f6f5; 
-            border-radius: 5px; 
-            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .refresh-btn { color: #00a550; /* Green icon for refresh */ }
+        .total-vehicles {
+            padding: 4px 8px;
+            font-size: 10px;
+            color: #2c3e50; /* Dark blue-grey text */
+            background: #f5f6f5; /* Neumorphic background light */
+            border-radius: 5px;
+            box-shadow: 2px 2px 3px rgba(163, 177, 198, 0.6), -2px -2px 3px rgba(255, 255, 255, 0.5); /* Neumorphic shadow */
         }
-        body.dark-mode .total-vehicles { 
-            color: #d9e1e8; 
-            background: #2c2c2c; 
-            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .total-vehicles {
+            color: #d9e1e8; /* Light grey text */
+            background: #2c2c2c; /* Dark grey background */
+            box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4), -2px -2px 3px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Tables section */
-        .tables-section { 
-            display: flex; 
-            gap: 10px; 
-            flex: 1; 
-            min-height: 360px; 
-            width: 100%; 
+        .tables-section {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-height: 360px;
+            width: 100%;
         }
-        .table-container { 
-            flex: 0 0 75%; 
-            background: #FFFFFF; 
-            border-radius: 12px; 
-            padding: 10px; 
-            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
-            overflow-x: auto; 
-            overflow-y: auto; 
-            max-height: calc(100vh - 150px); 
-            position: relative; 
+        .table-container {
+            flex: 0 0 75%;
+            background: #FFFFFF; /* White background for table area */
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 150px); /* Adjusted for other elements */
+            position: relative;
         }
-        body.dark-mode .table-container { 
-            background: #2c2c2c; 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        body.dark-mode .table-container {
+            background: #2c2c2c; /* Dark grey background for table area */
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); /* Adjusted inset shadow for dark mode */
         }
         .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
-        .table-container::-webkit-scrollbar-track { background: #f5f6f5; }
-        .table-container::-webkit-scrollbar-thumb { 
-            background: #d9e1e8; 
-            border-radius: 3px; 
-            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        .table-container::-webkit-scrollbar-track { background: #f5f6f5; /* Neumorphic background light */ }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #d9e1e8; /* Light grey scrollbar thumb */
+            border-radius: 3px;
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
         }
-        body.dark-mode .table-container::-webkit-scrollbar-track { background: #1a1a1a; }
-        body.dark-mode .table-container::-webkit-scrollbar-thumb { 
-            background: #555; 
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .table-container::-webkit-scrollbar-track { background: #1a1a1a; /* Dark background */ }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb {
+            background: #555; /* Darker grey scrollbar thumb */
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Adjusted inset shadow for dark mode */
         }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 11px; 
-            table-layout: fixed; 
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            table-layout: fixed;
         }
-        th, td { 
-            padding: 8px 10px; 
-            text-align: left; 
-            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
-            white-space: normal; 
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); /* Light border */
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
-        th { 
-            font-weight: 600; 
-            background: #003087; 
-            color: #FFFFFF; 
-            position: sticky; 
-            top: 0; 
-            z-index: 2; 
-            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); 
+        th {
+            font-weight: 600;
+            background: #003087; /* VinFast Blue */
+            color: #FFFFFF;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); /* Neumorphic shadow */
         }
-        body.dark-mode th { 
-            background: #00205B; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        body.dark-mode th {
+            background: #00205B; /* Darker VinFast Blue */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
-        td { color: #2c3e50; }
-        body.dark-mode td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
-        tbody tr:hover { 
-            background: #f0f0f0; 
-            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        td { color: #2c3e50; /* Dark blue-grey text */ }
+        body.dark-mode td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); /* Lighter border for dark mode */ }
+        tbody tr:hover {
+            background: #f0f0f0; /* Light grey hover */
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
         }
-        body.dark-mode tbody tr:hover { background: #3a3a3a; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
-        .highlight { font-weight: 600; color: #00a550; }
+        body.dark-mode tbody tr:hover { background: #3a3a3a; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Darker grey hover, adjusted inset shadow */ }
+        .highlight { font-weight: 600; color: #00a550; /* Green highlight */ }
 
         /* Column widths */
-        col:nth-child(1) { width: 8%; }
-        col:nth-child(2) { width: 11%; }
-        col:nth-child(3) { width: 13%; }
-        col:nth-child(4) { width: 18%; }
-        col:nth-child(5) { width: 10%; }
-        col:nth-child(6) { width: 16%; }
-        col:nth-child(7) { width: 12%; }
+        col:nth-child(1) { width: 8%; }  /* SỐ TT */
+        col:nth-child(2) { width: 11%; } /* DÒNG XE */
+        col:nth-child(3) { width: 13%; } /* PHIÊN BẢN */
+        col:nth-child(4) { width: 18%; } /* NGOẠI THẤT */
+        col:nth-child(5) { width: 10%; } /* NỘI THẤT */
+        col:nth-child(6) { width: 16%; } /* SỐ VIN */
+        col:nth-child(7) { width: 12%; } /* TRẠNG THÁI */
+        /* Ngày nhập is the 8th column */
 
         /* Loading overlay */
         .loading-overlay {
@@ -348,7 +349,7 @@
         }
         .loading-spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #003087;
+            border-top: 4px solid #003087; /* VinFast Blue spinner */
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -359,220 +360,356 @@
             100% { transform: rotate(360deg); }
         }
         body.dark-mode .loading-spinner {
-            border-top: 4px solid #00205B;
+            border-top: 4px solid #00205B; /* Darker VinFast Blue spinner */
         }
+        body.dark-mode .loading-overlay {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        body.dark-mode .loading-overlay span {
+            color: #d9e1e8;
+        }
+
 
         /* Detail panel */
-        .detail-panel { 
-            flex: 0 0 25%; 
-            min-width: 200px; 
-            background: #FFFFFF; 
-            border-radius: 12px; 
-            padding: 10px; 
-            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
-            overflow-y: auto; 
+        .detail-panel {
+            flex: 0 0 25%;
+            min-width: 200px;
+            background: #FFFFFF; /* White background for detail panel */
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
+            overflow-y: auto;
         }
-        body.dark-mode .detail-panel { 
-            background: #2c2c2c; 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); 
+        body.dark-mode .detail-panel {
+            background: #2c2c2c; /* Dark grey background for detail panel */
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.1); /* Adjusted inset shadow for dark mode */
         }
         .detail-panel::-webkit-scrollbar { width: 6px; }
-        .detail-panel::-webkit-scrollbar-track { background: #f5f6f5; }
-        .detail-panel::-webkit-scrollbar-thumb { 
-            background: #d9e1e8; 
-            border-radius: 3px; 
-            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        .detail-panel::-webkit-scrollbar-track { background: #f5f6f5; /* Neumorphic background light */ }
+        .detail-panel::-webkit-scrollbar-thumb {
+            background: #d9e1e8; /* Light grey scrollbar thumb */
+            border-radius: 3px;
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
         }
-        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #1a1a1a; }
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { 
-            background: #555; 
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #1a1a1a; /* Dark background */ }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb {
+            background: #555; /* Darker grey scrollbar thumb */
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Adjusted inset shadow for dark mode */
         }
-        .detail-panel h3 { 
-            font-size: 14px; 
-            color: #2c3e50; 
-            margin-bottom: 10px; 
-            font-weight: 600; 
+        .detail-panel h3 {
+            font-size: 14px;
+            color: #2c3e50; /* Dark blue-grey text */
+            margin-bottom: 10px;
+            font-weight: 600;
         }
-        body.dark-mode .detail-panel h3 { color: #d9e1e8; }
-        .detail-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 11px; 
+        body.dark-mode .detail-panel h3 { color: #d9e1e8; /* Light grey text */ }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
         }
-        .detail-table th, .detail-table td { 
-            padding: 8px 10px; 
-            text-align: left; 
-            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
-            white-space: normal; 
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
+        .detail-table th, .detail-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); /* Light border */
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
-        .detail-table th { 
-            color: #2c3e50; 
-            font-weight: 400; 
-            width: 50%; 
-            background: #f0f0f0; 
-            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        .detail-table th {
+            color: #2c3e50; /* Dark blue-grey text */
+            font-weight: 400;
+            width: 50%;
+            background: #f0f0f0; /* Light grey background for detail headers */
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Inset neumorphic shadow */
         }
-        body.dark-mode .detail-table th { 
-            color: #d9e1e8; 
-            background: #3a3a3a; 
-            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .detail-table th {
+            color: #d9e1e8; /* Light grey text */
+            background: #3a3a3a; /* Dark grey background for detail headers */
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.5); /* Adjusted inset shadow for dark mode */
         }
-        .detail-table td { color: #2c3e50; }
-        body.dark-mode .detail-table td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); }
+        .detail-table td { color: #2c3e50; /* Dark blue-grey text */ }
+        body.dark-mode .detail-table td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.5); /* Lighter border for dark mode */ }
 
         /* Pagination */
-        .pagination { 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px; 
-            margin-top: 10px; 
-            width: 100%; 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
         }
-        .pagination button { 
-            padding: 6px 12px; 
-            border: none; 
-            border-radius: 8px; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            font-size: 12px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        .pagination button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            background: #FFFFFF; /* White background for pagination buttons */
+            color: #2c3e50; /* Dark blue-grey text */
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Neumorphic shadow */
         }
-        .pagination button:hover { 
-            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        .pagination button:hover {
+            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); /* Inset shadow on hover */
         }
-        body.dark-mode .pagination button { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        body.dark-mode .pagination button {
+            background: #3a3a3a; /* Dark grey background for pagination buttons */
+            color: #d9e1e8; /* Light grey text */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
-        .pagination span { 
-            padding: 6px 12px; 
-            font-size: 12px; 
-            color: #2c3e50; 
+        .pagination span {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #2c3e50; /* Dark blue-grey text */
         }
-        body.dark-mode .pagination span { color: #d9e1e8; }
+        body.dark-mode .pagination span { color: #d9e1e8; /* Light grey text */ }
 
         /* Footer */
-        footer { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%; 
-            background: #003087; 
-            color: #FFFFFF; 
-            text-align: center; 
-            padding: 8px 0; 
-            font-size: 10px; 
-            box-shadow: 4px -4px 8px rgba(0, 48, 135, 0.6), -4px 4px 8px rgba(255, 255, 255, 0.1); 
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #003087; /* VinFast Blue */
+            color: #FFFFFF;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 10px;
+            box-shadow: 4px -4px 8px rgba(0, 48, 135, 0.6), -4px 4px 8px rgba(255, 255, 255, 0.1); /* Neumorphic shadow */
+            z-index: 999;
         }
-        body.dark-mode footer { 
-            background: #00205B; 
-            box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.4), -4px 4px 8px rgba(255, 255, 255, 0.5); 
+        body.dark-mode footer {
+            background: #00205B; /* Darker VinFast Blue */
+            box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.4), -4px 4px 8px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Notification */
-        #notification { 
-            position: fixed; 
-            top: 50px; 
-            right: 80px; 
-            padding: 8px 15px; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
-            border-radius: 8px; 
-            display: none; 
-            z-index: 10001; 
-            font-size: 12px; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        #notification {
+            position: fixed;
+            top: 50px; /* Adjusted for header */
+            right: 80px;
+            padding: 8px 15px;
+            background: #FFFFFF; /* White background for notification */
+            color: #2c3e50; /* Dark blue-grey text */
+            border-radius: 8px;
+            display: none;
+            z-index: 10001;
+            font-size: 12px;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Neumorphic shadow */
         }
-        body.dark-mode #notification { 
-            background: #3a3a3a; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+        body.dark-mode #notification {
+            background: #3a3a3a; /* Dark grey background for notification */
+            color: #d9e1e8; /* Light grey text */
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5); /* Adjusted shadow for dark mode */
         }
 
         /* Responsive for mobile */
         @media (max-width: 768px) {
+            header {
+                padding: 12px 0; /* Slightly more padding for mobile header */
+                font-size: 13px;
+            }
             .slidebar {
-                width: 50px;
-                padding: 10px;
+                width: 0; /* Hide slidebar completely on mobile for simplicity */
+                padding: 0;
+                overflow: hidden; /* Prevent content visibility */
             }
-            .slidebar .logo h1 { opacity: 0; }
+            .slidebar.collapsed {
+                 width: 0;
+            }
+            .toggle-btn { display: none; } /* Hide toggle button as sidebar is hidden */
+
             .main-container {
-                margin-left: 50px;
-                width: calc(100vw - 50px);
+                margin-left: 0; /* Full width as sidebar is hidden */
+                width: 100vw;
                 padding: 10px;
+                margin-top: 50px; /* Adjust based on new header height */
+                height: calc(100vh - 50px - 34px); /* Header and footer height */
             }
+             .main-container.collapsed {
+                margin-left: 0;
+                width: 100vw;
+            }
+
             .navbar-controls {
-                top: 10px;
+                top: 8px; /* Align with new header padding */
                 right: 10px;
-                gap: 5px;
+                gap: 8px;
             }
             .nav-btn, .theme-toggle {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
+                width: 36px; /* Larger tap targets */
+                height: 36px;
+                font-size: 16px; /* Larger icons */
+                box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.5), -2px -2px 4px rgba(255, 255, 255, 0.4); /* Softer shadow */
             }
+             body.dark-mode .nav-btn, body.dark-mode .theme-toggle {
+                box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+            }
+
+
             .filter-section {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
+                align-items: stretch; /* Make children full width */
+                gap: 8px; /* Increased gap */
             }
             .filter-group {
                 flex-direction: column;
                 width: 100%;
-                gap: 5px;
+                gap: 8px;
             }
             .filter-section input, .filter-section select {
                 width: 100%;
-                margin-bottom: 3px;
+                padding: 10px 8px; /* More padding for easier interaction */
+                font-size: 13px; /* Larger font */
+                height: auto;
+                 box-shadow: inset 1px 1px 2px rgba(163, 177, 198, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.4); /* Softer inset shadow */
             }
+            body.dark-mode .filter-section input, body.dark-mode .filter-section select {
+                box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3), inset -1px -1px 2px rgba(255, 255, 255, 0.3);
+            }
+
             .filter-section .button-group {
                 width: 100%;
-                justify-content: flex-start;
+                justify-content: space-around; /* Distribute buttons */
+                margin-top: 5px;
             }
-            .filter-section .total-vehicles {
+            .export-btn {
+                width: 40px; /* Larger tap targets */
+                height: 40px;
+                font-size: 16px; /* Larger icons */
+                 box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.5), -2px -2px 4px rgba(255, 255, 255, 0.4);
+            }
+            body.dark-mode .export-btn {
+                box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+            }
+
+
+            .total-vehicles {
                 width: 100%;
-                text-align: right;
-                padding: 3px 6px;
-                font-size: 9px;
+                text-align: center; /* Center total vehicles */
+                padding: 8px 6px;
+                font-size: 12px; /* Slightly larger font */
+                margin-top: 5px;
+                background: transparent; /* Simpler look */
+                box-shadow: none; /* Remove shadow for simplicity */
+                border: 1px solid rgba(163, 177, 198, 0.4);
             }
+            body.dark-mode .total-vehicles {
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+
             .tables-section {
                 flex-direction: column;
                 width: 100%;
+                gap: 15px; /* More space between table and detail */
             }
             .table-container {
                 flex: 1;
                 width: 100%;
-                max-height: 50vh;
+                max-height: 45vh; /* Adjust height allocation */
+                padding: 8px; /* Slightly less padding inside container */
+                box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.4); /* Softer shadow */
             }
+            body.dark-mode .table-container {
+                 box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+            }
+
+            table {
+                font-size: 11.5px; /* Slightly larger font for table content */
+            }
+            th, td {
+                padding: 10px 8px; /* More vertical padding in cells */
+            }
+            th {
+                 box-shadow: 2px 2px 4px rgba(0, 48, 135, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.05); /* Softer shadow */
+            }
+            body.dark-mode th {
+                box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+            }
+
+
             .detail-panel {
                 flex: 1;
                 width: 100%;
                 min-width: 0;
-                max-height: 30vh;
+                max-height: 35vh; /* Adjust height allocation */
+                padding: 10px;
+                box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.4); /* Softer shadow */
             }
+             body.dark-mode .detail-panel {
+                 box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+            }
+            .detail-panel h3 {
+                font-size: 13px;
+                text-align: center;
+            }
+            .detail-table {
+                font-size: 11.5px;
+            }
+            .detail-table th, .detail-table td {
+                padding: 9px 8px;
+            }
+             .detail-table th {
+                box-shadow: inset 1px 1px 2px rgba(163, 177, 198, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.4);
+            }
+            body.dark-mode .detail-table th {
+                box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.3), inset -1px -1px 2px rgba(255, 255, 255, 0.3);
+            }
+
+            .pagination {
+                margin-top: 15px; /* More space above pagination */
+                gap: 8px;
+            }
+            .pagination button {
+                padding: 8px 14px; /* Larger tap targets */
+                font-size: 13px;
+                 box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.5), -2px -2px 4px rgba(255, 255, 255, 0.4);
+            }
+            body.dark-mode .pagination button {
+                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.3);
+            }
+            .pagination span {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+
             #notification {
-                top: 60px;
+                top: auto; /* Position at bottom */
+                bottom: 45px; /* Above footer */
+                left: 10px;
                 right: 10px;
-                font-size: 10px;
-                padding: 6px 10px;
+                width: auto;
+                text-align: center;
+                font-size: 12px; /* Larger font */
+                padding: 10px 15px; /* More padding */
+                box-shadow: 0px -2px 5px rgba(0,0,0,0.1); /* Shadow for bottom notification */
             }
-            header, footer {
-                font-size: 12px;
-                padding: 8px 0;
+            body.dark-mode #notification {
+                 box-shadow: 0px -2px 5px rgba(0,0,0,0.3);
             }
-            col:nth-child(1) { width: 10%; }
-            col:nth-child(2) { width: 20%; }
-            col:nth-child(3) { width: 15%; }
-            col:nth-child(4) { width: 15%; }
-            col:nth-child(5) { width: 20%; }
-            col:nth-child(6) { width: 20%; }
-            col:nth-child(7) { width: 20%; }
+
+            footer {
+                font-size: 11px;
+                padding: 10px 0;
+                box-shadow: 2px -2px 4px rgba(0, 48, 135, 0.4), -2px 2px 4px rgba(255, 255, 255, 0.05); /* Softer shadow */
+            }
+            body.dark-mode footer {
+                box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.3), -2px 2px 4px rgba(255, 255, 255, 0.3);
+            }
+
+            /* Mobile Column widths - prioritize VIN, Status, Line, Version */
+            col:nth-child(1) { width: 10%; }  /* SỐ TT - Narrower */
+            col:nth-child(2) { width: 20%; } /* DÒNG XE */
+            col:nth-child(3) { width: 20%; } /* PHIÊN BẢN */
+            col:nth-child(4) { width: 0%; display: none; } /* NGOẠI THẤT - Hidden on mobile for simplicity */
+            col:nth-child(5) { width: 0%; display: none; } /* NỘI THẤT - Hidden on mobile for simplicity */
+            col:nth-child(6) { width: 30%; } /* SỐ VIN - Wider */
+            col:nth-child(7) { width: 20%; } /* TRẠNG THÁI */
+            /* Ngày nhập is the 8th column, will take remaining space or also be hidden if too cluttered */
+            /* To hide Ngày nhập as well: col:nth-child(8) { width: 0%; display: none; } */
         }
     </style>
 </head>
@@ -611,8 +748,8 @@
                     <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
                     <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
                     <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
-                    <span class="total-vehicles" id="total-vehicles">Tổng số xe: 0</span>
                 </div>
+                 <span class="total-vehicles" id="total-vehicles">Tổng số xe: 0</span>
             </div>
             <div class="tables-section">
                 <div class="table-container">
@@ -622,8 +759,7 @@
                     </div>
                     <table id="data-table">
                         <colgroup>
-                            <col><col><col><col><col><col><col>
-                        </colgroup>
+                            <col><col><col><col><col><col><col><col> </colgroup>
                         <thead>
                             <tr>
                                 <th>SỐ TT</th>
@@ -661,7 +797,7 @@
         let tableData = [];
         let filteredData = [];
         let currentPage = 1;
-        const rowsPerPage = 20;
+        const rowsPerPage = 15; // Reduced rows per page for mobile, can be adjusted
         let language = localStorage.getItem('language') || 'vi';
 
         const translations = {
@@ -689,7 +825,7 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             if (!isLoggedIn) {
-                window.location.href = "index.html";
+                window.location.href = "index.html"; // Assuming index.html is your login page
             } else {
                 loadInitialData();
                 setupSearch();
@@ -697,11 +833,24 @@
                     document.body.classList.add('dark-mode');
                     document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
                 }
+                // Check if on mobile and adjust sidebar
+                if (window.innerWidth <= 768) {
+                    document.getElementById("slidebar").classList.add("collapsed"); // Start collapsed on mobile
+                     document.getElementById("main-container").classList.add("collapsed");
+                }
             }
         });
 
         function showLoading() {
-            document.getElementById("loading-overlay").classList.add("active");
+            const loadingOverlay = document.getElementById("loading-overlay");
+            loadingOverlay.classList.add("active");
+            // Ensure loading text color contrasts in dark mode
+            const loadingText = loadingOverlay.querySelector("span");
+            if (document.body.classList.contains("dark-mode")) {
+                loadingText.style.color = "#d9e1e8";
+            } else {
+                loadingText.style.color = "#2c3e50";
+            }
         }
 
         function hideLoading() {
@@ -710,10 +859,14 @@
 
         async function loadInitialData() {
             showLoading();
+            // Replace with your actual API endpoint
             const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec";
             try {
                 const response = await axios.get(apiURL);
-                if (!response.data || !Array.isArray(response.data.khoxe)) throw new Error("Invalid data");
+                if (!response.data || !Array.isArray(response.data.khoxe)) {
+                     console.error("Invalid data structure received:", response.data);
+                    throw new Error("Dữ liệu không hợp lệ từ API");
+                }
                 tableData = response.data.khoxe.map(row => [
                     row["Dòng xe"] || "",
                     row["Phiên bản"] || "",
@@ -723,15 +876,15 @@
                     row["Trạng thái"] || "",
                     row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); // Cache data
                 filteredData = [...tableData];
                 renderTable();
                 populateFilters();
                 showNotification(language === 'vi' ? "Dữ liệu đã được tải!" : "Data loaded!", 2000);
             } catch (error) {
-                console.error(error);
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="8">⚠️ Lỗi tải dữ liệu: ${error.message}</td></tr>`;
-                showNotification(language === 'vi' ? "Lỗi tải dữ liệu!" : "Error loading data!", 3000);
+                console.error("Lỗi tải dữ liệu:", error);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">⚠️ Lỗi tải dữ liệu: ${error.message}. Vui lòng thử làm mới.</td></tr>`;
+                showNotification(language === 'vi' ? `Lỗi tải dữ liệu: ${error.message}` : `Error loading data: ${error.message}`, 3000);
             } finally {
                 hideLoading();
             }
@@ -739,41 +892,52 @@
 
         function renderTable() {
             const tbody = document.getElementById("table-body");
-            tbody.innerHTML = "";
+            tbody.innerHTML = ""; // Clear existing rows
             const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = filteredData.slice(start, end);
 
-            paginatedData.forEach((row, index) => {
-                const globalIndex = start + index + 1;
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${globalIndex}</td>
-                    <td>${row[0]}</td>
-                    <td>${row[1]}</td>
-                    <td>${row[2]}</td>
-                    <td>${row[3]}</td>
-                    <td class="highlight">${row[4]}</td>
-                    <td>${row[5]}</td>
-                    <td>${row[6]}</td>
-                `;
-                tr.onclick = () => showDetail(row, globalIndex);
-                tbody.appendChild(tr);
-            });
+            if (paginatedData.length === 0 && filteredData.length > 0) { // If current page is empty but data exists (e.g. after filtering)
+                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">Không tìm thấy xe nào khớp với bộ lọc.</td></tr>`;
+            } else if (filteredData.length === 0) { // No data at all
+                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">Hiện chưa có dữ liệu xe nào trong kho.</td></tr>`;
+            } else {
+                paginatedData.forEach((row, index) => {
+                    const globalIndex = start + index + 1;
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${globalIndex}</td>
+                        <td>${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td>${row[2]}</td>
+                        <td>${row[3]}</td>
+                        <td class="highlight">${row[4]}</td>
+                        <td>${row[5]}</td>
+                        <td>${row[6]}</td>
+                    `;
+                    tr.onclick = () => showDetail(row, globalIndex);
+                    tbody.appendChild(tr);
+                });
+            }
 
             updatePagination();
             updateTotalVehicles();
+
+            // Show detail of the first item if data exists, otherwise clear detail panel
             if (paginatedData.length > 0) {
                 showDetail(paginatedData[0], start + 1);
             } else {
-                document.querySelector("#detail-body tbody").innerHTML = "<tr><td colspan='2'>Không có dữ liệu để hiển thị.</td></tr>";
+                const detailBody = document.querySelector("#detail-body tbody");
+                detailBody.innerHTML = `<tr><td colspan='2' style='text-align:center; padding:10px;'>${language === 'vi' ? 'Chọn một xe để xem chi tiết.' : 'Select a vehicle to see details.'}</td></tr>`;
+                document.querySelector("#detail-panel h3").textContent = language === 'vi' ? 'Chi Tiết Xe' : 'Vehicle Details';
             }
         }
 
         function updatePagination() {
-            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(filteredData.length / rowsPerPage) || 1}`;
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
             document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = currentPage === Math.ceil(filteredData.length / rowsPerPage) || filteredData.length === 0;
+            document.getElementById("next-btn").disabled = currentPage === totalPages || filteredData.length === 0;
         }
 
         function updateTotalVehicles() {
@@ -781,7 +945,8 @@
         }
 
         function changePage(delta) {
-            currentPage = Math.min(Math.max(1, currentPage + delta), Math.ceil(filteredData.length / rowsPerPage));
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+            currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
             renderTable();
             document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
@@ -789,6 +954,8 @@
 
         function showDetail(row, index) {
             const detailBody = document.querySelector("#detail-body tbody");
+            document.querySelector("#detail-panel h3").textContent = `${language === 'vi' ? 'Chi Tiết Xe' : 'Vehicle Details'} - #${index}`;
+
             const headers = [
                 translations[language]["vehicle-line"],
                 translations[language]["vehicle-version"],
@@ -800,22 +967,30 @@
             ];
             let html = "";
             headers.forEach((header, i) => {
-                let value = row[i] || "";
-                if (i === 4 && value) {
+                // Skip hidden columns on mobile for the detail view as well
+                if (window.innerWidth <= 768 && (i === 2 || i === 3)) { // Ngoại thất, Nội thất
+                    return;
+                }
+                let value = row[i] || (language === 'vi' ? "N/A" : "N/A");
+                if (i === 4 && value && value !== "N/A") { // VIN
                     html += `<tr><th>${header}</th><td class="highlight">${value}</td></tr>`;
                 } else {
                     html += `<tr><th>${header}</th><td>${value}</td></tr>`;
                 }
             });
-            detailBody.innerHTML = html;
+            detailBody.innerHTML = html || `<tr><td colspan='2'>${language === 'vi' ? 'Không có chi tiết.' : 'No details.'}</td></tr>`;
         }
 
         async function refreshData() {
             showLoading();
-            const apiURL = "https://script.google.com/macros/s/AKfycbyCCE6Q9g3Go2rjsJ0en-7OhfKcWEssPOA_n7cEFTD7ShDA9WV-5VmkWyEtkWR3oUIU/exec";
+            // Replace with your actual API endpoint
+            const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec"; // Example API
             try {
                 const response = await axios.get(apiURL);
-                if (!response.data || !Array.isArray(response.data.khoxe)) throw new Error("Invalid data");
+                 if (!response.data || !Array.isArray(response.data.khoxe)) {
+                    console.error("Invalid data structure received on refresh:", response.data);
+                    throw new Error("Dữ liệu không hợp lệ từ API");
+                }
                 tableData = response.data.khoxe.map(row => [
                     row["Dòng xe"] || "",
                     row["Phiên bản"] || "",
@@ -825,20 +1000,22 @@
                     row["Trạng thái"] || "",
                     row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); // Update cache
                 filteredData = [...tableData];
+                // Reset filters
                 document.getElementById("search-input").value = "";
                 document.getElementById("filter-line").value = "";
                 document.getElementById("filter-version").value = "";
                 document.getElementById("filter-exterior").value = "";
                 document.getElementById("filter-status").value = "";
+                currentPage = 1; // Reset to first page
                 renderTable();
-                populateFilters();
+                populateFilters(); // Repopulate filters with potentially new data
                 showNotification(language === 'vi' ? "Dữ liệu đã được làm mới!" : "Data refreshed!", 2000);
             } catch (error) {
-                console.error(error);
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="8">⚠️ Lỗi làm mới dữ liệu: ${error.message}</td></tr>`;
-                showNotification(language === 'vi' ? "Lỗi làm mới dữ liệu!" : "Error refreshing data!", 3000);
+                console.error("Lỗi làm mới dữ liệu:", error);
+                document.getElementById("table-body").innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 20px;">⚠️ Lỗi làm mới dữ liệu: ${error.message}.</td></tr>`;
+                showNotification(language === 'vi' ? `Lỗi làm mới dữ liệu: ${error.message}` : `Error refreshing data: ${error.message}`, 3000);
             } finally {
                 hideLoading();
             }
@@ -849,14 +1026,22 @@
             const versionSelect = document.getElementById("filter-version");
             const exteriorSelect = document.getElementById("filter-exterior");
             const statusSelect = document.getElementById("filter-status");
-            const lines = [...new Set(tableData.map(row => row[0]))];
-            const versions = [...new Set(tableData.map(row => row[1]))];
-            const exteriors = [...new Set(tableData.map(row => row[2]))];
-            const statuses = [...new Set(tableData.map(row => row[5]))];
-            lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}">${line}</option>`).join('');
-            versionSelect.innerHTML = '<option value="">Tất cả phiên bản</option>' + versions.map(version => `<option value="${version}">${version}</option>`).join('');
-            exteriorSelect.innerHTML = '<option value="">Tất cả ngoại thất</option>' + exteriors.map(exterior => `<option value="${exterior}">${exterior}</option>`).join('');
-            statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}">${status}</option>`).join('');
+
+            // Preserve current values if they exist
+            const currentLine = lineSelect.value;
+            const currentVersion = versionSelect.value;
+            const currentExterior = exteriorSelect.value;
+            const currentStatus = statusSelect.value;
+
+            const lines = [...new Set(tableData.map(row => row[0]))].sort();
+            const versions = [...new Set(tableData.map(row => row[1]))].sort();
+            const exteriors = [...new Set(tableData.map(row => row[2]))].sort();
+            const statuses = [...new Set(tableData.map(row => row[5]))].sort();
+
+            lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}" ${line === currentLine ? 'selected' : ''}>${line}</option>`).join('');
+            versionSelect.innerHTML = '<option value="">Tất cả phiên bản</option>' + versions.map(version => `<option value="${version}" ${version === currentVersion ? 'selected' : ''}>${version}</option>`).join('');
+            exteriorSelect.innerHTML = '<option value="">Tất cả ngoại thất</option>' + exteriors.map(exterior => `<option value="${exterior}" ${exterior === currentExterior ? 'selected' : ''}>${exterior}</option>`).join('');
+            statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}" ${status === currentStatus ? 'selected' : ''}>${status}</option>`).join('');
         }
 
         function applyFilters() {
@@ -867,13 +1052,14 @@
             const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
 
             filteredData = tableData.filter(row => {
-                return (!lineFilter || row[0] === lineFilter) &&
-                       (!versionFilter || row[1] === versionFilter) &&
-                       (!exteriorFilter || row[2] === exteriorFilter) &&
-                       (!statusFilter || row[5] === statusFilter) &&
-                       (!searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue)));
+                const matchesSearch = !searchValue || row.some(cell => cell?.toString().toLowerCase().includes(searchValue));
+                const matchesLine = !lineFilter || row[0] === lineFilter;
+                const matchesVersion = !versionFilter || row[1] === versionFilter;
+                const matchesExterior = !exteriorFilter || row[2] === exteriorFilter;
+                const matchesStatus = !statusFilter || row[5] === statusFilter;
+                return matchesSearch && matchesLine && matchesVersion && matchesExterior && matchesStatus;
             });
-            currentPage = 1;
+            currentPage = 1; // Reset to first page after filtering
             renderTable();
         }
 
@@ -891,13 +1077,22 @@
                 ];
                 const exportData = filteredData.map((row, index) => {
                     const rowData = { "SỐ TT": index + 1 };
-                    headers.slice(1).forEach((header, i) => rowData[header] = row[i] || "");
+                    // Use original headers for mapping
+                    rowData[translations['vi']["vehicle-line"]] = row[0] || "";
+                    rowData[translations['vi']["vehicle-version"]] = row[1] || "";
+                    rowData[translations['vi']["vehicle-exterior"]] = row[2] || "";
+                    rowData[translations['vi']["vehicle-interior"]] = row[3] || "";
+                    rowData[translations['vi']["vehicle-vin"]] = row[4] || "";
+                    rowData[translations['vi']["vehicle-status"]] = row[5] || "";
+                    rowData[translations['vi']["import-date"]] = row[6] || "";
                     return rowData;
                 });
+
+                // Create worksheet with translated headers
                 const ws = XLSX.utils.json_to_sheet(exportData, { header: headers });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "KhoXe");
-                XLSX.writeFile(wb, `KhoXe_VinFast_ThuanAn_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                XLSX.writeFile(wb, `KhoXe_VinFast_ThuanAn_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
                 showNotification(language === 'vi' ? "Đã xuất file thành công!" : "File exported successfully!", 2000);
             }
         }
@@ -907,12 +1102,10 @@
             let tableContent = `
                 <table>
                     <colgroup>
-                        <col style="width: 50px;">
+                        <col style="width: 40px;">
                         <col style="width: 100px;">
-                        <col style="width: 80px;">
-                        <col style="width: 80px;">
                         <col style="width: 100px;">
-                        <col style="width: 120px;">
+                        <col style="width: 80px;"> <col style="width: 80px;"> <col style="width: 120px;">
                         <col style="width: 80px;">
                         <col style="width: 80px;">
                     </colgroup>
@@ -949,31 +1142,40 @@
                 </table>
             `;
             const printContent = `
-                <h2 style="color: #2c3e50;">KHO XE VINFAST THUẬN AN</h2>
-                <p>Hotline: 1900 232389</p>
+                <h2 style="color: #003087; text-align: center;">KHO XE VINFAST THUẬN AN</h2>
+                <p style="text-align: center;">Hotline: 1900 232389</p>
                 <p>In lúc: ${now}</p>
                 <p>Tổng số xe: ${filteredData.length}</p>
                 ${tableContent}
             `;
-            const win = window.open('', '', 'width=800,height=600');
+            const win = window.open('', '', 'width=1000,height=700'); // Wider for print
             win.document.write(`
                 <html>
                 <head>
                     <title>In danh sách kho xe VinFast</title>
                     <style>
-                        body { font-family: 'Roboto', sans-serif; margin: 20px; }
-                        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-                        th, td { border: 1px solid #ddd; padding: 8px 10px; font-size: 11px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
-                        th { background: #003087; color: #FFFFFF; }
+                        body { font-family: 'Roboto', sans-serif; margin: 20px; color: #2c3e50; }
+                        table { width: 100%; border-collapse: collapse; table-layout: auto; } /* auto for print */
+                        th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 10px; white-space: nowrap; }
+                        th { background: #003087; color: #FFFFFF; font-weight: 600;}
                         .highlight { font-weight: 600; color: #00a550; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } /* Ensure background colors print */
+                            th { background-color: #003087 !important; color: #FFFFFF !important; }
+                        }
                     </style>
                 </head>
                 <body>${printContent}</body>
                 </html>
             `);
             win.document.close();
-            win.print();
+            // Delay print to ensure content is loaded
+            setTimeout(() => {
+                win.print();
+                win.close();
+            }, 500);
         }
+
 
         function setupSearch() {
             const searchInput = document.getElementById("search-input");
@@ -994,38 +1196,63 @@
             const body = document.body;
             body.classList.toggle('dark-mode');
             const themeIcon = document.querySelector('.theme-toggle i');
+            const loadingText = document.querySelector("#loading-overlay span");
+
             if (body.classList.contains('dark-mode')) {
                 themeIcon.classList.replace('fa-moon', 'fa-sun');
                 localStorage.setItem('theme', 'dark');
+                if(loadingText) loadingText.style.color = "#d9e1e8";
             } else {
                 themeIcon.classList.replace('fa-sun', 'fa-moon');
                 localStorage.setItem('theme', 'light');
+                 if(loadingText) loadingText.style.color = "#2c3e50";
             }
         }
 
         function toggleSlidebar() {
-            document.getElementById("slidebar").classList.toggle("collapsed");
-            document.getElementById("main-container").classList.toggle("collapsed");
+            // This function might be less relevant if sidebar is hidden on mobile
+            if (window.innerWidth > 768) {
+                document.getElementById("slidebar").classList.toggle("collapsed");
+                document.getElementById("main-container").classList.toggle("collapsed");
+            }
         }
 
         function logout() {
             sessionStorage.clear();
-            window.location.href = "index.html";
+            window.location.href = "index.html"; // Assuming index.html is your login page
             showNotification(language === 'vi' ? "Đã đăng xuất!" : "Logged out!", 2000);
         }
 
         function goBack() {
-            window.location.href = "index.html";
-            showNotification(language === 'vi' ? "Đã quay lại trang chủ!" : "Returned to homepage!", 2000);
+            window.location.href = "index.html"; // Assuming index.html is your main/previous page
+            showNotification(language === 'vi' ? "Đã quay lại!" : "Returned!", 2000);
         }
 
         function showNotification(message, duration = 2000) {
             const notif = document.getElementById("notification");
             notif.textContent = message;
             notif.style.display = "block";
-            clearTimeout(notif.timeout);
-            notif.timeout = setTimeout(() => notif.style.display = "none", duration);
+            // Clear previous timeout if any
+            if (notif.timeout) clearTimeout(notif.timeout);
+            notif.timeout = setTimeout(() => {
+                notif.style.display = "none";
+            }, duration);
         }
+
+        // Adjust layout on resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                if (!document.getElementById("slidebar").classList.contains("collapsed")) {
+                     // document.getElementById("slidebar").classList.add("collapsed"); // Keep it hidden
+                     // document.getElementById("main-container").classList.add("collapsed");
+                }
+            } else {
+                 // Optionally restore sidebar if it was programmatically collapsed
+                 // and user resizes to desktop view.
+            }
+            renderTable(); // Re-render table to adjust columns if necessary
+        });
+
     </script>
 </body>
 </html>
