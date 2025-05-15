@@ -8,73 +8,114 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Roboto', sans-serif; 
-            background: #FFFFFF;
-            color: #2c3e50; 
-            min-height: 100vh; 
-            overflow-x: hidden; 
-            transition: background 0.3s, color 0.3s; 
-            width: 100vw; 
-        }
-        body.dark-mode { 
-            background: #1a202c;
-            color: #d9e1e8; 
+        /* Định nghĩa các biến CSS cho màu sắc, font chữ, và các giá trị chung */
+        :root {
+            --font-primary: 'Roboto', sans-serif;
+            --font-secondary: 'Montserrat', sans-serif;
+
+            --color-primary: #003087;
+            --color-primary-dark: #1e3a8a;
+            --color-secondary: #00a550;
+            --color-accent: #ed8936;
+            --color-danger: #e53e3e;
+
+            --text-light: #FFFFFF;
+            --text-dark: #2c3e50;
+            --text-muted-light: #d9e1e8;
+            --text-muted-dark: #a0aec0;
+
+            --bg-light: #FFFFFF;
+            --bg-light-neumorphic: #FFFFFF; /* Nền cho các element neumorphic ở light mode */
+            --bg-dark: #1a202c;
+            --bg-dark-neumorphic: #2d3748; /* Nền cho các element neumorphic ở dark mode */
+            --bg-dark-neumorphic-hover: #4a5568;
+
+            --shadow-light-outer-strong: rgba(0, 48, 135, 0.6);
+            --shadow-light-outer-weak: rgba(255, 255, 255, 0.1);
+            --shadow-light-inner-strong: rgba(163, 177, 198, 0.6);
+            --shadow-light-inner-weak: rgba(255, 255, 255, 0.5);
+
+            --shadow-dark-outer-strong: rgba(0, 0, 0, 0.5);
+            --shadow-dark-outer-weak: rgba(255, 255, 255, 0.05);
+            --shadow-dark-inner-strong: rgba(0, 0, 0, 0.5);
+            --shadow-dark-inner-weak: rgba(255, 255, 255, 0.05);
+
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-circle: 50%;
+
+            --transition-speed: 0.3s;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: var(--font-primary); 
+            background: var(--bg-light);
+            color: var(--text-dark); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            transition: background var(--transition-speed), color var(--transition-speed); 
+            width: 100vw; 
+            /* zoom: 100%; /* Có thể cần điều chỉnh hoặc loại bỏ tùy theo mục đích */
+        }
+        body.dark-mode { 
+            background: var(--bg-dark);
+            color: var(--text-muted-light); 
+        }
+
+        /* Header */
         header {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: #003087;
-            color: #FFFFFF;
+            background: var(--color-primary);
+            color: var(--text-light);
             text-align: center;
             padding: 10px 0;
             font-size: 14px;
             font-weight: 600;
             text-transform: uppercase;
             z-index: 999;
-            box-shadow: 4px 4px 8px rgba(0, 48, 135, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 4px 8px var(--shadow-light-outer-strong), -4px -4px 8px var(--shadow-light-outer-weak);
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
         body.dark-mode header {
-            background: #1e3a8a;
-            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5), -4px -4px 8px rgba(255, 255, 255, 0.05);
+            background: var(--color-primary-dark);
+            box-shadow: 4px 4px 8px var(--shadow-dark-outer-strong), -4px -4px 8px var(--shadow-dark-outer-weak);
         }
 
+        /* Sidebar */
         .slidebar {
             position: fixed;
             top: 0;
             left: 0;
             width: 160px;
             height: 100vh;
-            background: #003087;
+            background: var(--color-primary);
             padding: 15px;
-            padding-top: 40px;
-            transition: width 0.3s ease;
+            padding-top: 40px; /* Điều chỉnh để không bị header che */
+            transition: width var(--transition-speed) ease;
             z-index: 1000;
-            box-shadow: 4px 0 8px rgba(0, 48, 135, 0.6), -2px 0 8px rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 0 8px var(--shadow-light-outer-strong), -2px 0 8px var(--shadow-light-outer-weak);
         }
-        .slidebar.collapsed {
-            width: 50px;
-        }
+        .slidebar.collapsed { width: 50px; }
         body.dark-mode .slidebar {
-            background: #1e3a8a;
-            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.5), -2px 0 8px rgba(255, 255, 255, 0.05);
+            background: var(--color-primary-dark);
+            box-shadow: 4px 0 8px var(--shadow-dark-outer-strong), -2px 0 8px var(--shadow-dark-outer-weak);
         }
         .slidebar .logo h1 { 
             font-size: 16px; 
-            color: #FFFFFF; 
+            color: var(--text-light); 
             font-weight: 600; 
             text-transform: uppercase; 
             text-align: center; 
             margin-bottom: 20px; 
-            transition: opacity 0.3s ease; 
+            transition: opacity var(--transition-speed) ease; 
         }
         .slidebar.collapsed .logo h1 { opacity: 0; }
         .slidebar .tabs a { 
@@ -82,55 +123,43 @@
             align-items: center;
             padding: 10px;
             text-decoration: none;
-            color: #FFFFFF;
+            color: var(--text-light);
             font-size: 12px;
             font-weight: 500;
-            border-radius: 8px;
+            border-radius: var(--border-radius-md);
             background: rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            transition: all var(--transition-speed) ease;
             margin-bottom: 6px;
         }
-        .slidebar.collapsed .tabs a {
-            padding: 10px;
-            justify-content: center;
-        }
+        .slidebar.collapsed .tabs a { padding: 10px; justify-content: center; }
         .slidebar .tabs a i {
             margin-right: 8px;
             font-size: 14px;
             width: 18px;
             text-align: center;
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-speed) ease;
         }
-        .slidebar.collapsed .tabs a i {
-            margin-right: 0;
-        }
-        .slidebar .tabs a:hover i {
-            transform: scale(1.2) rotate(15deg);
-        }
-        .slidebar .tabs a span {
-            transition: opacity 0.3s ease, width 0.3s ease;
-        }
-        .slidebar.collapsed .tabs a span {
-            opacity: 0;
-            width: 0;
-        }
+        .slidebar.collapsed .tabs a i { margin-right: 0; }
+        .slidebar .tabs a:hover i { transform: scale(1.2) rotate(15deg); }
+        .slidebar .tabs a span { transition: opacity var(--transition-speed) ease, width var(--transition-speed) ease; }
+        .slidebar.collapsed .tabs a span { opacity: 0; width: 0; overflow: hidden; }
         .slidebar .tabs a:hover { 
             background: rgba(255, 255, 255, 0.2); 
-            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-outer-strong), inset -3px -3px 6px var(--shadow-light-outer-weak); 
         }
         .slidebar .tabs a.active { 
             background: rgba(255, 255, 255, 0.3); 
-            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-outer-strong), inset -3px -3px 6px var(--shadow-light-outer-weak); 
             font-weight: 600; 
         }
         body.dark-mode .slidebar .tabs a { 
             background: rgba(255, 255, 255, 0.05); 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-outer-strong), -3px -3px 6px var(--shadow-dark-outer-weak); 
         }
         body.dark-mode .slidebar .tabs a:hover, 
         body.dark-mode .slidebar .tabs a.active { 
             background: rgba(255, 255, 255, 0.15); 
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.05); 
+            box-shadow: inset 3px 3px 6px var(--shadow-dark-outer-strong), inset -3px -3px 6px var(--shadow-dark-outer-weak); 
         }
         .toggle-btn { 
             position: absolute; 
@@ -138,31 +167,32 @@
             right: -12px; 
             width: 24px; 
             height: 24px; 
-            background: #003087; 
+            background: var(--color-primary); 
             border: none; 
-            border-radius: 50%; 
-            color: #FFFFFF; 
+            border-radius: var(--border-radius-circle); 
+            color: var(--text-light); 
             font-size: 12px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
-            box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); 
+            transition: all var(--transition-speed) ease; 
+            box-shadow: 3px 3px 6px var(--shadow-light-outer-strong), -3px -3px 6px var(--shadow-light-outer-weak); 
         }
         .toggle-btn:hover { 
-            box-shadow: inset 3px 3px 6px rgba(0, 48, 135, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.2); 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-outer-strong), inset -3px -3px 6px var(--shadow-light-outer-weak); 
             transform: rotate(90deg); 
         }
         body.dark-mode .toggle-btn { 
-            background: #1e3a8a; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); 
+            background: var(--color-primary-dark); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-outer-strong), -3px -3px 6px var(--shadow-dark-outer-weak); 
         }
 
+        /* Main Container */
         .main-container { 
-            background: #FFFFFF;
+            background: var(--bg-light);
             margin-left: 160px;
             padding: 15px; 
-            margin-top: 40px; 
-            height: calc(100vh - 60px); 
-            transition: margin-left 0.3s ease; 
+            margin-top: 40px; /* Bằng chiều cao header */
+            height: calc(100vh - 60px); /* Header (40px) + Footer (20px) */
+            transition: margin-left var(--transition-speed) ease; 
             display: flex; 
             gap: 10px; 
             width: calc(100vw - 160px);
@@ -171,13 +201,12 @@
             margin-left: 50px;
             width: calc(100vw - 50px);
         }
-        body.dark-mode .main-container { 
-            background: #1a202c;
-        }
+        body.dark-mode .main-container { background: var(--bg-dark); }
 
+        /* Navbar Controls */
         .navbar-controls { 
             position: fixed; 
-            top: 15px; 
+            top: 10px; /* Điều chỉnh để căn giữa với header */
             right: 15px; 
             display: flex; 
             gap: 8px; 
@@ -186,218 +215,477 @@
         .nav-btn, .theme-toggle { 
             padding: 6px; 
             border: none; 
-            border-radius: 50%; 
-            background: #FFFFFF;
-            color: #2c3e50; 
+            border-radius: var(--border-radius-circle); 
+            background: var(--bg-light-neumorphic);
+            color: var(--text-dark); 
             font-size: 14px; 
             cursor: pointer; 
-            transition: all 0.3s ease; 
+            transition: all var(--transition-speed) ease; 
             width: 32px; 
             height: 32px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
             position: relative; 
         }
         .nav-btn:hover, .theme-toggle:hover { 
-            box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-inner-strong), inset -3px -3px 6px var(--shadow-light-inner-weak); 
         }
         body.dark-mode .nav-btn, body.dark-mode .theme-toggle { 
-            background: #2d3748;
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); 
+            background: var(--bg-dark-neumorphic);
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
         }
         .nav-btn:hover::after, .theme-toggle:hover::after { 
             content: attr(data-tooltip); 
             position: absolute; 
             top: 40px; 
-            background: #FFFFFF; 
-            color: #2c3e50; 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
             padding: 4px 8px; 
-            border-radius: 4px; 
+            border-radius: var(--border-radius-sm); 
             font-size: 12px; 
             white-space: nowrap; 
             z-index: 10; 
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
         }
         body.dark-mode .nav-btn:hover::after, body.dark-mode .theme-toggle:hover::after { 
-            background: #2d3748; 
-            color: #d9e1e8; 
-            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); 
+            background: var(--bg-dark-neumorphic); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
         }
 
+        /* Grid Container (Nơi chứa nội dung chính) */
         .grid-container { 
             flex: 1; 
-            background: #FFFFFF;
-            border-radius: 12px; 
+            background: var(--bg-light-neumorphic);
+            border-radius: var(--border-radius-lg); 
             padding: 15px; 
-            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
             width: 100%; 
             position: relative;
+            overflow-y: auto; /* Cho phép scroll nếu nội dung vượt quá */
         }
         body.dark-mode .grid-container { 
-            background: #2d3748;
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); 
+            background: var(--bg-dark-neumorphic);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
         }
 
+        /* Summary Cards */
         .summary-cards { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .summary-card { width: 200px; background: #FFFFFF; border-radius: 12px; padding: 10px; box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); display: flex; align-items: center; gap: 10px; transition: transform 0.3s ease; }
+        .summary-card { 
+            width: 200px; 
+            background: var(--bg-light-neumorphic); 
+            border-radius: var(--border-radius-lg); 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            transition: transform var(--transition-speed) ease; 
+        }
         .summary-card:hover { transform: translateY(-5px); }
-        body.dark-mode .summary-card { background: #2d3748; box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); }
-        .summary-card .icon { font-size: 20px; color: #003087; }
-        body.dark-mode .summary-card .icon { color: #63b3ed; }
-        .summary-card .info h3 { font-size: 12px; color: #2c3e50; margin-bottom: 5px; }
-        body.dark-mode .summary-card .info h3 { color: #d9e1e8; }
-        .summary-card .info p { font-size: 14px; font-weight: 600; color: #2c3e50; }
-        body.dark-mode .summary-card .info p { color: #d9e1e8; }
+        body.dark-mode .summary-card { 
+            background: var(--bg-dark-neumorphic); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
+        }
+        .summary-card .icon { font-size: 20px; color: var(--color-primary); }
+        body.dark-mode .summary-card .icon { color: var(--color-accent); /* Hoặc một màu sáng hơn */ }
+        .summary-card .info h3 { font-size: 12px; color: var(--text-dark); margin-bottom: 5px; }
+        body.dark-mode .summary-card .info h3 { color: var(--text-muted-light); }
+        .summary-card .info p { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+        body.dark-mode .summary-card .info p { color: var(--text-muted-light); }
 
+        /* Charts Section */
         .charts-section { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .chart-row { display: flex; gap: 10px; }
-        .chart-container { background: #FFFFFF; border-radius: 12px; padding: 10px; box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); position: relative; }
+        .chart-row { display: flex; gap: 10px; flex-wrap: wrap; /* Cho phép wrap trên màn hình nhỏ */ }
+        .chart-container { 
+            background: var(--bg-light-neumorphic); 
+            border-radius: var(--border-radius-lg); 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
+            position: relative; 
+        }
         .chart-container.full-width { width: 100%; }
-        .chart-container.half-width { width: 50%; }
-        body.dark-mode .chart-container { background: #2d3748; box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); }
-        .chart-container h3 { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; }
-        body.dark-mode .chart-container h3 { color: #d9e1e8; }
-        .chart-container canvas { height: 200px !important; }
-        .chart-container .download-btn { position: absolute; top: 10px; right: 10px; padding: 6px; background: #FFFFFF; color: #2c3e50; border: none; border-radius: 50%; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        .chart-container .download-btn:hover { box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .chart-container .download-btn { background: #4a5568; color: #d9e1e8; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
+        .chart-container.half-width { flex: 1; min-width: 300px; /* Đảm bảo không quá nhỏ */ }
+        body.dark-mode .chart-container { 
+            background: var(--bg-dark-neumorphic); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
+        }
+        .chart-container h3 { font-size: 14px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; }
+        body.dark-mode .chart-container h3 { color: var(--text-muted-light); }
+        .chart-container canvas { height: 200px !important; width: 100% !important; } /* Đảm bảo canvas fill container */
+        .chart-container .download-btn { 
+            position: absolute; top: 10px; right: 10px; 
+            padding: 6px; 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
+            border: none; 
+            border-radius: var(--border-radius-circle); 
+            cursor: pointer; 
+            width: 32px; height: 32px; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        .chart-container .download-btn:hover { 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-inner-strong), inset -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .chart-container .download-btn { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
 
-        .filter-section { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding-bottom: 8px; width: 100%; }
-        .filter-section input, .filter-section select { padding: 6px 10px; border: none; border-radius: 8px; font-size: 12px; background: #FFFFFF; box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); width: 180px; color: #2c3e50; }
+        /* Filter Section */
+        .filter-section { 
+            display: flex; flex-wrap: wrap; gap: 10px; 
+            align-items: center; justify-content: space-between; 
+            padding-bottom: 8px; width: 100%; 
+        }
+        .filter-section input, .filter-section select { 
+            padding: 6px 10px; border: none; 
+            border-radius: var(--border-radius-md); 
+            font-size: 12px; 
+            background: var(--bg-light-neumorphic); 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-inner-strong), inset -3px -3px 6px var(--shadow-light-inner-weak); 
+            width: 180px; color: var(--text-dark); 
+        }
         .filter-section input:focus, .filter-section select:focus { outline: none; }
-        body.dark-mode .filter-section input, body.dark-mode .filter-section select { background: #4a5568; color: #d9e1e8; box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.5), inset -3px -3px 6px rgba(255, 255, 255, 0.05); }
+        body.dark-mode .filter-section input, body.dark-mode .filter-section select { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: inset 3px 3px 6px var(--shadow-dark-inner-strong), inset -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
         .filter-section .button-group { display: flex; gap: 8px; justify-content: flex-end; }
-        .export-btn { padding: 6px; border: none; border-radius: 50%; background: #FFFFFF; color: #2c3e50; font-size: 12px; cursor: pointer; transition: all 0.3s ease; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); position: relative; }
-        .export-btn:hover { box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        .refresh-btn { background: #FFFFFF; color: #00a550; }
-        body.dark-mode .export-btn, body.dark-mode .refresh-btn { background: #4a5568; color: #d9e1e8; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
-        body.dark-mode .refresh-btn { color: #00a550; }
-        .export-btn:hover::after { content: attr(data-tooltip); position: absolute; top: 40px; background: #FFFFFF; color: #2c3e50; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 10; box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .export-btn:hover::after { background: #4a5568; color: #d9e1e8; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
+        .export-btn { 
+            padding: 6px; border: none; 
+            border-radius: var(--border-radius-circle); 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
+            font-size: 12px; cursor: pointer; 
+            transition: all var(--transition-speed) ease; 
+            width: 32px; height: 32px; 
+            display: flex; align-items: center; justify-content: center; 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
+            position: relative; 
+        }
+        .export-btn:hover { 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-inner-strong), inset -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        .refresh-btn { color: var(--color-secondary); } /* Màu xanh lá cho refresh */
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
+        body.dark-mode .refresh-btn { color: var(--color-secondary); }
+        .export-btn:hover::after { 
+            content: attr(data-tooltip); 
+            position: absolute; top: 40px; 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
+            padding: 4px 8px; 
+            border-radius: var(--border-radius-sm); 
+            font-size: 12px; white-space: nowrap; z-index: 10; 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .export-btn:hover::after { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
 
+        /* Tables Section */
         .tables-section { display: flex; gap: 10px; flex: 1; min-height: 350px; width: 100%; }
-        .table-container { flex: 1; background: #FFFFFF; border-radius: 12px; padding: 10px; box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); overflow-x: auto; overflow-y: auto; max-height: 450px; position: relative; }
-        #total_tables .table-container:nth-child(2) { max-height: 300px; overflow-y: auto; }
-        body.dark-mode .table-container { background: #2d3748; box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); }
+        .table-container { 
+            flex: 1; 
+            background: var(--bg-light-neumorphic); 
+            border-radius: var(--border-radius-lg); 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
+            overflow: auto; /* Cho phép scroll cả ngang và dọc */
+            max-height: 450px; position: relative; 
+        }
+        #total-tables .table-container:nth-child(2) { max-height: 300px; } /* Giới hạn chiều cao bảng TVBH ở tab Total */
+        body.dark-mode .table-container { 
+            background: var(--bg-dark-neumorphic); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
+        }
         .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
-        .table-container::-webkit-scrollbar-track { background: #f7fafc; }
-        .table-container::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 3px; box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .table-container::-webkit-scrollbar-track { background: #2d3748; }
-        body.dark-mode .table-container::-webkit-scrollbar-thumb { background: #718096; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.05); }
-        .table-container h3 { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; }
-        body.dark-mode .table-container h3 { color: #d9e1e8; }
+        .table-container::-webkit-scrollbar-track { background: var(--bg-light); }
+        .table-container::-webkit-scrollbar-thumb { 
+            background: var(--text-muted-dark); 
+            border-radius: 3px; 
+            box-shadow: inset 2px 2px 4px var(--shadow-light-inner-strong), inset -2px -2px 4px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .table-container::-webkit-scrollbar-track { background: var(--bg-dark-neumorphic); }
+        body.dark-mode .table-container::-webkit-scrollbar-thumb { 
+            background: var(--text-muted-light); 
+            box-shadow: inset 2px 2px 4px var(--shadow-dark-inner-strong), inset -2px -2px 4px var(--shadow-dark-inner-weak); 
+        }
+        .table-container h3 { font-size: 14px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; }
+        body.dark-mode .table-container h3 { color: var(--text-muted-light); }
         table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(163, 177, 198, 0.3); white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
-        th { font-weight: 600; background: #003087; color: #FFFFFF; position: sticky; top: 0; z-index: 2; box-shadow: 3px 3px 6px rgba(0, 48, 135, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.1); }
-        body.dark-mode th { background: #1e3a8a; color: #FFFFFF; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
-        td { color: #2c3e50; }
-        body.dark-mode td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        tbody tr:hover { background: #edf2f7; box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
-        body.dark-mode tbody tr:hover { background: #4a5568; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.05); }
-        .summary-row { font-weight: 600; background: #edf2f7; box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .summary-row { background: #4a5568; box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); }
+        th, td { 
+            padding: 8px 10px; text-align: left; 
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
+            white-space: normal; word-wrap: break-word; overflow-wrap: break-word; 
+        }
+        th { 
+            font-weight: 600; background: var(--color-primary); color: var(--text-light); 
+            position: sticky; top: 0; z-index: 2; 
+            box-shadow: 3px 3px 6px var(--shadow-light-outer-strong), -3px -3px 6px var(--shadow-light-outer-weak); 
+        }
+        body.dark-mode th { 
+            background: var(--color-primary-dark); color: var(--text-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-outer-strong), -3px -3px 6px var(--shadow-dark-outer-weak); 
+        }
+        td { color: var(--text-dark); }
+        body.dark-mode td { color: var(--text-muted-light); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        tbody tr:hover { 
+            background: #edf2f7; /* Màu nền khi hover ở light mode */
+            box-shadow: inset 2px 2px 4px var(--shadow-light-inner-strong), inset -2px -2px 4px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode tbody tr:hover { 
+            background: var(--bg-dark-neumorphic-hover); 
+            box-shadow: inset 2px 2px 4px var(--shadow-dark-inner-strong), inset -2px -2px 4px var(--shadow-dark-inner-weak); 
+        }
+        .summary-row { 
+            font-weight: 600; background: #edf2f7; 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .summary-row { 
+            background: var(--bg-dark-neumorphic-hover); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
+        }
 
-        .detail-panel { flex: 0 0 30%; min-width: 200px; background: #FFFFFF; border-radius: 12px; padding: 10px; box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5); overflow-y: auto; }
-        body.dark-mode .detail-panel { background: #2d3748; box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.05); }
+        /* Detail Panel */
+        .detail-panel { 
+            flex: 0 0 30%; min-width: 250px; /* Tăng min-width */
+            background: var(--bg-light-neumorphic); 
+            border-radius: var(--border-radius-lg); 
+            padding: 10px; 
+            box-shadow: inset 4px 4px 8px var(--shadow-light-inner-strong), inset -4px -4px 8px var(--shadow-light-inner-weak); 
+            overflow-y: auto; 
+        }
+        body.dark-mode .detail-panel { 
+            background: var(--bg-dark-neumorphic); 
+            box-shadow: inset 4px 4px 8px var(--shadow-dark-inner-strong), inset -4px -4px 8px var(--shadow-dark-inner-weak); 
+        }
         .detail-panel::-webkit-scrollbar { width: 6px; }
-        .detail-panel::-webkit-scrollbar-track { background: #f7fafc; }
-        .detail-panel::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 3px; box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: #2d3748; }
-        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { background: #718096; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.05); }
-        .detail-panel h3 { font-size: 14px; color: #2c3e50; margin-bottom: 10px; font-weight: 600; }
-        body.dark-mode .detail-panel h3 { color: #d9e1e8; }
+        .detail-panel::-webkit-scrollbar-track { background: var(--bg-light); }
+        .detail-panel::-webkit-scrollbar-thumb { 
+            background: var(--text-muted-dark); 
+            border-radius: 3px; 
+            box-shadow: inset 2px 2px 4px var(--shadow-light-inner-strong), inset -2px -2px 4px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: var(--bg-dark-neumorphic); }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { 
+            background: var(--text-muted-light); 
+            box-shadow: inset 2px 2px 4px var(--shadow-dark-inner-strong), inset -2px -2px 4px var(--shadow-dark-inner-weak); 
+        }
+        .detail-panel h3 { font-size: 14px; color: var(--text-dark); margin-bottom: 10px; font-weight: 600; }
+        body.dark-mode .detail-panel h3 { color: var(--text-muted-light); }
         .detail-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .detail-table th, .detail-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(163, 177, 198, 0.3); white-space: normal; word-wrap: break-word; overflow-wrap: break-word; }
-        .detail-table th { color: #2c3e50; font-weight: 400; width: 50%; background: #edf2f7; box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.6), inset -2px -2px 4px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .detail-table th { color: #d9e1e8; background: #4a5568; box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.05); }
-        .detail-table td { color: #2c3e50; }
-        body.dark-mode .detail-table td { color: #d9e1e8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .detail-table .vin-highlight { font-weight: 600; color: #00a550; }
+        .detail-table th, .detail-table td { 
+            padding: 8px 10px; text-align: left; 
+            border-bottom: 1px solid rgba(163, 177, 198, 0.3); 
+            white-space: normal; word-wrap: break-word; overflow-wrap: break-word; 
+        }
+        .detail-table th { 
+            color: var(--text-dark); font-weight: 400; width: 40%; /* Điều chỉnh width */
+            background: #edf2f7; 
+            box-shadow: inset 2px 2px 4px var(--shadow-light-inner-strong), inset -2px -2px 4px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .detail-table th { 
+            color: var(--text-muted-light); background: var(--bg-dark-neumorphic-hover); 
+            box-shadow: inset 2px 2px 4px var(--shadow-dark-inner-strong), inset -2px -2px 4px var(--shadow-dark-inner-weak); 
+        }
+        .detail-table td { color: var(--text-dark); }
+        body.dark-mode .detail-table td { color: var(--text-muted-light); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .detail-table .vin-highlight { font-weight: 600; color: var(--color-secondary); }
+        .detail-panel .no-detail-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted-dark);
+            font-style: italic;
+        }
+        body.dark-mode .detail-panel .no-detail-message {
+            color: var(--text-muted-light);
+        }
 
+
+        /* Pagination */
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 10px; width: 100%; }
-        .pagination button { padding: 6px 12px; border: none; border-radius: 8px; background: #FFFFFF; color: #2c3e50; font-size: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        .pagination button:hover { box-shadow: inset 3px 3px 6px rgba(163, 177, 198, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        body.dark-mode .pagination button { background: #4a5568; color: #d9e1e8; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
-        .pagination button:disabled { background: #e2e8f0; cursor: not-allowed; opacity: 0.5; }
-        body.dark-mode .pagination button:disabled { background: #718096; }
-        .pagination span { padding: 6px 12px; font-size: 12px; color: #2c3e50; }
-        body.dark-mode .pagination span { color: #d9e1e8; }
+        .pagination button { 
+            padding: 6px 12px; border: none; 
+            border-radius: var(--border-radius-md); 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
+            font-size: 12px; cursor: pointer; 
+            transition: all var(--transition-speed) ease; 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        .pagination button:hover { 
+            box-shadow: inset 3px 3px 6px var(--shadow-light-inner-strong), inset -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode .pagination button { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
+        .pagination button:disabled { 
+            background: #e2e8f0; /* Màu disabled ở light mode */
+            cursor: not-allowed; opacity: 0.5; 
+        }
+        body.dark-mode .pagination button:disabled { background: #718096; /* Màu disabled ở dark mode */ }
+        .pagination span { padding: 6px 12px; font-size: 12px; color: var(--text-dark); }
+        body.dark-mode .pagination span { color: var(--text-muted-light); }
 
-        footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #003087; color: #FFFFFF; text-align: center; padding: 8px 0; font-size: 10px; box-shadow: 4px -4px 8px rgba(0, 48, 135, 0.6), -4px 4px 8px rgba(255, 255, 255, 0.1); }
-        body.dark-mode footer { background: #1e3a8a; box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.5), -4px 4px 8px rgba(255, 255, 255, 0.05); }
+        /* Footer */
+        footer { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: var(--color-primary); color: var(--text-light); 
+            text-align: center; padding: 8px 0; font-size: 10px; 
+            box-shadow: 4px -4px 8px var(--shadow-light-outer-strong), -4px 4px 8px var(--shadow-light-outer-weak); 
+            z-index: 999; /* Đảm bảo footer ở trên */
+        }
+        body.dark-mode footer { 
+            background: var(--color-primary-dark); 
+            box-shadow: 4px -4px 8px var(--shadow-dark-outer-strong), -4px 4px 8px var(--shadow-dark-outer-weak); 
+        }
 
-        #notification { position: fixed; top: 50px; right: 80px; padding: 8px 15px; background: #FFFFFF; color: #2c3e50; border-radius: 8px; display: none; z-index: 10001; font-size: 12px; box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5); }
-        body.dark-mode #notification { background: #4a5568; color: #d9e1e8; box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5), -3px -3px 6px rgba(255, 255, 255, 0.05); }
+        /* Notification */
+        #notification { 
+            position: fixed; top: 50px; right: 80px; 
+            padding: 8px 15px; 
+            background: var(--bg-light-neumorphic); 
+            color: var(--text-dark); 
+            border-radius: var(--border-radius-md); 
+            display: none; z-index: 10001; font-size: 12px; 
+            box-shadow: 3px 3px 6px var(--shadow-light-inner-strong), -3px -3px 6px var(--shadow-light-inner-weak); 
+        }
+        body.dark-mode #notification { 
+            background: var(--bg-dark-neumorphic-hover); 
+            color: var(--text-muted-light); 
+            box-shadow: 3px 3px 6px var(--shadow-dark-inner-strong), -3px -3px 6px var(--shadow-dark-inner-weak); 
+        }
 
-        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+        /* Loading Overlay */
+        .loading-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255, 255, 255, 0.8); 
+            display: flex; flex-direction: column; /* Cho phép text ở dưới spinner */
+            justify-content: center; align-items: center; 
+            z-index: 10000; /* Đảm bảo overlay ở trên cùng */
+            opacity: 0; visibility: hidden; 
+            transition: opacity var(--transition-speed) ease; 
+            border-radius: var(--border-radius-lg); /* Bo góc cho overlay */
+        }
         body.dark-mode .loading-overlay { background: rgba(26, 32, 44, 0.8); }
         .loading-overlay.active { opacity: 1; visibility: visible; }
-        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #003087; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        body.dark-mode .loading-spinner { border: 4px solid #4a5568; border-top: 4px solid #63b3ed; }
+        .loading-spinner { 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid var(--color-primary); 
+            border-radius: var(--border-radius-circle); 
+            width: 30px; height: 30px; 
+            animation: spin 1s linear infinite; 
+        }
+        body.dark-mode .loading-spinner { 
+            border: 4px solid var(--bg-dark-neumorphic-hover); 
+            border-top: 4px solid var(--color-accent); /* Màu accent cho spinner ở dark mode */
+        }
+        .loading-overlay .loading-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+        body.dark-mode .loading-overlay .loading-text {
+            color: var(--text-muted-light);
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        #data-table th:nth-child(1) { width: 5%; }
-        #data-table th:nth-child(2) { width: 25%; }
-        #data-table th:nth-child(3) { width: 25%; }
-        #data-table th:nth-child(4) { width: 15%; }
-        #data-table th:nth-child(5) { width: 15%; }
-        #data-table th:nth-child(6) { width: 15%; }
-        .detail-table th:nth-child(1) { width: 35%; }
-        .detail-table th:nth-child(2) { width: 35%; }
-        .detail-table th:nth-child(3) { width: 35%; }
-        .detail-table th:nth-child(4) { width: 35%; }
-        .detail-table th:nth-child(5) { width: 35%; }
-        .detail-table th:nth-child(6) { width: 35%; }
-        .detail-table th:nth-child(7) { width: 35%; }
-        .detail-table th:nth-child(8) { width: 35%; }
-        .detail-table th:nth-child(9) { width: 35%; }
+        /* Table Column Widths (Có thể điều chỉnh nếu cần) */
+        #data-table th:nth-child(1) { width: 5%; }  /* STT */
+        #data-table th:nth-child(2) { width: 25%; } /* Tên KH */
+        #data-table th:nth-child(3) { width: 25%; } /* Số ĐH */
+        #data-table th:nth-child(4) { width: 15%; } /* Dòng Xe */
+        #data-table th:nth-child(5) { width: 15%; } /* Phiên Bản */
+        #data-table th:nth-child(6) { width: 15%; } /* Ngoại Thất */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .slidebar { width: 50px; } /* Sidebar mặc định thu gọn trên mobile */
+            .slidebar .logo h1 { opacity: 0; }
+            .slidebar .tabs a span { opacity: 0; width: 0; overflow: hidden;}
+            .slidebar .tabs a i { margin-right: 0; }
+            .main-container { margin-left: 50px; width: calc(100vw - 50px); }
+            .toggle-btn { display: none; } /* Ẩn nút toggle vì sidebar mặc định thu gọn */
+            
+            .filter-section { flex-direction: column; align-items: stretch; }
+            .filter-section input, .filter-section select { width: 100%; }
+            .filter-section .button-group { justify-content: center; margin-top: 10px;}
+
+            .tables-section { flex-direction: column; }
+            .detail-panel { flex-basis: auto; margin-top: 10px; max-height: 300px; }
+            .summary-cards { justify-content: space-around; }
+            .summary-card { width: calc(50% - 10px); margin-bottom: 10px; } /* 2 card mỗi hàng */
+             .chart-row { flex-direction: column; }
+            .chart-container.half-width { width: 100%; }
+
+            .navbar-controls { top: 5px; right: 5px; } /* Điều chỉnh vị trí nút control */
+        }
+         @media (max-width: 480px) {
+            .summary-card { width: 100%; } /* 1 card mỗi hàng */
+            header { font-size: 12px; padding: 8px 0;}
+            .main-container { margin-top: 34px; height: calc(100vh - 34px - 34px); } /* Adjust for smaller header/footer */
+            footer { padding: 6px 0; font-size: 9px; }
+         }
+
     </style>
 </head>
 <body>
     <header>BÁO CÁO DOANH SỐ VINFAST THUẬN AN</header>
+    
     <div class="slidebar" id="slidebar">
         <div class="logo">
             <h1>VinFast Thuận An</h1>
         </div>
-<div class="tabs">
-    <!-- Xuân (Tháng 1-3) -->
-    <a href="#" onclick="fetchSheetData('January', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-seedling mr-2 text-sm"></i><span>January</span></a>
-    <a href="#" onclick="fetchSheetData('February', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-fan mr-2 text-sm"></i><span>February</span></a>
-    <a href="#" onclick="fetchSheetData('March', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-leaf mr-2 text-sm"></i><span>March</span></a>
-    <!-- Hè (Tháng 4-6) -->
-    <a href="#" onclick="fetchSheetData('April', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-sun mr-2 text-sm"></i><span>April</span></a>
-    <a href="#" onclick="fetchSheetData('May', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-umbrella-beach mr-2 text-sm"></i><span>May</span></a>
-    <a href="#" onclick="fetchSheetData('June', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-temperature-high mr-2 text-sm"></i><span>June</span></a>
-    <!-- Thu (Tháng 7-9) -->
-    <a href="#" onclick="fetchSheetData('July', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-leaf mr-2 text-sm"></i><span>July</span></a>
-    <a href="#" onclick="fetchSheetData('August', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-cloud-sun mr-2 text-sm"></i><span>August</span></a>
-    <a href="#" onclick="fetchSheetData('September', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-tree mr-2 text-sm"></i><span>September</span></a>
-    <!-- Đông (Tháng 10-12) -->
-    <a href="#" onclick="fetchSheetData('October', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-snowflake mr-2 text-sm"></i><span>October</span></a>
-    <a href="#" onclick="fetchSheetData('November', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-wind mr-2 text-sm"></i><span>November</span></a>
-    <a href="#" onclick="fetchSheetData('December', this)" class="flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-icicles mr-2 text-sm"></i><span>December</span></a>
-    <!-- Tổng -->
-    <a href="#" onclick="fetchTotalData(this)" class="total-tab active flex items-center p-2 text-white text-xs font-medium rounded-lg bg-opacity-10 bg-white hover:bg-opacity-20 transition-all duration-300 mb-1.5"><i class="fas fa-chart-bar mr-2 text-sm"></i><span>Total</span></a>
-</div>
-        <button class="toggle-btn" onclick="toggleSlidebar()"><i class="fas fa-bars"></i></button>
+        <div class="tabs">
+            <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1"><i class="fas fa-seedling"></i><span>January</span></a>
+            <a href="#" onclick="fetchSheetData('February', this)" data-tooltip="Tháng 2"><i class="fas fa-fan"></i><span>February</span></a>
+            <a href="#" onclick="fetchSheetData('March', this)" data-tooltip="Tháng 3"><i class="fas fa-leaf"></i><span>March</span></a>
+            <a href="#" onclick="fetchSheetData('April', this)" data-tooltip="Tháng 4"><i class="fas fa-sun"></i><span>April</span></a>
+            <a href="#" onclick="fetchSheetData('May', this)" data-tooltip="Tháng 5"><i class="fas fa-umbrella-beach"></i><span>May</span></a>
+            <a href="#" onclick="fetchSheetData('June', this)" data-tooltip="Tháng 6"><i class="fas fa-temperature-high"></i><span>June</span></a>
+            <a href="#" onclick="fetchSheetData('July', this)" data-tooltip="Tháng 7"><i class="fas fa-leaf"></i><span>July</span></a>
+            <a href="#" onclick="fetchSheetData('August', this)" data-tooltip="Tháng 8"><i class="fas fa-cloud-sun"></i><span>August</span></a>
+            <a href="#" onclick="fetchSheetData('September', this)" data-tooltip="Tháng 9"><i class="fas fa-tree"></i><span>September</span></a>
+            <a href="#" onclick="fetchSheetData('October', this)" data-tooltip="Tháng 10"><i class="fas fa-snowflake"></i><span>October</span></a>
+            <a href="#" onclick="fetchSheetData('November', this)" data-tooltip="Tháng 11"><i class="fas fa-wind"></i><span>November</span></a>
+            <a href="#" onclick="fetchSheetData('December', this)" data-tooltip="Tháng 12"><i class="fas fa-icicles"></i><span>December</span></a>
+            <a href="#" onclick="fetchTotalData(this)" class="total-tab active" data-tooltip="Tổng hợp"><i class="fas fa-chart-bar"></i><span>Total</span></a>
+        </div>
+        <button class="toggle-btn" onclick="toggleSlidebar()" aria-label="Thu gọn/Mở rộng sidebar"><i class="fas fa-bars"></i></button>
     </div>
+
     <div class="navbar-controls">
-        <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
-        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện" aria-label="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
+        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
+        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
     </div>
+
     <div class="main-container" id="main-container">
         <div class="grid-container" id="grid-container">
             <div class="loading-overlay" id="loading-overlay">
                 <div class="loading-spinner"></div>
-                <span style="margin-left: 10px; font-size: 14px; color: #2c3e50;">Đang tải dữ liệu...</span>
+                <span class="loading-text">Đang tải dữ liệu...</span>
             </div>
+
             <div id="total-tables" style="display: none;">
                 <div class="summary-cards">
                     <div class="summary-card">
@@ -426,18 +714,18 @@
                     <div class="chart-container full-width">
                         <h3>Doanh Số Theo Tháng</h3>
                         <canvas id="monthly-chart"></canvas>
-                        <button class="download-btn" onclick="downloadChart('monthly-chart', 'Biểu đồ Doanh Số Theo Tháng')" data-tooltip="Tải xuống"><i class="fas fa-download"></i></button>
+                        <button class="download-btn" onclick="downloadChart('monthly-chart', 'Bieu_do_Doanh_So_Theo_Thang')" data-tooltip="Tải xuống" aria-label="Tải biểu đồ doanh số theo tháng"><i class="fas fa-download"></i></button>
                     </div>
                     <div class="chart-row">
                         <div class="chart-container half-width">
                             <h3>Tổng Hợp Theo Dòng Xe</h3>
                             <canvas id="car-chart"></canvas>
-                            <button class="download-btn" onclick="downloadChart('car-chart', 'Biểu đồ Dòng Xe')" data-tooltip="Tải xuống"><i class="fas fa-download"></i></button>
+                            <button class="download-btn" onclick="downloadChart('car-chart', 'Bieu_do_Dong_Xe')" data-tooltip="Tải xuống" aria-label="Tải biểu đồ dòng xe"><i class="fas fa-download"></i></button>
                         </div>
                         <div class="chart-container half-width">
                             <h3>Xu Hướng Dòng Xe Qua Các Tháng</h3>
                             <canvas id="trend-chart"></canvas>
-                            <button class="download-btn" onclick="downloadChart('trend-chart', 'Biểu đồ Xu Hướng Dòng Xe')" data-tooltip="Tải xuống"><i class="fas fa-download"></i></button>
+                            <button class="download-btn" onclick="downloadChart('trend-chart', 'Bieu_do_Xu_Huong_Dong_Xe')" data-tooltip="Tải xuống" aria-label="Tải biểu đồ xu hướng dòng xe"><i class="fas fa-download"></i></button>
                         </div>
                     </div>
                 </div>
@@ -458,403 +746,535 @@
                     </div>
                 </div>
             </div>
-            <div id="month-data" style="display: flex; flex-direction: row; gap: 10px; height: 100%;">
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-                    <div class="summary-cards">
-                        <div class="summary-card">
-                            <i class="fas fa-car icon"></i>
-                            <div class="info">
-                                <h3>Tổng Số Xe</h3>
-                                <p id="month-total-cars">0</p>
-                            </div>
+
+            <div id="month-data" style="display: flex; flex-direction: column; gap: 10px; height: 100%;">
+                 <div class="summary-cards">
+                    <div class="summary-card">
+                        <i class="fas fa-car icon"></i>
+                        <div class="info">
+                            <h3>Tổng Số Xe (Tháng)</h3>
+                            <p id="month-total-cars">0</p>
                         </div>
-                        <div class="summary-card">
-                            <i class="fas fa-star icon"></i>
-                            <div class="info">
-                                <h3>Dòng Xe Bán Chạy</h3>
-                                <p id="month-top-car">-</p>
-                            </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-star icon"></i>
+                        <div class="info">
+                            <h3>Dòng Xe Bán Chạy (Tháng)</h3>
+                            <p id="month-top-car">-</p>
                         </div>
-                        <div class="summary-card">
-                            <i class="fas fa-user icon"></i>
-                            <div class="info">
-                                <h3>Tư Vấn Bán Hàng</h3>
-                                <p id="month-top-tvbh">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-user icon"></i>
+                        <div class="info">
+                            <h3>Tư Vấn Bán Hàng (Tháng)</h3>
+                            <p id="month-top-tvbh">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="month-data-container" style="display: flex; flex-direction: column; flex-grow: 1;">
+                    <div class="filter-section">
+                        <div>
+                            <input type="text" id="search-input" placeholder="Tìm theo tên, SĐT, VIN..." oninput="applyFilters()" aria-label="Ô tìm kiếm">
+                            <select id="car-filter" onchange="applyFilters()" aria-label="Lọc theo dòng xe">
+                                <option value="">Lọc theo Dòng Xe</option>
+                            </select>
+                            <select id="tvbh-filter" onchange="applyFilters()" aria-label="Lọc theo tư vấn bán hàng">
+                                <option value="">Lọc theo Tư Vấn BH</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới" aria-label="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
+                            <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel" aria-label="Xuất ra Excel"><i class="fas fa-file-excel"></i></button>
+                            <button class="export-btn" onclick="printTable()" data-tooltip="In" aria-label="In bảng"><i class="fas fa-print"></i></button>
+                        </div>
+                    </div>
+                    <div class="tables-section" style="flex-grow: 1;">
+                        <div class="table-container" id="table-container">
+                            <table id="data-table">
+                                <thead id="table-header"></thead>
+                                <tbody id="table-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="detail-panel" id="detail-panel">
+                            <h3>Chi Tiết Đơn Hàng</h3>
+                            <div id="detail-body-content">
+                                <p class="no-detail-message">Chọn một mục từ bảng để xem chi tiết.</p>
                             </div>
                         </div>
                     </div>
-                    <div class="month-data-container">
-                        <div class="filter-section">
-                            <div>
-                                <input type="text" id="search-input" placeholder="Tìm theo tên..." oninput="applyFilters()">
-                                <select id="car-filter" onchange="applyFilters()">
-                                    <option value="">Lọc theo Dòng Xe</option>
-                                </select>
-                                <select id="tvbh-filter" onchange="applyFilters()">
-                                    <option value="">Lọc theo Tư Vấn BH</option>
-                                </select>
-                            </div>
-                            <div class="button-group">
-                                <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                                <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                                <button class="export-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
-                            </div>
-                        </div>
-                        <div class="tables-section">
-                            <div class="table-container" id="table-container">
-                                <table id="data-table">
-                                    <thead id="table-header"></thead>
-                                    <tbody id="table-body"></tbody>
-                                </table>
-                            </div>
-                            <div class="detail-panel" id="detail-panel">
-                                <h3>Chi Tiết Đơn Hàng</h3>
-                                <table id="detail-body" class="detail-table">
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="pagination" id="pagination">
-                        <button onclick="changePage(-1)" id="prev-btn">Trước</button>
-                        <span id="page-info">Trang 1</span>
-                        <button onclick="changePage(1)" id="next-btn">Sau</button>
-                    </div>
+                </div>
+                 <div class="pagination" id="pagination">
+                    <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
+                    <span id="page-info">Trang 1</span>
+                    <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
                 </div>
             </div>
         </div>
     </div>
+
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
     <div id="notification"></div>
 
     <script>
+    // --- Biến toàn cục và cấu hình ---
     let currentPage = 1;
-    const rowsPerPage = 20;
+    const ROWS_PER_PAGE = 20; // Sử dụng hằng số viết hoa
     let fullData = [], fullTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
-    let currentSheet = "Total";
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    let carChart, monthlyChart, trendChart;
-    let cachedData = {};
+    let currentSheet = "Total"; // Mặc định là tab Total
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let carChart, monthlyChart, trendChart; // Biến cho các biểu đồ
+    let cachedData = {}; // Cache dữ liệu đã fetch
 
-    document.body.style.zoom = "100%";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec"; // URL của Google Apps Script
 
+    // --- Khởi tạo khi DOM đã tải ---
     document.addEventListener("DOMContentLoaded", () => {
+        // Kiểm tra đăng nhập
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html";
-        } else {
-            fetchTotalData(document.querySelector('.tabs a.total-tab'));
+            window.location.href = "index.html"; // Chuyển hướng nếu chưa đăng nhập
+            return;
         }
+        // Thiết lập theme đã lưu
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateThemeIcon(true);
+        }
+        // Tải dữ liệu tổng hợp ban đầu
+        fetchTotalData(document.querySelector('.tabs a.total-tab'));
+        // Cập nhật panel chi tiết với thông báo mặc định
+        updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
     });
 
-    function showLoading() {
-        document.getElementById("loading-overlay").classList.add("active");
+    // --- Hàm tiện ích giao diện ---
+    function showLoading(message = "Đang tải dữ liệu...") {
+        const loadingOverlay = document.getElementById("loading-overlay");
+        loadingOverlay.querySelector(".loading-text").textContent = message;
+        loadingOverlay.classList.add("active");
     }
 
     function hideLoading() {
         document.getElementById("loading-overlay").classList.remove("active");
     }
-
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
+    
+    function updateThemeIcon(isDarkMode) {
         const themeIcon = document.querySelector('.theme-toggle i');
-        themeIcon.classList.toggle('fa-moon');
-        themeIcon.classList.toggle('fa-sun');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        updateChartColors();
+        if (isDarkMode) {
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+        } else {
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+        }
     }
 
-    function goBack() { window.location.href = "index.html"; showNotification("Đã quay lại trang chủ!", 2000); }
-    function logout() { sessionStorage.clear(); window.location.href = "index.html"; showNotification("Đã đăng xuất!", 2000); }
+    function toggleTheme() {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+        updateThemeIcon(isDarkMode);
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        updateAllChartColors(); // Cập nhật màu cho tất cả biểu đồ
+    }
+
+    function goBack() { 
+        window.location.href = "index.html"; 
+        showNotification("Đã quay lại trang chủ!", 2000); 
+    }
+    function logout() { 
+        sessionStorage.clear(); 
+        window.location.href = "index.html"; 
+        showNotification("Đã đăng xuất!", 2000); 
+    }
     function toggleSlidebar() {
         document.getElementById("slidebar").classList.toggle("collapsed");
         document.getElementById("main-container").classList.toggle("collapsed");
+        // Có thể cần trigger resize cho biểu đồ nếu kích thước container thay đổi đột ngột
+        if (window.Chart && (monthlyChart || carChart || trendChart)) {
+            setTimeout(() => {
+                if (monthlyChart) monthlyChart.resize();
+                if (carChart) carChart.resize();
+                if (trendChart) trendChart.resize();
+            }, 350); // Đợi transition hoàn thành
+        }
+    }
+    
+    function showNotification(message, duration = 3000, type = 'info') { // Thêm type cho notification
+        const notif = document.getElementById("notification");
+        notif.textContent = message;
+        notif.className = ''; // Reset class
+        notif.classList.add(type); // Thêm class type (VD: 'success', 'error') - cần CSS tương ứng
+        notif.style.display = "block";
+        
+        if (notif.timeout) clearTimeout(notif.timeout); // Xóa timeout cũ nếu có
+        notif.timeout = setTimeout(() => notif.style.display = "none", duration);
     }
 
-    if (localStorage.getItem('theme') === 'dark') toggleTheme();
+    // --- Hàm xử lý dữ liệu và API ---
+    async function fetchDataFromAPI(sheetName, retries = 3) {
+        const url = `${API_URL}?sheet=${sheetName}`;
+        try {
+            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+            if (!response.ok) {
+                throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (!data) throw new Error(`Dữ liệu trả về từ sheet '${sheetName}' là null.`);
+            if (!Array.isArray(data)) throw new Error(`Dữ liệu từ sheet '${sheetName}' không phải là mảng.`);
+            return data;
+        } catch (error) {
+            console.error(`Lỗi khi fetch dữ liệu từ sheet '${sheetName}':`, error);
+            if (retries > 0) {
+                showNotification(`Lỗi tải ${sheetName}. Thử lại (${retries} lần)...`, 2000, 'warning');
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Đợi trước khi thử lại
+                return fetchDataFromAPI(sheetName, retries - 1);
+            }
+            throw error; // Ném lỗi ra ngoài sau khi hết số lần thử
+        }
+    }
 
-    async function fetchSheetData(sheetName, element, retries = 3) {
+    async function fetchSheetData(sheetName, element) {
         currentSheet = sheetName;
         currentPage = 1;
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
+        
         document.getElementById("total-tables").style.display = "none";
         document.getElementById("month-data").style.display = "flex";
-        document.getElementById("detail-panel").style.display = "block";
+        document.getElementById("detail-panel").style.display = "block"; // Hiển thị detail panel
         document.getElementById("pagination").style.display = "flex";
+        updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
 
-        showLoading();
+
+        showLoading(`Đang tải dữ liệu tháng ${sheetName}...`);
 
         if (cachedData[sheetName]) {
             fullData = cachedData[sheetName];
-            filteredMonthData = fullData;
-            updateFilters(fullData);
-            updateMonthOverview(fullData);
-            renderTable(fullData);
-            showNotification(`Dữ liệu ${sheetName} từ cache (${fullData.length} đơn hàng)`, 2000);
+            processAndRenderMonthData(fullData, sheetName, true);
             hideLoading();
             return;
         }
 
         try {
-            const apiUrl = `https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${sheetName}`;
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache'
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server trả về mã lỗi ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            if (!data) {
-                throw new Error(`Dữ liệu trả về từ ${sheetName} là null`);
-            }
-            if (!Array.isArray(data)) {
-                throw new Error(`Dữ liệu từ ${sheetName} không phải mảng: ${JSON.stringify(data)}`);
-            }
-
-            if (data.length === 0) {
-                showNotification(`Không có dữ liệu cho ${sheetName}`, 3000);
-                fullData = [];
-            } else {
-                fullData = data;
-                cachedData[sheetName] = fullData;
-                sessionStorage.setItem(sheetName, JSON.stringify(fullData));
-                showNotification(`Dữ liệu ${sheetName} đã tải thành công (${fullData.length} đơn hàng)`, 2000);
-            }
-
-            filteredMonthData = fullData;
-            updateFilters(fullData);
-            updateMonthOverview(fullData);
-            renderTable(fullData);
+            const data = await fetchDataFromAPI(sheetName);
+            fullData = data;
+            cachedData[sheetName] = data; // Cache dữ liệu
+            sessionStorage.setItem(sheetName, JSON.stringify(data)); // Lưu vào session storage (tùy chọn)
+            processAndRenderMonthData(data, sheetName, false);
         } catch (error) {
-            console.error(`Lỗi khi tải dữ liệu ${sheetName}:`, error);
-            if (retries > 0) {
-                showNotification(`Thử lại ${sheetName} (${retries} lần còn lại)...`, 1000);
-                setTimeout(() => fetchSheetData(sheetName, element, retries - 1), 1000);
-            } else {
-                showNotification(`Không tải được ${sheetName}: ${error.message}`, 5000);
-                document.getElementById("table-body").innerHTML = `<tr><td colspan="6">⚠️ Lỗi: ${error.message}</td></tr>`;
-                fullData = [];
-                filteredMonthData = [];
-                updateFilters([]);
-                updateMonthOverview([]);
-                renderTable([]);
-            }
+            showNotification(`Không tải được dữ liệu ${sheetName}: ${error.message}`, 5000, 'error');
+            document.getElementById("table-body").innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--color-danger);">⚠️ Lỗi: ${error.message}</td></tr>`;
+            processAndRenderMonthData([], sheetName, false); // Hiển thị bảng rỗng
         } finally {
             hideLoading();
         }
     }
+    
+    function processAndRenderMonthData(data, sheetName, fromCache = false) {
+        filteredMonthData = [...data]; // Sao chép mảng để filter
+        updateFilters(data);
+        updateMonthOverview(data);
+        renderTable(data); // Ban đầu render toàn bộ dữ liệu (trang 1)
+        const message = fromCache 
+            ? `Dữ liệu ${sheetName} từ cache (${data.length} đơn hàng)`
+            : `Dữ liệu ${sheetName} đã tải (${data.length} đơn hàng)`;
+        showNotification(message, 2000, data.length > 0 ? 'success' : 'info');
+    }
+
 
     async function fetchTotalData(element) {
         currentSheet = "Total";
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
+        
         document.getElementById("month-data").style.display = "none";
         document.getElementById("total-tables").style.display = "block";
-        document.getElementById("detail-panel").style.display = "none";
+        // Không cần detail panel và pagination cho tab Total
+        document.getElementById("detail-panel").style.display = "none"; 
         document.getElementById("pagination").style.display = "none";
 
-        showLoading();
+        showLoading("Đang tổng hợp dữ liệu 12 tháng...");
 
-        let totalCarData = [], totalTvbhData = [], monthlyData = [], trendData = {};
+        let allMonthlyData = [];
         try {
-            const fetchPromises = months.map(async month => {
+            const fetchPromises = MONTHS.map(async month => {
                 if (cachedData[month]) return cachedData[month];
-                const cached = JSON.parse(sessionStorage.getItem(month));
-                if (cached) return cached;
-                return await fetchMonthData(month);
+                // const cachedSession = sessionStorage.getItem(month); // Có thể dùng session cache
+                // if (cachedSession) { cachedData[month] = JSON.parse(cachedSession); return cachedData[month]; }
+                return await fetchDataFromAPI(month); // Fetch nếu chưa có trong cache
             });
 
             const results = await Promise.all(fetchPromises);
-            const allData = results.flat().filter(row => row && Array.isArray(row) && row.length > 0);
-            const validData = allData.filter(row => row[3] && row[3].trim() !== "");
+            results.forEach((monthData, index) => {
+                if (monthData && Array.isArray(monthData)) {
+                    cachedData[MONTHS[index]] = monthData; // Cache lại nếu fetch mới
+                    allMonthlyData.push(...monthData);
+                }
+            });
+            
+            const validData = allMonthlyData.filter(row => row && row[3] && String(row[3]).trim() !== "");
 
             if (validData.length === 0) {
-                showNotification("Không có dữ liệu hợp lệ từ 12 tháng", 3000);
+                showNotification("Không có dữ liệu hợp lệ từ 12 tháng.", 3000, 'warning');
                 updateOverview([], [], 0);
-                renderTotalTables([], [], months.map(m => ({ month: m, count: 0 })), {});
+                renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
                 return;
             }
 
-            totalCarData = aggregateData(validData, 3);
-            totalTvbhData = aggregateData(validData, 7);
-            monthlyData = months.map((month, idx) => ({
+            totalCarData = aggregateData(validData, 3); // Dòng xe ở cột D (index 3)
+            totalTvbhData = aggregateData(validData, 7); // TVBH ở cột H (index 7)
+            
+            const monthlyCounts = MONTHS.map((month, idx) => ({
                 month: month,
                 count: results[idx] && Array.isArray(results[idx]) ? results[idx].length : 0
             }));
-            trendData = calculateTrendData(results);
+            
+            const trendData = calculateTrendData(results, totalCarData);
 
-            fullData = totalCarData;
-            fullTvbhData = totalTvbhData;
-            filteredCarData = totalCarData;
-            filteredTvbhData = totalTvbhData;
+            // Lưu trữ để có thể dùng lại cho update màu chart
+            filteredCarData = [...totalCarData]; 
+            // fullTvbhData = [...totalTvbhData]; // Nếu cần filter TVBH
 
             updateOverview(totalCarData, totalTvbhData, validData.length);
-            renderTotalTables(totalCarData, totalTvbhData, monthlyData, trendData);
-            showNotification(`Dữ liệu tổng cập nhật thành công (${validData.length} đơn hàng)`, 2000);
+            renderTotalTables(totalCarData, totalTvbhData, monthlyCounts, trendData);
+            showNotification(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 2000, 'success');
+
         } catch (error) {
             console.error("Lỗi tải dữ liệu tổng:", error);
-            showNotification(`Lỗi tải dữ liệu tổng: ${error.message}`, 5000);
+            showNotification(`Lỗi tải dữ liệu tổng: ${error.message}`, 5000, 'error');
             updateOverview([], [], 0);
-            renderTotalTables([], [], months.map(m => ({ month: m, count: 0 })), {});
+            renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
         } finally {
             hideLoading();
         }
     }
-
-    async function fetchMonthData(month) {
-        try {
-            const apiUrl = `https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec?sheet=${month}`;
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache'
-            });
-
-            if (!response.ok) throw new Error(`Server trả về lỗi ${response.status}`);
-
-            const data = await response.json();
-
-            if (!data || !Array.isArray(data)) {
-                console.warn(`Dữ liệu ${month} không hợp lệ:`, data);
-                return [];
-            }
-
-            cachedData[month] = data;
-            sessionStorage.setItem(month, JSON.stringify(data));
-            return data;
-        } catch (error) {
-            console.error(`Lỗi tải ${month}:`, error);
-            showNotification(`Không tải được ${month}: ${error.message}`, 3000);
-            return [];
-        }
-    }
-
-    function aggregateData(data, index) {
+    
+    // --- Hàm tổng hợp và tính toán dữ liệu ---
+    function aggregateData(data, columnIndex) {
         const stats = {};
         data.forEach(row => {
-            if (row[index] && row[index].trim()) {
-                stats[row[index]] = (stats[row[index]] || 0) + 1;
+            const key = row[columnIndex] ? String(row[columnIndex]).trim() : "Chưa xác định";
+            if (key) { // Chỉ tính nếu có key
+                stats[key] = (stats[key] || 0) + 1;
             }
         });
-        return Object.entries(stats).map(([key, count], idx) => ({ index: idx + 1, key, count }));
+        return Object.entries(stats)
+            .map(([key, count]) => ({ key, count }))
+            .sort((a, b) => b.count - a.count); // Sắp xếp giảm dần theo số lượng
     }
 
-    function calculateTrendData(monthlyResults) {
-        const topCars = aggregateData(monthlyResults.flat(), 3).slice(0, 5).map(item => item.key);
+    function calculateTrendData(monthlyResults, topCarData) {
+        // Lấy top 5 dòng xe bán chạy nhất từ totalCarData đã sắp xếp
+        const topCars = topCarData.slice(0, 5).map(item => item.key);
         const trendData = {};
-        topCars.forEach(car => {
-            trendData[car] = months.map((month, idx) => {
+        
+        topCars.forEach(carModel => {
+            trendData[carModel] = MONTHS.map((month, idx) => {
                 const monthData = monthlyResults[idx] || [];
-                return monthData.filter(row => row[3] === car).length;
+                return Array.isArray(monthData) ? monthData.filter(row => row && row[3] === carModel).length : 0;
             });
         });
         return trendData;
     }
 
+    // --- Hàm cập nhật giao diện (DOM manipulation) ---
     function updateFilters(data) {
         const carFilter = document.getElementById("car-filter");
         const tvbhFilter = document.getElementById("tvbh-filter");
-        const uniqueCars = [...new Set(data.map(row => row[3]).filter(Boolean))];
-        const uniqueTvbh = [...new Set(data.map(row => row[7]).filter(Boolean))];
-        carFilter.innerHTML = '<option value="">Lọc theo Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}">${m}</option>`).join('');
-        tvbhFilter.innerHTML = '<option value="">Lọc theo Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}">${t}</option>`).join('');
+        
+        const uniqueCars = [...new Set(data.map(row => row[3]).filter(Boolean))].sort();
+        const uniqueTvbh = [...new Set(data.map(row => row[7]).filter(Boolean))].sort();
+        
+        carFilter.innerHTML = '<option value="">Tất cả Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}">${m}</option>`).join('');
+        tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
-    function updateOverview(carData, tvbhData, totalCars) {
-        document.getElementById("total-cars").textContent = totalCars || 0;
-        const topCar = carData.length > 0 ? carData.reduce((max, row) => row.count > max.count ? row : max, carData[0]) : { key: "-", count: 0 };
-        document.getElementById("top-car").textContent = topCar.key;
-        const topTvbh = tvbhData.length > 0 ? tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0]) : { key: "-", count: 0 };
-        document.getElementById("top-tvbh").textContent = topTvbh.key;
+    function updateOverview(carData, tvbhData, totalSales) { // Dùng cho tab Total
+        document.getElementById("total-cars").textContent = totalSales || 0;
+        const topCar = carData.length > 0 ? carData[0] : { key: "-", count: 0 }; // Vì đã sort
+        document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
+        const topTvbh = tvbhData.length > 0 ? tvbhData[0] : { key: "-", count: 0 }; // Vì đã sort
+        document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
 
-    function updateMonthOverview(data) {
-        const totalCars = data.length;
-        const carData = aggregateData(data, 3);
-        const tvbhData = aggregateData(data, 7);
-        document.getElementById("month-total-cars").textContent = totalCars || 0;
-        const topCar = carData.length > 0 ? carData.reduce((max, row) => row.count > max.count ? row : max, carData[0]) : { key: "-", count: 0 };
-        document.getElementById("month-top-car").textContent = topCar.key;
-        const topTvbh = tvbhData.length > 0 ? tvbhData.reduce((max, row) => row.count > max.count ? row : max, tvbhData[0]) : { key: "-", count: 0 };
-        document.getElementById("month-top-tvbh").textContent = topTvbh.key;
+    function updateMonthOverview(data) { // Dùng cho tab tháng
+        const totalSales = data.length;
+        const carDataAgg = aggregateData(data, 3);
+        const tvbhDataAgg = aggregateData(data, 7);
+        
+        document.getElementById("month-total-cars").textContent = totalSales || 0;
+        const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
+        document.getElementById("month-top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
+        const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
+        document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
 
-    function renderTable(data) {
+    function renderTable(dataToRender) {
+        const tableHeader = document.getElementById("table-header");
+        const tableBody = document.getElementById("table-body");
         const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
-        document.getElementById("table-header").innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        const start = (currentPage - 1) * rowsPerPage;
-        const paginatedData = data.slice(start, start + rowsPerPage);
-        document.getElementById("table-body").innerHTML = paginatedData.length > 0 ? paginatedData.map((row, idx) => {
-            const isHighlight = (row[11]?.toLowerCase().includes("ưu tiên") || row[10]?.toLowerCase().includes("đặc biệt")) ? ' class="selected"' : '';
-            return `<tr${isHighlight} onclick="showDetail([${start + idx + 1}, '${row.slice(0, 1).concat(row.slice(2)).join("','")}'])">${[start + idx + 1, row[0], row[2], row[3], row[4], row[5]].map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
-        }).join('') : `<tr><td colspan="6">Không có dữ liệu</td></tr>`;
-        updatePagination(data);
+        
+        // Tạo header một lần nếu chưa có
+        if (!tableHeader.innerHTML) {
+            tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        }
+        
+        const start = (currentPage - 1) * ROWS_PER_PAGE;
+        const paginatedData = dataToRender.slice(start, start + ROWS_PER_PAGE);
+        
+        if (paginatedData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="${headers.length}" style="text-align:center; padding: 20px;">Không có dữ liệu phù hợp.</td></tr>`;
+        } else {
+            tableBody.innerHTML = paginatedData.map((row, idx) => {
+                // row[0]: Tên KH, row[1]: SĐT, row[2]: Số ĐH, row[3]: Dòng Xe, row[4]: Phiên Bản, row[5]: Ngoại thất, row[6]: Nội thất, row[7]: TVBH, row[8]: VIN, row[9]: Chính sách, row[10]: Ghi chú TVBH, row[11]: Ghi chú Admin
+                const isHighlight = (row[11]?.toLowerCase().includes("ưu tiên") || row[10]?.toLowerCase().includes("đặc biệt")) ? ' class="selected-row-highlight"' : ''; // Cần CSS cho class này
+                // Dữ liệu truyền cho showDetail: STT hiển thị, và các trường dữ liệu cần thiết.
+                // Đảm bảo tất cả các giá trị là chuỗi và được escape đúng cách.
+                const detailArgs = [
+                    start + idx + 1, // STT
+                    row[0] || '', // Tên KH
+                    row[2] || '', // Số ĐH
+                    row[3] || '', // Dòng Xe
+                    row[4] || '', // Phiên Bản
+                    row[5] || '', // Ngoại Thất
+                    row[6] || '', // Nội Thất
+                    row[7] || '', // TVBH
+                    row[8] || '', // VIN
+                    row[9] || ''  // Chính Sách
+                ].map(arg => typeof arg === 'string' ? `'${arg.replace(/'/g, "\\'")}'` : arg).join(',');
+
+
+                return `<tr${isHighlight} onclick="showDetail([${detailArgs}])" style="cursor:pointer;">
+                            <td>${start + idx + 1}</td>
+                            <td>${row[0] || ''}</td>
+                            <td>${row[2] || ''}</td>
+                            <td>${row[3] || ''}</td>
+                            <td>${row[4] || ''}</td>
+                            <td>${row[5] || ''}</td>
+                        </tr>`;
+            }).join('');
+        }
+        updatePagination(dataToRender.length);
     }
 
-    function renderTotalTables(carData, tvbhData, monthlyData, trendData) {
-        document.getElementById("total-car-header").innerHTML = "<tr><th>Dòng Xe</th><th>Tổng Số Lượng</th></tr>";
-        document.getElementById("total-car-body").innerHTML = carData.length > 0 ? carData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${carData.reduce((s, r) => s + r.count, 0)}</td></tr>` : `<tr><td colspan="2">Không có dữ liệu</td></tr>`;
-        document.getElementById("total-tvbh-header").innerHTML = "<tr><th>Tư Vấn Bán Hàng</th><th>Tổng Số Lượng Xe</th></tr>";
-        document.getElementById("total-tvbh-body").innerHTML = tvbhData.length > 0 ? tvbhData.map(row => `<tr><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + `<tr class="summary-row"><td>Tổng cộng</td><td>${tvbhData.reduce((s, r) => s + r.count, 0)}</td></tr>` : `<tr><td colspan="2">Không có dữ liệu</td></tr>`;
-        renderCharts(carData, monthlyData, trendData);
+    function renderTotalTables(carData, tvbhData, monthlySalesData, trendChartData) {
+        const totalCarBody = document.getElementById("total-car-body");
+        const totalTvbhBody = document.getElementById("total-tvbh-body");
+        document.getElementById("total-car-header").innerHTML = "<tr><th>STT</th><th>Dòng Xe</th><th>Tổng Số Lượng</th></tr>";
+        document.getElementById("total-tvbh-header").innerHTML = "<tr><th>STT</th><th>Tư Vấn Bán Hàng</th><th>Tổng Số Lượng Xe</th></tr>";
+
+        totalCarBody.innerHTML = carData.length > 0 
+            ? carData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + 
+              `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
+            : `<tr><td colspan="3" style="text-align:center;">Không có dữ liệu.</td></tr>`;
+
+        totalTvbhBody.innerHTML = tvbhData.length > 0 
+            ? tvbhData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') +
+              `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
+            : `<tr><td colspan="3" style="text-align:center;">Không có dữ liệu.</td></tr>`;
+        
+        renderAllCharts(carData, monthlySalesData, trendChartData);
+    }
+    
+    function updateDetailPanelWithMessage(message) {
+        const detailBodyContent = document.getElementById("detail-body-content");
+        detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
     }
 
-    function renderCharts(carData, monthlyData, trendData) {
+    function showDetail(detailDataArray) {
+        if (currentSheet === "Total") return; // Không hiển thị chi tiết cho tab Total
+        
+        // detailDataArray: [STT, Tên KH, Số ĐH, Dòng Xe, Phiên Bản, Ngoại Thất, Nội Thất, TVBH, VIN, Chính Sách]
+        const labels = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
+        const detailBodyContent = document.getElementById("detail-body-content");
+
+        if (!detailDataArray || detailDataArray.length === 0) {
+            updateDetailPanelWithMessage("Không có dữ liệu chi tiết để hiển thị.");
+            return;
+        }
+        
+        let tableHTML = '<table class="detail-table"><tbody>';
+        labels.forEach((label, i) => {
+            const value = detailDataArray[i] !== undefined ? detailDataArray[i] : 'N/A';
+            const isVin = label === "VIN";
+            tableHTML += `
+                <tr>
+                    <th>${label}</th>
+                    <td${isVin ? ' class="vin-highlight"' : ''}>${value}</td>
+                </tr>
+            `;
+        });
+        tableHTML += '</tbody></table>';
+        detailBodyContent.innerHTML = tableHTML;
+    }
+
+    // --- Hàm xử lý biểu đồ ---
+    function getChartColors() {
         const isDarkMode = document.body.classList.contains('dark-mode');
-        const monthlyColors = '#003087';
-        const carColors = ['#003087', '#00a550', '#ed8936', '#e53e3e'];
-        const trendColors = ['#003087', '#00a550', '#ed8936', '#e53e3e'];
+        return {
+            textColor: isDarkMode ? getComputedStyle(document.documentElement).getPropertyValue('--text-muted-light').trim() : getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim(),
+            gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            primarySet: [
+                getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(),
+                getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim(),
+                getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim(),
+                '#4A90E2', '#F5A623', '#B8E986', '#50E3C2', '#9013FE' // Thêm màu
+            ],
+             monthlyBarColor: isDarkMode ? getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() : getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim(),
+        };
+    }
 
-        if (carChart) carChart.destroy();
+    function renderAllCharts(carData, monthlySalesData, trendChartData) {
+        const colors = getChartColors();
+        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1;
+
+        // Destroy existing charts before re-rendering
         if (monthlyChart) monthlyChart.destroy();
+        if (carChart) carChart.destroy();
         if (trendChart) trendChart.destroy();
 
-        const totalCars = carData.reduce((sum, row) => sum + row.count, 0) || 1;
-
+        // Monthly Sales Chart (Bar)
         monthlyChart = new Chart(document.getElementById('monthly-chart').getContext('2d'), {
             type: 'bar',
             data: {
-                labels: months,
+                labels: MONTHS,
                 datasets: [{
-                    label: 'Số lượng xe',
-                    data: monthlyData.map(m => m.count),
-                    backgroundColor: monthlyColors,
-                    borderColor: monthlyColors,
+                    label: 'Số lượng xe bán',
+                    data: monthlySalesData.map(m => m.count),
+                    backgroundColor: colors.monthlyBarColor,
+                    borderColor: colors.monthlyBarColor,
                     borderWidth: 1
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: isDarkMode ? '#d9e1e8' : '#2c3e50' }, ticks: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } },
-                    x: { title: { display: true, text: 'Tháng', color: isDarkMode ? '#d9e1e8' : '#2c3e50' }, ticks: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } }
+                    y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } },
+                    x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }
                 },
                 plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => `${context.raw} xe` } } }
             }
         });
 
+        // Car Distribution Chart (Pie)
         carChart = new Chart(document.getElementById('car-chart').getContext('2d'), {
             type: 'pie',
             data: {
                 labels: carData.map(r => r.key),
-                datasets: [{ label: 'Số lượng xe', data: carData.map(r => r.count), backgroundColor: carColors }]
+                datasets: [{ 
+                    label: 'Số lượng xe', 
+                    data: carData.map(r => r.count), 
+                    backgroundColor: colors.primarySet,
+                    borderColor: document.body.classList.contains('dark-mode') ? getComputedStyle(document.documentElement).getPropertyValue('--bg-dark-neumorphic').trim() : getComputedStyle(document.documentElement).getPropertyValue('--bg-light-neumorphic').trim(),
+                    borderWidth: 2
+                }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'right', labels: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } },
+                    legend: { position: 'right', labels: { color: colors.textColor } },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 const value = context.raw;
-                                const percentage = ((value / totalCars) * 100).toFixed(1);
+                                const percentage = totalCarsForPie > 0 ? ((value / totalCarsForPie) * 100).toFixed(1) : 0;
                                 return `${context.label}: ${value} xe (${percentage}%)`;
                             }
                         }
@@ -863,131 +1283,221 @@
             }
         });
 
+        // Car Trend Chart (Line)
         trendChart = new Chart(document.getElementById('trend-chart').getContext('2d'), {
             type: 'line',
             data: {
-                labels: months,
-                datasets: Object.keys(trendData).map((car, idx) => ({
+                labels: MONTHS,
+                datasets: Object.keys(trendChartData).map((car, idx) => ({
                     label: car,
-                    data: trendData[car],
-                    borderColor: trendColors[idx % trendColors.length],
-                    backgroundColor: trendColors[idx % trendColors.length] + '33',
+                    data: trendChartData[car],
+                    borderColor: colors.primarySet[idx % colors.primarySet.length],
+                    backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', // 33 for ~20% opacity
                     fill: false,
                     tension: 0.1
                 }))
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: isDarkMode ? '#d9e1e8' : '#2c3e50' }, ticks: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } },
-                    x: { title: { display: true, text: 'Tháng', color: isDarkMode ? '#d9e1e8' : '#2c3e50' }, ticks: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } }
+                    y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } },
+                    x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }
                 },
-                plugins: { legend: { position: 'top', labels: { color: isDarkMode ? '#d9e1e8' : '#2c3e50' } }, tooltip: { mode: 'index', intersect: false } }
+                plugins: { legend: { position: 'top', labels: { color: colors.textColor } }, tooltip: { mode: 'index', intersect: false } }
             }
         });
     }
+    
+    function updateAllChartColors() {
+        // Chỉ render lại biểu đồ nếu đang ở tab "Total" và có dữ liệu
+        if (currentSheet === "Total" && filteredCarData && filteredCarData.length > 0) {
+            // Cần lấy lại monthlySalesData và trendData nếu chúng không được lưu trữ toàn cục
+            // Hoặc fetch lại toàn bộ nếu cần
+            const monthlySalesData = MONTHS.map(month => ({
+                month: month,
+                count: cachedData[month] ? cachedData[month].length : 0
+            }));
+            const allMonthlyRawData = MONTHS.map(month => cachedData[month] || []);
+            const trendData = calculateTrendData(allMonthlyRawData, filteredCarData);
 
-    function updateChartColors() {
-        if (currentSheet === "Total" && filteredCarData.length > 0) {
-            renderCharts(filteredCarData, monthlyData, trendData);
+            renderAllCharts(filteredCarData, monthlySalesData, trendData);
         }
+        // Nếu cần cập nhật biểu đồ ở tab tháng (nếu có), thêm logic ở đây
     }
 
-    function downloadChart(chartId, name) {
-        html2canvas(document.getElementById(chartId)).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `${name}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            showNotification("Đã tải biểu đồ!", 2000);
-        });
+
+    function downloadChart(chartId, fileName) {
+        const chartCanvas = document.getElementById(chartId);
+        if (!chartCanvas) {
+            showNotification(`Không tìm thấy biểu đồ với ID: ${chartId}`, 3000, 'error');
+            return;
+        }
+        // Tạm thời đổi nền của container chart để html2canvas chụp đúng màu
+        const chartContainer = chartCanvas.closest('.chart-container');
+        const originalBg = chartContainer.style.backgroundColor;
+        chartContainer.style.backgroundColor = document.body.classList.contains('dark-mode') 
+            ? getComputedStyle(document.documentElement).getPropertyValue('--bg-dark-neumorphic').trim() 
+            : getComputedStyle(document.documentElement).getPropertyValue('--bg-light-neumorphic').trim();
+
+        html2canvas(chartCanvas, { backgroundColor: null }) // backgroundColor: null để canvas gốc trong suốt
+            .then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${fileName}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification("Đã tải biểu đồ!", 2000, 'success');
+            })
+            .catch(err => {
+                console.error("Lỗi khi tải biểu đồ:", err);
+                showNotification("Lỗi khi tải biểu đồ.", 3000, 'error');
+            })
+            .finally(() => {
+                chartContainer.style.backgroundColor = originalBg; // Khôi phục màu nền
+            });
     }
 
+
+    // --- Hàm xử lý sự kiện người dùng ---
     function applyFilters() {
-        if (currentSheet === "Total") return;
-        const carFilter = document.getElementById("car-filter").value;
-        const tvbhFilter = document.getElementById("tvbh-filter").value;
-        const searchInput = document.getElementById("search-input").value.toLowerCase();
-        filteredMonthData = fullData.filter(row =>
-            (!carFilter || row[3] === carFilter) &&
-            (!tvbhFilter || row[7] === tvbhFilter) &&
-            row.some(cell => cell?.toString().toLowerCase().includes(searchInput))
-        );
-        currentPage = 1;
+        if (currentSheet === "Total") return; // Không filter ở tab Total
+        
+        const carFilterValue = document.getElementById("car-filter").value;
+        const tvbhFilterValue = document.getElementById("tvbh-filter").value;
+        const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
+        
+        filteredMonthData = fullData.filter(row => {
+            const matchesCar = !carFilterValue || (row[3] && row[3] === carFilterValue);
+            const matchesTvbh = !tvbhFilterValue || (row[7] && row[7] === tvbhFilterValue);
+            const matchesSearch = !searchInputValue || 
+                (row[0] && String(row[0]).toLowerCase().includes(searchInputValue)) || // Tên KH
+                (row[1] && String(row[1]).toLowerCase().includes(searchInputValue)) || // SĐT
+                (row[8] && String(row[8]).toLowerCase().includes(searchInputValue));  // VIN
+            return matchesCar && matchesTvbh && matchesSearch;
+        });
+        
+        currentPage = 1; // Reset về trang đầu khi filter
         renderTable(filteredMonthData);
+        updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
     }
 
     function changePage(delta) {
-        currentPage = Math.min(Math.max(1, currentPage + delta), Math.ceil(filteredMonthData.length / rowsPerPage));
+        const totalPages = Math.ceil(filteredMonthData.length / ROWS_PER_PAGE) || 1;
+        currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
         renderTable(filteredMonthData);
-        document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
-        document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
+        // Cuộn lên đầu bảng và panel chi tiết
+        document.querySelector('#table-container').scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('#detail-panel').scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function refreshData() {
-        if (currentSheet === "Total") return;
-        document.getElementById("search-input").value = "";
-        document.getElementById("car-filter").value = "";
-        document.getElementById("tvbh-filter").value = "";
-        delete cachedData[currentSheet];
-        fetchSheetData(currentSheet, document.querySelector('.tabs a.active'));
-        showNotification("Dữ liệu đã làm mới!", 2000);
+        if (currentSheet === "Total") {
+             fetchTotalData(document.querySelector('.tabs a.total-tab.active')); // Làm mới dữ liệu tổng
+        } else {
+            document.getElementById("search-input").value = "";
+            document.getElementById("car-filter").value = "";
+            document.getElementById("tvbh-filter").value = "";
+            
+            delete cachedData[currentSheet]; // Xóa cache của sheet hiện tại
+            // sessionStorage.removeItem(currentSheet); // Xóa session storage nếu dùng
+            
+            const activeTabElement = document.querySelector('.tabs a.active');
+            if (activeTabElement) {
+                fetchSheetData(currentSheet, activeTabElement);
+            } else {
+                showNotification("Không tìm thấy tab đang hoạt động để làm mới.", 3000, 'error');
+            }
+        }
+        showNotification("Dữ liệu đã được làm mới!", 2000, 'success');
     }
 
     function exportToExcel() {
-        if (currentSheet === "Total") return;
-        if (!confirm("Xuất danh sách sang Excel?")) return;
-        const tableHTML = document.getElementById("data-table").outerHTML;
-        const blob = new Blob(['\ufeff', tableHTML], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `VinFast_data_${currentSheet}.xls`;
-        link.click();
-        showNotification("Đã xuất file!", 2000);
+        if (currentSheet === "Total") {
+            showNotification("Chức năng xuất Excel chưa hỗ trợ cho tab Tổng hợp.", 3000, 'info');
+            return;
+        }
+        if (filteredMonthData.length === 0) {
+            showNotification("Không có dữ liệu để xuất.", 3000, 'warning');
+            return;
+        }
+        if (!confirm(`Bạn có muốn xuất ${filteredMonthData.length} dòng dữ liệu của tháng ${currentSheet} sang Excel không?`)) return;
+
+        // Tạo một workbook và một worksheet
+        const ws_name = currentSheet.substring(0, 30); // Tên sheet Excel (giới hạn ký tự)
+        const wb = XLSX.utils.book_new();
+        
+        // Thêm header cho file Excel
+        const excelHeaders = ["STT", "Tên Khách Hàng", "SĐT", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách", "Ghi Chú TVBH", "Ghi Chú Admin"];
+        const dataToExport = [
+            excelHeaders,
+            ...filteredMonthData.map((row, index) => [
+                index + 1,
+                row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '',
+                row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || '',
+                row[10] || '', row[11] || ''
+            ])
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(dataToExport);
+        XLSX.utils.book_append_sheet(wb, ws, ws_name);
+
+        // Xuất file
+        XLSX.writeFile(wb, `VinFast_Data_${currentSheet}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showNotification("Đã xuất file Excel!", 2000, 'success');
     }
 
     function printTable() {
-        if (currentSheet === "Total") return;
+        if (currentSheet === "Total") {
+            showNotification("Chức năng in chưa hỗ trợ cho tab Tổng hợp.", 3000, 'info');
+            return;
+        }
+         if (filteredMonthData.length === 0) {
+            showNotification("Không có dữ liệu để in.", 3000, 'warning');
+            return;
+        }
+
         const now = new Date().toLocaleString('vi-VN');
-        const printContent = `<h2 style="color: #2c3e50;">VINFAST MĐ AN PHÚ</h2><p>Hotline: 1900 232389</p><p>In lúc: ${now}</p>${document.getElementById("data-table").outerHTML}`;
-        const win = window.open('', '', 'width=800,height=600');
-        win.document.write(`<html><head><title>In danh sách</title><style>body { font-family: 'Montserrat', sans-serif; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid rgba(163, 177, 198, 0.3); padding: 8px 10px; font-size: 11px; } th { background: #003087; color: #FFFFFF; }</style></head><body>${printContent}</body></html>`);
-        win.document.close();
-        win.print();
-    }
+        const tableToPrint = document.getElementById("data-table").cloneNode(true); // Clone bảng để không ảnh hưởng bản gốc
+        
+        // Tạo nội dung HTML cho cửa sổ in
+        let printContent = `
+            <h2 style="color: #2c3e50; font-family: 'Montserrat', sans-serif; text-align:center;">BÁO CÁO DOANH SỐ VINFAST THUẬN AN - THÁNG ${currentSheet.toUpperCase()}</h2>
+            <p style="text-align:center; font-family: 'Montserrat', sans-serif;">Hotline: 1900 232389 | In lúc: ${now}</p>
+            <style>
+                body { font-family: 'Roboto', sans-serif; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; font-size: 10pt; }
+                th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; word-wrap: break-word; }
+                th { background: #003087; color: #FFFFFF; font-weight: bold; }
+                caption { font-size: 1.2em; margin-bottom: 10px; font-weight: bold; }
+            </style>
+            <table>
+             <caption>Danh sách đơn hàng tháng ${currentSheet} (${filteredMonthData.length} đơn)</caption>
+             ${tableToPrint.innerHTML}
+            </table>`;
 
-    function showDetail(data) {
-        if (currentSheet === "Total") return;
-        const labels = ["Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
-        const rowData = data.slice(1);
-        const tbody = document.querySelector("#detail-body tbody");
-        tbody.innerHTML = labels.map((label, i) => {
-            const value = rowData[i] || '';
-            const isVin = i === 7;
-            return `
-                <tr>
-                    <th>${label}</th>
-                    <td${isVin ? ' class="vin-highlight"' : ''}>${value}</td>
-                </tr>
-            `;
-        }).join('');
+        const win = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+        win.document.write(`<html><head><title>In Danh Sách Đơn Hàng - ${currentSheet}</title></head><body>${printContent}</body></html>`);
+        win.document.close(); // Quan trọng để hoàn tất việc ghi
+        
+        // Đợi một chút để nội dung tải hoàn chỉnh trước khi in
+        setTimeout(() => {
+            win.print();
+            // win.close(); // Có thể đóng cửa sổ sau khi in
+        }, 500);
+        showNotification("Đang chuẩn bị bản in...", 2000);
     }
-
-    function showNotification(message, duration = 2000) {
-        const notif = document.getElementById("notification");
-        notif.textContent = message;
-        notif.style.display = "block";
-        clearTimeout(notif.timeout);
-        notif.timeout = setTimeout(() => notif.style.display = "none", duration);
-    }
-
-    function updatePagination(data) {
-        if (currentSheet === "Total") return;
-        document.getElementById("page-info").textContent = `Trang ${currentPage} / ${Math.ceil(data.length / rowsPerPage) || 1}`;
+    
+    function updatePagination(totalItems) {
+        if (currentSheet === "Total") {
+            document.getElementById("pagination").style.display = "none";
+            return;
+        }
+        document.getElementById("pagination").style.display = "flex";
+        const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE) || 1;
+        document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
         document.getElementById("prev-btn").disabled = currentPage === 1;
-        document.getElementById("next-btn").disabled = currentPage === Math.ceil(data.length / rowsPerPage) || data.length === 0;
+        document.getElementById("next-btn").disabled = currentPage === totalPages || totalItems === 0;
     }
+
     </script>
 </body>
 </html>
