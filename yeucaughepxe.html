@@ -36,6 +36,8 @@
     /* Thêm các biến màu mới nếu cần cho Enhanced Modal Styles */
     --primary-text-color: #004a7c;
     --primary-text-color-dark: #a9cce3;
+    --scroll-to-top-bg: #005eb8;
+    --scroll-to-top-hover-bg: #003087;
 }
 
 [data-theme="dark"] {
@@ -58,6 +60,8 @@
     --success-bg: #2e7d32;
     --loading-bg: #455a64;
     --no-data-text-color: #95a5a6;
+    --scroll-to-top-bg: #66b0ff;
+    --scroll-to-top-hover-bg: #0087ff;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -411,16 +415,16 @@ tbody tr:hover {
     background: var(--modal-bg);
     border-radius: 12px;
     padding: 20px;
-    max-width: 450px; 
-    width: 100%; 
+    max-width: 450px;
+    width: 100%;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     color: var(--modal-text);
     position: relative;
-    transform: translateY(20px); 
+    transform: translateY(20px);
     transition: transform 0.3s ease;
 }
 .modal.active .modal-content { /* Original style */
-    transform: translateY(0); 
+    transform: translateY(0);
 }
 .modal-header { /* Original style */
     display: flex;
@@ -445,18 +449,18 @@ tbody tr:hover {
     transition: color 0.3s ease;
 }
 .modal-close-btn:hover { /* Original style */
-    color: #005eb8; 
+    color: #005eb8;
 }
 .modal-body { /* Original style */
     font-size: 12px;
     line-height: 1.5;
-    max-height: 50vh; 
-    overflow-y: hidden; 
-    scrollbar-width: none; 
-    text-align: center; 
+    max-height: 50vh;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    text-align: center;
 }
 .modal-body::-webkit-scrollbar { /* Original style */
-    display: none; 
+    display: none;
 }
 .modal-body.scrollable { /* Original style */
     overflow-y: auto;
@@ -473,34 +477,34 @@ tbody tr:hover {
 }
 .modal-body .detail-item, .modal-body div { /* Original style */
     display: grid;
-    grid-template-columns: 1fr 2fr; 
+    grid-template-columns: 1fr 2fr;
     gap: 10px;
     padding: 10px;
-    background: rgba(0,0,0,0.02); 
+    background: rgba(0,0,0,0.02);
     border-radius: 8px;
     margin-bottom: 8px;
     transition: background 0.2s ease;
 }
 .modal-body .detail-item:hover, .modal-body div:hover { /* Original style */
-    background: rgba(0,0,0,0.05); 
+    background: rgba(0,0,0,0.05);
 }
 .modal-body .detail-item strong, .modal-body div strong { /* Original style */
     font-weight: 700;
-    color: #005eb8; 
+    color: #005eb8;
 }
 .modal-body .detail-item span, .modal-body div span { /* Original style */
     color: var(--modal-text);
-    word-break: break-word; 
+    word-break: break-word;
 }
 .modal-body .detail-item.highlight strong { /* Original style */
-     color: var(--modal-text); 
+     color: var(--modal-text);
 }
 .modal-body .detail-item.highlight span { /* Original style */
-    color: #005eb8; 
+    color: #005eb8;
     font-weight: bold;
 }
 [data-theme="dark"] .modal-body .detail-item.highlight span { /* Original style */
-    color: #66b0ff; 
+    color: #66b0ff;
 }
 .modal-body p { /* Original style */
     text-align: center;
@@ -512,7 +516,7 @@ tbody tr:hover {
 }
 .modal-footer { /* Original style */
     display: flex;
-    justify-content: flex-end; 
+    justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
 }
@@ -530,10 +534,10 @@ tbody tr:hover {
     color: #ffffff;
 }
 .modal-btn.primary:hover { /* Original style */
-    background: #003087; 
+    background: #003087;
 }
 .modal-btn.secondary { /* Original style */
-    background: rgba(0,0,0,0.1); 
+    background: rgba(0,0,0,0.1);
     color: var(--modal-text);
 }
 .modal-btn.secondary:hover { /* Original style */
@@ -637,7 +641,7 @@ tbody tr:hover {
     /* Let specific theme styles handle this */
 }
 [data-theme="light"] .modal-body .detail-item.highlight strong {
-    color: #004a7c; 
+    color: #004a7c;
     opacity: 1;
 }
 [data-theme="dark"] .modal-body .detail-item.highlight strong {
@@ -999,6 +1003,31 @@ footer {
     footer { padding: 6px 0; font-size: 9px; }
 }
 .hidden { display: none !important; } /* Utility class to hide elements */
+
+/* Scroll to Top Button Styles */
+#scrollToTopBtn {
+    display: none; /* Ẩn theo mặc định */
+    position: fixed;
+    bottom: 20px; /* Khoảng cách với đáy */
+    right: 30px; /* Khoảng cách với lề phải */
+    z-index: 999; /* Đảm bảo nút nổi lên trên các phần tử khác */
+    border: none;
+    outline: none;
+    background-color: var(--scroll-to-top-bg);
+    color: white;
+    cursor: pointer;
+    padding: 10px 12px; /* Kích thước nút */
+    border-radius: 50%; /* Bo tròn thành hình tròn */
+    font-size: 16px; /* Kích thước icon */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.19);
+    transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+#scrollToTopBtn:hover {
+    background-color: var(--scroll-to-top-hover-bg);
+    transform: scale(1.1); /* Hiệu ứng phóng to nhẹ khi hover */
+}
+
     </style>
 </head>
 <body>
@@ -1274,6 +1303,11 @@ footer {
     </div>
 </div>
 
+<button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
@@ -1302,6 +1336,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (themeIcon) {
             themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
         }
+        // Khởi tạo nút cuộn lên đầu trang
+        initScrollToTopButton();
     }
 });
 
@@ -1741,7 +1777,7 @@ function showDetailByOrder(orderNumber) {
 
     for (const [key, value] of Object.entries(row)) {
         if (!displayedKeys.has(key)) {
-            const label = key; 
+            const label = key;
             const formattedValue = (key === "Ngày cọc" || key === "Thời gian nhập" || key === "Thời gian ghép")
                                    ? formatDateTime(value)
                                    : (value !== null && typeof value !== 'undefined' ? String(value) : "Chưa có dữ liệu");
@@ -2429,7 +2465,7 @@ function toggleAutoRefresh() {
         showNotification("Tự động làm mới mỗi 30 giây!", 2000);
         if(refreshButtonIcon) {
             refreshButtonIcon.classList.add('fa-spin');
-            refreshButtonIcon.parentElement.style.color = '#34D399';
+            refreshButtonIcon.parentElement.style.color = '#34D399'; // Màu xanh lá cây cho biết đang hoạt động
         }
     }
 }
@@ -2481,19 +2517,19 @@ function restrictVersion(select, savedVersionValue = null) {
         "VF 7": ["Eco", "Plus"],
         "VF 8": ["Eco", "Plus"],
         "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
-        "HERIO": ["HERIO"], 
+        "HERIO": ["HERIO"],
         "NERIO": ["NERIO"],
         "LIMO": ["LIMO"],
         "MINIO": ["MINIO"]
     };
 
     const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
-    const availableVersions = versions[car] || allPossibleVersions; 
+    const availableVersions = versions[car] || allPossibleVersions;
     console.log(`Các phiên bản khả dụng: ${availableVersions}`);
 
     const targetVersionValue = savedVersionValue !== null ? savedVersionValue : versionSelect.value;
-    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; 
-    
+    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
+
     let foundSelected = false;
     if (availableVersions.length > 0) {
         availableVersions.forEach(version => {
@@ -2504,13 +2540,13 @@ function restrictVersion(select, savedVersionValue = null) {
     } else {
          console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
     }
-    
+
     if (foundSelected) {
         versionSelect.value = targetVersionValue;
     } else {
-        versionSelect.value = ""; 
+        versionSelect.value = "";
     }
-    
+
     if (versionSelect.value === "") {
         const placeholderOption = versionSelect.querySelector('option[value=""]');
         if (placeholderOption) {
@@ -2521,6 +2557,219 @@ function restrictVersion(select, savedVersionValue = null) {
     console.log(`Nội dung select phiên bản sau khi cập nhật: ${versionSelect.innerHTML}`);
     console.log(`Giá trị được chọn của phiên bản: ${versionSelect.value}`);
 }
+
+// --- Chức năng Nút Cuộn Lên Đầu Trang ---
+function initScrollToTopButton() {
+    const scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+    if (!scrollToTopBtn) return;
+
+    // Hiển thị nút khi cuộn xuống 200px từ đầu trang
+    window.onscroll = function() {scrollFunction()};
+
+    function scrollFunction() {
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            scrollToTopBtn.style.display = "block";
+            scrollToTopBtn.style.opacity = "1";
+        } else {
+            scrollToTopBtn.style.opacity = "0";
+            // Đợi hiệu ứng mờ hoàn tất rồi mới ẩn hẳn để tránh giật cục
+            setTimeout(() => {
+                 if (!(document.body.scrollTop > 200 || document.documentElement.scrollTop > 200)) {
+                    scrollToTopBtn.style.display = "none";
+                 }
+            }, 300); // Phải khớp với thời gian transition opacity
+        }
+    }
+}
+
+// Khi người dùng nhấp vào nút, cuộn lên đầu tài liệu một cách mượt mà
+function scrollToTop() {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// --- Hàm Debounce ---
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
+function switchTab(tabName, element) {
+    // Deactivate all tabs and hide all sections first
+    const tabs = document.querySelectorAll(".navbar .tabs a");
+    tabs.forEach(tabLink => tabLink.classList.remove("active"));
+    const allSections = ["form-section", "history-section", "detailed-stats-section"];
+    allSections.forEach(sectionId => {
+        const el = document.getElementById(sectionId);
+        if (el) el.classList.add("hidden");
+    });
+
+    // Activate the clicked tab
+    if (element) element.classList.add("active");
+
+    // Show sections based on the tabName
+    if (tabName === 'form') {
+        const formSection = document.getElementById('form-section');
+        if (formSection) formSection.classList.remove('hidden');
+        const historySection = document.getElementById('history-section');
+        if (historySection) historySection.classList.remove('hidden');
+    } else if (tabName === 'history') {
+        const historySection = document.getElementById('history-section');
+        if (historySection) historySection.classList.remove('hidden');
+    } else if (tabName === 'detailed-stats') {
+        const detailedStatsSection = document.getElementById('detailed-stats-section');
+        if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
+    }
+
+    // Specific logic for fetching/filtering data when a tab becomes active
+    if (tabName === "history") {
+        if (!globalHistoryData || globalHistoryData.length === 0) {
+            // fetchHistory will be called from DOMContentLoaded for initial load if form tab is active
+            // Or if history tab is directly switched to and data is not present.
+            // This check prevents redundant calls if history is already populated.
+             if (document.getElementById('history-section').classList.contains('hidden')) {
+                // This case should not happen if logic is correct, but as a safeguard.
+                fetchHistory();
+            } else {
+                filterHistory();
+            }
+        } else {
+            filterHistory();
+        }
+    } else if (tabName === "detailed-stats") {
+        // Ensure data is prepared before filtering/rendering charts for detailed stats
+        if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
+            prepareDetailedStats(globalHistoryData);
+        }
+        filterDetailedStats();
+    }
+}
+
+
+function toggleMenu() {
+    const tabs = document.querySelector(".navbar .tabs");
+    if (tabs) tabs.classList.toggle("active");
+}
+
+function toggleAutoRefresh() {
+    const refreshButtonIcon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        showNotification("Tự động làm mới đã tắt!", 2000);
+        if(refreshButtonIcon) {
+            refreshButtonIcon.classList.remove('fa-spin');
+            refreshButtonIcon.parentElement.style.color = '';
+        }
+    } else {
+        autoRefreshInterval = setInterval(refreshData, 30000);
+        showNotification("Tự động làm mới mỗi 30 giây!", 2000);
+        if(refreshButtonIcon) {
+            refreshButtonIcon.classList.add('fa-spin');
+            refreshButtonIcon.parentElement.style.color = '#34D399'; // Màu xanh lá cây cho biết đang active
+        }
+    }
+}
+
+function setupScrollSync() {
+    const tableWrappers = document.querySelectorAll(".table-wrapper");
+    tableWrappers.forEach(tableWrapper => {
+        const header = tableWrapper.querySelector("thead");
+        if (tableWrapper && header) {
+            tableWrapper.addEventListener("scroll", () => {
+                header.style.transform = `translateX(-${tableWrapper.scrollLeft}px)`;
+            });
+        }
+    });
+}
+
+
+function showNotification(message, duration, isError = false) {
+    const notification = document.createElement("div");
+    notification.className = "notification";
+    if (isError) {
+        notification.classList.add("error");
+    }
+    notification.textContent = message;
+    notification.style.setProperty("--duration", `${duration}ms`);
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, duration);
+}
+
+function restrictVersion(select, savedVersionValue = null) {
+    const versionSelect = document.querySelector('select[name="phien_ban"]');
+    if (!versionSelect) {
+        console.error("Không tìm thấy select[name='phien_ban']");
+        showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
+        return;
+    }
+
+    const car = select.value;
+    console.log(`Dòng xe được chọn: ${car}`);
+
+    // Danh sách phiên bản cho từng dòng xe
+    const versions = {
+        "VF 3": ["Base"],
+        "VF 5": ["Plus"],
+        "VF 6": ["Eco", "Plus"],
+        "VF 7": ["Eco", "Plus"],
+        "VF 8": ["Eco", "Plus"],
+        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
+        "HERIO": ["HERIO"], // Giả sử tên phiên bản giống tên dòng xe nếu là loại đặc thù
+        "NERIO": ["NERIO"],
+        "LIMO": ["LIMO"],
+        "MINIO": ["MINIO"]
+    };
+
+    // Tất cả các phiên bản có thể có để fallback nếu dòng xe không có trong 'versions'
+    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
+    const availableVersions = versions[car] || allPossibleVersions; // Nếu không tìm thấy dòng xe, hiển thị tất cả
+    console.log(`Các phiên bản khả dụng: ${availableVersions}`);
+
+    // Giữ lại giá trị phiên bản đang được chọn (nếu có và hợp lệ) hoặc giá trị đã lưu (khi tải nháp)
+    const targetVersionValue = savedVersionValue !== null ? savedVersionValue : versionSelect.value;
+    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; // Xóa các option cũ, thêm lại placeholder
+    
+    let foundSelected = false;
+    if (availableVersions.length > 0) {
+        availableVersions.forEach(version => {
+            const selectedAttr = (version === targetVersionValue) ? " selected" : "";
+            if (version === targetVersionValue) foundSelected = true;
+            versionSelect.innerHTML += `<option value="${version}"${selectedAttr}>${version}</option>`;
+        });
+    } else {
+         // Trường hợp này ít xảy ra nếu allPossibleVersions được định nghĩa đúng
+         console.warn(`Không có phiên bản nào cho dòng xe: ${car}`);
+    }
+    
+    // Nếu giá trị mục tiêu (targetVersionValue) vẫn hợp lệ và tìm thấy trong danh sách mới, chọn nó
+    if (foundSelected) {
+        versionSelect.value = targetVersionValue;
+    } else {
+        versionSelect.value = ""; // Nếu không, reset về placeholder
+    }
+    
+    // Đảm bảo placeholder được chọn nếu không có giá trị nào hợp lệ
+    if (versionSelect.value === "") {
+        const placeholderOption = versionSelect.querySelector('option[value=""]');
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+        }
+    }
+
+    console.log(`Nội dung select phiên bản sau khi cập nhật: ${versionSelect.innerHTML}`);
+    console.log(`Giá trị được chọn của phiên bản: ${versionSelect.value}`);
+}
+// Hoàn thành thẻ script và body, html
 </script>
 </body>
 </html>
