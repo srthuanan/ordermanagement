@@ -86,18 +86,18 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 190px; /* Default expanded width */
+            width: 190px; 
             height: 100vh;
             background: linear-gradient(180deg, var(--primary-color), var(--primary-color-darker));
             padding: 20px;
-            padding-top: 60px; /* Space for header */
+            padding-top: 60px; 
             transition: width 0.3s ease;
             z-index: 1000;
             box-shadow: 10px 10px 20px rgba(0, 48, 135, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.1);
-            overflow-x: hidden; /* Hide text when collapsing */
+            overflow-x: hidden; 
         }
         .sidebar.collapsed { 
-            width: 60px; /* Collapsed width */
+            width: 60px; 
         }
         body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
         
@@ -142,19 +142,26 @@
             white-space: nowrap; 
             overflow: hidden; 
         }
+        /* START: Sửa lỗi hiển thị icon khi sidebar thu gọn */
         .sidebar.collapsed .menu a { 
-            padding: 12px; 
-            justify-content: center; 
-            width: 36px; 
-            margin: 0 auto; 
+            width: 38px;  /* Kích thước nút khi thu gọn, đủ cho icon và chút không gian */
+            height: 38px; /* Giữ cho nút vuông vắn */
+            padding: 0;   /* Bỏ padding của thẻ <a> */
+            justify-content: center; /* Căn giữa icon bên trong thẻ <a> */
+            margin: 0 auto; /* Căn giữa chính nút <a> trong không gian của nó */
         }
+        /* END: Sửa lỗi hiển thị icon khi sidebar thu gọn */
         .sidebar .menu a i { 
             font-size: 16px; 
             min-width: 16px; 
             text-align: center;
+            /* Đảm bảo icon luôn hiện rõ */
+            opacity: 1; 
+            transform: none;
+            transition: none; /* Bỏ transition riêng cho icon nếu có */
         }
         .sidebar .menu a span { 
-            transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s; /* Added delay for smoother text fade out */
+            transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s; 
             opacity: 1;
             transform: translateX(0);
             display: inline-block; 
@@ -164,6 +171,7 @@
             width: 0; 
             transform: translateX(-10px); 
             pointer-events: none; 
+            margin-left: -1000px; /* Đẩy text ra xa để không chiếm không gian vô hình */
         }
         .sidebar .menu a:hover { 
             background: rgba(255, 255, 255, 0.25); 
@@ -1033,7 +1041,6 @@
                 if(navMenu) navMenu.style.display = "flex"; 
                 if(logoutBtn) logoutBtn.style.display = "flex"; 
 
-                // Xử lý sidebar dựa trên kích thước màn hình
                 if (window.innerWidth <= 900) { 
                     sidebar.classList.add("collapsed");
                     mainContent.classList.add("collapsed");
@@ -1086,14 +1093,14 @@
                            mainContent.classList.remove("collapsed");
                            if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-times";
                         }
-                    } else { // Nếu người dùng đã tự thu gọn trên desktop
-                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; // Giữ icon bars
+                    } else { 
+                         if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
                     }
                 }
             } else {
-                sidebar.classList.remove("collapsed"); // Luôn mở rộng nếu chưa đăng nhập
+                sidebar.classList.remove("collapsed"); 
                 mainContent.classList.remove("collapsed");
-                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; // Icon mặc định
+                if (toggleButtonIcon) toggleButtonIcon.className = "fas fa-bars"; 
             }
         }
 
