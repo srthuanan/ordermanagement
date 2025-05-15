@@ -10,41 +10,57 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
+        :root {
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --background-light: #f5f6fa;
+            --text-light: #2c3e50;
+            --background-dark: #1a1a2e;
+            --text-dark: #d9e1e8;
+            --card-bg-light: #fff;
+            --card-bg-dark: #2a2a3e;
+            --shadow-light-outer: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5);
+            --shadow-dark-outer: 10px 10px 20px rgba(0, 0, 0, 0.3), -10px -10px 20px rgba(255, 255, 255, 0.1);
+            --shadow-light-inner: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.5);
+            --shadow-dark-inner: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(255, 255, 255, 0.1);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Roboto', sans-serif; 
-            background: #f5f6fa; 
-            color: #2c3e50; 
+            background: var(--background-light); 
+            color: var(--text-light); 
             min-height: 100vh; 
             overflow-x: hidden; 
             transition: background 0.3s, color 0.3s; 
         }
-        body.dark-mode { background: #1a1a2e; color: #d9e1e8; }
+        body.dark-mode { 
+            background: var(--background-dark); 
+            color: var(--text-dark); 
+        }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track {
-            background: #f5f6fa;
+            background: var(--background-light);
             border-radius: 5px;
             box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
         }
         body.dark-mode ::-webkit-scrollbar-track {
-            background: #2a2a3e;
+            background: var(--card-bg-dark); /* Slightly different from body bg for contrast */
             box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2), inset -3px -3px 6px rgba(255, 255, 255, 0.1);
         }
         ::-webkit-scrollbar-thumb {
-            background: #003087;
+            background: var(--primary-color);
             border-radius: 5px;
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2), -3px -3px 6px rgba(255, 255, 255, 0.3);
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #0040c1;
+            background: var(--primary-color-lighter);
             box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3), -4px -4px 8px rgba(255, 255, 255, 0.4);
         }
-        body.dark-mode ::-webkit-scrollbar-thumb { background: #0040c1; }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
         /* Header */
         header {
@@ -52,7 +68,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(135deg, #003087, #0040c1);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter));
             color: #fff;
             text-align: center;
             padding: 12px 0;
@@ -62,7 +78,7 @@
             z-index: 999;
             box-shadow: 8px 8px 16px rgba(0, 48, 135, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.2);
         }
-        body.dark-mode header { background: linear-gradient(135deg, #00205b, #003087); }
+        body.dark-mode header { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
 
         /* Sidebar */
         .sidebar {
@@ -71,7 +87,7 @@
             left: 0;
             width: 190px;
             height: 100vh;
-            background: linear-gradient(180deg, #003087, #00205b);
+            background: linear-gradient(180deg, var(--primary-color), var(--primary-color-darker));
             padding: 20px;
             padding-top: 60px;
             transition: width 0.3s ease;
@@ -79,7 +95,7 @@
             box-shadow: 10px 10px 20px rgba(0, 48, 135, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.1);
         }
         .sidebar.collapsed { width: 60px; }
-        body.dark-mode .sidebar { background: linear-gradient(180deg, #00205b, #001840); }
+        body.dark-mode .sidebar { background: linear-gradient(180deg, var(--primary-color-darker), #001840); }
         .sidebar .logo h1 { 
             font-size: 28px; 
             color: #fff; 
@@ -115,7 +131,7 @@
         .sidebar.collapsed .menu a span { opacity: 0; width: 0; }
         .sidebar .menu a:hover { 
             background: rgba(255, 255, 255, 0.25); 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-light-inner);
         }
         .sidebar .menu a.active { 
             background: rgba(255, 255, 255, 0.35); 
@@ -128,7 +144,7 @@
             right: -12px; 
             width: 24px; 
             height: 24px; 
-            background: #003087; 
+            background: var(--primary-color); 
             border: none; 
             border-radius: 50%; 
             color: #fff; 
@@ -138,10 +154,10 @@
             box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.2); 
         }
         .toggle-btn:hover { 
-            background: #0040c1; 
+            background: var(--primary-color-lighter); 
             box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.3); 
         }
-        body.dark-mode .toggle-btn { background: #00205b; }
+        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
         /* Navbar Controls */
         .navbar-controls { 
@@ -156,8 +172,8 @@
             padding: 8px; 
             border: none; 
             border-radius: 50%; 
-            background: #fff; 
-            color: #2c3e50; 
+            background: var(--card-bg-light); 
+            color: var(--text-light); 
             font-size: 16px; 
             cursor: pointer; 
             transition: all 0.3s ease; 
@@ -170,13 +186,21 @@
         }
         .nav-btn:hover, .theme-toggle:hover, .language-btn:hover { 
             background: #e9ecef; 
-            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.4); 
+            box-shadow: var(--shadow-light-inner); 
         }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle, body.dark-mode .language-btn { 
-            background: #2a2a3e; 
-            color: #d9e1e8; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.1); 
+        body.dark-mode .nav-btn, 
+        body.dark-mode .theme-toggle, 
+        body.dark-mode .language-btn { 
+            background: var(--card-bg-dark); 
+            color: var(--text-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
+        body.dark-mode .nav-btn:hover, 
+        body.dark-mode .theme-toggle:hover, 
+        body.dark-mode .language-btn:hover {
+            box-shadow: var(--shadow-dark-inner);
+        }
+
 
         /* Main Content */
         .main-content { 
@@ -197,7 +221,7 @@
             margin-bottom: 20px; 
             position: relative;
             min-height: 300px;
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5);
+            box-shadow: var(--shadow-light-outer);
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -228,7 +252,7 @@
         .hero .login-btn { 
             padding: 10px 25px; 
             background: white; 
-            color: #003087; 
+            color: var(--primary-color); 
             border: none; 
             border-radius: 10px; 
             font-size: 16px; 
@@ -238,23 +262,23 @@
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
         }
         .hero .login-btn:hover { 
-            background: #0040c1; 
+            background: var(--primary-color-lighter); 
             color: #fff; 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(255, 255, 255, 0.4); 
+            box-shadow: var(--shadow-light-inner); 
         }
 
         /* Internal Section */
         .internal-section { 
-            background: #fff; 
+            background: var(--card-bg-light); 
             border-radius: 12px; 
             padding: 20px; 
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5); 
+            box-shadow: var(--shadow-light-outer); 
             text-align: center; 
             margin-bottom: 20px; 
         }
         body.dark-mode .internal-section { 
-            background: #2a2a3e; 
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.3), -10px -10px 20px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
         .internal-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 15px; }
         .internal-section p { font-size: 14px; margin-bottom: 20px; }
@@ -264,34 +288,37 @@
             gap: 15px; 
         }
         .feature-card { 
-            background: #fff; 
+            background: var(--card-bg-light); 
             padding: 15px; 
             border-radius: 10px; 
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
             transition: all 0.3s ease; 
         }
         .feature-card:hover { 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.4); 
+            box-shadow: var(--shadow-light-inner); 
         }
         body.dark-mode .feature-card { 
-            background: #2a2a3e; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
-        .feature-card i { font-size: 24px; color: #003087; margin-bottom: 15px; }
+        body.dark-mode .feature-card:hover {
+            box-shadow: var(--shadow-dark-inner);
+        }
+        .feature-card i { font-size: 24px; color: var(--primary-color); margin-bottom: 15px; }
         .feature-card h4 { font-size: 16px; margin-bottom: 10px; }
         .feature-card p { font-size: 12px; }
 
         /* Dashboard Section */
         .dashboard-section { 
             display: none; 
-            background: #fff; 
+            background: var(--card-bg-light); 
             border-radius: 12px; 
             padding: 20px; 
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.5); 
+            box-shadow: var(--shadow-light-outer); 
         }
         body.dark-mode .dashboard-section { 
-            background: #2a2a3e; 
-            box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.3), -10px -10px 20px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
         .dashboard-section h3 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-align: center; }
         .dashboard-content { 
@@ -300,22 +327,26 @@
             gap: 15px; 
         }
         .dashboard-card { 
-            background: #fff; 
+            background: var(--card-bg-light); 
             padding: 15px; 
             border-radius: 10px; 
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
             transition: all 0.3s ease; 
         }
         .dashboard-card:hover { 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.4); 
+            box-shadow: var(--shadow-light-inner); 
         }
         body.dark-mode .dashboard-card { 
-            background: #2a2a3e; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
+        }
+         body.dark-mode .dashboard-card:hover {
+            box-shadow: var(--shadow-dark-inner);
         }
         .dashboard-card h4 { font-size: 16px; margin-bottom: 10px; }
         .dashboard-card p { font-size: 12px; margin-bottom: 10px; }
-        .dashboard-card a { color: #003087; text-decoration: none; font-weight: 600; }
+        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+        body.dark-mode .dashboard-card a { color: var(--primary-color-lighter); }
         .dashboard-card a:hover { text-decoration: underline; }
 
         /* Table Styles */
@@ -324,13 +355,13 @@
             overflow-y: auto; 
             margin-bottom: 15px; 
             border-radius: 10px; 
-            background: #fff; 
+            background: var(--card-bg-light); 
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2), -6px -6px 12px rgba(255, 255, 255, 0.5); 
             transition: all 0.3s ease;
         }
         body.dark-mode .table-container { 
-            background: #2a2a3e; 
-            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
         .data-table { 
             width: 100%; 
@@ -342,8 +373,11 @@
             text-align: left; 
             border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
         }
+        body.dark-mode .data-table th, body.dark-mode .data-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
         .data-table th { 
-            background: linear-gradient(135deg, #003087, #0040c1); 
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
             color: #fff; 
             font-weight: 600; 
             position: sticky; 
@@ -351,9 +385,12 @@
             z-index: 2; 
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.3), inset -5px -5px 10px rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-light-inner);
         }
-        body.dark-mode .data-table th { modeling: linear-gradient(135deg, #00205b, #003087); }
+        body.dark-mode .data-table th { 
+            background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); 
+            box-shadow: var(--shadow-dark-inner);
+        }
         .data-table tr { transition: all 0.3s ease; }
         .data-table tr:hover { background: rgba(0, 48, 135, 0.05); }
         body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.05); }
@@ -370,49 +407,76 @@
             z-index: 1001; 
             align-items: center; 
             justify-content: center; 
+            padding: 15px; /* Add padding for smaller screens */
         }
         .modal-content { 
-            background: #fff; 
+            background: var(--card-bg-light); 
             padding: 25px; 
             border-radius: 12px; 
             max-width: 450px; 
             width: 100%; 
-            box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.2), -12px -12px 24px rgba(255, 255, 255, 0.5); 
+            box-shadow: var(--shadow-light-outer); 
             transform: scale(0.9); 
             transition: transform 0.3s ease; 
+            position: relative; /* For close button positioning */
         }
         .modal-content.active { transform: scale(1); }
         body.dark-mode .modal-content { 
-            background: #2a2a3e; 
-            box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.3), -12px -12px 24px rgba(255, 255, 255, 0.1); 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
         }
         .modal-content h2 { font-size: 20px; font-weight: 600; margin-bottom: 15px; text-align: center; }
         .modal-content p { font-size: 14px; text-align: center; margin-bottom: 20px; }
+        
+        /* START: Label styling for modal forms */
+        .modal-content label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-light); /* Use text color variable */
+            margin-bottom: 6px; /* Space between label and input group */
+            text-align: left;
+        }
+        body.dark-mode .modal-content label {
+            color: var(--text-dark);
+        }
+        /* END: Label styling for modal forms */
+
         .input-group { margin-bottom: 15px; position: relative; }
         .input-group .input-icon { 
             position: absolute; 
             top: 50%; 
-            left: 10px; 
+            left: 12px; /* Adjusted for better alignment with padding */
             transform: translateY(-50%); 
-            color: #003087; 
+            color: var(--primary-color); 
             font-size: 14px; 
+            z-index: 1; /* Ensure icon is above input background */
         }
         .modal-content input { 
-            padding: 10px 10px 10px 35px; 
+            padding: 12px 12px 12px 40px; /* Increased padding for touch and icon */
             border: none; 
             border-radius: 10px; 
             font-size: 14px; 
             width: 100%; 
-            background: #f5f6fa; 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.2), inset -5px -5px 10px rgba(255, 255, 255, 0.5); 
+            background: var(--background-light); 
+            color: var(--text-light); /* Ensure input text color is correct */
+            box-shadow: var(--shadow-light-inner); 
+        }
+        body.dark-mode .modal-content input {
+            background: var(--background-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-inner);
         }
         .modal-content input:focus { 
             outline: none; 
             box-shadow: 5px 5px 10px rgba(0, 48, 135, 0.3), -5px -5px 10px rgba(255, 255, 255, 0.7); 
         }
+        body.dark-mode .modal-content input:focus {
+            box-shadow: 5px 5px 10px rgba(0, 64, 193, 0.4), -5px -5px 10px rgba(255, 255, 255, 0.2);
+        }
         .modal-content button { 
-            padding: 10px; 
-            background: #003087; 
+            padding: 12px; /* Increased padding */
+            background: var(--primary-color); 
             color: #fff; 
             border: none; 
             border-radius: 10px; 
@@ -429,34 +493,58 @@
             box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.2);
         }
         .modal-content button:hover { 
-            background: #0040c1; 
-            box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.4), inset -5px -5px 10px rgba(255, 255, 255, 0.3); 
+            background: var(--primary-color-lighter); 
+            box-shadow: var(--shadow-light-inner); 
+        }
+        body.dark-mode .modal-content button:hover {
+            box-shadow: var(--shadow-dark-inner);
+        }
+
+        /* START: Enhanced Loading state for button */
+        .modal-content button .button-text,
+        .modal-content button .fas { /* Target icon within button */
+            transition: opacity 0.2s ease-in-out;
+        }
+        .modal-content button.loading .button-text,
+        .modal-content button.loading .fas {
+            opacity: 0; /* Hide text and icon when loading */
         }
         .modal-content button.loading::after {
             content: '';
-            width: 16px;
-            height: 16px;
-            border: 2px solid #fff;
-            border-top: 2px solid transparent;
+            position: absolute; /* Position spinner in the center of the button */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; /* Slightly larger spinner */
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.5); /* Lighter border for track */
+            border-top-color: #fff; /* Solid white for spinning part */
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
+        /* END: Enhanced Loading state for button */
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
-        .modal-links span { font-size: 12px; color: #003087; cursor: pointer; }
+        .modal-links span { font-size: 12px; color: var(--primary-color); cursor: pointer; }
+        body.dark-mode .modal-links span { color: var(--primary-color-lighter); }
         .modal-links span:hover { text-decoration: underline; }
         .close { 
             position: absolute; 
             top: 15px; 
             right: 15px; 
             font-size: 20px; 
-            color: #2c3e50; 
+            color: var(--text-light); 
             cursor: pointer; 
+            transition: color 0.3s;
         }
-        .close:hover { color: #003087; }
+        body.dark-mode .close { color: var(--text-dark); }
+        .close:hover { color: var(--primary-color); }
+        body.dark-mode .close:hover { color: var(--primary-color-lighter); }
+
 
         /* Footer */
         footer { 
@@ -464,14 +552,14 @@
             bottom: 0; 
             left: 0; 
             width: 100%; 
-            background: linear-gradient(135deg, #003087, #0040c1); 
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-color-lighter)); 
             color: #fff; 
             text-align: center; 
             padding: 10px 0; 
             font-size: 12px; 
             box-shadow: 8px 8px 16px rgba(0, 48, 135, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.2); 
         }
-        body.dark-mode footer { background: linear-gradient(135deg, #00205b, #003087); }
+        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker), var(--primary-color)); }
         footer .social-links a { 
             color: #fff; 
             font-size: 16px; 
@@ -486,13 +574,20 @@
             .sidebar .logo h1, .sidebar .menu a span { opacity: 0; }
             .main-content { margin-left: 60px; }
             .dashboard-content { grid-template-columns: 1fr; }
-            .hero h2 { font-size: 22px; }
-            .hero p { font-size: 14px; }
+            .hero h2 { font-size: 28px; } /* Adjusted for smaller screens */
+            .hero p { font-size: 16px; } /* Adjusted for smaller screens */
+            .hero .login-btn { font-size: 14px; padding: 8px 20px; }
         }
         @media (max-width: 480px) {
             .navbar-controls { gap: 5px; }
             .nav-btn, .theme-toggle, .language-btn { width: 32px; height: 32px; font-size: 14px; }
-            .modal-content { padding: 15px; }
+            .modal-content { padding: 20px; } /* Slightly reduce padding on very small screens */
+            .modal-content h2 { font-size: 18px; }
+            .modal-content p { font-size: 13px; }
+            .modal-content input { padding: 10px 10px 10px 35px; font-size: 13px; }
+            .modal-content button { padding: 10px; font-size: 13px; }
+            .hero h2 { font-size: 22px; }
+            .hero p { font-size: 14px; }
         }
     </style>
 </head>
@@ -521,7 +616,7 @@
             <div class="hero-content">
                 <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
                 <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
-                <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
+                <button class="login-btn" id="heroLoginBtn" onclick="openModal('loginModal')"><i class="fas fa-sign-in-alt"></i> <span data-lang="login-btn" class="button-text">Đăng Nhập</span></button>
             </div>
         </section>
         <section class="internal-section" id="welcomeSection" data-aos="fade-up">
@@ -610,15 +705,21 @@
                 <h2 data-lang="login-title">Đăng Nhập</h2>
                 <p data-lang="login-subtitle">Truy cập hệ thống nội bộ Thuận An</p>
                 <form onsubmit="login(event)">
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    <div>
+                        <label for="username" data-lang="username">Tên đăng nhập</label>
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password" onkeypress="if(event.key === 'Enter') login(event)">
+                    <div>
+                        <label for="password" data-lang="password">Mật khẩu</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" placeholder="Mật khẩu" required data-lang-placeholder="password" onkeypress="if(event.key === 'Enter') login(event)">
+                        </div>
                     </div>
-                    <button type="submit" id="loginButton" data-lang="login-btn"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
+                    <button type="submit" id="loginButton"><i class="fas fa-sign-in-alt"></i> <span class="button-text" data-lang="login-btn">Đăng Nhập</span></button>
                 </form>
                 <div class="modal-links">
                     <span onclick="showForm('resetPasswordForm')" data-lang="reset-password">Đặt lại mật khẩu</span>
@@ -629,23 +730,35 @@
                 <h2 data-lang="reset-password-title">Đổi Mật Khẩu</h2>
                 <p data-lang="reset-password-subtitle">Nhập thông tin để đổi mật khẩu</p>
                 <form onsubmit="changePassword(event)">
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="changeUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    <div>
+                        <label for="changeUsername" data-lang="username">Tên đăng nhập</label>
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="changeUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="oldPassword" placeholder="Mật khẩu cũ" required data-lang-placeholder="old-password">
+                    <div>
+                        <label for="oldPassword" data-lang="old-password">Mật khẩu cũ</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="oldPassword" placeholder="Mật khẩu cũ" required data-lang-placeholder="old-password">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="newPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                    <div>
+                        <label for="newPassword" data-lang="new-password">Mật khẩu mới</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="newPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                    <div>
+                        <label for="confirmPassword" data-lang="confirm-password">Xác nhận mật khẩu mới</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                        </div>
                     </div>
-                    <button type="submit" data-lang="change-password-btn"><i class="fas fa-key"></i> Đổi Mật Khẩu</button>
+                    <button type="submit"><i class="fas fa-key"></i> <span class="button-text" data-lang="change-password-btn">Đổi Mật Khẩu</span></button>
                 </form>
                 <div class="modal-links">
                     <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
@@ -655,11 +768,14 @@
                 <h2 data-lang="forgot-password-title">Quên Mật Khẩu</h2>
                 <p data-lang="forgot-password-subtitle">Nhập email để nhận OTP đặt lại mật khẩu</p>
                 <form onsubmit="forgotPassword(event)">
-                    <div class="input-group">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="forgotEmail" placeholder="Email" required data-lang-placeholder="email">
+                    <div>
+                        <label for="forgotEmail" data-lang="email">Email</label>
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="forgotEmail" placeholder="Email" required data-lang-placeholder="email">
+                        </div>
                     </div>
-                    <button type="submit" data-lang="send-otp-btn"><i class="fas fa-paper-plane"></i> Gửi OTP</button>
+                    <button type="submit"><i class="fas fa-paper-plane"></i> <span class="button-text" data-lang="send-otp-btn">Gửi OTP</span></button>
                 </form>
                 <div class="modal-links">
                     <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
@@ -669,23 +785,35 @@
                 <h2 data-lang="reset-password-otp-title">Đặt Lại Mật Khẩu</h2>
                 <p data-lang="reset-password-otp-subtitle">Nhập OTP và mật khẩu mới</p>
                 <form onsubmit="resetPasswordWithOTP(event)">
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="resetUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                    <div>
+                        <label for="resetUsername" data-lang="username">Tên đăng nhập</label>
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="resetUsername" placeholder="Tên đăng nhập" required data-lang-placeholder="username">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-key input-icon"></i>
-                        <input type="text" id="resetOTP" placeholder="OTP" required data-lang-placeholder="otp">
+                    <div>
+                        <label for="resetOTP" data-lang="otp">OTP</label>
+                        <div class="input-group">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="text" id="resetOTP" placeholder="OTP" required data-lang-placeholder="otp">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="resetNewPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                    <div>
+                        <label for="resetNewPassword" data-lang="new-password">Mật khẩu mới</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="resetNewPassword" placeholder="Mật khẩu mới" required data-lang-placeholder="new-password">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="resetConfirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                    <div>
+                        <label for="resetConfirmPassword" data-lang="confirm-password">Xác nhận mật khẩu mới</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="resetConfirmPassword" placeholder="Xác nhận mật khẩu mới" required data-lang-placeholder="confirm-password">
+                        </div>
                     </div>
-                    <button type="submit" data-lang="reset-password-btn"><i class="fas fa-key"></i> Đặt Lại Mật Khẩu</button>
+                    <button type="submit"><i class="fas fa-key"></i> <span class="button-text" data-lang="reset-password-btn">Đặt Lại Mật Khẩu</span></button>
                 </form>
                 <div class="modal-links">
                     <span onclick="showForm('loginForm')" data-lang="back-to-login">Quay lại đăng nhập</span>
@@ -698,34 +826,37 @@
             <span class="close" onclick="closeModal('alertModal')"><i class="fas fa-times"></i></span>
             <h2 id="alertTitle"></h2>
             <p id="alertMessage"></p>
-            <button onclick="closeModal('alertModal')" data-lang="ok-btn">OK</button>
+            <button onclick="closeModal('alertModal')"><span class="button-text" data-lang="ok-btn">OK</span></button>
         </div>
     </div>
     <footer>
         <div class="footer-content">
-
             <p>© 2025 VinFast Thuận An</p>
         </div>
     </footer>
 
     <script>
+        // Khai báo các URL API ở đầu script
         const API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
         const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
         const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbxbSlzYq1h7F0cAIn4uDaF-hpx2nKlzwelLPcwzzzH8S80iEewUdX156nBsPeZkzvyOJA/exec";
         const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxgsToUHNrfRHQJFq36DjDwXLWrVnMO1IH23LuMmbiAghczh74pHL5_zusgsR7SOhQEqw/exec";
 
+        // Khởi tạo AOS (Animate On Scroll)
         AOS.init({ duration: 1200, easing: "ease-out-back", once: true });
 
+        // Khai báo các biến trạng thái toàn cục
         let isLoggedIn = sessionStorage.getItem("isLoggedIn") === "true";
         let currentUser = sessionStorage.getItem("currentUser") || "";
-        let userRole = sessionStorage.getItem("userRole") || "employee";
-        let language = localStorage.getItem("language") || "vi";
+        let userRole = sessionStorage.getItem("userRole") || "employee"; // Mặc định là employee
+        let language = localStorage.getItem("language") || "vi"; // Mặc định là tiếng Việt
 
+        // Đối tượng chứa các bản dịch
         const translations = {
             vi: {
                 "hero-title": "Hệ Thống Quản Lý Đơn Hàng",
                 "hero-subtitle": "Chào mừng đến với Showroom Thuận An",
-                "welcome-title": "",
+                "welcome-title": `Chào mừng ${currentUser || 'bạn'}!`, // Thêm tên người dùng nếu đã đăng nhập
                 "welcome-text": "Quản lý kinh doanh, đơn hàng và xe đã bán một cách hiệu quả với hệ thống nội bộ Thuận An.",
                 "login-btn": "Đăng Nhập",
                 "login-title": "Đăng Nhập",
@@ -751,10 +882,11 @@
                 "reset-password-btn": "Đặt Lại Mật Khẩu",
                 "orders-title": "Quản Lý Đơn Hàng",
                 "orders-text": "Theo dõi và xử lý đơn hàng nhanh chóng.",
+                "stock-title": "Quản Lý Kho Xe",
+                "stock-text": "Kiểm tra và quản lý xe trong kho dễ dàng.",
+                "pairing-title": "Hỗ Trợ Ghép Xe",
+                "pairing-text": "Tìm kiếm và ghép xe theo nhu cầu khách hàng.",
                 "dashboard-title": "Bảng Điều Khiển",
-                "footer-title": "VINFAST THUẬN AN",
-                "footer-address": "Địa chỉ: 8/1A, An Phú, Thuận An, Bình Dương",
-                "footer-contact": "Liên hệ: 0968275404 | Email: showroomthuanan@gmail.com",
                 "ok-btn": "OK",
                 "fill-all-fields": "Vui lòng nhập đầy đủ thông tin!",
                 "password-mismatch": "Mật khẩu không khớp!",
@@ -772,13 +904,13 @@
                 "policy-docs": "Chính Sách & Tài Liệu"
             },
             en: {
-                "hero-title": "VinFast Internal System",
+                "hero-title": "Order Management System",
                 "hero-subtitle": "Welcome to Thuan An Showroom",
-                "welcome-title": "Welcome to the Internal System",
-                "welcome-text": "Efficiently manage sales, orders, and sold vehicles with the VinFast internal system.",
+                "welcome-title": `Welcome ${currentUser || 'Guest'}!`,
+                "welcome-text": "Efficiently manage sales, orders, and sold vehicles with the Thuan An internal system.",
                 "login-btn": "Login",
                 "login-title": "Login",
-                "login-subtitle": "Access the VinFast internal system",
+                "login-subtitle": "Access the Thuan An internal system",
                 "username": "Username",
                 "password": "Password",
                 "email": "Email",
@@ -800,10 +932,11 @@
                 "reset-password-btn": "Reset Password",
                 "orders-title": "Manage Orders",
                 "orders-text": "Track and process orders quickly.",
+                "stock-title": "Manage Vehicle Stock",
+                "stock-text": "Check and manage vehicles in stock easily.",
+                "pairing-title": "Vehicle Pairing Support",
+                "pairing-text": "Search and pair vehicles according to customer needs.",
                 "dashboard-title": "Dashboard",
-                "footer-title": "VINFAST THUAN AN",
-                "footer-address": "Address: 8/1A, An Phu, Thuan An, Binh Duong",
-                "footer-contact": "Contact: 0968275404 | Email: showroomthuanan@gmail.com",
                 "ok-btn": "OK",
                 "fill-all-fields": "Please fill in all fields!",
                 "password-mismatch": "Passwords do not match!",
@@ -822,425 +955,501 @@
             }
         };
 
+        // Chạy khi DOM đã tải xong
         document.addEventListener("DOMContentLoaded", () => {
-            updateUI();
-            updateLanguage();
-            if (localStorage.getItem("theme") === "dark") toggleDarkMode();
+            updateUIBasedOnLogin(); // Đổi tên hàm cho rõ ràng hơn
+            updateLanguage(); // Cập nhật ngôn ngữ ban đầu
+            // Kiểm tra và áp dụng theme đã lưu
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+                const icon = document.querySelector(".theme-toggle i");
+                if (icon) {
+                    icon.classList.remove("fa-moon");
+                    icon.classList.add("fa-sun");
+                }
+            }
+            // Nếu đã đăng nhập, tải dữ liệu cho dashboard
             if (isLoggedIn) {
-                fetchTotalSoldCars();
-                fetchSoldCarsData();
-                fetchRandomStockData();
-                fetchPairingRequests();
+                fetchDashboardData();
             }
         });
 
-        function updateUI() {
+        // Cập nhật giao diện dựa trên trạng thái đăng nhập
+        function updateUIBasedOnLogin() {
             const heroSection = document.getElementById("heroSection");
             const welcomeSection = document.getElementById("welcomeSection");
             const dashboard = document.getElementById("dashboard");
             const logoutBtn = document.getElementById("logoutBtn");
             const navMenu = document.getElementById("navMenu");
+            const welcomeTitle = welcomeSection.querySelector('[data-lang="welcome-title"]');
 
             if (isLoggedIn && currentUser) {
                 heroSection.style.display = "none";
-                welcomeSection.style.display = "none";
+                welcomeSection.style.display = "block"; // Hiển thị welcome section khi đã đăng nhập
+                if (welcomeTitle) { // Cập nhật tiêu đề chào mừng
+                    translations.vi["welcome-title"] = `Chào mừng ${currentUser}!`;
+                    translations.en["welcome-title"] = `Welcome ${currentUser}!`;
+                    welcomeTitle.textContent = translations[language]["welcome-title"];
+                }
                 dashboard.style.display = "block";
-                navMenu.style.display = "flex";
-                logoutBtn.style.display = "block";
+                navMenu.style.display = "flex"; // Hiển thị menu điều hướng
+                logoutBtn.style.display = "flex"; // Hiển thị nút đăng xuất
             } else {
-                heroSection.style.display = "block";
-                welcomeSection.style.display = "block";
+                heroSection.style.display = "flex"; // Sử dụng flex để căn giữa nội dung hero
+                welcomeSection.style.display = "block"; // Vẫn hiển thị welcome section khi chưa đăng nhập
+                 if (welcomeTitle) { // Đặt lại tiêu đề chào mừng mặc định
+                    translations.vi["welcome-title"] = "Hệ Thống Nội Bộ";
+                    translations.en["welcome-title"] = "Internal System";
+                    welcomeTitle.textContent = translations[language]["welcome-title"];
+                }
                 dashboard.style.display = "none";
-                navMenu.style.display = "none";
-                logoutBtn.style.display = "none";
+                navMenu.style.display = "none"; // Ẩn menu điều hướng
+                logoutBtn.style.display = "none"; // Ẩn nút đăng xuất
             }
         }
+        
+        // Hàm tổng hợp để tải dữ liệu cho dashboard
+        function fetchDashboardData() {
+            fetchTotalSoldCars();
+            fetchSoldCarsDataForDashboard(); // Đổi tên để tránh nhầm lẫn
+            fetchRandomStockDataForDashboard(); // Đổi tên
+            fetchPairingRequestsForDashboard(); // Đổi tên
+        }
 
+        // Tải tổng số xe đã bán
         async function fetchTotalSoldCars() {
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             let totalSoldCars = 0;
+            const totalSoldCarsElement = document.getElementById("total-sold-cars");
+            if (!totalSoldCarsElement) return;
 
             try {
                 const fetchPromises = months.map(month =>
-                    fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
-                        .then(response => response.json())
-                        .then(data => (data && data.length > 1 ? data.length - 1 : 0))
+                    axios.get(SOLD_CARS_API_URL, { params: { sheet: month } })
+                        .then(response => (response.data && response.data.length > 1 ? response.data.length - 1 : 0))
                         .catch(() => 0)
                 );
                 const results = await Promise.all(fetchPromises);
                 totalSoldCars = results.reduce((sum, count) => sum + count, 0);
-                document.getElementById("total-sold-cars").textContent = `${totalSoldCars} xe`;
+                totalSoldCarsElement.textContent = `${totalSoldCars} xe`;
             } catch (error) {
-                document.getElementById("total-sold-cars").textContent = "Lỗi tải dữ liệu";
+                totalSoldCarsElement.textContent = "Lỗi tải";
                 showAlert("Error", translations[language]["server-error"]);
             }
         }
 
-        async function fetchSoldCarsData() {
+        // Tải dữ liệu xe đã bán cho dashboard
+        async function fetchSoldCarsDataForDashboard() {
             const tableBody = document.getElementById("sold-cars-table-body");
+            if (!tableBody) return;
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             let allSoldCars = [];
 
             try {
                 const fetchPromises = months.map(month =>
-                    fetch(`${SOLD_CARS_API_URL}?sheet=${month}`)
-                        .then(response => response.json())
-                        .then(data => (data && data.length > 1 ? data.slice(1) : []))
+                    axios.get(SOLD_CARS_API_URL, { params: { sheet: month } })
+                        .then(response => (response.data && response.data.length > 1 ? response.data.slice(1) : []))
                         .catch(() => [])
                 );
                 const results = await Promise.all(fetchPromises);
                 allSoldCars = results.flat();
-                const randomData = getRandomRows(allSoldCars, 10);
-                displaySoldCarsData(randomData);
+                // Sắp xếp theo ngày bán mới nhất (giả sử cột ngày bán là cột cuối cùng hoặc có chỉ số cụ thể)
+                // Ví dụ: allSoldCars.sort((a, b) => new Date(b[DATE_COLUMN_INDEX]) - new Date(a[DATE_COLUMN_INDEX]));
+                const randomData = getRandomRows(allSoldCars, 5); // Hiển thị 5 dòng ngẫu nhiên
+                displaySoldCarsData(randomData, tableBody);
             } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>`;
                 showAlert("Error", translations[language]["server-error"]);
             }
         }
-
+        
+        // Hàm tiện ích lấy các dòng ngẫu nhiên từ mảng
         function getRandomRows(array, count) {
-            if (array.length <= count) return array.slice();
+            if (!array || array.length === 0) return [];
+            if (array.length <= count) return [...array]; // Trả về bản sao của mảng nếu không đủ phần tử
             const result = [];
             const indices = new Set();
-            while (indices.size < count) indices.add(Math.floor(Math.random() * array.length));
+            while (indices.size < count && indices.size < array.length) {
+                 indices.add(Math.floor(Math.random() * array.length));
+            }
             indices.forEach(index => result.push(array[index]));
             return result;
         }
 
-        function displaySoldCarsData(data) {
-            const tableBody = document.getElementById("sold-cars-table-body");
-            tableBody.innerHTML = "";
-            if (data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>`;
+        // Hiển thị dữ liệu xe đã bán
+        function displaySoldCarsData(data, tableBodyElement) {
+            tableBodyElement.innerHTML = "";
+            if (!data || data.length === 0) {
+                tableBodyElement.innerHTML = `<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>`;
                 return;
             }
             data.forEach(row => {
                 const tr = document.createElement("tr");
+                // Cập nhật chỉ số cột dựa trên cấu trúc thực tế của Google Sheet
                 tr.innerHTML = `
-                    <td>${row[7] || "Chưa có dữ liệu"}</td>
-                    <td>${row[3] || "Chưa có dữ liệu"}</td>
-                    <td>${row[8] || "Chưa có dữ liệu"}</td>
-                `;
-                tableBody.appendChild(tr);
+                    <td>${row[7] || "N/A"}</td> <td>${row[3] || "N/A"}</td> <td>${row[8] || "N/A"}</td> `;
+                tableBodyElement.appendChild(tr);
             });
         }
 
-        async function fetchRandomStockData() {
+        // Tải dữ liệu kho xe ngẫu nhiên cho dashboard
+        async function fetchRandomStockDataForDashboard() {
             const stockTableBody = document.getElementById("stockTableBody");
             const stockCountElement = document.getElementById("currentStockCount");
+            if (!stockTableBody || !stockCountElement) return;
 
             try {
-                const response = await fetch(STOCK_API_URL);
-                const data = await response.json();
-                const stockData = data.slice(1);
-                const randomRows = getRandomRows(stockData, 10);
+                const response = await axios.get(STOCK_API_URL);
+                const data = response.data;
+                const stockData = data.slice(1); // Bỏ qua dòng tiêu đề
+                const randomRows = getRandomRows(stockData, 5); // Hiển thị 5 dòng ngẫu nhiên
                 stockTableBody.innerHTML = "";
-                randomRows.forEach(row => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>${row[0] || "N/A"}</td>
-                        <td>${row[2] || "N/A"}</td>
-                        <td>${row[6] || "N/A"}</td>
-                        <td>${row[5] || "N/A"}</td>
-                    `;
-                    stockTableBody.appendChild(tr);
-                });
-                stockCountElement.textContent = `${stockData.length} xe`;
-            } catch (error) {
-                stockTableBody.innerHTML = '<tr><td colspan="4">Lỗi tải dữ liệu</td></tr>';
-                stockCountElement.textContent = "Lỗi tải dữ liệu";
-                showAlert("Error", translations[language]["server-error"]);
-            }
-        }
-
-        async function fetchPairingRequests() {
-            const pairingTableBody = document.getElementById("pairingRequestTableBody");
-            const pairingCountElement = document.getElementById("pairingRequestCount");
-
-            try {
-                const response = await fetch(PAIRING_REQUEST_API_URL);
-                const data = await response.text();
-                const jsonData = JSON.parse(data);
-                jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
-                const latestRequests = jsonData.slice(0, 10);
-                pairingTableBody.innerHTML = "";
-                if (latestRequests.length === 0) {
-                    pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>';
+                if (randomRows.length === 0) {
+                     stockTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Không có dữ liệu</td></tr>`;
                 } else {
-                    latestRequests.forEach(row => {
+                    randomRows.forEach(row => {
                         const tr = document.createElement("tr");
                         tr.innerHTML = `
-                            <td>${row["Dòng xe"] || "N/A"}</td>
-                            <td>${row["Phiên bản"] || "N/A"}</td>
-                            <td>${row["Ngoại thất"] || "N/A"}</td>
-                        `;
-                        pairingTableBody.appendChild(tr);
+                            <td>${row[0] || "N/A"}</td> <td>${row[2] || "N/A"}</td> <td>${row[6] || "N/A"}</td> <td>${row[5] || "N/A"}</td> `;
+                        stockTableBody.appendChild(tr);
                     });
                 }
-                pairingCountElement.textContent = `${jsonData.length}`;
+                stockCountElement.textContent = `${stockData.length} xe`;
             } catch (error) {
-                pairingTableBody.innerHTML = '<tr><td colspan="3">Lỗi tải dữ liệu</td></tr>';
-                pairingCountElement.textContent = "Lỗi tải dữ liệu";
+                stockTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
+                stockCountElement.textContent = "Lỗi tải";
                 showAlert("Error", translations[language]["server-error"]);
             }
         }
 
-async function login(e) {
-    e.preventDefault();
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const loginButton = document.getElementById("loginButton");
+        // Tải yêu cầu ghép xe cho dashboard
+        async function fetchPairingRequestsForDashboard() {
+            const pairingTableBody = document.getElementById("pairingRequestTableBody");
+            const pairingCountElement = document.getElementById("pairingRequestCount");
+            if(!pairingTableBody || !pairingCountElement) return;
 
-    // Ánh xạ username đến tên tư vấn viên
-    const userToConsultantMap = {
-        'admin': 'PHẠM THÀNH NHÂN',
-        'bachttn': 'TRẦN THỊ NGUYỆT BẠCH',
-        'taiba': 'BÙI ANH TÀI',
-        'anhlm': 'LÊ MAI ANH',
-        'tuanvm': 'VÕ MINH TUẤN',
-        'vinhtn': 'THÀNH NGỌC VINH',
-        'thaont': 'NGUYỄN THIỆN THẢO',
-        'tuanna': 'NGUYỄN ANH TUẤN',
-        'nhandt': 'ĐINH TRỌNG NHÂN',
-        'thanhnth': 'NGUYỄN TRẦN HOÀNG THANH',
-        'phucnh': 'NGUYỄN HOÀNG PHÚC',
-        'phuongtd': 'TRẦN DANH PHƯƠNG',
-        'thachnh': 'NGUYỄN HOÀNG THẠCH',
-        'tuongtb': 'TẤT BÁCH TƯỜNG',
-        'vinhlk': 'LÝ KIM VINH',
-        'trangvt': 'VŨ THỊ TRANG',
-        'huypt': 'PHẠM TRỌNG HUY',
-        'lamnp': 'NGUYỄN PHƯƠNG LÂM',
-        'giapnv': 'NGUYỄN VĂN GIÁP',
-        'haivv': 'VŨ VIẾT HẢI',
-        'quangln': 'LÊ NHỰT QUANG',
-        'thuannd': 'NGUYỄN DƯ THUẬN',
-        'tannd': 'NGUYỄN DUY TÂN',
-        'ducdt': 'ĐINH TÀI ĐỨC',
-        'nhungtth': 'TRẦN THỊ HỒNG NHUNG',
-        'haink': 'NGUYỄN KIM HẢI',
-        'xuyennb': 'NGUYỄN BẢO XUYÊN',
-        'diennt': 'NGUYỄN THỊ DIỆN',
-        'dungnd': 'NGÔ ĐÌNH DŨNG',
-        'trungnm': 'NGUYỄN MINH TRUNG',
-        'cant': 'NGUYỄN THANH CẢ',
-        'tramdtn': 'ĐẶNG THỊ NGỌC TRÂM',
-        'namlv': 'LÊ VĂN NAM',
-        'thiennm': 'NGUYỄN MINH THIỆN'
-    };
+            try {
+                const response = await axios.get(PAIRING_REQUEST_API_URL);
+                const jsonData = response.data; // Axios tự parse JSON
+                // Sắp xếp theo thời gian nhập mới nhất (giả sử có trường "Thời gian nhập")
+                if (jsonData && Array.isArray(jsonData)) {
+                    jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
+                    const latestRequests = jsonData.slice(0, 5); // Hiển thị 5 yêu cầu mới nhất
+                    pairingTableBody.innerHTML = "";
+                    if (latestRequests.length === 0) {
+                        pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Không có dữ liệu</td></tr>';
+                    } else {
+                        latestRequests.forEach(row => {
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `
+                                <td>${row["Dòng xe"] || "N/A"}</td>
+                                <td>${row["Phiên bản"] || "N/A"}</td>
+                                <td>${row["Ngoại thất"] || "N/A"}</td>
+                            `;
+                            pairingTableBody.appendChild(tr);
+                        });
+                    }
+                    pairingCountElement.textContent = `${jsonData.length}`;
+                } else {
+                     pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Dữ liệu không hợp lệ</td></tr>';
+                     pairingCountElement.textContent = "0";
+                }
+            } catch (error) {
+                pairingTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Lỗi tải dữ liệu</td></tr>';
+                pairingCountElement.textContent = "Lỗi tải";
+                showAlert("Error", translations[language]["server-error"]);
+            }
+        }
 
-    if (!username || !password) {
-        showAlert("Error", translations[language]["fill-all-fields"]);
-        return;
-    }
+        // Xử lý đăng nhập
+        async function login(e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const loginButton = document.getElementById("loginButton");
 
-    loginButton.classList.add("loading");
-    loginButton.disabled = true;
+            const userToConsultantMap = {
+                'admin': 'PHẠM THÀNH NHÂN', 'bachttn': 'TRẦN THỊ NGUYỆT BẠCH', 'taiba': 'BÙI ANH TÀI',
+                'anhlm': 'LÊ MAI ANH', 'tuanvm': 'VÕ MINH TUẤN', 'vinhtn': 'THÀNH NGỌC VINH',
+                'thaont': 'NGUYỄN THIỆN THẢO', 'tuanna': 'NGUYỄN ANH TUẤN', 'nhandt': 'ĐINH TRỌNG NHÂN',
+                'thanhnth': 'NGUYỄN TRẦN HOÀNG THANH', 'phucnh': 'NGUYỄN HOÀNG PHÚC', 'phuongtd': 'TRẦN DANH PHƯƠNG',
+                'thachnh': 'NGUYỄN HOÀNG THẠCH', 'tuongtb': 'TẤT BÁCH TƯỜNG', 'vinhlk': 'LÝ KIM VINH',
+                'trangvt': 'VŨ THỊ TRANG', 'huypt': 'PHẠM TRỌNG HUY', 'giapnv': 'NGUYỄN VĂN GIÁP',
+                'lamnp': 'NGUYỄN PHƯƠNG LÂM', 'haivv': 'VŨ VIẾT HẢI', 'quangln': 'LÊ NHỰT QUANG',
+                'thuannd': 'NGUYỄN DƯ THUẬN'
+            };
 
-    try {
-        const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
-        const result = response.data;
-        if (result.success) {
-            isLoggedIn = true;
-            currentUser = result.username;
-            userRole = result.role || "employee";
-            sessionStorage.setItem("isLoggedIn", "true");
-            sessionStorage.setItem("currentUser", result.username);
-            sessionStorage.setItem("userRole", userRole);
-            // Lưu currentConsultant dựa trên ánh xạ
-            if (userToConsultantMap[username]) {
-                sessionStorage.setItem("currentConsultant", userToConsultantMap[username]);
-            } else {
-                showAlert("Error", "Tên tư vấn viên không tìm thấy cho tài khoản này!");
-                loginButton.classList.remove("loading");
-                loginButton.disabled = false;
+            if (!username || !password) {
+                showAlert("Lỗi", translations[language]["fill-all-fields"]);
                 return;
             }
-            closeModal("loginModal");
-            showAlert("Success", translations[language]["login-success"]);
-            updateUI();
-            fetchTotalSoldCars();
-            fetchSoldCarsData();
-            fetchRandomStockData();
-            fetchPairingRequests();
-        } else {
-            showAlert("Error", result.message);
+
+            loginButton.classList.add("loading");
+            loginButton.disabled = true;
+
+            try {
+                const response = await axios.post(API_URL, null, { params: { action: "login", username, password } });
+                const result = response.data;
+                if (result.success) {
+                    isLoggedIn = true;
+                    currentUser = result.username; // Lưu username đã chuẩn hóa từ server (nếu có)
+                    userRole = result.role || "employee";
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    sessionStorage.setItem("currentUser", currentUser);
+                    sessionStorage.setItem("userRole", userRole);
+                    
+                    const consultantName = userToConsultantMap[username.toLowerCase()] || userToConsultantMap[currentUser.toLowerCase()];
+                    if (consultantName) {
+                        sessionStorage.setItem("currentConsultant", consultantName);
+                    } else {
+                         // Nếu không tìm thấy trong map, có thể dùng username làm tên tư vấn viên tạm thời hoặc báo lỗi
+                        sessionStorage.setItem("currentConsultant", currentUser); // Hoặc xử lý khác
+                        // showAlert("Cảnh báo", "Không tìm thấy tên tư vấn viên tương ứng, sử dụng username.");
+                    }
+
+                    closeModal("loginModal");
+                    showAlert("Thành công", translations[language]["login-success"]);
+                    updateUIBasedOnLogin();
+                    fetchDashboardData();
+                } else {
+                    showAlert("Lỗi", result.message || "Tên đăng nhập hoặc mật khẩu không đúng.");
+                }
+            } catch (error) {
+                showAlert("Lỗi", translations[language]["server-error"]);
+            } finally {
+                loginButton.classList.remove("loading");
+                loginButton.disabled = false;
+            }
         }
-    } catch (error) {
-        showAlert("Error", translations[language]["server-error"]);
-    } finally {
-        loginButton.classList.remove("loading");
-        loginButton.disabled = false;
-    }
-}
+        
+        // Xử lý đổi mật khẩu
         async function changePassword(e) {
             e.preventDefault();
             const username = document.getElementById("changeUsername").value.trim();
             const oldPassword = document.getElementById("oldPassword").value.trim();
             const newPassword = document.getElementById("newPassword").value.trim();
             const confirmPassword = document.getElementById("confirmPassword").value.trim();
+            const button = e.target.querySelector('button[type="submit"]');
 
             if (!username || !oldPassword || !newPassword || !confirmPassword) {
-                showAlert("Error", translations[language]["fill-all-fields"]);
-                return;
+                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
             }
             if (newPassword !== confirmPassword) {
-                showAlert("Error", translations[language]["password-mismatch"]);
-                return;
+                showAlert("Lỗi", translations[language]["password-mismatch"]); return;
             }
             if (newPassword.length < 6) {
-                showAlert("Error", translations[language]["password-length"]);
-                return;
+                showAlert("Lỗi", translations[language]["password-length"]); return;
             }
-
+            
+            button.classList.add("loading"); button.disabled = true;
             try {
                 const response = await axios.post(API_URL, null, { params: { action: "changePassword", username, oldPassword, newPassword } });
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
-                    showAlert("Success", translations[language]["password-changed"]);
+                    showAlert("Thành công", translations[language]["password-changed"]);
+                    resetModalToLogin();
                 } else {
-                    showAlert("Error", result.message);
+                    showAlert("Lỗi", result.message || "Không thể đổi mật khẩu.");
                 }
             } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
+                showAlert("Lỗi", translations[language]["server-error"]);
+            } finally {
+                button.classList.remove("loading"); button.disabled = false;
             }
         }
 
+        // Xử lý quên mật khẩu
         async function forgotPassword(e) {
             e.preventDefault();
             const email = document.getElementById("forgotEmail").value.trim();
+            const button = e.target.querySelector('button[type="submit"]');
 
             if (!email) {
-                showAlert("Error", translations[language]["fill-all-fields"]);
-                return;
+                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
             }
-
+            button.classList.add("loading"); button.disabled = true;
             try {
                 const response = await axios.post(API_URL, null, { params: { action: "forgotPassword", email } });
                 const result = response.data;
                 if (result.success) {
-                    showResetPasswordWithOTPForm(result.username);
-                    showAlert("Success", translations[language]["otp-sent"]);
+                    showResetPasswordWithOTPForm(result.username); // Truyền username nhận được từ server
+                    showAlert("Thành công", translations[language]["otp-sent"]);
                 } else {
-                    showAlert("Error", result.message);
+                    showAlert("Lỗi", result.message || "Email không tồn tại hoặc có lỗi xảy ra.");
                 }
             } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
+                showAlert("Lỗi", translations[language]["server-error"]);
+            } finally {
+                button.classList.remove("loading"); button.disabled = false;
             }
         }
-
+        
+        // Hiển thị form đặt lại mật khẩu với OTP
         function showResetPasswordWithOTPForm(username) {
             showForm('resetPasswordWithOTPForm');
-            document.getElementById("resetUsername").value = username;
+            const resetUsernameInput = document.getElementById("resetUsername");
+            if(resetUsernameInput) resetUsernameInput.value = username || ""; // Điền username nếu có
         }
 
+        // Xử lý đặt lại mật khẩu với OTP
         async function resetPasswordWithOTP(e) {
             e.preventDefault();
             const username = document.getElementById("resetUsername").value.trim();
             const otp = document.getElementById("resetOTP").value.trim();
             const newPassword = document.getElementById("resetNewPassword").value.trim();
             const confirmPassword = document.getElementById("resetConfirmPassword").value.trim();
+            const button = e.target.querySelector('button[type="submit"]');
 
             if (!username || !otp || !newPassword || !confirmPassword) {
-                showAlert("Error", translations[language]["fill-all-fields"]);
-                return;
+                showAlert("Lỗi", translations[language]["fill-all-fields"]); return;
             }
             if (newPassword !== confirmPassword) {
-                showAlert("Error", translations[language]["password-mismatch"]);
-                return;
+                showAlert("Lỗi", translations[language]["password-mismatch"]); return;
             }
             if (newPassword.length < 6) {
-                showAlert("Error", translations[language]["password-length"]);
-                return;
+                showAlert("Lỗi", translations[language]["password-length"]); return;
             }
-
+            button.classList.add("loading"); button.disabled = true;
             try {
                 const response = await axios.post(API_URL, null, { params: { action: "resetPassword", username, otp, newPassword } });
                 const result = response.data;
                 if (result.success) {
                     closeModal("loginModal");
-                    showAlert("Success", translations[language]["password-reset-success"]);
-                    showForm('loginForm');
+                    showAlert("Thành công", translations[language]["password-reset-success"]);
+                    resetModalToLogin();
                 } else {
-                    showAlert("Error", result.message);
+                    showAlert("Lỗi", result.message || "OTP không đúng hoặc có lỗi xảy ra.");
                 }
             } catch (error) {
-                showAlert("Error", translations[language]["server-error"]);
+                showAlert("Lỗi", translations[language]["server-error"]);
+            } finally {
+                button.classList.remove("loading"); button.disabled = false;
             }
         }
 
+        // Xử lý đăng xuất
         function logout() {
             isLoggedIn = false;
             currentUser = "";
             userRole = "employee";
-            sessionStorage.clear();
-            updateUI();
-            showAlert("Notice", translations[language]["logout-success"]);
+            sessionStorage.clear(); // Xóa tất cả dữ liệu session
+            updateUIBasedOnLogin();
+            showAlert("Thông báo", translations[language]["logout-success"]);
         }
 
+        // Chuyển đổi trạng thái sidebar
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("collapsed");
             document.getElementById("main-content").classList.toggle("collapsed");
         }
 
+        // Mở modal
         function openModal(id) {
             const modal = document.getElementById(id);
+            if (!modal) return;
             const content = modal.querySelector(".modal-content");
             modal.style.display = "flex";
-            setTimeout(() => content.classList.add("active"), 10);
+            setTimeout(() => {
+                if (content) content.classList.add("active");
+            }, 10); // Delay nhỏ để transition có hiệu lực
         }
 
+        // Đóng modal
         function closeModal(id) {
             const modal = document.getElementById(id);
+            if (!modal) return;
             const content = modal.querySelector(".modal-content");
-            content.classList.remove("active");
+            if (content) content.classList.remove("active");
             setTimeout(() => {
                 modal.style.display = "none";
-                if (id === "loginModal") resetModalToLogin();
-            }, 300);
+                // Nếu là loginModal, reset về form đăng nhập chính
+                if (id === "loginModal") {
+                    resetModalToLogin();
+                }
+            }, 300); // Thời gian khớp với transition
         }
-
+        
+        // Reset modal về form đăng nhập
         function resetModalToLogin() {
             showForm("loginForm");
+            // Xóa các trường input trong form đăng nhập (tùy chọn)
+            const loginFormElement = document.getElementById("loginForm");
+            if (loginFormElement) {
+                loginFormElement.querySelector('form')?.reset();
+            }
         }
 
+        // Hiển thị thông báo tùy chỉnh
         function showAlert(title, message) {
-            document.getElementById("alertTitle").textContent = title;
-            document.getElementById("alertMessage").textContent = message;
+            const alertTitle = document.getElementById("alertTitle");
+            const alertMessage = document.getElementById("alertMessage");
+            if (alertTitle) alertTitle.textContent = title;
+            if (alertMessage) alertMessage.textContent = message;
             openModal("alertModal");
         }
 
+        // Chuyển đổi giao diện sáng/tối
         function toggleDarkMode() {
             document.body.classList.toggle("dark-mode");
             const icon = document.querySelector(".theme-toggle i");
-            icon.classList.toggle("fa-moon");
-            icon.classList.toggle("fa-sun");
+            if (icon) {
+                icon.classList.toggle("fa-moon");
+                icon.classList.toggle("fa-sun");
+            }
             localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
         }
 
+        // Chuyển đổi ngôn ngữ
         function toggleLanguage() {
             language = language === "vi" ? "en" : "vi";
             localStorage.setItem("language", language);
-            document.getElementById("languageBtn").textContent = language === "vi" ? "EN" : "VI";
+            const langBtn = document.getElementById("languageBtn");
+            if (langBtn) langBtn.textContent = language === "vi" ? "EN" : "VI";
             updateLanguage();
-            updateUI();
+            updateUIBasedOnLogin(); // Cập nhật lại tiêu đề chào mừng
         }
 
+        // Cập nhật các yếu tố ngôn ngữ trên trang
         function updateLanguage() {
             document.querySelectorAll("[data-lang]").forEach(element => {
                 const key = element.getAttribute("data-lang");
-                if (translations[language][key]) element.textContent = translations[language][key];
+                if (translations[language] && translations[language][key] !== undefined) {
+                     // Xử lý trường hợp welcome-title đặc biệt
+                    if (key === "welcome-title") {
+                        const welcomeTitleElement = document.querySelector('#welcomeSection [data-lang="welcome-title"]');
+                        if (welcomeTitleElement) {
+                             if (isLoggedIn && currentUser) {
+                                welcomeTitleElement.textContent = language === 'vi' ? `Chào mừng ${currentUser}!` : `Welcome ${currentUser}!`;
+                            } else {
+                                welcomeTitleElement.textContent = language === 'vi' ? "Hệ Thống Nội Bộ" : "Internal System";
+                            }
+                        }
+                    } else {
+                        element.textContent = translations[language][key];
+                    }
+                }
             });
             document.querySelectorAll("[data-lang-placeholder]").forEach(element => {
                 const key = element.getAttribute("data-lang-placeholder");
-                if (translations[language][key]) element.placeholder = translations[language][key];
+                if (translations[language] && translations[language][key] !== undefined) {
+                    element.placeholder = translations[language][key];
+                }
             });
         }
 
+
+        // Hiển thị form cụ thể trong modal
         function showForm(formName) {
-            ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(form => {
-                const formElement = document.getElementById(form);
-                if (formElement) formElement.style.display = form === formName ? "block" : "none";
+            ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(formId => {
+                const formElement = document.getElementById(formId);
+                if (formElement) {
+                    formElement.style.display = formId === formName ? "block" : "none";
+                    // Reset form khi hiển thị (trừ form đăng nhập chính có thể giữ lại username)
+                    if (formId !== 'loginForm' && formId === formName) {
+                        formElement.querySelector('form')?.reset();
+                    }
+                }
             });
         }
     </script>
