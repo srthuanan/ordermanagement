@@ -1931,75 +1931,119 @@
         }
     }
 
-    function printTable() {
+    async function printTable() {
         if (currentSheet === "Total") {
             showToast("Chức năng in chưa hỗ trợ cho tab Tổng hợp.", 'info');
             return;
         }
-         if (!filteredMonthData || filteredMonthData.length === 0) {
-            showToast("Không có dữ liệu để in.", 'warning');
+
+        if (!confirm("Bạn có muốn in dữ liệu của TẤT CẢ các tháng không? Thao tác này có thể mất chút thời gian.")) {
             return;
         }
 
-        showLoading("Đang chuẩn bị bản in...");
-        try {
-            const now = new Date().toLocaleString('vi-VN');
-            // Lấy toàn bộ dữ liệu đã lọc, không chỉ trang hiện tại
-            const tableToPrint = document.createElement('table');
-            const theadToPrint = document.getElementById("table-header").cloneNode(true);
-            const tbodyToPrint = document.createElement('tbody');
+        showLoading("Đang chuẩn bị bản in cho tất cả các tháng...");
+        let allMonthsPrintContent = "";
+        const now = new Date().toLocaleString('vi-VN');
+        let totalRecordsPrinted = 0;
 
-            filteredMonthData.forEach((row, idx) => {
-                if (!row || typeof row !== 'object') return;
-                 const tr = document.createElement('tr');
-                 // STT, Tên KH, Số ĐH, Dòng Xe, Phiên Bản, Ngoại Thất (các cột hiển thị trong bảng)
-                 tr.innerHTML = `
-                    <td>${idx + 1}</td>
-                    <td>${row[0] || ''}</td>
-                    <td>${row[2] || ''}</td>
-                    <td>${row[3] || ''}</td>
-                    <td>${row[4] || ''}</td>
-                    <td>${row[5] || ''}</td>
-                 `;
-                 tbodyToPrint.appendChild(tr);
-            });
-            tableToPrint.appendChild(theadToPrint);
-            tableToPrint.appendChild(tbodyToPrint);
-            
-            let printContent = `
-                <h2 style="color: #2c3e50; font-family: 'Montserrat', sans-serif; text-align:center;">BÁO CÁO DOANH SỐ VINFAST THUẬN AN - THÁNG ${currentSheet.toUpperCase()}</h2>
+        // Định nghĩa các headers cho bảng in, giống với "Chi Tiết Đơn Hàng"
+        const printHeaders = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
+
+        try {
+            allMonthsPrintContent += `
+                <h2 style="color: #2c3e50; font-family: 'Montserrat', sans-serif; text-align:center;">BÁO CÁO DOANH SỐ VINFAST THUẬN AN - TỔNG HỢP THEO THÁNG</h2>
                 <p style="text-align:center; font-family: 'Montserrat', sans-serif;">Hotline: 1900 232389 | In lúc: ${now}</p>
                 <style>
                     @media print {
                         body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        table { border-collapse: collapse; width: 100%; font-size: 10pt; }
-                        th, td { border: 1px solid #ccc !important; padding: 6px 8px; text-align: left; word-wrap: break-word; }
+                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; } /* Giảm font-size một chút */
+                        tr { page-break-inside: avoid; page-break-after: auto; }
+                        thead { display: table-header-group; } 
+                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; } /* Giảm padding */
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
-                        caption { font-size: 1.2em; margin-bottom: 10px; font-weight: bold; text-align: left; }
+                        .month-header { 
+                            font-size: 1.2em; /* Điều chỉnh font tiêu đề tháng */
+                            margin-top: 20px; 
+                            margin-bottom: 8px; 
+                            font-weight: bold; 
+                            text-align: left; 
+                            color: #003087; 
+                            page-break-after: avoid; 
+                            page-break-before: auto; 
+                        }
                         .no-print { display: none !important; }
+                        @page { 
+                            margin: 0.5in; /* Điều chỉnh lề trang in nhỏ hơn */
+                        }
                     }
-                </style>
-                <table>
-                 <caption>Danh sách đơn hàng tháng ${currentSheet} (${filteredMonthData.length} đơn)</caption>
-                 ${tableToPrint.innerHTML}
-                </table>`;
+                </style>`;
+
+            for (const month of MONTHS) {
+                let monthData = cachedData[month];
+                if (!monthData) {
+                    try {
+                        showLoading(`Đang tải dữ liệu tháng ${month} để in...`);
+                        monthData = await fetchDataFromAPI(month); 
+                        cachedData[month] = monthData; 
+                    } catch (fetchError) {
+                        console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`);
+                        allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`;
+                        continue; 
+                    }
+                }
+
+                if (!monthData || monthData.length === 0) {
+                    allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không có dữ liệu cho tháng này.</p>`;
+                    continue;
+                }
+
+                totalRecordsPrinted += monthData.length;
+                
+                // Tạo a header row HTML string từ printHeaders
+                const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+
+                let tbodyToPrintHTML = "";
+                monthData.forEach((row, idx) => {
+                    if (!row || typeof row !== 'object') return;
+                    // Dữ liệu theo thứ tự của printHeaders
+                    // row[0]: Tên KH, row[1]: SĐT (không dùng), row[2]: Số ĐH, row[3]: Dòng Xe, row[4]: Phiên Bản, 
+                    // row[5]: Ngoại thất, row[6]: Nội thất, row[7]: TVBH, row[8]: VIN, row[9]: Chính sách
+                    tbodyToPrintHTML += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${row[0] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td>${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> <td>${row[7] || ''}</td> <td>${row[8] || ''}</td> <td>${row[9] || ''}</td> </tr>
+                    `;
+                });
+
+                allMonthsPrintContent += `
+                    <h3 class="month-header">Tháng ${month.toUpperCase()} (${monthData.length} đơn hàng)</h3>
+                    <table>
+                        <thead>${theadToPrintHTML}</thead>
+                        <tbody>${tbodyToPrintHTML}</tbody>
+                    </table>
+                `;
+            }
+            showLoading("Đang hoàn tất bản in..."); 
+
+            if (totalRecordsPrinted === 0 && !allMonthsPrintContent.includes("Không thể tải dữ liệu")) {
+                 allMonthsPrintContent += "<p style='text-align:center; margin-top:20px;'>Không có dữ liệu nào để in từ tất cả các tháng.</p>";
+            }
 
             const win = window.open('', '_blank');
             if (win) {
-                win.document.write(`<html><head><title>In Danh Sách Đơn Hàng - ${currentSheet}</title></head><body>${printContent}</body></html>`);
-                win.document.close(); 
-                
+                win.document.write(`<html><head><title>In Báo Cáo Doanh Số Tổng Hợp - VinFast Thuận An</title></head><body>${allMonthsPrintContent}</body></html>`);
+                win.document.close();
                 setTimeout(() => {
                     win.print();
-                    // win.close(); // Có thể đóng sau khi in, hoặc để người dùng tự đóng
-                }, 500); // Đợi render
-                showToast("Đang mở cửa sổ in...", 'info');
+                }, 500); 
+                showToast("Đang mở cửa sổ in cho tất cả các tháng...", 'info');
             } else {
                 showToast("Không thể mở cửa sổ in. Vui lòng kiểm tra cài đặt trình duyệt.", 'warning');
             }
+
         } catch (error) {
-            console.error("Lỗi khi in:", error);
-            showToast("Lỗi khi chuẩn bị bản in: " + error.message, 'error');
+            console.error("Lỗi khi chuẩn bị bản in tổng hợp:", error);
+            showToast("Lỗi khi chuẩn bị bản in tổng hợp: " + error.message, 'error');
         } finally {
             hideLoading();
         }
