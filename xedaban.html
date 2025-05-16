@@ -1031,7 +1031,7 @@
 
             <div id="total-tables" style="display: none;">
                 <div class="summary-cards">
-                    <div class="summary-card">
+                    <div class="summary-card" id="total-cars-summary-card">
                         <i class="fas fa-car icon"></i>
                         <div class="info">
                             <h3>Tổng Số Xe</h3>
@@ -1045,7 +1045,7 @@
                             <p id="top-car">-</p>
                         </div>
                     </div>
-                    <div class="summary-card">
+                    <div class="summary-card" id="top-tvbh-summary-card">
                         <i class="fas fa-user icon"></i>
                         <div class="info">
                             <h3>Tư Vấn Bán Hàng</h3>
@@ -1106,7 +1106,7 @@
                             <p id="month-top-car">-</p>
                         </div>
                     </div>
-                    <div class="summary-card">
+                    <div class="summary-card" id="month-tvbh-summary-card">
                         <i class="fas fa-user icon"></i>
                         <div class="info">
                             <h3>Tư Vấn Bán Hàng (Tháng)</h3>
@@ -1162,20 +1162,23 @@
     <script>
     // --- Biến toàn cục và cấu hình ---
     let currentPage = 1;
-    const ROWS_PER_PAGE = 20; // Sử dụng hằng số viết hoa
-    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = []; // Đổi tên fullTvbhData thành totalTvbhData cho rõ nghĩa hơn
-    let currentSheet = "Total"; // Mặc định là tab Total
+    const ROWS_PER_PAGE = 20; 
+    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = []; 
+    let currentSheet = "Total"; 
     const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    let carChart, monthlyChart, trendChart; // Biến cho các biểu đồ
-    let cachedData = {}; // Cache dữ liệu đã fetch
+    let carChart, monthlyChart, trendChart; 
+    let cachedData = {}; 
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec"; // URL của Google Apps Script
+    let allMonthlyDataForNavigation = [];
+    let topSalespersonNameForNavigation = null;
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec"; 
 
     // --- Khởi tạo khi DOM đã tải ---
     document.addEventListener("DOMContentLoaded", () => {
         // Kiểm tra đăng nhập
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; // Chuyển hướng nếu chưa đăng nhập
+            window.location.href = "index.html"; 
             return;
         }
         // Thiết lập theme đã lưu
@@ -1183,9 +1186,48 @@
             document.body.classList.add('dark-mode');
             updateThemeIcon(true);
         }
-        // Tải dữ liệu tổng hợp ban đầu
-        fetchTotalData(document.querySelector('.tabs a.total-tab'));
-        // Cập nhật panel chi tiết với thông báo mặc định
+
+        // MODIFIED: Load state from sessionStorage
+        try {
+            const storedCache = sessionStorage.getItem('appCachedData');
+            if (storedCache) {
+                cachedData = JSON.parse(storedCache);
+            }
+            const storedSheet = sessionStorage.getItem('appCurrentSheet');
+            const storedPage = sessionStorage.getItem('appCurrentPage');
+
+            if (storedSheet) {
+                currentSheet = storedSheet;
+                currentPage = storedPage ? parseInt(storedPage, 10) : 1;
+
+                document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
+                const activeTabLink = Array.from(document.querySelectorAll('.tabs a')).find(a => 
+                    (a.textContent.trim().toLowerCase() === currentSheet.toLowerCase()) || 
+                    (currentSheet === "Total" && a.classList.contains('total-tab'))
+                );
+
+                if (activeTabLink) {
+                    activeTabLink.classList.add('active');
+                    if (currentSheet === "Total") {
+                        fetchTotalData(activeTabLink, true); // true for isInitialLoad
+                    } else {
+                        fetchSheetData(currentSheet, activeTabLink, true); // true for isInitialLoad
+                    }
+                } else { // Fallback if tab not found (e.g. sheet name changed)
+                    fetchTotalData(document.querySelector('.tabs a.total-tab'));
+                }
+            } else {
+                // Tải dữ liệu tổng hợp ban đầu nếu không có gì trong sessionStorage
+                fetchTotalData(document.querySelector('.tabs a.total-tab'));
+            }
+        } catch (error) {
+            console.error("Lỗi khi khôi phục trạng thái từ sessionStorage:", error);
+            sessionStorage.removeItem('appCachedData'); // Clear potentially corrupted data
+            sessionStorage.removeItem('appCurrentSheet');
+            sessionStorage.removeItem('appCurrentPage');
+            fetchTotalData(document.querySelector('.tabs a.total-tab')); // Fallback to default load
+        }
+        
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
     });
 
@@ -1218,7 +1260,7 @@
         const isDarkMode = document.body.classList.toggle('dark-mode');
         updateThemeIcon(isDarkMode);
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        updateAllChartColors(); // Cập nhật màu cho tất cả biểu đồ
+        updateAllChartColors(); 
     }
 
     function goBack() { 
@@ -1226,7 +1268,7 @@
         showToast("Đã quay lại trang chủ!", 'info'); 
     }
     function logout() { 
-        sessionStorage.clear(); 
+        sessionStorage.clear(); // Clear all session storage on logout
         window.location.href = "index.html"; 
         showToast("Đã đăng xuất!", 'info'); 
     }
@@ -1236,12 +1278,10 @@
         slidebar.classList.toggle("collapsed");
         mainContainer.classList.toggle("collapsed");
 
-        // Nếu sidebar đang mở trên mobile (không có class collapsed), thì đóng nó lại
         if (window.innerWidth <= 900 && slidebar.classList.contains('open')) {
             slidebar.classList.remove('open');
         }
         
-        // Trigger resize cho biểu đồ
         if (window.Chart && (monthlyChart || carChart || trendChart)) {
             setTimeout(() => {
                 if (monthlyChart && monthlyChart.ctx) monthlyChart.resize();
@@ -1253,8 +1293,7 @@
 
     function toggleMobileMenu() {
         const slidebar = document.getElementById("slidebar");
-        slidebar.classList.toggle("open"); // Class 'open' sẽ hiển thị sidebar trên mobile
-        // Không cần thay đổi main-container margin-left trên mobile vì nó đã là 0
+        slidebar.classList.toggle("open"); 
     }
     
     function showToast(message, type = 'info', duration = 3000) {
@@ -1265,9 +1304,9 @@
         }
 
         const toast = document.createElement('div');
-        toast.classList.add('toast', type); // Thêm class type (VD: 'success', 'error')
+        toast.classList.add('toast', type); 
 
-        let iconClass = 'fas fa-info-circle'; // Default icon
+        let iconClass = 'fas fa-info-circle'; 
         if (type === 'success') iconClass = 'fas fa-check-circle';
         else if (type === 'error') iconClass = 'fas fa-times-circle';
         else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
@@ -1279,19 +1318,17 @@
 
         toastContainer.appendChild(toast);
 
-        // Trigger animation
         setTimeout(() => {
             toast.classList.add('show');
-        }, 100); // Small delay to ensure transition works
+        }, 100); 
 
-        // Remove toast after duration
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => {
-                if (toast.parentNode === toastContainer) { // Kiểm tra xem toast còn trong container không trước khi xóa
+                if (toast.parentNode === toastContainer) { 
                      toastContainer.removeChild(toast);
                 }
-            }, 500); // Wait for fade out animation
+            }, 500); 
         }, duration);
     }
 
@@ -1307,7 +1344,6 @@
             const data = await response.json();
             if (data === null || data === undefined) throw new Error(`Dữ liệu trả về từ sheet '${sheetName}' là null hoặc undefined.`);
             if (!Array.isArray(data)) {
-                 // Xử lý trường hợp data là object có key là sheetName và value là mảng
                 if (typeof data === 'object' && data[sheetName] && Array.isArray(data[sheetName])) {
                     return data[sheetName];
                 }
@@ -1318,84 +1354,95 @@
             console.error(`Lỗi khi fetch dữ liệu từ sheet '${sheetName}':`, error);
             if (retries > 0) {
                 showToast(`Lỗi tải ${sheetName}. Thử lại (${retries} lần)...`, 'warning');
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Đợi trước khi thử lại
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
                 return fetchDataFromAPI(sheetName, retries - 1);
             }
-            throw error; // Ném lỗi ra ngoài sau khi hết số lần thử
+            throw error; 
         }
     }
-
-    async function fetchSheetData(sheetName, element) {
-        if (currentSheet === sheetName && cachedData[sheetName] && !confirm(`Bạn đang ở tab ${sheetName}. Bạn có muốn tải lại dữ liệu không?`)) {
-            // Nếu người dùng không muốn tải lại, không làm gì cả
-            // Đảm bảo tab vẫn active
+    // MODIFIED: Added isInitialLoad parameter
+    async function fetchSheetData(sheetName, element, isInitialLoad = false) {
+        // If it's not an initial load, and user clicks the same tab, confirm re-fetch
+        if (!isInitialLoad && currentSheet === sheetName && cachedData[sheetName] && !confirm(`Bạn đang ở tab ${sheetName}. Bạn có muốn tải lại dữ liệu không?`)) {
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
+            // Even if not re-fetching, ensure UI reflects the current (cached) sheet
+            processAndRenderMonthData(cachedData[sheetName], sheetName, true);
             return;
         }
 
         showLoading(`Đang tải dữ liệu tháng ${sheetName}...`);
         currentSheet = sheetName;
-        currentPage = 1; // Reset trang khi chuyển tab
+        if (!isInitialLoad) { // Only reset page if it's a new tab click, not initial load
+             currentPage = 1;
+        }
         
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active'); // Kiểm tra element tồn tại
+        if (element) element.classList.add('active'); 
         
         document.getElementById("total-tables").style.display = "none";
         document.getElementById("month-data").style.display = "flex";
-        document.getElementById("detail-panel").style.display = "block"; // Hiển thị detail panel
+        document.getElementById("detail-panel").style.display = "block"; 
         document.getElementById("pagination").style.display = "flex";
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
-        // Xóa bộ lọc cũ
         document.getElementById("search-input").value = "";
-        document.getElementById("car-filter").innerHTML = '<option value="">Lọc theo Dòng Xe</option>';
-        document.getElementById("tvbh-filter").innerHTML = '<option value="">Lọc theo Tư Vấn BH</option>';
+        // Filters will be repopulated by processAndRenderMonthData
 
-
-        if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) { // Không dùng cache nếu là refresh
+        // Use cached data if available and not a forced refresh or initial load where cache might be stale
+        if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) { 
             fullData = cachedData[sheetName];
-            processAndRenderMonthData(fullData, sheetName, true); // true for fromCache
+            processAndRenderMonthData(fullData, sheetName, true); 
+            // MODIFIED: Save current sheet to sessionStorage even when loading from cache
+            sessionStorage.setItem('appCurrentSheet', currentSheet);
+            sessionStorage.setItem('appCurrentPage', currentPage.toString());
             hideLoading();
-            if (element) element.classList.remove('refresh-triggered'); // Reset cờ refresh
+            if (element) element.classList.remove('refresh-triggered'); 
             return;
         }
-        if (element) element.classList.remove('refresh-triggered'); // Reset cờ refresh nếu có
+        if (element) element.classList.remove('refresh-triggered'); 
 
         try {
             const data = await fetchDataFromAPI(sheetName);
-            fullData = data;
-            cachedData[sheetName] = data; // Cache dữ liệu
-            // sessionStorage.setItem(sheetName, JSON.stringify(data)); // (Tùy chọn)
-            processAndRenderMonthData(data, sheetName, false); // false for not fromCache
+            fullData = data; 
+            cachedData[sheetName] = data; 
+            processAndRenderMonthData(data, sheetName, false); 
+            // MODIFIED: Save to sessionStorage after successful fetch
+            sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
+            sessionStorage.setItem('appCurrentSheet', currentSheet);
+            sessionStorage.setItem('appCurrentPage', currentPage.toString());
         } catch (error) {
             showToast(`Không tải được dữ liệu ${sheetName}: ${error.message}`, 'error', 5000);
             document.getElementById("table-body").innerHTML = `<tr><td colspan="6" class="empty-state">⚠️ Lỗi: ${error.message}</td></tr>`;
-            processAndRenderMonthData([], sheetName, false); // Hiển thị bảng rỗng và cập nhật overview
+            processAndRenderMonthData([], sheetName, false); 
         } finally {
             hideLoading();
         }
     }
     
     function processAndRenderMonthData(data, sheetName, fromCache = false) {
-        filteredMonthData = data ? [...data] : []; // Sao chép mảng để filter, đảm bảo data tồn tại
-        updateFilters(filteredMonthData); // Cập nhật bộ lọc dựa trên dữ liệu mới (hoặc đã filter)
-        updateMonthOverview(filteredMonthData);
-        renderTable(filteredMonthData); // Ban đầu render toàn bộ dữ liệu (trang 1)
+        filteredMonthData = data ? [...data] : []; 
+        updateFilters(filteredMonthData); 
+        updateMonthOverview(data); 
+        renderTable(filteredMonthData); 
         
-        const message = fromCache 
-            ? `Dữ liệu ${sheetName} từ cache (${filteredMonthData.length} đơn hàng)`
-            : `Dữ liệu ${sheetName} đã tải (${filteredMonthData.length} đơn hàng)`;
-        showToast(message, filteredMonthData.length > 0 ? 'success' : 'info');
+        if (!fromCache || document.getElementById("table-body").innerHTML.includes("empty-state")) { // Avoid redundant toast if loaded from cache and data is present
+            const message = fromCache 
+                ? `Dữ liệu ${sheetName} từ cache (${(data || []).length} đơn hàng)`
+                : `Dữ liệu ${sheetName} đã tải (${(data || []).length} đơn hàng)`;
+            showToast(message, (data || []).length > 0 ? 'success' : 'info');
+        }
     }
 
-
-    async function fetchTotalData(element) {
+    // MODIFIED: Added isInitialLoad parameter
+    async function fetchTotalData(element, isInitialLoad = false) {
         showLoading("Đang tải dữ liệu tổng hợp...");
         currentSheet = "Total";
-        currentPage = 1; // Reset trang
+        if (!isInitialLoad) {
+            currentPage = 1; // Reset page for "Total" tab if not initial load
+        }
         
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-         if (element) element.classList.add('active');
+        if (element) element.classList.add('active');
         
         document.getElementById("month-data").style.display = "none";
         document.getElementById("total-tables").style.display = "block";
@@ -1403,40 +1450,83 @@
         document.getElementById("pagination").style.display = "none";
 
         let allMonthlyData = [];
+        let allFetchesSuccessful = true;
         try {
-            // Ưu tiên dùng cache nếu có, chỉ fetch những tháng chưa có
-            const fetchPromises = MONTHS.map(async month => {
-                if (cachedData[month]) return cachedData[month];
-                // const cachedSession = sessionStorage.getItem(month);
-                // if (cachedSession) { cachedData[month] = JSON.parse(cachedSession); return cachedData[month]; }
-                return await fetchDataFromAPI(month); 
-            });
+            // Check if all monthly data is already in cache (e.g., from sessionStorage)
+            let canReconstructFromCache = true;
+            if (isInitialLoad) {
+                for (const month of MONTHS) {
+                    if (!cachedData[month]) {
+                        canReconstructFromCache = false;
+                        break;
+                    }
+                }
+            } else { // If not initial load, always try to fetch or use fresh cache
+                canReconstructFromCache = false;
+            }
 
-            const results = await Promise.all(fetchPromises);
+
+            if (canReconstructFromCache) {
+                 showToast("Đang tải dữ liệu tổng hợp từ cache...", 'info', 1500);
+                 results = MONTHS.map(month => cachedData[month]);
+            } else {
+                const fetchPromises = MONTHS.map(async month => {
+                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { // Use existing cache if not refreshing
+                        return cachedData[month];
+                    }
+                    try {
+                        const monthApiData = await fetchDataFromAPI(month);
+                        cachedData[month] = monthApiData; // Update cache
+                        return monthApiData;
+                    } catch (monthError) {
+                        allFetchesSuccessful = false;
+                        console.warn(`Lỗi khi tải dữ liệu cho tháng ${month} trong fetchTotalData: ${monthError.message}`);
+                        cachedData[month] = []; // Ensure cache has an empty array on error
+                        return []; // Return empty array for this month on error
+                    }
+                });
+                results = await Promise.all(fetchPromises);
+            }
+
+
             results.forEach((monthData, index) => {
                 if (monthData && Array.isArray(monthData)) {
-                    cachedData[MONTHS[index]] = monthData; // Cache lại nếu fetch mới
                     allMonthlyData.push(...monthData);
-                } else if (monthData === null || monthData === undefined) {
-                    // Xử lý trường hợp sheet rỗng hoặc không có dữ liệu, không thêm vào allMonthlyData
-                    console.warn(`Sheet ${MONTHS[index]} không có dữ liệu hoặc trả về null/undefined.`);
-                    cachedData[MONTHS[index]] = []; // Cache là mảng rỗng
                 }
             });
             
-            // Lọc bỏ các hàng không hợp lệ (ví dụ: hàng không có dòng xe)
             const validData = allMonthlyData.filter(row => row && typeof row === 'object' && row[3] && String(row[3]).trim() !== "");
-
+            allMonthlyDataForNavigation = [...validData]; 
 
             if (validData.length === 0) {
-                showToast("Không có dữ liệu hợp lệ từ 12 tháng để tổng hợp.", 'warning', 3000);
-                updateOverview([], [], 0); // Cập nhật overview với dữ liệu rỗng
-                renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {}); // Render bảng và biểu đồ rỗng
+                if (allFetchesSuccessful) {
+                    showToast("Không có dữ liệu hợp lệ từ 12 tháng để tổng hợp.", 'warning', 3000);
+                } else {
+                    showToast("Một số tháng không tải được dữ liệu. Tổng hợp có thể chưa đầy đủ.", 'warning', 4000);
+                }
+                updateOverview([], [], 0); 
+                renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: (cachedData[m] || []).length })), {});
+                allMonthlyDataForNavigation = []; 
+                topSalespersonNameForNavigation = null; 
+                const prevTotalCarsCard = document.getElementById('total-cars-summary-card');
+                if (prevTotalCarsCard) prevTotalCarsCard.onclick = null;
+                const prevTopTvbhCard = document.getElementById('top-tvbh-summary-card');
+                if (prevTopTvbhCard) prevTopTvbhCard.onclick = null;
+                // MODIFIED: Save to sessionStorage even if no data
+                sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
+                sessionStorage.setItem('appCurrentSheet', "Total");
+                hideLoading(); 
                 return;
             }
 
-            totalCarData = aggregateData(validData, 3); // Dòng xe ở cột D (index 3)
-            totalTvbhData = aggregateData(validData, 7); // TVBH ở cột H (index 7)
+            totalCarData = aggregateData(validData, 3); 
+            totalTvbhData = aggregateData(validData, 7); 
+            
+            if (totalTvbhData && totalTvbhData.length > 0) {
+                topSalespersonNameForNavigation = totalTvbhData[0].key;
+            } else {
+                topSalespersonNameForNavigation = null;
+            }
             
             const monthlyCounts = MONTHS.map((month, idx) => ({
                 month: month,
@@ -1445,19 +1535,58 @@
             
             const trendData = calculateTrendData(MONTHS.map(m => cachedData[m] || []), totalCarData);
 
-            // Lưu trữ để có thể dùng lại cho update màu chart
             filteredCarData = [...totalCarData]; 
-            // totalTvbhData đã được gán ở trên
 
             updateOverview(totalCarData, totalTvbhData, validData.length);
             renderTotalTables(totalCarData, totalTvbhData, monthlyCounts, trendData);
-            showToast(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 'success');
+            
+            if (!isInitialLoad || !canReconstructFromCache) { // Avoid redundant toast on initial load from session cache
+                 showToast(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 'success');
+            }
+
+
+            const totalCarsCard = document.getElementById('total-cars-summary-card');
+            if (totalCarsCard) {
+                totalCarsCard.style.cursor = 'pointer';
+                totalCarsCard.onclick = () => {
+                    if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
+                        sessionStorage.setItem('allSalesDataForTongXe', JSON.stringify(allMonthlyDataForNavigation));
+                        window.location.href = 'tongxe.html';
+                    } else {
+                        showToast('Không có dữ liệu tổng hợp để hiển thị.', 'warning');
+                    }
+                };
+            }
+
+            const topTvbhCard = document.getElementById('top-tvbh-summary-card');
+            if (topTvbhCard) {
+                topTvbhCard.style.cursor = 'pointer';
+                topTvbhCard.onclick = () => {
+                    if (topSalespersonNameForNavigation && allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
+                        const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && row[7] === topSalespersonNameForNavigation);
+                        if (bestSalespersonData.length > 0) {
+                            sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(bestSalespersonData));
+                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); 
+                            window.location.href = 'bestsale.html';
+                        } else {
+                            showToast(`Không tìm thấy dữ liệu cho TVBH: ${topSalespersonNameForNavigation}`, 'warning');
+                        }
+                    } else {
+                        showToast('Không có dữ liệu TVBH hoặc dữ liệu tổng hợp để hiển thị.', 'warning');
+                    }
+                };
+            }
+            // MODIFIED: Save to sessionStorage after successful processing
+            sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
+            sessionStorage.setItem('appCurrentSheet', "Total");
 
         } catch (error) {
             console.error("Lỗi tải dữ liệu tổng:", error);
             showToast(`Lỗi tải dữ liệu tổng: ${error.message}`, 'error', 5000);
             updateOverview([], [], 0);
             renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
+            allMonthlyDataForNavigation = []; 
+            topSalespersonNameForNavigation = null; 
         } finally {
             hideLoading();
         }
@@ -1466,29 +1595,27 @@
     // --- Hàm tổng hợp và tính toán dữ liệu ---
     function aggregateData(data, columnIndex) {
         const stats = {};
-        if (!Array.isArray(data)) return []; // Trả về mảng rỗng nếu data không hợp lệ
+        if (!Array.isArray(data)) return []; 
         data.forEach(row => {
-            // Kiểm tra row và row[columnIndex] tồn tại trước khi truy cập
             if (row && row[columnIndex] !== undefined && row[columnIndex] !== null) {
                 const key = String(row[columnIndex]).trim();
-                if (key) { // Chỉ tính nếu key không rỗng
+                if (key) { 
                     stats[key] = (stats[key] || 0) + 1;
                 }
             }
         });
         return Object.entries(stats)
             .map(([key, count]) => ({ key, count }))
-            .sort((a, b) => b.count - a.count); // Sắp xếp giảm dần theo số lượng
+            .sort((a, b) => b.count - a.count); 
     }
 
     function calculateTrendData(monthlyResults, topCarData) {
-        // Lấy top 5 dòng xe bán chạy nhất từ totalCarData đã sắp xếp
         const topCars = topCarData.slice(0, 5).map(item => item.key);
         const trendData = {};
         
         topCars.forEach(carModel => {
             trendData[carModel] = MONTHS.map((month, idx) => {
-                const monthData = monthlyResults[idx] || []; // Đảm bảo monthData là mảng
+                const monthData = monthlyResults[idx] || []; 
                 return Array.isArray(monthData) ? monthData.filter(row => row && row[3] === carModel).length : 0;
             });
         });
@@ -1500,15 +1627,18 @@
         const carFilter = document.getElementById("car-filter");
         const tvbhFilter = document.getElementById("tvbh-filter");
         
-        // Đảm bảo data là mảng trước khi map
         const uniqueCars = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[3]).filter(Boolean))].sort() : [];
         const uniqueTvbh = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[7]).filter(Boolean))].sort() : [];
         
-        carFilter.innerHTML = '<option value="">Tất cả Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}">${m}</option>`).join('');
-        tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}">${t}</option>`).join('');
+        // Preserve selected filter values if they exist in the new dataset
+        const currentCarFilterValue = carFilter.value;
+        const currentTvbhFilterValue = tvbhFilter.value;
+
+        carFilter.innerHTML = '<option value="">Tất cả Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}" ${m === currentCarFilterValue ? 'selected' : ''}>${m}</option>`).join('');
+        tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}" ${t === currentTvbhFilterValue ? 'selected' : ''}>${t}</option>`).join('');
     }
 
-    function updateOverview(carData, tvbhData, totalSales) { // Dùng cho tab Total
+    function updateOverview(carData, tvbhData, totalSales) { 
         document.getElementById("total-cars").textContent = totalSales || 0;
         const topCar = carData && carData.length > 0 ? carData[0] : { key: "-", count: 0 };
         document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
@@ -1516,16 +1646,43 @@
         document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
 
-    function updateMonthOverview(data) { // Dùng cho tab tháng
+    function updateMonthOverview(data) { 
         const totalSales = data ? data.length : 0;
-        const carDataAgg = aggregateData(data, 3);
-        const tvbhDataAgg = aggregateData(data, 7);
+        const carDataAgg = aggregateData(data, 3); 
+        const tvbhDataAgg = aggregateData(data, 7); 
         
         document.getElementById("month-total-cars").textContent = totalSales;
         const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
+        
         const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
+
+        const monthTvbhSummaryCard = document.getElementById("month-tvbh-summary-card");
+
+        if (monthTvbhSummaryCard) {
+            if (topTvbh.key !== "-" && topTvbh.count > 0) {
+                monthTvbhSummaryCard.style.cursor = 'pointer';
+                monthTvbhSummaryCard.setAttribute('data-tooltip', `Xem chi tiết doanh số của ${topTvbh.key} trong tháng ${currentSheet}`);
+                monthTvbhSummaryCard.onclick = () => {
+                    const salespersonName = topTvbh.key;
+                    const salespersonSpecificData = data.filter(row => row && row[7] === salespersonName);
+
+                    if (salespersonSpecificData.length > 0) {
+                        sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(salespersonSpecificData));
+                        sessionStorage.setItem('bestSalespersonName', salespersonName);
+                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); 
+                        window.location.href = 'bestsale.html';
+                    } else {
+                        showToast(`Không tìm thấy dữ liệu cho TVBH: ${salespersonName} trong tháng ${currentSheet}.`, 'warning');
+                    }
+                };
+            } else {
+                monthTvbhSummaryCard.style.cursor = 'default';
+                monthTvbhSummaryCard.removeAttribute('data-tooltip');
+                monthTvbhSummaryCard.onclick = null;
+            }
+        }
     }
 
     function renderTable(dataToRender) {
@@ -1533,7 +1690,6 @@
         const tableBody = document.getElementById("table-body");
         const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
         
-        // Tạo header một lần nếu chưa có hoặc nếu nó trống
         if (!tableHeader.innerHTML.trim()) {
             tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         }
@@ -1545,23 +1701,22 @@
             tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
         } else {
             tableBody.innerHTML = paginatedData.map((row, idx) => {
-                if (!row || typeof row !== 'object') return ''; // Bỏ qua nếu row không hợp lệ
-                // row[0]: Tên KH, row[1]: SĐT, row[2]: Số ĐH, row[3]: Dòng Xe, row[4]: Phiên Bản, row[5]: Ngoại thất, row[6]: Nội thất, row[7]: TVBH, row[8]: VIN, row[9]: Chính sách, row[10]: Ghi chú TVBH, row[11]: Ghi chú Admin
+                if (!row || typeof row !== 'object') return ''; 
                 const ghiChuAdmin = row[11] ? String(row[11]).toLowerCase() : '';
                 const ghiChuTvbh = row[10] ? String(row[10]).toLowerCase() : '';
                 const isHighlight = (ghiChuAdmin.includes("ưu tiên") || ghiChuTvbh.includes("đặc biệt")) ? ' class="selected-row-highlight"' : '';
 
                 const detailArgs = [
-                    start + idx + 1, // STT
-                    row[0] || '', // Tên KH
-                    row[2] || '', // Số ĐH
-                    row[3] || '', // Dòng Xe
-                    row[4] || '', // Phiên Bản
-                    row[5] || '', // Ngoại Thất
-                    row[6] || '', // Nội Thất
-                    row[7] || '', // TVBH
-                    row[8] || '', // VIN
-                    row[9] || ''  // Chính Sách
+                    start + idx + 1, 
+                    row[0] || '', 
+                    row[2] || '', 
+                    row[3] || '', 
+                    row[4] || '', 
+                    row[5] || '', 
+                    row[6] || '', 
+                    row[7] || '', 
+                    row[8] || '', 
+                    row[9] || ''  
                 ].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
 
 
@@ -1581,7 +1736,6 @@
     function renderTotalTables(carData, tvbhData, monthlySalesData, trendChartData) {
         const totalCarBody = document.getElementById("total-car-body");
         const totalTvbhBody = document.getElementById("total-tvbh-body");
-        // Tạo header nếu chưa có
         if (!document.getElementById("total-car-header").innerHTML.trim()) {
             document.getElementById("total-car-header").innerHTML = "<tr><th>STT</th><th>Dòng Xe</th><th>Tổng Số Lượng</th></tr>";
         }
@@ -1633,11 +1787,8 @@
         tableHTML += '</tbody></table>';
         detailBodyContent.innerHTML = tableHTML;
 
-        // Highlight hàng được chọn trong bảng chính
         const tableRows = document.querySelectorAll("#data-table tbody tr");
-        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); // Xóa highlight cũ
-        // Tìm hàng tương ứng để highlight (cần một cách đáng tin cậy hơn để xác định hàng)
-        // Ví dụ: nếu STT là duy nhất và là detailDataArray[0]
+        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); 
         const sttToHighlight = detailDataArray[0];
         if (sttToHighlight) {
             const targetRow = Array.from(tableRows).find(row => row.cells[0] && parseInt(row.cells[0].textContent) === sttToHighlight);
@@ -1657,7 +1808,7 @@
             primarySet: [
                 rootStyle.getPropertyValue('--primary-color').trim(),
                 rootStyle.getPropertyValue('--secondary-color').trim(),
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40' // Thêm nhiều màu hơn
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40' 
             ],
             monthlyBarColor: isDarkMode ? rootStyle.getPropertyValue('--secondary-color').trim() : rootStyle.getPropertyValue('--primary-color').trim(),
             chartBgColor: isDarkMode ? rootStyle.getPropertyValue('--card-bg-dark').trim() : rootStyle.getPropertyValue('--card-bg-light').trim(),
@@ -1666,14 +1817,12 @@
 
     function renderAllCharts(carData, monthlySalesData, trendChartData) {
         const colors = getChartColors();
-        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; // Tránh chia cho 0
+        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; 
 
-        // Destroy existing charts before re-rendering
         if (monthlyChart && typeof monthlyChart.destroy === 'function') monthlyChart.destroy();
         if (carChart && typeof carChart.destroy === 'function') carChart.destroy();
         if (trendChart && typeof trendChart.destroy === 'function') trendChart.destroy();
 
-        // Monthly Sales Chart (Bar)
         const monthlyCtx = document.getElementById('monthly-chart')?.getContext('2d');
         if (monthlyCtx) {
             monthlyChart = new Chart(monthlyCtx, {
@@ -1699,7 +1848,6 @@
             });
         }
 
-        // Car Distribution Chart (Pie)
         const carCtx = document.getElementById('car-chart')?.getContext('2d');
         if (carCtx) {
             carChart = new Chart(carCtx, {
@@ -1710,7 +1858,7 @@
                         label: 'Số lượng xe', 
                         data: carData.map(r => r.count), 
                         backgroundColor: colors.primarySet,
-                        borderColor: colors.chartBgColor, // Màu nền của chart container
+                        borderColor: colors.chartBgColor, 
                         borderWidth: 2
                     }]
                 },
@@ -1732,7 +1880,6 @@
             });
         }
 
-        // Car Trend Chart (Line)
         const trendCtx = document.getElementById('trend-chart')?.getContext('2d');
         if (trendCtx && trendChartData && Object.keys(trendChartData).length > 0) {
             trendChart = new Chart(trendCtx, {
@@ -1743,7 +1890,7 @@
                         label: car,
                         data: trendChartData[car],
                         borderColor: colors.primarySet[idx % colors.primarySet.length],
-                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', // ~20% opacity
+                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', 
                         fill: false,
                         tension: 0.1
                     }))
@@ -1757,7 +1904,7 @@
                     plugins: { legend: { position: 'top', labels: { color: colors.textColor } }, tooltip: { mode: 'index', intersect: false } }
                 }
             });
-        } else if (trendCtx) { // Nếu không có trend data, hiển thị thông báo
+        } else if (trendCtx) { 
              trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height);
              trendCtx.textAlign = 'center';
              trendCtx.fillStyle = colors.textColor;
@@ -1766,7 +1913,7 @@
     }
     
     function updateAllChartColors() {
-        if (currentSheet === "Total" && filteredCarData && filteredCarData.length > 0) {
+        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { // Check if filteredCarData is defined
             const monthlySalesData = MONTHS.map(month => ({
                 month: month,
                 count: cachedData[month] ? cachedData[month].length : 0
@@ -1781,19 +1928,18 @@
 
     function downloadChart(chartId, fileName) {
         const chartCanvas = document.getElementById(chartId);
-        if (!chartCanvas || !chartCanvas.getContext) { // Kiểm tra chartCanvas và context
+        if (!chartCanvas || !chartCanvas.getContext) { 
             showToast(`Không tìm thấy biểu đồ hoặc context của biểu đồ: ${chartId}`, 'error');
             return;
         }
-        // Tạm thời đổi nền của container chart để html2canvas chụp đúng màu
         const chartContainer = chartCanvas.closest('.chart-container');
         const originalBg = chartContainer.style.backgroundColor;
         const colors = getChartColors();
         chartContainer.style.backgroundColor = colors.chartBgColor;
 
-        html2canvas(chartContainer, { // Chụp cả container để có tiêu đề và nền đúng
-            backgroundColor: colors.chartBgColor, // Đảm bảo html2canvas dùng đúng màu nền
-            scale: 2 // Tăng độ phân giải
+        html2canvas(chartContainer, { 
+            backgroundColor: colors.chartBgColor, 
+            scale: 2 
          })
             .then(canvas => {
                 const link = document.createElement('a');
@@ -1807,7 +1953,7 @@
                 showToast("Lỗi khi tải biểu đồ: " + err.message, 'error');
             })
             .finally(() => {
-                chartContainer.style.backgroundColor = originalBg; // Khôi phục màu nền
+                chartContainer.style.backgroundColor = originalBg; 
             });
     }
 
@@ -1820,14 +1966,14 @@
         const tvbhFilterValue = document.getElementById("tvbh-filter").value;
         const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
         
-        if (!Array.isArray(fullData)) { // Kiểm tra fullData có phải là mảng không
+        if (!Array.isArray(fullData)) { 
             filteredMonthData = [];
         } else {
             filteredMonthData = fullData.filter(row => {
-                if (!row || typeof row !== 'object') return false; // Bỏ qua nếu row không hợp lệ
+                if (!row || typeof row !== 'object') return false; 
                 const tenKH = String(row[0] || '').toLowerCase();
-                const sdt = String(row[1] || '').toLowerCase(); // Giả sử SĐT ở cột 1
-                const vin = String(row[8] || '').toLowerCase(); // Giả sử VIN ở cột 8
+                const sdt = String(row[1] || '').toLowerCase(); 
+                const vin = String(row[8] || '').toLowerCase(); 
                 const dongXe = String(row[3] || '');
                 const tvbh = String(row[7] || '');
 
@@ -1841,10 +1987,11 @@
             });
         }
         
-        currentPage = 1; // Reset về trang đầu khi filter
-        renderTable(filteredMonthData);
-        updateMonthOverview(filteredMonthData); // Cập nhật lại overview theo dữ liệu đã lọc
+        currentPage = 1; 
+        renderTable(filteredMonthData); 
+        // updateMonthOverview(filteredMonthData); // Decide if overview should reflect filtered data
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
+        sessionStorage.setItem('appCurrentPage', currentPage.toString()); // Save page after filtering
     }
 
     function changePage(delta) {
@@ -1858,6 +2005,9 @@
         
         const detailPanel = document.querySelector('#detail-panel');
         if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // MODIFIED: Save currentPage to sessionStorage
+        sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
 
     function refreshData() {
@@ -1868,18 +2018,18 @@
         }
 
         if (currentSheet === "Total") {
+             activeTabElement.classList.add('refresh-triggered'); // Add refresh trigger for fetchTotalData
              fetchTotalData(activeTabElement); 
         } else {
-            // Đặt cờ để fetchSheetData biết là refresh, không dùng cache
             activeTabElement.classList.add('refresh-triggered'); 
-            
-            // Xóa cache của sheet hiện tại để đảm bảo tải mới
             delete cachedData[currentSheet]; 
-            // sessionStorage.removeItem(currentSheet); // Nếu dùng session storage
+            // Clear from sessionStorage as well to force re-fetch
+            const tempCache = JSON.parse(sessionStorage.getItem('appCachedData') || '{}');
+            delete tempCache[currentSheet];
+            sessionStorage.setItem('appCachedData', JSON.stringify(tempCache));
 
             fetchSheetData(currentSheet, activeTabElement);
         }
-        // Không cần showToast ở đây nữa vì fetchSheetData/fetchTotalData sẽ show
     }
 
     function exportToExcel() {
@@ -1902,7 +2052,7 @@
             const dataToExport = [
                 excelHeaders,
                 ...filteredMonthData.map((row, index) => {
-                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); // Trả về hàng rỗng nếu row không hợp lệ
+                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); 
                     return [
                         index + 1,
                         row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '',
@@ -1913,9 +2063,8 @@
             ];
 
             const ws = XLSX.utils.aoa_to_sheet(dataToExport);
-            // Tự động điều chỉnh độ rộng cột (ước lượng)
             const colWidths = excelHeaders.map((_, i) => ({
-                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 // Thêm chút padding
+                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 
             }));
             ws['!cols'] = colWidths;
 
@@ -1946,7 +2095,6 @@
         const now = new Date().toLocaleString('vi-VN');
         let totalRecordsPrinted = 0;
 
-        // Định nghĩa các headers cho bảng in, giống với "Chi Tiết Đơn Hàng"
         const printHeaders = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
 
         try {
@@ -1956,13 +2104,13 @@
                 <style>
                     @media print {
                         body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; } /* Giảm font-size một chút */
+                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; } 
                         tr { page-break-inside: avoid; page-break-after: auto; }
                         thead { display: table-header-group; } 
-                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; } /* Giảm padding */
+                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; } 
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
                         .month-header { 
-                            font-size: 1.2em; /* Điều chỉnh font tiêu đề tháng */
+                            font-size: 1.2em; 
                             margin-top: 20px; 
                             margin-bottom: 8px; 
                             font-weight: bold; 
@@ -1973,7 +2121,7 @@
                         }
                         .no-print { display: none !important; }
                         @page { 
-                            margin: 0.5in; /* Điều chỉnh lề trang in nhỏ hơn */
+                            margin: 0.5in; 
                         }
                     }
                 </style>`;
@@ -1985,6 +2133,8 @@
                         showLoading(`Đang tải dữ liệu tháng ${month} để in...`);
                         monthData = await fetchDataFromAPI(month); 
                         cachedData[month] = monthData; 
+                        // Save updated cache to sessionStorage
+                        sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
                     } catch (fetchError) {
                         console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`);
                         allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`;
@@ -1999,15 +2149,11 @@
 
                 totalRecordsPrinted += monthData.length;
                 
-                // Tạo a header row HTML string từ printHeaders
                 const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
                 let tbodyToPrintHTML = "";
                 monthData.forEach((row, idx) => {
                     if (!row || typeof row !== 'object') return;
-                    // Dữ liệu theo thứ tự của printHeaders
-                    // row[0]: Tên KH, row[1]: SĐT (không dùng), row[2]: Số ĐH, row[3]: Dòng Xe, row[4]: Phiên Bản, 
-                    // row[5]: Ngoại thất, row[6]: Nội thất, row[7]: TVBH, row[8]: VIN, row[9]: Chính sách
                     tbodyToPrintHTML += `
                         <tr>
                             <td>${idx + 1}</td>
@@ -2062,7 +2208,6 @@
         document.getElementById("next-btn").disabled = currentPage === totalPages || totalItems === 0;
     }
 
-    // Xử lý đóng sidebar khi click ra ngoài trên mobile
     document.addEventListener('click', function(event) {
         const slidebar = document.getElementById('slidebar');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
