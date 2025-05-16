@@ -53,6 +53,13 @@
             --no-data-text-color-dark: #adb5bd;
             --scroll-to-top-bg: var(--primary-color);
             --scroll-to-top-hover-bg: var(--primary-color-lighter);
+             /* Warning colors */
+            --warning-bg-light: #fff3cd;
+            --warning-text-light: #856404;
+            --warning-icon-light: #ffc107;
+            --warning-bg-dark: #533f03;
+            --warning-text-dark: #ffeeba;
+            --warning-icon-dark: #ffca2c;
         }
 
         body.dark-mode {
@@ -72,6 +79,9 @@
             --no-data-text-color-light: var(--no-data-text-color-dark);
             --scroll-to-top-bg: var(--primary-color-lighter);
             --scroll-to-top-hover-bg: var(--secondary-color);
+            --warning-bg-light: var(--warning-bg-dark);
+            --warning-text-light: var(--warning-text-dark);
+            --warning-icon-light: var(--warning-icon-dark);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -255,7 +265,7 @@
         body.dark-mode .table-placeholder td { color: var(--no-data-text-color-dark); }
         .table-placeholder .fas { margin-right: 8px; }
 
-        /* --- Enhanced Modal Styles (Preview, Success, Loading) --- */
+        /* --- Enhanced Modal Styles (Preview, Success, Loading, Warning) --- */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.65);
@@ -297,8 +307,11 @@
             font-size: 18px;
             font-weight: 600; color: var(--primary-color);
             margin: 0; text-align: center; width: 100%;
+            display: flex; align-items: center; justify-content: center;
         }
         body.dark-mode .modal-header h2 { color: var(--secondary-color); }
+        .modal-header h2 .fas { margin-right: 8px; } /* For icons in modal titles */
+
 
         .modal-close-btn {
             position: absolute; top: 10px; right: 10px;
@@ -335,7 +348,6 @@
         .modal-body::-webkit-scrollbar-thumb { background-color: var(--primary-color-lighter); border-radius: 3px; }
         body.dark-mode .modal-body::-webkit-scrollbar-thumb { background-color: var(--secondary-color); }
 
-        /* CSS cho modal xem trước và các modal khác (không phải chi tiết đơn hàng) */
         .modal-body .detail-item {
             display: grid;
             grid-template-columns: auto 1fr;
@@ -388,6 +400,16 @@
         #loading-modal .modal-body .fas.fa-spinner { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
         body.dark-mode #loading-modal .modal-body .fas.fa-spinner { color: var(--secondary-color); }
         #loading-modal .modal-body p { font-size: 1rem; line-height: 1.5; }
+        
+        /* Warning Modal Styles */
+        .warning-modal-content { background: var(--warning-bg-light); padding-top: 25px; padding-bottom: 25px; }
+        body.dark-mode .warning-modal-content { background: var(--warning-bg-dark); }
+        .warning-modal-content .modal-header h2 { color: var(--warning-text-light); font-size: 19px; }
+        body.dark-mode .warning-modal-content .modal-header h2 { color: var(--warning-text-dark); }
+        .warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-light); } /* Icon color for warning */
+        body.dark-mode .warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-dark); }
+        .warning-modal-content .modal-body p { color: var(--warning-text-light); font-size: 14px; }
+        body.dark-mode .warning-modal-content .modal-body p { color: var(--warning-text-dark); }
         /* --- End Enhanced Modal Styles --- */
 
 
@@ -434,6 +456,9 @@
         .notification.show { opacity: 1; transform: translateX(0); }
         .notification.error { background-color: #dc3545; color: white; }
         body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
+        .notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
+        body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
+
 
         /* Scroll to Top */
         #scrollToTopBtn {
@@ -752,9 +777,9 @@
                 <h2>Đã Gửi Dữ Liệu</h2>
             </div>
             <div class="modal-body" style="text-align: center;">
-                <i class="fas fa-check-circle" style="font-size: 2.5rem; color: var(--success-icon-light); margin-bottom: 0.8rem; display: block; margin-left: auto; margin-right: auto;"></i>
-                <p style="color: var(--success-text-light);">Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
-                 <p style="color: var(--success-text-light); font-size: 0.9em;">Bạn sẽ được chuyển đến trang chi tiết sau giây lát.</p>
+                <i class="fas fa-check-circle"></i>
+                <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
+                 <p style="font-size: 0.9em;">Bạn sẽ được chuyển đến trang chi tiết sau giây lát.</p>
             </div>
             <div class="modal-footer">
                 <button class="modal-btn primary" onclick="closeModalAndRedirect()">Đóng và Xem Chi Tiết</button>
@@ -776,6 +801,25 @@
         </div>
     </div>
 
+    <div class="modal" id="pending-invoice-warning-modal">
+        <div class="modal-content warning-modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i>Cảnh Báo</h2>
+                <button class="modal-close-btn" onclick="closeModal('pending-invoice-warning-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 15px; line-height: 1.6;">Có một số xe đã được ghép VIN nhưng có thể chưa xuất hóa đơn.</p>
+                <p style="font-size: 15px; line-height: 1.6; margin-top: 10px;">
+                    <strong>Đề nghị kiểm tra và xuất hóa đơn cho các xe này trước khi tạo yêu cầu ghép xe mới.</strong>
+                </p>
+                </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn primary" onclick="closeModal('pending-invoice-warning-modal')">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+
+
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
@@ -784,14 +828,14 @@
 
 <script>
 // --- Global Variables and Constants ---
-let globalHistoryData = []; // MODIFIED: Initialize as empty, will be populated from sessionStorage or API
+let globalHistoryData = [];
 let formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN";
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v2';
-const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1'; // Key cho sessionStorage
+const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
 
 const labelMap = {
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
@@ -811,26 +855,24 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        loadFormDraft(); // Loads form draft
+        loadFormDraft();
 
-        // MODIFIED: Try to load history data from sessionStorage
         const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
         if (cachedHistoryData) {
             try {
                 globalHistoryData = JSON.parse(cachedHistoryData);
                 if (globalHistoryData && globalHistoryData.length > 0) {
-                    // If data is loaded from cache, prepare detailed stats immediately
-                    // so it's ready if the user navigates to that tab.
                     prepareDetailedStats(globalHistoryData);
+                    checkPendingInvoicesWarning(); // Check after data is loaded from cache
                 }
             } catch (e) {
                 console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
-                sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY); // Clear corrupted data
-                globalHistoryData = []; // Ensure it's an empty array
+                sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY);
+                globalHistoryData = [];
             }
         }
 
-        switchTab('form', document.querySelector('.tabs a[onclick*="form"]')); // Default tab
+        switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
         setupScrollSync();
         applyInitialTheme();
         initScrollToTopButton();
@@ -844,6 +886,10 @@ function applyInitialTheme() {
     const themeIcon = document.getElementById("theme-icon");
     if (themeIcon) {
         themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+    }
+     // Make sure chart colors are updated if charts are already rendered (e.g. on detailed stats tab)
+    if (carChart || carVersionChart || advisorChart) {
+        updateChartColors();
     }
 }
 
@@ -860,9 +906,9 @@ function toggleTheme() {
 
 // --- Navigation and Session ---
 function logout() {
-    sessionStorage.clear(); // Clears all session storage, including cached history
+    sessionStorage.clear();
     localStorage.removeItem(FORM_DRAFT_KEY);
-    globalHistoryData = []; // Clear in-memory cache
+    globalHistoryData = [];
     detailedStatsData = [];
     window.location.href = "index.html";
     showNotification("Đã đăng xuất!", "info", 2000);
@@ -940,7 +986,7 @@ function formatDateForFilter(dtString) {
     return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
 }
 
-// --- Modal Management (Preview, Success, Loading) ---
+// --- Modal Management (Preview, Success, Loading, Warning) ---
 function showLoadingModal(title = "Đang xử lý...", message = "Vui lòng chờ trong giây lát.") {
     const modal = document.getElementById("loading-modal");
     if (modal) {
@@ -964,9 +1010,9 @@ function adjustModalScroll(modalElementOrId) {
     if (!modal) return;
     const modalBody = modal.querySelector(".modal-body");
     if (!modalBody) return;
-    if (modal.querySelector('.loading-modal-content')) {
+    if (modal.querySelector('.loading-modal-content') || modal.querySelector('.warning-modal-content') || modal.querySelector('.success-modal-content')) { // Added warning and success
         modalBody.classList.remove("scrollable");
-        modalBody.style.overflowY = 'hidden';
+        modalBody.style.overflowY = 'hidden'; // Typically these modals have short content
         return;
     }
     const isScrollable = modalBody.scrollHeight > modalBody.clientHeight || modalBody.scrollHeight > parseInt(getComputedStyle(modalBody).maxHeight, 10);
@@ -984,7 +1030,6 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
 
 // --- Data Fetching and Rendering ---
 function fetchHistory() {
-    // This function now always fetches from API, updates global var and sessionStorage
     setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
     const detailedStatsSection = document.getElementById('detailed-stats-section');
     if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
@@ -1000,7 +1045,7 @@ function fetchHistory() {
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
-            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData)); // Save to sessionStorage
+            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
 
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
@@ -1008,14 +1053,14 @@ function fetchHistory() {
 
             renderHistoryTable(dataForHistoryTable);
             renderSummary(globalHistoryData);
-            prepareDetailedStats(globalHistoryData); // Prepare detailed stats with new data
+            prepareDetailedStats(globalHistoryData);
+            checkPendingInvoicesWarning(); // Check for pending invoices after fresh data fetch
 
-            // If detailed stats tab is active, render its content
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
                 renderDetailedStatsTable(detailedStatsData);
                 renderCharts(detailedStatsData);
             }
-            closeModal("loading-modal"); // Close loading modal if it was shown by refreshData
+            closeModal("loading-modal");
         })
         .catch(error => {
             console.error("Lỗi khi tải dữ liệu lịch sử:", error);
@@ -1036,7 +1081,7 @@ function fetchHistory() {
 
 function refreshData() {
     showLoadingModal("Đang Làm Mới Dữ Liệu...", "Vui lòng chờ trong giây lát.");
-    fetchHistory(); // fetchHistory will get fresh data, update cache and render
+    fetchHistory();
     showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
 }
 
@@ -1091,7 +1136,7 @@ function renderHistoryTable(dataToRender) {
 }
 
 
-function filterHistory() { // This function now primarily filters/displays data from globalHistoryData
+function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
     let dataToDisplay = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
@@ -1105,7 +1150,6 @@ function sortTable(columnKey) {
     const dataKey = columnKey;
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    // Sort a copy of the relevant slice of globalHistoryData
     let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
 
     if (lastSortColumn === dataKey) {
@@ -1118,7 +1162,7 @@ function sortTable(columnKey) {
     dataToSort.sort((a, b) => {
         let valA = a[dataKey] ?? "";
         let valB = b[dataKey] ?? "";
-        if (dataKey === "STT") { // STT is based on current render order, not inherent data
+        if (dataKey === "STT") {
             const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
             const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
             return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
@@ -1136,7 +1180,7 @@ function sortTable(columnKey) {
         if (valA > valB) return lastSortDirection === 'asc' ? 1 : -1;
         return 0;
     });
-    renderHistoryTable(dataToSort); // Render the sorted temporary list
+    renderHistoryTable(dataToSort);
 }
 
 // --- Export Functions ---
@@ -1232,11 +1276,11 @@ function confirmSubmit() {
 
     fetch(apiURL, { method: "POST", body: formDataToSend })
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi gửi: ${response.status} ${text}`) }))
-        .then(() => { // After successful POST, fetch all data again to update globalHistoryData and sessionStorage
+        .then(() => {
             return fetch(apiURL);
         })
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
-        .then(updatedData => { // This is the fresh data from the second fetch
+        .then(updatedData => {
             closeModal("loading-modal");
             clearFormDraft();
             document.getElementById("vinfast-form").reset();
@@ -1245,7 +1289,6 @@ function confirmSubmit() {
             const dongXeSelect = document.getElementById('dong_xe');
             if (dongXeSelect) restrictVersion(dongXeSelect);
 
-            // Update globalHistoryData and sessionStorage with the fresh data
             const daghep = updatedData.daghep || [];
             const chuaghep = updatedData.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
@@ -1254,13 +1297,12 @@ function confirmSubmit() {
             const successModal = document.getElementById("success-modal");
             if (successModal) { successModal.classList.add("active"); adjustModalScroll(successModal); }
 
-            // Re-render relevant parts of the UI with the new globalHistoryData
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
             renderHistoryTable(dataForHistoryTable);
             renderSummary(globalHistoryData);
-            prepareDetailedStats(globalHistoryData); // Prepare detailed stats with new data
+            prepareDetailedStats(globalHistoryData);
 
             const detailedStatsSection = document.getElementById('detailed-stats-section');
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
@@ -1289,7 +1331,7 @@ function closeModalAndRedirect() {
 
 
 // --- Detailed Stats & Charts ---
-function prepareDetailedStats(data) { // Takes data (usually globalHistoryData) to prepare detailedStatsData
+function prepareDetailedStats(data) {
     const statsMap = new Map();
     data.forEach(row => {
         const key = `${row["Dòng xe"] || "N/A"}|${row["Phiên bản"] || "N/A"}|${row["Ngoại thất"] || "N/A"}|${row["Nội thất"] || "N/A"}|${row["Tên tư vấn bán hàng"] || "N/A"}|${row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A"}`;
@@ -1303,16 +1345,15 @@ function prepareDetailedStats(data) { // Takes data (usually globalHistoryData) 
             });
         }
     });
-    detailedStatsData = Array.from(statsMap.values()); // Update global detailedStatsData
+    detailedStatsData = Array.from(statsMap.values());
 }
 
-function renderDetailedStatsTable(dataToRender) { // Takes data (usually detailedStatsData)
+function renderDetailedStatsTable(dataToRender) {
     const tbody = document.getElementById("detailed-stats-body");
     if (!tbody) return;
     if (!dataToRender || dataToRender.length === 0) {
         setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê chi tiết.", "fas fa-chart-pie");
         document.getElementById("detailed-row-count").textContent = 0;
-        // Clear summary for detailed stats if no data
         document.getElementById("detailed-total").textContent = "0";
         document.getElementById("detailed-car-types").textContent = "0";
         document.getElementById("detailed-advisors").textContent = "0";
@@ -1331,14 +1372,13 @@ function renderDetailedStatsTable(dataToRender) { // Takes data (usually detaile
         </tr>
     `).join("");
     document.getElementById("detailed-row-count").textContent = dataToRender.length;
-    // Update detailed summary based on globalHistoryData (source for detailedStatsData)
     document.getElementById("detailed-total").textContent = globalHistoryData.length;
     document.getElementById("detailed-car-types").textContent = new Set(globalHistoryData.map(r => r["Dòng xe"]).filter(Boolean)).size;
     document.getElementById("detailed-advisors").textContent = new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]).filter(Boolean)).size;
 }
 
 
-function renderCharts(dataForCharts) { // Takes data (usually detailedStatsData)
+function renderCharts(dataForCharts) {
     if (typeof Chart === "undefined") return showNotification("Thư viện Chart.js chưa được tải!", "error", 3000);
     const carData = {}, carVersionData = {}, advisorData = {};
     dataForCharts.forEach(row => {
@@ -1386,7 +1426,6 @@ function renderCharts(dataForCharts) { // Takes data (usually detailedStatsData)
 
 function updateChartColors() {
     const activeTabLink = document.querySelector('.tabs a.active');
-    // Only re-render charts if detailed-stats tab is active and data exists
     if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats') && detailedStatsData.length > 0) {
         renderCharts(detailedStatsData);
     }
@@ -1394,7 +1433,7 @@ function updateChartColors() {
 
 function exportDetailedStatsToExcel() {
     if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
-    const dataToExport = detailedStatsData; // Uses the globally prepared detailedStatsData
+    const dataToExport = detailedStatsData;
     if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", "info", 3000);
 
     const formattedForExcel = dataToExport.map((row, index) => ({
@@ -1410,7 +1449,6 @@ function exportDetailedStatsToExcel() {
     showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
-// MODIFIED: switchTab logic to use cached globalHistoryData first
 function switchTab(tabName, element) {
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
     if (element) element.classList.add("active");
@@ -1424,19 +1462,17 @@ function switchTab(tabName, element) {
     const historySection = document.getElementById('history-section');
     const detailedStatsSection = document.getElementById('detailed-stats-section');
 
-    // Check if data is already in globalHistoryData (loaded from cache or previous fetch)
     const isDataCached = globalHistoryData && globalHistoryData.length > 0;
 
     if (tabName === 'form') {
         if (formSection) formSection.classList.remove('hidden');
-        if (historySection) historySection.classList.remove('hidden'); // Form tab also shows history
+        if (historySection) historySection.classList.remove('hidden');
 
         if (isDataCached) {
-            filterHistory(); // Uses globalHistoryData
+            filterHistory();
             renderSummary(globalHistoryData);
-            // detailedStatsData should have been prepared at DOMContentLoaded if cache hit
         } else {
-            fetchHistory(); // Fetches, stores in sessionStorage, updates globalHistoryData, and renders all relevant parts
+            fetchHistory();
         }
     } else if (tabName === 'history') {
         if (historySection) historySection.classList.remove('hidden');
@@ -1451,18 +1487,16 @@ function switchTab(tabName, element) {
         if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
 
         if (isDataCached) {
-            // Ensure detailedStatsData is current if globalHistoryData was just loaded/updated
-            // prepareDetailedStats was called at DOMContentLoaded or after fetchHistory
             if(detailedStatsData.length === 0 && globalHistoryData.length > 0) {
-                prepareDetailedStats(globalHistoryData); // Recalculate if somehow empty but global has data
+                prepareDetailedStats(globalHistoryData);
             }
             renderDetailedStatsTable(detailedStatsData);
             renderCharts(detailedStatsData);
         } else {
-            fetchHistory(); // fetchHistory will also call prepareDetailedStats and render charts
+            fetchHistory();
         }
     }
-    document.querySelector(".navbar .tabs")?.classList.remove("active"); // For mobile menu
+    document.querySelector(".navbar .tabs")?.classList.remove("active");
 }
 
 
@@ -1477,7 +1511,7 @@ function toggleAutoRefresh() {
         showNotification("Tự động làm mới đã tắt!", "info", 2000);
         if(icon) { icon.classList.remove('fa-spin'); icon.parentElement.style.color = ''; }
     } else {
-        autoRefreshInterval = setInterval(refreshData, 30000); // refreshData calls fetchHistory
+        autoRefreshInterval = setInterval(refreshData, 30000);
         showNotification("Tự động làm mới mỗi 30 giây!", "info", 2000);
         if(icon) { icon.classList.add('fa-spin'); icon.parentElement.style.color = '#28a745'; }
     }
@@ -1501,6 +1535,7 @@ function showNotification(message, type = "info", duration = 3000) {
     let iconClass = 'fas fa-info-circle';
     if (type === 'success') iconClass = 'fas fa-check-circle';
     if (type === 'error') iconClass = 'fas fa-times-circle';
+    if (type === 'warning') iconClass = 'fas fa-exclamation-triangle'; // Added for warning type
     notification.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
     container.appendChild(notification);
     setTimeout(() => notification.classList.add('show'), 10);
@@ -1564,6 +1599,50 @@ function debounce(func, delay) {
         timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
 }
+
+// --- NEW FUNCTION: Check for pending invoices and show warning ---
+function checkPendingInvoicesWarning() {
+    const consultantName = sessionStorage.getItem("currentConsultant");
+    // Do not show warning for ADMIN_USER or if consultantName is not available
+    if (!consultantName || consultantName === ADMIN_USER) {
+        return;
+    }
+
+    // Ensure globalHistoryData is available and not empty
+    if (!globalHistoryData || globalHistoryData.length === 0) {
+        return; 
+    }
+
+    const pendingInvoiceOrders = globalHistoryData.filter(row => {
+        // A car is considered matched if it has a VIN.
+        // The "Kết quả" field stores the VIN or "Chưa tìm thấy VIN".
+        // The "VIN" field might also store it.
+        const hasVINInKetQua = row["Kết quả"] && row["Kết quả"].trim() !== "" &&
+                               row["Kết quả"] !== "Chưa tìm thấy VIN" &&
+                               row["Kết quả"] !== "Chưa có";
+        const hasVINDirectly = row["VIN"] && row["VIN"].trim() !== "";
+        
+        const isMatched = hasVINInKetQua || hasVINDirectly;
+        
+        // We assume a matched car for the current consultant might be "Chờ xuất hóa đơn"
+        // A more specific status field would be needed for exactness.
+        return row["Tên tư vấn bán hàng"] === consultantName && isMatched;
+    });
+
+    if (pendingInvoiceOrders.length > 0) {
+        const modal = document.getElementById("pending-invoice-warning-modal");
+        if (modal) {
+            // Optional: If you want to list the order numbers in the modal
+            // const orderNumbers = pendingInvoiceOrders.map(o => o["Số đơn hàng"]).join(", ");
+            // const detailsP = modal.querySelector("#warning-details-orders");
+            // if (detailsP) detailsP.textContent = `Các đơn hàng có thể cần xuất hóa đơn: ${orderNumbers}`;
+            
+            modal.classList.add("active");
+            adjustModalScroll(modal); // Adjust scroll for the warning modal
+        }
+    }
+}
+
 </script>
 </body>
 </html>
