@@ -15,6 +15,7 @@
             --primary-color-lighter: #0040c1;
             --secondary-color: #00aeff; 
             --accent-color: #ffc107; /* Màu vàng cho điểm nhấn gợi ý */
+            --success-color: #28a745; /* Màu xanh lá cho thành công/ghép xe */
             --background-light: #f4f7fc; 
             --text-light: #2c3e50;
             --background-dark: #161b22; 
@@ -492,6 +493,8 @@
             box-shadow: var(--shadow-light-outer);
             overflow-y: auto;
             border: 1px solid var(--border-color-light);
+            display: flex; /* Thêm để cho phép button ở dưới */
+            flex-direction: column; /* Sắp xếp theo chiều dọc */
         }
         body.dark-mode .detail-panel {
             background: var(--card-bg-dark);
@@ -509,6 +512,11 @@
         body.dark-mode .detail-panel h3 {
             color: var(--secondary-color);
             border-bottom: 1px solid var(--border-color-dark);
+        }
+        .detail-table-container { /* Container cho bảng chi tiết để có thể scroll */
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 15px; /* Khoảng cách với nút */
         }
         .detail-table {
             width: 100%;
@@ -537,6 +545,38 @@
         body.dark-mode .detail-table td {
             border-bottom: 1px solid var(--border-color-dark);
         }
+        /* Nút Yêu Cầu Ghép Xe */
+        .request-pairing-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: auto; /* Đẩy nút xuống dưới cùng của flex container */
+            background: linear-gradient(135deg, var(--success-color) 0%, #218838 100%); /* Màu xanh lá */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.4);
+            text-align: center;
+        }
+        .request-pairing-btn i {
+            margin-right: 8px;
+        }
+        .request-pairing-btn:hover {
+            background: linear-gradient(135deg, #218838 0%, var(--success-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(40, 167, 69, 0.5);
+        }
+        body.dark-mode .request-pairing-btn {
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.5);
+        }
+         body.dark-mode .request-pairing-btn:hover {
+            box-shadow: 0 5px 12px rgba(40, 167, 69, 0.6);
+        }
+
 
         /* Pagination */
         .pagination {
@@ -648,23 +688,23 @@
             width: 100%; 
             height: 100%; 
             overflow: auto; 
-            background-color: rgba(0,0,0,0.65); /* Tăng độ mờ backdrop */
-            backdrop-filter: blur(5px); /* Tăng blur */
+            background-color: rgba(0,0,0,0.65); 
+            backdrop-filter: blur(5px); 
             align-items: center;
             justify-content: center;
-            padding: 20px; /* Tăng padding cho modal wrapper */
+            padding: 20px; 
         }
         .modal-suggestion-content {
             background-color: var(--card-bg-light);
             margin: auto;
-            padding: 25px 30px; /* Tăng padding bên trong */
-            border: none; /* Bỏ border cũ */
-            border-radius: 16px; /* Bo tròn nhiều hơn */
+            padding: 25px 30px; 
+            border: none; 
+            border-radius: 16px; 
             width: 95%;
-            max-width: 600px; /* Tăng max-width */
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15); /* Đổ bóng rõ hơn */
+            max-width: 600px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15); 
             position: relative;
-            animation: fadeInModal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Animation mượt hơn */
+            animation: fadeInModal 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
         }
         body.dark-mode .modal-suggestion-content {
             background-color: var(--card-bg-dark);
@@ -679,9 +719,9 @@
             background: transparent;
             border: none;
             position: absolute;
-            top: 15px; /* Điều chỉnh vị trí */
-            right: 15px; /* Điều chỉnh vị trí */
-            font-size: 22px; /* Giảm kích thước icon */
+            top: 15px; 
+            right: 15px; 
+            font-size: 22px; 
             font-weight: bold;
             transition: color 0.2s ease, transform 0.2s ease;
             width: 30px;
@@ -706,10 +746,10 @@
             background-color: rgba(255,255,255,0.1);
         }
         .modal-suggestion-title {
-            font-size: 22px; /* Tăng kích thước tiêu đề */
-            font-weight: 700; /* Đậm hơn */
+            font-size: 22px; 
+            font-weight: 700; 
             color: var(--primary-color);
-            margin-bottom: 8px; /* Giảm margin */
+            margin-bottom: 8px; 
             text-align: center;
             display: flex;
             align-items: center;
@@ -718,15 +758,15 @@
         body.dark-mode .modal-suggestion-title {
             color: var(--secondary-color);
         }
-        .modal-suggestion-title i.fa-lightbulb { /* Icon mới */
-            font-size: 26px; /* Kích thước icon lớn hơn */
+        .modal-suggestion-title i.fa-lightbulb { 
+            font-size: 26px; 
             margin-right: 12px;
-            color: var(--accent-color); /* Màu vàng cho icon */
-            text-shadow: 0 0 10px rgba(255, 193, 7, 0.5); /* Thêm hiệu ứng phát sáng nhẹ */
+            color: var(--accent-color); 
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.5); 
         }
         .modal-suggestion-subtitle {
             font-size: 14px;
-            margin-bottom: 20px; /* Tăng margin */
+            margin-bottom: 20px; 
             text-align: center;
             color: var(--text-light);
             opacity: 0.9;
@@ -737,21 +777,20 @@
             opacity: 0.8;
         }
         .suggestion-list-container {
-            max-height: 280px; /* Tăng chiều cao tối đa */
+            max-height: 280px; 
             overflow-y: auto;
-            margin-bottom: 25px; /* Tăng margin */
-            padding-right: 5px; /* Giảm padding để thanh cuộn không quá sát */
+            margin-bottom: 25px; 
+            padding-right: 5px; 
         }
-        /* Card design cho mỗi xe gợi ý */
         .suggestion-item {
             background-color: var(--card-bg-light);
             border: 1px solid var(--border-color-light);
-            border-radius: 12px; /* Bo tròn nhiều hơn */
-            padding: 15px 18px; /* Tăng padding */
-            margin-bottom: 12px; /* Tăng khoảng cách giữa các thẻ */
-            font-size: 13.5px; /* Tăng nhẹ font */
+            border-radius: 12px; 
+            padding: 15px 18px; 
+            margin-bottom: 12px; 
+            font-size: 13.5px; 
             line-height: 1.7;
-            box-shadow: var(--shadow-light-outer); /* Đổ bóng cho thẻ */
+            box-shadow: var(--shadow-light-outer); 
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
         }
         .suggestion-item:hover {
@@ -767,42 +806,42 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
 
-        .suggestion-item div { /* Mỗi dòng thông tin */
+        .suggestion-item div { 
             display: flex;
             align-items: center;
-            margin-bottom: 6px; /* Khoảng cách giữa các dòng */
+            margin-bottom: 6px; 
         }
         .suggestion-item div:last-child {
             margin-bottom: 0;
         }
-        .suggestion-item i.fas { /* Icon cho từng dòng thông tin */
+        .suggestion-item i.fas { 
             color: var(--primary-color);
             margin-right: 10px;
-            width: 16px; /* Cố định chiều rộng icon */
+            width: 16px; 
             text-align: center;
         }
         body.dark-mode .suggestion-item i.fas {
             color: var(--primary-color-lighter);
         }
-        .suggestion-item strong { /* Label */
+        .suggestion-item strong { 
             color: var(--text-light);
             font-weight: 500;
-            min-width: 80px; /* Đảm bảo label thẳng hàng */
+            min-width: 80px; 
             display: inline-block;
         }
         body.dark-mode .suggestion-item strong {
             color: var(--text-dark);
         }
-        .suggestion-item .value { /* Giá trị */
+        .suggestion-item .value { 
              color: var(--text-light);
         }
         body.dark-mode .suggestion-item .value {
             color: var(--text-dark);
         }
-        .suggestion-item .highlight { /* VIN */
+        .suggestion-item .highlight { 
             font-weight: 600;
             color: var(--secondary-color);
-            background-color: rgba(0, 174, 255, 0.1); /* Nền nhẹ cho VIN */
+            background-color: rgba(0, 174, 255, 0.1); 
             padding: 2px 6px;
             border-radius: 4px;
         }
@@ -813,12 +852,12 @@
         .modal-suggestion-button {
             display: block;
             width: 100%;
-            padding: 12px 20px; /* Tăng padding */
+            padding: 12px 20px; 
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: white;
             border: none;
-            border-radius: 10px; /* Bo tròn nhiều hơn */
-            font-size: 15px; /* Tăng font */
+            border-radius: 10px; 
+            font-size: 15px; 
             font-weight: 600;
             cursor: pointer;
             transition: all 0.25s ease;
@@ -995,7 +1034,7 @@
 
             .modal-suggestion-content {
                 padding: 20px;
-                max-width: calc(100% - 30px); /* Đảm bảo không tràn màn hình */
+                max-width: calc(100% - 30px); 
             }
             .modal-suggestion-title {
                 font-size: 18px;
@@ -1087,9 +1126,14 @@
                 </div>
                 <div class="detail-panel" id="detail-panel">
                     <h3>Chi Tiết Xe</h3>
-                    <table id="detail-body" class="detail-table">
-                        <tbody></tbody>
-                    </table>
+                    <div class="detail-table-container">
+                        <table id="detail-body" class="detail-table">
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <button class="request-pairing-btn" id="requestPairingBtn" onclick="requestPairing()" style="display: none;">
+                        <i class="fas fa-link"></i> Yêu Cầu Ghép Xe Ngay
+                    </button>
                 </div>
             </div>
             <div class="pagination" id="pagination">
@@ -1121,6 +1165,7 @@
         let currentPage = 1;
         const rowsPerPage = 15;
         let language = localStorage.getItem('language') || 'vi';
+        let currentSelectedCarData = null; // Biến lưu trữ dữ liệu xe đang được chọn
 
         document.addEventListener("DOMContentLoaded", function () {
             if (!isLoggedIn) {
@@ -1263,6 +1308,7 @@
                 if (detailBody) detailBody.innerHTML = `<tr><td colspan='2' style='text-align:center; padding:10px;'>Chọn một xe để xem chi tiết.</td></tr>`;
                 const detailPanelH3 = document.querySelector("#detail-panel h3");
                 if (detailPanelH3) detailPanelH3.textContent = 'Chi Tiết Xe';
+                document.getElementById('requestPairingBtn').style.display = 'none'; // Ẩn nút nếu không có xe
             }
         }
 
@@ -1286,6 +1332,7 @@
         }
 
         function showDetail(row, index) {
+            currentSelectedCarData = row; // Lưu dữ liệu xe đang được chọn
             const detailBody = document.querySelector("#detail-body tbody");
             const detailPanelH3 = document.querySelector("#detail-panel h3");
             if(detailPanelH3) detailPanelH3.textContent = `Chi Tiết Xe - #${index}`;
@@ -1303,6 +1350,7 @@
                 }
             });
             if(detailBody) detailBody.innerHTML = html || `<tr><td colspan='2'>Không có chi tiết.</td></tr>`;
+            document.getElementById('requestPairingBtn').style.display = 'block'; // Hiển thị nút
         }
 
         async function refreshData() {
@@ -1632,6 +1680,25 @@
         function closeSuggestionModal() {
             const modal = document.getElementById('suggestionModal');
             if (modal) modal.style.display = 'none';
+        }
+
+        // --- Chức năng Yêu Cầu Ghép Xe ---
+        function requestPairing() {
+            if (currentSelectedCarData) {
+                const dongXe = encodeURIComponent(currentSelectedCarData[0] || ''); // Dòng xe
+                const phienBan = encodeURIComponent(currentSelectedCarData[1] || ''); // Phiên bản
+                const ngoaiThat = encodeURIComponent(currentSelectedCarData[2] || ''); // Ngoại thất
+                const noiThat = encodeURIComponent(currentSelectedCarData[3] || ''); // Nội thất
+                const vin = encodeURIComponent(currentSelectedCarData[4] || ''); // Số VIN
+
+                // Tạo URL với các tham số
+                const url = `yeucaughepxe.html?dongXe=${dongXe}&phienBan=${phienBan}&ngoaiThat=${ngoaiThat}&noiThat=${noiThat}&vin=${vin}`;
+                
+                // Chuyển hướng đến trang yeucaughepxe.html
+                window.location.href = url;
+            } else {
+                showNotification("Vui lòng chọn một xe từ danh sách trước.", 3000);
+            }
         }
 
     </script>
