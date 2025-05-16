@@ -10,1043 +10,799 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
- :root {
-    --background: #e0e5ec;
-    --text-color: #2c3e50;
-    --container-bg: #e0e5ec;
-    --table-header-bg: #d1d9e6;
-    --table-header-text: #2c3e50;
-    --table-row-bg: #e0e5ec;
-    --table-row-hover: #d1d9e6;
-    --border-color: #b3c0d1;
-    --shadow-light: rgba(255, 255, 255, 0.9);
-    --shadow-dark: rgba(0, 0, 0, 0.2);
-    --modal-bg: #ffffff;
-    --modal-text: #2c3e50;
-    --summary-bg: #e0e5ec;
-    --chart-bg: #e0e5ec;
-    --footer-bg: #003087;
-    --footer-text: #ffffff;
-    --success-bg: #e6ffe6;
-    --loading-bg: #f5f5f5; /* Nền cho modal loading (sáng) */
-    --no-data-text-color: #7f8c8d;
-    --primary-text-color: #004a7c;
-    --primary-text-color-dark: #a9cce3;
-    --scroll-to-top-bg: #005eb8;
-    --scroll-to-top-hover-bg: #003087;
-}
+        :root {
+            /* Color Palette */
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff;
+            --background-light: #f4f7fc;
+            --text-light: #2c3e50;
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e;
+            --border-color-light: #e1e4e8;
+            --border-color-dark: #30363d;
+            /* Shadows */
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            /* Transitions */
+            --transition-speed: 0.3s;
+            /* Skeleton Loading */
+            --skeleton-bg-light: #e0e0e0;
+            --skeleton-bg-dark: #3a3a4a;
 
-[data-theme="dark"] {
-    --background: #2c3e50;
-    --text-color: #e0e5ec;
-    --container-bg: #2c3e50;
-    --table-header-bg: #34495e;
-    --table-header-text: #e0e5ec;
-    --table-row-bg: #2c3e50;
-    --table-row-hover: #34495e;
-    --border-color: #34495e;
-    --shadow-light: rgba(255, 255, 255, 0.1);
-    --shadow-dark: rgba(0, 0, 0, 0.5);
-    --summary-bg: #2c3e50;
-    --chart-bg: #2c3e50;
-    --footer-bg: #005eb8;
-    --footer-text: #e0e5ec;
-    --success-bg: #2e7d32;
-    --loading-bg: #455a64; /* Nền cho modal loading (tối) */
-    --no-data-text-color: #95a5a6;
-    --scroll-to-top-bg: #66b0ff;
-    --scroll-to-top-hover-bg: #0087ff;
-}
+            /* Specific colors for this page, aligned with Index.html style */
+            --footer-bg: var(--primary-color);
+            --footer-text: #ffffff;
+            --success-bg-light: #d4edda; /* Light green for success */
+            --success-text-light: #155724; /* Dark green text for success */
+            --success-icon-light: #155724;
+            --success-bg-dark: #1e4620;   /* Darker green for dark mode success */
+            --success-text-dark: #d4edda;  /* Light text for dark mode success */
+            --success-icon-dark: #a3d9a5;
+            --loading-bg-light: var(--card-bg-light);
+            --loading-bg-dark: var(--card-bg-dark);
+            --no-data-text-color-light: #6c757d;
+            --no-data-text-color-dark: #adb5bd;
+            --scroll-to-top-bg: var(--primary-color);
+            --scroll-to-top-hover-bg: var(--primary-color-lighter);
+        }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: 'Montserrat', sans-serif;
-    background: var(--background);
-    color: var(--text-color);
-    min-height: 100vh;
-    overflow-x: hidden;
-    transition: background 0.3s ease, color 0.3s ease;
-    font-size: 10px; /* Base font size, can be adjusted in media queries */
-}
+        body.dark-mode {
+            /* Dark Mode Color Palette */
+            --background-light: var(--background-dark);
+            --text-light: var(--text-dark);
+            --card-bg-light: var(--card-bg-dark);
+            --border-color-light: var(--border-color-dark);
+            --shadow-light-outer: var(--shadow-dark-outer);
+            --shadow-light-inner: var(--shadow-dark-inner);
+            --skeleton-bg-light: var(--skeleton-bg-dark);
+            --footer-bg: var(--primary-color-darker);
+            --success-bg-light: var(--success-bg-dark);
+            --success-text-light: var(--success-text-dark);
+            --success-icon-light: var(--success-icon-dark);
+            --loading-bg-light: var(--loading-bg-dark);
+            --no-data-text-color-light: var(--no-data-text-color-dark);
+            --scroll-to-top-bg: var(--primary-color-lighter);
+            --scroll-to-top-hover-bg: var(--secondary-color);
+        }
 
-/* Navbar styles */
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 40px; /* Default height */
-    background: linear-gradient(135deg, #003087, #005eb8);
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-}
-.navbar .logo h1 {
-    font-size: 14px; /* Default font size */
-    color: #ffffff;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.navbar .tabs {
-    display: flex;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    gap: 10px;
-    transition: all 0.3s ease;
-}
-.navbar .tabs a {
-    padding: 6px 10px; /* Default padding */
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 10px; /* Default font size */
-    font-weight: 700;
-    transition: all 0.3s ease;
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.2), inset -2px -2px 5px rgba(0, 0, 0, 0.2);
-}
-.navbar .tabs a:hover, .navbar .tabs a.active {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
-}
-.navbar-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-}
-.nav-btn {
-    padding: 6px;
-    border: none;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    font-size: 10px; /* Default font size */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 25px; /* Default size */
-    height: 25px; /* Default size */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2), -2px -2px 5px rgba(255, 255, 255, 0.2);
-}
-.nav-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.2);
-}
-.nav-btn[data-tooltip]::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    top: -30px; 
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 5px;
-    font-size: 10px;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 10;
-}
-.nav-btn[data-tooltip]::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 3px solid transparent;
-    border-top-color: #333;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-.nav-btn:hover::after, .nav-btn:hover::before {
-    opacity: 1;
-}
-[data-theme="dark"] .nav-btn[data-tooltip]::after { background: #66b0ff; }
-[data-theme="dark"] .nav-btn[data-tooltip]::before { border-top-color: #66b0ff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+            font-size: 14px;
+        }
 
-.theme-toggle {
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 16px; 
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-.theme-toggle:hover { transform: scale(1.1); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode ::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; transition: background var(--transition-speed) ease; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-.hamburger {
-    display: none; 
-    background: none;
-    border: none;
-    color: #ffffff;
-    font-size: 20px;
-    cursor: pointer;
-    margin-right: 10px;
-}
+        /* Navbar */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 1000;
+            transition: background var(--transition-speed) ease;
+        }
+        body.dark-mode .navbar {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        .navbar .logo h1 { font-size: 18px; color: #ffffff; font-weight: 700; text-transform: uppercase; }
+        .navbar .tabs {
+            display: flex; position: absolute; left: 50%; transform: translateX(-50%);
+            gap: 10px; transition: all var(--transition-speed) ease;
+        }
+        .navbar .tabs a {
+            padding: 8px 12px; text-decoration: none; color: rgba(255,255,255,0.85);
+            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        .navbar .tabs a:hover, .navbar .tabs a.active { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active { background: rgba(0, 0, 0, 0.2); }
 
-/* Main Container styles */
-.main-container {
-    display: flex;
-    flex-direction: column; /* Default for mobile */
-    margin-top: 50px; /* Space for fixed navbar */
-    padding: 8px; /* Default padding */
-    gap: 8px; /* Default gap */
-    min-height: calc(100vh - 70px); /* Full height minus navbar and footer */
-    transition: opacity 0.3s ease; 
-}
-.form-container, .grid-container {
-    background: var(--container-bg);
-    border-radius: 15px;
-    padding: 10px; /* Default padding */
-    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-    width: 100%; /* Full width on mobile */
-}
-.form-container h2 {
-    font-size: 12px; /* Default font size */
-    color: #005eb8;
-    margin-bottom: 10px;
-    font-weight: 700;
-}
-.form-container form {
-    display: grid;
-    gap: 8px;
-}
-/* START: Cải thiện kiểu dáng label */
-.form-container label {
-    display: block; 
-    margin-bottom: 2px; /* Giảm khoảng cách dưới label một chút */
-    font-size: 10px; 
-    color: var(--text-color);
-    font-weight: 600; 
-}
-/* END: Cải thiện kiểu dáng label */
+        .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .nav-btn, .theme-toggle-btn {
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer; transition: all var(--transition-speed) ease;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        .nav-btn:hover, .theme-toggle-btn:hover { background: #e9ecef; transform: translateY(-2px); }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover { background: var(--primary-color-darker); color: #fff; }
 
-.form-container input, .form-container select {
-    padding: 6px 10px; /* Default padding */
-    border: none;
-    border-radius: 10px;
-    font-size: 10px; /* Default font size */
-    background: var(--container-bg);
-    color: var(--text-color);
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-    transition: all 0.3s ease;
-    width: 100%; /* Ensure inputs take full width of their grid cell */
-}
-.form-container input:focus, .form-container select:focus {
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    outline: none;
-}
-.form-container .form-buttons {
-    display: flex;
-    gap: 8px; 
-    justify-content: flex-start; 
-    margin-top: 8px; /* Thêm khoảng cách trên cho cụm nút */
-}
+        /* Tooltip */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after {
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+            transform: translateX(-50%); background-color: #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 10000;
+        }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 
-.form-container button {
-    padding: 6px 12px; /* Default padding */
-    border: none;
-    border-radius: 10px;
-    color: #ffffff;
-    font-size: 10px; /* Default font size */
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    transition: all 0.3s ease;
-}
-.form-container button[type="submit"] { background: #005eb8; }
-.form-container button[type="submit"]:hover {
-    background: #003087;
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-}
-.form-container button.danger { background: #e74c3c; }
-.form-container button.danger:hover {
-    background: #c0392b;
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-}
+        .hamburger { display: none; background: none; border: none; color: #ffffff; font-size: 20px; cursor: pointer; margin-right: 10px; }
 
-.grid-container { overflow: hidden; }
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    gap: 8px;
-}
-.search-container {
-    display: flex;
-    flex-wrap: wrap; 
-    gap: 8px;
-    align-items: center;
-    width: 100%; 
-}
-.search-container input, .search-container select {
-    padding: 6px 10px; /* Default padding */
-    border: none;
-    border-radius: 10px;
-    font-size: 10px; /* Default font size */
-    background: var(--container-bg);
-    color: var(--text-color);
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-    transition: all 0.3s ease;
-    flex: 1; 
-    min-width: 100px; 
-}
-.search-container input:focus, .search-container select:focus {
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    outline: none;
-}
-.export-btn-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    width: 100%; /* Full width on mobile for better spacing */
-    justify-content: space-between; /* Distribute buttons */
-}
-.export-btn-container span { font-size: 9px; }
+        /* Main Content Area */
+        .main-container {
+            display: flex; flex-direction: column; margin-top: 60px; padding: 10px;
+            gap: 15px; min-height: calc(100vh - 60px - 40px);
+            transition: opacity var(--transition-speed) ease;
+        }
+        .form-container, .grid-container {
+            background: var(--card-bg-light); border-radius: 10px; padding: 15px;
+            box-shadow: var(--shadow-light-outer); width: 100%;
+            border: 1px solid var(--border-color-light);
+        }
+        body.dark-mode .form-container, body.dark-mode .grid-container {
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 {
+            font-size: 17px; color: var(--primary-color); margin-bottom: 12px; font-weight: 600;
+        }
+        body.dark-mode .form-container h2, body.dark-mode .grid-container h3,
+        body.dark-mode .chart-card h3, body.dark-mode .summary-section h3 {
+            color: var(--secondary-color);
+        }
 
-.export-btn, .refresh-btn {
-    padding: 8px;
-    border: none;
-    border-radius: 50%;
-    background: var(--container-bg);
-    color: #005eb8;
-    font-size: 10px; /* Default font size */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 25px; 
-    height: 25px; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-}
-.export-btn:hover, .refresh-btn:hover {
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-}
-.table-wrapper {
-    max-height: calc(100vh - 230px); 
-    overflow-y: auto; 
-    overflow-x: auto; 
-    scrollbar-width: thin;
-    scrollbar-color: #005eb8 var(--container-bg);
-    width: 100%; /* Ensure wrapper takes full width */
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10px; /* Adjusted for mobile, can be larger on desktop */
-    min-width: 600px; /* Ensures horizontal scroll on desktop if content overflows */
-}
-th, td {
-    padding: 6px; /* Adjusted for mobile */
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-th {
-    background: linear-gradient(135deg, #003087, #005eb8);
-    color: #ffffff;
-    font-weight: 700;
-    text-transform: uppercase;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    cursor: pointer;
-    font-size: 9px; /* Slightly smaller for mobile header */
-}
-td {
-    background: var(--table-row-bg);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 120px; 
-}
-td[title]:hover { cursor: pointer; }
-tbody tr:hover {
-    background: var(--table-row-hover);
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-.table-placeholder td { 
-    text-align: center;
-    padding: 16px;
-    font-size: 10px;
-    color: var(--no-data-text-color);
-}
-.table-placeholder .fas { margin-right: 8px; }
+        /* Form Elements - Compacted */
+        .form-container form { display: grid; gap: 10px; }
+        .form-container label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-light); margin-bottom: 4px; }
+        body.dark-mode .form-container label { color: var(--text-dark); }
+        .form-container input, .form-container select {
+            padding: 8px 10px; border: 1px solid var(--border-color-light); border-radius: 6px;
+            font-size: 13.5px; background: var(--background-light); color: var(--text-light);
+            box-shadow: none; transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease;
+            width: 100%;
+        }
+        body.dark-mode .form-container input, body.dark-mode .form-container select {
+            background: var(--background-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark);
+        }
+        .form-container input:focus, .form-container select:focus {
+            outline: none; border-color: var(--primary-color); background: var(--card-bg-light);
+        }
+        body.dark-mode .form-container input:focus, body.dark-mode .form-container select:focus {
+            border-color: var(--secondary-color); background: var(--card-bg-dark);
+        }
+
+        /* Buttons - Compacted */
+        .form-container .form-buttons { display: flex; gap: 8px; justify-content: flex-start; margin-top: 8px; }
+        .form-container button, .modal-btn {
+            padding: 8px 15px; border: none; border-radius: 6px; color: #ffffff;
+            font-size: 13.5px; font-weight: 600; cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
+        }
+        .form-container button[type="submit"], .modal-btn.primary { background: var(--primary-color); }
+        .form-container button[type="submit"]:hover, .modal-btn.primary:hover {
+            background: var(--primary-color-lighter); transform: translateY(-1px);
+            box-shadow: 0 3px 7px rgba(0, 48, 135, 0.35);
+        }
+        .form-container button.danger { background: #e74c3c; }
+        .form-container button.danger:hover { background: #c0392b; transform: translateY(-1px); }
+        .modal-btn.secondary {
+            background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); box-shadow: none;
+        }
+        body.dark-mode .modal-btn.secondary { color: var(--primary-color-lighter); border-color: var(--primary-color-lighter); }
+        .modal-btn.secondary:hover { background: rgba(0, 48, 135, 0.05); transform: translateY(-1px); }
+        body.dark-mode .modal-btn.secondary:hover { background: rgba(0, 64, 193, 0.1); }
+
+        /* Grid Controls (Export only now) */
+        .grid-container .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+        .export-btn-container { display: flex; gap: 10px; align-items: center; }
+        .export-btn-container span { font-size: 13px; color: var(--text-light); }
+        body.dark-mode .export-btn-container span { color: var(--text-dark); }
+        .export-btn, .refresh-btn {
+            padding: 8px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--primary-color);
+            font-size: 14px; cursor: pointer; transition: all var(--transition-speed) ease;
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+        }
+        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+            background: var(--card-bg-dark); color: var(--primary-color-lighter); box-shadow: var(--shadow-dark-outer);
+        }
+        .export-btn:hover, .refresh-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover { background: var(--primary-color-darker); }
+
+        /* Table */
+        .table-wrapper {
+            max-height: calc(100vh - 280px); overflow: auto; border-radius: 8px;
+            background: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
+            border: 1px solid var(--border-color-light); transition: all var(--transition-speed) ease;
+        }
+        body.dark-mode .table-wrapper {
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
+            border: 1px solid var(--border-color-dark);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color-light); white-space: nowrap; }
+        body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
+        th {
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+            color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10;
+            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+        }
+        body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
+        td { overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        td[title]:hover { cursor: pointer; }
+        tbody tr:hover { background: rgba(0, 48, 135, 0.05); cursor: pointer; transition: background 0.2s ease; }
+        body.dark-mode tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+        .table-placeholder td { text-align: center; padding: 20px; color: var(--no-data-text-color-light); }
+        body.dark-mode .table-placeholder td { color: var(--no-data-text-color-dark); }
+        .table-placeholder .fas { margin-right: 8px; }
+
+        /* --- Enhanced Modal Styles (Preview, Success, Loading) --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 1002; align-items: center; justify-content: center;
+            padding: 15px;
+            backdrop-filter: blur(5px);
+            opacity: 0; transition: opacity var(--transition-speed) ease-in-out;
+        }
+        .modal.active { display: flex; opacity: 1; }
+
+        .modal-content {
+            background: var(--card-bg-light);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: var(--shadow-light-outer), 0 10px 40px rgba(0,0,0,0.1);
+            transform: translateY(-15px) scale(0.98); opacity: 0;
+            transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+            position: relative;
+            border: 1px solid var(--border-color-light);
+        }
+        .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        body.dark-mode .modal-content {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer), 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color-dark);
+        }
+
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color-light);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        body.dark-mode .modal-header { border-bottom-color: var(--border-color-dark); }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600; color: var(--primary-color);
+            margin: 0; text-align: center; width: 100%;
+        }
+        body.dark-mode .modal-header h2 { color: var(--secondary-color); }
+
+        .modal-close-btn {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 20px;
+            color: var(--text-light);
+            background: transparent; border: none;
+            padding: 5px; line-height: 1; border-radius: 50%;
+            cursor: pointer; transition: color var(--transition-speed) ease, transform var(--transition-speed) ease, background-color var(--transition-speed) ease;
+        }
+        body.dark-mode .modal-close-btn { color: var(--text-dark); }
+        .modal-close-btn:hover {
+            color: var(--primary-color); transform: rotate(90deg) scale(1.1);
+            background-color: rgba(0,0,0,0.05);
+        }
+        body.dark-mode .modal-close-btn:hover {
+            color: var(--primary-color-lighter);
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .modal-body {
+            font-size: 13.5px;
+            line-height: 1.55; max-height: 65vh;
+            overflow-y: auto; color: var(--text-light);
+            padding-right: 5px;
+            scrollbar-width: thin; scrollbar-color: var(--primary-color-lighter) var(--card-bg-light);
+        }
+        body.dark-mode .modal-body {
+            color: var(--text-dark);
+            scrollbar-color: var(--secondary-color) var(--card-bg-dark);
+        }
+        .modal-body::-webkit-scrollbar { width: 6px; }
+        .modal-body::-webkit-scrollbar-track { background: var(--card-bg-light); border-radius: 3px;}
+        body.dark-mode .modal-body::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        .modal-body::-webkit-scrollbar-thumb { background-color: var(--primary-color-lighter); border-radius: 3px; }
+        body.dark-mode .modal-body::-webkit-scrollbar-thumb { background-color: var(--secondary-color); }
+
+        /* CSS cho modal xem trước và các modal khác (không phải chi tiết đơn hàng) */
+        .modal-body .detail-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color-light);
+            align-items: baseline;
+        }
+        body.dark-mode .modal-body .detail-item { border-bottom-color: var(--border-color-dark); }
+        .modal-body .detail-item:last-child { border-bottom: none; }
+
+        .modal-body .detail-item strong {
+            font-weight: 500;
+            opacity: 0.9;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+        body.dark-mode .modal-body .detail-item strong { color: var(--text-dark); }
+
+        .modal-body .detail-item span {
+            word-break: break-word;
+            text-align: right;
+        }
+
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color-light);
+            margin-top: 15px;
+        }
+        body.dark-mode .modal-footer { border-top-color: var(--border-color-dark); }
+
+        /* Specific Modals - Compacted */
+        .success-modal-content { background: var(--success-bg-light); padding-top: 25px; padding-bottom: 25px; }
+        body.dark-mode .success-modal-content { background: var(--success-bg-dark); }
+        .success-modal-content .modal-header h2 { color: var(--success-text-light); font-size: 19px; }
+        body.dark-mode .success-modal-content .modal-header h2 { color: var(--success-text-dark); }
+        .success-modal-content .modal-body p { color: var(--success-text-light); font-size: 14px; }
+        body.dark-mode .success-modal-content .modal-body p { color: var(--success-text-dark); }
+        .success-modal-content .fas.fa-check-circle {
+            color: var(--success-icon-light); font-size: 2.5rem; margin-bottom: 0.8rem;
+        }
+        body.dark-mode .success-modal-content .fas.fa-check-circle { color: var(--success-icon-dark); }
 
 
-/* Modal Styles (Enhanced) */
-.modal {
-    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); 
-    display: none; align-items: center; justify-content: center;
-    z-index: 1000; padding: 15px; opacity: 0; transition: opacity 0.3s ease;
-}
-.modal.active { display: flex; opacity: 1; }
-
-.modal-content {
-    background: var(--modal-bg); border-radius: 16px; 
-    padding: 20px 25px; /* Adjusted padding for mobile */
-    max-width: 90%; /* More width on mobile */
-    width: 100%; 
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); 
-    border: 1px solid rgba(0,0,0,0.05);
-    position: relative; transform: translateY(20px); transition: transform 0.3s ease;
-}
-.modal.active .modal-content { transform: translateY(0); }
-
-[data-theme="light"] .modal-content { background: #fdfdfd; border-color: #efefef; color: #2c3e50; }
-[data-theme="dark"] .modal-content { background: #28313e; border-color: #3a4552; color: #e0e5ec; }
-
-.modal-header {
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid var(--border-color); 
-    padding-bottom: 12px; /* Adjusted padding */
-    margin-bottom: 15px; /* Adjusted margin */
-}
-.modal-header h2 {
-    font-size: 16px; /* Adjusted for mobile */
-    color: var(--primary-text-color, #004a7c); 
-    font-weight: 600; margin: 0; text-align: center; width: 100%;
-}
-[data-theme="dark"] .modal-header h2 { color: var(--primary-text-color-dark, #a9cce3); }
-
-.modal-close-btn {
-    background: none; border: none; 
-    color: var(--text-color); 
-    font-size: 18px; /* Adjusted for mobile */
-    cursor: pointer; transition: color 0.3s ease, transform 0.3s ease;
-}
-[data-theme="light"] .modal-close-btn { color: #2c3e50; }
-[data-theme="dark"] .modal-close-btn { color: #e0e5ec; }
-.modal-close-btn:hover { color: #e74c3c !important; transform: rotate(90deg); }
-
-.modal-body { 
-    font-size: 11px; /* Adjusted for mobile */
-    line-height: 1.5; max-height: 60vh; /* Increased max-height for mobile */
-    overflow-y: hidden; scrollbar-width: none; text-align: left; /* Align text left */
-}
-.modal-body::-webkit-scrollbar { display: none; }
-.modal-body.scrollable { 
-    overflow-y: auto; scrollbar-width: thin; 
-    scrollbar-color: #005eb8 var(--modal-bg); 
-}
-.modal-body.scrollable::-webkit-scrollbar { width: 6px; display: block; }
-.modal-body.scrollable::-webkit-scrollbar-thumb { background: #005eb8; border-radius: 3px; }
-
-.modal-body .detail-item, .modal-body div:not(.fas):not(p) { /* Điều chỉnh selector để không ảnh hưởng icon, p trong loading modal */
-    display: grid; 
-    grid-template-columns: 1fr; /* Single column for mobile */
-    gap: 6px 10px; /* Adjusted gap */
-    padding: 8px 0; /* Adjusted padding */
-    background: transparent; border-radius: 0; margin-bottom: 0;
-    border-bottom: 1px dashed var(--border-color); 
-    transition: none; 
-}
-.modal-body .detail-item:last-child, .modal-body div:not(.fas):not(p):last-child { border-bottom: none; }
+        .loading-modal-content { background: var(--loading-bg-light); text-align: center; padding-top: 25px; padding-bottom: 25px;}
+        body.dark-mode .loading-modal-content { background: var(--loading-bg-dark); }
+        .loading-modal-content .modal-header h2 { color: var(--primary-color); font-size: 19px; }
+        body.dark-mode .loading-modal-content .modal-header h2 { color: var(--secondary-color); }
+        #loading-modal .modal-body .fas.fa-spinner { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
+        body.dark-mode #loading-modal .modal-body .fas.fa-spinner { color: var(--secondary-color); }
+        #loading-modal .modal-body p { font-size: 1rem; line-height: 1.5; }
+        /* --- End Enhanced Modal Styles --- */
 
 
-.modal-body .detail-item strong, .modal-body div:not(.fas):not(p) strong {
-    font-weight: 500; color: var(--text-color); opacity: 0.8;
-}
-[data-theme="light"] .modal-body .detail-item strong { color: #2c3e50; opacity: 0.7;}
-[data-theme="dark"] .modal-body .detail-item strong { color: #e0e5ec; opacity: 0.7;}
+        /* Summary & Charts */
+        .summary-section, .chart-card {
+            background: var(--card-bg-light); border-radius: 10px; padding: 15px;
+            margin-bottom: 15px; box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+        }
+        body.dark-mode .summary-section, body.dark-mode .chart-card {
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .summary-section p { font-size: 14px; color: var(--text-light); margin: 5px 0; }
+        body.dark-mode .summary-section p { color: var(--text-dark); }
+        .chart-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .chart-card { flex: 1; min-width: 250px; position: relative; }
+        .chart-no-data {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--no-data-text-color-light); font-size: 14px; text-align: center;
+        }
+        body.dark-mode .chart-no-data { color: var(--no-data-text-color-dark); }
+        canvas { max-width: 100%; max-height: 250px; height: auto; }
 
-.modal-body .detail-item.highlight strong { /* No change needed, handled by theme */ }
-[data-theme="light"] .modal-body .detail-item.highlight strong { color: #004a7c; opacity: 1; }
-[data-theme="dark"] .modal-body .detail-item.highlight strong { color: #a9cce3; opacity: 1; }
+        /* Footer */
+        footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px;
+            z-index: 998; transition: background var(--transition-speed) ease;
+        }
+        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
 
-.modal-body .detail-item.highlight span { color: #005eb8; font-weight: 600; }
-[data-theme="dark"] .modal-body .detail-item.highlight span { color: #79b6f2; }
+        /* Notifications (Toast-like) */
+        .notification {
+            position: fixed; bottom: 20px; right: 20px;
+            background-color: var(--card-bg-dark); color: var(--text-dark);
+            padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000; opacity: 0; transform: translateX(100%);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            display: flex; align-items: center; gap: 10px;
+        }
+        body.dark-mode .notification { background-color: var(--card-bg-light); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .notification.show { opacity: 1; transform: translateX(0); }
+        .notification.error { background-color: #dc3545; color: white; }
+        body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
 
-.modal-body .detail-item span, .modal-body div:not(.fas):not(p) span {
-    font-size: 12px; /* Adjusted for mobile */
-    word-break: break-word; 
-}
-[data-theme="light"] .modal-body .detail-item span, [data-theme="light"] .modal-body div:not(.fas):not(p) span { color: #2c3e50; }
-[data-theme="dark"] .modal-body .detail-item span, [data-theme="dark"] .modal-body div:not(.fas):not(p) span { color: #e0e5ec; }
+        /* Scroll to Top */
+        #scrollToTopBtn {
+            display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999;
+            border: none; outline: none; background-color: var(--scroll-to-top-bg);
+            color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px;
+            box-shadow: var(--shadow-light-outer);
+            transition: background-color var(--transition-speed) ease, opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+            width: 40px; height: 40px; align-items: center; justify-content: center;
+        }
+        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.1); }
+        .hidden { display: none !important; }
 
+        /* Responsive Adjustments */
+        @media (max-width: 767px) {
+            .navbar { height: 45px; padding: 0 10px; }
+            .navbar .logo h1 { font-size: 16px; }
+            .navbar .tabs {
+                display: none; flex-direction: column; position: fixed; top: 45px;
+                left: 0; width: 100%;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+                padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            }
+            body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
+            .navbar .tabs.active { display: flex; }
+            .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
+            .hamburger { display: block; }
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
 
-.modal-footer {
-    display: flex; justify-content: flex-end; gap: 8px; /* Adjusted gap */
-    padding-top: 15px; /* Adjusted padding */
-    border-top: 1px solid var(--border-color); 
-    margin-top: 20px; /* Adjusted margin */
-}
-.modal-btn {
-    padding: 8px 18px; /* Adjusted for mobile */
-    border-radius: 8px; font-size: 12px; /* Adjusted for mobile */
-    font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
-    transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border: none; cursor: pointer; 
-}
-.modal-btn.primary { background: #005eb8; color: #ffffff; }
-.modal-btn.primary:hover { background: #004a7c; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transform: translateY(-1px); }
-.modal-btn.secondary { background: transparent; border: 1px solid var(--border-color); }
-[data-theme="light"] .modal-btn.secondary { color: #005eb8; border-color: #005eb8; }
-[data-theme="dark"] .modal-btn.secondary { color: #79b6f2; border-color: #79b6f2; }
-.modal-btn.secondary:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
-[data-theme="light"] .modal-btn.secondary:hover { background: rgba(0, 94, 184, 0.1); border-color: #004a7c; }
-[data-theme="dark"] .modal-btn.secondary:hover { background: rgba(121, 182, 242, 0.15); border-color: #a9cce3; }
+            .main-container { margin-top: 55px; padding: 10px; gap: 15px; }
+            .form-container, .grid-container { padding: 12px; border-radius: 8px; }
+            .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 { font-size: 15px; margin-bottom: 8px; }
+            .form-container label { font-size: 12px; margin-bottom: 3px; }
+            .form-container input, .form-container select { padding: 7px 9px; font-size: 12.5px; }
+            .form-container button, .modal-btn { padding: 7px 12px; font-size: 12.5px; }
 
-.modal-body.scrollable::-webkit-scrollbar-thumb { background: #005eb8; border-radius: 3px; }
-.modal-body.scrollable::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
-[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-thumb { background: #79b6f2; }
-[data-theme="dark"] .modal-body.scrollable::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+            .controls { flex-direction: column; align-items: stretch; }
+            .export-btn-container { justify-content: space-between; margin-top: 10px; width: 100%;}
+            .export-btn, .refresh-btn { width: 32px; height: 32px; font-size: 13px; }
 
+            .table-wrapper { max-height: calc(100vh - 300px); }
+            table { display: block; min-width: 0; font-size: 12px; }
+            thead { display: none; }
+            tbody, tr { display: block; }
+            tr {
+                margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
+                padding: 12px; box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light);
+            }
+            body.dark-mode tr {
+                background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+                border: 1px solid var(--border-color-dark);
+            }
+            td {
+                display: flex; justify-content: space-between; align-items: baseline;
+                padding: 6px 0; border: none; font-size: 13px; max-width: none;
+                white-space: normal; text-overflow: clip;
+            }
+            td:before {
+                content: attr(data-label); font-weight: 600; color: var(--primary-color);
+                padding-right: 10px; white-space: nowrap; flex-shrink: 0;
+            }
+            body.dark-mode td:before { color: var(--secondary-color); }
+            td span { text-align: right; word-break: break-word; flex-grow: 1; min-width: 0; }
+            td:last-child { border-bottom: none; }
 
-.success-modal-content { background: var(--success-bg); text-align: center; }
-.success-modal-content .modal-header h2 { color: #2e7d32; }
+            .summary-section h3 { font-size: 15px; }
+            .summary-section p { font-size: 13px; }
+            .chart-container { flex-direction: column; }
+            .chart-card { min-width: 0; padding: 12px; }
+            .chart-card h3 { font-size: 15px; }
+            canvas { max-height: 200px; }
 
-/* START: Cải thiện modal loading */
-.loading-modal-content { 
-    background: var(--loading-bg); 
-    text-align: center; 
-}
-.loading-modal-content .modal-header h2 { 
-    color: var(--primary-text-color); /* Sử dụng biến màu chính */
-}
-[data-theme="dark"] .loading-modal-content .modal-header h2 { 
-    color: var(--primary-text-color-dark); 
-}
+            .modal-content { max-width: calc(100% - 20px); padding: 15px; }
+            .modal-header h2 { font-size: 17px; }
+            .modal-body { font-size: 13px; max-height: 70vh; }
+            .modal-btn { padding: 8px 15px; font-size: 13px; }
 
-#loading-modal .modal-body { /* Áp dụng riêng cho modal loading */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 25px; /* Tăng padding cho thoáng */
-    text-align: center;
-}
+            #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
+            .notification { bottom: 50px; right: 10px; padding: 10px 15px; font-size: 13px; width: calc(100% - 20px); }
+        }
 
-#loading-modal .modal-body .fas.fa-spinner {
-    font-size: 3rem; /* Kích thước spinner lớn hơn (tailwind text-4xl là 2.25rem) */
-    margin-bottom: 1.25rem; /* Tăng khoảng cách dưới spinner */
-    color: #005eb8; /* Giữ màu xanh cho spinner, hoặc dùng var(--primary-text-color) */
-}
-[data-theme="dark"] #loading-modal .modal-body .fas.fa-spinner {
-    color: #66b0ff; /* Màu spinner cho theme tối */
-}
-
-#loading-modal .modal-body p {
-    font-size: 1.05rem; /* Kích thước chữ thông báo */
-    color: var(--text-color); 
-    line-height: 1.6;
-}
-/* END: Cải thiện modal loading */
-
-
-/* Responsive styles for mobile (max-width: 767px) */
-@media (max-width: 767px) {
-    .navbar { height: 40px; }
-    .navbar .logo h1 { font-size: 12px; } /* Smaller logo text */
-    .navbar .tabs {
-        display: none; 
-        flex-direction: column; position: fixed; top: 40px; 
-        left: 0; width: 100%;
-        background: linear-gradient(135deg, #003087, #005eb8);
-        padding: 8px 0; /* Reduced padding */
-        transform: translateX(0); gap: 6px; /* Reduced gap */
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Add shadow for dropdown */
-    }
-    .navbar .tabs.active { display: flex; }
-    .navbar .tabs a { padding: 8px 10px; font-size: 11px; text-align: center; } /* Adjusted padding and font */
-    .hamburger { display: block; }
-
-    .main-container { margin-top: 40px; padding: 6px; gap: 6px; }
-    .form-container, .grid-container { padding: 8px; border-radius: 10px; } /* Smaller padding and radius */
-    .form-container h2 { font-size: 11px; margin-bottom: 8px; }
-    
-    /* START: Cải thiện label và input ngày cọc trên mobile */
-    .form-container label {
-        font-size: 10.5px; /* Kích thước label trên mobile */
-        margin-bottom: 3px;
-    }
-    .form-container input, .form-container select { 
-        padding: 8px 10px; 
-        font-size: 11px; 
-    }
-    .form-container input[name="ngay_coc"] {
-        padding: 10px; /* Tăng padding cho dễ chạm */
-        font-size: 12px; /* Tăng font chữ cho giá trị ngày tháng */
-        min-height: 40px; /* Đảm bảo chiều cao tối thiểu */
-        -webkit-appearance: none; /* Thử loại bỏ giao diện mặc định của iOS nếu cần */
-        appearance: none;
-    }
-     /* END: Cải thiện label và input ngày cọc trên mobile */
-
-    .form-container button { padding: 8px 12px; font-size: 11px; }
-
-    .controls { flex-direction: column; align-items: stretch; } /* Stack controls */
-    .search-container { flex-direction: column; align-items: stretch; } /* Stack search inputs */
-    .search-container input, .search-container select { min-width: 0; } /* Allow full stretch */
-    .export-btn-container { justify-content: space-around; margin-top: 8px; } /* Space out export buttons */
-    .export-btn, .refresh-btn { width: 30px; height: 30px; font-size: 12px; } /* Slightly larger touch targets */
-    
-    .table-wrapper { max-height: calc(100vh - 280px); /* Adjust based on other elements on mobile */ }
-    table { display: block; min-width: 0; font-size: 9px; } /* Stack table, smaller font */
-    thead { display: none; }
-    tbody, tr { display: block; }
-    tr {
-        margin-bottom: 8px; border-radius: 10px;
-        background: var(--table-row-bg); padding: 10px; /* More padding inside each "card" */
-        box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    }
-    td {
-        display: flex; justify-content: space-between; align-items: baseline; 
-        padding: 5px 0; /* Vertical padding, no horizontal as it's handled by tr */
-        border: none; font-size: 10px; /* Slightly larger font for readability */
-        max-width: none; white-space: normal; text-overflow: clip;
-    }
-    td:before {
-        content: attr(data-label); font-weight: 700; color: #005eb8;
-        padding-right: 10px; /* More space for label */
-        white-space: nowrap; flex-shrink: 0;
-    }
-    td span { text-align: right; word-break: break-word; flex-grow: 1; min-width: 0; }
-    td:last-child { border-bottom: none; }
-
-    .summary-section { padding: 8px; }
-    .summary-section h3 { font-size: 11px; }
-    .summary-section p { font-size: 10px; }
-
-    .chart-container { flex-direction: column; } /* Stack charts */
-    .chart-card { min-width: 0; padding: 10px; } /* Full width for chart cards */
-    .chart-card h3 { font-size: 11px; }
-    canvas { max-height: 180px; } /* Adjust chart height for mobile */
-
-    .notification { top: 50px; right: 10px; padding: 8px 15px; font-size: 11px; }
-    #scrollToTopBtn { bottom: 15px; right: 15px; padding: 8px 10px; font-size: 14px; }
-}
-
-.detail-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-.detail-table th, .detail-table td { padding: 6px; }
-
-.summary-section {
-    background: var(--summary-bg); border-radius: 10px; padding: 8px;
-    margin-bottom: 10px; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-}
-.summary-section h3 { font-size: 10px; color: #005eb8; margin-bottom: 8px; font-weight: 700; }
-.summary-section p { font-size: 9px; color: var(--text-color); margin: 4px 0; }
-
-.chart-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-.chart-card {
-    flex: 1; min-width: 200px; background: var(--chart-bg);
-    border-radius: 10px; padding: 8px; 
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-    position: relative; 
-}
-.chart-card h3 { font-size: 10px; color: #005eb8; margin-bottom: 8px; font-weight: 700; }
-.chart-no-data { 
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: var(--no-data-text-color); font-size: 10px; text-align: center;
-}
-canvas { max-width: 100%; max-height: 150px; height: auto; }
-
-footer {
-    position: fixed; bottom: 0; left: 0; width: 100%;
-    background: var(--footer-bg); color: var(--footer-text);
-    text-align: center; padding: 4px 0; font-size: 7px;
-    z-index: 990; /* Ensure it's above content but below modals/navbar */
-}
-.notification { 
-    position: fixed; top: 60px; right: 20px;
-    background: #28a745; color: #ffffff;
-    padding: 10px 20px; border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 2000; 
-    animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
-    animation-delay: 0s, calc(var(--duration) - 0.3s); 
-}
-.notification.error { background: #e74c3c; }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-
-/* Responsive Design for larger screens */
-@media (min-width: 768px) {
-    body { font-size: 11px; } /* Base font size for desktop */
-    .navbar { height: 50px; padding: 0 15px; }
-    .navbar .logo h1 { font-size: 16px; }
-    .navbar .tabs { display: flex; flex-direction: row; position: absolute; top: auto; left: 50%; transform: translateX(-50%); background: transparent; padding: 0; box-shadow: none; gap: 12px; }
-    .navbar .tabs a { padding: 8px 12px; font-size: 11px; }
-    .hamburger { display: none; } /* Hide hamburger on desktop */
-
-    .main-container {
-        flex-direction: row; 
-        margin-top: 60px; padding: 10px 15px; gap: 12px;
-        min-height: calc(100vh - 80px); 
-    }
-    .form-container { flex: 1; padding: 15px; max-width: 400px; /* Limit form width on desktop */ } 
-    .form-container h2 { font-size: 14px; margin-bottom: 15px; }
-    .form-container label { font-size: 11px; } /* Label size for desktop */
-    .form-container input, .form-container select { padding: 8px 12px; font-size: 11px; }
-    .form-container input[name="ngay_coc"] { /* Specific desktop styles for date input if needed */
-        font-size: 11px; 
-        min-height: auto; /* Reset min-height from mobile */
-    }
-    .form-container button { padding: 8px 15px; font-size: 11px; }
-    
-    .grid-container { flex: 2; padding: 15px; } 
-    .controls { flex-wrap: nowrap; gap: 12px; }
-    .search-container { width: auto; flex-direction: row; } 
-    .search-container input, .search-container select { padding: 8px 12px; font-size: 11px; min-width: 150px; }
-    .export-btn-container { width: auto; justify-content: flex-end; } /* Align to right on desktop */
-    .export-btn, .refresh-btn { padding: 10px; font-size: 11px; width: 30px; height: 30px; }
-    
-    .table-wrapper { max-height: calc(100vh - 240px); } 
-    table { font-size: 11px; min-width: 600px; display: table; } 
-    th, td { padding: 8px; white-space: nowrap; font-size: 10px; } 
-    th { font-size: 10px; }
-
-    thead { display: table-header-group; }
-    tbody {display: table-row-group;}
-    tr { display: table-row; margin-bottom: 0; border-radius: 0; padding: 0; box-shadow: none; background: var(--table-row-bg); }
-    td { display: table-cell; justify-content: flex-start; border-bottom: 1px solid var(--border-color); align-items: initial; } 
-    td:before { display: none; } 
-    td span { text-align: left; flex-grow: 0; min-width: auto; } 
-    td:last-child { border-bottom: 1px solid var(--border-color); } 
-    tbody tr:hover { background: var(--table-row-hover); }
-    tbody tr:last-child td { border-bottom: none; } 
-
-
-    .detail-table { font-size: 11px; }
-    .detail-table th, .detail-table td { padding: 8px; }
-    .summary-section { padding: 10px; margin-bottom: 12px; }
-    .summary-section h3 { font-size: 12px; margin-bottom: 10px; }
-    .summary-section p { font-size: 11px; }
-    .chart-card { padding: 12px; }
-    .chart-card h3 { font-size: 12px; margin-bottom: 10px; }
-    canvas { max-height: 200px; } 
-    footer { padding: 6px 0; font-size: 9px; }
-
-    .modal-content { max-width: 500px; padding: 25px 30px; } /* Desktop modal size */
-    .modal-header h2 { font-size: 18px; }
-    .modal-body { font-size: 13px; }
-    .modal-body .detail-item, .modal-body div:not(.fas):not(p) { grid-template-columns: 150px 1fr; padding: 12px 0; }
-    .modal-btn { padding: 10px 25px; font-size: 13px; }
-}
-.hidden { display: none !important; } 
-
-#scrollToTopBtn {
-    display: none; position: fixed; bottom: 20px; right: 30px; z-index: 999; 
-    border: none; outline: none; background-color: var(--scroll-to-top-bg);
-    color: white; cursor: pointer; padding: 10px 12px; 
-    border-radius: 50%; font-size: 16px; 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.19);
-    transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
-}
-#scrollToTopBtn:hover {
-    background-color: var(--scroll-to-top-hover-bg);
-    transform: scale(1.1); 
-}
-
+        @media (min-width: 768px) {
+            .main-container { flex-direction: row; padding: 15px; gap: 20px; }
+            .form-container { flex: 1; max-width: 380px; padding: 15px; }
+            .grid-container { flex: 2; padding: 15px; }
+            .grid-container .controls { justify-content: flex-end; }
+            .export-btn-container { width: auto; }
+        }
     </style>
 </head>
-<body>
-<div class="navbar">
-    <div class="logo">
-        <h1>VinFast Thuận An</h1>
-    </div>
-    <button class="hamburger" onclick="toggleMenu()">
-        <i class="fas fa-bars"></i>
-    </button>
-    <div class="tabs">
-        <a href="#" onclick="switchTab('form', this)" class="active">Yêu Cầu Ghép Xe</a>
-        <a href="#" onclick="switchTab('history', this)">Lịch Sử Ghép</a>
-        <a href="#" onclick="switchTab('detailed-stats', this)">Thống Kê Chi Tiết</a>
-    </div>
-    <div class="navbar-controls">
-        <button class="theme-toggle" onclick="toggleTheme()" title="Chuyển đổi chế độ sáng/tối">
-            <i class="fas fa-moon" id="theme-icon"></i>
+<body data-theme="light">
+    <div class="navbar">
+        <div class="logo">
+            <h1>VinFast Thuận An</h1>
+        </div>
+        <button class="hamburger" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
         </button>
-        <button class="nav-btn" onclick="toggleAutoRefresh()" data-tooltip="Tự động làm mới"><i class="fas fa-redo"></i></button>
-        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        <div class="tabs">
+            <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
+            <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
+            <a href="#" onclick="switchTab('detailed-stats', this)" data-tooltip="Xem thống kê chi tiết">Thống Kê Chi Tiết</a>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="nav-btn" onclick="toggleAutoRefresh()" data-tooltip="Tự động làm mới (30s)"><i class="fas fa-sync-alt"></i></button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
     </div>
-</div>
 
-<div class="main-container">
-<div class="form-container" id="form-section"> <h2>Thêm Yêu Cầu Ghép Xe</h2>
-    <form id="vinfast-form" onsubmit="previewForm(event)">
-        <label for="ten_ban_hang">Tên Tư Vấn Bán Hàng:</label>
-        <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" />
-
-        <label for="ten_khach_hang">Tên Khách Hàng:</label>
-        <input name="ten_khach_hang" id="ten_khach_hang" placeholder="Tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()"/>
-        
-        <label for="dong_xe">Dòng Xe:</label>
-        <select name="dong_xe" id="dong_xe" required onchange="restrictVersion(this); saveFormDraft()">
-            <option value="" disabled selected>Chọn dòng xe</option>
-            <option value="VF 3">VF 3</option>
-            <option value="VF 5">VF 5</option>
-            <option value="VF 6">VF 6</option>
-            <option value="VF 7">VF 7</option>
-            <option value="VF 8">VF 8</option>
-            <option value="VF 9">VF 9</option>
-            <option value="HERIO">HERIO</option>
-            <option value="NERIO">NERIO</option>
-            <option value="LIMO">LIMO</option>
-            <option value="MINIO">MINIO</option>
-        </select>
-
-        <label for="phien_ban">Phiên Bản:</label>
-        <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()">
-            <option value="" disabled selected>Chọn phiên bản</option>
-            <option value="Plus">Plus</option>
-            <option value="Eco">Eco</option>
-            <option value="Plus_Metal">Plus_Metal</option>
-            <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
-            <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
-            <option value="Eco_3ZONES">Eco_3ZONES</option>
-            <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
-            <option value="Base">Base</option>
-        </select>
-
-        <label for="ngoai_that">Ngoại Thất:</label>
-        <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()">
-            <option value="" disabled selected>Chọn ngoại thất</option>
-            <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
-            <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
-            <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
-            <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
-            <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
-            <option value="Jet Black (CE11)">Jet Black (CE11)</option>
-            <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
-            <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
-            <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
-            <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
-            <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
-            <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
-            <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
-            <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
-            <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
-            <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
-            <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
-            <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
-            <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
-            <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
-            <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
-            <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
-            <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
-            <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
-            <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
-            <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
-            <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
-            <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
-            <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
-            <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
-            <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
-            <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
-            <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
-            <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
-            <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
-        </select>
-
-        <label for="noi_that">Nội Thất:</label>
-        <select name="noi_that" id="noi_that" required onchange="saveFormDraft()">
-            <option value="" disabled selected>Chọn nội thất</option>
-            <option value="Black">Black</option>
-            <option value="Brown">Brown</option>
-            <option value="Beige">Beige</option>
-        </select>
-
-        <label for="so_don_hang">Số Đơn Hàng:</label>
-        <input name="so_don_hang" id="so_don_hang" placeholder="Số đơn hàng (VD: N31913-VSO-25-04-0028)" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Số đơn hàng phải có định dạng Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028)" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. Vui lòng nhập theo kiểu Nxxxxx-XXX-yy-mm-zzzz (VD: N31913-VSO-25-04-0028).')" oninput="this.setCustomValidity(''); saveFormDraft()"/>
-        
-        <label for="ngay_coc">Ngày Cọc:</label>
-        <input name="ngay_coc" id="ngay_coc" type="datetime-local" required oninput="saveFormDraft()"/>
-        
-        <div class="form-buttons">
-            <button type="submit">Xác Nhận</button>
-            <button type="button" class="danger" onclick="clearFormDraft()">Xóa Nháp</button>
-        </div>
-    </form>
-</div>
-    <div class="grid-container hidden" id="history-section"> <div class="summary-section">
-            <h3>Tổng Quan</h3>
-            <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
-            <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
-            <p>Tư vấn viên tích cực nhất: <span id="summary-top-advisor">Chưa có dữ liệu</span></p>
-        </div>
-        <div class="controls">
-            <div class="search-container">
-                <input type="text" id="search-box" placeholder="Tìm kiếm...">
-                <select id="filter-car" onchange="filterHistory()">
-                    <option value="">Tất cả dòng xe</option>
+    <div class="main-container">
+        <div class="form-container" id="form-section">
+            <h2>Thêm Yêu Cầu Ghép Xe</h2>
+            <form id="vinfast-form" onsubmit="previewForm(event)">
+                <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" />
+                <input name="ten_khach_hang" id="ten_khach_hang" placeholder="Nhập tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()"/>
+                <select name="dong_xe" id="dong_xe" required onchange="restrictVersion(this); saveFormDraft()">
+                    <option value="" disabled selected>Chọn dòng xe</option>
+                    <option value="VF 3">VF 3</option>
+                    <option value="VF 5">VF 5</option>
+                    <option value="VF 6">VF 6</option>
+                    <option value="VF 7">VF 7</option>
+                    <option value="VF 8">VF 8</option>
+                    <option value="VF 9">VF 9</option>
+                    <option value="HERIO">HERIO</option>
+                    <option value="NERIO">NERIO</option>
+                    <option value="LIMO">LIMO</option>
+                    <option value="MINIO">MINIO</option>
                 </select>
-                <select id="filter-advisor" onchange="filterHistory()">
-                    <option value="">Tất cả tư vấn viên</option>
+
+                <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()">
+                    <option value="" disabled selected>Chọn phiên bản</option>
+                    <option value="Plus">Plus</option>
+                    <option value="Eco">Eco</option>
+                    <option value="Plus_Metal">Plus_Metal</option>
+                    <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
+                    <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
+                    <option value="Eco_3ZONES">Eco_3ZONES</option>
+                    <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
+                    <option value="Base">Base</option>
                 </select>
-                <input type="date" id="filter-date" onchange="filterHistory()">
-            </div>
-            <div class="export-btn-container">
-                <span>Tổng số đơn: <span id="total-don-count">0</span></span>
-                <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-                <button class="export-btn" onclick="exportToPDF()" data-tooltip="Xuất PDF"><i class="fas fa-file-pdf"></i></button>
-            </div>
-        </div>
-        <div class="table-wrapper">
-            <table id="history-table">
-                <thead id="table-header">
-                    <tr>
-                        <th onclick="sortTable('STT')">STT</th>
-                        <th onclick="sortTable('Tên tư vấn bán hàng')">Tư Vấn Bán Hàng</th>
-                        <th onclick="sortTable('Tên khách hàng')">Tên Khách Hàng</th>
-                        <th onclick="sortTable('Số đơn hàng')">Số Đơn Hàng</th>
-                        <th onclick="sortTable('Dòng xe')">Dòng Xe</th>
-                        <th onclick="sortTable('Phiên bản')">Phiên Bản</th>
-                        <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
-                        <th onclick="sortTable('Nội thất')">Nội Thất</th>
-                        <th onclick="sortTable('Kết quả')">Trạng Thái</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <div class="grid-container hidden" id="detailed-stats-section"> <div class="summary-section">
-            <h3>Tổng Quan Chi Tiết</h3>
-            <p>Tổng số yêu cầu: <span id="detailed-total">0</span></p>
-            <p>Tổng số dòng xe: <span id="detailed-car-types">0</span></p>
-            <p>Tổng số tư vấn viên: <span id="detailed-advisors">0</span></p>
-        </div>
-        <div class="chart-container">
-            <div class="chart-card">
-                <h3>Số Lượng Yêu Cầu Theo Dòng Xe</h3>
-                <canvas id="car-chart"></canvas>
-                <div class="chart-no-data" id="car-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
-            </div>
-            <div class="chart-card">
-                <h3>Số Lượng Yêu Cầu Theo Dòng Xe Kèm Phiên Bản</h3>
-                <canvas id="car-version-chart"></canvas>
-                 <div class="chart-no-data" id="car-version-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
-            </div>
-            <div class="chart-card">
-                <h3>Phân Bố Yêu Cầu Theo Tư Vấn Viên</h3>
-                <canvas id="advisor-chart"></canvas>
-                 <div class="chart-no-data" id="advisor-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
-            </div>
-        </div>
-        <div class="controls">
-            <div class="search-container">
-                <input type="text" id="detailed-search-box" placeholder="Tìm kiếm...">
-                <select id="detailed-filter-car" onchange="filterDetailedStats()">
-                    <option value="">Tất cả dòng xe</option>
+                <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()">
+                    <option value="" disabled selected>Chọn ngoại thất</option>
+                    <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
+                    <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
+                    <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
+                    <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
+                    <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
+                    <option value="Jet Black (CE11)">Jet Black (CE11)</option>
+                    <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
+                    <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
+                    <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
+                    <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
+                    <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
+                    <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
+                    <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
+                    <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
+                    <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
+                    <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
+                    <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
+                    <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
+                    <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
+                    <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
+                    <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
+                    <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
+                    <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
+                    <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
+                    <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
+                    <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
+                    <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
+                    <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
+                    <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
+                    <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
+                    <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
+                    <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
+                    <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
+                    <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
+                    <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
                 </select>
-                <select id="detailed-filter-advisor" onchange="filterDetailedStats()">
-                    <option value="">Tất cả tư vấn viên</option>
+
+                <select name="noi_that" id="noi_that" required onchange="saveFormDraft()">
+                    <option value="" disabled selected>Chọn nội thất</option>
+                    <option value="Black">Black</option>
+                    <option value="Brown">Brown</option>
+                    <option value="Beige">Beige</option>
                 </select>
-                <input type="date" id="detailed-filter-date" onchange="filterDetailedStats()">
+
+                <input name="so_don_hang" id="so_don_hang" placeholder="VD: N31913-VSO-25-04-0028" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. VD: N31913-VSO-25-04-0028')" oninput="this.setCustomValidity(''); saveFormDraft()"/>
+
+                <label for="ngay_coc">Ngày Cọc:</label>
+                <input name="ngay_coc" id="ngay_coc" type="datetime-local" required oninput="saveFormDraft()"/>
+
+                <div class="form-buttons">
+                    <button type="submit">Xác Nhận</button>
+                    <button type="button" class="danger" onclick="clearFormDraft()">Xóa Nháp</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="grid-container hidden" id="history-section">
+            <div class="summary-section">
+                <h3>Tổng Quan Lịch Sử Ghép</h3>
+                <p>Tổng số yêu cầu: <span id="summary-total">0</span></p>
+                <p>Dòng xe phổ biến nhất: <span id="summary-top-car">Chưa có dữ liệu</span></p>
+                <p>Tư vấn viên tích cực nhất: <span id="summary-top-advisor">Chưa có dữ liệu</span></p>
             </div>
-            <div class="export-btn-container">
-                <span>Tổng số dòng: <span id="detailed-row-count">0</span></span>
-                <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-                <button class="export-btn" onclick="exportDetailedStatsToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+            <div class="controls">
+                <div class="export-btn-container">
+                    <span>Tổng số đơn: <span id="total-don-count">0</span></span>
+                    <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
+                    <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất ra Excel"><i class="fas fa-file-excel"></i></button>
+                    <button class="export-btn" onclick="exportToPDF()" data-tooltip="Xuất ra PDF"><i class="fas fa-file-pdf"></i></button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="history-table">
+                    <thead id="table-header">
+                        <tr>
+                            <th onclick="sortTable('STT')">STT</th>
+                            <th onclick="sortTable('Tên tư vấn bán hàng')">Tư Vấn Bán Hàng</th>
+                            <th onclick="sortTable('Tên khách hàng')">Tên Khách Hàng</th>
+                            <th onclick="sortTable('Số đơn hàng')">Số Đơn Hàng</th>
+                            <th onclick="sortTable('Dòng xe')">Dòng Xe</th>
+                            <th onclick="sortTable('Phiên bản')">Phiên Bản</th>
+                            <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
+                            <th onclick="sortTable('Nội thất')">Nội Thất</th>
+                            <th onclick="sortTable('Kết quả')">Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="table-wrapper">
-            <table id="detailed-stats-table">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Dòng Xe</th>
-                        <th>Phiên Bản</th>
-                        <th>Ngoại Thất</th>
-                        <th>Nội Thất</th>
-                        <th>Tư Vấn Viên</th>
-                        <th>Ngày Cọc</th>
-                        <th>Số Lượng Yêu Cầu</th>
-                    </tr>
-                </thead>
-                <tbody id="detailed-stats-body">
-                     <tr class="table-placeholder"><td colspan="8"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
-                </tbody>
-            </table>
+
+        <div class="grid-container hidden" id="detailed-stats-section">
+            <div class="summary-section">
+                <h3>Tổng Quan Chi Tiết Thống Kê</h3>
+                <p>Tổng số yêu cầu: <span id="detailed-total">0</span></p>
+                <p>Tổng số dòng xe: <span id="detailed-car-types">0</span></p>
+                <p>Tổng số tư vấn viên: <span id="detailed-advisors">0</span></p>
+            </div>
+            <div class="chart-container">
+                <div class="chart-card">
+                    <h3>Số Lượng Yêu Cầu Theo Dòng Xe</h3>
+                    <canvas id="car-chart"></canvas>
+                    <div class="chart-no-data" id="car-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
+                </div>
+                <div class="chart-card">
+                    <h3>Số Lượng Yêu Cầu Theo Dòng Xe Kèm Phiên Bản</h3>
+                    <canvas id="car-version-chart"></canvas>
+                     <div class="chart-no-data" id="car-version-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
+                </div>
+                <div class="chart-card">
+                    <h3>Phân Bố Yêu Cầu Theo Tư Vấn Viên</h3>
+                    <canvas id="advisor-chart"></canvas>
+                     <div class="chart-no-data" id="advisor-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
+                </div>
+            </div>
+            <div class="controls">
+                 <div class="export-btn-container">
+                    <span>Tổng số dòng: <span id="detailed-row-count">0</span></span>
+                    <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
+                    <button class="export-btn" onclick="exportDetailedStatsToExcel()" data-tooltip="Xuất ra Excel"><i class="fas fa-file-excel"></i></button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="detailed-stats-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Dòng Xe</th>
+                            <th>Phiên Bản</th>
+                            <th>Ngoại Thất</th>
+                            <th>Nội Thất</th>
+                            <th>Tư Vấn Viên</th>
+                            <th>Ngày Cọc</th>
+                            <th>Số Lượng Yêu Cầu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-stats-body">
+                         <tr class="table-placeholder"><td colspan="8"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<footer>
-    © 2025 VinFast Minh Đạo Thuận An
-</footer>
+    <footer>
+        © 2025 VinFast Minh Đạo Thuận An
+    </footer>
 
-<div class="modal" id="preview-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Xác Nhận Thông Tin</h2>
-            <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="preview-content" class="modal-body"></div>
-        <div class="modal-footer">
-            <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Hủy</button>
-            <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Xác Nhận Thông Tin</h2>
+                <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="preview-content" class="modal-body"></div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Hủy</button>
+                <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="modal" id="detail-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="detail-modal-title">Chi Tiết Yêu Cầu</h2> <button class="modal-close-btn" onclick="closeModal('detail-modal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="detail-content" class="modal-body"></div>
-        <div class="modal-footer">
-            <button class="modal-btn primary" onclick="closeModal('detail-modal')">Đóng</button>
+    <div class="modal" id="success-modal">
+        <div class="modal-content success-modal-content">
+            <div class="modal-header">
+                <h2>Đã Gửi Dữ Liệu</h2>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 2.5rem; color: var(--success-icon-light); margin-bottom: 0.8rem; display: block; margin-left: auto; margin-right: auto;"></i>
+                <p style="color: var(--success-text-light);">Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
+                 <p style="color: var(--success-text-light); font-size: 0.9em;">Bạn sẽ được chuyển đến trang chi tiết sau giây lát.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="closeModalAndRedirect()">Đóng và Xem Chi Tiết</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="modal" id="success-modal">
-    <div class="modal-content success-modal-content">
-        <div class="modal-header">
-            <h2>Đã Gửi Dữ Liệu</h2>
-        </div>
-        <div class="modal-body" style="text-align: center;"> <i class="fas fa-check-circle text-4xl text-green-600 mb-4" style="display: block; margin-left: auto; margin-right: auto;"></i>
-            <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
-        </div>
-        <div class="modal-footer">
-            <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
+    <div class="modal" id="loading-modal">
+        <div class="modal-content loading-modal-content">
+            <div class="modal-header">
+                <h2 id="loading-title">Đang Tải Dữ Liệu...</h2>
+            </div>
+            <div class="modal-body">
+                <i class="fas fa-spinner fa-spin"></i> <p id="loading-message">Vui lòng chờ trong giây lát.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" id="loading-close-btn" onclick="closeModal('loading-modal')" style="display: none;">Đóng</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="modal" id="loading-modal">
-    <div class="modal-content loading-modal-content">
-        <div class="modal-header">
-            <h2 id="loading-title">Đang Tải Dữ Liệu...</h2>
-        </div>
-        <div class="modal-body">
-            <i class="fas fa-spinner animate-spin"></i> <p id="loading-message">Vui lòng chờ trong giây lát.</p>
-        </div>
-        <div class="modal-footer">
-            <button class="modal-btn primary" id="loading-close-btn" onclick="closeModal('loading-modal')" style="display: none;">Đóng</button>
-        </div>
-    </div>
-</div>
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
-<button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
-    <i class="fas fa-arrow-up"></i>
-</button>
-
+    <div id="notification-container"></div>
 
 <script>
+// --- Global Variables and Constants ---
+let globalHistoryData = []; // MODIFIED: Initialize as empty, will be populated from sessionStorage or API
+let formData = {}, orderId = "", detailedStatsData = [];
+let carChart, carVersionChart, advisorChart;
+let autoRefreshInterval;
+const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
+const ADMIN_USER = "PHẠM THÀNH NHÂN";
+const FORM_DRAFT_KEY = 'vinfastFormDraft_v2';
+const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1'; // Key cho sessionStorage
+
+const labelMap = {
+    "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
+    "dong_xe": "Dòng Xe", "phien_ban": "Phiên Bản", "ngoai_that": "Ngoại Thất",
+    "noi_that": "Nội Thất", "so_don_hang": "Số Đơn Hàng", "ngay_coc": "Ngày Cọc",
+    "thoi_gian_nhap": "Thời Gian Nhập", "trang_thai": "Trạng Thái",
+    "thoi_gian_ghep": "Thời Gian Ghép", "so_ngay_ghep": "Số Ngày Ghép",
+    "ket_qua": "Kết Quả", "VIN": "VIN"
+};
+
+// --- DOMContentLoaded ---
 document.addEventListener("DOMContentLoaded", function () {
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
         window.location.href = "index.html";
@@ -1055,54 +811,73 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        loadFormDraft();
-        switchTab('form', document.querySelector('.tabs a[onclick*="form"]')); 
-        fetchHistory(); // Fetch initial data for history and detailed stats
-        setupSearch();
-        setupScrollSync();
-        const savedTheme = localStorage.getItem("theme") || "light";
-        document.body.setAttribute("data-theme", savedTheme);
-        const themeIcon = document.getElementById("theme-icon");
-        if (themeIcon) {
-            themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+        loadFormDraft(); // Loads form draft
+
+        // MODIFIED: Try to load history data from sessionStorage
+        const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
+        if (cachedHistoryData) {
+            try {
+                globalHistoryData = JSON.parse(cachedHistoryData);
+                if (globalHistoryData && globalHistoryData.length > 0) {
+                    // If data is loaded from cache, prepare detailed stats immediately
+                    // so it's ready if the user navigates to that tab.
+                    prepareDetailedStats(globalHistoryData);
+                }
+            } catch (e) {
+                console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
+                sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY); // Clear corrupted data
+                globalHistoryData = []; // Ensure it's an empty array
+            }
         }
+
+        switchTab('form', document.querySelector('.tabs a[onclick*="form"]')); // Default tab
+        setupScrollSync();
+        applyInitialTheme();
         initScrollToTopButton();
     }
 });
 
+// --- Theme Management ---
+function applyInitialTheme() {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.toggle("dark-mode", savedTheme === "dark");
+    const themeIcon = document.getElementById("theme-icon");
+    if (themeIcon) {
+        themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("dark-mode");
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    const themeIcon = document.getElementById("theme-icon");
+    if (themeIcon) {
+        themeIcon.className = isDarkMode ? "fas fa-sun" : "fas fa-moon";
+    }
+    updateChartColors();
+}
+
+// --- Navigation and Session ---
 function logout() {
-    sessionStorage.clear();
-    localStorage.removeItem('vinfastFormDraft'); 
+    sessionStorage.clear(); // Clears all session storage, including cached history
+    localStorage.removeItem(FORM_DRAFT_KEY);
+    globalHistoryData = []; // Clear in-memory cache
+    detailedStatsData = [];
     window.location.href = "index.html";
-    showNotification("Đã đăng xuất!", 2000);
+    showNotification("Đã đăng xuất!", "info", 2000);
 }
 
 function goBack() {
     window.location.href = "index.html";
 }
 
-let globalHistoryData = [], formData = {}, orderId = "", detailedStatsData = [];
-let carChart, carVersionChart, advisorChart;
-let autoRefreshInterval;
-const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
-const ADMIN_USER = "PHẠM THÀNH NHÂN";
-const FORM_DRAFT_KEY = 'vinfastFormDraft'; 
-
-const labelMap = { 
-    "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
-    "dong_xe": "Dòng Xe", "phien_ban": "Phiên Bản", "ngoai_that": "Ngoại Thất",
-    "noi_that": "Nội Thất", "so_don_hang": "Số Đơn Hàng", "ngay_coc": "Ngày Cọc",
-    "thoi_gian_nhap": "Thời Gian Nhập", "trang_thai": "Trạng Thái", 
-    "thoi_gian_ghep": "Thời Gian Ghép", "so_ngay_ghep": "Số Ngày Ghép",
-    "ket_qua": "Kết Quả", "VIN": "VIN"
-};
-
+// --- Form Draft Management ---
 function saveFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (!form) return;
     const currentFormData = {};
-    const inputs = form.querySelectorAll("input:not([readonly]), select");
-    inputs.forEach(input => {
+    form.querySelectorAll("input:not([readonly]), select").forEach(input => {
         if (input.name) currentFormData[input.name] = input.value;
     });
     localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(currentFormData));
@@ -1113,67 +888,51 @@ function loadFormDraft() {
     if (!form) return;
     const draftData = localStorage.getItem(FORM_DRAFT_KEY);
     if (draftData) {
-        const parsedData = JSON.parse(draftData);
-        Object.keys(parsedData).forEach(key => {
-            const inputElement = form.elements[key];
-            if (inputElement) {
-                inputElement.value = parsedData[key];
-                if (key === 'dong_xe' && parsedData[key]) {
-                    restrictVersion(inputElement, parsedData['phien_ban']);
+        try {
+            const parsedData = JSON.parse(draftData);
+            Object.keys(parsedData).forEach(key => {
+                const inputElement = form.elements[key];
+                if (inputElement) {
+                    inputElement.value = parsedData[key];
+                    if (key === 'dong_xe' && parsedData[key]) {
+                        restrictVersion(inputElement, parsedData['phien_ban']);
+                    }
                 }
-            }
-        });
-        showNotification("Đã khôi phục dữ liệu nháp.", 2000);
+            });
+            showNotification("Đã khôi phục dữ liệu nháp.", "info", 2000);
+        } catch (e) {
+            console.error("Lỗi khi parse dữ liệu nháp:", e);
+            localStorage.removeItem(FORM_DRAFT_KEY);
+        }
     }
 }
 
 function clearFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (form) {
-        // Đặt lại giá trị cho các input và select, trừ input readonly
         form.querySelectorAll("input:not([readonly]), select").forEach(input => {
-            if (input.type === 'select-one') {
-                input.selectedIndex = 0; // Chọn option đầu tiên (thường là placeholder "Chọn...")
-            } else if (input.type !== 'datetime-local') { // Không xóa trắng datetime-local để tránh lỗi
+            if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            } else {
                 input.value = "";
             }
-             // For datetime-local, explicitly clearing might not be ideal, let user decide.
         });
-        
-        // Xử lý riêng cho select dòng xe để cập nhật lại phiên bản
         const dongXeSelect = form.elements['dong_xe'];
         if (dongXeSelect) {
-            dongXeSelect.selectedIndex = 0; // Reset dòng xe
-            restrictVersion(dongXeSelect); // Cập nhật lại danh sách phiên bản
-        }
-         // Reset input ngày cọc
-        const ngayCocInput = form.elements['ngay_coc'];
-        if (ngayCocInput) {
-            ngayCocInput.value = "";
+            restrictVersion(dongXeSelect);
         }
     }
     localStorage.removeItem(FORM_DRAFT_KEY);
-    showNotification("Đã xóa dữ liệu nháp.", 2000);
+    showNotification("Đã xóa dữ liệu nháp.", "info", 2000);
 }
 
-function toggleTheme() {
-    const currentTheme = document.body.getAttribute("data-theme");
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
-    document.body.setAttribute("data-theme", newTheme);
-    const themeIcon = document.getElementById("theme-icon");
-    if (themeIcon) themeIcon.className = newTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
-    localStorage.setItem("theme", newTheme);
-    updateChartColors();
-}
-
+// --- Date & Time Formatting ---
 function formatDateTime(dtString) {
-    if (!dtString) return "";
+    if (!dtString) return "N/A";
     const d = new Date(dtString);
-    if (isNaN(d.getTime())) return dtString; // Trả về chuỗi gốc nếu không hợp lệ
-    // Định dạng dd/MM/yyyy HH:mm (bỏ giây)
+    if (isNaN(d.getTime())) return dtString;
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
-
 
 function formatDateForFilter(dtString) {
     if (!dtString) return "";
@@ -1181,15 +940,17 @@ function formatDateForFilter(dtString) {
     return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
 }
 
-function showLoadingModal(title, message) {
+// --- Modal Management (Preview, Success, Loading) ---
+function showLoadingModal(title = "Đang xử lý...", message = "Vui lòng chờ trong giây lát.") {
     const modal = document.getElementById("loading-modal");
     if (modal) {
-        document.getElementById("loading-title").textContent = title;
-        document.getElementById("loading-message").textContent = message;
-        const closeBtn = document.getElementById("loading-close-btn");
+        const titleEl = modal.querySelector("#loading-title");
+        const messageEl = modal.querySelector("#loading-message");
+        const closeBtn = modal.querySelector("#loading-close-btn");
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
         if (closeBtn) closeBtn.style.display = "none";
         modal.classList.add("active");
-        adjustModalScroll(modal);
     }
 }
 
@@ -1198,27 +959,32 @@ function closeModal(modalId) {
     if (modal) modal.classList.remove("active");
 }
 
-function adjustModalScroll(modal) {
-    const body = modal.querySelector(".modal-body");
-    if (!body) return;
-    // Kiểm tra xem modal có class 'loading-modal-content' không, nếu có thì không cần scrollable
-    const isLoadingModal = modal.querySelector('.loading-modal-content');
-    if (isLoadingModal) {
-        body.classList.remove("scrollable"); // Đảm bảo loading modal không scroll
+function adjustModalScroll(modalElementOrId) {
+    const modal = typeof modalElementOrId === 'string' ? document.getElementById(modalElementOrId) : modalElementOrId;
+    if (!modal) return;
+    const modalBody = modal.querySelector(".modal-body");
+    if (!modalBody) return;
+    if (modal.querySelector('.loading-modal-content')) {
+        modalBody.classList.remove("scrollable");
+        modalBody.style.overflowY = 'hidden';
         return;
     }
-    body.classList.toggle("scrollable", body.scrollHeight > parseInt(window.getComputedStyle(body).maxHeight));
+    const isScrollable = modalBody.scrollHeight > modalBody.clientHeight || modalBody.scrollHeight > parseInt(getComputedStyle(modalBody).maxHeight, 10);
+    modalBody.classList.toggle("scrollable", isScrollable);
+    modalBody.style.overflowY = isScrollable ? 'auto' : 'hidden';
 }
 
-
+// --- Table Placeholder ---
 function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
     const tbody = document.getElementById(tableBodyId);
     if (!tbody) return;
     const colspan = tbody.previousElementSibling?.rows[0]?.cells.length || 9;
-    tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i>${message}</td></tr>`;
+    tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
+// --- Data Fetching and Rendering ---
 function fetchHistory() {
+    // This function now always fetches from API, updates global var and sessionStorage
     setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
     const detailedStatsSection = document.getElementById('detailed-stats-section');
     if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
@@ -1227,125 +993,78 @@ function fetchHistory() {
 
     fetch(apiURL)
         .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            if (!response.ok) throw new Error(`Lỗi mạng: ${response.status}`);
             return response.json();
         })
         .then(data => {
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].reverse(); 
+            globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData)); // Save to sessionStorage
 
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            
-            renderHistory(dataForHistoryTable); 
-            renderSummary(globalHistoryData); 
-            populateFilters(globalHistoryData); 
-            prepareDetailedStats(globalHistoryData); 
 
+            renderHistoryTable(dataForHistoryTable);
+            renderSummary(globalHistoryData);
+            prepareDetailedStats(globalHistoryData); // Prepare detailed stats with new data
+
+            // If detailed stats tab is active, render its content
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                filterDetailedStats(); 
+                renderDetailedStatsTable(detailedStatsData);
+                renderCharts(detailedStatsData);
             }
+            closeModal("loading-modal"); // Close loading modal if it was shown by refreshData
         })
         .catch(error => {
             console.error("Lỗi khi tải dữ liệu lịch sử:", error);
-            setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle text-red-600");
+            setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle");
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                 setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle text-red-600");
+                 setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle");
+            }
+            const loadingModalTitle = document.getElementById("loading-title");
+            const loadingModalMessage = document.getElementById("loading-message");
+            const loadingCloseBtn = document.getElementById("loading-close-btn");
+            if (document.getElementById("loading-modal")?.classList.contains("active")) {
+                if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Tải Dữ Liệu";
+                if (loadingModalMessage) loadingModalMessage.textContent = `Không thể tải: ${error.message}`;
+                if (loadingCloseBtn) loadingCloseBtn.style.display = "block";
             }
         });
 }
 
 function refreshData() {
-    const activeTabLink = document.querySelector('.tabs a.active');
-    let activeTabName = activeTabLink?.getAttribute('onclick')?.match(/switchTab\('([^']+)'/)?.[1] || '';
-    const shouldShowLoadingModal = activeTabName === 'history' || activeTabName === 'detailed-stats' || activeTabName === 'form';
-
-    if (shouldShowLoadingModal) showLoadingModal("Đang Làm Mới...", "Vui lòng chờ trong giây lát.");
-
-    fetch(apiURL)
-        .then(response => response.json())
-        .then(data => {
-            const daghep = data.daghep || [];
-            const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].reverse(); 
-
-            if (shouldShowLoadingModal) closeModal("loading-modal");
-            showNotification("Dữ liệu đã được làm mới!", 2000);
-
-            const currentUser = sessionStorage.getItem("currentConsultant");
-            const isAdmin = currentUser === ADMIN_USER;
-            let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-
-            renderHistory(dataForHistoryTable);
-            renderSummary(globalHistoryData);
-            populateFilters(globalHistoryData);
-            prepareDetailedStats(globalHistoryData);
-
-            const detailedStatsSection = document.getElementById('detailed-stats-section');
-            if (activeTabName === 'detailed-stats' || (detailedStatsSection && !detailedStatsSection.classList.contains('hidden'))) {
-                filterDetailedStats();
-            }
-        })
-        .catch(error => {
-            console.error("Lỗi khi làm mới dữ liệu:", error);
-            if (shouldShowLoadingModal) {
-                document.getElementById("loading-title").textContent = "Lỗi Làm Mới";
-                document.getElementById("loading-message").textContent = `Lỗi: ${error.message}`;
-                document.getElementById("loading-close-btn").style.display = "block";
-            } else {
-                 showNotification(`Không thể làm mới dữ liệu: ${error.message}`, 5000, true);
-            }
-            if (activeTabName === 'form' || activeTabName === 'history') {
-                setTablePlaceholder("table-body", `Lỗi làm mới: ${error.message}`, "fas fa-exclamation-triangle text-red-600");
-            }
-            if (activeTabName === 'detailed-stats') {
-                 setTablePlaceholder("detailed-stats-body", `Lỗi làm mới: ${error.message}`, "fas fa-exclamation-triangle text-red-600");
-            }
-        });
+    showLoadingModal("Đang Làm Mới Dữ Liệu...", "Vui lòng chờ trong giây lát.");
+    fetchHistory(); // fetchHistory will get fresh data, update cache and render
+    showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
 }
 
-function populateFilters(data) {
-    const cars = [...new Set(data.map(row => row["Dòng xe"]))].filter(Boolean).sort();
-    const advisors = [...new Set(data.map(row => row["Tên tư vấn bán hàng"]))].filter(Boolean).sort();
 
-    ['filter-car', 'detailed-filter-car'].forEach(id => {
-        const filterEl = document.getElementById(id);
-        if (filterEl) {
-            const currentValue = filterEl.value;
-            filterEl.innerHTML = '<option value="">Tất cả dòng xe</option>';
-            cars.forEach(car => filterEl.innerHTML += `<option value="${car}" ${currentValue === car ? 'selected' : ''}>${car}</option>`);
-        }
-    });
-    ['filter-advisor', 'detailed-filter-advisor'].forEach(id => {
-        const filterEl = document.getElementById(id);
-        if (filterEl) {
-            const currentValue = filterEl.value;
-            filterEl.innerHTML = '<option value="">Tất cả tư vấn viên</option>';
-            advisors.forEach(advisor => filterEl.innerHTML += `<option value="${advisor}" ${currentValue === advisor ? 'selected' : ''}>${advisor}</option>`);
-        }
-    });
-}
-
-function renderSummary(data) { 
-    if (!Array.isArray(data)) return;
+function renderSummary(data) {
+    if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("summary-total").textContent = "0";
+        document.getElementById("summary-top-car").textContent = "N/A";
+        document.getElementById("summary-top-advisor").textContent = "N/A";
+        return;
+    }
     const total = data.length;
-    const byCar = {}, byAdvisor = {};
-    data.forEach(row => {
-        const car = row["Dòng xe"], advisor = row["Tên tư vấn bán hàng"];
-        if (car) byCar[car] = (byCar[car] || 0) + 1;
-        if (advisor) byAdvisor[advisor] = (byAdvisor[advisor] || 0) + 1;
-    });
-    const topCarEntry = Object.entries(byCar).sort((a, b) => b[1] - a[1])[0];
-    const topAdvisorEntry = Object.entries(byAdvisor).sort((a, b) => b[1] - a[1])[0];
-
+    const carCounts = data.reduce((acc, row) => {
+        if (row["Dòng xe"]) acc[row["Dòng xe"]] = (acc[row["Dòng xe"]] || 0) + 1;
+        return acc;
+    }, {});
+    const advisorCounts = data.reduce((acc, row) => {
+        if (row["Tên tư vấn bán hàng"]) acc[row["Tên tư vấn bán hàng"]] = (acc[row["Tên tư vấn bán hàng"]] || 0) + 1;
+        return acc;
+    }, {});
+    const topCar = Object.entries(carCounts).sort((a,b) => b[1] - a[1])[0];
+    const topAdvisor = Object.entries(advisorCounts).sort((a,b) => b[1] - a[1])[0];
     document.getElementById("summary-total").textContent = total;
-    document.getElementById("summary-top-car").textContent = topCarEntry ? `${topCarEntry[0]} (${topCarEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
-    document.getElementById("summary-top-advisor").textContent = topAdvisorEntry ? `${topAdvisorEntry[0]} (${topAdvisorEntry[1]} yêu cầu)` : "Chưa có dữ liệu";
+    document.getElementById("summary-top-car").textContent = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "N/A";
+    document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "N/A";
 }
 
-function renderHistory(dataToRender) { 
+function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
     if (!dataToRender || dataToRender.length === 0) {
@@ -1353,118 +1072,60 @@ function renderHistory(dataToRender) {
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
-    tbody.innerHTML = dataToRender.map((row, i) => `
-        <tr onclick="showDetailByOrder('${row["Số đơn hàng"] || `temp-id-${i}`}')">
+    tbody.innerHTML = dataToRender.map((row, i) => {
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
+        return `
+        <tr onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')" style="cursor: pointer;">
             <td data-label="STT"><span>${i + 1}</span></td>
-            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || ""}</span></td>
-            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || ""}</span></td>
-            <td data-label="Số Đơn Hàng" title="${row["Số đơn hàng"] || ""}"><span>${row["Số đơn hàng"] || ""}</span></td>
-            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || ""}</span></td>
-            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || ""}</span></td>
-            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span>${row["Ngoại thất"] || ""}</span></td>
-            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || ""}</span></td>
-            <td data-label="Trạng Thái" title="${row["Kết quả"] || "Chưa tìm thấy VIN"}"><span>${row["Kết quả"] || "Chưa tìm thấy VIN"}</span></td>
+            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
+            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
+            <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
+            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
+            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
+            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span>${row["Ngoại thất"] || "N/A"}</span></td>
+            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
+            <td data-label="Trạng Thái" title="${row["Kết quả"] || "Chưa tìm thấy VIN"}"><span>${row["Kết quả"] || "Chưa có"}</span></td>
         </tr>
-    `).join("");
+    `}).join("");
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
 
-function showDetailByOrder(orderNumber) {
-    document.getElementById("detail-modal-title").textContent = "Chi Tiết Đơn Hàng";
-    const row = globalHistoryData.find(r => r["Số đơn hàng"] === orderNumber); 
-    if (!row) {
-        document.getElementById("detail-content").innerHTML = `<p class="text-red-500">Không tìm thấy dữ liệu.</p>`;
-        document.getElementById("detail-modal").classList.add("active");
-        adjustModalScroll(document.getElementById("detail-modal"));
-        showNotification("Không tìm thấy dữ liệu chi tiết!", 3000, true);
-        return;
-    }
-    let html = "";
-    const fieldOrder = [
-        { key: "Kết quả", highlight: true }, { key: "VIN", highlight: true },
-        { key: "Số đơn hàng" }, { key: "Tên khách hàng" }, { key: "Tên tư vấn bán hàng" },
-        { key: "Dòng xe" }, { key: "Phiên bản" }, { key: "Ngoại thất" }, { key: "Nội thất" },
-        { key: "Ngày cọc" }, { key: "Thời gian nhập" }, { key: "Thời gian ghép" }, { key: "Số ngày ghép" }
-    ];
-    const displayedKeys = new Set();
-    fieldOrder.forEach(field => {
-        if (row.hasOwnProperty(field.key)) {
-            const value = row[field.key], label = labelMap[field.key] || field.key;
-            const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(field.key)) ? formatDateTime(value) : (value ?? "Chưa có dữ liệu");
-            const highlightClass = field.highlight && value && String(value).toLowerCase() !== "chưa có dữ liệu" ? " highlight" : "";
-            html += `<div class="detail-item${highlightClass}"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
-            displayedKeys.add(field.key);
-        }
-    });
-    Object.entries(row).forEach(([key, value]) => {
-        if (!displayedKeys.has(key)) {
-            const label = labelMap[key] || key;
-            const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(key)) ? formatDateTime(value) : (value ?? "Chưa có dữ liệu");
-            html += `<div class="detail-item"><strong>${label}:</strong> <span>${formattedValue}</span></div>`;
-        }
-    });
-    document.getElementById("detail-content").innerHTML = html || "<p>Không có thông tin.</p>";
-    document.getElementById("detail-modal").classList.add("active");
-    adjustModalScroll(document.getElementById("detail-modal"));
-}
 
-function filterHistory() { 
-    const keyword = document.getElementById("search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("filter-car").value;
-    const selectedAdvisor = document.getElementById("filter-advisor").value;
-    const selectedDate = document.getElementById("filter-date").value;
+function filterHistory() { // This function now primarily filters/displays data from globalHistoryData
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-
-    let baseDataForFilter = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    
-    const filtered = baseDataForFilter.filter(row => 
-        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
-        (!selectedCar || row["Dòng xe"] === selectedCar) &&
-        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
-        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
-    );
-    renderHistory(filtered); 
+    let dataToDisplay = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+    renderHistoryTable(dataToDisplay);
 }
 
+// --- Sorting ---
 let lastSortColumn = '';
-let lastSortDirection = 'asc'; 
-
-function sortTable(columnName) { 
-    const dataKey = columnName; 
+let lastSortDirection = 'asc';
+function sortTable(columnKey) {
+    const dataKey = columnKey;
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    let baseDataForSort = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-    
-    const keyword = document.getElementById("search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("filter-car").value;
-    const selectedAdvisor = document.getElementById("filter-advisor").value;
-    const selectedDate = document.getElementById("filter-date").value;
-
-    let dataToSort = baseDataForSort.filter(row => 
-        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
-        (!selectedCar || row["Dòng xe"] === selectedCar) &&
-        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
-        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
-    );
+    // Sort a copy of the relevant slice of globalHistoryData
+    let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
 
     if (lastSortColumn === dataKey) {
         lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        lastSortDirection = 'asc'; 
+        lastSortDirection = 'asc';
     }
     lastSortColumn = dataKey;
 
     dataToSort.sort((a, b) => {
-        let valA = a[dataKey] ?? ""; 
+        let valA = a[dataKey] ?? "";
         let valB = b[dataKey] ?? "";
-
-        if (dataKey === "Ngày cọc" || dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép") {
-            valA = new Date(a[dataKey] || 0).getTime(); 
-            valB = new Date(b[dataKey] || 0).getTime();
+        if (dataKey === "STT") { // STT is based on current render order, not inherent data
+            const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
+            const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
+            return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
         }
-        if (dataKey === "STT") { 
-            return 0; 
+        if (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(dataKey)) {
+            valA = new Date(a[dataKey] || 0).getTime();
+            valB = new Date(b[dataKey] || 0).getTime();
         }
         if (typeof valA === 'number' && typeof valB === 'number') {
             return lastSortDirection === 'asc' ? valA - valB : valB - valA;
@@ -1475,78 +1136,69 @@ function sortTable(columnName) {
         if (valA > valB) return lastSortDirection === 'asc' ? 1 : -1;
         return 0;
     });
-    renderHistory(dataToSort);
+    renderHistoryTable(dataToSort); // Render the sorted temporary list
 }
 
-function exportToExcel() { 
-    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa tải!", 3000, true);
-    
+// --- Export Functions ---
+function exportToExcel() {
+    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
-    let baseDataForExport = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+    let dataToExport = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
 
-    const keyword = document.getElementById("search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("filter-car").value;
-    const selectedAdvisor = document.getElementById("filter-advisor").value;
-    const selectedDate = document.getElementById("filter-date").value;
+    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu để xuất.", "info", 3000);
 
-    let dataToExport = baseDataForExport.filter(row => 
-        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
-        (!selectedCar || row["Dòng xe"] === selectedCar) &&
-        (!selectedAdvisor || row["Tên tư vấn bán hàng"] === selectedAdvisor) &&
-        (!selectedDate || (row["Ngày cọc"] && formatDateForFilter(row["Ngày cọc"]) === selectedDate))
-    );
-
-    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu để xuất.", 3000, true);
-    
     const headers = ["STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số đơn hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Ngày cọc", "Thời gian nhập", "Kết quả", "VIN", "Thời gian ghép", "Số ngày ghép"];
-    const dataWithFormattedHeaders = dataToExport.map((row, index) => { 
+    const dataWithFormattedHeaders = dataToExport.map((row, index) => {
         const newRow = {"STT": index + 1};
-        headers.slice(1).forEach(header => { 
-            const value = row[header];
-            if (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(header)) newRow[header] = formatDateTime(value);
-            else newRow[header] = value ?? "";
+        headers.slice(1).forEach(header => {
+            const value = row[header]; 
+            newRow[header] = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(header)) ? formatDateTime(value) : (value ?? "");
         });
         return newRow;
     });
-
     const ws = XLSX.utils.json_to_sheet(dataWithFormattedHeaders, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "LichSuGhepXe");
-    XLSX.writeFile(wb, "lich_su_ghep_xe_moi_nhat_dau.xlsx");
-    showNotification("Đã xuất Excel thành công!", 2000);
+    XLSX.writeFile(wb, "LichSuGhepXe_ThuanAn.xlsx");
+    showNotification("Đã xuất Excel thành công!", "success", 2000);
 }
 
 function exportToPDF() {
-    if (typeof jsPDF === "undefined" || typeof html2canvas === "undefined") return showNotification("Thư viện PDF chưa tải!", 3000, true);
+    if (typeof jsPDF === "undefined" || typeof html2canvas === "undefined") return showNotification("Thư viện PDF chưa được tải!", "error", 3000);
     const { jsPDF } = window.jspdf;
     const table = document.getElementById('history-table');
-    if (!table) return showNotification("Không tìm thấy bảng dữ liệu.", 3000, true);
+    if (!table) return showNotification("Không tìm thấy bảng dữ liệu.", "error", 3000);
 
-    showLoadingModal("Đang Xuất PDF...", "Vui lòng chờ...");
-    html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight }).then(canvas => {
+    showLoadingModal("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
+    html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight })
+    .then(canvas => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('l', 'mm', 'a4');
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
         const pdfWidth = pdf.internal.pageSize.getWidth(), pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const contentWidth = pdfWidth - 2 * margin, contentHeight = pdfHeight - 2 * margin;
         const ratio = canvas.width / canvas.height;
-        let imgWidth = pdfWidth - 20, imgHeight = imgWidth / ratio;
-        if (imgHeight > pdfHeight - 20) { imgHeight = pdfHeight - 20; imgWidth = imgHeight * ratio; }
-        pdf.addImage(imgData, 'PNG', (pdfWidth - imgWidth) / 2, 10, imgWidth, imgHeight);
-        pdf.save('lich_su_ghep_xe_moi_nhat_dau.pdf');
+        let imgWidth = contentWidth, imgHeight = imgWidth / ratio;
+        if (imgHeight > contentHeight) { imgHeight = contentHeight; imgWidth = imgHeight * ratio; }
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        pdf.save('LichSuGhepXe_ThuanAn.pdf');
         closeModal('loading-modal');
-        showNotification("Đã xuất PDF thành công!", 2000);
+        showNotification("Đã xuất PDF thành công!", "success", 2000);
     }).catch(err => {
         closeModal('loading-modal');
-        showNotification("Lỗi xuất PDF: " + err.message, 4000, true);
+        showNotification(`Lỗi xuất PDF: ${err.message}`, "error", 4000);
     });
 }
 
+// --- Form Submission ---
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
     if (!form || !form.checkValidity()) {
-        showNotification("Vui lòng điền đủ thông tin!", 3000, true);
-        form.reportValidity(); return;
+        showNotification("Vui lòng điền đầy đủ các trường bắt buộc!", "error", 3000);
+        form.reportValidity();
+        return;
     }
     formData = {}; let html = "";
     form.querySelectorAll("input, select").forEach(input => {
@@ -1558,16 +1210,20 @@ function previewForm(e) {
         }
     });
     document.getElementById("preview-content").innerHTML = html;
-    document.getElementById("preview-modal").classList.add("active");
-    adjustModalScroll(document.getElementById("preview-modal"));
+    const previewModal = document.getElementById("preview-modal");
+    previewModal.classList.add("active");
+    adjustModalScroll(previewModal);
 }
+
+let redirectTimeout; 
 
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
-        showNotification("Số đơn hàng đã tồn tại!", 3000, true);
-        closeModal("preview-modal"); return;
+        showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
+        closeModal("preview-modal");
+        return;
     }
-    showLoadingModal("Đang Gửi Dữ Liệu", "Vui lòng chờ...");
+    showLoadingModal("Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString();
     formData["trang_thai"] = "Chưa ghép";
@@ -1575,81 +1231,92 @@ function confirmSubmit() {
     Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
 
     fetch(apiURL, { method: "POST", body: formDataToSend })
-        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi gửi: ${response.status} ${text}`) }))
-        .then(() => fetch(apiURL)) 
-        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi tải lại: ${response.status} ${text}`) }))
-        .then(updatedData => {
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi gửi: ${response.status} ${text}`) }))
+        .then(() => { // After successful POST, fetch all data again to update globalHistoryData and sessionStorage
+            return fetch(apiURL);
+        })
+        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
+        .then(updatedData => { // This is the fresh data from the second fetch
             closeModal("loading-modal");
-            clearFormDraft(); // Xóa nháp sau khi gửi thành công
-            document.getElementById("vinfast-form").reset(); // Reset form
-            // Đặt lại tên tư vấn viên sau khi reset form
+            clearFormDraft();
+            document.getElementById("vinfast-form").reset();
             const consultantInput = document.getElementById("ten_ban_hang");
-            if (consultantInput) {
-                consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
-            }
-             // Reset lại select Dòng xe và Phiên bản (quan trọng sau khi reset form)
+            if (consultantInput) consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
             const dongXeSelect = document.getElementById('dong_xe');
-            if (dongXeSelect) {
-                dongXeSelect.selectedIndex = 0; // Chọn option đầu tiên (placeholder)
-                restrictVersion(dongXeSelect); // Cập nhật lại danh sách phiên bản
-            }
+            if (dongXeSelect) restrictVersion(dongXeSelect);
 
-
+            // Update globalHistoryData and sessionStorage with the fresh data
             const daghep = updatedData.daghep || [];
             const chuaghep = updatedData.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].reverse(); 
+            globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
 
-            const submittedOrder = globalHistoryData.find(row => row["Số đơn hàng"] === formData["so_don_hang"]) || formData;
-            sessionStorage.setItem("orderDetails", JSON.stringify(submittedOrder));
-            
-            // Hiển thị modal success thay vì notification và chuyển trang
             const successModal = document.getElementById("success-modal");
-            if (successModal) {
-                successModal.classList.add("active");
-                adjustModalScroll(successModal);
-            }
-            // Cập nhật lại các tab dữ liệu
+            if (successModal) { successModal.classList.add("active"); adjustModalScroll(successModal); }
+
+            // Re-render relevant parts of the UI with the new globalHistoryData
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            
-            renderHistory(dataForHistoryTable);
+            renderHistoryTable(dataForHistoryTable);
             renderSummary(globalHistoryData);
-            populateFilters(globalHistoryData);
-            prepareDetailedStats(globalHistoryData);
-            if (document.getElementById('detailed-stats-section') && !document.getElementById('detailed-stats-section').classList.contains('hidden')) {
-                filterDetailedStats();
+            prepareDetailedStats(globalHistoryData); // Prepare detailed stats with new data
+
+            const detailedStatsSection = document.getElementById('detailed-stats-section');
+            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                renderDetailedStatsTable(detailedStatsData);
+                renderCharts(detailedStatsData);
             }
-            // Không tự động chuyển trang nữa, để người dùng đóng modal success
-            setTimeout(() => window.location.href = "order-details.html", 2000); 
+            
+            clearTimeout(redirectTimeout);
+            redirectTimeout = setTimeout(() => {
+                if (document.getElementById("success-modal")?.classList.contains("active")) {
+                    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(formData["so_don_hang"])}`;
+                }
+            }, 2000); 
         })
         .catch(error => {
             closeModal("loading-modal");
-            showNotification(`Lỗi: ${error.message}`, 5000, true);
+            showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
         });
 }
 
+function closeModalAndRedirect() {
+    clearTimeout(redirectTimeout); 
+    closeModal('success-modal');
+    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(formData["so_don_hang"])}`;
+}
 
-function prepareDetailedStats(data) { 
+
+// --- Detailed Stats & Charts ---
+function prepareDetailedStats(data) { // Takes data (usually globalHistoryData) to prepare detailedStatsData
     const statsMap = new Map();
     data.forEach(row => {
         const key = `${row["Dòng xe"] || "N/A"}|${row["Phiên bản"] || "N/A"}|${row["Ngoại thất"] || "N/A"}|${row["Nội thất"] || "N/A"}|${row["Tên tư vấn bán hàng"] || "N/A"}|${row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A"}`;
-        if (statsMap.has(key)) statsMap.get(key).count++;
-        else statsMap.set(key, {
-            dong_xe: row["Dòng xe"] || "N/A", phien_ban: row["Phiên bản"] || "N/A",
-            ngoai_that: row["Ngoại thất"] || "N/A", noi_that: row["Nội thất"] || "N/A",
-            tu_van_vien: row["Tên tư vấn bán hàng"] || "N/A", ngay_coc: row["Ngày cọc"], count: 1
-        });
+        const entry = statsMap.get(key);
+        if (entry) { entry.count++; }
+        else {
+            statsMap.set(key, {
+                dong_xe: row["Dòng xe"] || "N/A", phien_ban: row["Phiên bản"] || "N/A",
+                ngoai_that: row["Ngoại thất"] || "N/A", noi_that: row["Nội thất"] || "N/A",
+                tu_van_vien: row["Tên tư vấn bán hàng"] || "N/A", ngay_coc: row["Ngày cọc"], count: 1
+            });
+        }
     });
-    detailedStatsData = Array.from(statsMap.values()); 
+    detailedStatsData = Array.from(statsMap.values()); // Update global detailedStatsData
 }
 
-function renderDetailedStats(dataToRender) { 
+function renderDetailedStatsTable(dataToRender) { // Takes data (usually detailedStatsData)
     const tbody = document.getElementById("detailed-stats-body");
     if (!tbody) return;
     if (!dataToRender || dataToRender.length === 0) {
-        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê.", "fas fa-chart-pie");
-        document.getElementById("detailed-row-count").textContent = 0; return;
+        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê chi tiết.", "fas fa-chart-pie");
+        document.getElementById("detailed-row-count").textContent = 0;
+        // Clear summary for detailed stats if no data
+        document.getElementById("detailed-total").textContent = "0";
+        document.getElementById("detailed-car-types").textContent = "0";
+        document.getElementById("detailed-advisors").textContent = "0";
+        return;
     }
     tbody.innerHTML = dataToRender.map((row, i) => `
         <tr>
@@ -1659,34 +1326,20 @@ function renderDetailedStats(dataToRender) {
             <td data-label="Ngoại Thất"><span>${row.ngoai_that}</span></td>
             <td data-label="Nội Thất"><span>${row.noi_that}</span></td>
             <td data-label="Tư Vấn Viên"><span>${row.tu_van_vien}</span></td>
-            <td data-label="Ngày Cọc"><span>${row.ngay_coc ? formatDateTime(row.ngay_coc) : ""}</span></td>
+            <td data-label="Ngày Cọc"><span>${row.ngay_coc ? formatDateTime(row.ngay_coc) : "N/A"}</span></td>
             <td data-label="Số Lượng"><span>${row.count}</span></td>
         </tr>
     `).join("");
     document.getElementById("detailed-row-count").textContent = dataToRender.length;
+    // Update detailed summary based on globalHistoryData (source for detailedStatsData)
     document.getElementById("detailed-total").textContent = globalHistoryData.length;
-    document.getElementById("detailed-car-types").textContent = [...new Set(globalHistoryData.map(r => r["Dòng xe"]))].filter(Boolean).length;
-    document.getElementById("detailed-advisors").textContent = [...new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]))].filter(Boolean).length;
+    document.getElementById("detailed-car-types").textContent = new Set(globalHistoryData.map(r => r["Dòng xe"]).filter(Boolean)).size;
+    document.getElementById("detailed-advisors").textContent = new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]).filter(Boolean)).size;
 }
 
-function filterDetailedStats() { 
-    const keyword = document.getElementById("detailed-search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("detailed-filter-car").value;
-    const selectedAdvisor = document.getElementById("detailed-filter-advisor").value;
-    const selectedDate = document.getElementById("detailed-filter-date").value;
 
-    const filtered = detailedStatsData.filter(row => 
-        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
-        (!selectedCar || row.dong_xe === selectedCar) &&
-        (!selectedAdvisor || row.tu_van_vien === selectedAdvisor) &&
-        (!selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate))
-    );
-    renderDetailedStats(filtered);
-    renderCharts(filtered); 
-}
-
-function renderCharts(dataForCharts) { 
-    if (typeof Chart === "undefined") return showNotification("Chart.js chưa tải!", 3000, true);
+function renderCharts(dataForCharts) { // Takes data (usually detailedStatsData)
+    if (typeof Chart === "undefined") return showNotification("Thư viện Chart.js chưa được tải!", "error", 3000);
     const carData = {}, carVersionData = {}, advisorData = {};
     dataForCharts.forEach(row => {
         if (row.dong_xe && row.dong_xe !== "N/A") carData[row.dong_xe] = (carData[row.dong_xe] || 0) + row.count;
@@ -1695,93 +1348,123 @@ function renderCharts(dataForCharts) {
         if (row.tu_van_vien && row.tu_van_vien !== "N/A") advisorData[row.tu_van_vien] = (advisorData[row.tu_van_vien] || 0) + row.count;
     });
 
-    const theme = document.body.getAttribute("data-theme") || "light";
-    const chartColors = theme === "dark" ? 
-        { grid: 'rgba(255,255,255,0.1)', ticks: '#e0e5ec', legend: '#e0e5ec', bg: "rgba(102,176,255,0.2)", border: "#66b0ff" } :
-        { grid: 'rgba(0,0,0,0.1)', ticks: '#2c3e50', legend: '#2c3e50', bg: "rgba(0,94,184,0.2)", border: "#005eb8" };
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    const chartColors = {
+        grid: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        ticks: isDarkMode ? '#c9d1d9' : '#2c3e50',
+        legend: isDarkMode ? '#c9d1d9' : '#2c3e50',
+        bgBar: isDarkMode ? "rgba(0, 174, 255, 0.6)" : "rgba(0, 48, 135, 0.6)",
+        borderBar: isDarkMode ? "#00aeff" : "#003087",
+        pieColors: isDarkMode ? ["#00aeff", "#00c6ff", "#66d9ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"] : ["#003087", "#0040c1", "#005eb8", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"]
+    };
     const baseOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 } } };
-    const barOptions = { ...baseOptions, scales: { y: { beginAtZero: true, ticks: { font: { size: 8 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid }, maxTicksLimit: 5 }, x: { ticks: { font: { size: 8 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } } }, layout: { padding: 5 } };
+    const barOptions = { ...baseOptions, scales: {
+        y: { beginAtZero: true, ticks: { font: { size: 9 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid } },
+        x: { ticks: { font: { size: 9 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { color: chartColors.grid } }
+    }, layout: { padding: 5 } };
     const pieOptions = { ...baseOptions };
 
     [carChart, carVersionChart, advisorChart].forEach(chart => chart?.destroy());
 
-    const createChart = (ctxId, noDataId, type, data, labels, options) => {
+    const createChartInstance = (ctxId, noDataId, type, data, labels, options, customColors = null) => {
         const ctx = document.getElementById(ctxId), noDataEl = document.getElementById(noDataId);
-        if (ctx && labels.length > 0) {
-            if(noDataEl) noDataEl.style.display = "none"; ctx.style.display = "block";
-            return new Chart(ctx, { type, data: { labels, datasets: [{ label: "Số lượng", data, backgroundColor: type === 'pie' ? ["#005eb8", "#0087ff", "#66b0ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"] : chartColors.bg, borderColor: chartColors.border, borderWidth: 1 }] }, options });
-        } else if (ctx) {
-            if(noDataEl) noDataEl.style.display = "block"; ctx.style.display = "none"; ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        if (!ctx || !noDataEl) return null;
+        if (labels.length > 0) {
+            noDataEl.style.display = "none"; ctx.style.display = "block";
+            return new Chart(ctx, { type, data: { labels, datasets: [{ label: "Số lượng", data, backgroundColor: customColors || (type === 'pie' ? chartColors.pieColors : chartColors.bgBar), borderColor: type === 'pie' ? (isDarkMode ? '#1e242e' : '#ffffff') : chartColors.borderBar, borderWidth: type === 'pie' ? 2 : 1 }] }, options });
+        } else {
+            noDataEl.style.display = "block"; ctx.style.display = "none";
+            const context = ctx.getContext('2d');
+            if (context) context.clearRect(0, 0, ctx.width, ctx.height);
         }
         return null;
     };
-    carChart = createChart("car-chart", "car-chart-no-data", "bar", Object.values(carData), Object.keys(carData), barOptions);
-    carVersionChart = createChart("car-version-chart", "car-version-chart-no-data", "bar", Object.values(carVersionData), Object.keys(carVersionData), barOptions);
-    advisorChart = createChart("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
+    carChart = createChartInstance("car-chart", "car-chart-no-data", "bar", Object.values(carData), Object.keys(carData), barOptions);
+    carVersionChart = createChartInstance("car-version-chart", "car-version-chart-no-data", "bar", Object.values(carVersionData), Object.keys(carVersionData), barOptions);
+    advisorChart = createChartInstance("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
 }
 
 function updateChartColors() {
     const activeTabLink = document.querySelector('.tabs a.active');
-    if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats')) filterDetailedStats();
+    // Only re-render charts if detailed-stats tab is active and data exists
+    if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats') && detailedStatsData.length > 0) {
+        renderCharts(detailedStatsData);
+    }
 }
 
-function exportDetailedStatsToExcel() { 
-    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa tải!", 3000, true);
-    const keyword = document.getElementById("detailed-search-box").value.toLowerCase();
-    const selectedCar = document.getElementById("detailed-filter-car").value;
-    const selectedAdvisor = document.getElementById("detailed-filter-advisor").value;
-    const selectedDate = document.getElementById("detailed-filter-date").value;
+function exportDetailedStatsToExcel() {
+    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
+    const dataToExport = detailedStatsData; // Uses the globally prepared detailedStatsData
+    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", "info", 3000);
 
-    const dataToExport = detailedStatsData.filter(row => 
-        (!keyword || Object.values(row).some(val => String(val).toLowerCase().includes(keyword))) &&
-        (!selectedCar || row.dong_xe === selectedCar) &&
-        (!selectedAdvisor || row.tu_van_vien === selectedAdvisor) &&
-        (!selectedDate || (row.ngay_coc && formatDateForFilter(row.ngay_coc) === selectedDate))
-    );
-    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", 3000, true);
-    
-    const formattedForExcel = dataToExport.map((row, index) => ({ 
-        "STT": index + 1,
-        "Dòng Xe": row.dong_xe, "Phiên Bản": row.phien_ban, "Ngoại Thất": row.ngoai_that,
+    const formattedForExcel = dataToExport.map((row, index) => ({
+        "STT": index + 1, "Dòng Xe": row.dong_xe, "Phiên Bản": row.phien_ban, "Ngoại Thất": row.ngoai_that,
         "Nội Thất": row.noi_that, "Tư Vấn Viên": row.tu_van_vien,
         "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "", "Số Lượng Yêu Cầu": row.count
     }));
     const headers = ["STT", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "Tư Vấn Viên", "Ngày Cọc", "Số Lượng Yêu Cầu"];
-    const ws = XLSX.utils.json_to_sheet(formattedForExcel, {header: headers}); 
+    const ws = XLSX.utils.json_to_sheet(formattedForExcel, {header: headers});
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ThongKeChiTiet");
-    XLSX.writeFile(wb, "thong_ke_chi_tiet_moi_nhat_dau.xlsx");
-    showNotification("Đã xuất Thống kê chi tiết!", 2000);
+    XLSX.utils.book_append_sheet(wb, ws, "ThongKeChiTietGhepXe");
+    XLSX.writeFile(wb, "ThongKeChiTietGhepXe_ThuanAn.xlsx");
+    showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
-function setupSearch() {
-    const searchBox = document.getElementById("search-box");
-    const detailedSearchBox = document.getElementById("detailed-search-box");
-    if (searchBox) searchBox.addEventListener("input", debounce(filterHistory, 300));
-    if (detailedSearchBox) detailedSearchBox.addEventListener("input", debounce(filterDetailedStats, 300));
-}
-
+// MODIFIED: switchTab logic to use cached globalHistoryData first
 function switchTab(tabName, element) {
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
-    ["form-section", "history-section", "detailed-stats-section"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
     if (element) element.classList.add("active");
 
-    if (tabName === 'form') {
-        document.getElementById('form-section')?.classList.remove('hidden');
-        document.getElementById('history-section')?.classList.remove('hidden'); 
-        if (!globalHistoryData || globalHistoryData.length === 0) fetchHistory(); else filterHistory();
+    ["form-section", "history-section", "detailed-stats-section"].forEach(id => {
+        const section = document.getElementById(id);
+        if (section) section.classList.add("hidden");
+    });
 
-    } else if (tabName === 'history') {
-        document.getElementById('history-section')?.classList.remove('hidden');
-        if (!globalHistoryData || globalHistoryData.length === 0) fetchHistory(); else filterHistory();
-    } else if (tabName === 'detailed-stats') {
-        document.getElementById('detailed-stats-section')?.classList.remove('hidden');
-        if (!detailedStatsData || detailedStatsData.length === 0 && globalHistoryData.length > 0) {
-            prepareDetailedStats(globalHistoryData);
+    const formSection = document.getElementById('form-section');
+    const historySection = document.getElementById('history-section');
+    const detailedStatsSection = document.getElementById('detailed-stats-section');
+
+    // Check if data is already in globalHistoryData (loaded from cache or previous fetch)
+    const isDataCached = globalHistoryData && globalHistoryData.length > 0;
+
+    if (tabName === 'form') {
+        if (formSection) formSection.classList.remove('hidden');
+        if (historySection) historySection.classList.remove('hidden'); // Form tab also shows history
+
+        if (isDataCached) {
+            filterHistory(); // Uses globalHistoryData
+            renderSummary(globalHistoryData);
+            // detailedStatsData should have been prepared at DOMContentLoaded if cache hit
+        } else {
+            fetchHistory(); // Fetches, stores in sessionStorage, updates globalHistoryData, and renders all relevant parts
         }
-        filterDetailedStats();
+    } else if (tabName === 'history') {
+        if (historySection) historySection.classList.remove('hidden');
+
+        if (isDataCached) {
+            filterHistory();
+            renderSummary(globalHistoryData);
+        } else {
+            fetchHistory();
+        }
+    } else if (tabName === 'detailed-stats') {
+        if (detailedStatsSection) detailedStatsSection.classList.remove('hidden');
+
+        if (isDataCached) {
+            // Ensure detailedStatsData is current if globalHistoryData was just loaded/updated
+            // prepareDetailedStats was called at DOMContentLoaded or after fetchHistory
+            if(detailedStatsData.length === 0 && globalHistoryData.length > 0) {
+                prepareDetailedStats(globalHistoryData); // Recalculate if somehow empty but global has data
+            }
+            renderDetailedStatsTable(detailedStatsData);
+            renderCharts(detailedStatsData);
+        } else {
+            fetchHistory(); // fetchHistory will also call prepareDetailedStats and render charts
+        }
     }
+    document.querySelector(".navbar .tabs")?.classList.remove("active"); // For mobile menu
 }
+
 
 function toggleMenu() {
     document.querySelector(".navbar .tabs")?.classList.toggle("active");
@@ -1791,88 +1474,95 @@ function toggleAutoRefresh() {
     const icon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval); autoRefreshInterval = null;
-        showNotification("Tự động làm mới đã tắt!", 2000);
+        showNotification("Tự động làm mới đã tắt!", "info", 2000);
         if(icon) { icon.classList.remove('fa-spin'); icon.parentElement.style.color = ''; }
     } else {
-        autoRefreshInterval = setInterval(refreshData, 30000);
-        showNotification("Tự động làm mới mỗi 30 giây!", 2000);
-        if(icon) { icon.classList.add('fa-spin'); icon.parentElement.style.color = '#34D399'; }
+        autoRefreshInterval = setInterval(refreshData, 30000); // refreshData calls fetchHistory
+        showNotification("Tự động làm mới mỗi 30 giây!", "info", 2000);
+        if(icon) { icon.classList.add('fa-spin'); icon.parentElement.style.color = '#28a745'; }
     }
 }
 
 function setupScrollSync() {
     document.querySelectorAll(".table-wrapper").forEach(wrapper => {
         const header = wrapper.querySelector("thead");
-        if (wrapper && header) wrapper.addEventListener("scroll", () => header.style.transform = `translateX(-${wrapper.scrollLeft}px)`);
+        if (wrapper && header) {
+            wrapper.addEventListener("scroll", () => {
+                header.style.transform = `translateX(-${wrapper.scrollLeft}px)`;
+            });
+        }
     });
 }
 
-function showNotification(message, duration, isError = false) {
+function showNotification(message, type = "info", duration = 3000) {
+    const container = document.getElementById("notification-container") || document.body;
     const notification = document.createElement("div");
-    notification.className = `notification${isError ? ' error' : ''}`;
-    notification.textContent = message;
-    notification.style.setProperty("--duration", `${duration}ms`);
-    document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), duration);
+    notification.className = `notification ${type}`;
+    let iconClass = 'fas fa-info-circle';
+    if (type === 'success') iconClass = 'fas fa-check-circle';
+    if (type === 'error') iconClass = 'fas fa-times-circle';
+    notification.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
+    container.appendChild(notification);
+    setTimeout(() => notification.classList.add('show'), 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        notification.addEventListener('transitionend', () => notification.remove());
+    }, duration);
 }
 
-function restrictVersion(select, savedVersionValue = null) {
-    const versionSelect = document.querySelector('select[name="phien_ban"]');
-    if (!versionSelect) return showNotification("Lỗi: Không tìm thấy danh sách phiên bản!", 3000, true);
-    const car = select.value;
-    const versions = { "VF 3": ["Base"], "VF 5": ["Plus"], "VF 6": ["Eco", "Plus"], "VF 7": ["Eco", "Plus"], "VF 8": ["Eco", "Plus"], "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"], "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"] };
+function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
+    const phienBanSelect = document.querySelector('select[name="phien_ban"]');
+    if (!phienBanSelect) {
+        showNotification("Lỗi: Không tìm thấy trường chọn Phiên Bản!", "error", 3000);
+        return;
+    }
+    const selectedDongXe = dongXeSelectElement.value;
+    const versionsMap = {
+        "VF 3": ["Base"], "VF 5": ["Plus"], "VF 6": ["Eco", "Plus"], "VF 7": ["Eco", "Plus"],
+        "VF 8": ["Eco", "Plus"],
+        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
+        "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"]
+    };
     const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
-    const availableVersions = versions[car] || allPossibleVersions;
-    const targetVersionValue = savedVersionValue ?? versionSelect.value; // Ưu tiên giá trị đã lưu khi load nháp
-    
-    let currentVersionSelectValue = versionSelect.value; // Lưu giá trị hiện tại của select phiên bản
-
-    versionSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
-    let foundTarget = false;
-
-    availableVersions.forEach(version => {
-        // Nếu đang load nháp (savedVersionValue có giá trị), thì selected là savedVersionValue
-        // Nếu không load nháp, và version hiện tại của select nằm trong danh sách mới, thì giữ lại
-        let isSelected = false;
-        if (savedVersionValue) { // Trường hợp load nháp
-            isSelected = (version === savedVersionValue);
-        } else { // Trường hợp người dùng tự chọn dòng xe
-            isSelected = (version === currentVersionSelectValue);
-        }
-        
-        if (isSelected) foundTarget = true;
-        versionSelect.innerHTML += `<option value="${version}"${isSelected ? " selected" : ""}>${version}</option>`;
-    });
-
-    if (foundTarget) {
-        if (savedVersionValue) {
-            versionSelect.value = savedVersionValue;
-        } else {
-            versionSelect.value = currentVersionSelectValue; // Giữ lại giá trị nếu nó hợp lệ
-        }
-    } else {
-        versionSelect.value = ""; // Nếu không tìm thấy, reset về placeholder
+    const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
+    const currentPhienBanValue = phienBanSelect.value;
+    phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
+    let valueToSelect = "";
+    if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
+        valueToSelect = savedPhienBanValue;
+    } else if (availableVersions.includes(currentPhienBanValue)) {
+        valueToSelect = currentPhienBanValue;
     }
-    
-    if (versionSelect.value === "") {
-        versionSelect.querySelector('option[value=""]')?.setAttribute('selected', 'true');
+    availableVersions.forEach(version => {
+        const option = document.createElement('option');
+        option.value = version; option.textContent = version;
+        if (version === valueToSelect) option.selected = true;
+        phienBanSelect.appendChild(option);
+    });
+    if (!valueToSelect && phienBanSelect.options.length > 1) { 
+         phienBanSelect.selectedIndex = 0; 
+    } else if (!valueToSelect && phienBanSelect.options.length <=1) {
+        phienBanSelect.value = ""; 
     }
 }
-
 
 function initScrollToTopButton() {
     const btn = document.getElementById("scrollToTopBtn");
     if (!btn) return;
     window.onscroll = () => {
         const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200;
-        btn.style.display = show ? "block" : "none";
+        btn.style.display = show ? "flex" : "none";
         btn.style.opacity = show ? "1" : "0";
     };
 }
 function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+
 function debounce(func, delay) {
     let timeoutId;
-    return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); };
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
 }
 </script>
 </body>
