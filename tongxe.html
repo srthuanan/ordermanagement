@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng Hợp Đơn Hàng 12 Tháng - VinFast Thuận An</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff;
+            --background-light: #f4f7fc;
+            --text-light: #2c3e50;
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e;
+            --border-color-light: #e1e4e8;
+            --border-color-dark: #30363d;
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --color-danger: #dc3545;
+            --color-success: #28a745;
+            --color-info: #17a2b8;
+            --font-primary: 'Roboto', sans-serif;
+            --font-secondary: 'Montserrat', sans-serif;
+            --header-height: 55px; /* Giảm chiều cao header */
+            --footer-height: 35px; /* Giảm chiều cao footer */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html {
+            height: 100%;
+            overflow: hidden; 
+        }
+        body {
+            font-family: var(--font-primary);
+            background: var(--background-light);
+            color: var(--text-light);
+            height: 100%;
+            overflow: hidden; 
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+            display: flex;
+            flex-direction: column;
+        }
+        body.dark-mode {
+            background: var(--background-dark);
+            color: var(--text-dark);
+        }
+        
+        /* Custom scrollbar for #table-wrapper */
+        #table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+        #table-wrapper::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+        #table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: #fff;
+            padding: 0 15px; 
+            height: var(--header-height);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-light-outer);
+            flex-shrink: 0;
+            position: sticky; 
+            top: 0;
+            z-index: 1000;
+        }
+        body.dark-mode header {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        header .header-title {
+            flex-grow: 1;
+            text-align: center;
+            font-size: 1.05em; 
+            font-weight: 500;
+        }
+        .header-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .control-btn, .theme-toggle-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            padding: 6px 10px; 
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background var(--transition-speed) ease;
+            font-size: 12.5px; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .control-btn:hover, .theme-toggle-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        body.dark-mode .control-btn, body.dark-mode .theme-toggle-btn {
+            background: rgba(0,0,0,0.15);
+        }
+        body.dark-mode .control-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+            background: rgba(0,0,0,0.25);
+        }
+
+        .main-content-wrapper { 
+            flex-grow: 1;
+            /* overflow-y: auto; Không cần cuộn ở đây nữa, body đã fixed */
+            display: flex; 
+            flex-direction: column; /* Để main-content có thể co giãn */
+            min-height: 0; /* Cần thiết cho flex item */
+        }
+        .main-content {
+            padding: 15px; 
+            margin: 0 auto;
+            width: 100%;
+            max-width: 1500px; /* Tăng nhẹ max-width */
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; 
+            min-height: 0; /* Cần thiết cho flex item */
+        }
+        .table-card {
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-height: 0; /* Cần thiết cho flex item */
+            overflow: hidden; 
+        }
+        body.dark-mode .table-card {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .table-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .action-btn {
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            /* Các thuộc tính khác của action-btn giữ nguyên từ file gốc */
+            background: var(--primary-color);
+            color: #fff;
+            cursor: pointer;
+            transition: background var(--transition-speed) ease, transform 0.2s ease;
+            box-shadow: var(--shadow-light-outer);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+        }
+        .action-btn:hover {
+            background: var(--primary-color-lighter);
+            transform: translateY(-2px);
+        }
+        body.dark-mode .action-btn {
+            background: var(--primary-color-lighter);
+        }
+        body.dark-mode .action-btn:hover {
+            background: var(--secondary-color);
+        }
+         .action-btn i { margin-right: 5px; }
+        
+        #table-wrapper { 
+            overflow: auto; 
+            flex-grow: 1; 
+            min-height: 0; /* Cần thiết cho flex item */
+            /* max-height được tính toán dựa trên các thành phần khác */
+            /* Ví dụ: calc(100vh - header - footer - main_padding - card_padding - actions_height - pagination_height) */
+            max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 30px - 45px - 50px); 
+            /* 30px = main-content padding (15*2) */
+            /* 30px = table-card padding (15*2) */
+            /* 45px = table-actions height + margin (ước lượng 35px + 10px) */
+            /* 50px = pagination height + margin (ước lượng 35px + 15px) */
+            border-radius: 6px; 
+            border: 1px solid var(--border-color-light); 
+        }
+        body.dark-mode #table-wrapper {
+            border-color: var(--border-color-dark);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px; /* Giảm nhẹ font size bảng */
+        }
+        th, td {
+            padding: 8px 10px; 
+            text-align: left;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+        /* Text wrapping rules from original file - kept */
+        th:nth-child(1), td:nth-child(1) { white-space: nowrap; } /* STT */
+        th:nth-child(2), td:nth-child(2), /* Tên KH */
+        th:nth-child(3), td:nth-child(3), /* Số ĐH */
+        th:nth-child(9), td:nth-child(9), /* Chính Sách */
+        th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
+        th:nth-child(11), td:nth-child(11) { /* Ghi Chú Admin */
+             white-space: normal;
+             word-break: break-word; 
+             min-width: 120px; 
+        }
+        /* Các cột khác có thể để nowrap mặc định hoặc thêm nowrap nếu cần */
+        th:nth-child(4), td:nth-child(4), /* Dòng Xe */
+        th:nth-child(5), td:nth-child(5), /* Phiên Bản */
+        th:nth-child(6), td:nth-child(6), /* Ngoại Thất */
+        th:nth-child(7), td:nth-child(7), /* Nội Thất */
+        th:nth-child(8), td:nth-child(8)  /* TVBH, VIN */
+        {
+            white-space: nowrap;
+        }
+
+
+        body.dark-mode th, body.dark-mode td {
+            border-bottom: 1px solid var(--border-color-dark);
+        }
+        th {
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+            color: #fff;
+            font-weight: 500; 
+            position: sticky;
+            top: 0; 
+            z-index: 1; 
+        }
+        body.dark-mode th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
+        }
+        tbody tr:hover {
+            background: rgba(0, 48, 135, 0.04); 
+        }
+        body.dark-mode tbody tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .empty-state, .loading-state {
+            text-align: center;
+            padding: 25px; 
+            font-size: 1em; 
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px; 
+            flex-shrink: 0; 
+        }
+        .pagination button {
+            padding: 6px 10px; /* Giảm padding nút pagination */
+            font-size: 11.5px; /* Giảm font nút pagination */
+            /* Các thuộc tính khác của pagination button giữ nguyên từ file gốc */
+            border: none;
+            border-radius: 6px;
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--shadow-light-outer);
+        }
+         .pagination button:hover {
+            background: #e9ecef;
+            transform: translateY(-1px); /* Giảm hiệu ứng hover */
+        }
+        body.dark-mode .pagination button {
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .pagination button:hover {
+            background: var(--primary-color-darker);
+            color: #fff;
+        }
+        .pagination button:disabled {
+            background: var(--border-color-light);
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+            transform: none;
+        }
+        body.dark-mode .pagination button:disabled {
+             background: var(--border-color-dark);
+             color: #666;
+        }
+        .pagination span { font-size: 11.5px; }
+
+        footer {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: #fff;
+            text-align: center;
+            padding: 0;
+            height: var(--footer-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px; 
+            flex-shrink: 0; 
+            position: sticky; 
+            bottom: 0;
+            z-index: 1000;
+            width: 100%;
+        }
+        body.dark-mode footer {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+        }
+        .toast-container {
+            position: fixed;
+            bottom: calc(var(--footer-height) + 10px); /* Điều chỉnh vị trí toast */
+            right: 10px;
+            z-index: 1005;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 10px 15px; 
+            font-size: 13px; 
+            border-radius: 6px;
+            /* Các thuộc tính khác của toast giữ nguyên */
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        body:not(.dark-mode) .toast {
+             background-color: var(--card-bg-light);
+             color: var(--text-light);
+             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast i { font-size: 16px; } /* Giảm icon toast */
+        .toast.success i { color: var(--color-success); }
+        .toast.error i { color: var(--color-danger); }
+        .toast.info i { color: var(--color-info); }
+        .toast-message { font-size: 13px; }
+
+
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 50px;
+                --footer-height: 30px;
+            }
+            header .header-title { font-size: 0.95em; }
+            .main-content { padding: 10px; }
+            .table-card { padding: 10px; }
+            th, td { font-size: 11px; padding: 6px 8px; }
+            th:nth-child(2), td:nth-child(2), /* Tên KH */
+            th:nth-child(3), td:nth-child(3), /* Số ĐH */
+            th:nth-child(9), td:nth-child(9), /* Chính Sách */
+            th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
+            th:nth-child(11), td:nth-child(11) {min-width: 100px;}
+
+            .action-btn { font-size: 11px; padding: 6px 10px; }
+            .pagination button, .pagination span { font-size: 11px; padding: 6px 10px; }
+            .control-btn, .theme-toggle-btn { padding: 5px 8px; font-size: 11.5px; }
+            footer { font-size: 10px; }
+            .toast-container { bottom: calc(var(--footer-height) + 8px); right: 8px; }
+            #table-wrapper {
+                /* Recalculate max-height for tablet */
+                /* header:50, footer:30, main_pad:20, card_pad:20, actions:40, pagination:45 = 205 */
+                max-height: calc(100vh - 205px); 
+            }
+        }
+         @media (max-width: 480px) {
+            :root {
+                --header-height: 45px;
+                --footer-height: 28px;
+            }
+            header { padding: 0 10px;}
+            .header-controls { gap: 5px;}
+            .control-btn, .theme-toggle-btn { padding: 4px 6px; font-size: 11px; }
+            .table-actions { flex-direction: column; align-items: stretch; }
+            .action-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
+            .action-btn:last-child { margin-bottom: 0; }
+            th, td { font-size: 10px; padding: 5px; }
+             th:nth-child(2), td:nth-child(2), /* Tên KH */
+            th:nth-child(3), td:nth-child(3), /* Số ĐH */
+            th:nth-child(9), td:nth-child(9), /* Chính Sách */
+            th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
+            th:nth-child(11), td:nth-child(11) {min-width: 80px;}
+            .toast-container {
+                bottom: calc(var(--footer-height) + 5px);
+                left: 5px;
+                right: 5px;
+                align-items: center;
+            }
+            .toast { width: auto; max-width: calc(100% - 10px); }
+             #table-wrapper {
+                /* Recalculate max-height for mobile */
+                /* header:45, footer:28, main_pad:20, card_pad:20, actions: (2*30+5)=65, pagination:45 = 223 */
+                max-height: calc(100vh - 223px); 
+            }
+         }
+    </style>
+</head>
+<body>
+    <header>
+        <span class="header-title">Tổng Hợp Đơn Hàng 12 Tháng</span>
+        <div class="header-controls">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện">
+                <i class="fas fa-moon"></i> <span class="theme-text">Tối</span>
+            </button>
+            <button class="control-btn" onclick="goBack()" aria-label="Quay lại">
+                <i class="fas fa-arrow-left"></i> Quay Lại
+            </button>
+        </div>
+    </header>
+
+    <div class="main-content-wrapper">
+        <div class="main-content">
+            <div class="table-card">
+                <div class="table-actions">
+                    <button class="action-btn" onclick="exportToExcel()" aria-label="Xuất Excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                    <button class="action-btn" onclick="printPage()" aria-label="In Bảng"><i class="fas fa-print"></i> In Bảng</button>
+                </div>
+                <div id="table-wrapper">
+                    <p class="loading-state" id="loading-message">Đang tải dữ liệu...</p>
+                    <table id="sales-table" style="display:none;">
+                        <thead>
+                            <tr id="table-header-row">
+                                </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination-controls" style="display:none;">
+                    <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
+                    <span id="page-info">Trang 1 / 1</span>
+                    <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        let allSalesData = [];
+        let currentPage = 1;
+        const ROWS_PER_PAGE = 25; 
+        const columnConfig = [
+            { key: null, header: "STT", isIndex: true },
+            { key: 0, header: "Tên Khách Hàng" },
+            { key: 2, header: "Số Đơn Hàng" },
+            { key: 3, header: "Dòng Xe" },
+            { key: 4, header: "Phiên Bản" },
+            { key: 5, header: "Ngoại Thất" },
+            { key: 6, header: "Nội Thất" },
+            { key: 7, header: "TVBH" },
+            { key: 8, header: "VIN" },
+            { key: 9, header: "Chính Sách" },
+
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                updateThemeButton(true);
+            } else {
+                updateThemeButton(false);
+            }
+
+            const rawData = sessionStorage.getItem('allSalesDataForTongXe');
+            if (rawData) {
+                try {
+                    allSalesData = JSON.parse(rawData);
+                    if (Array.isArray(allSalesData) && allSalesData.length > 0) {
+                        document.getElementById("loading-message").style.display = "none";
+                        document.getElementById("sales-table").style.display = ""; 
+                        document.getElementById("pagination-controls").style.display = "flex";
+                        renderTableHeader();
+                        renderTable();
+                    } else {
+                        showEmptyState("Không có dữ liệu tổng hợp nào được tìm thấy.");
+                    }
+                } catch (e) {
+                    console.error("Lỗi xử lý dữ liệu từ sessionStorage:", e);
+                    showEmptyState("Lỗi khi tải dữ liệu. Vui lòng thử lại.");
+                }
+            } else {
+                showEmptyState("Không tìm thấy dữ liệu tổng hợp. Vui lòng quay lại trang trước và thử lại.");
+            }
+            adjustToastPositionForStickyFooter();
+            window.addEventListener('resize', adjustToastPositionForStickyFooter);
+        });
+
+        function renderTableHeader() {
+            const headerRow = document.getElementById("table-header-row");
+            headerRow.innerHTML = columnConfig.map(col => `<th>${col.header}</th>`).join('');
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById("table-body");
+            const salesTable = document.getElementById("sales-table");
+            const loadingMessage = document.getElementById("loading-message");
+            const paginationControls = document.getElementById("pagination-controls");
+
+            tableBody.innerHTML = ""; 
+
+            if (allSalesData.length === 0) {
+                showEmptyState("Không có dữ liệu để hiển thị.");
+                return;
+            }
+            
+            salesTable.style.display = "";
+            loadingMessage.style.display = "none";
+            paginationControls.style.display = "flex";
+
+            const start = (currentPage - 1) * ROWS_PER_PAGE;
+            const end = start + ROWS_PER_PAGE;
+            const paginatedData = allSalesData.slice(start, end);
+
+            paginatedData.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                columnConfig.forEach(col => {
+                    const td = document.createElement("td");
+                    if (col.isIndex) {
+                        td.textContent = start + index + 1;
+                    } else {
+                        td.textContent = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
+                    }
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+            updatePaginationControls();
+        }
+
+        function showEmptyState(message) {
+            const loadingMessage = document.getElementById("loading-message");
+            loadingMessage.textContent = message;
+            loadingMessage.style.display = "block";
+            document.getElementById("sales-table").style.display = "none";
+            document.getElementById("pagination-controls").style.display = "none";
+        }
+
+        function updatePaginationControls() {
+            const pageInfo = document.getElementById("page-info");
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            const totalPages = Math.ceil(allSalesData.length / ROWS_PER_PAGE) || 1;
+
+            pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        function changePage(delta) {
+            const totalPages = Math.ceil(allSalesData.length / ROWS_PER_PAGE) || 1;
+            currentPage += delta;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderTable();
+            document.getElementById('table-wrapper').scrollTop = 0;
+        }
+
+        function toggleTheme() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeButton(isDarkMode);
+            adjustToastPositionForStickyFooter();
+        }
+
+        function updateThemeButton(isDarkMode) {
+            const themeToggleBtn = document.querySelector('.theme-toggle-btn');
+            const themeIcon = themeToggleBtn.querySelector('i');
+            const themeText = themeToggleBtn.querySelector('span.theme-text');
+            if (isDarkMode) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                if(themeText) themeText.textContent = " Sáng";
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                 if(themeText) themeText.textContent = " Tối";
+            }
+        }
+
+        function goBack() {
+            window.location.href = "xedaban.html"; // Hoặc trang chính của bạn
+        }
+
+        function exportToExcel() {
+            if (allSalesData.length === 0) {
+                showToast("Không có dữ liệu để xuất.", 'warning');
+                return;
+            }
+            // Lấy toàn bộ dữ liệu để xuất, không chỉ trang hiện tại
+            const dataToExport = allSalesData.map((row, index) => {
+                return columnConfig.map(col => {
+                    if (col.isIndex) return index + 1; // STT cho toàn bộ dữ liệu
+                    return (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
+                });
+            });
+
+            const excelData = [
+                columnConfig.map(col => col.header),
+                ...dataToExport 
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            const colWidths = columnConfig.map((colConf) => ({
+                wch: Math.max(
+                    colConf.header.length, 
+                    ...allSalesData.map(row => { // Tính toán độ rộng cột dựa trên toàn bộ dữ liệu
+                        let val = '';
+                        if (colConf.isIndex) val = String(allSalesData.indexOf(row) + 1);
+                        else val = (row && row[colConf.key] !== undefined && row[colConf.key] !== null) ? String(row[colConf.key]) : '';
+                        return val.length;
+                    })
+                ) + 3 // Thêm chút padding cho cột
+            }));
+            ws['!cols'] = colWidths;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "TongHopDonHang");
+            XLSX.writeFile(wb, `TongHopDonHang_12Thang_${new Date().toISOString().slice(0,10)}.xlsx`);
+            showToast("Đã xuất file Excel!", 'success');
+        }
+
+        function printPage() {
+            if (allSalesData.length === 0) {
+                showToast("Không có dữ liệu để in.", 'warning');
+                return;
+            }
+            let fullTableHtml = '<table><thead><tr>';
+            columnConfig.forEach(col => {
+                fullTableHtml += `<th>${col.header}</th>`;
+            });
+            fullTableHtml += '</tr></thead><tbody>';
+            allSalesData.forEach((row, index) => {
+                fullTableHtml += '<tr>';
+                columnConfig.forEach(col => {
+                    let cellData = '';
+                    if (col.isIndex) {
+                        cellData = index + 1;
+                    } else {
+                        cellData = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
+                    }
+                    fullTableHtml += `<td>${cellData}</td>`;
+                });
+                fullTableHtml += '</tr>';
+            });
+            fullTableHtml += '</tbody></table>';
+
+
+            const printWindow = window.open('', '_blank');
+            const now = new Date().toLocaleString('vi-VN');
+
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>In Tổng Hợp Đơn Hàng - VinFast Thuận An</title>
+                    <style>
+                        body { font-family: 'Roboto', sans-serif; margin: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        h1 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.5em; margin-bottom: 10px;}
+                        p { text-align: center; font-size: 0.85em; margin-bottom: 10px;}
+                        table { border-collapse: collapse; width: 100%; font-size: 8.5pt; } 
+                        th, td { border: 1px solid #ccc !important; padding: 4px 6px; text-align: left; word-wrap: break-word; } 
+                        th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index: 1;}
+                        @page { margin: 0.5in; size: a4 landscape; } 
+                        @media print {
+                            html, body { width: 100%; height: auto; overflow: visible !important; }
+                            header, footer, .header-controls, .table-actions, .pagination, .toast-container { display: none !important; }
+                            .main-content-wrapper, .main-content, .table-card { 
+                                margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; overflow: visible !important;
+                            }
+                            #table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>BÁO CÁO TỔNG HỢP ĐƠN HÀNG 12 THÁNG</h1>
+                    <p>VinFast Thuận An | In lúc: ${now}</p>
+                    ${fullTableHtml} 
+                    <script>
+                        setTimeout(() => { window.print(); window.close(); }, 300); // Tăng nhẹ timeout
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById("toast-container");
+            if (!toastContainer) return;
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            else if (type === 'error') iconClass = 'fas fa-times-circle';
+            else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+            toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => { if (toast.parentNode === toastContainer) toastContainer.removeChild(toast); }, 500);
+            }, duration);
+        }
+
+        function adjustToastPositionForStickyFooter() {
+            const footer = document.querySelector('footer');
+            const toastContainer = document.getElementById('toast-container');
+            if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
+                const footerHeight = footer.offsetHeight;
+                let bottomOffset = footerHeight + 10; // 10px là khoảng cách từ footer
+                
+                if (window.innerWidth <= 480) { // Cho màn hình mobile
+                     bottomOffset = footerHeight + 5; 
+                }
+                toastContainer.style.bottom = `${bottomOffset}px`;
+            } else if (toastContainer) { 
+                toastContainer.style.bottom = (window.innerWidth <= 480) ? '5px' : '10px';
+            }
+        }
+    </script>
+</body>
+</html>
