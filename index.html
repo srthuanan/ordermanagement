@@ -1472,9 +1472,6 @@ body.dark-mode footer {
 
             let linkToActivate = Array.from(navLinks).find(link => link.getAttribute('href') === currentPageFile);
 
-            if (!linkToActivate && (currentPageFile === "Index.html" || currentPageFile === "") && isLoggedIn) {
-                linkToActivate = document.querySelector('#navMenu a[href="danhsach.html"]');
-            }
 
             if (linkToActivate && getComputedStyle(linkToActivate).display !== 'none') {
                 linkToActivate.classList.add("active");
