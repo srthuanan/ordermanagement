@@ -88,16 +88,16 @@
             box-shadow: var(--shadow-dark-outer);
         }
 
-        /* Slidebar - Giữ nguyên cấu trúc HTML, chỉ thay đổi CSS */
+        /* Slidebar */
         .slidebar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 200px; /* Chiều rộng mặc định từ Index.html */
+            width: 200px; 
             height: 100vh;
-            background: var(--primary-color-darker); /* Màu từ Index.html */
+            background: var(--primary-color-darker); 
             padding: 15px;
-            padding-top: 50px; /* Điều chỉnh cho header */
+            padding-top: 50px; 
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
             z-index: 1000;
             box-shadow: 3px 0 10px rgba(0,0,0,0.1);
@@ -105,10 +105,10 @@
             flex-direction: column;
         }
         .slidebar.collapsed {
-            width: 60px; /* Chiều rộng khi thu gọn từ Index.html */
+            width: 60px; 
         }
         body.dark-mode .slidebar {
-            background: var(--background-dark); /* Nền tối từ Index.html */
+            background: var(--background-dark); 
             border-right: 1px solid var(--border-color-dark);
             box-shadow: 3px 0 10px rgba(0,0,0,0.2);
         }
@@ -127,14 +127,13 @@
             opacity: 0;
             font-size: 0;
         }
-        /* Nút toggle sidebar */
         .toggle-btn {
             position: absolute;
-            top: 12px; /* Vị trí từ Index.html */
-            right: -15px; /* Vị trí từ Index.html */
-            width: 30px; /* Kích thước từ Index.html */
-            height: 30px; /* Kích thước từ Index.html */
-            background: var(--primary-color); /* Màu từ Index.html */
+            top: 12px; 
+            right: -15px; 
+            width: 30px; 
+            height: 30px; 
+            background: var(--primary-color); 
             border: none;
             border-radius: 50%;
             color: #fff;
@@ -148,13 +147,12 @@
             z-index: 1001;
         }
         .toggle-btn:hover {
-            background: var(--primary-color-lighter); /* Hiệu ứng hover từ Index.html */
+            background: var(--primary-color-lighter); 
             transform: scale(1.1);
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
-
-        /* Navbar controls - Áp dụng style từ Index.html */
+        /* Navbar controls */
         .navbar-controls {
             position: fixed;
             top: 10px;
@@ -163,7 +161,7 @@
             gap: 8px;
             z-index: 1001;
         }
-        .nav-btn, .theme-toggle { /* .language-btn không có trong khoxe.html */
+        .nav-btn, .theme-toggle { 
             border: none;
             border-radius: 50%;
             background: var(--card-bg-light);
@@ -195,7 +193,6 @@
             color: #fff;
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
-         /* Tooltip CSS from Index.html */
         [data-tooltip] {
             position: relative;
         }
@@ -225,30 +222,29 @@
             color: #333;
         }
 
-
-        /* Main container - Điều chỉnh margin cho sidebar mới */
+        /* Main container */
         .main-container {
-            background: var(--background-light); /* Nền từ Index.html */
-            margin-left: 200px; /* Phù hợp với sidebar width */
-            padding: 20px; /* Padding từ Index.html */
-            margin-top: 45px; /* Điều chỉnh cho header */
-            min-height: calc(100vh - 45px - 34px); /* Header và footer */
+            background: var(--background-light); 
+            margin-left: 200px; 
+            padding: 20px; 
+            margin-top: 45px; 
+            min-height: calc(100vh - 45px - 34px); 
             transition: margin-left var(--transition-speed) ease;
-            display: flex; /* Giữ lại flex cho cấu trúc khoxe */
-            gap: 15px; /* Khoảng cách giữa các grid items */
+            display: flex; 
+            gap: 15px; 
         }
         .main-container.collapsed {
-            margin-left: 60px; /* Phù hợp với sidebar collapsed width */
+            margin-left: 60px; 
         }
         body.dark-mode .main-container {
             background: var(--background-dark);
         }
-        .grid-container { /* Đây là container chính cho nội dung của KhoXe */
+        .grid-container { 
             flex: 1;
-            background: var(--card-bg-light); /* Áp dụng card background */
-            border-radius: 10px; /* Bo tròn góc */
-            padding: 20px; /* Padding bên trong */
-            box-shadow: var(--shadow-light-outer); /* Đổ bóng */
+            background: var(--card-bg-light); 
+            border-radius: 10px; 
+            padding: 20px; 
+            box-shadow: var(--shadow-light-outer); 
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -261,45 +257,45 @@
             border: 1px solid var(--border-color-dark);
         }
 
-        /* Filter section - Áp dụng style cho input/select từ Index.html (modal) */
+        /* Filter section */
         .filter-section {
             display: flex;
-            flex-wrap: wrap; /* Cho phép wrap trên màn hình nhỏ */
-            gap: 10px; /* Tăng khoảng cách */
+            flex-wrap: wrap; 
+            gap: 10px; 
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 15px; /* Tăng padding */
+            padding-bottom: 15px; 
             width: 100%;
-            border-bottom: 1px solid var(--border-color-light); /* Thêm đường kẻ phân cách */
+            border-bottom: 1px solid var(--border-color-light); 
         }
         body.dark-mode .filter-section {
             border-bottom: 1px solid var(--border-color-dark);
         }
         .filter-group {
             display: flex;
-            flex-wrap: wrap; /* Cho phép wrap */
+            flex-wrap: wrap; 
             gap: 10px;
             align-items: center;
         }
         .filter-section input, .filter-section select {
-            padding: 10px 12px; /* Tăng padding */
+            padding: 10px 12px; 
             border: 1px solid var(--border-color-light);
-            border-radius: 8px; /* Bo tròn nhiều hơn */
-            font-size: 13px; /* Giảm font size một chút */
-            background: var(--background-light); /* Nền sáng hơn */
+            border-radius: 8px; 
+            font-size: 13px; 
+            background: var(--background-light); 
             color: var(--text-light);
-            box-shadow: none; /* Bỏ box-shadow mặc định */
+            box-shadow: none; 
             transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease;
-            min-width: 150px; /* Chiều rộng tối thiểu */
-            height: auto; /* Chiều cao tự động */
+            min-width: 150px; 
+            height: auto; 
         }
         .filter-section input:focus, .filter-section select:focus {
             outline: none;
             border-color: var(--primary-color);
-            background: var(--card-bg-light); /* Nền trắng khi focus */
+            background: var(--card-bg-light); 
         }
         body.dark-mode .filter-section input, body.dark-mode .filter-section select {
-            background: var(--card-bg-dark); /* Nền input tối */
+            background: var(--card-bg-dark); 
             color: var(--text-dark);
             border: 1px solid var(--border-color-dark);
         }
@@ -307,14 +303,12 @@
             border-color: var(--secondary-color);
             background: var(--card-bg-dark);
         }
-        /* Button group trong filter */
         .filter-section .button-group {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-        /* Export buttons và Refresh button - Áp dụng style nav-btn */
-        .export-btn { /* Bao gồm cả refresh-btn */
+        .export-btn { 
             border: none;
             border-radius: 50%;
             background: var(--card-bg-light);
@@ -333,13 +327,12 @@
             background: #e9ecef;
             transform: translateY(-2px);
         }
-        .refresh-btn { /* Giữ màu xanh cho refresh */
+        .refresh-btn { 
              color: #00a550;
         }
         .refresh-btn:hover {
-            color: #008440; /* Đậm hơn khi hover */
+            color: #008440; 
         }
-
         body.dark-mode .export-btn {
             background: var(--card-bg-dark);
             color: var(--text-dark);
@@ -353,12 +346,12 @@
         body.dark-mode .refresh-btn:hover { color: #20c997; }
 
         .total-vehicles {
-            padding: 8px 12px; /* Tăng padding */
+            padding: 8px 12px; 
             font-size: 13px;
             color: var(--text-light);
             background: var(--background-light);
             border-radius: 8px;
-            box-shadow: var(--shadow-light-inner); /* Đổ bóng trong */
+            box-shadow: var(--shadow-light-inner); 
             border: 1px solid var(--border-color-light);
         }
         body.dark-mode .total-vehicles {
@@ -371,20 +364,19 @@
         /* Tables section */
         .tables-section {
             display: flex;
-            gap: 15px; /* Khoảng cách từ main-container */
+            gap: 15px; 
             flex: 1;
-            min-height: 360px; /* Giữ nguyên hoặc điều chỉnh */
+            min-height: 360px; 
             width: 100%;
         }
-        /* Table container - Áp dụng style card */
         .table-container {
-            flex: 0 0 70%; /* Điều chỉnh tỷ lệ nếu cần */
+            flex: 0 0 70%; 
             background: var(--card-bg-light);
             border-radius: 10px;
-            padding: 15px; /* Padding bên trong card */
+            padding: 15px; 
             box-shadow: var(--shadow-light-outer);
-            overflow: auto; /* Giữ overflow auto */
-            max-height: calc(100vh - 220px); /* Điều chỉnh max-height */
+            overflow: auto; 
+            max-height: calc(100vh - 220px); 
             position: relative;
             border: 1px solid var(--border-color-light);
         }
@@ -393,17 +385,16 @@
             box-shadow: var(--shadow-dark-outer);
             border: 1px solid var(--border-color-dark);
         }
-        /* Table style - Áp dụng style data-table từ Index.html */
-        table { /* Chung cho cả data-table và detail-table */
+        table { 
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px; /* Font size từ data-table */
-            table-layout: fixed; /* Giữ table-layout fixed */
+            font-size: 13px; 
+            table-layout: fixed; 
         }
         th, td {
-            padding: 12px 15px; /* Padding từ data-table */
+            padding: 12px 15px; 
             text-align: left;
-            border-bottom: 1px solid var(--border-color-light); /* Border từ data-table */
+            border-bottom: 1px solid var(--border-color-light); 
             white-space: normal;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -411,15 +402,15 @@
         body.dark-mode th, body.dark-mode td {
             border-bottom: 1px solid var(--border-color-dark);
         }
-        th { /* Header của bảng chính */
+        th { 
             font-weight: 600;
-            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%); /* Gradient từ data-table */
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%); 
             color: #fff;
             position: sticky;
             top: 0;
             z-index: 2;
-            text-transform: uppercase; /* Từ data-table */
-            letter-spacing: 0.5px; /* Từ data-table */
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
         }
         body.dark-mode th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
@@ -427,12 +418,11 @@
         td { color: var(--text-light); }
         body.dark-mode td { color: var(--text-dark); }
 
-        tbody tr { transition: background-color 0.2s ease; } /* Hiệu ứng hover từ data-table */
+        tbody tr { transition: background-color 0.2s ease; } 
         tbody tr:hover { background: rgba(0, 48, 135, 0.05); }
         body.dark-mode tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
-        .highlight { font-weight: 600; color: var(--secondary-color); /* Màu highlight nổi bật hơn */ }
+        .highlight { font-weight: 600; color: var(--secondary-color); }
 
-        /* Desktop Column widths - Giữ nguyên hoặc điều chỉnh nếu cần */
         col:nth-child(1) { width: 6%; }
         col:nth-child(2) { width: 12%; }
         col:nth-child(3) { width: 14%; }
@@ -442,15 +432,14 @@
         col:nth-child(7) { width: 12%; }
         col:nth-child(8) { width: 12%; }
 
-
-        /* Loading overlay - Giữ nguyên, màu sắc sẽ tự động điều chỉnh theo dark mode */
+        /* Loading overlay */
         .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.7); /* Sáng hơn một chút */
+            background: rgba(255, 255, 255, 0.7); 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -458,15 +447,15 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease;
-            border-radius: 10px; /* Bo tròn theo card */
+            border-radius: 10px; 
         }
         .loading-overlay.active {
             opacity: 1;
             visibility: visible;
         }
         .loading-spinner {
-            border: 4px solid #f0f0f0; /* Màu nền spinner sáng hơn */
-            border-top: 4px solid var(--primary-color); /* Màu chính */
+            border: 4px solid #f0f0f0; 
+            border-top: 4px solid var(--primary-color); 
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -479,10 +468,10 @@
         .loading-overlay span {
             margin-left: 10px;
             font-size: 14px;
-            color: var(--text-light); /* Màu chữ loading */
+            color: var(--text-light); 
         }
         body.dark-mode .loading-overlay {
-            background: rgba(30, 36, 46, 0.8); /* Nền loading tối */
+            background: rgba(30, 36, 46, 0.8); 
         }
         body.dark-mode .loading-spinner {
             border: 4px solid var(--card-bg-dark);
@@ -492,10 +481,9 @@
             color: var(--text-dark);
         }
 
-
-        /* Detail panel - Áp dụng style card */
+        /* Detail panel */
         .detail-panel {
-            flex: 0 0 30%; /* Điều chỉnh tỷ lệ nếu cần */
+            flex: 0 0 30%; 
             min-width: 220px;
             background: var(--card-bg-light);
             border-radius: 10px;
@@ -510,8 +498,8 @@
             border: 1px solid var(--border-color-dark);
         }
         .detail-panel h3 {
-            font-size: 16px; /* Lớn hơn một chút */
-            color: var(--primary-color); /* Màu chính */
+            font-size: 16px; 
+            color: var(--primary-color); 
             margin-bottom: 15px;
             font-weight: 600;
             padding-bottom: 10px;
@@ -521,55 +509,53 @@
             color: var(--secondary-color);
             border-bottom: 1px solid var(--border-color-dark);
         }
-        /* Detail table - Giữ style bảng chung */
         .detail-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
         }
         .detail-table th, .detail-table td {
-            padding: 10px 12px; /* Đồng nhất padding */
+            padding: 10px 12px; 
             text-align: left;
             border-bottom: 1px solid var(--border-color-light);
             white-space: normal;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
-        .detail-table th { /* Header của bảng chi tiết */
+        .detail-table th { 
             color: var(--text-light);
-            font-weight: 500; /* Giảm độ đậm */
-            width: 40%; /* Điều chỉnh chiều rộng */
-            background: var(--background-light); /* Nền sáng hơn */
+            font-weight: 500; 
+            width: 40%; 
+            background: var(--background-light); 
         }
         body.dark-mode .detail-table th {
             color: var(--text-dark);
-            background: var(--card-bg-dark); /* Nền tối hơn cho header */
+            background: var(--card-bg-dark); 
             border-bottom: 1px solid var(--border-color-dark);
         }
         body.dark-mode .detail-table td {
             border-bottom: 1px solid var(--border-color-dark);
         }
 
-
-        /* Pagination - Áp dụng style button từ Index.html (modal button) */
+        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 20px; /* Tăng margin */
+            margin-top: 20px; 
             width: 100%;
         }
         .pagination button {
-            padding: 10px 18px; /* Padding lớn hơn */
+            padding: 10px 18px; 
             border: none;
             border-radius: 8px;
             background: var(--primary-color);
             color: #fff;
             font-size: 13px;
-            font-weight: 500; /* Đậm hơn một chút */
+            font-weight: 500; 
             cursor: pointer;
             transition: all var(--transition-speed) ease;
-            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2); /* Đổ bóng nhẹ */
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2); 
         }
         .pagination button:hover:not(:disabled) {
             background: var(--primary-color-lighter);
@@ -605,7 +591,7 @@
         }
         body.dark-mode .pagination span { color: var(--text-dark); }
 
-        /* Footer - Áp dụng style từ Index.html */
+        /* Footer */
         footer {
             position: fixed;
             bottom: 0;
@@ -614,34 +600,34 @@
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: #fff;
             text-align: center;
-            padding: 10px 0; /* Padding từ Index.html */
-            font-size: 12px; /* Font size từ Index.html */
-            z-index: 998; /* Dưới header và sidebar */
+            padding: 10px 0; 
+            font-size: 12px; 
+            z-index: 998; 
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
         }
         body.dark-mode footer {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
 
-        /* Notification - Áp dụng style toast từ Index.html */
+        /* Notification */
         #notification {
             position: fixed;
-            bottom: 50px; /* Đặt trên footer */
+            bottom: 50px; 
             right: 20px;
             padding: 12px 18px;
-            background: var(--card-bg-dark); /* Nền tối cho notification */
-            color: var(--text-dark); /* Chữ sáng */
+            background: var(--card-bg-dark); 
+            color: var(--text-dark); 
             border-radius: 8px;
             display: none;
-            z-index: 10001; /* Trên cả overlay */
+            z-index: 10001; 
             font-size: 14px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             transition: opacity 0.4s ease, transform 0.4s ease;
             opacity: 0;
             transform: translateX(100%);
         }
-        #notification.show { /* Thêm class .show để kích hoạt animation */
-            display: block; /* Hoặc flex nếu cần căn giữa nội dung */
+        #notification.show { 
+            display: block; 
             opacity: 1;
             transform: translateX(0);
         }
@@ -651,41 +637,174 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
+        /* Modal Gợi ý Xe Mới */
+        .modal-suggestion {
+            display: none; 
+            position: fixed; 
+            z-index: 10002; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.6); 
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .modal-suggestion-content {
+            background-color: var(--card-bg-light);
+            margin: auto;
+            padding: 25px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 550px; 
+            box-shadow: var(--shadow-light-outer);
+            position: relative;
+            animation: fadeInModal 0.3s ease-out;
+        }
+        body.dark-mode .modal-suggestion-content {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-color-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        @keyframes fadeInModal {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .close-suggestion-btn {
+            color: var(--text-light);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        .close-suggestion-btn:hover,
+        .close-suggestion-btn:focus {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+            transform: rotate(90deg);
+        }
+        body.dark-mode .close-suggestion-btn {
+            color: var(--text-dark);
+        }
+        body.dark-mode .close-suggestion-btn:hover {
+            color: var(--primary-color-lighter);
+        }
+        .modal-suggestion-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        body.dark-mode .modal-suggestion-title {
+            color: var(--secondary-color);
+        }
+        .modal-suggestion-title i {
+            margin-right: 8px;
+            color: #f0ad4e; 
+        }
+        .modal-suggestion-subtitle {
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+        body.dark-mode .modal-suggestion-subtitle {
+            color: var(--text-dark);
+        }
+        .suggestion-list-container {
+            max-height: 250px; 
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px; 
+        }
+        .suggestion-item {
+            background-color: var(--background-light);
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        body.dark-mode .suggestion-item {
+            background-color: var(--card-bg-dark); 
+            border-color: var(--border-color-dark);
+        }
+        .suggestion-item strong {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        body.dark-mode .suggestion-item strong {
+            color: var(--primary-color-lighter);
+        }
+        .suggestion-item .highlight { 
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        .modal-suggestion-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .modal-suggestion-button:hover {
+            background-color: var(--primary-color-lighter);
+            transform: translateY(-1px);
+        }
+        body.dark-mode .modal-suggestion-button {
+            background-color: var(--primary-color-darker);
+        }
+        body.dark-mode .modal-suggestion-button:hover {
+            background-color: var(--primary-color);
+        }
 
-        /* Responsive for mobile - Cần rà soát và điều chỉnh lại kỹ lưỡng */
-        @media (max-width: 900px) { /* Breakpoint từ Index.html */
+        /* Responsive */
+        @media (max-width: 900px) { 
              .slidebar {
                 transform: translateX(-100%);
-                width: 220px; /* Chiều rộng sidebar mobile */
+                width: 220px; 
                 box-shadow: 5px 0 15px rgba(0,0,0,0.2);
             }
-            .slidebar.open { /* Class mới để mở sidebar trên mobile */
+            .slidebar.open { 
                 transform: translateX(0);
             }
-            .slidebar.collapsed { /* Khi collapsed trên mobile, vẫn ẩn */
+            .slidebar.collapsed { 
                 transform: translateX(-100%);
             }
-             .slidebar.open .logo h1 { /* Hiển thị logo text khi mở */
+             .slidebar.open .logo h1 { 
                 opacity: 1;
                 font-size: 20px;
             }
-
             .main-container {
                 margin-left: 0;
                 padding: 15px;
             }
              .main-container.collapsed { margin-left: 0; }
-
-            .toggle-btn { display: none; } /* Ẩn nút toggle desktop */
-
+            .toggle-btn { display: none; } 
             .tables-section {
                 flex-direction: column;
                 gap: 15px;
             }
             .table-container, .detail-panel {
-                flex: 1; /* Chia đều không gian */
+                flex: 1; 
                 width: 100%;
-                max-height: 45vh; /* Giới hạn chiều cao */
+                max-height: 45vh; 
             }
              .detail-panel {
                 min-width: unset;
@@ -697,10 +816,9 @@
                 padding: 12px 0;
                 font-size: 13px;
             }
-
             .main-container {
-                margin-top: 48px; /* Header height */
-                height: calc(100vh - 48px - 44px); /* Header and footer height */
+                margin-top: 48px; 
+                height: calc(100vh - 48px - 44px); 
                 padding: 10px;
                 gap: 10px;
             }
@@ -708,7 +826,6 @@
                 padding: 15px;
                 gap: 10px;
             }
-
             .navbar-controls {
                 top: 8px;
                 right: 8px;
@@ -719,7 +836,6 @@
                 height: 30px;
                 font-size: 13px;
             }
-
             .filter-section {
                 flex-direction: column;
                 align-items: stretch;
@@ -742,7 +858,7 @@
                 margin-top: 5px;
             }
             .export-btn {
-                width: 36px; /* Lớn hơn cho mobile */
+                width: 36px; 
                 height: 36px;
                 font-size: 15px;
             }
@@ -753,18 +869,16 @@
                 font-size: 12px;
                 margin-top: 5px;
             }
-
             .table-container {
-                padding: 10px; /* Giảm padding cho table container */
+                padding: 10px; 
                 max-height: 40vh;
             }
             table {
                 font-size: 10.5px;
             }
             th, td {
-                padding: 8px 6px; /* Giảm padding cell */
+                padding: 8px 6px; 
             }
-
             .detail-panel {
                 padding: 10px;
                 max-height: 38vh;
@@ -780,7 +894,6 @@
             .detail-table th, .detail-table td {
                 padding: 8px 6px;
             }
-
             .pagination {
                 margin-top: 15px;
                 gap: 8px;
@@ -793,9 +906,8 @@
                 padding: 8px 10px;
                 font-size: 13px;
             }
-
             #notification {
-                bottom: 50px; /* Trên footer */
+                bottom: 50px; 
                 left: 10px;
                 right: 10px;
                 width: auto;
@@ -803,12 +915,10 @@
                 font-size: 13px;
                 padding: 10px 15px;
             }
-
             footer {
                 font-size: 11px;
                 padding: 10px 0;
             }
-
             col:nth-child(1) { width: 10%;}
             col:nth-child(2) { width: 15%;}
             col:nth-child(3) { width: 15%;}
@@ -833,7 +943,6 @@
     <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" style="display: none; position: fixed; top: 9px; left: 10px; z-index: 1002; background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-color-light); border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; box-shadow: var(--shadow-light-outer); align-items: center; justify-content: center;">
         <i class="fas fa-bars"></i>
     </button>
-
 
     <div class="navbar-controls">
         <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
@@ -903,6 +1012,18 @@
             </div>
         </div>
     </div>
+
+    <div id="suggestionModal" class="modal-suggestion" style="display:none;">
+        <div class="modal-suggestion-content">
+            <span class="close-suggestion-btn" onclick="closeSuggestionModal()">&times;</span>
+            <h2 class="modal-suggestion-title"><i class="fas fa-lightbulb"></i> Gợi Ý Xe Mới Sẵn Sàng</h2>
+            <p class="modal-suggestion-subtitle">Đây là những xe mới về (trong 7 ngày) và đang <strong style="color: var(--secondary-color);">Sẵn sàng</strong> để tư vấn:</p>
+            <div id="suggestionList" class="suggestion-list-container">
+                </div>
+            <button onclick="closeSuggestionModal()" class="modal-suggestion-button">Đã xem</button>
+        </div>
+    </div>
+
     <footer><p>© 2025 VinFast Thuận An</p></footer>
     <div id="notification"></div>
 
@@ -918,7 +1039,7 @@
             if (!isLoggedIn) {
                 window.location.href = "index.html";
             } else {
-                loadInitialData();
+                loadInitialData(); // loadInitialData sẽ gọi showNewUnpairedCarSuggestions sau khi có dữ liệu
                 setupSearch();
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
@@ -926,8 +1047,6 @@
                     if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
                 }
                 
-                // Khởi tạo trạng thái sidebar cho desktop
-                // Ưu tiên trạng thái 'expanded' từ localStorage, còn lại mặc định là 'collapsed'
                 if (window.innerWidth > 900) {
                     const sidebar = document.getElementById("slidebar");
                     const mainContainer = document.getElementById("main-container");
@@ -936,10 +1055,9 @@
                     if (storedState === 'expanded') {
                         sidebar.classList.remove("collapsed");
                         mainContainer.classList.remove("collapsed");
-                    } else { // Default to collapsed (if 'collapsed' or no state stored)
+                    } else { 
                         sidebar.classList.add("collapsed");
                         mainContainer.classList.add("collapsed");
-                        // Nếu không có trạng thái nào được lưu, đặt mặc định là 'collapsed'
                         if (!storedState) {
                             localStorage.setItem('sidebarState_khoxe', 'collapsed');
                         }
@@ -954,7 +1072,7 @@
             }
             
             document.addEventListener('click', function(event) {
-                const sidebar = document.getElementById('slidebar'); // Sửa ID thành 'slidebar'
+                const sidebar = document.getElementById('slidebar'); 
                 const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
                 if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
                     if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
@@ -994,13 +1112,14 @@
                     row["Ngoại thất"] || "",
                     row["Nội thất"] || "",
                     row["VIN"] || "",
-                    row["Trạng thái"] || "",
+                    row["Trạng thái"] || "", // Đây là cột trạng thái, ví dụ: "Sẵn sàng", "Chờ ghép cặp"
                     row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
                 filteredData = [...tableData];
-                renderTable();
+                renderTable(); 
                 populateFilters();
+                showNewUnpairedCarSuggestions(); // Gọi hàm gợi ý sau khi có dữ liệu
                 showNotification("Dữ liệu đã được tải!", 2000);
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
@@ -1020,7 +1139,6 @@
             const paginatedData = filteredData.slice(start, end);
             const isMobile = window.innerWidth <= 768;
             const colCount = isMobile ? 7 : 8;
-
 
             if (paginatedData.length === 0 && filteredData.length > 0) {
                  tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">Không tìm thấy xe nào khớp với bộ lọc.</td></tr>`;
@@ -1124,6 +1242,7 @@
                 currentPage = 1;
                 renderTable();
                 populateFilters();
+                showNewUnpairedCarSuggestions(); // Gọi lại gợi ý sau khi làm mới
                 showNotification("Dữ liệu đã được làm mới!", 2000);
             } catch (error) {
                 console.error("Lỗi làm mới dữ liệu:", error);
@@ -1259,7 +1378,6 @@
             setTimeout(() => { win.print(); win.close(); }, 500);
         }
 
-
         function setupSearch() {
             const searchInput = document.getElementById("search-input");
             searchInput.addEventListener("input", debounce(function () {
@@ -1303,13 +1421,12 @@
         }
 
         function toggleMobileSidebar() { 
-            const sidebar = document.getElementById("slidebar"); // Sửa ID thành 'slidebar'
+            const sidebar = document.getElementById("slidebar"); 
             sidebar.classList.toggle("open"); 
              if (sidebar.classList.contains("open")) {
                 sidebar.classList.remove("collapsed"); 
             }
         }
-
 
         function logout() {
             sessionStorage.clear();
@@ -1345,7 +1462,7 @@
 
                 if (mobileMenuBtn) mobileMenuBtn.style.display = isTablet ? 'flex' : 'none';
 
-                const sidebar = document.getElementById("slidebar"); // Sửa ID thành 'slidebar'
+                const sidebar = document.getElementById("slidebar"); 
                 const mainContainer = document.getElementById("main-container");
 
                 if (!isTablet) { 
@@ -1354,10 +1471,9 @@
                     if (storedState === 'expanded') {
                         sidebar.classList.remove("collapsed");
                         mainContainer.classList.remove("collapsed");
-                    } else { // Default to collapsed (if 'collapsed' or no state stored)
+                    } else { 
                         sidebar.classList.add("collapsed");
                         mainContainer.classList.add("collapsed");
-                         // Không cần setItem ở đây nữa vì đã làm trong DOMContentLoaded
                     }
                 } else { 
                     sidebar.classList.remove("collapsed"); 
@@ -1367,6 +1483,70 @@
             }
             window.addEventListener('resize', debounce(checkAndAdjustLayout, 200));
             checkAndAdjustLayout(); 
+        }
+
+        // --- Chức năng Gợi Ý Xe Mới ---
+        function showNewUnpairedCarSuggestions() {
+            if (!tableData || tableData.length === 0) return;
+
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            sevenDaysAgo.setHours(0, 0, 0, 0); // Chuẩn hóa về đầu ngày
+
+            const newUnpairedCars = tableData.filter(row => {
+                const status = row[5] ? row[5].toString().toLowerCase() : ""; // Cột trạng thái
+                const dateAddedStr = row[6]; // Cột ngày nhập (dd/mm/yyyy)
+
+                if (!dateAddedStr) return false;
+
+                const parts = dateAddedStr.split('/');
+                if (parts.length !== 3) return false;
+                // new Date(year, monthIndex, day)
+                const dateAdded = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                dateAdded.setHours(0,0,0,0); // Chuẩn hóa về đầu ngày
+
+                const isNew = dateAdded >= sevenDaysAgo;
+                // Kiểm tra các từ khóa cho trạng thái "chưa ghép" hoặc "sẵn sàng"
+                const isUnpaired = status.includes("chưa ghép") || status.includes("sẵn sàng") || status.includes("chờ ghép");
+                
+                return isNew && isUnpaired;
+            });
+
+            if (newUnpairedCars.length > 0) {
+                const suggestionListDiv = document.getElementById('suggestionList');
+                if (!suggestionListDiv) return;
+                suggestionListDiv.innerHTML = ''; // Xóa gợi ý cũ
+
+                // Sắp xếp xe mới nhất lên đầu (nếu cần)
+                newUnpairedCars.sort((a, b) => {
+                    const partsA = a[6].split('/');
+                    const dateA = new Date(partsA[2], partsA[1] - 1, partsA[0]);
+                    const partsB = b[6].split('/');
+                    const dateB = new Date(partsB[2], partsB[1] - 1, partsB[0]);
+                    return dateB - dateA; // Mới nhất lên đầu
+                });
+
+                newUnpairedCars.slice(0, 5).forEach(car => { // Giới hạn 5 xe gợi ý
+                    const carInfo = `
+                        <div class="suggestion-item">
+                            <strong>Dòng xe:</strong> ${car[0] || 'N/A'}<br>
+                            <strong>Phiên bản:</strong> ${car[1] || 'N/A'}<br>
+                            <strong>Ngoại thất:</strong> ${car[2] || 'N/A'}<br>
+                            <strong>VIN:</strong> <span class="highlight">${car[4] || 'N/A'}</span><br>
+                            <strong>Ngày nhập:</strong> ${car[6] || 'N/A'}
+                        </div>
+                    `;
+                    suggestionListDiv.innerHTML += carInfo;
+                });
+                
+                const modal = document.getElementById('suggestionModal');
+                if (modal) modal.style.display = 'flex';
+            }
+        }
+
+        function closeSuggestionModal() {
+            const modal = document.getElementById('suggestionModal');
+            if (modal) modal.style.display = 'none';
         }
 
     </script>
