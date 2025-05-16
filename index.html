@@ -1530,13 +1530,17 @@ body.dark-mode footer {
                 logoutBtn.style.display = "flex";
                 navMenuLinks.forEach(link => link.style.display = "flex");
 
-                if (window.innerWidth > 900) {
+if (window.innerWidth > 900) { // Desktop, logged in
                     if (localStorage.getItem('sidebarState') === 'collapsed') {
+                        // Nếu người dùng đã từng thu gọn sidebar khi đăng nhập, giữ nguyên trạng thái đó
                         sidebar.classList.add("collapsed");
                         mainContent.classList.add("collapsed");
-                    } else {
-                        sidebar.classList.remove("collapsed");
+                    } else { // Bao gồm trạng thái 'expanded' hoặc null (lần truy cập đầu tiên/chưa có trạng thái)
+                        sidebar.classList.remove("collapsed"); // Mặc định mở rộng
                         mainContent.classList.remove("collapsed");
+                        if (localStorage.getItem('sidebarState') !== 'expanded') {
+                            localStorage.setItem('sidebarState', 'expanded'); // Cập nhật trạng thái trong localStorage
+                        }
                     }
                 } else {
                     sidebar.classList.remove("collapsed");
@@ -1557,10 +1561,10 @@ body.dark-mode footer {
                 if (window.innerWidth <= 900) {
                     sidebar.classList.remove("open");
                     sidebar.classList.remove("collapsed");
-                } else {
-                    sidebar.classList.add("collapsed");
-                    mainContent.classList.add("collapsed");
-                    localStorage.setItem('sidebarState', 'collapsed');
+} else { // Desktop, not logged in
+                    sidebar.classList.remove("collapsed"); // Đảm bảo sidebar mở rộng
+                    mainContent.classList.remove("collapsed"); // Đảm bảo nội dung chính được điều chỉnh
+                    localStorage.setItem('sidebarState', 'expanded'); // Thiết lập trạng thái mặc định là mở rộng
                 }
             }
             setActiveSidebarLink();
