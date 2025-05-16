@@ -302,7 +302,7 @@
             margin-top: 45px;
             min-height: calc(100vh - 45px - 30px);
             transition: margin-left var(--transition-speed) ease;
-            padding-bottom: 50px;
+            padding-bottom: 50px; /* Tăng padding-bottom để có không gian cho xe */
         }
         .main-content.collapsed {
             margin-left: 60px;
@@ -711,27 +711,27 @@
 
 
         /* Footer */
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%); /* Sử dụng nền chuyển màu giống header */
-    color: #fff; /* Đổi màu chữ sang trắng để dễ nhìn hơn */
-    text-align: center;
-    padding: 10px 0;
-    font-size: 12px;
-    border-top: none; /* Bỏ đường viền trên nếu muốn giống hoàn toàn header */
-    z-index: 998;
-    transition: background var(--transition-speed) ease, color var(--transition-speed) ease, border-top var(--transition-speed) ease;
-}
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%); /* Sử dụng nền chuyển màu giống header */
+            color: #fff; /* Đổi màu chữ sang trắng để dễ nhìn hơn */
+            text-align: center;
+            padding: 10px 0;
+            font-size: 12px;
+            border-top: none; /* Bỏ đường viền trên nếu muốn giống hoàn toàn header */
+            z-index: 998;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, border-top var(--transition-speed) ease;
+        }
 
-/* Điều chỉnh chế độ tối cho footer */
-body.dark-mode footer {
-    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); /* Sử dụng nền chuyển màu giống header ở chế độ tối */
-    color: var(--text-dark); /* Hoặc giữ #fff tùy theo độ tương phản mong muốn */
-    border-top: none; /* Bỏ đường viền trên */
-}
+        /* Điều chỉnh chế độ tối cho footer */
+        body.dark-mode footer {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); /* Sử dụng nền chuyển màu giống header ở chế độ tối */
+            color: var(--text-dark); /* Hoặc giữ #fff tùy theo độ tương phản mong muốn */
+            border-top: none; /* Bỏ đường viền trên */
+        }
 
         /* Nút menu di động */
         .mobile-menu-btn {
@@ -905,7 +905,7 @@ body.dark-mode footer {
                 transform: translateX(0);
             }
             .sidebar.collapsed {
-                transform: translateX(-100%);
+                transform: translateX(-100%); /* Đảm bảo sidebar thu gọn hoàn toàn trên mobile khi không 'open' */
             }
             .sidebar.open .logo h1, .sidebar.open .menu a span {
                 opacity: 1;
@@ -919,7 +919,7 @@ body.dark-mode footer {
                 margin-left: 0;
                 padding: 15px;
             }
-            .main-content.collapsed { margin-left: 0; }
+            .main-content.collapsed { margin-left: 0; } /* Không cần margin khi sidebar ẩn trên mobile */
 
             .toggle-btn { display: none; }
             .mobile-menu-btn { display: flex; }
@@ -976,6 +976,68 @@ body.dark-mode footer {
             footer { padding: 8px 0; font-size: 11px; }
             .toast-container { bottom: 10px; right: 10px; width: calc(100% - 20px); }
             .toast { width: 100%; }
+        }
+
+        /* CSS cho xe chạy */
+        #animatedCarContainer {
+            position: fixed; /* Giữ xe cố định ở một vị trí trên màn hình */
+            bottom: 35px;    /* Đặt vị trí ngay phía trên footer (footer cao khoảng 32px + padding) */
+            left: 0;
+            width: 100%;
+            height: 40px;    /* Chiều cao của khu vực chứa xe, điều chỉnh nếu cần */
+            overflow: hidden; /* Ẩn xe khi nó chạy ra ngoài lề màn hình */
+            z-index: 990;    /* Đảm bảo xe nằm dưới các menu và modal, nhưng trên footer */
+            pointer-events: none; /* Để xe không cản trở việc nhấp chuột vào các phần tử khác */
+        }
+
+        #animatedCarElement {
+            position: absolute;
+            bottom: 0;        /* Đặt xe ở dưới cùng của #animatedCarContainer */
+            left: 0;          /* Vị trí bắt đầu logic trước khi áp dụng transform */
+            font-size: 30px;  /* Kích thước của biểu tượng xe */
+            color: var(--primary-color); /* Màu xe, có thể thay đổi */
+            /* Nếu dùng ảnh: */
+            /* width: 80px; */ /* Ví dụ chiều rộng ảnh */
+            /* height: 40px; */ /* Ví dụ chiều cao ảnh */
+            /* object-fit: contain; */
+
+            /* Bắt đầu cho xe ở ngoài màn hình bên trái */
+            transform: translateX(-100%) scaleX(1); /* Dịch chuyển sang trái bằng chính chiều rộng của nó */
+            animation: driveAcrossAndBack 15s linear infinite; /* Áp dụng animation */
+        }
+
+        body.dark-mode #animatedCarElement {
+            color: var(--secondary-color); /* Đổi màu xe trong dark mode nếu muốn */
+        }
+
+        @keyframes driveAcrossAndBack {
+            0% {
+                /* Xe bắt đầu ở ngoài màn hình bên trái, hướng sang phải */
+                transform: translateX(-100%) scaleX(1);
+            }
+            45% {
+                /* Xe di chuyển đến ngoài màn hình bên phải, vẫn hướng sang phải */
+                /* 100vw là chiều rộng của viewport (khung nhìn) */
+                transform: translateX(100vw) scaleX(1);
+            }
+            /* Khoảnh khắc xe đổi chiều */
+            50% {
+                /* Xe vẫn ở ngoài màn hình bên phải, nhưng lật ngược (hướng sang trái) */
+                transform: translateX(100vw) scaleX(-1);
+            }
+            /* Xe bắt đầu di chuyển về trái */
+            55% {
+                /* Xe bắt đầu xuất hiện từ mép phải, di chuyển sang trái */
+                transform: translateX(100vw) scaleX(-1);
+            }
+            95% {
+                /* Xe di chuyển đến ngoài màn hình bên trái, vẫn hướng sang trái */
+                transform: translateX(-100%) scaleX(-1);
+            }
+            100% {
+                /* Quay lại trạng thái ban đầu để lặp lại mượt mà */
+                transform: translateX(-100%) scaleX(1);
+            }
         }
     </style>
 </head>
@@ -1233,6 +1295,10 @@ body.dark-mode footer {
     </div>
 
     <div id="toastContainer" class="toast-container"></div>
+
+    <div id="animatedCarContainer">
+        <i class="fas fa-car" id="animatedCarElement"></i>
+    </div>
 
     <footer>
         <div class="footer-content">
@@ -1530,7 +1596,7 @@ body.dark-mode footer {
                 logoutBtn.style.display = "flex";
                 navMenuLinks.forEach(link => link.style.display = "flex");
 
-if (window.innerWidth > 900) { // Desktop, logged in
+                if (window.innerWidth > 900) { // Desktop, logged in
                     if (localStorage.getItem('sidebarState') === 'collapsed') {
                         // Nếu người dùng đã từng thu gọn sidebar khi đăng nhập, giữ nguyên trạng thái đó
                         sidebar.classList.add("collapsed");
@@ -1542,13 +1608,13 @@ if (window.innerWidth > 900) { // Desktop, logged in
                             localStorage.setItem('sidebarState', 'expanded'); // Cập nhật trạng thái trong localStorage
                         }
                     }
-                } else {
-                    sidebar.classList.remove("collapsed");
-                    sidebar.classList.remove("open");
+                } else { // Mobile, logged in
+                    sidebar.classList.remove("collapsed"); // Xóa collapsed trên mobile
+                    sidebar.classList.remove("open"); // Đảm bảo sidebar đóng khi tải lại trang trên mobile
                     mainContent.classList.remove("collapsed");
                 }
 
-            } else {
+            } else { // Not logged in
                 heroSection.style.display = "flex";
                 welcomeSection.style.display = "block";
                  if (welcomeTitle) {
@@ -1558,10 +1624,10 @@ if (window.innerWidth > 900) { // Desktop, logged in
                 logoutBtn.style.display = "none";
                 navMenuLinks.forEach(link => link.style.display = "none");
 
-                if (window.innerWidth <= 900) {
+                if (window.innerWidth <= 900) { // Mobile, not logged in
                     sidebar.classList.remove("open");
-                    sidebar.classList.remove("collapsed");
-} else { // Desktop, not logged in
+                    sidebar.classList.remove("collapsed"); // Xóa collapsed trên mobile
+                } else { // Desktop, not logged in
                     sidebar.classList.remove("collapsed"); // Đảm bảo sidebar mở rộng
                     mainContent.classList.remove("collapsed"); // Đảm bảo nội dung chính được điều chỉnh
                     localStorage.setItem('sidebarState', 'expanded'); // Thiết lập trạng thái mặc định là mở rộng
@@ -1888,7 +1954,7 @@ if (window.innerWidth > 900) { // Desktop, logged in
             isLoggedIn = false;
             currentUser = "";
             userRole = "employee";
-            localStorage.removeItem('sidebarState');
+            localStorage.removeItem('sidebarState'); // Xóa trạng thái sidebar khi đăng xuất
             updateUIBasedOnLogin();
             showToast(translations[language]["logout-success"], 'info');
         }
@@ -1910,6 +1976,7 @@ if (window.innerWidth > 900) { // Desktop, logged in
         function toggleMobileSidebar() {
             const sidebar = document.getElementById("sidebar");
             sidebar.classList.toggle("open");
+            // Khi mở sidebar trên mobile, đảm bảo nó không ở trạng thái collapsed
             if (sidebar.classList.contains("open")) {
                 sidebar.classList.remove("collapsed");
             }
