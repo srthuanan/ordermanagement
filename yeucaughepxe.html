@@ -175,7 +175,31 @@
             box-shadow: var(--shadow-dark-outer);
         }
         .navbar .logo { animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; }
-        .navbar .logo h1 { font-size: 18px; color: #ffffff; font-weight: 700; text-transform: uppercase; }
+.navbar .logo h1 {
+    font-size: 25px;
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    /* Additions for animation */
+    animation: bounceGlow 2s infinite alternate;
+}
+
+@keyframes bounceGlow {
+    0%, 100% {
+        transform: translateY(0);
+        text-shadow: 0 0 3px #fff, /* White glow - reduced */
+                     0 0 6px #fff,
+                     0 0 9px #00aeff, /* Light blue glow - reduced */
+                     0 0 12px #00aeff;
+    }
+    50% {
+        transform: translateY(-10px); /* Bouncing effect */
+        text-shadow: 0 0 6px #fff,
+                     0 0 12px #fff,
+                     0 0 18px #0077cc, /* Darker blue glow for bounce peak - reduced */
+                     0 0 24px #0077cc;
+    }
+}
         .navbar .tabs {
             display: flex; position: absolute; left: 50%; transform: translateX(-50%);
             gap: 10px; transition: all var(--transition-speed) var(--transition-easing);
