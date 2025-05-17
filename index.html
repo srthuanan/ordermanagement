@@ -29,6 +29,8 @@
             --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
             --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
             --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
@@ -118,6 +120,8 @@
         .sidebar .logo {
             text-align: center;
             margin-bottom: 25px;
+            position: relative; /* For shimmer effect */
+            overflow: hidden; /* For shimmer effect */
         }
         .sidebar .logo h1 {
             font-size: 20px;
@@ -125,11 +129,36 @@
             font-weight: 600;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block; /* For shimmer */
         }
+        /* NÂNG CẤP: Hiệu ứng Shimmer cho Logo */
+        .sidebar:not(.collapsed) .logo h1::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%; /* Bắt đầu ngoài màn hình */
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shimmer 3s infinite linear;
+            animation-delay: 1s; /* Bắt đầu sau một chút */
+        }
+        @keyframes shimmer {
+            0% { left: -150%; }
+            50% { left: 150%; } /* Di chuyển qua */
+            100% { left: 150%; } /* Ở ngoài màn hình trước khi lặp lại */
+        }
+
         .sidebar.collapsed .logo h1 {
             opacity: 0;
             font-size: 0;
         }
+        .sidebar.collapsed .logo h1::after {
+            display: none; /* Ẩn shimmer khi thu gọn */
+        }
+
 
         .sidebar .menu {
             display: flex;
@@ -146,26 +175,26 @@
             font-weight: 500;
             border-radius: 6px;
             background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease; /* Thêm transform */
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
             display: flex;
             align-items: center;
             gap: 10px;
-            position: relative; /* Cho hiệu ứng gạch chân */
+            position: relative;
             overflow: hidden; /* Cho hiệu ứng gạch chân */
         }
-        /* Hiệu ứng gạch chân khi hover cho menu sidebar */
+        /* NÂNG CẤP: Hiệu ứng gạch chân trượt vào cho link menu */
         .sidebar .menu a::before {
             content: '';
             position: absolute;
             bottom: 0;
-            left: -100%; /* Bắt đầu từ ngoài */
+            left: -100%; /* Bắt đầu từ bên trái ngoài màn hình */
             width: 100%;
             height: 2px;
             background-color: var(--secondary-color);
             transition: left var(--transition-speed) ease-out;
         }
         .sidebar .menu a:hover::before {
-            left: 0; /* Di chuyển vào trong */
+            left: 0; /* Trượt vào khi hover */
         }
 
         body.dark-mode .sidebar .menu a {
@@ -176,7 +205,7 @@
             justify-content: center;
         }
         .sidebar.collapsed .menu a::before {
-            display: none; /* Ẩn gạch chân khi sidebar thu gọn */
+            display: none; /* Không hiển thị gạch chân khi sidebar thu gọn */
         }
         .sidebar .menu a i {
             font-size: 16px;
@@ -197,15 +226,15 @@
         .sidebar .menu a:hover {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            padding-left: 15px;
-            transform: translateX(3px); /* Hiệu ứng nhích nhẹ */
+            padding-left: 15px; /* Nhấn mạnh hơn khi hover */
+            transform: translateX(3px); /* Hiệu ứng đẩy nhẹ */
         }
         .sidebar.collapsed .menu a:hover {
             padding-left: 10px;
-            transform: scale(1.05); /* Phóng to icon khi thu gọn */
+            transform: scale(1.05); /* Phóng to icon khi hover ở trạng thái thu gọn */
         }
         .sidebar .menu a:hover i {
-            transform: scale(1.1) rotate(5deg); /* Icon xoay nhẹ và phóng to */
+            transform: scale(1.1) rotate(5deg); /* Icon hơi nghiêng và phóng to */
         }
         body.dark-mode .sidebar .menu a:hover {
             background: var(--primary-color-lighter);
@@ -217,14 +246,29 @@
             font-weight: 600;
         }
         .sidebar .menu a.active::before {
-            left: 0; /* Hiển thị gạch chân cho mục active */
-            background-color: #fff; /* Màu gạch chân cho active item */
+            left: 0;
+            background-color: #fff; /* Gạch chân màu trắng cho link active */
+        }
+        /* NÂNG CẤP: Hiệu ứng Pulse/Glow cho Link Sidebar Active */
+        .sidebar .menu a.active {
+            animation: activeLinkPulse 1.5s infinite ease-in-out;
+        }
+        @keyframes activeLinkPulse {
+            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
+            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
         }
         body.dark-mode .sidebar .menu a.active {
             background: var(--primary-color);
+            animation-name: activeLinkPulseDark; /* Animation khác cho dark mode nếu cần */
         }
         body.dark-mode .sidebar .menu a.active::before {
             background-color: var(--secondary-color);
+        }
+        @keyframes activeLinkPulseDark {
+            0% { box-shadow: 0 0 5px var(--secondary-color); }
+            50% { box-shadow: 0 0 15px var(--secondary-color); }
+            100% { box-shadow: 0 0 5px var(--secondary-color); }
         }
 
 
@@ -249,7 +293,7 @@
         }
         .toggle-btn:hover {
             background: var(--primary-color-lighter);
-            transform: scale(1.1) rotate(180deg); /* Nút xoay khi hover */
+            transform: scale(1.1) rotate(180deg); /* Xoay khi hover */
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
@@ -269,7 +313,7 @@
             color: var(--text-light);
             font-size: 14px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Thêm cubic-bezier cho hiệu ứng nảy */
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Easing cho hiệu ứng nảy */
             width: 32px;
             height: 32px;
             display: flex;
@@ -279,14 +323,21 @@
         }
         .nav-btn:hover, .theme-toggle:hover, .language-btn:hover {
             background: #e9ecef;
-            transform: translateY(-2px) scale(1.1); /* Hiệu ứng nảy lên và phóng to */
+            transform: translateY(-2px) scale(1.1); /* Nảy lên và phóng to */
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
-        /* Hiệu ứng active (khi nhấn) */
         .nav-btn:active, .theme-toggle:active, .language-btn:active {
             transform: translateY(0px) scale(0.95); /* Nhấn xuống */
             box-shadow: var(--shadow-light-inner);
         }
+        /* NÂNG CẤP: Hiệu ứng xoay mượt mà cho icon Theme Toggle */
+        .theme-toggle i {
+            transition: transform var(--transition-speed-slow) ease-in-out;
+        }
+        .theme-toggle.spinning i {
+            transform: rotate(360deg); /* Xoay 360 độ */
+        }
+
 
         body.dark-mode .nav-btn,
         body.dark-mode .theme-toggle,
@@ -315,9 +366,9 @@
         [data-tooltip]::after {
             content: attr(data-tooltip);
             position: absolute;
-            bottom: 125%;
+            bottom: 125%; /* Vị trí phía trên nút */
             left: 50%;
-            transform: translateX(-50%) translateY(5px); /* Bắt đầu từ dưới một chút */
+            transform: translateX(-50%) translateY(5px); /* Hiệu ứng trượt nhẹ lên */
             background-color: #333;
             color: #fff;
             padding: 4px 8px;
@@ -326,13 +377,13 @@
             white-space: nowrap;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out; /* Thêm transform vào transition */
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out;
             z-index: 10000;
         }
         [data-tooltip]:hover::after {
             opacity: 1;
             visibility: visible;
-            transform: translateX(-50%) translateY(0); /* Di chuyển lên vị trí cuối cùng */
+            transform: translateX(-50%) translateY(0);
         }
         body.dark-mode [data-tooltip]::after {
             background-color: #f0f0f0;
@@ -343,10 +394,10 @@
         .main-content {
             margin-left: 200px;
             padding: 20px;
-            margin-top: 45px;
-            min-height: calc(100vh - 45px - 30px);
+            margin-top: 45px; /* Khoảng cách với header */
+            min-height: calc(100vh - 45px - 30px); /* Chiều cao tối thiểu để footer không bị che */
             transition: margin-left var(--transition-speed) ease;
-            padding-bottom: 50px; /* Tăng padding-bottom để có không gian cho xe */
+            padding-bottom: 50px; /* Khoảng cách với footer */
         }
         .main-content.collapsed {
             margin-left: 60px;
@@ -355,22 +406,22 @@
         /* Khu vực Hero */
         .hero {
             background: url('https://otodien.vn/wp-content/uploads/2024/08/hinh-anh-xe-vinfast-vf5-plus-1024x519.webp') no-repeat center center;
-            background-attachment: fixed;
+            background-attachment: fixed; /* Hiệu ứng parallax */
             background-size: cover;
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 20px;
             position: relative;
-            min-height: 280px;
+            min-height: 280px; /* Chiều cao tối thiểu */
             box-shadow: var(--shadow-light-outer);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            overflow: hidden; /* Quan trọng cho hiệu ứng particles */
+            overflow: hidden; /* Để các hạt không tràn ra ngoài */
         }
-        .hero::before { /* Lớp phủ gradient */
+        .hero::before { /* Lớp phủ mờ */
             content: '';
             position: absolute;
             top: 0;
@@ -381,42 +432,19 @@
             border-radius: 12px;
             z-index: 1;
         }
-        /* Hiệu ứng hạt cho Hero */
-        .hero::after { /* Lớp chứa các hạt */
-            content: '';
+        /* NÂNG CẤP: Canvas cho hạt tương tác */
+        #heroParticleCanvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Để không cản trở tương tác */
-            z-index: 0; /* Nằm dưới lớp phủ gradient và nội dung */
-            /* Sử dụng box-shadow để tạo nhiều hạt */
-            /* Sẽ được tạo bằng JavaScript để có nhiều hạt hơn và ngẫu nhiên hơn */
+            pointer-events: none; /* Cho phép click xuyên qua canvas */
+            z-index: 0; /* Nằm dưới lớp phủ */
         }
-        .particle {
-            position: absolute;
-            background-color: var(--star-color-light);
-            border-radius: 50%;
-            opacity: 0;
-            animation: sparkle 5s infinite ease-in-out;
-            pointer-events: none;
-        }
-        body.dark-mode .particle {
-            background-color: var(--star-color-dark);
-        }
-
-        @keyframes sparkle {
-            0%, 100% { opacity: 0; transform: scale(0.5) translateY(0px); }
-            25% { opacity: 0.8; transform: scale(1) translateY(-10px); }
-            50% { opacity: 1; transform: scale(0.8) translateY(5px); }
-            75% { opacity: 0.5; transform: scale(1.2) translateY(-5px); }
-        }
-
-
         .hero .hero-content {
             position: relative;
-            z-index: 2;
+            z-index: 2; /* Nằm trên lớp phủ và canvas */
         }
         .hero h2, .hero p, .hero .login-btn { color: #fff; }
         .hero h2 {
@@ -426,7 +454,7 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             animation: textFocusIn 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
         }
-        @keyframes textFocusIn { /* Hiệu ứng chữ hiện ra */
+        @keyframes textFocusIn { /* Hiệu ứng chữ hiện ra từ mờ */
             0% {
                 filter: blur(12px);
                 opacity: 0;
@@ -441,9 +469,9 @@
             margin-bottom: 25px;
             text-shadow: 0 1px 3px rgba(0,0,0,0.2);
             animation: fadeInDelayed 1.5s ease-out both;
-            animation-delay: 0.5s; /* Hiện ra sau tiêu đề */
+            animation-delay: 0.5s; /* Trễ hơn tiêu đề */
         }
-        @keyframes fadeInDelayed {
+        @keyframes fadeInDelayed { /* Hiện ra từ dưới lên và mờ dần */
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
@@ -459,28 +487,28 @@
             cursor: pointer;
             transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4);
-            animation: pulse 2s infinite ease-in-out; /* Hiệu ứng nhấp nháy nhẹ */
-            animation-delay: 1s; /* Bắt đầu sau khi các text đã hiện */
+            animation: pulse 2s infinite ease-in-out; /* Hiệu ứng pulse */
+            animation-delay: 1s; /* Bắt đầu sau khi các text hiện ra */
         }
-        @keyframes pulse {
+        @keyframes pulse { /* Hiệu ứng nhấp nháy nhẹ */
             0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0, 174, 255, 0.6); }
             100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4); }
         }
         .hero .login-btn:hover {
             background: var(--primary-color);
-            transform: translateY(-3px) scale(1.1); /* Phóng to hơn khi hover */
+            transform: translateY(-3px) scale(1.1); /* Nâng cao và phóng to hơn khi hover */
             box-shadow: 0 8px 20px rgba(0, 48, 135, 0.6);
             animation-play-state: paused; /* Dừng animation pulse khi hover */
         }
         .hero .login-btn:active {
-            transform: translateY(0px) scale(1.05);
+            transform: translateY(0px) scale(1.05); /* Hiệu ứng nhấn xuống */
         }
 
 
         /* Khu vực nội bộ & Thẻ tính năng */
         .internal-section {
-            background: transparent;
+            background: transparent; /* Nền trong suốt */
             border-radius: 10px;
             padding: 15px 0;
             text-align: center;
@@ -491,8 +519,34 @@
             background: transparent;
             box-shadow: none;
         }
-        .internal-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 20px; color: var(--primary-color); }
-        body.dark-mode .internal-section h3 { color: var(--secondary-color); }
+        /* NÂNG CẤP: Hiệu ứng gạch chân tự vẽ cho tiêu đề mục */
+        .internal-section h3, .dashboard-section h3 {
+            position: relative;
+            display: inline-block; /* Quan trọng cho hiệu ứng gạch chân */
+            padding-bottom: 5px; /* Khoảng trống cho gạch chân */
+            font-size: 22px; font-weight: 600; margin-bottom: 20px; color: var(--primary-color);
+        }
+        .internal-section h3::after, .dashboard-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0; /* Bắt đầu không có chiều rộng */
+            height: 3px;
+            background-color: var(--secondary-color);
+            transition: width var(--transition-speed-slow) ease-out;
+        }
+        /* Kích hoạt khi section hiển thị (sử dụng AOS) */
+        .internal-section[data-aos="fade-up"].aos-animate h3::after,
+        .dashboard-section[data-aos="fade-up"].aos-animate h3::after {
+            width: 70%; /* Vẽ gạch chân đến 70% chiều rộng */
+        }
+
+        body.dark-mode .internal-section h3, body.dark-mode .dashboard-section h3 { color: var(--secondary-color); }
+        body.dark-mode .internal-section h3::after, body.dark-mode .dashboard-section h3::after {
+            background-color: var(--primary-color-lighter);
+        }
+
         .internal-section p.section-subtitle { font-size: 14px; margin-bottom: 25px; color: var(--text-light); }
         body.dark-mode .internal-section p.section-subtitle { color: var(--text-dark); opacity: 0.8; }
 
@@ -506,15 +560,15 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease; /* Thêm transition cho box-shadow */
             display: block;
             text-decoration: none;
             color: var(--text-light);
             border: 1px solid var(--border-color-light);
-            position: relative; /* Cho hiệu ứng background shine */
-            overflow: hidden; /* Cho hiệu ứng background shine */
+            position: relative; /* Cho hiệu ứng shine */
+            overflow: hidden; /* Cho hiệu ứng shine */
         }
-        /* Hiệu ứng background shine cho feature card */
+        /* NÂNG CẤP: Hiệu ứng "shine" lướt qua thẻ khi hover */
         .feature-card::after {
             content: "";
             position: absolute;
@@ -523,17 +577,17 @@
             width: 200%;
             height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-            body.dark-mode & {
+            body.dark-mode & { /* Điều chỉnh cho dark mode */
                  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
             }
             transform: rotate(45deg);
             opacity: 0;
             transition: opacity 0.5s ease, transform 0.7s ease;
-            pointer-events: none;
+            pointer-events: none; /* Không cản trở click */
         }
         .feature-card:hover::after {
             opacity: 1;
-            transform: rotate(20deg) scale(1.2); /* Điều chỉnh để hiệu ứng đẹp hơn */
+            transform: rotate(20deg) scale(1.2); /* Hiệu ứng lướt qua */
         }
 
         body.dark-mode .feature-card {
@@ -543,12 +597,14 @@
             border: 1px solid var(--border-color-dark);
         }
         .feature-card:hover {
-            transform: translateY(-8px) scale(1.02); /* Nâng cao hơn và phóng to nhẹ */
-            box-shadow: 0 12px 25px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.12);
-            border-color: var(--secondary-color); /* Viền đổi màu */
+            transform: translateY(-8px) scale(1.02); /* Nâng cao và phóng to hơn */
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.12),
+                        0 0 15px var(--secondary-color); /* NÂNG CẤP: Thêm hiệu ứng glow */
+            border-color: var(--secondary-color);
         }
         body.dark-mode .feature-card:hover {
-             box-shadow: 0 12px 25px rgba(0,0,0,0.35), 0 5px 10px rgba(0,0,0,0.25);
+             box-shadow: 0 12px 25px rgba(0,0,0,0.35), 0 5px 10px rgba(0,0,0,0.25),
+                         0 0 15px var(--primary-color-lighter); /* NÂNG CẤP: Glow cho dark mode */
              border-color: var(--primary-color-lighter);
         }
         .feature-card i {
@@ -556,10 +612,10 @@
             color: var(--primary-color);
             margin-bottom: 15px;
             display: inline-block;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), color var(--transition-speed) ease; /* Thêm cubic-bezier cho hiệu ứng nảy của icon */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), color var(--transition-speed) ease; /* Easing nảy và transition màu */
         }
         .feature-card:hover i {
-            transform: scale(1.25) rotate(-10deg) translateY(-5px); /* Icon nảy lên, phóng to và xoay */
+            transform: scale(1.25) rotate(-10deg) translateY(-5px); /* Icon nảy lên, xoay và phóng to */
             color: var(--secondary-color);
         }
         body.dark-mode .feature-card i { color: var(--secondary-color); }
@@ -570,13 +626,11 @@
 
         /* Khu vực Dashboard */
         .dashboard-section {
-            display: none;
+            display: none; /* Sẽ được hiển thị bằng JS khi đăng nhập */
             padding: 20px;
             background: transparent;
             box-shadow: none;
         }
-        .dashboard-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 20px; text-align: center; color: var(--primary-color); }
-        body.dark-mode .dashboard-section h3 { color: var(--secondary-color); }
 
         .dashboard-content {
             display: grid;
@@ -588,12 +642,13 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, box-shadow var(--transition-speed) ease; /* Thêm transition cho box-shadow */
             border: 1px solid var(--border-color-light);
         }
         .dashboard-card:hover {
-            transform: translateY(-5px) scale(1.01); /* Nâng cao hơn và phóng to nhẹ */
-            box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+            transform: translateY(-5px) scale(1.01); /* Nâng nhẹ và phóng to */
+            box-shadow: 0 8px 22px rgba(0,0,0,0.12),
+                        0 0 10px var(--primary-color); /* NÂNG CẤP: Hiệu ứng glow */
         }
         body.dark-mode .dashboard-card {
             background: var(--card-bg-dark);
@@ -601,11 +656,31 @@
             border: 1px solid var(--border-color-dark);
         }
          body.dark-mode .dashboard-card:hover {
-            box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.25),
+                        0 0 10px var(--secondary-color); /* NÂNG CẤP: Glow cho dark mode */
             border-color: var(--primary-color-lighter);
         }
-        .dashboard-card h4 { font-size: 17px; margin-bottom: 12px; font-weight: 600; color: var(--primary-color); }
+        .dashboard-card h4 {
+            font-size: 17px; margin-bottom: 12px; font-weight: 600; color: var(--primary-color);
+            position: relative; display: inline-block; padding-bottom: 3px;
+        }
+        /* NÂNG CẤP: Gạch chân tự vẽ cho tiêu đề thẻ dashboard */
+        .dashboard-card h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%; /* Bắt đầu không có chiều rộng */
+            height: 2px;
+            background-color: var(--primary-color);
+            transition: width var(--transition-speed-slow) ease-out;
+        }
+        .dashboard-card:hover h4::after {
+            width: 100%; /* Vẽ gạch chân khi hover thẻ */
+        }
         body.dark-mode .dashboard-card h4 { color: var(--secondary-color); }
+        body.dark-mode .dashboard-card h4::after { background-color: var(--secondary-color); }
+
         .dashboard-card p { font-size: 13px; margin-bottom: 10px; }
         .dashboard-card a {
             color: var(--primary-color);
@@ -613,22 +688,30 @@
             font-weight: 600;
             font-size: 13px;
             transition: color var(--transition-speed) ease, letter-spacing var(--transition-speed) ease; /* Thêm letter-spacing */
-            display: inline-block; /* Cho transform */
+            display: inline-block; /* Cho phép transform icon */
         }
+        /* NÂNG CẤP: Animation cho icon mũi tên trong link dashboard */
+        .dashboard-card a i {
+            transition: transform var(--transition-speed-fast) ease-in-out;
+            display: inline-block; /* Cho phép transform */
+        }
+        .dashboard-card a:hover i {
+            transform: translateX(5px) scale(1.1); /* Trượt xa hơn và phóng to */
+        }
+
         body.dark-mode .dashboard-card a { color: var(--primary-color-lighter); }
         .dashboard-card a:hover {
             text-decoration: underline;
             color: var(--secondary-color);
-            letter-spacing: 0.5px; /* Giãn chữ khi hover */
-            transform: translateX(2px);
+            letter-spacing: 0.5px; /* Tăng khoảng cách chữ khi hover */
         }
         body.dark-mode .dashboard-card a:hover { color: var(--primary-color); }
 
 
         /* Kiểu bảng */
         .table-container {
-            max-height: 230px;
-            overflow-y: auto;
+            max-height: 230px; /* Giới hạn chiều cao */
+            overflow-y: auto; /* Cho phép cuộn dọc */
             margin-bottom: 15px;
             border-radius: 8px;
             background: var(--card-bg-light);
@@ -658,7 +741,7 @@
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff;
             font-weight: 600;
-            position: sticky;
+            position: sticky; /* Tiêu đề dính khi cuộn */
             top: 0;
             z-index: 2;
             text-transform: uppercase;
@@ -667,10 +750,10 @@
         body.dark-mode .data-table th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        .data-table tr { transition: background-color 0.2s ease, transform 0.2s ease; } /* Thêm transform */
+        .data-table tr { transition: background-color 0.2s ease, transform 0.2s ease; }
         .data-table tr:hover {
-            background: rgba(0, 48, 135, 0.05);
-            transform: scale(1.005); /* Phóng to nhẹ hàng khi hover */
+            background: rgba(0, 48, 135, 0.05); /* Nổi bật hàng khi hover */
+            transform: scale(1.005); /* Phóng to nhẹ hàng */
         }
         body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.05); }
         .data-table td.empty-state {
@@ -687,14 +770,14 @@
         .skeleton-row td div {
             height: 1em;
             background: linear-gradient(90deg, var(--skeleton-bg-light) 25%, #f0f0f0 50%, var(--skeleton-bg-light) 75%);
-            body.dark-mode & {
+            body.dark-mode & { /* Điều chỉnh cho dark mode */
                  background: linear-gradient(90deg, var(--skeleton-bg-dark) 25%, #4a4a5a 50%, var(--skeleton-bg-dark) 75%);
             }
             background-size: 200% 100%;
             animation: skeleton-loading 1.5s infinite linear;
             border-radius: 4px;
         }
-        @keyframes skeleton-loading {
+        @keyframes skeleton-loading { /* Hiệu ứng skeleton */
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
@@ -702,18 +785,18 @@
 
         /* Modal */
         .modal {
-            display: none;
+            display: none; /* Ẩn ban đầu */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.7); /* Nền mờ */
             z-index: 1002;
             align-items: center;
             justify-content: center;
             padding: 10px;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px); /* Hiệu ứng blur nền (nếu trình duyệt hỗ trợ) */
         }
         .modal-content {
             background: var(--card-bg-light);
@@ -722,12 +805,12 @@
             max-width: 420px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            transform: translateY(-20px) scale(0.95);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), opacity 0.3s ease-out; /* Thêm cubic-bezier cho hiệu ứng nảy */
+            transform: translateY(-20px) scale(0.95); /* Trạng thái ban đầu cho animation */
+            opacity: 0; /* Trạng thái ban đầu cho animation */
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), opacity 0.3s ease-out; /* Animation hiện ra */
             position: relative;
         }
-        .modal-content.active {
+        .modal-content.active { /* Trạng thái khi modal hiển thị */
             transform: translateY(0) scale(1);
             opacity: 1;
         }
@@ -760,15 +843,15 @@
             color: var(--primary-color);
             font-size: 14px;
             z-index: 1;
-            transition: color var(--transition-speed) ease, transform 0.2s ease; /* Thêm transform */
+            transition: color var(--transition-speed) ease, transform 0.2s ease; /* Animation cho icon */
         }
-        .input-group:focus-within .input-icon {
+        .input-group:focus-within .input-icon { /* Khi input bên trong được focus */
             color: var(--secondary-color);
-            transform: translateY(-50%) scale(1.1); /* Icon phóng to nhẹ khi focus */
+            transform: translateY(-50%) scale(1.1); /* Icon phóng to và đổi màu */
         }
 
         .modal-content input {
-            padding: 12px 12px 12px 40px;
+            padding: 12px 12px 12px 40px; /* Khoảng trống cho icon */
             border: 1px solid var(--border-color-light);
             border-radius: 8px;
             font-size: 14px;
@@ -776,7 +859,7 @@
             background: var(--background-light);
             color: var(--text-light);
             box-shadow: none;
-            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease, box-shadow var(--transition-speed) ease; /* Thêm box-shadow */
+            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
         body.dark-mode .modal-content input {
             background: var(--background-dark);
@@ -787,7 +870,7 @@
             outline: none;
             border-color: var(--primary-color);
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2); /* Viền sáng khi focus */
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2); /* Hiệu ứng focus */
         }
         body.dark-mode .modal-content input:focus {
             border-color: var(--secondary-color);
@@ -804,8 +887,8 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: all var(--transition-speed) ease, transform 0.15s ease-out; /* Điều chỉnh transition cho active */
-            position: relative;
+            transition: all var(--transition-speed) ease, transform 0.15s ease-out; /* Animation cho nút */
+            position: relative; /* Cho spinner loading */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -814,10 +897,9 @@
         }
         .modal-content button:hover {
             background: var(--primary-color-lighter);
-            transform: translateY(-2px) scale(1.02); /* Nâng lên và phóng to nhẹ */
+            transform: translateY(-2px) scale(1.02); /* Nâng nhẹ và phóng to khi hover */
             box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
         }
-        /* Hiệu ứng khi nhấn nút trong modal */
         .modal-content button:active {
             transform: translateY(0px) scale(0.98); /* Nhấn xuống */
             background: var(--primary-color-darker);
@@ -825,14 +907,14 @@
         }
 
         .modal-content button .button-text,
-        .modal-content button .fas {
+        .modal-content button .fas { /* Icon và text bên trong nút */
             transition: opacity 0.2s ease-in-out;
         }
         .modal-content button.loading .button-text,
-        .modal-content button.loading .fas {
+        .modal-content button.loading .fas { /* Ẩn text và icon khi loading */
             opacity: 0;
         }
-        .modal-content button.loading::after {
+        .modal-content button.loading::after { /* Spinner loading */
             content: '';
             position: absolute;
             top: 50%;
@@ -846,7 +928,7 @@
             animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
+        @keyframes spin { /* Animation xoay cho spinner */
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
@@ -861,25 +943,25 @@
         .modal-links span:hover {
             text-decoration: underline;
             color: var(--secondary-color);
-            letter-spacing: 0.3px; /* Giãn chữ nhẹ */
+            letter-spacing: 0.3px; /* Tăng khoảng cách chữ khi hover */
         }
         body.dark-mode .modal-links span:hover { color: var(--primary-color); }
 
-        .close {
+        .close { /* Nút đóng modal */
             position: absolute;
             top: 12px;
             right: 12px;
             font-size: 22px;
             color: var(--text-light);
             cursor: pointer;
-            transition: color var(--transition-speed) ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Thêm cubic-bezier */
+            transition: color var(--transition-speed) ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Easing nảy */
             padding: 5px;
             line-height: 1;
         }
         body.dark-mode .close { color: var(--text-dark); }
         .close:hover {
             color: var(--primary-color);
-            transform: rotate(90deg) scale(1.2); /* Xoay và phóng to */
+            transform: rotate(90deg) scale(1.2); /* Xoay và phóng to khi hover */
         }
         body.dark-mode .close:hover { color: var(--primary-color-lighter); }
 
@@ -890,26 +972,25 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%); /* Sử dụng nền chuyển màu giống header */
-            color: #fff; /* Đổi màu chữ sang trắng để dễ nhìn hơn */
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: #fff;
             text-align: center;
             padding: 10px 0;
             font-size: 12px;
-            border-top: none; /* Bỏ đường viền trên nếu muốn giống hoàn toàn header */
+            border-top: none; /* Bỏ border top */
             z-index: 998;
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease, border-top var(--transition-speed) ease;
         }
 
-        /* Điều chỉnh chế độ tối cho footer */
         body.dark-mode footer {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); /* Sử dụng nền chuyển màu giống header ở chế độ tối */
-            color: var(--text-dark); /* Hoặc giữ #fff tùy theo độ tương phản mong muốn */
-            border-top: none; /* Bỏ đường viền trên */
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+            color: var(--text-dark);
+            border-top: none;
         }
 
         /* Nút menu di động */
         .mobile-menu-btn {
-            display: none;
+            display: none; /* Ẩn ban đầu, hiện trên mobile bằng media query */
             position: fixed;
             top: 8px;
             left: 10px;
@@ -925,7 +1006,7 @@
             box-shadow: var(--shadow-light-outer);
             align-items: center;
             justify-content: center;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Easing nảy */
         }
         .mobile-menu-btn:hover {
             background: #e9ecef;
@@ -964,32 +1045,33 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            opacity: 0;
-            transform: translateX(100%) scale(0.9); /* Bắt đầu nhỏ hơn và từ bên phải */
-            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275); /* Thêm cubic-bezier */
+            opacity: 0; /* Trạng thái ban đầu cho animation */
+            transform: translateX(100%) scale(0.9); /* Trạng thái ban đầu cho animation */
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275); /* Animation hiện ra */
         }
         body.dark-mode .toast {
              background-color: var(--card-bg-light);
              color: var(--text-light);
              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .toast.show {
+        .toast.show { /* Trạng thái khi toast hiển thị */
             opacity: 1;
-            transform: translateX(0) scale(1); /* Hiện ra và phóng to về kích thước gốc */
+            transform: translateX(0) scale(1);
         }
-        .toast i {
+        .toast i { /* Icon trong toast */
             font-size: 18px;
         }
+        /* NÂNG CẤP: Animation cho icon trong toast */
         .toast.success i { color: #28a745; animation: iconPop 0.5s ease-out; }
         .toast.error i { color: #dc3545; animation: iconShake 0.5s ease-out; }
         .toast.info i { color: #17a2b8; animation: iconPop 0.5s ease-out; }
 
-        @keyframes iconPop {
+        @keyframes iconPop { /* Animation icon nảy lên */
             0% { transform: scale(0.5); opacity: 0; }
             50% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes iconShake {
+        @keyframes iconShake { /* Animation icon rung lắc */
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-5px); }
             40%, 80% { transform: translateX(5px); }
@@ -999,15 +1081,15 @@
             font-size: 14px;
         }
 
-        /* --- CSS Chủ đề Thanh lịch cho Intro.js --- */
+        /* --- CSS Chủ đề Thanh lịch cho Intro.js (Giữ nguyên) --- */
         .introjs-tooltip.introjs-elegant-theme {
             background-color: var(--card-bg-light);
             color: var(--text-light);
             border: 1px solid var(--border-color-light);
-            border-radius: 8px; /* Bo tròn góc nhiều hơn */
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); /* Đổ bóng mềm mại hơn */
-            padding: 18px; /* Tăng padding */
-            font-family: 'Roboto', sans-serif; /* Đảm bảo font nhất quán */
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            padding: 18px;
+            font-family: 'Roboto', sans-serif;
         }
 
         body.dark-mode .introjs-tooltip.introjs-elegant-theme {
@@ -1018,36 +1100,35 @@
         }
 
         .introjs-elegant-theme .introjs-tooltiptext {
-            font-size: 14px; /* Cỡ chữ cho nội dung */
+            font-size: 14px;
             line-height: 1.6;
-            color: inherit; /* Kế thừa màu từ tooltip cha */
+            color: inherit;
         }
 
         .introjs-elegant-theme .introjs-button {
             background-color: var(--primary-color);
             color: #ffffff;
             border: none;
-            border-radius: 6px; /* Bo tròn nút */
-            padding: 8px 15px; /* Điều chỉnh padding nút */
+            border-radius: 6px;
+            padding: 8px 15px;
             font-size: 13px;
             font-weight: 500;
-            text-shadow: none; /* Bỏ text-shadow mặc định */
+            text-shadow: none;
             transition: background-color 0.2s ease, transform 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .introjs-elegant-theme .introjs-button:hover {
             background-color: var(--primary-color-lighter);
-            transform: translateY(-1px) scale(1.03); /* Hiệu ứng nổi nhẹ và phóng to khi hover */
+            transform: translateY(-1px) scale(1.03);
         }
         .introjs-elegant-theme .introjs-button:focus {
             outline: none;
-            box-shadow: 0 0 0 2px var(--primary-color-lighter); /* Viền focus */
+            box-shadow: 0 0 0 2px var(--primary-color-lighter);
         }
         .introjs-elegant-theme .introjs-button:active {
             transform: translateY(0px) scale(0.98);
         }
 
-        /* Nút Bỏ qua/Hoàn thành có thể có style khác */
         .introjs-elegant-theme .introjs-skipbutton {
             color: var(--text-light);
             background-color: transparent;
@@ -1068,7 +1149,6 @@
         }
 
 
-        /* Mũi tên tooltip */
         .introjs-elegant-theme .introjs-arrow.top { border-bottom-color: var(--card-bg-light); }
         body.dark-mode .introjs-elegant-theme .introjs-arrow.top { border-bottom-color: var(--card-bg-dark); }
         .introjs-elegant-theme .introjs-arrow.right { border-left-color: var(--card-bg-light); }
@@ -1078,29 +1158,28 @@
         .introjs-elegant-theme .introjs-arrow.left { border-right-color: var(--card-bg-light); }
         body.dark-mode .introjs-elegant-theme .introjs-arrow.left { border-right-color: var(--card-bg-dark); }
 
-        /* Điều chỉnh lớp phủ (overlay) để tinh tế hơn */
         .introjs-overlay {
-            background-color: rgba(0, 0, 0, 0.6); /* Giảm độ mờ một chút */
+            background-color: rgba(0, 0, 0, 0.6);
         }
         body.dark-mode .introjs-overlay {
-            background-color: rgba(0, 0, 0, 0.75); /* Có thể đậm hơn một chút trong dark mode */
+            background-color: rgba(0, 0, 0, 0.75);
         }
 
 
         /* Responsive */
         @media (max-width: 900px) {
             .sidebar {
-                transform: translateX(-100%);
-                width: 220px;
+                transform: translateX(-100%); /* Ẩn sidebar ban đầu trên mobile */
+                width: 220px; /* Chiều rộng sidebar mobile */
                 box-shadow: 5px 0 15px rgba(0,0,0,0.2);
             }
-            .sidebar.open {
+            .sidebar.open { /* Khi mở sidebar mobile */
                 transform: translateX(0);
             }
-            .sidebar.collapsed {
-                transform: translateX(-100%); /* Đảm bảo sidebar thu gọn hoàn toàn trên mobile khi không 'open' */
+            .sidebar.collapsed { /* Khi ở trạng thái collapsed (desktop) nhưng view trên mobile */
+                transform: translateX(-100%); /* Vẫn ẩn */
             }
-            .sidebar.open .logo h1, .sidebar.open .menu a span {
+            .sidebar.open .logo h1, .sidebar.open .menu a span { /* Hiện text khi mở sidebar mobile */
                 opacity: 1;
                 max-width: 100px;
             }
@@ -1109,22 +1188,22 @@
             }
 
             .main-content {
-                margin-left: 0;
+                margin-left: 0; /* Nội dung chiếm toàn bộ chiều rộng */
                 padding: 15px;
             }
-            .main-content.collapsed { margin-left: 0; } /* Không cần margin khi sidebar ẩn trên mobile */
+            .main-content.collapsed { margin-left: 0; } /* Không áp dụng collapsed margin trên mobile */
 
-            .toggle-btn { display: none; }
-            .mobile-menu-btn { display: flex; }
+            .toggle-btn { display: none; } /* Ẩn nút toggle desktop */
+            .mobile-menu-btn { display: flex; } /* Hiện nút menu mobile */
 
-            .dashboard-content { grid-template-columns: 1fr; }
+            .dashboard-content { grid-template-columns: 1fr; } /* Dashboard 1 cột */
             .hero h2 { font-size: 26px; }
             .hero p { font-size: 16px; }
             .hero .login-btn { font-size: 14px; padding: 10px 20px; }
             header { padding: 12px 0; font-size: 15px;}
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 480px) { /* Điều chỉnh cho màn hình nhỏ hơn */
             header { padding: 10px 0; font-size: 13px; }
             .navbar-controls { gap: 5px; top: 8px; right: 8px;}
             .nav-btn, .theme-toggle, .language-btn, .mobile-menu-btn {
@@ -1143,14 +1222,13 @@
             .hero .hero-content { padding-top: 30px; padding-bottom: 15px;}
 
 
-            .internal-section h3 { font-size: 20px; }
+            .internal-section h3, .dashboard-section h3 { font-size: 20px; }
             .internal-section p.section-subtitle { font-size: 13px; margin-bottom: 20px; }
-            .features-grid { grid-template-columns: 1fr; gap: 15px; }
+            .features-grid { grid-template-columns: 1fr; gap: 15px; } /* Feature card 1 cột */
             .feature-card { padding: 15px; }
             .feature-card i { font-size: 24px; margin-bottom: 12px; }
             .feature-card h4 { font-size: 15px; }
 
-            .dashboard-section h3 { font-size: 18px; }
             .dashboard-card h4 { font-size: 16px; }
             .dashboard-card p, .dashboard-card a { font-size: 12px; }
 
@@ -1173,76 +1251,230 @@
 
         /* CSS cho xe chạy */
         #animatedCarContainer {
-            position: fixed; /* Giữ xe cố định ở một vị trí trên màn hình */
-            bottom: 35px;    /* Đặt vị trí ngay phía trên footer (footer cao khoảng 32px + padding) */
+            position: fixed;
+            bottom: 35px; /* Vị trí từ dưới lên */
             left: 0;
             width: 100%;
-            height: 40px;    /* Chiều cao của khu vực chứa xe, điều chỉnh nếu cần */
-            overflow: hidden; /* Ẩn xe khi nó chạy ra ngoài lề màn hình */
-            z-index: 990;    /* Đảm bảo xe nằm dưới các menu và modal, nhưng trên footer */
-            pointer-events: none; /* Để xe không cản trở việc nhấp chuột vào các phần tử khác */
+            height: 40px; /* Chiều cao của vùng chứa xe */
+            overflow: hidden; /* Ẩn phần xe chạy ra ngoài */
+            z-index: 990; /* Nằm trên footer một chút */
+            pointer-events: none; /* Không cản trở tương tác */
         }
 
         #animatedCarElement {
             position: absolute;
-            bottom: 0;        /* Đặt xe ở dưới cùng của #animatedCarContainer */
-            left: 0;          /* Vị trí bắt đầu logic trước khi áp dụng transform */
-            font-size: 30px;  /* Kích thước của biểu tượng xe */
-            color: var(--primary-color); /* Màu xe, có thể thay đổi */
-            transform: translateX(-100%) scaleX(1);
+            bottom: 0;
+            left: 0;
+            font-size: 30px; /* Kích thước xe */
+            color: var(--primary-color);
+            transform: translateX(-100%) scaleX(1); /* Bắt đầu ngoài màn hình bên trái */
             animation: driveAcrossAndBack 15s linear infinite;
-            text-shadow: 0 0 5px rgba(255,255,255,0.5), /* Thêm hiệu ứng đèn xe */
-                         0 0 10px var(--secondary-color);
+            text-shadow: 0 0 5px rgba(255,255,255,0.5),
+                         0 0 10px var(--secondary-color); /* Thêm bóng cho xe */
         }
 
         body.dark-mode #animatedCarElement {
-            color: var(--secondary-color); /* Đổi màu xe trong dark mode nếu muốn */
+            color: var(--secondary-color);
             text-shadow: 0 0 5px rgba(0,0,0,0.5),
                          0 0 10px var(--primary-color-lighter);
         }
 
         @keyframes driveAcrossAndBack {
+            0% { transform: translateX(-100%) scaleX(1) translateY(0px); }
+            5% { transform: translateX(-80vw) scaleX(1) translateY(-2px); } 
+            10% { transform: translateX(-60vw) scaleX(1) translateY(0px); } 
+            45% { transform: translateX(100vw) scaleX(1) translateY(0px); } 
+            49% { transform: translateX(100vw) scaleX(1) translateY(-3px); } 
+            50% { transform: translateX(100vw) scaleX(-1) translateY(0px); } 
+            51% { transform: translateX(100vw) scaleX(-1) translateY(-3px); } 
+            55% { transform: translateX(80vw) scaleX(-1) translateY(0px); } 
+            95% { transform: translateX(-100%) scaleX(-1) translateY(0px); } 
+            99% { transform: translateX(-100%) scaleX(-1) translateY(-3px); } 
+            100% { transform: translateX(-100%) scaleX(1) translateY(0px); } 
+        }
+
+        /* === CSS CHO HIỆU ỨNG CHÀO MỪNG TƯƠNG TÁC VỚI GÕ CHỮ === */
+        .interactive-welcome-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+            padding: 22px 35px; /* Tăng padding một chút */
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12); 
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out, transform 0.5s cubic-bezier(0.175, 0.885, 0.320, 1.275); /* Easing nảy hơn */
+            border: 1px solid var(--border-color-light);
+            text-align: center; 
+            min-width: 300px; /* Đảm bảo đủ rộng cho nội dung */
+        }
+
+        body.dark-mode .interactive-welcome-message {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .interactive-welcome-message .welcome-content-interactive {
+            position: relative;
+            z-index: 1; 
+        }
+
+        .interactive-welcome-message .time-greeting-interactive {
+            display: block; 
+            font-size: 16px; 
+            font-weight: 500; /* Đậm hơn một chút */
+            opacity: 0.9;
+            margin-bottom: 8px; 
+        }
+        .interactive-welcome-message .main-welcome-text {
+            font-size: 20px; 
+            font-weight: 600; /* Đậm hơn */
+            color: var(--primary-color);
+        }
+        body.dark-mode .interactive-welcome-message .main-welcome-text {
+            color: var(--secondary-color);
+        }
+
+        .interactive-welcome-message .username-typed {
+            font-weight: 700; /* Làm nổi bật tên người dùng */
+            /* Màu sắc có thể được tùy chỉnh thêm nếu muốn */
+        }
+
+        /* Hiệu ứng con trỏ gõ chữ */
+        .typewriter-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em; /* Chiều cao bằng với dòng chữ */
+            background-color: var(--primary-color);
+            animation: blink-cursor 0.7s step-end infinite;
+            margin-left: 3px;
+            vertical-align: bottom; /* Căn chỉnh với dòng chữ */
+        }
+        body.dark-mode .typewriter-cursor {
+            background-color: var(--secondary-color);
+        }
+
+        @keyframes blink-cursor {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--primary-color); }
+        }
+        body.dark-mode @keyframes blink-cursor {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--secondary-color); }
+        }
+
+
+        .interactive-welcome-message.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .interactive-welcome-message.hide {
+            opacity: 0;
+            visibility: hidden;
+            transform: translate(-50%, -60%) scale(0.85); /* Hiệu ứng trượt nhẹ lên và thu nhỏ khi ẩn */
+        }
+
+        /* Container cho các hạt lấp lánh (giữ nguyên từ phiên bản trước nếu phù hợp) */
+        .welcome-sparkle-container-interactive {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+            pointer-events: none; 
+            z-index: 0;
+        }
+
+        .sparkle-interactive { /* Đổi tên để tránh xung đột nếu có CSS cũ */
+            position: absolute;
+            width: 5px; /* To hơn một chút */
+            height: 5px;
+            background-color: var(--secondary-color); 
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkle-animation-interactive 1.3s ease-out forwards; /* Thời gian dài hơn chút */
+        }
+        body.dark-mode .sparkle-interactive {
+            background-color: var(--primary-color-lighter);
+        }
+
+        @keyframes sparkle-animation-interactive {
             0% {
-                transform: translateX(-100%) scaleX(1) translateY(0px); /* Bắt đầu từ trái, hướng phải */
+                transform: scale(0.3) translate(0, 0);
+                opacity: 0;
             }
-            5% {
-                transform: translateX(-80vw) scaleX(1) translateY(-2px); /* Nhảy nhẹ */
-            }
-            10% {
-                transform: translateX(-60vw) scaleX(1) translateY(0px);
-            }
-            /* ... các keyframes khác cho xe chạy ... */
-            45% {
-                transform: translateX(100vw) scaleX(1) translateY(0px); /* Đến phải, hướng phải */
-            }
-            49% {
-                transform: translateX(100vw) scaleX(1) translateY(-3px); /* Chuẩn bị đổi chiều, nảy nhẹ */
-            }
-            50% {
-                transform: translateX(100vw) scaleX(-1) translateY(0px); /* Đổi chiều, hướng trái */
-            }
-            51% {
-                transform: translateX(100vw) scaleX(-1) translateY(-3px); /* Bắt đầu chạy về, nảy nhẹ */
-            }
-            55% {
-                transform: translateX(80vw) scaleX(-1) translateY(0px);
-            }
-            /* ... các keyframes khác cho xe chạy về ... */
-            95% {
-                transform: translateX(-100%) scaleX(-1) translateY(0px); /* Đến trái, hướng trái */
-            }
-            99% {
-                transform: translateX(-100%) scaleX(-1) translateY(-3px); /* Chuẩn bị đổi chiều, nảy nhẹ */
+            30% { /* Hiện ra và giữ một chút */
+                opacity: 1; 
+                transform: scale(1) translate(var(--tx-start, 0px), var(--ty-start, 0px));
             }
             100% {
-                transform: translateX(-100%) scaleX(1) translateY(0px); /* Quay lại ban đầu */
+                transform: scale(0.5) translate(var(--tx-end, 0px), var(--ty-end, 0px)); /* Bay ra xa và nhỏ lại */
+                opacity: 0;
             }
         }
+
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(1) {
+            top: 15%; left: 10%; animation-delay: 0.5s; --tx-start: 0px; --ty-start:0px; --tx-end: -60px; --ty-end: -40px;
+            background-color: #FFD700;
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(2) {
+            top: 85%; left: 25%; animation-delay: 0.7s; --tx-start: 0px; --ty-start:0px; --tx-end: -50px; --ty-end: 50px;
+            background-color: #FF69B4; 
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(3) {
+            top: 50%; left: 90%; animation-delay: 0.6s; --tx-start: 0px; --ty-start:0px; --tx-end: 60px; --ty-end: 0px;
+            background-color: var(--secondary-color);
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(4) {
+            top: 5%; left: 75%; animation-delay: 0.8s; --tx-start: 0px; --ty-start:0px; --tx-end: 40px; --ty-end: -60px;
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(5) {
+            top: 95%; left: 55%; animation-delay: 0.55s; --tx-start: 0px; --ty-start:0px; --tx-end: 30px; --ty-end: 60px;
+            background-color: #ADFF2F; 
+        }
+         .interactive-welcome-message.show .sparkle-interactive:nth-child(6) {
+            top: 25%; left: 45%; animation-delay: 0.75s; --tx-start: 0px; --ty-start:0px; --tx-end: -30px; --ty-end: -30px;
+        }
+         .interactive-welcome-message.show .sparkle-interactive:nth-child(7) { 
+            top: 65%; left: 5%; animation-delay: 0.65s; --tx-start: 0px; --ty-start:0px; --tx-end: -70px; --ty-end: 30px;
+            background-color: #FFAC33; 
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(8) {
+            top: 35%; left: 95%; animation-delay: 0.85s; --tx-start: 0px; --ty-start:0px; --tx-end: 70px; --ty-end: -40px;
+            background-color: #8A2BE2; 
+        }
+        /* === KẾT THÚC CSS CHO HIỆU ỨNG CHÀO MỪNG TƯƠNG TÁC === */
+
     </style>
 </head>
 <body>
     <header>SHOWROOM VINFAST THUẬN AN</header>
 
+    <div id="interactiveWelcomeMessage" class="interactive-welcome-message">
+        <div class="welcome-sparkle-container-interactive">
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+        </div>
+        <div class="welcome-content-interactive">
+            <span id="interactiveTimeGreeting" class="time-greeting-interactive"></span>
+            <div class="main-welcome-text">
+                <span id="interactiveStaticText">Chào mừng, </span>
+                <span id="interactiveUsernameTyped" class="username-typed"></span>
+                <span id="typewriterCursor" class="typewriter-cursor" style="display: none;"></span>
+            </div>
+        </div>
+    </div>
     <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu">
         <i class="fas fa-bars"></i>
     </button>
@@ -1284,6 +1516,7 @@
 
     <div class="main-content" id="main-content">
         <section class="hero" id="heroSection" data-aos="fade-up" data-aos-duration="800">
+            <canvas id="heroParticleCanvas"></canvas>
             <div class="hero-content">
                 <h2 data-lang="hero-title">Hệ Thống Quản Lý Đơn Hàng</h2>
                 <p data-lang="hero-subtitle">Chào mừng đến với Showroom Thuận An</p>
@@ -1516,7 +1749,7 @@
         AOS.init({
             duration: 700,
             easing: "ease-out-cubic",
-            once: true
+            once: true 
         });
 
         // Khai báo các biến trạng thái toàn cục
@@ -1602,7 +1835,11 @@
                 "theme-toggle-tooltip": "Chuyển đổi giao diện Sáng/Tối",
                 "language-toggle-tooltip": "Thay đổi Ngôn ngữ (VI/EN)",
                 "user-guide-tooltip": "Mở hướng dẫn sử dụng trang web",
-                "logout-tooltip": "Đăng xuất khỏi hệ thống"
+                "logout-tooltip": "Đăng xuất khỏi hệ thống",
+                "time-greeting-morning": "Chào buổi sáng",
+                "time-greeting-afternoon": "Chào buổi chiều",
+                "time-greeting-evening": "Chào buổi tối",
+                "welcome-static-text": "Chào mừng, " // Thêm bản dịch cho phần tĩnh của lời chào
             },
             en: {
                 "hero-title": "Order Management System",
@@ -1679,34 +1916,113 @@
                 "theme-toggle-tooltip": "Toggle Light/Dark Theme",
                 "language-toggle-tooltip": "Change Language (VI/EN)",
                 "user-guide-tooltip": "Open website user guide",
-                "logout-tooltip": "Logout from the system"
+                "logout-tooltip": "Logout from the system",
+                "time-greeting-morning": "Good morning",
+                "time-greeting-afternoon": "Good afternoon",
+                "time-greeting-evening": "Good evening",
+                "welcome-static-text": "Welcome, " // English translation for static part
             }
         };
 
-        // --- Chức năng tạo hạt cho Hero Section ---
-        function createParticles() {
+        // Script cho hiệu ứng hạt tương tác trên Hero Section
+        const heroCanvas = document.getElementById('heroParticleCanvas');
+        const heroCtx = heroCanvas.getContext('2d');
+        let heroParticlesArray = [];
+        let heroMouse = { x: null, y: null, radius: 80 };
+
+        function resizeHeroCanvas() {
             const heroSection = document.getElementById('heroSection');
-            if (!heroSection) return;
+            if (heroSection) {
+                heroCanvas.width = heroSection.offsetWidth;
+                heroCanvas.height = heroSection.offsetHeight;
+            }
+        }
+        window.addEventListener('resize', () => {
+            resizeHeroCanvas();
+            initHeroParticles(); 
+        });
+        document.addEventListener('mousemove', (event) => {
+            const heroSectionRect = heroCanvas.getBoundingClientRect();
+            heroMouse.x = event.clientX - heroSectionRect.left;
+            heroMouse.y = event.clientY - heroSectionRect.top;
+        });
+        heroCanvas.addEventListener('mouseleave', () => {
+            heroMouse.x = null;
+            heroMouse.y = null;
+        });
 
-            // Xóa các hạt cũ nếu có
-            const existingParticles = heroSection.querySelectorAll('.particle');
-            existingParticles.forEach(p => p.remove());
 
-            const numParticles = 50; // Số lượng hạt
-            for (let i = 0; i < numParticles; i++) {
-                const particle = document.createElement('div');
-                particle.classList.add('particle');
-                particle.style.left = `${Math.random() * 100}%`;
-                particle.style.top = `${Math.random() * 100}%`;
-                const size = Math.random() * 3 + 1; // Kích thước ngẫu nhiên từ 1px đến 4px
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.animationDelay = `${Math.random() * 5}s`; // Độ trễ animation ngẫu nhiên
-                particle.style.animationDuration = `${Math.random() * 3 + 3}s`; // Thời gian animation ngẫu nhiên
-                heroSection.appendChild(particle);
+        class HeroParticle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+                this.baseX = this.x; 
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1; 
+            }
+            draw() {
+                heroCtx.beginPath();
+                heroCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                heroCtx.fillStyle = this.color;
+                heroCtx.fill();
+            }
+            update() {
+                let dx = heroMouse.x - this.x;
+                let dy = heroMouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = heroMouse.radius;
+                let force = (maxDistance - distance) / maxDistance; 
+                let directionX = forceDirectionX * force * this.density * 0.3; 
+                let directionY = forceDirectionY * force * this.density * 0.3;
+
+                if (distance < heroMouse.radius) {
+                    this.x -= directionX;
+                    this.y -= directionY;
+                } else {
+                    if (this.x !== this.baseX) {
+                        let dxToBase = this.x - this.baseX;
+                        this.x -= dxToBase / 20; 
+                    }
+                    if (this.y !== this.baseY) {
+                        let dyToBase = this.y - this.baseY;
+                        this.y -= dyToBase / 20;
+                    }
+                }
+                this.draw();
             }
         }
 
+        function initHeroParticles() {
+            heroParticlesArray = [];
+            resizeHeroCanvas(); 
+            const numberOfParticles = Math.floor(heroCanvas.width * heroCanvas.height / 15000); 
+            const particleColorLight = getComputedStyle(document.documentElement).getPropertyValue('--star-color-light').trim();
+            const particleColorDark = getComputedStyle(document.documentElement).getPropertyValue('--star-color-dark').trim();
+            const particleColor = document.body.classList.contains('dark-mode') ? particleColorDark : particleColorLight;
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = Math.random() * 2.5 + 0.5; 
+                let x = Math.random() * (heroCanvas.width - size * 2) + size;
+                let y = Math.random() * (heroCanvas.height - size * 2) + size;
+                let directionX = (Math.random() * .4) - .2;
+                let directionY = (Math.random() * .4) - .2;
+                heroParticlesArray.push(new HeroParticle(x, y, directionX, directionY, size, particleColor));
+            }
+        }
+
+        function animateHeroParticles() {
+            heroCtx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+            for (let i = 0; i < heroParticlesArray.length; i++) {
+                heroParticlesArray[i].update();
+            }
+            requestAnimationFrame(animateHeroParticles);
+        }
 
         // --- Chức năng Thông báo Toast ---
         function showToast(message, type = 'info', duration = 3000) {
@@ -1720,12 +2036,8 @@
 
             toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
             container.appendChild(toast);
-
-            // Trigger reflow to enable transition
-            toast.offsetHeight; // eslint-disable-line no-unused-expressions
-
+            toast.offsetHeight; 
             toast.classList.add('show');
-
 
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -1760,12 +2072,13 @@
         // --- Đặt Link Sidebar Active ---
         function setActiveSidebarLink() {
             const navLinks = document.querySelectorAll("#navMenu a");
-            const currentPageFile = window.location.pathname.split("/").pop() || "Index.html";
+            const currentPageFile = window.location.pathname.split("/").pop() || "Index.html"; 
 
-            navLinks.forEach(link => link.classList.remove("active"));
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+            });
 
             let linkToActivate = Array.from(navLinks).find(link => link.getAttribute('href') === currentPageFile);
-
 
             if (linkToActivate && getComputedStyle(linkToActivate).display !== 'none') {
                 linkToActivate.classList.add("active");
@@ -1775,11 +2088,14 @@
         // Chạy khi DOM đã tải xong
         document.addEventListener("DOMContentLoaded", () => {
             updateUIBasedOnLogin();
-            updateLanguage();
-            createParticles(); // Tạo hạt khi DOM tải xong
+            updateLanguage(); 
+            initHeroParticles(); 
+            animateHeroParticles(); 
+
             if (localStorage.getItem("theme") === "dark") {
                 document.body.classList.add("dark-mode");
-                const icon = document.querySelector(".theme-toggle i");
+                const themeToggle = document.querySelector(".theme-toggle");
+                const icon = themeToggle.querySelector("i");
                 if (icon) {
                     icon.classList.remove("fa-moon");
                     icon.classList.add("fa-sun");
@@ -1825,25 +2141,24 @@
                 logoutBtn.style.display = "flex";
                 navMenuLinks.forEach(link => link.style.display = "flex");
 
-                if (window.innerWidth > 900) { // Desktop, logged in
+                if (window.innerWidth > 900) { 
                     if (localStorage.getItem('sidebarState') === 'collapsed') {
-                        // Nếu người dùng đã từng thu gọn sidebar khi đăng nhập, giữ nguyên trạng thái đó
                         sidebar.classList.add("collapsed");
                         mainContent.classList.add("collapsed");
-                    } else { // Bao gồm trạng thái 'expanded' hoặc null (lần truy cập đầu tiên/chưa có trạng thái)
-                        sidebar.classList.remove("collapsed"); // Mặc định mở rộng
+                    } else {
+                        sidebar.classList.remove("collapsed");
                         mainContent.classList.remove("collapsed");
                         if (localStorage.getItem('sidebarState') !== 'expanded') {
-                            localStorage.setItem('sidebarState', 'expanded'); // Cập nhật trạng thái trong localStorage
+                            localStorage.setItem('sidebarState', 'expanded');
                         }
                     }
-                } else { // Mobile, logged in
-                    sidebar.classList.remove("collapsed"); // Xóa collapsed trên mobile
-                    sidebar.classList.remove("open"); // Đảm bảo sidebar đóng khi tải lại trang trên mobile
+                } else { 
+                    sidebar.classList.remove("collapsed");
+                    sidebar.classList.remove("open");
                     mainContent.classList.remove("collapsed");
                 }
 
-            } else { // Not logged in
+            } else { 
                 heroSection.style.display = "flex";
                 welcomeSection.style.display = "block";
                  if (welcomeTitle) {
@@ -1853,18 +2168,19 @@
                 logoutBtn.style.display = "none";
                 navMenuLinks.forEach(link => link.style.display = "none");
 
-                if (window.innerWidth <= 900) { // Mobile, not logged in
+                if (window.innerWidth <= 900) { 
                     sidebar.classList.remove("open");
-                    sidebar.classList.remove("collapsed"); // Xóa collapsed trên mobile
-                } else { // Desktop, not logged in
-                    sidebar.classList.remove("collapsed"); // Đảm bảo sidebar mở rộng
-                    mainContent.classList.remove("collapsed"); // Đảm bảo nội dung chính được điều chỉnh
-                    localStorage.setItem('sidebarState', 'expanded'); // Thiết lập trạng thái mặc định là mở rộng
+                    sidebar.classList.remove("collapsed");
+                } else { 
+                    sidebar.classList.remove("collapsed");
+                    mainContent.classList.remove("collapsed");
+                    localStorage.setItem('sidebarState', 'expanded');
                 }
             }
-            setActiveSidebarLink();
+            setActiveSidebarLink(); 
         }
 
+        // Các hàm fetch data
         function fetchDashboardData() {
             fetchTotalSoldCars();
             fetchSoldCarsDataForDashboard();
@@ -1889,6 +2205,7 @@
                 totalSoldCars = results.reduce((sum, count) => sum + count, 0);
                 totalSoldCarsElement.textContent = `${totalSoldCars} xe`;
             } catch (error) {
+                console.error("Lỗi khi lấy tổng số xe đã bán:", error);
                 totalSoldCarsElement.textContent = "Lỗi tải";
             }
         }
@@ -1916,19 +2233,23 @@
                     showEmptyState(tableBodyId, 3);
                 }
             } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu xe đã bán cho dashboard:", error);
                 showEmptyState(tableBodyId, 3, "server-error");
             }
         }
 
         function getRandomRows(array, count) {
             if (!array || array.length === 0) return [];
-            if (array.length <= count) return [...array];
+            if (array.length <= count) return [...array]; 
             const result = [];
-            const indices = new Set();
-            while (indices.size < count && indices.size < array.length) {
-                 indices.add(Math.floor(Math.random() * array.length));
+            const usedIndices = new Set();
+            while (result.length < count && usedIndices.size < array.length) {
+                 const randomIndex = Math.floor(Math.random() * array.length);
+                 if (!usedIndices.has(randomIndex)) {
+                    result.push(array[randomIndex]);
+                    usedIndices.add(randomIndex);
+                 }
             }
-            indices.forEach(index => result.push(array[index]));
             return result;
         }
 
@@ -1957,21 +2278,27 @@
             try {
                 const response = await axios.get(STOCK_API_URL);
                 const data = response.data;
-                const stockData = data.slice(1);
-                const randomRows = getRandomRows(stockData, 5);
-                stockTableBody.innerHTML = "";
-                if (randomRows.length === 0) {
-                     showEmptyState(tableBodyId, 4);
+                if (data && data.length > 1) {
+                    const stockData = data.slice(1);
+                    const randomRows = getRandomRows(stockData, 5);
+                    stockTableBody.innerHTML = "";
+                    if (randomRows.length === 0) {
+                         showEmptyState(tableBodyId, 4);
+                    } else {
+                        randomRows.forEach(row => {
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `
+                                <td>${row[0] || "N/A"}</td> <td>${row[2] || "N/A"}</td> <td>${row[6] || "N/A"}</td> <td>${row[5] || "N/A"}</td> `;
+                            stockTableBody.appendChild(tr);
+                        });
+                    }
+                    stockCountElement.textContent = `${stockData.length} xe`;
                 } else {
-                    randomRows.forEach(row => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${row[0] || "N/A"}</td> <td>${row[2] || "N/A"}</td> <td>${row[6] || "N/A"}</td> <td>${row[5] || "N/A"}</td> `;
-                        stockTableBody.appendChild(tr);
-                    });
+                     showEmptyState(tableBodyId, 4);
+                     stockCountElement.textContent = "0 xe";
                 }
-                stockCountElement.textContent = `${stockData.length} xe`;
             } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu kho cho dashboard:", error);
                 showEmptyState(tableBodyId, 4, "server-error");
                 stockCountElement.textContent = "Lỗi tải";
             }
@@ -1990,8 +2317,12 @@
                 const response = await axios.get(PAIRING_REQUEST_API_URL);
                 const jsonData = response.data;
                 pairingTableBody.innerHTML = "";
-                if (jsonData && Array.isArray(jsonData)) {
-                    jsonData.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
+                if (jsonData && Array.isArray(jsonData) && jsonData.length > 0) {
+                    jsonData.sort((a, b) => {
+                        const dateA = new Date(a["Thời gian nhập"]);
+                        const dateB = new Date(b["Thời gian nhập"]);
+                        return dateB - dateA;
+                    });
                     const latestRequests = jsonData.slice(0, 5);
 
                     if (latestRequests.length === 0) {
@@ -2013,11 +2344,85 @@
                      pairingCountElement.textContent = "0";
                 }
             } catch (error) {
+                console.error("Lỗi khi lấy yêu cầu ghép xe cho dashboard:", error);
                 showEmptyState(tableBodyId, 3, "server-error");
                 pairingCountElement.textContent = "Lỗi tải";
             }
         }
 
+        // === HÀM HIỂN THỊ THÔNG ĐIỆP CHÀO MỪNG TƯƠNG TÁC VỚI GÕ CHỮ ===
+        let typingTimeout; // Biến để lưu trữ timeout của hiệu ứng gõ chữ
+
+        function typeWriter(element, text, speed, callback) {
+            let i = 0;
+            element.innerHTML = ""; // Xóa nội dung cũ
+            const cursor = document.getElementById('typewriterCursor');
+            if(cursor) cursor.style.display = 'inline-block'; // Hiện con trỏ
+
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    typingTimeout = setTimeout(type, speed);
+                } else {
+                    if(cursor) cursor.style.display = 'none'; // Ẩn con trỏ khi gõ xong
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        function displayInteractiveWelcomeMessage(username) {
+            const welcomeElement = document.getElementById('interactiveWelcomeMessage');
+            const usernameTypedSpan = document.getElementById('interactiveUsernameTyped');
+            const timeGreetingSpan = document.getElementById('interactiveTimeGreeting');
+            const staticTextSpan = document.getElementById('interactiveStaticText');
+            
+            // Xóa timeout cũ nếu có để tránh gõ chữ nhiều lần chồng chéo
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+            usernameTypedSpan.innerHTML = ""; // Reset phần tên người dùng
+
+            if (welcomeElement && usernameTypedSpan && timeGreetingSpan && staticTextSpan) {
+                // Xác định lời chào theo thời gian
+                const currentHour = new Date().getHours();
+                let timeGreetingKey = "time-greeting-evening";
+                let staticWelcomeTextKey = "welcome-static-text"; // Key cho phần "Chào mừng, "
+                
+                if (currentHour >= 5 && currentHour < 12) {
+                    timeGreetingKey = "time-greeting-morning";
+                } else if (currentHour >= 12 && currentHour < 18) {
+                    timeGreetingKey = "time-greeting-afternoon";
+                }
+
+                timeGreetingSpan.textContent = translations[language][timeGreetingKey] || "Chào bạn";
+                staticTextSpan.textContent = translations[language][staticWelcomeTextKey] || "Chào mừng, ";
+
+
+                welcomeElement.classList.remove('hide');
+                welcomeElement.classList.add('show'); // Hiển thị hộp thoại trước
+
+                // Sau một khoảng trễ nhỏ, bắt đầu hiệu ứng gõ chữ cho tên người dùng
+                setTimeout(() => {
+                    typeWriter(usernameTypedSpan, username + "!", 100, () => {
+                        // Callback sau khi gõ chữ xong: kích hoạt hiệu ứng lấp lánh
+                        // Các hạt lấp lánh đã có animation tự chạy khi class 'show' được thêm vào welcomeElement
+                        // Chỉ cần đảm bảo chúng được hiển thị đúng lúc
+                        
+                        // Tự động ẩn toàn bộ thông điệp sau một khoảng thời gian nữa
+                        setTimeout(() => {
+                            welcomeElement.classList.remove('show');
+                            welcomeElement.classList.add('hide');
+                        }, 2500); // Thời gian hiển thị sau khi gõ chữ xong (2.5 giây)
+                    });
+                }, 500); // Trễ 0.5 giây trước khi bắt đầu gõ chữ
+
+            }
+        }
+
+
+        // Các hàm xử lý login, password, logout
         async function login(e) {
             e.preventDefault();
             const username = document.getElementById("username").value.trim();
@@ -2055,7 +2460,7 @@
                     if (consultantName) {
                         sessionStorage.setItem("currentConsultant", consultantName);
                     } else {
-                        sessionStorage.setItem("currentConsultant", result.username);
+                        sessionStorage.setItem("currentConsultant", result.username); 
                     }
                     isLoggedIn = true;
                     currentUser = result.username;
@@ -2063,12 +2468,17 @@
 
                     closeModal("loginModal");
                     showToast(translations[language]["login-success"], 'success');
+                    
+                    const userDisplayNameForWelcome = consultantName || result.username;
+                    displayInteractiveWelcomeMessage(userDisplayNameForWelcome); 
+                    
                     updateUIBasedOnLogin();
                     fetchDashboardData();
                 } else {
                     showToast(result.message || "Tên đăng nhập hoặc mật khẩu không đúng.", 'error');
                 }
             } catch (error) {
+                console.error("Lỗi đăng nhập:", error);
                 showToast(translations[language]["server-error"], 'error');
             } finally {
                 loginButton.classList.remove("loading");
@@ -2106,6 +2516,7 @@
                     showToast(result.message || "Không thể đổi mật khẩu.", 'error');
                 }
             } catch (error) {
+                console.error("Lỗi đổi mật khẩu:", error);
                 showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
@@ -2131,6 +2542,7 @@
                     showToast(result.message || "Email không tồn tại hoặc có lỗi xảy ra.", 'error');
                 }
             } catch (error) {
+                console.error("Lỗi quên mật khẩu:", error);
                 showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
@@ -2172,6 +2584,7 @@
                     showToast(result.message || "OTP không đúng hoặc có lỗi xảy ra.", 'error');
                 }
             } catch (error) {
+                console.error("Lỗi đặt lại mật khẩu bằng OTP:", error);
                 showToast(translations[language]["server-error"], 'error');
             } finally {
                 button.classList.remove("loading"); button.disabled = false;
@@ -2183,11 +2596,12 @@
             isLoggedIn = false;
             currentUser = "";
             userRole = "employee";
-            localStorage.removeItem('sidebarState'); // Xóa trạng thái sidebar khi đăng xuất
+            localStorage.removeItem('sidebarState');
             updateUIBasedOnLogin();
             showToast(translations[language]["logout-success"], 'info');
         }
 
+        // Các hàm điều khiển UI (sidebar, modal, theme, language)
         function toggleSidebarDesktop() {
             if (window.innerWidth > 900) {
                 const sidebar = document.getElementById("sidebar");
@@ -2205,7 +2619,6 @@
         function toggleMobileSidebar() {
             const sidebar = document.getElementById("sidebar");
             sidebar.classList.toggle("open");
-            // Khi mở sidebar trên mobile, đảm bảo nó không ở trạng thái collapsed
             if (sidebar.classList.contains("open")) {
                 sidebar.classList.remove("collapsed");
             }
@@ -2216,8 +2629,7 @@
             if (!modal) return;
             const content = modal.querySelector(".modal-content");
             modal.style.display = "flex";
-            // Trigger reflow
-            modal.offsetHeight; // eslint-disable-line no-unused-expressions
+            modal.offsetHeight;
             if (content) content.classList.add("active");
         }
 
@@ -2231,27 +2643,42 @@
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 400); // Phù hợp với transition duration của modal-content
+            }, 400);
         }
 
         function resetModalToLogin() {
             showForm("loginForm");
-            const loginFormElement = document.getElementById("loginForm");
-            if (loginFormElement) {
-                loginFormElement.querySelector('form')?.reset();
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                const forms = loginModal.querySelectorAll('form');
+                forms.forEach(form => form.reset());
             }
         }
 
         function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            const icon = document.querySelector(".theme-toggle i");
-            if (icon) {
-                icon.classList.toggle("fa-moon");
-                icon.classList.toggle("fa-sun");
+            const body = document.body;
+            const themeToggle = document.querySelector(".theme-toggle");
+            const icon = themeToggle.querySelector("i");
+
+            body.classList.toggle("dark-mode");
+            themeToggle.classList.add("spinning"); 
+
+            if (body.classList.contains("dark-mode")) {
+                icon.classList.remove("fa-moon");
+                icon.classList.add("fa-sun");
+                localStorage.setItem("theme", "dark");
+            } else {
+                icon.classList.remove("fa-sun");
+                icon.classList.add("fa-moon");
+                localStorage.setItem("theme", "light");
             }
-            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-            createParticles(); // Tạo lại hạt khi đổi theme để màu sắc phù hợp
+            initHeroParticles();
+
+            setTimeout(() => { 
+                themeToggle.classList.remove("spinning");
+            }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed-slow') || '0.5s') * 1000);
         }
+
 
         function toggleLanguage() {
             language = language === "vi" ? "en" : "vi";
@@ -2262,10 +2689,17 @@
             if (isLoggedIn && document.getElementById('dashboard').style.display !== 'none') {
                 fetchDashboardData();
             }
-             setActiveSidebarLink();
+            const welcomeElement = document.getElementById('interactiveWelcomeMessage'); // Cập nhật ID
+            if (welcomeElement && welcomeElement.classList.contains('show')) {
+                const userDisplayName = sessionStorage.getItem("currentConsultant") || sessionStorage.getItem("currentUser");
+                if (userDisplayName) {
+                    // Gọi lại hàm chào mừng để cập nhật ngôn ngữ của các phần tĩnh và gõ lại tên
+                    displayInteractiveWelcomeMessage(userDisplayName);
+                }
+            }
         }
 
-        function updateLanguage() {
+        function updateLanguage() { 
             document.querySelectorAll("[data-lang]").forEach(element => {
                 const key = element.getAttribute("data-lang");
 
@@ -2281,7 +2715,13 @@
                     } else {
                         welcomeTitleElement.textContent = translations[language]["welcome-title"] || (language === 'vi' ? "HỆ THỐNG NỘI BỘ" : "INTERNAL SYSTEM");
                     }
-                } else if (translations[language] && translations[language][key] !== undefined) {
+                } else if (key === "welcome-static-text") { // Xử lý riêng cho phần tĩnh của lời chào mới
+                     const staticTextSpan = document.getElementById('interactiveStaticText');
+                     if(staticTextSpan && translations[language] && translations[language][key] !== undefined) {
+                        staticTextSpan.textContent = translations[language][key];
+                     }
+                }
+                else if (translations[language] && translations[language][key] !== undefined) {
                     if (element.parentElement && element.parentElement.classList.contains('menu') && element.querySelector('span')) {
                         element.querySelector('span').textContent = translations[language][key];
                     } else {
@@ -2301,7 +2741,7 @@
                     element.setAttribute('data-tooltip', translations[language][key]);
                 }
             });
-            document.querySelectorAll("[data-lang-aria-label]").forEach(element => {
+             document.querySelectorAll("[data-lang-aria-label]").forEach(element => {
                 const key = element.getAttribute("data-lang-aria-label");
                 if (translations[language] && translations[language][key] !== undefined) {
                     element.setAttribute('aria-label', translations[language][key]);
@@ -2312,26 +2752,29 @@
                 td.textContent = translations[language][messageKey];
             });
             if (document.getElementById('dashboard') && document.getElementById('dashboard').style.display !== 'none') {
-                const loadingText = translations[language]["loading-data"];
+                 const loadingText = translations[language]["loading-data"];
                 ['currentStockCount', 'total-sold-cars', 'pairingRequestCount'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el && (el.textContent.includes("Đang tải") || el.textContent.includes("Loading"))) {
+                    if (el && (el.textContent.includes("Đang tải") || el.textContent.toLowerCase().includes("loading"))) {
                         el.textContent = loadingText;
                     }
                 });
             }
+            setActiveSidebarLink();
         }
 
-        function showForm(formName) {
+        function showForm(formName) { 
             ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(formId => {
                 const formElement = document.getElementById(formId);
-                if (formElement) {
-                    formElement.style.display = formId === formName ? "block" : "none";
-                    if (formId !== 'loginForm' && formId === formName) {
-                        formElement.querySelector('form')?.reset();
-                    }
-                }
+                if (formElement) formElement.style.display = "none";
             });
+            const targetForm = document.getElementById(formName);
+            if (targetForm) {
+                targetForm.style.display = "block";
+                if (formName !== 'loginForm') {
+                    targetForm.querySelector('form')?.reset();
+                }
+            }
         }
 
         // --- Chức năng Hướng dẫn Sử dụng (Intro.js) ---
@@ -2343,9 +2786,8 @@
                 }
             ];
 
-            // Bước 1: Sidebar
             const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) {
+            if (sidebarEl && getComputedStyle(sidebarEl).visibility !== 'hidden' && getComputedStyle(sidebarEl).display !== 'none') {
                 steps.push({
                     element: '#sidebar',
                     intro: translations[language]["guide-sidebar"],
@@ -2353,7 +2795,6 @@
                 });
             }
 
-            // Bước 2: Nút menu di động (nếu hiển thị)
             const mobileMenuBtnEl = document.querySelector('.mobile-menu-btn');
             if (mobileMenuBtnEl && getComputedStyle(mobileMenuBtnEl).display !== 'none') {
                 steps.push({
@@ -2363,7 +2804,6 @@
                 });
             }
 
-            // Bước 3: Các nút điều khiển Navbar
             const navbarControlsEl = document.querySelector('.navbar-controls');
             if (navbarControlsEl) {
                  steps.push({
@@ -2372,7 +2812,6 @@
                     position: 'left'
                 });
 
-                // Thêm các bước chi tiết cho từng nút trong navbar controls
                 const themeToggleEl = document.querySelector('.theme-toggle');
                 if (themeToggleEl) {
                      steps.push({
@@ -2411,9 +2850,7 @@
             }
 
 
-            // Các bước tùy thuộc vào trạng thái đăng nhập
             if (!isLoggedIn) {
-                // Bước khi chưa đăng nhập: Nút Đăng nhập Hero
                 const heroLoginBtnEl = document.getElementById('heroLoginBtn');
                 if (heroLoginBtnEl && getComputedStyle(heroLoginBtnEl).display !== 'none') {
                     steps.push({
@@ -2423,7 +2860,6 @@
                     });
                 }
             } else {
-                // Các bước khi đã đăng nhập: Dashboard và các thẻ
                 const dashboardEl = document.getElementById('dashboard');
                 if (dashboardEl && getComputedStyle(dashboardEl).display !== 'none') {
                     steps.push({
@@ -2432,7 +2868,6 @@
                         position: 'top'
                     });
 
-                    // Thêm các bước cho từng thẻ trong dashboard
                     const stockCardEl = document.getElementById('stockCard');
                     if (stockCardEl) {
                          steps.push({
@@ -2461,55 +2896,33 @@
                     }
                 }
 
-                // Các bước cho các mục menu chính khi đã đăng nhập
-                const menuStockEl = document.querySelector('#navMenu a[href="khoxe.html"]');
-                if (menuStockEl && getComputedStyle(menuStockEl).display !== 'none') {
-                     steps.push({
-                         element: '#navMenu a[href="khoxe.html"]',
-                         intro: translations[language]["guide-menu-example-stock"],
-                         position: 'right'
-                    });
+                const navMenu = document.getElementById('navMenu');
+                if (navMenu) {
+                    const visibleLinks = Array.from(navMenu.querySelectorAll('a')).filter(link => getComputedStyle(link).display !== 'none');
+                    if (visibleLinks.length > 0) {
+                        const firstVisibleLink = visibleLinks[0];
+                        const firstLinkKey = firstVisibleLink.dataset.lang;
+                        const guideKeyBase = "guide-menu-example-";
+
+                        if (translations[language][guideKeyBase + firstLinkKey]) {
+                             steps.push({
+                                 element: firstVisibleLink,
+                                 intro: translations[language][guideKeyBase + firstLinkKey],
+                                 position: 'right'
+                            });
+                        }
+                         const policyLink = navMenu.querySelector('a[href*="script.google.com/macros"]');
+                         if (policyLink && getComputedStyle(policyLink).display !== 'none' && translations[language]["guide-menu-example-policy"]) {
+                             steps.push({
+                                 element: policyLink,
+                                 intro: translations[language]["guide-menu-example-policy"],
+                                 position: 'right'
+                            });
+                         }
+                    }
                 }
-
-                const menuSoldEl = document.querySelector('#navMenu a[href="xedaban.html"]');
-                if (menuSoldEl && getComputedStyle(menuSoldEl).display !== 'none') {
-                     steps.push({
-                         element: '#navMenu a[href="xedaban.html"]',
-                         intro: translations[language]["guide-menu-example-sold"],
-                         position: 'right'
-                    });
-                }
-
-                const menuPairingEl = document.querySelector('#navMenu a[href="yeucaughepxe.html"]');
-                if (menuPairingEl && getComputedStyle(menuPairingEl).display !== 'none') {
-                     steps.push({
-                         element: '#navMenu a[href="yeucaughepxe.html"]',
-                         intro: translations[language]["guide-menu-example-pairing"],
-                         position: 'right'
-                    });
-                }
-
-                 const menuPairingListEl = document.querySelector('#navMenu a[href="danhsach.html"]');
-                if (menuPairingListEl && getComputedStyle(menuPairingListEl).display !== 'none') {
-                     steps.push({
-                         element: '#navMenu a[href="danhsach.html"]',
-                         intro: translations[language]["guide-menu-example-pairing-list"],
-                         position: 'right'
-                    });
-                }
-
-                 const menuPolicyEl = document.querySelector('#navMenu a[href*="script.google.com/macros"]');
-                 if (menuPolicyEl && getComputedStyle(menuPolicyEl).display !== 'none') {
-                     steps.push({
-                         element: menuPolicyEl,
-                         intro: translations[language]["guide-menu-example-policy"],
-                         position: 'right'
-                    });
-                 }
-
             }
 
-            // Bước cuối cùng
             steps.push({
                 intro: translations[language]["guide-end"]
             });
@@ -2519,15 +2932,14 @@
                 nextLabel: translations[language]["guide-next"],
                 prevLabel: translations[language]["guide-prev"],
                 doneLabel: translations[language]["guide-done"],
-                tooltipClass: 'introjs-elegant-theme', // Áp dụng chủ đề thanh lịch mới
+                tooltipClass: 'introjs-elegant-theme',
                 exitOnEsc: true,
                 exitOnOverlayClick: true,
-                showBullets: false, // Có thể bật nếu muốn hiển thị các chấm chỉ bước
-                showStepNumbers: false // Có thể bật nếu muốn hiển thị số bước
+                showBullets: false,
+                showStepNumbers: false
             });
             intro.start();
         }
-
     </script>
 </body>
 </html>
