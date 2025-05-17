@@ -31,6 +31,18 @@
             --transition-speed: 0.3s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
+
+            /* CSS Variables for text colors based on exteriorValue (can be defined here or inline) */
+            --exterior-default-text: #333; /* Màu chữ mặc định */
+            --exterior-orange-text: orange;
+            --exterior-red-text: red;
+            --exterior-blue-text: blue;
+            --exterior-yellow-text: #B8860B; /* DarkGoldenrod - for better contrast on light backgrounds */
+            --exterior-pink-text: hotpink;
+            --exterior-green-text: green;
+            --exterior-white-text: #333; /* For white cars, use dark text if background is light */
+            --exterior-grey-text: dimgray;
+            --exterior-bronze-text: peru;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,6 +59,19 @@
             background: var(--background-dark);
             color: var(--text-dark);
         }
+        body.dark-mode {
+            --exterior-default-text: #ccc;
+            --exterior-orange-text: #FFA500;
+            --exterior-red-text: #FF4747;
+            --exterior-blue-text: #5CADFF;
+            --exterior-yellow-text: #FFD700; /* Gold - for dark backgrounds */
+            --exterior-pink-text: #FF69B4;
+            --exterior-green-text: #32CD32;
+            --exterior-white-text: #E0E0E0; /* Light grey for white cars on dark bg */
+            --exterior-grey-text: #A9A9A9;
+            --exterior-bronze-text: #CD7F32;
+        }
+
 
         /* Thanh cuộn tùy chỉnh */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -931,7 +956,7 @@
             .main-container {
                 margin-top: 48px; /* Adjust for slightly taller header */
                 min-height: calc(100vh - 48px - 34px); /* Recalculate height */
-                padding: 15px; /* UPDATED: Increased padding for better spacing on phones */
+                padding: 15px; 
                 gap: 10px;
             }
             .grid-container {
@@ -989,7 +1014,11 @@
                 font-size: 10.5px; /* Smaller font for table data */
             }
             th, td {
-                padding: 10px 8px; /* UPDATED: Increased padding for table cells */
+                padding: 10px 8px; 
+            }
+             /* Style cho cột ngoại thất để áp dụng màu chữ */
+            td:nth-child(4) { /* Cột "NGOẠI THẤT" */
+                /* Kiểu chữ sẽ được áp dụng bởi JavaScript */
             }
             .detail-panel {
                 padding: 10px;
@@ -1004,7 +1033,7 @@
                 font-size: 11.5px;
             }
             .detail-table th, .detail-table td {
-                padding: 10px 8px; /* UPDATED: Increased padding for detail table cells */
+                padding: 10px 8px; 
             }
             .pagination {
                 margin-top: 15px;
@@ -1175,9 +1204,180 @@
         let filteredData = [];
         let currentPage = 1;
         const rowsPerPage = 15;
-        // Ngôn ngữ không được sử dụng trong logic hiện tại, nhưng có thể để dành cho tương lai
-        // let language = localStorage.getItem('language') || 'vi';
         let currentSelectedCarData = null; // Biến lưu trữ dữ liệu xe đang được chọn
+
+        function getExteriorColorStyle(exteriorValue) {
+            // Kiểu viền chữ cơ bản để tăng độ tương phản
+            const outlineStyle = "text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #000;";
+            
+            // Kiểu mặc định với viền và font-weight normal
+            // Sử dụng CSS variable cho màu chữ mặc định để dễ dàng tùy chỉnh
+            let defaultColorStyle = `color: var(--exterior-default-text, #333); ${outlineStyle} font-weight: normal;`;
+
+            // Nếu không có giá trị màu ngoại thất, trả về kiểu mặc định
+            if (!exteriorValue) {
+                return defaultColorStyle;
+            }
+
+            // Chuyển giá trị màu ngoại thất về chữ thường để xử lý không phân biệt hoa thường
+            const lowerExteriorValue = exteriorValue.toLowerCase();
+            // Kiểu font-weight đậm hơn cho các trường hợp màu chữ cụ thể
+            const fontWeight = `font-weight: 600;`; 
+
+            // Ưu tiên các chuỗi đầy đủ hoặc cụ thể nhất trước
+            // Các trường hợp này sẽ được kiểm tra trước các trường hợp chung chung hơn
+            if (lowerExteriorValue === "brahminy white (ce18)") {
+                return `color: white; ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "sunset orb (ce1a)") {
+                // Sử dụng CSS variable cho màu cam
+                return `color: var(--exterior-orange-text, orange); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "crimson red (ce1m)") {
+                // Sử dụng CSS variable cho màu đỏ
+                return `color: var(--exterior-red-text, red); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "vinfast blue (ce1n)") {
+                // Sử dụng CSS variable cho màu xanh dương
+                return `color: var(--exterior-blue-text, blue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "neptune grey (ce14)") {
+                // Nếu #4A4A4A là màu xám tối, cân nhắc chữ trắng nếu nền cũng tối.
+                // Giả sử nó đủ sáng để thấy viền đen, hoặc nền tương phản tốt.
+                return `color: #778899; /* LightSlateGray */ ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black (ce11)") {
+                // Chữ trắng trên nền đen để đảm bảo độ tương phản
+                return `color: white; /* Đổi từ black thành white cho dễ đọc trên nền đen */ ${outlineStyle} ${fontWeight}`; 
+            }
+            if (lowerExteriorValue === "electric blue (ce1j)") {
+                return `color: var(--exterior-blue-text, dodgerblue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "zenith grey (ce1v)") {
+                // Giả sử --exterior-grey-text đủ sáng, hoặc đổi màu chữ nếu cần
+                return `color: #B0C4DE; /* LightSteelBlue */ ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") {
+                return `color: var(--exterior-yellow-text, yellow); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") {
+                return `color: var(--exterior-blue-text, deepskyblue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") {
+                return `color: var(--exterior-pink-text, hotpink); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") {
+                return `color: var(--exterior-pink-text, mediumvioletred); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "urbant mint (ce1w)") {
+                return `color: #3CB371; /* MediumSeaGreen */ ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "vinbus green (ce2b)") {
+                return `color: var(--exterior-green-text, green); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "deep ocean (ce1h)") {
+                // Chữ trắng trên nền xanh đậm để đảm bảo độ tương phản
+                return `color: white; /* Đổi từ #228B22 (ForestGreen) thành white */ ${outlineStyle} ${fontWeight}`; 
+            }
+            // Lưu ý: "brahminy white roof- summer yellow body (181u)" bị lặp lại, đã xử lý ở trên.
+            if (lowerExteriorValue === "iris berry (ce1x)") {
+                return `color: var(--exterior-pink-text, mediumvioletred); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") {
+                return `color: var(--exterior-grey-text, darkgray); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "urbant mint green - desat silv (171w)") {
+                return `color: var(--exterior-green-text, mediumseagreen); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "ivy green-desat silver roof (1722)") {
+                return `color: var(--exterior-green-text, darkolivegreen); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") {
+                return `color: var(--exterior-blue-text, steelblue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black-champagne creme roof (2311)") { // Body is Jet Black
+                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
+            }
+            if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") { // Body is Infinity Blanc
+                // Nếu --exterior-white-text là trắng, sẽ là chữ trắng viền đen trên nền trắng
+                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; // Dùng màu xám nhạt nếu nền trắng
+            }
+            if (lowerExteriorValue === "champagne creme - matte champa (2523)") { // Body is Champagne Creme
+                return `color: var(--exterior-yellow-text, palegoldenrod); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black - graphite roof (2811)") { // Body is Jet Black
+                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
+            }
+            if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") { // Body is Crimson Velvet
+                return `color: var(--exterior-red-text, crimson); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "ivy_green_gne (ce22)") {
+                return `color: var(--exterior-green-text, darkolivegreen); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "champagne_creme_ylg (ce23)") {
+                return `color: var(--exterior-yellow-text, khaki); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "crimson red - jet black roof (111m)") { // Body is Crimson Red
+                return `color: var(--exterior-red-text, firebrick); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") { // Body is Infinity Blanc
+                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; // Dùng màu xám nhạt nếu nền trắng
+            }
+            if (lowerExteriorValue === "deep ocean_jet black roof (111h)") { // Body is Deep Ocean
+                return `color: white; ${outlineStyle} ${fontWeight}`; // Quyết định dùng chữ trắng cho dễ đọc
+            }
+            if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") { // Body is Alantic Blue
+                return `color: var(--exterior-blue-text, cornflowerblue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") { // Body is Jet Black
+                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
+            }
+            if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") { // Body is Champagne Creme
+                return `color: var(--exterior-yellow-text, lightgoldenrodyellow); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue === "de sat silver ind12007 (ce17)") {
+                return `color: var(--exterior-grey-text, silver); ${outlineStyle} ${fontWeight}`;
+            }
+
+            // Fallback for more general terms using .includes()
+            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) {
+                return `color: var(--exterior-red-text, red); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) {
+                return `color: var(--exterior-pink-text, hotpink); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("deep ocean")) { 
+                return `color: white; ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) {
+                return `color: var(--exterior-blue-text, blue); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("sunset orb")) {
+                return `color: var(--exterior-orange-text, orange); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) {
+                return `color: var(--exterior-yellow-text, yellow); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) {
+                return `color: var(--exterior-green-text, green); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("jet black")) {
+                return `color: white; ${outlineStyle} ${fontWeight}`; 
+            }
+            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) {
+                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; 
+            }
+            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) {
+                return `color: var(--exterior-grey-text, dimgray); ${outlineStyle} ${fontWeight}`;
+            }
+            if (lowerExteriorValue.includes("mystery bronz")) {
+                return `color: var(--exterior-bronze-text, peru); ${outlineStyle} ${fontWeight}`;
+            }
+            
+            return defaultColorStyle;
+        }
+        // --- END: Hàm để lấy kiểu màu chữ ngoại thất ---
+
 
         document.addEventListener("DOMContentLoaded", function () {
             if (!isLoggedIn) {
@@ -1185,15 +1385,13 @@
             } else {
                 loadInitialData(); 
                 setupSearch(); // Thiết lập chức năng tìm kiếm
-                // Áp dụng theme tối nếu đã lưu
                 if (localStorage.getItem('theme') === 'dark') {
                     document.body.classList.add('dark-mode');
                     const themeIcon = document.querySelector('.theme-toggle i');
                     if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
                 }
                 
-                // Khôi phục trạng thái sidebar cho desktop
-                if (window.innerWidth > 900) { // Chỉ áp dụng cho màn hình lớn hơn tablet
+                if (window.innerWidth > 900) { 
                     const sidebar = document.getElementById("slidebar");
                     const mainContainer = document.getElementById("main-container");
                     const storedState = localStorage.getItem('sidebarState_khoxe');
@@ -1202,42 +1400,36 @@
                         sidebar.classList.remove("collapsed");
                         mainContainer.classList.remove("collapsed");
                     } else { 
-                        sidebar.classList.add("collapsed"); // Mặc định thu gọn hoặc theo trạng thái đã lưu
+                        sidebar.classList.add("collapsed"); 
                         mainContainer.classList.add("collapsed");
-                        if (!storedState) { // Nếu chưa có trạng thái nào, lưu là collapsed
+                        if (!storedState) { 
                             localStorage.setItem('sidebarState_khoxe', 'collapsed');
                         }
                     }
                 }
-                setupResponsiveChecks(); // Thiết lập các kiểm tra responsive ban đầu và khi resize
+                setupResponsiveChecks(); 
             }
             
-            // Hiển thị nút menu mobile nếu ở màn hình tablet/mobile
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
             if (window.innerWidth <= 900 && mobileMenuBtn) {
                 mobileMenuBtn.style.display = 'flex';
             }
             
-            // Xử lý click bên ngoài để đóng sidebar mobile
             document.addEventListener('click', function(event) {
                 const sidebar = document.getElementById('slidebar'); 
                 const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-                // Chỉ hoạt động khi màn hình <= 900px và sidebar đang mở
                 if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
-                    // Nếu click không phải vào sidebar và không phải vào nút mở menu
                     if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
-                        sidebar.classList.remove('open'); // Đóng sidebar
+                        sidebar.classList.remove('open'); 
                     }
                 }
             });
         });
 
-        // Hiển thị overlay loading
         function showLoading() {
             const loadingOverlay = document.getElementById("loading-overlay");
             loadingOverlay.classList.add("active");
             const loadingText = loadingOverlay.querySelector("span");
-            // Điều chỉnh màu chữ loading cho theme
             if (document.body.classList.contains("dark-mode")) {
                 if(loadingText) loadingText.style.color = "var(--text-dark)";
             } else {
@@ -1245,23 +1437,19 @@
             }
         }
 
-        // Ẩn overlay loading
         function hideLoading() {
             document.getElementById("loading-overlay").classList.remove("active");
         }
 
-        // Tải dữ liệu ban đầu từ API
         async function loadInitialData() {
             showLoading();
             const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec";
             try {
                 const response = await axios.get(apiURL);
-                // Kiểm tra cấu trúc dữ liệu trả về
                 if (!response.data || !Array.isArray(response.data.khoxe)) {
                      console.error("Invalid data structure received:", response.data);
                     throw new Error("Dữ liệu không hợp lệ từ API");
                 }
-                // Xử lý và lưu dữ liệu
                 tableData = response.data.khoxe.map(row => [
                     row["Dòng xe"] || "",
                     row["Phiên bản"] || "",
@@ -1269,17 +1457,17 @@
                     row["Nội thất"] || "",
                     row["VIN"] || "",
                     row["Trạng thái"] || "", 
-                    row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : "" // Định dạng ngày
+                    row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); // Lưu vào session storage
-                filteredData = [...tableData]; // Khởi tạo dữ liệu đã lọc
-                renderTable(); // Hiển thị bảng
-                populateFilters(); // Điền các bộ lọc
-                showNewUnpairedCarSuggestions(); // Hiển thị gợi ý xe mới
+                sessionStorage.setItem('KhoXe', JSON.stringify(tableData)); 
+                filteredData = [...tableData]; 
+                renderTable(); 
+                populateFilters(); 
+                showNewUnpairedCarSuggestions(); 
                 showNotification("Dữ liệu đã được tải!", 2000);
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
-                const colCount = window.innerWidth <= 768 ? 7 : 8; // Số cột tuỳ theo màn hình
+                const colCount = window.innerWidth <= 768 ? 7 : 8; 
                 document.getElementById("table-body").innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">⚠️ Lỗi tải dữ liệu: ${error.message}. Vui lòng thử làm mới.</td></tr>`;
                 showNotification(`Lỗi tải dữ liệu: ${error.message}`, 3000);
             } finally {
@@ -1287,15 +1475,14 @@
             }
         }
 
-        // Hiển thị dữ liệu lên bảng
         function renderTable() {
             const tbody = document.getElementById("table-body");
-            tbody.innerHTML = ""; // Xóa nội dung cũ
+            tbody.innerHTML = ""; 
             const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
-            const paginatedData = filteredData.slice(start, end); // Lấy dữ liệu cho trang hiện tại
+            const paginatedData = filteredData.slice(start, end); 
             const isMobile = window.innerWidth <= 768;
-            const colCount = isMobile ? 7 : 8; // Số cột hiển thị
+            const colCount = isMobile ? 7 : 8; 
 
             if (paginatedData.length === 0 && filteredData.length > 0) {
                  tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">Không tìm thấy xe nào khớp với bộ lọc.</td></tr>`;
@@ -1303,33 +1490,36 @@
                  tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">Hiện chưa có dữ liệu xe nào trong kho.</td></tr>`;
             } else {
                 paginatedData.forEach((row, index) => {
-                    const globalIndex = start + index + 1; // Số thứ tự toàn cục
+                    const globalIndex = start + index + 1; 
                     const tr = document.createElement("tr");
+                    
+                    const exteriorColorValue = row[2] || ''; // Giá trị màu ngoại thất
+                    const exteriorColorStyle = getExteriorColorStyle(exteriorColorValue); // Lấy style màu
+
                     let rowHtml = `
                         <td>${globalIndex}</td>
                         <td>${row[0] || ''}</td>
                         <td>${row[1] || ''}</td>
-                        <td>${row[2] || ''}</td>
+                        <td style="${exteriorColorStyle}">${exteriorColorValue}</td>
                         <td>${row[3] || ''}</td>
                         <td class="highlight">${row[4] || ''}</td>
                         <td>${row[5] || ''}</td>
                     `;
-                    if (!isMobile) { // Chỉ hiển thị cột "Ngày nhập" trên màn hình lớn
+                    if (!isMobile) { 
                         rowHtml += `<td>${row[6] || ''}</td>`;
                     }
                     tr.innerHTML = rowHtml;
-                    tr.onclick = () => showDetail(row, globalIndex); // Gán sự kiện click để xem chi tiết
+                    tr.onclick = () => showDetail(row, globalIndex); 
                     tbody.appendChild(tr);
                 });
             }
 
-            updatePagination(); // Cập nhật thông tin phân trang
-            updateTotalVehicles(); // Cập nhật tổng số xe
+            updatePagination(); 
+            updateTotalVehicles(); 
 
-            // Hiển thị chi tiết xe đầu tiên nếu có dữ liệu
             if (paginatedData.length > 0) {
                 showDetail(paginatedData[0], start + 1);
-            } else { // Nếu không có dữ liệu, xóa chi tiết và ẩn nút yêu cầu
+            } else { 
                 const detailBody = document.querySelector("#detail-body tbody");
                 if (detailBody) detailBody.innerHTML = `<tr><td colspan='2' style='text-align:center; padding:10px;'>Chọn một xe để xem chi tiết.</td></tr>`;
                 const detailPanelH3 = document.querySelector("#detail-panel h3");
@@ -1338,7 +1528,6 @@
             }
         }
 
-        // Cập nhật các nút và thông tin phân trang
         function updatePagination() {
             const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
             document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
@@ -1346,24 +1535,20 @@
             document.getElementById("next-btn").disabled = currentPage === totalPages || filteredData.length === 0;
         }
 
-        // Cập nhật tổng số xe hiển thị
         function updateTotalVehicles() {
             document.getElementById("total-vehicles").textContent = `Tổng số xe: ${filteredData.length}`;
         }
 
-        // Chuyển trang
         function changePage(delta) {
             const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
             currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
             renderTable();
-            // Cuộn lên đầu bảng và panel chi tiết khi chuyển trang
             document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById("detail-panel").scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Hiển thị chi tiết của xe được chọn
         function showDetail(row, index) {
-            currentSelectedCarData = row; // Lưu dữ liệu xe hiện tại
+            currentSelectedCarData = row; 
             const detailBody = document.querySelector("#detail-body tbody");
             const detailPanelH3 = document.querySelector("#detail-panel h3");
             if(detailPanelH3) detailPanelH3.textContent = `Chi Tiết Xe - #${index}`;
@@ -1373,22 +1558,24 @@
             ];
             let html = "";
             headers.forEach((header, i) => {
-                // Bỏ qua "Ngày nhập" nếu đang ở màn hình mobile và cột đó bị ẩn
                 if (window.innerWidth <= 768 && i === 6) return; 
 
                 let value = row[i] || "N/A";
-                // Highlight số VIN
+                let cellStyle = "";
+                if (i === 2) { // Cột "Ngoại thất"
+                    cellStyle = getExteriorColorStyle(value);
+                }
+                
                 if (i === 4 && value && value !== "N/A") { 
-                    html += `<tr><th>${header}</th><td class="highlight">${value}</td></tr>`;
+                    html += `<tr><th>${header}</th><td class="highlight" style="${cellStyle}">${value}</td></tr>`;
                 } else {
-                    html += `<tr><th>${header}</th><td>${value}</td></tr>`;
+                    html += `<tr><th>${header}</th><td style="${cellStyle}">${value}</td></tr>`;
                 }
             });
             if(detailBody) detailBody.innerHTML = html || `<tr><td colspan='2'>Không có chi tiết.</td></tr>`;
-            document.getElementById('requestPairingBtn').style.display = 'block'; // Hiển thị nút yêu cầu ghép xe
+            document.getElementById('requestPairingBtn').style.display = 'block'; 
         }
 
-        // Làm mới dữ liệu từ API
         async function refreshData() {
             showLoading();
             const apiURL = "https://script.google.com/macros/s/AKfycbwVmfihNIMYfheBH1QIJDDB3iqfFwAJaKDyo2rzW4XX5k3fHtV71b5DFT4R3-C7Va_tSg/exec";
@@ -1405,13 +1592,12 @@
                 ]);
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
                 filteredData = [...tableData];
-                // Reset các bộ lọc và ô tìm kiếm
                 document.getElementById("search-input").value = "";
                 document.getElementById("filter-line").value = "";
                 document.getElementById("filter-version").value = "";
                 document.getElementById("filter-exterior").value = "";
                 document.getElementById("filter-status").value = "";
-                currentPage = 1; // Về trang đầu
+                currentPage = 1; 
                 renderTable();
                 populateFilters();
                 showNewUnpairedCarSuggestions(); 
@@ -1426,33 +1612,28 @@
             }
         }
 
-        // Điền các tùy chọn vào bộ lọc select
         function populateFilters() {
             const lineSelect = document.getElementById("filter-line");
             const versionSelect = document.getElementById("filter-version");
             const exteriorSelect = document.getElementById("filter-exterior");
             const statusSelect = document.getElementById("filter-status");
 
-            // Lưu giá trị hiện tại của các bộ lọc để khôi phục sau khi điền lại
             const currentLine = lineSelect.value;
             const currentVersion = versionSelect.value;
             const currentExterior = exteriorSelect.value;
             const currentStatus = statusSelect.value;
 
-            // Lấy các giá trị duy nhất từ dữ liệu
             const lines = [...new Set(tableData.map(row => row[0]))].sort();
             const versions = [...new Set(tableData.map(row => row[1]))].sort();
             const exteriors = [...new Set(tableData.map(row => row[2]))].sort();
             const statuses = [...new Set(tableData.map(row => row[5]))].sort();
 
-            // Tạo HTML cho các option
             lineSelect.innerHTML = '<option value="">Tất cả dòng xe</option>' + lines.map(line => `<option value="${line}" ${line === currentLine ? 'selected' : ''}>${line}</option>`).join('');
             versionSelect.innerHTML = '<option value="">Tất cả phiên bản</option>' + versions.map(version => `<option value="${version}" ${version === currentVersion ? 'selected' : ''}>${version}</option>`).join('');
             exteriorSelect.innerHTML = '<option value="">Tất cả ngoại thất</option>' + exteriors.map(exterior => `<option value="${exterior}" ${exterior === currentExterior ? 'selected' : ''}>${exterior}</option>`).join('');
             statusSelect.innerHTML = '<option value="">Tất cả trạng thái</option>' + statuses.map(status => `<option value="${status}" ${status === currentStatus ? 'selected' : ''}>${status}</option>`).join('');
         }
 
-        // Áp dụng các bộ lọc và tìm kiếm
         function applyFilters() {
             const lineFilter = document.getElementById("filter-line").value;
             const versionFilter = document.getElementById("filter-version").value;
@@ -1468,18 +1649,16 @@
                 const matchesStatus = !statusFilter || row[5] === statusFilter;
                 return matchesSearch && matchesLine && matchesVersion && matchesExterior && matchesStatus;
             });
-            currentPage = 1; // Reset về trang đầu khi lọc
+            currentPage = 1; 
             renderTable();
         }
 
-        // Xuất dữ liệu ra file Excel
         function exportToExcel() {
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
                 const headers = [ 
                     "SỐ TT", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT",
                     "SỐ VIN", "TRẠNG THÁI", "NGÀY NHẬP"
                 ];
-                // Chỉ bao gồm các cột được hiển thị (không bao gồm "Ngày nhập" trên mobile)
                 const isMobile = window.innerWidth <= 768;
                 const actualHeaders = isMobile ? headers.slice(0, -1) : headers;
 
@@ -1505,7 +1684,6 @@
             }
         }
 
-        // Chức năng in bảng
         function printTable() {
             const now = new Date().toLocaleString('vi-VN');
             const isMobile = window.innerWidth <= 768;
@@ -1526,9 +1704,11 @@
                     <tbody>
             `;
             filteredData.forEach((row, index) => {
+                const exteriorColorValue = row[2] || '';
+                const exteriorColorStyle = getExteriorColorStyle(exteriorColorValue);
                 tableContent += `
                     <tr>
-                        <td>${index + 1}</td> <td>${row[0]}</td> <td>${row[1]}</td> <td>${row[2]}</td>
+                        <td>${index + 1}</td> <td>${row[0]}</td> <td>${row[1]}</td> <td style="${exteriorColorStyle}">${exteriorColorValue}</td>
                         <td>${row[3]}</td> <td class="highlight">${row[4]}</td> <td>${row[5]}</td>
                         ${!isMobile ? `<td>${row[6]}</td>` : ''}
                     </tr>
@@ -1550,6 +1730,8 @@
                     th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 10px; white-space: nowrap; }
                     th { background: var(--primary-color); color: #FFFFFF; font-weight: 600;}
                     .highlight { font-weight: 600; color: var(--secondary-color); }
+                    /* Ensure text shadow for outline is black for printing */
+                    td[style*="text-shadow"] { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #000 !important; }
                     @media print {
                         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                         th { background-color: var(--primary-color) !important; color: #FFFFFF !important; }
@@ -1560,18 +1742,16 @@
                 </style></head><body>${printContent}</body></html>
             `);
             win.document.close();
-            setTimeout(() => { win.print(); win.close(); }, 500); // Đợi chút để CSS load rồi mới in
+            setTimeout(() => { win.print(); win.close(); }, 500); 
         }
 
-        // Thiết lập tìm kiếm với debounce
         function setupSearch() {
             const searchInput = document.getElementById("search-input");
             searchInput.addEventListener("input", debounce(function () {
                 applyFilters();
-            }, 300)); // Delay 300ms
+            }, 300)); 
         }
 
-        // Hàm debounce để trì hoãn thực thi hàm
         function debounce(func, wait) {
             let timeout;
             return function (...args) {
@@ -1580,7 +1760,6 @@
             };
         }
 
-        // Chuyển đổi theme sáng/tối
         function toggleTheme() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -1596,76 +1775,66 @@
                 localStorage.setItem('theme', 'light');
                  if(loadingText) loadingText.style.color = "var(--text-light)";
             }
+            renderTable(); // Re-render table to apply new theme to colors
         }
 
-        // Thu gọn/mở rộng sidebar cho desktop
         function toggleSlidebarDesktop() { 
-            if (window.innerWidth > 900) { // Chỉ hoạt động trên màn hình lớn
+            if (window.innerWidth > 900) { 
                 const sidebar = document.getElementById("slidebar");
                 const mainContainer = document.getElementById("main-container");
                 sidebar.classList.toggle("collapsed");
                 mainContainer.classList.toggle("collapsed");
-                // Lưu trạng thái sidebar
                 localStorage.setItem('sidebarState_khoxe', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
             }
         }
 
-        // Mở/đóng sidebar cho mobile
         function toggleMobileSidebar() { 
             const sidebar = document.getElementById("slidebar"); 
             sidebar.classList.toggle("open"); 
-             // Nếu mở sidebar mobile, đảm bảo nó không ở trạng thái "collapsed" của desktop
              if (sidebar.classList.contains("open")) {
                 sidebar.classList.remove("collapsed"); 
             }
         }
 
-        // Đăng xuất
         function logout() {
-            sessionStorage.clear(); // Xóa session
+            sessionStorage.clear(); 
             window.location.href = "index.html";
             showNotification("Đã đăng xuất!", 2000);
         }
 
-        // Quay lại trang chủ
         function goBack() {
             window.location.href = "index.html";
         }
 
-        // Hiển thị thông báo
         function showNotification(message, duration = 2000) {
             const notif = document.getElementById("notification");
             notif.textContent = message;
             notif.classList.add("show"); 
-            if (notif.timeout) clearTimeout(notif.timeout); // Xóa timeout cũ nếu có
+            if (notif.timeout) clearTimeout(notif.timeout); 
             notif.timeout = setTimeout(() => {
                 notif.classList.remove("show"); 
             }, duration);
         }
 
-        // Thiết lập các kiểm tra responsive khi load và resize
         function setupResponsiveChecks() {
-            const colNgayNhap = document.getElementById('col-ngay-nhap'); // colgroup cho Ngày Nhập
-            const thNgayNhap = document.getElementById('th-ngay-nhap');   // th cho Ngày Nhập
+            const colNgayNhap = document.getElementById('col-ngay-nhap'); 
+            const thNgayNhap = document.getElementById('th-ngay-nhap');   
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
 
             function checkAndAdjustLayout() {
                 const isMobile = window.innerWidth <= 768;
-                const isTablet = window.innerWidth <= 900; // Bao gồm cả mobile
+                const isTablet = window.innerWidth <= 900; 
 
-                // Ẩn/hiện cột "Ngày nhập" và header tương ứng
                 if (colNgayNhap) colNgayNhap.style.display = isMobile ? 'none' : '';
                 if (thNgayNhap) thNgayNhap.style.display = isMobile ? 'none' : '';
                 
-                // Hiển thị/ẩn nút menu mobile
                 if (mobileMenuBtn) mobileMenuBtn.style.display = isTablet ? 'flex' : 'none';
 
                 const sidebar = document.getElementById("slidebar"); 
                 const mainContainer = document.getElementById("main-container");
 
-                if (!isTablet) { // Màn hình desktop
-                    sidebar.classList.remove("open"); // Đóng mobile menu nếu đang mở
-                    // Khôi phục trạng thái collapsed/expanded của desktop sidebar
+                if (!isTablet) { 
+                    sidebar.classList.remove("open"); 
                     const storedState = localStorage.getItem('sidebarState_khoxe');
                     if (storedState === 'expanded') {
                         sidebar.classList.remove("collapsed");
@@ -1674,41 +1843,36 @@
                         sidebar.classList.add("collapsed");
                         mainContainer.classList.add("collapsed");
                     }
-                } else { // Màn hình tablet/mobile
-                    // Reset trạng thái collapsed của desktop, để mobile menu kiểm soát
+                } else { 
                     sidebar.classList.remove("collapsed"); 
                     mainContainer.classList.remove("collapsed");
                 }
-                renderTable(); // Render lại bảng để cập nhật số cột hiển thị
+                renderTable(); 
             }
-            window.addEventListener('resize', debounce(checkAndAdjustLayout, 200)); // Thêm debounce cho resize
-            checkAndAdjustLayout(); // Chạy lần đầu khi load
+            window.addEventListener('resize', debounce(checkAndAdjustLayout, 200)); 
+            checkAndAdjustLayout(); 
         }
 
-        // --- Chức năng Gợi Ý Xe Mới ---
         function showNewUnpairedCarSuggestions() {
             if (!tableData || tableData.length === 0) return;
 
             const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // Lấy ngày 7 ngày trước
-            sevenDaysAgo.setHours(0, 0, 0, 0); // Set về đầu ngày để so sánh chính xác
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); 
+            sevenDaysAgo.setHours(0, 0, 0, 0); 
 
             const newUnpairedCars = tableData.filter(row => {
                 const status = row[5] ? row[5].toString().toLowerCase() : ""; 
-                const dateAddedStr = row[6]; // Ngày nhập dạng "dd/mm/yyyy"
+                const dateAddedStr = row[6]; 
 
-                if (!dateAddedStr) return false; // Bỏ qua nếu không có ngày nhập
+                if (!dateAddedStr) return false; 
 
-                // Chuyển đổi chuỗi ngày nhập sang đối tượng Date
                 const parts = dateAddedStr.split('/');
-                if (parts.length !== 3) return false; // Định dạng ngày không hợp lệ
+                if (parts.length !== 3) return false; 
                 
-                // new Date(year, monthIndex, day)
                 const dateAdded = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                dateAdded.setHours(0,0,0,0); // Set về đầu ngày
+                dateAdded.setHours(0,0,0,0); 
 
-                const isNew = dateAdded >= sevenDaysAgo; // Xe mới trong 7 ngày
-                // Kiểm tra các trạng thái "chưa ghép", "sẵn sàng", "chờ ghép" (linh hoạt với chữ hoa/thường)
+                const isNew = dateAdded >= sevenDaysAgo; 
                 const isUnpaired = status.includes("chưa ghép") || status.includes("sẵn sàng") || status.includes("chờ ghép");
                 
                 return isNew && isUnpaired;
@@ -1717,24 +1881,24 @@
             if (newUnpairedCars.length > 0) {
                 const suggestionListDiv = document.getElementById('suggestionList');
                 if (!suggestionListDiv) return;
-                suggestionListDiv.innerHTML = ''; // Xóa gợi ý cũ
+                suggestionListDiv.innerHTML = ''; 
 
-                // Sắp xếp xe mới nhất lên đầu
                 newUnpairedCars.sort((a, b) => {
                     const partsA = a[6].split('/');
                     const dateA = new Date(partsA[2], partsA[1] - 1, partsA[0]);
                     const partsB = b[6].split('/');
                     const dateB = new Date(partsB[2], partsB[1] - 1, partsB[0]);
-                    return dateB - dateA; // Sắp xếp giảm dần theo ngày
+                    return dateB - dateA; 
                 });
 
-                // Chỉ hiển thị tối đa 5 xe
                 newUnpairedCars.slice(0, 5).forEach(car => { 
+                    const exteriorColorValue = car[2] || 'N/A';
+                    const exteriorColorStyle = getExteriorColorStyle(exteriorColorValue);
                     const carInfo = `
                         <div class="suggestion-item">
                             <div><i class="fas fa-car"></i><strong>Dòng xe:</strong><span class="value">${car[0] || 'N/A'}</span></div>
                             <div><i class="fas fa-cogs"></i><strong>Phiên bản:</strong><span class="value">${car[1] || 'N/A'}</span></div>
-                            <div><i class="fas fa-palette"></i><strong>Ngoại thất:</strong><span class="value">${car[2] || 'N/A'}</span></div>
+                            <div><i class="fas fa-palette"></i><strong>Ngoại thất:</strong><span class="value" style="${exteriorColorStyle}">${exteriorColorValue}</span></div>
                             <div><i class="fas fa-barcode"></i><strong>VIN:</strong><span class="value highlight">${car[4] || 'N/A'}</span></div>
                             <div><i class="fas fa-calendar-alt"></i><strong>Ngày nhập:</strong><span class="value">${car[6] || 'N/A'}</span></div>
                         </div>
@@ -1743,30 +1907,25 @@
                 });
                 
                 const modal = document.getElementById('suggestionModal');
-                if (modal) modal.style.display = 'flex'; // Hiển thị modal
+                if (modal) modal.style.display = 'flex'; 
             }
         }
 
-        // Đóng modal gợi ý
         function closeSuggestionModal() {
             const modal = document.getElementById('suggestionModal');
             if (modal) modal.style.display = 'none';
         }
 
-        // --- Chức năng Yêu Cầu Ghép Xe ---
         function requestPairing() {
             if (currentSelectedCarData) {
-                // Lấy thông tin xe từ currentSelectedCarData
                 const dongXe = encodeURIComponent(currentSelectedCarData[0] || ''); 
                 const phienBan = encodeURIComponent(currentSelectedCarData[1] || ''); 
                 const ngoaiThat = encodeURIComponent(currentSelectedCarData[2] || ''); 
                 const noiThat = encodeURIComponent(currentSelectedCarData[3] || ''); 
                 const vin = encodeURIComponent(currentSelectedCarData[4] || ''); 
 
-                // Tạo URL với các tham số query
                 const url = `yeucaughepxe.html?dongXe=${dongXe}&phienBan=${phienBan}&ngoaiThat=${ngoaiThat}&noiThat=${noiThat}&vin=${vin}`;
                 
-                // Chuyển hướng đến trang yeucaughepxe.html
                 window.location.href = url;
             } else {
                 showNotification("Vui lòng chọn một xe từ danh sách trước.", 3000);
