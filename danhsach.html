@@ -116,10 +116,30 @@
 
         .sidebar .logo { text-align: center; margin-bottom: 25px; }
         .sidebar .logo h1 {
-            font-size: 20px; color: #fff; font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
+font-size: 25px;
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    /* Additions for animation */
+    animation: bounceGlow 2s infinite alternate;
+}
+
+@keyframes bounceGlow {
+    0%, 100% {
+        transform: translateY(0);
+        text-shadow: 0 0 3px #fff, /* White glow - reduced */
+                     0 0 6px #fff,
+                     0 0 9px #00aeff, /* Light blue glow - reduced */
+                     0 0 12px #00aeff;
+    }
+    50% {
+        transform: translateY(-10px); /* Bouncing effect */
+        text-shadow: 0 0 6px #fff,
+                     0 0 12px #fff,
+                     0 0 18px #0077cc, /* Darker blue glow for bounce peak - reduced */
+                     0 0 24px #0077cc;
+    }
+}
         .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
         .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
         .sidebar .menu a {
@@ -447,7 +467,7 @@
     </button>
 
     <div class="sidebar" id="sidebar"> <div class="logo">
-            <h1>VinFast</h1>
+            <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="menu" id="menuTabs"> <a href="#" onclick="switchTab('daghep', this)" class="active" data-tooltip="Đã Ghép"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
             <a href="#" onclick="switchTab('chuaghep', this)" data-tooltip="Chưa Ghép"><i class="fas fa-hourglass-half fa-fw"></i><span>Chưa Ghép</span></a>
