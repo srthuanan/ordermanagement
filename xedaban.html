@@ -11,18 +11,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Định nghĩa các biến CSS từ Index.html */
         :root {
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff; /* Màu xanh dương sáng hơn cho điểm nhấn */
-            --background-light: #f4f7fc; /* Nền sáng hơn một chút */
+            --secondary-color: #00aeff; 
+            --accent-color: #ffc107; 
+            --success-color: #28a745; 
+            --background-light: #f4f7fc; 
             --text-light: #2c3e50;
-            --background-dark: #161b22; /* Nền tối GitHub-like */
-            --text-dark: #c9d1d9;   /* Màu chữ GitHub-like */
+            --background-dark: #161b22; 
+            --text-dark: #c9d1d9;   
             --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;  /* Nền card tối hơn */
+            --card-bg-dark: #1e242e;  
             --border-color-light: #e1e4e8;
             --border-color-dark: #30363d;
             --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -30,37 +31,36 @@
             --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
             --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
-            --color-danger: #dc3545; /* Màu cho thông báo lỗi */
-            --color-success: #28a745; /* Màu cho thông báo thành công */
-            --color-warning: #ffc107; /* Màu cho thông báo cảnh báo */
-            --color-info: #17a2b8; /* Màu cho thông báo thông tin */
+            --color-danger: #dc3545; 
+            --color-success: #28a745; 
+            --color-warning: #ffc107; 
+            --color-info: #17a2b8; 
 
-
-            /* Giữ lại biến font nếu cần */
             --font-primary: 'Roboto', sans-serif;
-            --font-secondary: 'Montserrat', sans-serif; /* Dùng cho tiêu đề */
+            --font-secondary: 'Montserrat', sans-serif; 
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: var(--font-primary);
             background: var(--background-light);
-            color: var(--text-light); /* Sử dụng text-light cho chế độ sáng */
+            color: var(--text-light); 
             min-height: 100vh;
             overflow-x: hidden;
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+            font-size: 14px;
         }
         body.dark-mode {
             background: var(--background-dark);
-            color: var(--text-dark); /* Sử dụng text-dark cho chế độ tối */
+            color: var(--text-dark); 
         }
 
-        /* Thanh cuộn tùy chỉnh */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
-            background: var(--background-light);
+            background: var(--card-bg-light); 
             border-radius: 4px;
         }
         body.dark-mode ::-webkit-scrollbar-track {
@@ -76,7 +76,6 @@
         }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        /* Header */
         header {
             position: fixed;
             top: 0;
@@ -98,16 +97,15 @@
             box-shadow: var(--shadow-dark-outer);
         }
 
-        /* Sidebar (slidebar) */
-        .slidebar {
+        .slidebar { /* Renamed from sidebar to slidebar to match HTML */
             position: fixed;
             top: 0;
             left: 0;
-            width: 200px; /* Chiều rộng mặc định */
+            width: 200px; 
             height: 100vh;
             background: var(--primary-color-darker);
             padding: 15px;
-            padding-top: 50px; /* Điều chỉnh để không bị header che */
+            padding-top: 50px; 
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
             z-index: 1000;
             box-shadow: 3px 0 10px rgba(0,0,0,0.1);
@@ -115,10 +113,9 @@
             flex-direction: column;
         }
         .slidebar.collapsed {
-            width: 60px; /* Chiều rộng khi thu gọn */
+            width: 60px; 
         }
-         /* Sidebar mobile */
-        .slidebar.open {
+        .slidebar.open { /* For mobile */
             transform: translateX(0);
         }
         body.dark-mode .slidebar {
@@ -132,41 +129,29 @@
             margin-bottom: 25px;
         }
         .slidebar .logo h1 {
-            font-size: 25px; /* Kích thước gốc từ file của bạn */
+            font-size: 25px; 
             color: #fff;
-            font-weight: 600;
+            font-weight: 600; /* Adjusted from 700 to match overall feel */
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* text-shadow gốc từ file của bạn */
-            /* Thêm animation */
             animation: bounceGlowReduced 2s infinite alternate;
         }
 
         @keyframes bounceGlowReduced {
             0%, 100% {
                 transform: translateY(0);
-                /* Kết hợp text-shadow gốc với hiệu ứng phát sáng đã giảm */
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), /* Bóng đổ gốc */
-                             0 0 3px #fff, /* Phát sáng trắng - đã giảm */
-                             0 0 6px #fff,
-                             0 0 9px #00aeff, /* Phát sáng xanh nhạt - đã giảm */
-                             0 0 12px #00aeff;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
             }
             50% {
-                transform: translateY(-8px); /* Điều chỉnh độ nảy nếu cần, ví dụ: -8px */
-                /* Kết hợp text-shadow gốc với hiệu ứng phát sáng đã giảm ở đỉnh của cú nảy */
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), /* Bóng đổ gốc */
-                             0 0 6px #fff,
-                             0 0 12px #fff,
-                             0 0 18px #0077cc, /* Phát sáng xanh đậm hơn ở đỉnh - đã giảm */
-                             0 0 24px #0077cc;
+                transform: translateY(-8px); 
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
             }
         }
         .slidebar.collapsed .logo h1 {
             opacity: 0;
-            font-size: 0; /* Ẩn chữ khi thu gọn */
+            font-size: 0; 
         }
 
-        .slidebar .tabs { /* Sử dụng class tabs cho menu */
+        .slidebar .tabs { 
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -228,11 +213,11 @@
             transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
             white-space: nowrap;
             overflow: hidden;
-            max-width: 100px; /* Giới hạn chiều rộng chữ */
+            max-width: 100px; 
         }
         .slidebar.collapsed .tabs a span {
             opacity: 0;
-            max-width: 0; /* Ẩn chữ khi thu gọn */
+            max-width: 0; 
         }
         .slidebar .tabs a:hover {
             background: rgba(255, 255, 255, 0.1);
@@ -241,7 +226,7 @@
             transform: translateX(3px);
         }
          .slidebar.collapsed .tabs a:hover {
-            padding-left: 10px; /* Giữ padding khi thu gọn */
+            padding-left: 10px; 
             transform: scale(1.05);
         }
         .slidebar .tabs a:hover i {
@@ -279,10 +264,10 @@
             100% { box-shadow: 0 0 5px var(--secondary-color); }
         }
 
-        .toggle-btn {
+        .toggle-btn { /* Desktop sidebar toggle */
             position: absolute;
             top: 12px;
-            right: -15px; /* Nút toggle bên ngoài sidebar */
+            right: -15px; 
             width: 30px;
             height: 30px;
             background: var(--primary-color);
@@ -304,7 +289,6 @@
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
-        /* Các nút điều khiển Navbar */
         .navbar-controls {
             position: fixed;
             top: 10px;
@@ -338,7 +322,7 @@
             box-shadow: var(--shadow-light-inner);
         }
         .theme-toggle i {
-            transition: transform 0.5s ease-in-out; /* 0.5s là --transition-speed-slow */
+            transition: transform 0.5s ease-in-out; 
         }
         .theme-toggle.spinning i {
             transform: rotate(360deg);
@@ -360,8 +344,6 @@
             box-shadow: var(--shadow-dark-inner);
         }
 
-
-         /* Tooltip CSS */
         [data-tooltip] {
             position: relative;
         }
@@ -392,39 +374,33 @@
             color: #333;
         }
 
-
-        /* Main Container */
         .main-container {
-            margin-left: 200px; /* Margin bằng chiều rộng sidebar mặc định */
-            padding: 20px; /* Padding nội dung */
-            margin-top: 45px; /* Margin dưới header */
-            min-height: calc(100vh - 45px - 30px); /* Chiều cao trừ header và footer */
+            margin-left: 200px; 
+            padding: 20px; 
+            margin-top: 45px; 
+            min-height: calc(100vh - 45px - 30px); 
             transition: margin-left var(--transition-speed) ease;
-            padding-bottom: 50px; /* Padding cho footer */
+            padding-bottom: 50px; 
             display: flex;
-            flex-direction: column; /* Nội dung xếp dọc */
-            gap: 15px; /* Khoảng cách giữa các section */
+            flex-direction: column; 
+            gap: 15px; 
         }
         .main-container.collapsed {
-            margin-left: 60px; /* Margin khi sidebar thu gọn */
+            margin-left: 60px; 
         }
-        body.dark-mode .main-container {
-             /* Không cần background ở đây, background ở body */
-        }
-
-        /* Grid Container (Nơi chứa nội dung chính trên xedaban.html) */
+        
         .grid-container {
             flex: 1;
-            background: var(--card-bg-light); /* Nền cho container chính */
-            border-radius: 12px; /* Bo góc lớn hơn */
-            padding: 20px; /* Padding nội bộ */
-            box-shadow: var(--shadow-light-outer); /* Đổ bóng ngoài */
+            background: var(--card-bg-light); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: var(--shadow-light-outer); 
             display: flex;
             flex-direction: column;
-            gap: 15px; /* Khoảng cách giữa các phần trong grid */
+            gap: 15px; 
             width: 100%;
-            position: relative; /* Cần cho loading overlay */
-            overflow-y: auto; /* Cho phép scroll nếu nội dung vượt quá */
+            position: relative; 
+            overflow-y: auto; 
             border: 1px solid var(--border-color-light);
         }
         body.dark-mode .grid-container {
@@ -433,31 +409,30 @@
             border: 1px solid var(--border-color-dark);
         }
 
-        /* Loading Overlay */
         .loading-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.7); /* Nền mờ */
-            display: none; /* Mặc định ẩn */
+            background-color: rgba(255, 255, 255, 0.7); 
+            display: none; 
             align-items: center;
             justify-content: center;
-            z-index: 1000; /* Hiển thị trên cùng */
-            border-radius: 12px; /* Giữ bo góc của grid-container */
-            flex-direction: column; /* Để hiển thị text dưới spinner */
+            z-index: 1000; 
+            border-radius: 12px; 
+            flex-direction: column; 
             gap: 10px;
         }
         body.dark-mode .loading-overlay {
-            background-color: rgba(30, 36, 46, 0.8); /* Nền mờ cho dark mode */
+            background-color: rgba(30, 36, 46, 0.8); 
         }
         .loading-overlay.active {
-            display: flex; /* Hiển thị khi active */
+            display: flex; 
         }
         .loading-spinner {
-            border: 5px solid var(--background-light); /* Màu nền của spinner */
-            border-top: 5px solid var(--primary-color); /* Màu của spinner */
+            border: 5px solid var(--background-light); 
+            border-top: 5px solid var(--primary-color); 
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -481,16 +456,14 @@
             100% { transform: rotate(360deg); }
         }
 
-
-        /* Summary Cards */
         .summary-cards { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .summary-card {
-            flex: 1 1 220px; /* Cho phép co giãn và có kích thước cơ bản */
-            max-width: 250px; /* Giới hạn chiều rộng tối đa */
+            flex: 1 1 220px; 
+            max-width: 250px; 
             background: var(--card-bg-light);
             border-radius: 10px;
             padding: 15px;
-            box-shadow: var(--shadow-light-inner); /* Đổ bóng trong cho card */
+            box-shadow: var(--shadow-light-inner); 
             display: flex;
             align-items: center;
             gap: 10px;
@@ -499,7 +472,7 @@
         }
         .summary-card:hover {
             transform: translateY(-5px) scale(1.02);
-            box-shadow: var(--shadow-light-outer), 0 0 10px var(--secondary-color); /* Đổ bóng ngoài và glow khi hover */
+            box-shadow: var(--shadow-light-outer), 0 0 10px var(--secondary-color); 
             border-color: var(--secondary-color);
         }
         body.dark-mode .summary-card {
@@ -528,8 +501,6 @@
         .summary-card .info p { font-size: 16px; font-weight: 700; color: var(--primary-color); }
         body.dark-mode .summary-card .info p { color: var(--secondary-color); }
 
-
-        /* Charts Section */
         .charts-section { display: flex; flex-direction: column; gap: 15px; }
         .chart-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .chart-container {
@@ -558,7 +529,7 @@
         }
         .chart-container h3 { font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 15px; }
         body.dark-mode .chart-container h3 { color: var(--secondary-color); }
-        .chart-container canvas { height: 250px !important; width: 100% !important; } /* Tăng chiều cao canvas */
+        .chart-container canvas { height: 250px !important; width: 100% !important; } 
         .chart-container .download-btn {
             position: absolute; top: 10px; right: 10px;
             padding: 6px;
@@ -586,9 +557,7 @@
              color: #fff;
         }
 
-
-        /* Filter Section */
-        .filter-section {
+        .filter-section { /* Styles for filter section in month view */
             display: flex; flex-wrap: wrap; gap: 10px;
             align-items: center;
             padding-bottom: 10px;
@@ -599,21 +568,21 @@
          body.dark-mode .filter-section {
              border-bottom: 1px solid var(--border-color-dark);
          }
-        .filter-section > div { /* Wrapper cho inputs/selects */
+        .filter-section > div { 
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            flex-grow: 1; /* Cho phép lấp đầy không gian */
+            flex-grow: 1; 
         }
         .filter-section input, .filter-section select {
-            padding: 8px 12px; /* Tăng padding */
+            padding: 8px 12px; 
             border: 1px solid var(--border-color-light);
-            border-radius: 8px; /* Bo góc */
+            border-radius: 8px; 
             font-size: 13px;
             background: var(--background-light);
             color: var(--text-light);
-            box-shadow: var(--shadow-light-inner); /* Đổ bóng trong */
-            width: 200px; /* Chiều rộng mặc định */
+            box-shadow: var(--shadow-light-inner); 
+            width: 200px; 
             transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
         .filter-section input:focus, .filter-section select:focus {
@@ -622,7 +591,7 @@
             box-shadow: var(--shadow-light-outer), 0 0 0 2px rgba(0, 48, 135, 0.2);
         }
         body.dark-mode .filter-section input, body.dark-mode .filter-section select {
-            background: var(--background-dark);
+            background: var(--card-bg-dark); /* Changed from --background-dark */
             color: var(--text-dark);
             border: 1px solid var(--border-color-dark);
             box-shadow: var(--shadow-dark-inner);
@@ -633,17 +602,19 @@
         }
 
         .filter-section .button-group { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-        .export-btn, .refresh-btn {
-            padding: 8px; /* Tăng padding */
+        .export-btn, .refresh-btn { /* General style for these buttons */
+            padding: 8px; 
             border: none;
-            border-radius: 8px; /* Bo góc */
+            border-radius: 8px; 
             background: var(--card-bg-light);
             color: var(--text-light);
             font-size: 14px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all var(--transition-speed-fast) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
             display: flex; align-items: center; justify-content: center;
+            min-width: 36px; /* Ensure consistent button size */
+            height: 36px;
         }
          .export-btn:hover, .refresh-btn:hover {
              background: #e9ecef;
@@ -654,7 +625,7 @@
             transform: translateY(0px) scale(0.98);
             box-shadow: var(--shadow-light-inner);
          }
-        .refresh-btn { color: var(--primary-color); } /* Màu cho refresh */
+        .refresh-btn { color: var(--primary-color); } 
         body.dark-mode .export-btn, body.dark-mode .refresh-btn {
             background: var(--card-bg-dark);
             color: var(--text-dark);
@@ -667,71 +638,67 @@
         body.dark-mode .refresh-btn { color: var(--primary-color-lighter); }
 
 
-        /* Tables Section */
-        .tables-section { display: flex; gap: 15px; flex: 1; min-height: 300px; width: 100%; } /* Giảm min-height */
-        .table-container {
-            flex: 1;
+        /* Tables Section - Applied styles from yeucaughepxe.html and khoxe.html */
+        .tables-section { display: flex; gap: 15px; flex: 1; min-height: 300px; width: 100%; } 
+        #table-container, /* For month data */
+        #total-tables .table-container /* For total data tables */
+         {
+            flex: 1; /* Allow table containers to share space */
             background: var(--card-bg-light);
             border-radius: 10px;
-            padding: 10px;
-            box-shadow: var(--shadow-light-inner);
-            overflow: auto; /* Cho phép scroll cả ngang và dọc */
-            max-height: 400px; /* Giới hạn chiều cao */
+            padding: 0; /* Remove padding from container, apply to table/cells if needed */
+            box-shadow: var(--shadow-light-outer);
+            overflow: auto; 
+            max-height: 400px; 
             position: relative;
             border: 1px solid var(--border-color-light);
             transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
         }
-        .table-container:hover {
-            box-shadow: var(--shadow-light-outer);
+        #table-container:hover,
+        #total-tables .table-container:hover {
+            box-shadow: var(--shadow-light-outer), 0 0 8px var(--primary-color);
             border-color: var(--primary-color);
         }
-         /* Điều chỉnh max-height cho bảng TVBH ở tab Total nếu cần */
-        #total-tables .table-container:nth-child(2) table { max-height: 300px; }
-
-        body.dark-mode .table-container {
+        body.dark-mode #table-container,
+        body.dark-mode #total-tables .table-container {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
-         body.dark-mode .table-container:hover {
-            box-shadow: var(--shadow-dark-outer);
+         body.dark-mode #table-container:hover,
+         body.dark-mode #total-tables .table-container:hover {
+            box-shadow: var(--shadow-dark-outer), 0 0 8px var(--secondary-color);
             border-color: var(--secondary-color);
         }
-        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
-        .table-container::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
-        body.dark-mode .table-container::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-        .table-container::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-            transition: background var(--transition-speed) ease;
+        
+        /* Common styles for all tables that need this new look */
+        #data-table, #total-car-table, #total-tvbh-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 13px; 
+            table-layout: auto; /* Changed to auto for these tables for better content fitting */
         }
-        .table-container::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
-        body.dark-mode .table-container::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
-
-        .table-container h3 { font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px; }
-        body.dark-mode .table-container h3 { color: var(--secondary-color); }
-
-        table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; /* Sử dụng auto để cột tự điều chỉnh */ }
-        th, td {
-            padding: 10px 12px; /* Tăng padding */
+        #data-table th, #data-table td,
+        #total-car-table th, #total-car-table td,
+        #total-tvbh-table th, #total-tvbh-table td {
+            padding: 10px 12px; 
             text-align: left;
             border-bottom: 1px solid var(--border-color-light);
-            white-space: nowrap; /* Giữ nội dung trên một dòng */
-            overflow: hidden; /* Ẩn nội dung tràn */
-            text-overflow: ellipsis; /* Hiển thị ... khi tràn */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
         }
-         /* Cho phép wrap text ở cột cần thiết */
-        #data-table td:nth-child(2), /* Tên KH */
-        #data-table td:nth-child(3), /* Số ĐH */
-        #detail-panel td {
+        /* Allow wrap for specific columns if needed */
+        #data-table td:nth-child(2), /* Tên KH in month view */
+        #data-table td:nth-child(3)  /* Số ĐH in month view */
+        {
              white-space: normal;
              word-wrap: break-word;
         }
 
-        body.dark-mode th, body.dark-mode td {
-            border-bottom: 1px solid var(--border-color-dark);
-        }
-        th {
+        #data-table th, 
+        #total-car-table th, 
+        #total-tvbh-table th {
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff;
             font-weight: 600;
@@ -740,24 +707,55 @@
             z-index: 2;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Đổ bóng dưới header cố định */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
         }
-        body.dark-mode th {
+        body.dark-mode #data-table th, 
+        body.dark-mode #total-car-table th, 
+        body.dark-mode #total-tvbh-table th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        td { color: var(--text-light); }
-        body.dark-mode td { color: var(--text-dark); }
+        
+        #data-table td, 
+        #total-car-table td, 
+        #total-tvbh-table td { color: var(--text-light); }
+        body.dark-mode #data-table td, 
+        body.dark-mode #total-car-table td, 
+        body.dark-mode #total-tvbh-table td { color: var(--text-dark); }
 
-        tbody tr { transition: background-color 0.2s ease, transform 0.15s ease; cursor: pointer; }
-        tbody tr:hover {
-            background: rgba(0, 48, 135, 0.05);
-            transform: scale(1.005); /* Hiệu ứng phóng to nhẹ khi hover */
+        #data-table tbody tr, 
+        #total-car-table tbody tr, 
+        #total-tvbh-table tbody tr { 
+            transition: background-color 0.2s ease, transform 0.15s ease; 
         }
-        body.dark-mode tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+        #data-table tbody tr:hover, 
+        #total-car-table tbody tr:hover, 
+        #total-tvbh-table tbody tr:hover {
+            background: rgba(0, 48, 135, 0.05);
+            transform: scale(1.005); 
+        }
+        body.dark-mode #data-table tbody tr:hover, 
+        body.dark-mode #total-car-table tbody tr:hover, 
+        body.dark-mode #total-tvbh-table tbody tr:hover { 
+            background: rgba(255, 255, 255, 0.05); 
+        }
+        
+        /* Placeholder for tables */
+        .table-placeholder td { 
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light); 
+            font-style: italic;
+        }
+        body.dark-mode .table-placeholder td {
+            color: var(--text-dark);
+        }
+        .table-placeholder .fas { margin-right: 8px; }
+        .table-placeholder .fas.fa-spinner { animation: spin 1.5s linear infinite; }
 
-        .summary-row {
+
+        .summary-row { /* For total rows in summary tables */
             font-weight: 600;
-            background: rgba(0, 48, 135, 0.1); /* Nền khác cho dòng tổng */
+            background: rgba(0, 48, 135, 0.1); 
             color: var(--primary-color);
         }
         body.dark-mode .summary-row {
@@ -770,8 +768,8 @@
 
         /* Detail Panel */
         .detail-panel {
-            flex: 0 0 350px; /* Chiều rộng cố định */
-            min-width: 300px; /* Chiều rộng tối thiểu */
+            flex: 0 0 350px; 
+            min-width: 300px; 
             background: var(--card-bg-light);
             border-radius: 10px;
             padding: 15px;
@@ -814,7 +812,7 @@
          }
         .detail-table th {
             color: var(--text-light); font-weight: 500; width: 40%;
-            background: var(--background-light); /* Nền nhẹ cho header chi tiết */
+            background: var(--background-light); 
         }
          body.dark-mode .detail-table th {
              color: var(--text-dark);
@@ -836,18 +834,16 @@
              color: var(--text-dark);
          }
 
-
-        /* Pagination */
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 15px; width: 100%; align-items: center; }
         .pagination button {
-            padding: 8px 15px; /* Tăng padding */
+            padding: 8px 15px; 
             border: none;
-            border-radius: 8px; /* Bo góc */
+            border-radius: 8px; 
             background: var(--card-bg-light);
             color: var(--text-light);
             font-size: 13px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all var(--transition-speed-fast) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
         }
         .pagination button:hover {
@@ -869,7 +865,7 @@
              color: #fff;
          }
         .pagination button:disabled {
-            background: var(--border-color-light); /* Màu disabled */
+            background: var(--border-color-light); 
             color: #999;
             cursor: not-allowed; opacity: 0.7;
             box-shadow: none;
@@ -882,8 +878,6 @@
         .pagination span { padding: 0 10px; font-size: 13px; color: var(--text-light); }
         body.dark-mode .pagination span { color: var(--text-dark); }
 
-
-        /* Footer */
         footer {
             position: fixed;
             bottom: 0;
@@ -902,9 +896,8 @@
             color: var(--text-dark);
         }
 
-         /* Nút menu di động */
         .mobile-menu-btn {
-            display: none; /* Mặc định ẩn trên desktop */
+            display: none; 
             position: fixed;
             top: 8px;
             left: 10px;
@@ -940,8 +933,6 @@
             color: #fff;
         }
 
-
-        /* Thông báo Toast */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -952,8 +943,8 @@
             gap: 10px;
         }
         .toast {
-            background-color: var(--card-bg-dark); /* Nền tối cho toast mặc định */
-            color: var(--text-dark); /* Chữ sáng cho toast mặc định */
+            background-color: var(--card-bg-dark); 
+            color: var(--text-dark); 
             padding: 12px 18px;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -964,7 +955,6 @@
             transform: translateX(100%) scale(0.9);
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275);
         }
-         /* Toast ở chế độ sáng */
         body:not(.dark-mode) .toast {
              background-color: var(--card-bg-light);
              color: var(--text-light);
@@ -996,9 +986,8 @@
             font-size: 14px;
         }
 
-        /* Skeleton Loading for Tables */
         .skeleton-row td {
-            padding: 10px 12px; /* Phù hợp với padding của td */
+            padding: 10px 12px; 
         }
         .skeleton-row td div {
             height: 1em;
@@ -1009,7 +998,7 @@
         }
         body.dark-mode .skeleton-row td div {
              background: linear-gradient(90deg, var(--skeleton-bg-dark) 25%, #4a4a5a 50%, var(--skeleton-bg-dark) 75%);
-             background-size: 200% 100%; /* Cần cho dark mode animation */
+             background-size: 200% 100%; 
         }
         @keyframes skeleton-loading {
             0% { background-position: 200% 0; }
@@ -1025,28 +1014,25 @@
              color: #888;
          }
 
-         /* Highlight row khi click */
          tbody tr.selected-row-highlight {
-             background-color: rgba(0, 174, 255, 0.15); /* Màu xanh dương nhạt */
+             background-color: rgba(0, 174, 255, 0.15); 
              font-weight: 500;
          }
          body.dark-mode tbody tr.selected-row-highlight {
-             background-color: rgba(0, 48, 135, 0.3); /* Màu xanh đậm hơn */
+             background-color: rgba(0, 48, 135, 0.3); 
          }
 
-
         /* Responsive adjustments */
-        @media (max-width: 900px) {
-            /* Sidebar mobile */
+        @media (max-width: 900px) { 
             .slidebar {
-                transform: translateX(-100%); /* Ẩn sidebar */
-                width: 220px; /* Chiều rộng khi mở */
+                transform: translateX(-100%); 
+                width: 220px; 
                 box-shadow: 5px 0 15px rgba(0,0,0,0.2);
             }
             .slidebar.open {
-                transform: translateX(0); /* Hiển thị sidebar */
+                transform: translateX(0); 
             }
-             .slidebar.collapsed { /* Đảm bảo collapsed không ảnh hưởng trên mobile */
+             .slidebar.collapsed { 
                  transform: translateX(-100%);
                  width: 220px;
              }
@@ -1057,31 +1043,31 @@
              .slidebar.open .logo h1 {
                 font-size: 20px;
             }
-             .slidebar .tabs a i { margin-right: 10px; } /* Hiển thị icon và text */
+             .slidebar .tabs a i { margin-right: 10px; } 
 
 
             .main-container {
-                margin-left: 0; /* Không có margin trái */
+                margin-left: 0; 
                 padding: 15px;
-                margin-top: 40px; /* Điều chỉnh margin-top phù hợp với header */
-                min-height: calc(100vh - 40px - 40px); /* Điều chỉnh chiều cao */
-                padding-bottom: 40px; /* Điều chỉnh padding-bottom phù hợp với footer */
+                margin-top: 40px; 
+                min-height: calc(100vh - 40px - 40px); 
+                padding-bottom: 40px; 
             }
-            .main-container.collapsed { margin-left: 0; } /* Đảm bảo không có margin khi collapsed */
+            .main-container.collapsed { margin-left: 0; } 
 
 
-            .toggle-btn { display: none; } /* Ẩn nút toggle desktop */
-            .mobile-menu-btn { display: flex; } /* Hiển thị nút menu mobile */
+            .toggle-btn { display: none; } 
+            .mobile-menu-btn { display: flex; } 
 
             .summary-cards { justify-content: space-around; gap: 10px; }
-            .summary-card { flex: 1 1 180px; max-width: none; width: calc(50% - 10px); } /* 2 cột trên tablet */
+            .summary-card { flex: 1 1 180px; max-width: none; width: calc(50% - 10px); } 
 
             .chart-row { flex-direction: column; gap: 15px; }
             .chart-container.half-width { width: 100%; min-width: 0; }
 
             .tables-section { flex-direction: column; gap: 15px; }
-            .detail-panel { flex: 0 0 auto; width: 100%; min-width: 0; max-height: 300px; order: -1; /* Đẩy detail panel lên trên */ }
-             #table-container { max-height: 400px; } /* Điều chỉnh max-height bảng chính */
+            .detail-panel { flex: 0 0 auto; width: 100%; min-width: 0; max-height: 300px; order: -1;  }
+            #table-container, #total-tables .table-container { max-height: 400px; } 
 
             .filter-section { flex-direction: column; align-items: stretch; gap: 10px; }
             .filter-section > div { flex-direction: column; gap: 10px; }
@@ -1096,34 +1082,134 @@
             .nav-btn, .theme-toggle, .mobile-menu-btn { width: 30px; height: 30px; font-size: 14px;}
             .mobile-menu-btn { left: 8px; top: 9px;}
         }
+        
+        /* Mobile Table Styling from yeucaughepxe.html and khoxe.html */
+        @media (max-width: 768px) { 
+            header { font-size: 12px; padding: 8px 0; }
+            .main-container { margin-top: 38px; padding-bottom: 38px; }
+            .grid-container { padding: 15px; gap: 10px;}
+            .filter-section { flex-direction: column; align-items: stretch; gap: 10px;}
+            .filter-section input[type="text"], .filter-section select { width: 100%; font-size: 13px;}
+            .filter-section .button-group { justify-content: flex-start; flex-wrap: wrap;}
+            .filter-section .button-group button { font-size: 12px; padding: 7px 12px;}
+            
+            #table-container, #total-tables .table-container {
+                padding: 10px; 
+                max-height: none; 
+                overflow-x: hidden; 
+                background: transparent; 
+                box-shadow: none; 
+                border: none; 
+            }
+            #data-table, #total-car-table, #total-tvbh-table { 
+                display: block;
+                width: 100%;
+                font-size: 12px; 
+            }
+            #data-table thead, #total-car-table thead, #total-tvbh-table thead {
+                display: none; 
+            }
+            #data-table tbody, #data-table tr,
+            #total-car-table tbody, #total-car-table tr,
+            #total-tvbh-table tbody, #total-tvbh-table tr {
+                display: block; 
+            }
+            #data-table tr, #total-car-table tr, #total-tvbh-table tr {
+                margin-bottom: 10px;
+                border-radius: 8px;
+                background: var(--card-bg-light);
+                padding: 12px;
+                box-shadow: var(--shadow-light-outer);
+                border: 1px solid var(--border-color-light);
+            }
+            body.dark-mode #data-table tr, 
+            body.dark-mode #total-car-table tr, 
+            body.dark-mode #total-tvbh-table tr {
+                background: var(--card-bg-dark);
+                box-shadow: var(--shadow-dark-outer);
+                border: 1px solid var(--border-color-dark);
+            }
+            #data-table td, #total-car-table td, #total-tvbh-table td {
+                display: flex; 
+                justify-content: space-between;
+                align-items: baseline; 
+                padding: 8px 0; 
+                border: none; 
+                border-bottom: 1px dashed var(--border-color-light); 
+                font-size: 13px;
+                max-width: none; 
+                white-space: normal; 
+                text-overflow: clip; 
+                overflow: visible; 
+            }
+            #data-table td:last-child, 
+            #total-car-table td:last-child, 
+            #total-tvbh-table td:last-child {
+                border-bottom: none; 
+            }
+            body.dark-mode #data-table td, 
+            body.dark-mode #total-car-table td, 
+            body.dark-mode #total-tvbh-table td {
+                 border-bottom: 1px dashed var(--border-color-dark);
+            }
+             body.dark-mode #data-table td:last-child, 
+             body.dark-mode #total-car-table td:last-child, 
+             body.dark-mode #total-tvbh-table td:last-child {
+                border-bottom: none;
+            }
+
+            #data-table td::before, 
+            #total-car-table td::before, 
+            #total-tvbh-table td::before {
+                content: attr(data-label); 
+                font-weight: 600;
+                color: var(--primary-color);
+                padding-right: 10px; 
+                white-space: nowrap; 
+                flex-shrink: 0; 
+            }
+            body.dark-mode #data-table td::before, 
+            body.dark-mode #total-car-table td::before, 
+            body.dark-mode #total-tvbh-table td::before {
+                color: var(--secondary-color);
+            }
+            #data-table td span.value-mobile, 
+            #total-car-table td span.value-mobile, 
+            #total-tvbh-table td span.value-mobile { 
+                text-align: right;
+                word-break: break-word; 
+                flex-grow: 1; 
+                min-width: 0; 
+            }
+            #data-table colgroup, #total-car-table colgroup, #total-tvbh-table colgroup { display: none; } 
+
+
+            .detail-panel h3 { font-size: 14px; } .detail-table { font-size: 11px; } .detail-table th, .detail-table td { padding: 7px 8px;}
+            .pagination button, .pagination span { font-size: 12px; padding: 7px 10px;}
+            footer { font-size: 11px; padding: 8px 0; }
+            #notification { font-size: 13px; padding: 10px 15px; max-width: calc(100% - 30px); }
+            #notification.important-info { font-size: 13.5px; padding: 12px 18px;}
+        }
 
         @media (max-width: 480px) {
-            header { padding: 10px 0; font-size: 13px; }
-            .main-container { margin-top: 34px; padding: 10px; min-height: calc(100vh - 34px - 34px); padding-bottom: 34px;}
-            footer { padding: 6px 0; font-size: 10px; }
+            header { padding: 10px 0; font-size: 11px; }
+            .navbar-controls { gap: 5px; top: 8px; right: 8px;}
+            .nav-btn, .theme-toggle, .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { left: 8px; top: 9px;}
+            .main-container { padding: 10px; margin-top: 40px; padding-bottom: 40px; }
+            .grid-container { padding: 10px; }
+            .filter-section input[type="text"], .filter-section select { padding: 8px 12px; }
+            .filter-section .button-group button { padding: 6px 10px; gap: 5px; }
+            .filter-section .button-group button i { font-size: 11px; }
+            
+            #data-table td, #total-car-table td, #total-tvbh-table td { font-size: 12px; padding: 7px 0;} 
+            #data-table td::before, #total-car-table td::before, #total-tvbh-table td::before { font-size: 11.5px; }
 
-            .summary-cards { gap: 10px; }
-            .summary-card { width: 100%; } /* 1 cột trên mobile */
 
-            .chart-container { padding: 10px; }
-            .chart-container h3 { font-size: 14px; margin-bottom: 10px; }
-            .chart-container canvas { height: 200px !important; } /* Giảm chiều cao canvas */
-
-            .filter-section input, .filter-section select { font-size: 12px; padding: 6px 10px; }
-            .export-btn, .refresh-btn { font-size: 12px; padding: 6px; border-radius: 6px; } /* Nút nhỏ hơn */
-
-            th, td { padding: 8px 10px; font-size: 12px; }
-
-            .detail-panel { padding: 10px; }
-            .detail-panel h3 { font-size: 14px; margin-bottom: 10px; }
-            .detail-table th, .detail-table td { padding: 6px 8px; font-size: 12px; }
-
-            .pagination button { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
-            .pagination span { font-size: 12px; }
-
-             .toast-container { bottom: 10px; right: 10px; width: calc(100% - 20px); }
-             .toast { width: 100%; font-size: 13px; padding: 10px 15px; }
-             .toast i { font-size: 16px; }
+            .detail-panel h3 { font-size: 13px; } .detail-table { font-size: 10px; } .detail-table th, .detail-table td { padding: 5px 6px; }
+            .pagination button, .pagination span { font-size: 11px; padding: 6px 8px;}
+            #notification { font-size: 12px; padding: 8px 12px; max-width: calc(100% - 20px); }
+            #notification.important-info { font-size: 12.5px; padding: 10px 15px;}
         }
 
     </style>
@@ -1136,19 +1222,19 @@
             <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="tabs">
-            <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1"><i class="fas fa-seedling"></i><span>January</span></a>
-            <a href="#" onclick="fetchSheetData('February', this)" data-tooltip="Tháng 2"><i class="fas fa-fan"></i><span>February</span></a>
-            <a href="#" onclick="fetchSheetData('March', this)" data-tooltip="Tháng 3"><i class="fas fa-leaf"></i><span>March</span></a>
-            <a href="#" onclick="fetchSheetData('April', this)" data-tooltip="Tháng 4"><i class="fas fa-sun"></i><span>April</span></a>
-            <a href="#" onclick="fetchSheetData('May', this)" data-tooltip="Tháng 5"><i class="fas fa-umbrella-beach"></i><span>May</span></a>
-            <a href="#" onclick="fetchSheetData('June', this)" data-tooltip="Tháng 6"><i class="fas fa-temperature-high"></i><span>June</span></a>
-            <a href="#" onclick="fetchSheetData('July', this)" data-tooltip="Tháng 7"><i class="fas fa-leaf"></i><span>July</span></a>
-            <a href="#" onclick="fetchSheetData('August', this)" data-tooltip="Tháng 8"><i class="fas fa-cloud-sun"></i><span>August</span></a>
-            <a href="#" onclick="fetchSheetData('September', this)" data-tooltip="Tháng 9"><i class="fas fa-tree"></i><span>September</span></a>
-            <a href="#" onclick="fetchSheetData('October', this)" data-tooltip="Tháng 10"><i class="fas fa-snowflake"></i><span>October</span></a>
-            <a href="#" onclick="fetchSheetData('November', this)" data-tooltip="Tháng 11"><i class="fas fa-wind"></i><span>November</span></a>
-            <a href="#" onclick="fetchSheetData('December', this)" data-tooltip="Tháng 12"><i class="fas fa-icicles"></i><span>December</span></a>
-            <a href="#" onclick="fetchTotalData(this)" class="total-tab active" data-tooltip="Tổng hợp"><i class="fas fa-chart-bar"></i><span>Total</span></a>
+            <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1"><i class="fas fa-seedling"></i><span>Tháng 1</span></a>
+            <a href="#" onclick="fetchSheetData('February', this)" data-tooltip="Tháng 2"><i class="fas fa-fan"></i><span>Tháng 2</span></a>
+            <a href="#" onclick="fetchSheetData('March', this)" data-tooltip="Tháng 3"><i class="fas fa-leaf"></i><span>Tháng 3</span></a>
+            <a href="#" onclick="fetchSheetData('April', this)" data-tooltip="Tháng 4"><i class="fas fa-sun"></i><span>Tháng 4</span></a>
+            <a href="#" onclick="fetchSheetData('May', this)" data-tooltip="Tháng 5"><i class="fas fa-umbrella-beach"></i><span>Tháng 5</span></a>
+            <a href="#" onclick="fetchSheetData('June', this)" data-tooltip="Tháng 6"><i class="fas fa-temperature-high"></i><span>Tháng 6</span></a>
+            <a href="#" onclick="fetchSheetData('July', this)" data-tooltip="Tháng 7"><i class="fas fa-leaf"></i><span>Tháng 7</span></a>
+            <a href="#" onclick="fetchSheetData('August', this)" data-tooltip="Tháng 8"><i class="fas fa-cloud-sun"></i><span>Tháng 8</span></a>
+            <a href="#" onclick="fetchSheetData('September', this)" data-tooltip="Tháng 9"><i class="fas fa-tree"></i><span>Tháng 9</span></a>
+            <a href="#" onclick="fetchSheetData('October', this)" data-tooltip="Tháng 10"><i class="fas fa-snowflake"></i><span>Tháng 10</span></a>
+            <a href="#" onclick="fetchSheetData('November', this)" data-tooltip="Tháng 11"><i class="fas fa-wind"></i><span>Tháng 11</span></a>
+            <a href="#" onclick="fetchSheetData('December', this)" data-tooltip="Tháng 12"><i class="fas fa-icicles"></i><span>Tháng 12</span></a>
+            <a href="#" onclick="fetchTotalData(this)" class="total-tab active" data-tooltip="Tổng hợp"><i class="fas fa-chart-bar"></i><span>Tổng Hợp</span></a>
         </div>
         <button class="toggle-btn" onclick="toggleSlidebar()" aria-label="Thu gọn/Mở rộng sidebar"><i class="fas fa-bars"></i></button>
     </div>
@@ -1212,18 +1298,22 @@
                     </div>
                 </div>
                 <div class="tables-section">
-                    <div class="table-container">
+                    <div class="table-container" id="total-car-table-container">
                         <h3>Danh Sách Dòng Xe</h3>
                         <table id="total-car-table">
                             <thead id="total-car-header"></thead>
-                            <tbody id="total-car-body"></tbody>
+                            <tbody id="total-car-body">
+                                <tr class="table-placeholder"><td colspan="3">Đang tải...</td></tr>
+                            </tbody>
                         </table>
                     </div>
-                    <div class="table-container">
+                    <div class="table-container" id="total-tvbh-table-container">
                         <h3>Danh Sách Tư Vấn Bán Hàng</h3>
                         <table id="total-tvbh-table">
                             <thead id="total-tvbh-header"></thead>
-                            <tbody id="total-tvbh-body"></tbody>
+                            <tbody id="total-tvbh-body">
+                                 <tr class="table-placeholder"><td colspan="3">Đang tải...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -1256,7 +1346,7 @@
                 <div class="month-data-container" style="display: flex; flex-direction: column; flex-grow: 1;">
                     <div class="filter-section">
                         <div>
-                            <input type="text" id="search-input" placeholder="Tìm theo tên, SĐT, VIN..." oninput="applyFilters()" aria-label="Ô tìm kiếm">
+                            <input type="text" id="search-input" placeholder="Tìm theo tên, VIN..." oninput="applyFilters()" aria-label="Ô tìm kiếm">
                             <select id="car-filter" onchange="applyFilters()" aria-label="Lọc theo dòng xe">
                                 <option value="">Lọc theo Dòng Xe</option>
                             </select>
@@ -1265,7 +1355,7 @@
                             </select>
                         </div>
                         <div class="button-group">
-                            <button class="export-btn refresh-btn" onclick="refreshData()" data-tooltip="Làm mới" aria-label="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
+                            <button class="refresh-btn export-btn" onclick="refreshData()" data-tooltip="Làm mới" aria-label="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
                             <button class="export-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel" aria-label="Xuất ra Excel"><i class="fas fa-file-excel"></i></button>
                             <button class="export-btn" onclick="printTable()" data-tooltip="In" aria-label="In bảng"><i class="fas fa-print"></i></button>
                         </div>
@@ -1273,8 +1363,11 @@
                     <div class="tables-section" style="flex-grow: 1;">
                         <div class="table-container" id="table-container">
                             <table id="data-table">
-                                <thead id="table-header"></thead>
-                                <tbody id="table-body"></tbody>
+                                <thead id="table-header">
+                                    </thead>
+                                <tbody id="table-body">
+                                    <tr class="table-placeholder"><td colspan="6">Đang tải dữ liệu tháng...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                         <div class="detail-panel" id="detail-panel">
@@ -1315,18 +1408,15 @@
 
     // --- Khởi tạo khi DOM đã tải ---
     document.addEventListener("DOMContentLoaded", () => {
-        // Kiểm tra đăng nhập
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; // Chuyển hướng về trang đăng nhập nếu chưa đăng nhập
+            window.location.href = "index.html"; 
             return;
         }
-        // Thiết lập theme đã lưu
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
             updateThemeIcon(true);
         }
 
-        // Khôi phục trạng thái từ sessionStorage
         try {
             const storedCache = sessionStorage.getItem('appCachedData');
             if (storedCache) {
@@ -1348,26 +1438,26 @@
                 if (activeTabLink) {
                     activeTabLink.classList.add('active');
                     if (currentSheet === "Total") {
-                        fetchTotalData(activeTabLink, true); // true for isInitialLoad
+                        fetchTotalData(activeTabLink, true); 
                     } else {
-                        fetchSheetData(currentSheet, activeTabLink, true); // true for isInitialLoad
+                        fetchSheetData(currentSheet, activeTabLink, true); 
                     }
-                } else { // Fallback nếu không tìm thấy tab (ví dụ tên sheet thay đổi)
+                } else { 
                     fetchTotalData(document.querySelector('.tabs a.total-tab'));
                 }
             } else {
-                // Tải dữ liệu tổng hợp ban đầu nếu không có gì trong sessionStorage
                 fetchTotalData(document.querySelector('.tabs a.total-tab'));
             }
         } catch (error) {
             console.error("Lỗi khi khôi phục trạng thái từ sessionStorage:", error);
-            sessionStorage.removeItem('appCachedData'); // Xóa dữ liệu có thể bị hỏng
+            sessionStorage.removeItem('appCachedData'); 
             sessionStorage.removeItem('appCurrentSheet');
             sessionStorage.removeItem('appCurrentPage');
-            fetchTotalData(document.querySelector('.tabs a.total-tab')); // Fallback về tải mặc định
+            fetchTotalData(document.querySelector('.tabs a.total-tab')); 
         }
 
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
+        updateSidebarToggleIcon(); // Cập nhật icon sidebar
     });
 
     // --- Hàm tiện ích giao diện ---
@@ -1386,6 +1476,7 @@
 
     function updateThemeIcon(isDarkMode) {
         const themeIcon = document.querySelector('.theme-toggle i');
+        if(!themeIcon) return;
         if (isDarkMode) {
             themeIcon.classList.remove('fa-moon');
             themeIcon.classList.add('fa-sun');
@@ -1396,33 +1487,37 @@
     }
 
     function toggleTheme() {
+        const themeToggleBtn = document.querySelector('.theme-toggle');
+        themeToggleBtn.classList.add('spinning');
+
         const isDarkMode = document.body.classList.toggle('dark-mode');
         updateThemeIcon(isDarkMode);
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        updateAllChartColors(); // Cập nhật màu biểu đồ khi đổi theme
+        updateAllChartColors(); 
+
+        setTimeout(() => {
+            themeToggleBtn.classList.remove('spinning');
+        }, 500); // Duration of the spin animation
     }
 
     function goBack() {
-        window.location.href = "index.html"; // Quay lại trang chủ
+        window.location.href = "index.html"; 
         showToast("Đã quay lại trang chủ!", 'info');
     }
     function logout() {
-        sessionStorage.clear(); // Xóa tất cả sessionStorage khi đăng xuất
-        window.location.href = "index.html"; // Chuyển hướng về trang đăng nhập
+        sessionStorage.clear(); 
+        window.location.href = "index.html"; 
         showToast("Đã đăng xuất!", 'info');
     }
-    function toggleSlidebar() {
+    function toggleSlidebar() { // For desktop
         const slidebar = document.getElementById("slidebar");
         const mainContainer = document.getElementById("main-container");
         slidebar.classList.toggle("collapsed");
         mainContainer.classList.toggle("collapsed");
+        localStorage.setItem('sidebarState', slidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+        updateSidebarToggleIcon();
 
-        // Nếu đang ở chế độ mobile và sidebar đang mở, đóng lại khi toggle
-        if (window.innerWidth <= 900 && slidebar.classList.contains('open')) {
-            slidebar.classList.remove('open');
-        }
 
-        // Resize biểu đồ sau khi sidebar thay đổi kích thước để tránh bị méo
         if (window.Chart && (monthlyChart || carChart || trendChart)) {
             setTimeout(() => {
                 if (monthlyChart && monthlyChart.ctx) monthlyChart.resize();
@@ -1432,10 +1527,46 @@
         }
     }
 
-    function toggleMobileMenu() {
+    function toggleMobileMenu() { // For mobile
         const slidebar = document.getElementById("slidebar");
-        slidebar.classList.toggle("open"); // Mở/đóng sidebar trên mobile
+        slidebar.classList.toggle("open"); 
+        updateSidebarToggleIcon();
     }
+    
+    function updateSidebarToggleIcon() {
+        const sidebar = document.getElementById("slidebar");
+        const toggleIconDesktop = document.querySelector(".toggle-btn i"); // Desktop toggle
+        const mobileMenuBtnIcon = document.querySelector(".mobile-menu-btn i"); // Mobile toggle
+
+        if (!sidebar) return;
+
+        if (window.innerWidth <= 900) { // Mobile/Tablet view
+            if(document.querySelector('.toggle-btn')) document.querySelector('.toggle-btn').style.display = 'none';
+            if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'flex';
+            if (mobileMenuBtnIcon) {
+                if (sidebar.classList.contains("open")) {
+                    mobileMenuBtnIcon.classList.remove("fa-bars");
+                    mobileMenuBtnIcon.classList.add("fa-times");
+                } else {
+                    mobileMenuBtnIcon.classList.remove("fa-times");
+                    mobileMenuBtnIcon.classList.add("fa-bars");
+                }
+            }
+        } else { // Desktop view
+            if(document.querySelector('.toggle-btn')) document.querySelector('.toggle-btn').style.display = 'flex';
+            if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'none';
+            if (toggleIconDesktop) {
+                if (sidebar.classList.contains("collapsed")) {
+                    toggleIconDesktop.classList.remove("fa-times");
+                    toggleIconDesktop.classList.add("fa-bars");
+                } else {
+                    toggleIconDesktop.classList.remove("fa-bars");
+                    toggleIconDesktop.classList.add("fa-times");
+                }
+            }
+        }
+    }
+
 
     function showToast(message, type = 'info', duration = 3000) {
         const toastContainer = document.getElementById("toast-container");
@@ -1445,9 +1576,9 @@
         }
 
         const toast = document.createElement('div');
-        toast.classList.add('toast', type); // Thêm class type (success, error, info, warning)
+        toast.classList.add('toast', type); 
 
-        let iconClass = 'fas fa-info-circle'; // Icon mặc định
+        let iconClass = 'fas fa-info-circle'; 
         if (type === 'success') iconClass = 'fas fa-check-circle';
         else if (type === 'error') iconClass = 'fas fa-times-circle';
         else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
@@ -1459,20 +1590,17 @@
 
         toastContainer.appendChild(toast);
 
-        // Kích hoạt animation hiển thị
         setTimeout(() => {
             toast.classList.add('show');
-        }, 100); // Delay nhỏ để CSS transition hoạt động
+        }, 100); 
 
-        // Tự động ẩn toast sau một khoảng thời gian
         setTimeout(() => {
             toast.classList.remove('show');
-            // Xóa element sau khi animation ẩn hoàn tất
             setTimeout(() => {
-                if (toast.parentNode === toastContainer) { // Kiểm tra xem toast còn là con của container không
+                if (toast.parentNode === toastContainer) { 
                      toastContainer.removeChild(toast);
                 }
-            }, 500); // Thời gian chờ bằng với transition của toast
+            }, 500); 
         }, duration);
     }
 
@@ -1481,14 +1609,13 @@
     async function fetchDataFromAPI(sheetName, retries = 3) {
         const url = `${API_URL}?sheet=${sheetName}`;
         try {
-            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' }); // Không cache để luôn lấy dữ liệu mới nhất
+            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' }); 
             if (!response.ok) {
                 throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
             }
             const data = await response.json();
             if (data === null || data === undefined) throw new Error(`Dữ liệu trả về từ sheet '${sheetName}' là null hoặc undefined.`);
             if (!Array.isArray(data)) {
-                // Xử lý trường hợp API trả về object chứa sheet name làm key
                 if (typeof data === 'object' && data[sheetName] && Array.isArray(data[sheetName])) {
                     return data[sheetName];
                 }
@@ -1499,78 +1626,71 @@
             console.error(`Lỗi khi fetch dữ liệu từ sheet '${sheetName}':`, error);
             if (retries > 0) {
                 showToast(`Lỗi tải ${sheetName}. Thử lại (${retries} lần)...`, 'warning');
-                await new Promise(resolve => setTimeout(resolve, 1500)); // Chờ 1.5 giây trước khi thử lại
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
                 return fetchDataFromAPI(sheetName, retries - 1);
             }
-            throw error; // Ném lỗi sau khi hết số lần thử lại
+            throw error; 
         }
     }
-    // MODIFIED: Thêm tham số isInitialLoad
+    
     async function fetchSheetData(sheetName, element, isInitialLoad = false) {
-        // Nếu không phải tải lần đầu, và người dùng click vào tab hiện tại, xác nhận tải lại
         if (!isInitialLoad && currentSheet === sheetName && cachedData[sheetName] && !confirm(`Bạn đang ở tab ${sheetName}. Bạn có muốn tải lại dữ liệu không?`)) {
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
-            // Dù không tải lại, vẫn đảm bảo UI phản ánh sheet hiện tại (từ cache)
             processAndRenderMonthData(cachedData[sheetName], sheetName, true);
             return;
         }
 
         showLoading(`Đang tải dữ liệu tháng ${sheetName}...`);
         currentSheet = sheetName;
-        if (!isInitialLoad) { // Chỉ reset trang nếu là click tab mới, không phải tải lần đầu
+        if (!isInitialLoad) { 
              currentPage = 1;
         }
 
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active'); // Đánh dấu tab đang active
+        if (element) element.classList.add('active'); 
 
         document.getElementById("total-tables").style.display = "none";
         document.getElementById("month-data").style.display = "flex";
-        document.getElementById("detail-panel").style.display = "block"; // Hiển thị panel chi tiết
+        document.getElementById("detail-panel").style.display = "block"; 
         document.getElementById("pagination").style.display = "flex";
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
         document.getElementById("search-input").value = "";
-        // Filters sẽ được điền lại bởi processAndRenderMonthData
-
-        // Sử dụng dữ liệu cache nếu có và không phải là refresh bắt buộc hoặc tải lần đầu mà cache có thể cũ
+        
         if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) {
             fullData = cachedData[sheetName];
-            processAndRenderMonthData(fullData, sheetName, true); // true nghĩa là từ cache
-            // MODIFIED: Lưu sheet hiện tại vào sessionStorage ngay cả khi tải từ cache
+            processAndRenderMonthData(fullData, sheetName, true); 
             sessionStorage.setItem('appCurrentSheet', currentSheet);
             sessionStorage.setItem('appCurrentPage', currentPage.toString());
             hideLoading();
-            if (element) element.classList.remove('refresh-triggered'); // Xóa cờ refresh
+            if (element) element.classList.remove('refresh-triggered'); 
             return;
         }
-        if (element) element.classList.remove('refresh-triggered'); // Xóa cờ refresh
+        if (element) element.classList.remove('refresh-triggered'); 
 
         try {
             const data = await fetchDataFromAPI(sheetName);
-            fullData = data; // Lưu dữ liệu gốc
-            cachedData[sheetName] = data; // Cập nhật cache
-            processAndRenderMonthData(data, sheetName, false); // false nghĩa là không từ cache
-            // MODIFIED: Lưu vào sessionStorage sau khi fetch thành công
+            fullData = data; 
+            cachedData[sheetName] = data; 
+            processAndRenderMonthData(data, sheetName, false); 
             sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
             sessionStorage.setItem('appCurrentSheet', currentSheet);
             sessionStorage.setItem('appCurrentPage', currentPage.toString());
         } catch (error) {
             showToast(`Không tải được dữ liệu ${sheetName}: ${error.message}`, 'error', 5000);
-            document.getElementById("table-body").innerHTML = `<tr><td colspan="6" class="empty-state">⚠️ Lỗi: ${error.message}</td></tr>`;
-            processAndRenderMonthData([], sheetName, false); // Hiển thị trạng thái rỗng
+            document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="6" class="empty-state">⚠️ Lỗi: ${error.message}</td></tr>`;
+            processAndRenderMonthData([], sheetName, false); 
         } finally {
             hideLoading();
         }
     }
 
     function processAndRenderMonthData(data, sheetName, fromCache = false) {
-        filteredMonthData = data ? [...data] : []; // Tạo bản sao để lọc
-        updateFilters(filteredMonthData); // Cập nhật các bộ lọc
-        updateMonthOverview(data); // Cập nhật thông tin tổng quan của tháng
-        renderTable(filteredMonthData); // Hiển thị bảng dữ liệu
+        filteredMonthData = data ? [...data] : []; 
+        updateFilters(filteredMonthData); 
+        updateMonthOverview(data); 
+        renderTable(filteredMonthData); 
 
-        // Tránh toast thừa nếu tải từ cache và có dữ liệu
         if (!fromCache || document.getElementById("table-body").innerHTML.includes("empty-state")) {
             const message = fromCache
                 ? `Dữ liệu ${sheetName} từ cache (${(data || []).length} đơn hàng)`
@@ -1579,12 +1699,11 @@
         }
     }
 
-    // MODIFIED: Thêm tham số isInitialLoad
     async function fetchTotalData(element, isInitialLoad = false) {
         showLoading("Đang tải dữ liệu tổng hợp...");
         currentSheet = "Total";
         if (!isInitialLoad) {
-            currentPage = 1; // Reset trang cho tab "Total" nếu không phải tải lần đầu
+            currentPage = 1; 
         }
 
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
@@ -1592,15 +1711,14 @@
 
         document.getElementById("month-data").style.display = "none";
         document.getElementById("total-tables").style.display = "block";
-        document.getElementById("detail-panel").style.display = "none"; // Ẩn panel chi tiết ở tab Total
+        document.getElementById("detail-panel").style.display = "none"; 
         document.getElementById("pagination").style.display = "none";
 
         let allMonthlyData = [];
         let allFetchesSuccessful = true;
-        let results = []; // Khai báo results ở đây để có thể truy cập trong khối if/else
+        let results = []; 
 
         try {
-            // Kiểm tra xem tất cả dữ liệu tháng đã có trong cache chưa (ví dụ, từ sessionStorage)
             let canReconstructFromCache = true;
             if (isInitialLoad) {
                 for (const month of MONTHS) {
@@ -1609,7 +1727,7 @@
                         break;
                     }
                 }
-            } else { // Nếu không phải tải lần đầu, luôn thử fetch hoặc dùng cache mới
+            } else { 
                 canReconstructFromCache = false;
             }
 
@@ -1619,18 +1737,18 @@
                  results = MONTHS.map(month => cachedData[month]);
             } else {
                 const fetchPromises = MONTHS.map(async month => {
-                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { // Sử dụng cache hiện có nếu không refresh
+                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { 
                         return cachedData[month];
                     }
                     try {
                         const monthApiData = await fetchDataFromAPI(month);
-                        cachedData[month] = monthApiData; // Cập nhật cache
+                        cachedData[month] = monthApiData; 
                         return monthApiData;
                     } catch (monthError) {
                         allFetchesSuccessful = false;
                         console.warn(`Lỗi khi tải dữ liệu cho tháng ${month} trong fetchTotalData: ${monthError.message}`);
-                        cachedData[month] = []; // Đảm bảo cache có mảng rỗng khi lỗi
-                        return []; // Trả về mảng rỗng cho tháng này khi lỗi
+                        cachedData[month] = []; 
+                        return []; 
                     }
                 });
                 results = await Promise.all(fetchPromises);
@@ -1643,9 +1761,8 @@
                 }
             });
 
-            // Lọc bỏ các dòng không hợp lệ (ví dụ: không có Dòng Xe)
             const validData = allMonthlyData.filter(row => row && typeof row === 'object' && row[3] && String(row[3]).trim() !== "");
-            allMonthlyDataForNavigation = [...validData]; // Dữ liệu cho navigation
+            allMonthlyDataForNavigation = [...validData]; 
 
             if (validData.length === 0) {
                 if (allFetchesSuccessful) {
@@ -1653,23 +1770,22 @@
                 } else {
                     showToast("Một số tháng không tải được dữ liệu. Tổng hợp có thể chưa đầy đủ.", 'warning', 4000);
                 }
-                updateOverview([], [], 0); // Cập nhật tổng quan với dữ liệu rỗng
+                updateOverview([], [], 0); 
                 renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: (cachedData[m] || []).length })), {});
-                allMonthlyDataForNavigation = []; // Reset dữ liệu navigation
-                topSalespersonNameForNavigation = null; // Reset TVBH top
+                allMonthlyDataForNavigation = []; 
+                topSalespersonNameForNavigation = null; 
                 const prevTotalCarsCard = document.getElementById('total-cars-summary-card');
                 if (prevTotalCarsCard) prevTotalCarsCard.onclick = null;
                 const prevTopTvbhCard = document.getElementById('top-tvbh-summary-card');
                 if (prevTopTvbhCard) prevTopTvbhCard.onclick = null;
-                // MODIFIED: Lưu vào sessionStorage ngay cả khi không có dữ liệu
                 sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
                 sessionStorage.setItem('appCurrentSheet', "Total");
                 hideLoading();
                 return;
             }
 
-            totalCarData = aggregateData(validData, 3); // Tổng hợp theo Dòng Xe (cột index 3)
-            totalTvbhData = aggregateData(validData, 7); // Tổng hợp theo TVBH (cột index 7)
+            totalCarData = aggregateData(validData, 3); 
+            totalTvbhData = aggregateData(validData, 7); 
 
             if (totalTvbhData && totalTvbhData.length > 0) {
                 topSalespersonNameForNavigation = totalTvbhData[0].key;
@@ -1684,12 +1800,11 @@
 
             const trendData = calculateTrendData(MONTHS.map(m => cachedData[m] || []), totalCarData);
 
-            filteredCarData = [...totalCarData]; // Dữ liệu xe đã lọc (ban đầu là toàn bộ)
+            filteredCarData = [...totalCarData]; 
 
             updateOverview(totalCarData, totalTvbhData, validData.length);
             renderTotalTables(totalCarData, totalTvbhData, monthlyCounts, trendData);
 
-            // Tránh toast thừa khi tải lần đầu từ session cache
             if (!isInitialLoad || !canReconstructFromCache) {
                  showToast(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 'success');
             }
@@ -1716,7 +1831,7 @@
                         const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && row[7] === topSalespersonNameForNavigation);
                         if (bestSalespersonData.length > 0) {
                             sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(bestSalespersonData));
-                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); // Lưu tên TVBH
+                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); 
                             window.location.href = 'bestsale.html';
                         } else {
                             showToast(`Không tìm thấy dữ liệu cho TVBH: ${topSalespersonNameForNavigation}`, 'warning');
@@ -1726,7 +1841,6 @@
                     }
                 };
             }
-            // MODIFIED: Lưu vào sessionStorage sau khi xử lý thành công
             sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
             sessionStorage.setItem('appCurrentSheet', "Total");
 
@@ -1735,8 +1849,8 @@
             showToast(`Lỗi tải dữ liệu tổng: ${error.message}`, 'error', 5000);
             updateOverview([], [], 0);
             renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
-            allMonthlyDataForNavigation = []; // Reset dữ liệu navigation
-            topSalespersonNameForNavigation = null; // Reset TVBH top
+            allMonthlyDataForNavigation = []; 
+            topSalespersonNameForNavigation = null; 
         } finally {
             hideLoading();
         }
@@ -1745,27 +1859,27 @@
     // --- Hàm tổng hợp và tính toán dữ liệu ---
     function aggregateData(data, columnIndex) {
         const stats = {};
-        if (!Array.isArray(data)) return []; // Trả về mảng rỗng nếu data không phải mảng
+        if (!Array.isArray(data)) return []; 
         data.forEach(row => {
             if (row && row[columnIndex] !== undefined && row[columnIndex] !== null) {
-                const key = String(row[columnIndex]).trim(); // Chuyển sang string và trim
-                if (key) { // Chỉ tính nếu key không rỗng
+                const key = String(row[columnIndex]).trim(); 
+                if (key) { 
                     stats[key] = (stats[key] || 0) + 1;
                 }
             }
         });
         return Object.entries(stats)
             .map(([key, count]) => ({ key, count }))
-            .sort((a, b) => b.count - a.count); // Sắp xếp giảm dần theo số lượng
+            .sort((a, b) => b.count - a.count); 
     }
 
     function calculateTrendData(monthlyResults, topCarData) {
-        const topCars = topCarData.slice(0, 5).map(item => item.key); // Lấy 5 dòng xe bán chạy nhất
+        const topCars = topCarData.slice(0, 5).map(item => item.key); 
         const trendData = {};
 
         topCars.forEach(carModel => {
             trendData[carModel] = MONTHS.map((month, idx) => {
-                const monthData = monthlyResults[idx] || []; // Dữ liệu của tháng, hoặc mảng rỗng nếu không có
+                const monthData = monthlyResults[idx] || []; 
                 return Array.isArray(monthData) ? monthData.filter(row => row && row[3] === carModel).length : 0;
             });
         });
@@ -1780,7 +1894,6 @@
         const uniqueCars = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[3]).filter(Boolean))].sort() : [];
         const uniqueTvbh = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[7]).filter(Boolean))].sort() : [];
 
-        // Giữ lại giá trị filter đã chọn nếu chúng tồn tại trong dataset mới
         const currentCarFilterValue = carFilter.value;
         const currentTvbhFilterValue = tvbhFilter.value;
 
@@ -1788,7 +1901,7 @@
         tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}" ${t === currentTvbhFilterValue ? 'selected' : ''}>${t}</option>`).join('');
     }
 
-    function updateOverview(carData, tvbhData, totalSales) { // Cập nhật tổng quan cho tab Total
+    function updateOverview(carData, tvbhData, totalSales) { 
         document.getElementById("total-cars").textContent = totalSales || 0;
         const topCar = carData && carData.length > 0 ? carData[0] : { key: "-", count: 0 };
         document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
@@ -1796,10 +1909,10 @@
         document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
 
-    function updateMonthOverview(data) { // Cập nhật tổng quan cho tab tháng
+    function updateMonthOverview(data) { 
         const totalSales = data ? data.length : 0;
-        const carDataAgg = aggregateData(data, 3); // Tổng hợp theo dòng xe
-        const tvbhDataAgg = aggregateData(data, 7); // Tổng hợp theo TVBH
+        const carDataAgg = aggregateData(data, 3); 
+        const tvbhDataAgg = aggregateData(data, 7); 
 
         document.getElementById("month-total-cars").textContent = totalSales;
         const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
@@ -1808,7 +1921,6 @@
         const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
 
-        // Thêm sự kiện click cho card TVBH của tháng
         const monthTvbhSummaryCard = document.getElementById("month-tvbh-summary-card");
 
         if (monthTvbhSummaryCard) {
@@ -1822,7 +1934,7 @@
                     if (salespersonSpecificData.length > 0) {
                         sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(salespersonSpecificData));
                         sessionStorage.setItem('bestSalespersonName', salespersonName);
-                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); // Lưu tháng hiện tại
+                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); 
                         window.location.href = 'bestsale.html';
                     } else {
                         showToast(`Không tìm thấy dữ liệu cho TVBH: ${salespersonName} trong tháng ${currentSheet}.`, 'warning');
@@ -1839,26 +1951,40 @@
     function renderTable(dataToRender) {
         const tableHeader = document.getElementById("table-header");
         const tableBody = document.getElementById("table-body");
+        // Define headers for the monthly data table
         const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
+        const dataKeys = [null, 0, 2, 3, 4, 5]; // Index mapping for row data, STT is generated
 
-        if (!tableHeader.innerHTML.trim()) { // Chỉ tạo header nếu chưa có
+        if (!tableHeader.innerHTML.trim()) { 
             tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         }
 
         const start = (currentPage - 1) * ROWS_PER_PAGE;
         const paginatedData = dataToRender && Array.isArray(dataToRender) ? dataToRender.slice(start, start + ROWS_PER_PAGE) : [];
+        const isMobile = window.innerWidth <= 768;
 
         if (paginatedData.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
+            tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="${headers.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
         } else {
             tableBody.innerHTML = paginatedData.map((row, idx) => {
-                if (!row || typeof row !== 'object') return ''; // Bỏ qua dòng không hợp lệ
-                // Kiểm tra ghi chú để highlight
+                if (!row || typeof row !== 'object') return ''; 
+                
                 const ghiChuAdmin = row[11] ? String(row[11]).toLowerCase() : '';
                 const ghiChuTvbh = row[10] ? String(row[10]).toLowerCase() : '';
                 const isHighlight = (ghiChuAdmin.includes("ưu tiên") || ghiChuTvbh.includes("đặc biệt")) ? ' class="selected-row-highlight"' : '';
 
-                // Chuẩn bị dữ liệu cho hàm showDetail, đảm bảo escape ký tự đặc biệt
+                let cellsHTML = "";
+                headers.forEach((headerText, cellIdx) => {
+                    let cellValue = "";
+                    if (headerText === "STT") {
+                        cellValue = start + idx + 1;
+                    } else {
+                        cellValue = row[dataKeys[cellIdx]] || 'N/A';
+                    }
+                    cellsHTML += `<td data-label="${headerText}"><span class="value-mobile">${cellValue}</span></td>`;
+                });
+                
+                // Prepare data for showDetail, ensuring all necessary fields are passed
                 const detailArgs = [
                     start + idx + 1, // STT
                     row[0] || '', // Tên KH
@@ -1873,50 +1999,109 @@
                 ].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
 
 
-                return `<tr${isHighlight} onclick="showDetail([${detailArgs}])" style="cursor:pointer;">
-                            <td>${start + idx + 1}</td>
-                            <td>${row[0] || ''}</td>
-                            <td>${row[2] || ''}</td>
-                            <td>${row[3] || ''}</td>
-                            <td>${row[4] || ''}</td>
-                            <td>${row[5] || ''}</td>
-                        </tr>`;
+                return `<tr${isHighlight} onclick="showDetail([${detailArgs}])" style="cursor:pointer;">${cellsHTML}</tr>`;
             }).join('');
         }
         updatePagination(dataToRender ? dataToRender.length : 0);
+         if (paginatedData.length > 0) {
+            // Show detail of the first row by default
+            const firstRowDetailData = [
+                start + 1, paginatedData[0][0] || '', paginatedData[0][2] || '', paginatedData[0][3] || '',
+                paginatedData[0][4] || '', paginatedData[0][5] || '', paginatedData[0][6] || '',
+                paginatedData[0][7] || '', paginatedData[0][8] || '', paginatedData[0][9] || ''
+            ];
+            showDetail(firstRowDetailData);
+        } else {
+            updateDetailPanelWithMessage("Không có dữ liệu để hiển thị chi tiết.");
+        }
     }
+
 
     function renderTotalTables(carData, tvbhData, monthlySalesData, trendChartData) {
         const totalCarBody = document.getElementById("total-car-body");
         const totalTvbhBody = document.getElementById("total-tvbh-body");
-        if (!document.getElementById("total-car-header").innerHTML.trim()) {
-            document.getElementById("total-car-header").innerHTML = "<tr><th>STT</th><th>Dòng Xe</th><th>Tổng Số Lượng</th></tr>";
-        }
-        if (!document.getElementById("total-tvbh-header").innerHTML.trim()){
-            document.getElementById("total-tvbh-header").innerHTML = "<tr><th>STT</th><th>Tư Vấn Bán Hàng</th><th>Tổng Số Lượng Xe</th></tr>";
-        }
+        const totalCarHeader = document.getElementById("total-car-header");
+        const totalTvbhHeader = document.getElementById("total-tvbh-header");
 
+        const carTableHeaders = ["STT", "Dòng Xe", "Tổng Số Lượng"];
+        const tvbhTableHeaders = ["STT", "Tư Vấn Bán Hàng", "Tổng Số Lượng Xe"];
+
+        if (totalCarHeader && !totalCarHeader.innerHTML.trim()) {
+            totalCarHeader.innerHTML = `<tr>${carTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        }
+        if (totalTvbhHeader && !totalTvbhHeader.innerHTML.trim()){
+            totalTvbhHeader.innerHTML = `<tr>${tvbhTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        }
 
         totalCarBody.innerHTML = carData && carData.length > 0
-            ? carData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') +
-              `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
-            : `<tr><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
+            ? carData.map((row, idx) => `<tr onclick="navigateToCarDetail('${row.key}')" style="cursor:pointer;">
+                                            <td data-label="${carTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td>
+                                            <td data-label="${carTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td>
+                                            <td data-label="${carTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td>
+                                         </tr>`).join('') +
+              `<tr class="summary-row">
+                    <td data-label="${carTableHeaders[0]}"><span class="value-mobile"></span></td>
+                    <td data-label="${carTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td>
+                    <td data-label="${carTableHeaders[2]}"><span class="value-mobile"><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></span></td>
+               </tr>`
+            : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
 
         totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0
-            ? tvbhData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') +
-              `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
-            : `<tr><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
+            ? tvbhData.map((row, idx) => `<tr onclick="navigateToTvbhDetail('${row.key}')" style="cursor:pointer;">
+                                            <td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td>
+                                            <td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td>
+                                            <td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td>
+                                          </tr>`).join('') +
+              `<tr class="summary-row">
+                    <td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile"></span></td>
+                    <td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td>
+                    <td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile"><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></span></td>
+               </tr>`
+            : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
 
         renderAllCharts(carData || [], monthlySalesData || [], trendChartData || {});
     }
+    
+    function navigateToCarDetail(carModel) {
+        if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
+            const carSpecificData = allMonthlyDataForNavigation.filter(row => row && row[3] === carModel);
+            if (carSpecificData.length > 0) {
+                sessionStorage.setItem('carSpecificSalesData', JSON.stringify(carSpecificData));
+                sessionStorage.setItem('carModelForDetail', carModel);
+                window.location.href = 'tongxe.html'; // Chuyển đến trang chi tiết dòng xe
+            } else {
+                showToast(`Không có dữ liệu chi tiết cho dòng xe: ${carModel}`, 'warning');
+            }
+        } else {
+            showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
+        }
+    }
+
+    function navigateToTvbhDetail(tvbhName) {
+        if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
+            const tvbhSpecificData = allMonthlyDataForNavigation.filter(row => row && row[7] === tvbhName);
+            if (tvbhSpecificData.length > 0) {
+                sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(tvbhSpecificData));
+                sessionStorage.setItem('bestSalespersonName', tvbhName);
+                window.location.href = 'bestsale.html'; // Chuyển đến trang chi tiết TVBH
+            } else {
+                showToast(`Không có dữ liệu chi tiết cho TVBH: ${tvbhName}`, 'warning');
+            }
+        } else {
+            showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
+        }
+    }
+
 
     function updateDetailPanelWithMessage(message) {
         const detailBodyContent = document.getElementById("detail-body-content");
-        detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
+        if (detailBodyContent) {
+            detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
+        }
     }
 
     function showDetail(detailDataArray) {
-        if (currentSheet === "Total") return; // Không hiển thị chi tiết ở tab Total
+        if (currentSheet === "Total") return; 
 
         const labels = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
         const detailBodyContent = document.getElementById("detail-body-content");
@@ -1938,12 +2123,11 @@
             `;
         });
         tableHTML += '</tbody></table>';
-        detailBodyContent.innerHTML = tableHTML;
+        if (detailBodyContent) detailBodyContent.innerHTML = tableHTML;
 
-        // Highlight dòng được chọn trong bảng chính
         const tableRows = document.querySelectorAll("#data-table tbody tr");
-        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); // Xóa highlight cũ
-        const sttToHighlight = detailDataArray[0]; // Lấy STT từ dữ liệu chi tiết
+        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); 
+        const sttToHighlight = detailDataArray[0]; 
         if (sttToHighlight) {
             const targetRow = Array.from(tableRows).find(row => row.cells[0] && parseInt(row.cells[0].textContent) === sttToHighlight);
             if (targetRow) {
@@ -1959,10 +2143,11 @@
         return {
             textColor: isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim(),
             gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            primarySet: [ // Bộ màu chính cho biểu đồ
+            primarySet: [ 
                 rootStyle.getPropertyValue('--primary-color').trim(),
                 rootStyle.getPropertyValue('--secondary-color').trim(),
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40' // Thêm các màu khác
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                '#E74C3C', '#2ECC71', '#F1C40F', '#8E44AD', '#3498DB', '#1ABC9C' // Thêm nhiều màu hơn
             ],
             monthlyBarColor: isDarkMode ? rootStyle.getPropertyValue('--secondary-color').trim() : rootStyle.getPropertyValue('--primary-color').trim(),
             chartBgColor: isDarkMode ? rootStyle.getPropertyValue('--card-bg-dark').trim() : rootStyle.getPropertyValue('--card-bg-light').trim(),
@@ -1971,14 +2156,12 @@
 
     function renderAllCharts(carData, monthlySalesData, trendChartData) {
         const colors = getChartColors();
-        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; // Tránh chia cho 0
+        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; 
 
-        // Hủy biểu đồ cũ nếu tồn tại
         if (monthlyChart && typeof monthlyChart.destroy === 'function') monthlyChart.destroy();
         if (carChart && typeof carChart.destroy === 'function') carChart.destroy();
         if (trendChart && typeof trendChart.destroy === 'function') trendChart.destroy();
 
-        // Biểu đồ doanh số theo tháng
         const monthlyCtx = document.getElementById('monthly-chart')?.getContext('2d');
         if (monthlyCtx) {
             monthlyChart = new Chart(monthlyCtx, {
@@ -2004,7 +2187,6 @@
             });
         }
 
-        // Biểu đồ tổng hợp theo dòng xe (Pie chart)
         const carCtx = document.getElementById('car-chart')?.getContext('2d');
         if (carCtx) {
             carChart = new Chart(carCtx, {
@@ -2015,14 +2197,14 @@
                         label: 'Số lượng xe',
                         data: carData.map(r => r.count),
                         backgroundColor: colors.primarySet,
-                        borderColor: colors.chartBgColor, // Màu viền giống màu nền chart
+                        borderColor: colors.chartBgColor, 
                         borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { color: colors.textColor } },
+                        legend: { position: 'right', labels: { color: colors.textColor, boxWidth: 12, padding: 15 } },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -2037,7 +2219,6 @@
             });
         }
 
-        // Biểu đồ xu hướng dòng xe qua các tháng (Line chart)
         const trendCtx = document.getElementById('trend-chart')?.getContext('2d');
         if (trendCtx && trendChartData && Object.keys(trendChartData).length > 0) {
             trendChart = new Chart(trendCtx, {
@@ -2048,9 +2229,9 @@
                         label: car,
                         data: trendChartData[car],
                         borderColor: colors.primarySet[idx % colors.primarySet.length],
-                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', // Màu nền với độ mờ
-                        fill: false, // Không tô màu nền dưới đường line
-                        tension: 0.1 // Độ cong của đường line
+                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', 
+                        fill: false, 
+                        tension: 0.1 
                     }))
                 },
                 options: {
@@ -2059,10 +2240,10 @@
                         y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } },
                         x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } }
                     },
-                    plugins: { legend: { position: 'top', labels: { color: colors.textColor } }, tooltip: { mode: 'index', intersect: false } }
+                    plugins: { legend: { position: 'top', labels: { color: colors.textColor, boxWidth: 12, padding: 10 } }, tooltip: { mode: 'index', intersect: false } }
                 }
             });
-        } else if (trendCtx) { // Hiển thị thông báo nếu không có dữ liệu
+        } else if (trendCtx) { 
              trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height);
              trendCtx.textAlign = 'center';
              trendCtx.fillStyle = colors.textColor;
@@ -2071,7 +2252,7 @@
     }
 
     function updateAllChartColors() {
-        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { // Kiểm tra filteredCarData đã được định nghĩa
+        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { 
             const monthlySalesData = MONTHS.map(month => ({
                 month: month,
                 count: cachedData[month] ? cachedData[month].length : 0
@@ -2086,18 +2267,18 @@
 
     function downloadChart(chartId, fileName) {
         const chartCanvas = document.getElementById(chartId);
-        if (!chartCanvas || !chartCanvas.getContext) { // Kiểm tra canvas và context
+        if (!chartCanvas || !chartCanvas.getContext) { 
             showToast(`Không tìm thấy biểu đồ hoặc context của biểu đồ: ${chartId}`, 'error');
             return;
         }
         const chartContainer = chartCanvas.closest('.chart-container');
-        const originalBg = chartContainer.style.backgroundColor; // Lưu màu nền gốc
+        const originalBg = chartContainer.style.backgroundColor; 
         const colors = getChartColors();
-        chartContainer.style.backgroundColor = colors.chartBgColor; // Set màu nền cho html2canvas
+        chartContainer.style.backgroundColor = colors.chartBgColor; 
 
         html2canvas(chartContainer, {
-            backgroundColor: colors.chartBgColor, // Đảm bảo html2canvas sử dụng đúng màu nền
-            scale: 2 // Tăng độ phân giải ảnh
+            backgroundColor: colors.chartBgColor, 
+            scale: 2 
          })
             .then(canvas => {
                 const link = document.createElement('a');
@@ -2111,27 +2292,27 @@
                 showToast("Lỗi khi tải biểu đồ: " + err.message, 'error');
             })
             .finally(() => {
-                chartContainer.style.backgroundColor = originalBg; // Khôi phục màu nền gốc
+                chartContainer.style.backgroundColor = originalBg; 
             });
     }
 
 
     // --- Hàm xử lý sự kiện người dùng ---
     function applyFilters() {
-        if (currentSheet === "Total") return; // Không áp dụng filter ở tab Total
+        if (currentSheet === "Total") return; 
 
         const carFilterValue = document.getElementById("car-filter").value;
         const tvbhFilterValue = document.getElementById("tvbh-filter").value;
         const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
 
-        if (!Array.isArray(fullData)) { // Kiểm tra fullData có phải là mảng không
+        if (!Array.isArray(fullData)) { 
             filteredMonthData = [];
         } else {
             filteredMonthData = fullData.filter(row => {
-                if (!row || typeof row !== 'object') return false; // Bỏ qua dòng không hợp lệ
+                if (!row || typeof row !== 'object') return false; 
                 const tenKH = String(row[0] || '').toLowerCase();
-                const sdt = String(row[1] || '').toLowerCase(); // Giả sử SĐT ở cột 1
-                const vin = String(row[8] || '').toLowerCase(); // VIN ở cột 8
+                const sdt = String(row[1] || '').toLowerCase(); 
+                const vin = String(row[8] || '').toLowerCase(); 
                 const dongXe = String(row[3] || '');
                 const tvbh = String(row[7] || '');
 
@@ -2139,17 +2320,16 @@
                 const matchesTvbh = !tvbhFilterValue || tvbh === tvbhFilterValue;
                 const matchesSearch = !searchInputValue ||
                     tenKH.includes(searchInputValue) ||
-                    sdt.includes(searchInputValue) || // Thêm tìm kiếm theo SĐT
-                    vin.includes(searchInputValue);  // Thêm tìm kiếm theo VIN
+                    sdt.includes(searchInputValue) || 
+                    vin.includes(searchInputValue);  
                 return matchesCar && matchesTvbh && matchesSearch;
             });
         }
 
-        currentPage = 1; // Reset về trang đầu sau khi lọc
-        renderTable(filteredMonthData); // Hiển thị lại bảng với dữ liệu đã lọc
-        // updateMonthOverview(filteredMonthData); // Quyết định xem có cập nhật tổng quan theo dữ liệu lọc không
+        currentPage = 1; 
+        renderTable(filteredMonthData); 
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
-        sessionStorage.setItem('appCurrentPage', currentPage.toString()); // Lưu trang sau khi lọc
+        sessionStorage.setItem('appCurrentPage', currentPage.toString()); 
     }
 
     function changePage(delta) {
@@ -2158,14 +2338,12 @@
         currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
         renderTable(filteredMonthData);
 
-        // Cuộn lên đầu bảng và panel chi tiết khi chuyển trang
         const tableContainer = document.querySelector('#table-container');
         if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
 
         const detailPanel = document.querySelector('#detail-panel');
         if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // MODIFIED: Lưu currentPage vào sessionStorage
         sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
 
@@ -2177,12 +2355,11 @@
         }
 
         if (currentSheet === "Total") {
-             activeTabElement.classList.add('refresh-triggered'); // Thêm cờ refresh cho fetchTotalData
-             fetchTotalData(activeTabElement); // Gọi lại fetchTotalData
+             activeTabElement.classList.add('refresh-triggered'); 
+             fetchTotalData(activeTabElement); 
         } else {
-            activeTabElement.classList.add('refresh-triggered'); // Thêm cờ refresh
-            delete cachedData[currentSheet]; // Xóa cache của sheet hiện tại
-            // Xóa khỏi sessionStorage để ép fetch lại
+            activeTabElement.classList.add('refresh-triggered'); 
+            delete cachedData[currentSheet]; 
             const tempCache = JSON.parse(sessionStorage.getItem('appCachedData') || '{}');
             delete tempCache[currentSheet];
             sessionStorage.setItem('appCachedData', JSON.stringify(tempCache));
@@ -2204,15 +2381,14 @@
 
         showLoading("Đang chuẩn bị file Excel...");
         try {
-            const ws_name = currentSheet.substring(0, 30); // Tên sheet tối đa 30 ký tự
+            const ws_name = currentSheet.substring(0, 30); 
             const wb = XLSX.utils.book_new();
 
-            // Header cho file Excel (đầy đủ các cột)
             const excelHeaders = ["STT", "Tên Khách Hàng", "SĐT", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách", "Ghi Chú TVBH", "Ghi Chú Admin"];
             const dataToExport = [
                 excelHeaders,
                 ...filteredMonthData.map((row, index) => {
-                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); // Dòng rỗng nếu dữ liệu không hợp lệ
+                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); 
                     return [
                         index + 1,
                         row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '',
@@ -2223,9 +2399,8 @@
             ];
 
             const ws = XLSX.utils.aoa_to_sheet(dataToExport);
-            // Tự động điều chỉnh độ rộng cột
             const colWidths = excelHeaders.map((_, i) => ({
-                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 // Thêm chút padding
+                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 
             }));
             ws['!cols'] = colWidths;
 
@@ -2267,7 +2442,7 @@
                         body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                         table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; }
                         tr { page-break-inside: avoid; page-break-after: auto; }
-                        thead { display: table-header-group; } /* Đảm bảo header lặp lại trên mỗi trang */
+                        thead { display: table-header-group; } 
                         th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; }
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
                         .month-header {
@@ -2277,29 +2452,28 @@
                             font-weight: bold;
                             text-align: left;
                             color: #003087;
-                            page-break-after: avoid; /* Tránh ngắt trang ngay sau header tháng */
-                            page-break-before: auto; /* Cho phép ngắt trang trước header tháng nếu cần */
+                            page-break-after: avoid; 
+                            page-break-before: auto; 
                         }
                         .no-print { display: none !important; }
                         @page {
-                            margin: 0.5in; /* Lề trang in */
+                            margin: 0.5in; 
                         }
                     }
                 </style>`;
 
             for (const month of MONTHS) {
                 let monthData = cachedData[month];
-                if (!monthData) { // Nếu chưa có trong cache, fetch
+                if (!monthData) { 
                     try {
                         showLoading(`Đang tải dữ liệu tháng ${month} để in...`);
-                        monthData = await fetchDataFromAPI(month); // Fetch dữ liệu
-                        cachedData[month] = monthData; // Cập nhật cache
-                        // Lưu cache đã cập nhật vào sessionStorage
+                        monthData = await fetchDataFromAPI(month); 
+                        cachedData[month] = monthData; 
                         sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
                     } catch (fetchError) {
                         console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`);
                         allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`;
-                        continue; // Bỏ qua tháng này nếu không tải được
+                        continue; 
                     }
                 }
 
@@ -2310,10 +2484,8 @@
 
                 totalRecordsPrinted += monthData.length;
 
-                // Tạo header cho bảng của tháng
                 const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
-                // Tạo body cho bảng của tháng
                 let tbodyToPrintHTML = "";
                 monthData.forEach((row, idx) => {
                     if (!row || typeof row !== 'object') return;
@@ -2332,7 +2504,7 @@
                     </table>
                 `;
             }
-            showLoading("Đang hoàn tất bản in..."); // Thông báo cho người dùng
+            showLoading("Đang hoàn tất bản in..."); 
 
             if (totalRecordsPrinted === 0 && !allMonthsPrintContent.includes("Không thể tải dữ liệu")) {
                  allMonthsPrintContent += "<p style='text-align:center; margin-top:20px;'>Không có dữ liệu nào để in từ tất cả các tháng.</p>";
@@ -2342,7 +2514,7 @@
             if (win) {
                 win.document.write(`<html><head><title>In Báo Cáo Doanh Số Tổng Hợp - VinFast Thuận An</title></head><body>${allMonthsPrintContent}</body></html>`);
                 win.document.close();
-                setTimeout(() => { // Chờ một chút để nội dung được render trước khi in
+                setTimeout(() => { 
                     win.print();
                 }, 500);
                 showToast("Đang mở cửa sổ in cho tất cả các tháng...", 'info');
@@ -2371,18 +2543,42 @@
         document.getElementById("next-btn").disabled = currentPage === totalPages || totalItems === 0;
     }
 
-    // Đóng sidebar mobile khi click ra ngoài
     document.addEventListener('click', function(event) {
         const slidebar = document.getElementById('slidebar');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        const isClickInsideSidebar = slidebar.contains(event.target);
-        const isClickOnMenuBtn = mobileMenuBtn.contains(event.target);
+        // Check if slidebar and mobileMenuBtn exist before accessing contains
+        const isClickInsideSidebar = slidebar && slidebar.contains(event.target);
+        const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
 
-        if (window.innerWidth <= 900 && slidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
+        if (window.innerWidth <= 900 && slidebar && slidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
             slidebar.classList.remove('open');
+            updateSidebarToggleIcon(); // Update icon when sidebar closes
         }
     });
+    
+    window.addEventListener('resize', debounce(() => {
+        updateSidebarToggleIcon(); 
+        if (window.innerWidth <= 900) {
+            const sidebar = document.getElementById("slidebar");
+            if (sidebar && sidebar.classList.contains("collapsed") && !sidebar.classList.contains("open")) {
+                 sidebar.classList.remove("collapsed"); 
+            }
+        } else { 
+            const sidebar = document.getElementById("slidebar");
+            if(sidebar) sidebar.classList.remove("open"); 
+            const storedState = localStorage.getItem('sidebarState');
+            if (sidebar && storedState === 'collapsed') {
+                sidebar.classList.add('collapsed');
+               if(document.getElementById('main-content')) document.getElementById('main-content').classList.add('collapsed');
+            } else if (sidebar) {
+                sidebar.classList.remove('collapsed');
+                if(document.getElementById('main-content')) document.getElementById('main-content').classList.remove('collapsed');
+            }
+        }
+    }, 200));
+    document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon); 
 
     </script>
 </body>
 </html>
+
