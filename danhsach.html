@@ -13,13 +13,15 @@
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff; 
-            --background-light: #f4f7fc; 
+            --secondary-color: #00aeff;
+            --accent-color: #ffc107; 
+            --success-color: #28a745; 
+            --background-light: #f4f7fc;
             --text-light: #2c3e50;
-            --background-dark: #161b22; 
-            --text-dark: #c9d1d9;   
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
             --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;  
+            --card-bg-dark: #1e242e;
             --border-color-light: #e1e4e8;
             --border-color-dark: #30363d;
             --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -27,14 +29,25 @@
             --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
             --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
-            --warning-color-light-bg: #fff8e1;  /* Lightened yellow */
-            --warning-color-light-text: #8d6e63; /* Brownish text for better contrast */
-            --warning-color-light-border: #ffecb3; 
-            --warning-color-dark-bg: #2a220a;  /* Darker yellow/brown for dark mode */
-            --warning-color-dark-text: #ffeecc; /* Lighter yellow text for dark mode */
-            --warning-color-dark-border: #5c4a1a; 
+
+            /* Warning colors for rows waiting for invoice */
+            --warning-color-light-bg: #fffde7;  /* Softer yellow */
+            --warning-color-light-text: #795548; /* Brownish text */
+            --warning-color-light-border: #fff59d; /* Lighter yellow border */
+            --warning-color-dark-bg: #3e2723;  /* Dark brown for dark mode */
+            --warning-color-dark-text: #fff176; /* Lighter yellow text for dark mode */
+            --warning-color-dark-border: #795548; /* Brown border for dark mode */
+
+            /* Status Badge Colors (can be expanded if needed) */
+            --status-default-bg-light: #e9ecef;
+            --status-default-text-light: #495057;
+            --status-default-border-light: #d6d8db;
+            --status-default-bg-dark: #343a40;
+            --status-default-text-dark: #adb5bd;
+            --status-default-border-dark: #545b62;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,15 +58,22 @@
             min-height: 100vh;
             overflow-x: hidden;
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+            font-size: 14px;
         }
         body.dark-mode {
             background: var(--background-dark);
             color: var(--text-dark);
+            --warning-color-light-bg: var(--warning-color-dark-bg);
+            --warning-color-light-text: var(--warning-color-dark-text);
+            --warning-color-light-border: var(--warning-color-dark-border);
+            --status-default-bg-light: var(--status-default-bg-dark);
+            --status-default-text-light: var(--status-default-text-dark);
+            --status-default-border-light: var(--status-default-border-dark);
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
-            background: var(--background-light);
+            background: var(--card-bg-light); 
             border-radius: 4px;
         }
         body.dark-mode ::-webkit-scrollbar-track {
@@ -98,7 +118,7 @@
             height: 100vh;
             background: var(--primary-color-darker);
             padding: 15px;
-            padding-top: 50px;
+            padding-top: 50px; 
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
             z-index: 1000;
             box-shadow: 3px 0 10px rgba(0,0,0,0.1);
@@ -116,30 +136,23 @@
 
         .sidebar .logo { text-align: center; margin-bottom: 25px; }
         .sidebar .logo h1 {
-font-size: 25px;
-    color: #ffffff;
-    font-weight: 700;
-    text-transform: uppercase;
-    /* Additions for animation */
-    animation: bounceGlow 2s infinite alternate;
-}
+            font-size: 25px;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            animation: bounceGlow 2s infinite alternate;
+        }
 
-@keyframes bounceGlow {
-    0%, 100% {
-        transform: translateY(0);
-        text-shadow: 0 0 3px #fff, /* White glow - reduced */
-                     0 0 6px #fff,
-                     0 0 9px #00aeff, /* Light blue glow - reduced */
-                     0 0 12px #00aeff;
-    }
-    50% {
-        transform: translateY(-10px); /* Bouncing effect */
-        text-shadow: 0 0 6px #fff,
-                     0 0 12px #fff,
-                     0 0 18px #0077cc, /* Darker blue glow for bounce peak - reduced */
-                     0 0 24px #0077cc;
-    }
-}
+        @keyframes bounceGlow {
+            0%, 100% {
+                transform: translateY(0);
+                text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
+            }
+            50% {
+                transform: translateY(-10px); 
+                text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
+            }
+        }
         .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
         .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
         .sidebar .menu a {
@@ -186,11 +199,13 @@ font-size: 25px;
         [data-tooltip] { position: relative; }
         [data-tooltip]::after {
             content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
-            transform: translateX(-50%); background-color: #333; color: #fff; padding: 4px 8px;
+            transform: translateX(-50%) translateY(5px); 
+            background-color: #333; color: #fff; padding: 4px 8px;
             border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s; z-index: 10000;
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; 
+            z-index: 10000;
         }
-        [data-tooltip]:hover::after { opacity: 1; visibility: visible; }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
         body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 
         .main-content {
@@ -215,85 +230,160 @@ font-size: 25px;
             padding: 10px 15px; border: 1px solid var(--border-color-light); border-radius: 6px;
             font-size: 14px; background: var(--background-light); color: var(--text-light);
             min-width: 250px; box-shadow: var(--shadow-light-inner);
-            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease;
+            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
-        body.dark-mode .filter-section input[type="text"] { background: var(--background-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-inner); }
-        .filter-section input[type="text"]:focus { outline: none; border-color: var(--primary-color); background: #fff; }
-        body.dark-mode .filter-section input[type="text"]:focus { border-color: var(--secondary-color); background: var(--card-bg-dark); }
+        body.dark-mode .filter-section input[type="text"] { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-inner); }
+        .filter-section input[type="text"]:focus { 
+            outline: none; border-color: var(--primary-color); background: var(--card-bg-light); 
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+        }
+        body.dark-mode .filter-section input[type="text"]:focus { 
+            border-color: var(--secondary-color); background: var(--card-bg-dark); 
+            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
+        }
         .filter-section .button-group { display: flex; gap: 10px; }
         .filter-section .button-group button {
             padding: 8px 15px; background: var(--primary-color); color: #fff; border: none;
             border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
-            transition: all var(--transition-speed) ease; display: flex; align-items: center; gap: 8px;
+            transition: all var(--transition-speed-fast) ease; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
         }
-        .filter-section .button-group button:hover { background: var(--primary-color-lighter); transform: translateY(-2px); }
+        .filter-section .button-group button:hover { background: var(--primary-color-lighter); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);}
         .filter-section .button-group button.refresh-btn { background: var(--secondary-color); }
         .filter-section .button-group button.refresh-btn:hover { background: #0095dd; }
-        body.dark-mode .filter-section .button-group button { background: var(--primary-color-lighter); }
-        body.dark-mode .filter-section .button-group button:hover { background: var(--secondary-color); }
+        body.dark-mode .filter-section .button-group button { background: var(--primary-color-lighter); box-shadow: 0 2px 5px rgba(0,0,0, 0.3); }
+        body.dark-mode .filter-section .button-group button:hover { background: var(--secondary-color); box-shadow: 0 4px 8px rgba(0,0,0, 0.4);}
         body.dark-mode .filter-section .button-group button.refresh-btn { background: var(--primary-color); }
         body.dark-mode .filter-section .button-group button.refresh-btn:hover { background: var(--primary-color-darker); }
 
         .tables-section { display: flex; gap: 15px; flex: 1; min-height: 0; width: 100%; }
-        .table-container, .detail-panel {
-            background: var(--card-bg-light); border-radius: 8px; padding: 15px;
-            box-shadow: var(--shadow-light-inner); border: 1px solid var(--border-color-light);
-            overflow: auto; display: flex; flex-direction: column;
+        .table-container { /* Adapted from khoxe_updated_styles */
+            flex: 0 0 70%; 
+            background: var(--card-bg-light);
+            border-radius: 10px; 
+            padding: 0; 
+            box-shadow: var(--shadow-light-outer);
+            overflow: auto; 
+            max-height: 550px; /* Adjusted max-height for this page */
+            position: relative;
+            border: 1px solid var(--border-color-light);
+            transition: all var(--transition-speed) ease;
         }
-        body.dark-mode .table-container, body.dark-mode .detail-panel { background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner); border: 1px solid var(--border-color-dark); }
-        .table-container { flex: 0 0 70%; position: relative; max-height: 500px; }
-        .detail-panel { flex: 0 0 30%; min-width: 250px; max-height: 600px; }
+        .detail-panel { 
+            flex: 0 0 30%; 
+            min-width: 250px; 
+            background: var(--card-bg-light); 
+            border-radius: 8px; 
+            padding: 15px;
+            box-shadow: var(--shadow-light-inner); 
+            border: 1px solid var(--border-color-light);
+            overflow: auto; 
+            display: flex; 
+            flex-direction: column;
+            max-height: 500px; /* Match table-container max-height */
+        }
 
-        .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+        body.dark-mode .table-container, body.dark-mode .detail-panel { 
+            background: var(--card-bg-dark); 
+            box-shadow: var(--shadow-dark-outer); 
+            border: 1px solid var(--border-color-dark); 
+        }
+        
+        .data-table { /* Renamed from table to .data-table to be specific */
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 12.5px; 
+            table-layout: fixed; 
+        }
         .data-table th, .data-table td {
-            text-align: left; border-bottom: 1px solid var(--border-color-light);
-            white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
+            padding: 10px 12px;
+            text-align: left; 
+            border-bottom: 1px solid var(--border-color-light);
+            white-space: nowrap; 
         }
         .data-table th {
-            padding: 10px 12px; background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 2;
-            text-transform: uppercase; letter-spacing: 0.25px; vertical-align: middle;
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+            color: #fff; 
+            font-weight: 600; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            vertical-align: middle;
+            transition: background var(--transition-speed-fast) ease;
         }
-        .data-table td { padding: 8px 12px; vertical-align: middle; }
+        .data-table td { 
+            padding: 8px 12px; 
+            vertical-align: middle; 
+            color: var(--text-light);
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
         body.dark-mode .data-table th, body.dark-mode .data-table td { border-bottom: 1px solid var(--border-color-dark); }
         body.dark-mode .data-table th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
-        .data-table tr { transition: background-color 0.2s ease; }
-        .data-table tr:not(.row-waiting-for-invoice):hover { background: rgba(0, 48, 135, 0.05); } /* Apply hover only if not waiting */
-        body.dark-mode .data-table tr:not(.row-waiting-for-invoice):hover { background: rgba(255, 255, 255, 0.05); }
-        .data-table td.empty-state { text-align: center; padding: 20px; color: #777; }
-        body.dark-mode .data-table td.empty-state { color: #888; }
+        body.dark-mode .data-table td { color: var(--text-dark); }
+
+        .data-table tbody tr { transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease; }
+        .data-table tbody tr:not(.row-waiting-for-invoice):hover { 
+            background: rgba(0, 48, 135, 0.08); 
+            cursor: pointer;
+            transform: translateY(-2px); 
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        }
+        body.dark-mode .data-table tbody tr:not(.row-waiting-for-invoice):hover { 
+            background: rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        }
+        .data-table .empty-state td, .data-table .table-placeholder td { /* Combined for loading/no data */
+            text-align: center; 
+            padding: 20px; 
+            color: var(--text-light); 
+        }
+        body.dark-mode .data-table .empty-state td, body.dark-mode .data-table .table-placeholder td { 
+            color: var(--text-dark); 
+        }
+        .data-table .table-placeholder .fas { margin-right: 8px; }
+        .data-table .table-placeholder .fas.fa-spinner { animation: spin 1.5s linear infinite; }
+
+
         .vin-highlight { font-weight: bold; color: var(--secondary-color); }
         body.dark-mode .vin-highlight { color: var(--primary-color-lighter); }
 
-        /* CSS cho dòng đang chờ xuất hóa đơn */
         .row-waiting-for-invoice td {
             background-color: var(--warning-color-light-bg) !important;
             color: var(--warning-color-light-text) !important;
-            font-weight: 500; /* Hơi đậm hơn một chút */
+            font-weight: 500; 
+            border-bottom-color: var(--warning-color-light-border) !important;
         }
-        .row-waiting-for-invoice:hover td { /* Giữ màu nền khi hover hoặc làm tối hơn một chút */
-             background-color: var(--warning-color-light-border) !important; /* Màu viền làm nền hover */
+        .row-waiting-for-invoice:hover td { 
+             background-color: var(--warning-color-light-border) !important; 
+             cursor: pointer;
         }
         body.dark-mode .row-waiting-for-invoice td {
             background-color: var(--warning-color-dark-bg) !important;
             color: var(--warning-color-dark-text) !important;
+            border-bottom-color: var(--warning-color-dark-border) !important;
         }
         body.dark-mode .row-waiting-for-invoice:hover td {
             background-color: var(--warning-color-dark-border) !important;
         }
 
+        /* Colgroup for .data-table based on displayHeadersConfig */
+        /* This will be dynamically set by JS if widths are different per tab, or fixed here if consistent */
+        /* Example for a 6-column layout, adjust as per displayHeadersConfig */
+        .data-table colgroup col:nth-child(1) { width: 5%; }  /* STT */
+        .data-table colgroup col:nth-child(2) { width: 20%; } /* TƯ VẤN BÁN HÀNG */
+        .data-table colgroup col:nth-child(3) { width: 25%; } /* TÊN KHÁCH HÀNG */
+        .data-table colgroup col:nth-child(4) { width: 15%; } /* DÒNG XE */
+        .data-table colgroup col:nth-child(5) { width: 15%; } /* PHIÊN BẢN */
+        .data-table colgroup col:nth-child(6) { width: 20%; } /* NGOẠI THẤT */
 
-        .table-6-cols col:nth-child(1) { width: 5%; }  
-        .table-6-cols col:nth-child(2) { width: 20%; } 
-        .table-6-cols col:nth-child(3) { width: 25%; } 
-        .table-6-cols col:nth-child(4) { width: 15%; } 
-        .table-6-cols col:nth-child(5) { width: 15%; } 
-        .table-6-cols col:nth-child(6) { width: 20%; } 
 
         .loading-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.7); display: flex; justify-content: center; align-items: center;
-            z-index: 10; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; border-radius: 8px;
+            z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; border-radius: 8px;
         }
         .loading-overlay.active { opacity: 1; visibility: visible; }
         .loading-spinner {
@@ -318,19 +408,20 @@ font-size: 25px;
         }
         .detail-table th { padding: 8px 10px; color: var(--text-light); font-weight: 500; width: 40%; background: var(--background-light); }
         .detail-table td { padding: 8px 10px; }
-        body.dark-mode .detail-table th { color: var(--text-dark); background: var(--background-dark); border-bottom: 1px solid var(--border-color-dark); }
+        body.dark-mode .detail-table th { color: var(--text-dark); background: var(--card-bg-dark); border-bottom: 1px solid var(--border-color-dark); }
         body.dark-mode .detail-table td { border-bottom: 1px solid var(--border-color-dark); }
 
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 15px; padding-bottom: 5px; }
         .pagination button {
             padding: 8px 15px; background: var(--primary-color); color: #fff; border: none;
             border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed-fast) ease;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2);
         }
-        .pagination button:hover:not(:disabled) { background: var(--primary-color-lighter); transform: translateY(-2px); }
-        .pagination button:disabled { background: var(--border-color-light); color: #aaa; cursor: not-allowed; transform: none; }
-        body.dark-mode .pagination button { background: var(--primary-color-lighter); }
-        body.dark-mode .pagination button:hover:not(:disabled) { background: var(--secondary-color); }
+        .pagination button:hover:not(:disabled) { background: var(--primary-color-lighter); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 48, 135, 0.3);}
+        .pagination button:disabled { background: var(--border-color-light); color: #aaa; cursor: not-allowed; transform: none; box-shadow: none;}
+        body.dark-mode .pagination button { background: var(--primary-color-lighter); box-shadow: 0 2px 5px rgba(0,0,0, 0.3);}
+        body.dark-mode .pagination button:hover:not(:disabled) { background: var(--secondary-color); box-shadow: 0 4px 8px rgba(0,0,0, 0.4);}
         body.dark-mode .pagination button:disabled { background: var(--border-color-dark); color: #777; }
         .pagination span { padding: 8px 12px; font-size: 13px; color: var(--text-light); display: flex; align-items: center; }
         body.dark-mode .pagination span { color: var(--text-dark); }
@@ -343,55 +434,58 @@ font-size: 25px;
         }
         body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
 
-        /* CSS cho thông báo ở giữa trang */
         #notification {
             position: fixed;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) scale(0.9); /* Bắt đầu ẩn và hơi nhỏ */
+            transform: translate(-50%, -50%) scale(0.9); 
             background-color: var(--card-bg-dark);
             color: var(--text-dark);
             padding: 12px 18px;
             border-radius: 8px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.25); /* Bóng đổ rõ hơn */
-            display: none; 
-            align-items: center; 
-            gap: 10px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25); 
+            display: none;
+            align-items: center;
+            gap: 10px;
             z-index: 1005;
             font-size: 14px;
             opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease; /* Hiệu ứng mượt mà hơn */
+            transition: opacity 0.3s ease, transform 0.3s ease; 
             max-width: 90%;
-            width: auto; /* Để chiều rộng tự điều chỉnh theo nội dung */
+            width: auto; 
         }
         #notification.show {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1); /* Hiện ra với kích thước đầy đủ */
-            display: flex; 
+            transform: translate(-50%, -50%) scale(1); 
+            display: flex;
         }
         body.dark-mode #notification {
              background-color: var(--card-bg-light);
              color: var(--text-light);
              box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
-        
+        #notification.success { background-color: var(--success-color); color: white; }
+        #notification.error { background-color: #dc3545; color: white; } /* Bootstrap danger red */
+        body.dark-mode #notification.error { background-color: #f8d7da; color: #721c24;} /* Light red for dark mode error */
+
+
         #notification.important-info {
-            background-color: var(--warning-color-light-bg); 
-            color: var(--warning-color-light-text); 
+            background-color: var(--warning-color-light-bg);
+            color: var(--warning-color-light-text);
             border: 1px solid var(--warning-color-light-border);
-            border-left-width: 6px; /* Viền trái dày hơn */
-            border-left-color: var(--warning-color-light-text); 
-            font-weight: 600; 
-            font-size: 15px; /* Chữ to hơn một chút */
-            padding: 18px 25px; /* Tăng padding */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* Bóng đổ mạnh hơn cho cảnh báo */
+            border-left-width: 6px; 
+            border-left-color: var(--warning-color-light-text);
+            font-weight: 600;
+            font-size: 15px; 
+            padding: 18px 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
         }
         #notification.important-info .icon {
-            font-size: 1.5em; /* Icon to hơn */
-            margin-right: 5px; /* Khoảng cách nhỏ với text */
+            font-size: 1.5em; 
+            margin-right: 5px; 
         }
         body.dark-mode #notification.important-info {
-            background-color: var(--warning-color-dark-bg); 
+            background-color: var(--warning-color-dark-bg);
             color: var(--warning-color-dark-text);
             border: 1px solid var(--warning-color-dark-border);
             border-left-width: 6px;
@@ -410,22 +504,23 @@ font-size: 25px;
         body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer); }
         body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
 
-        @media (max-width: 900px) {
+        /* Responsive adjustments - Adopting yeucaughepxe.html's mobile table style */
+        @media (max-width: 900px) { /* Tablet and smaller */
             .sidebar { transform: translateX(-100%); width: 220px; }
             .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
-            .sidebar.collapsed { transform: translateX(-100%); }
+            .sidebar.collapsed { transform: translateX(-100%); } /* Keep collapsed hidden */
             .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
             .sidebar.open .logo h1 { font-size: 20px; }
             .main-content { margin-left: 0; padding: 15px; }
-            .main-content.collapsed { margin-left: 0; }
-            .toggle-btn { display: none; }
-            .mobile-menu-btn { display: flex; }
+            .main-content.collapsed { margin-left: 0; } /* No effect from desktop collapsed state */
+            .toggle-btn { display: none; } /* Hide desktop toggle */
+            .mobile-menu-btn { display: flex; } /* Show mobile toggle */
             .tables-section { flex-direction: column; }
-            .table-container, .detail-panel { flex-basis: auto; width: 100%; max-height: none; }
+            .table-container, .detail-panel { flex-basis: auto; width: 100%; max-height: none; } /* Allow full height */
             .detail-panel { min-height: 200px; }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px) { /* Phone specific adjustments */
             header { font-size: 12px; padding: 8px 0; }
             .main-content { margin-top: 38px; padding-bottom: 38px; }
             .grid-container { padding: 15px; gap: 10px;}
@@ -433,11 +528,87 @@ font-size: 25px;
             .filter-section input[type="text"] { width: 100%; font-size: 13px;}
             .filter-section .button-group { justify-content: flex-start; flex-wrap: wrap;}
             .filter-section .button-group button { font-size: 12px; padding: 7px 12px;}
-            .data-table { font-size: 11px; } .data-table th { padding: 8px 10px; } .data-table td { padding: 6px 10px; }
+            
+            /* Mobile Table Styling from yeucaughepxe.html */
+            .table-container {
+                padding: 10px; 
+                max-height: none; 
+                overflow-x: hidden; 
+                background: transparent; 
+                box-shadow: none; 
+                border: none; 
+            }
+            .data-table { 
+                display: block;
+                width: 100%;
+                font-size: 12px; 
+            }
+            .data-table thead {
+                display: none; 
+            }
+            .data-table tbody, .data-table tr {
+                display: block; 
+            }
+            .data-table tr {
+                margin-bottom: 10px;
+                border-radius: 8px;
+                background: var(--card-bg-light);
+                padding: 12px;
+                box-shadow: var(--shadow-light-outer);
+                border: 1px solid var(--border-color-light);
+            }
+            body.dark-mode .data-table tr {
+                background: var(--card-bg-dark);
+                box-shadow: var(--shadow-dark-outer);
+                border: 1px solid var(--border-color-dark);
+            }
+            .data-table td {
+                display: flex; 
+                justify-content: space-between;
+                align-items: baseline; 
+                padding: 8px 0; 
+                border: none; 
+                border-bottom: 1px dashed var(--border-color-light); 
+                font-size: 13px;
+                max-width: none; 
+                white-space: normal; 
+                text-overflow: clip; 
+                overflow: visible; 
+            }
+            .data-table td:last-child {
+                border-bottom: none; 
+            }
+            body.dark-mode .data-table td {
+                 border-bottom: 1px dashed var(--border-color-dark);
+            }
+             body.dark-mode .data-table td:last-child {
+                border-bottom: none;
+            }
+
+            .data-table td::before {
+                content: attr(data-label); 
+                font-weight: 600;
+                color: var(--primary-color);
+                padding-right: 10px; 
+                white-space: nowrap; 
+                flex-shrink: 0; 
+            }
+            body.dark-mode .data-table td::before {
+                color: var(--secondary-color);
+            }
+            .data-table td span.value-mobile { 
+                text-align: right;
+                word-break: break-word; 
+                flex-grow: 1; 
+                min-width: 0; 
+            }
+            .data-table colgroup { display: none; } /* Hide colgroup on mobile */
+
+
             .detail-panel h3 { font-size: 14px; } .detail-table { font-size: 11px; } .detail-table th, .detail-table td { padding: 7px 8px;}
             .pagination button, .pagination span { font-size: 12px; padding: 7px 10px;}
             footer { font-size: 11px; padding: 8px 0; }
-            #notification { font-size: 13px; padding: 10px 15px; max-width: calc(100% - 30px); /* Đảm bảo không tràn màn hình mobile */ }
+            #notification { font-size: 13px; padding: 10px 15px; max-width: calc(100% - 30px); }
             #notification.important-info { font-size: 13.5px; padding: 12px 18px;}
         }
 
@@ -451,7 +622,11 @@ font-size: 25px;
             .filter-section input[type="text"] { padding: 8px 12px; }
             .filter-section .button-group button { padding: 6px 10px; gap: 5px; }
             .filter-section .button-group button i { font-size: 11px; }
-            .data-table { font-size: 9.5px; } .data-table th { padding: 6px 7px; } .data-table td { padding: 5px 7px; }
+            
+            .data-table td { font-size: 12px; padding: 7px 0;} /* Slightly adjust td font for very small screens */
+            .data-table td::before { font-size: 11.5px; }
+
+
             .detail-panel h3 { font-size: 13px; } .detail-table { font-size: 10px; } .detail-table th, .detail-table td { padding: 5px 6px; }
             .pagination button, .pagination span { font-size: 11px; padding: 6px 8px;}
             #notification { font-size: 12px; padding: 8px 12px; max-width: calc(100% - 20px); }
@@ -467,7 +642,7 @@ font-size: 25px;
     </button>
 
     <div class="sidebar" id="sidebar"> <div class="logo">
-            <h1>VINFAST THUẬN AN</h1>
+            <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="menu" id="menuTabs"> <a href="#" onclick="switchTab('daghep', this)" class="active" data-tooltip="Đã Ghép"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
             <a href="#" onclick="switchTab('chuaghep', this)" data-tooltip="Chưa Ghép"><i class="fas fa-hourglass-half fa-fw"></i><span>Chưa Ghép</span></a>
@@ -498,9 +673,12 @@ font-size: 25px;
                         <div class="loading-spinner"></div>
                         <span>Đang tải dữ liệu...</span>
                     </div>
-                    <table id="data-table" class="data-table"> <colgroup id="table-colgroup"></colgroup>
+                    <table id="data-table" class="data-table"> 
+                        <colgroup id="table-colgroup"></colgroup>
                         <thead id="table-head"></thead>
-                        <tbody id="table-body"></tbody>
+                        <tbody id="table-body">
+                            <tr class="table-placeholder"><td colspan="6"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                        </tbody>
                     </table>
                 </div>
                 <div class="detail-panel" id="detail-panel">
@@ -529,11 +707,12 @@ font-size: 25px;
 
         let currentSheet = 'daghep'; // Default tab
         let currentPage = 1;
-        const rowsPerPage = 15; 
-        let isDataFullyLoaded = false; 
+        const rowsPerPage = 15;
+        let isDataFullyLoaded = false;
 
-        const ADMIN_USER = "PHẠM THÀNH NHÂN"; 
-        
+        const ADMIN_USER = "PHẠM THÀNH NHÂN";
+
+        // Configuration for table headers and data mapping
         const displayHeadersConfig = {
             "SỐ TT": { dataKey: "STT", width: "5%" },
             "TƯ VẤN BÁN HÀNG": { dataKey: "Tên tư vấn bán hàng", width: "20%" },
@@ -542,12 +721,13 @@ font-size: 25px;
             "PHIÊN BẢN": { dataKey: "Phiên bản", width: "15%" },
             "NGOẠI THẤT": { dataKey: "Ngoại thất", width: "20%" }
         };
+        // Order of headers for display
         const displayHeaderKeys = Object.keys(displayHeadersConfig);
 
 
         document.addEventListener("DOMContentLoaded", function () {
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
-                window.location.href = "index.html"; 
+                window.location.href = "index.html";
                 return;
             }
 
@@ -560,22 +740,22 @@ font-size: 25px;
                 document.body.classList.remove('dark-mode');
                 if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
             }
-            
-            if (window.innerWidth > 900) { 
+
+            if (window.innerWidth > 900) { // Desktop
                 if (localStorage.getItem('sidebarState') === 'collapsed') {
                     document.getElementById("sidebar").classList.add("collapsed");
                     document.getElementById("main-content").classList.add("collapsed");
                 }
-            } else { 
-                 document.getElementById("sidebar").classList.remove("open"); 
-                 document.getElementById("sidebar").classList.remove("collapsed"); 
+            } else { // Mobile/Tablet
+                 document.getElementById("sidebar").classList.remove("open"); // Ensure it's closed by default on mobile
+                 document.getElementById("sidebar").classList.remove("collapsed"); // Not relevant for mobile
             }
-            updateSidebarToggleIcon(); 
+            updateSidebarToggleIcon(); // Update icon based on initial state
 
 
-            updateTableHeader(); 
-            loadInitialData();
-            setupSearch();
+            updateTableHeader(); // Setup table header and colgroup
+            loadInitialData();   // Load data
+            setupSearch();       // Setup search functionality
         });
 
         function showLoading() {
@@ -602,13 +782,15 @@ font-size: 25px;
                         throw new Error("Dữ liệu trong sessionStorage không hợp lệ.");
                     }
                     isDataFullyLoaded = true;
-                    applyFiltersAndRenderCurrentTab();
-                    checkAndNotifyPendingInvoices(); 
+                    applyFiltersAndRenderCurrentTab(); // Render from cache first
+                    checkAndNotifyPendingInvoices();
                     loadedFromCache = true;
+                    console.log("Data loaded from cache.");
                 } catch (error) {
+                    console.error("Error loading from cache:", error);
                     sessionStorage.removeItem('daghep');
                     sessionStorage.removeItem('chuaghep');
-                    globalApiData = { daghep: [], chuaghep: [] };
+                    globalApiData = { daghep: [], chuaghep: [] }; // Reset data
                 }
             }
 
@@ -619,24 +801,30 @@ font-size: 25px;
 
                 sessionStorage.setItem('daghep', JSON.stringify(globalApiData.daghep));
                 sessionStorage.setItem('chuaghep', JSON.stringify(globalApiData.chuaghep));
+                console.log("Data fetched from API and cached.");
 
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab();
-                checkAndNotifyPendingInvoices(); 
+                applyFiltersAndRenderCurrentTab(); // Re-render with fresh data
+                checkAndNotifyPendingInvoices();
                 if (!loadedFromCache) {
                     showNotification("Dữ liệu đã được tải thành công!", 'success', 2000);
+                } else {
+                    showNotification("Dữ liệu đã được làm mới từ máy chủ!", 'info', 1500);
                 }
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status} - ${error.response.data || error.message}` : `Lỗi mạng: ${error.message}`;
-                if (!loadedFromCache) {
-                     document.getElementById("table-body").innerHTML = `<tr><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
+                console.error("API fetch error:", errorMsg);
+                if (!loadedFromCache) { // Only show error if cache also failed or didn't exist
+                     document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
                     showNotification(errorMsg, 'error', 5000);
+                } else {
+                    showNotification("Không thể làm mới dữ liệu từ máy chủ. Hiển thị dữ liệu từ cache.", 'warning', 3000);
                 }
             } finally {
                 hideLoading();
             }
         }
-        
+
         function checkAndNotifyPendingInvoices() {
             if (!isDataFullyLoaded) return;
 
@@ -654,7 +842,7 @@ font-size: 25px;
 
                 if (pendingInvoiceOrders.length > 0) {
                     const message = `Bạn có ${pendingInvoiceOrders.length} đơn hàng "Đã ghép" đang Chờ Xuất Hóa Đơn.`;
-                    showNotification(message, 'important-info', 3000); // THAY ĐỔI: Thời gian hiển thị là 5 giây
+                    showNotification(message, 'important-info', 5000); // Display for 5 seconds
                 }
             }
         }
@@ -678,19 +866,23 @@ font-size: 25px;
                 );
             }
 
-            currentDisplayData = dataForSheet.reverse();
+            currentDisplayData = dataForSheet.sort((a, b) => { // Sort by "Thời gian nhập" descending
+                 const dateA = new Date(a["Thời gian nhập"] || 0);
+                 const dateB = new Date(b["Thời gian nhập"] || 0);
+                 return dateB - dateA;
+            });
             renderTable(currentDisplayData, currentPage);
         }
 
 
         function logout() {
             sessionStorage.clear();
-            localStorage.removeItem('sidebarState'); 
+            localStorage.removeItem('sidebarState'); // Also clear sidebar state
             window.location.href = "index.html";
         }
 
         function goBack() {
-            window.location.href = "index.html";
+            window.location.href = "index.html"; // Or previous page: history.back();
         }
 
         function toggleTheme() {
@@ -707,14 +899,15 @@ font-size: 25px;
 
         function updateSidebarToggleIcon() {
             const sidebar = document.getElementById("sidebar");
-            const toggleIcon = document.querySelector("#sidebar-toggle-btn i"); 
-            const mobileMenuIcon = document.querySelector(".mobile-menu-btn i"); 
+            const toggleIconDesktop = document.querySelector("#sidebar-toggle-btn i");
+            const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+            const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
 
             if (!sidebar) return;
 
-            if (window.innerWidth <= 900) { 
+            if (window.innerWidth <= 900) { // Mobile/Tablet view
                 if(document.getElementById('sidebar-toggle-btn')) document.getElementById('sidebar-toggle-btn').style.display = 'none';
-                if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'flex';
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
                 if (mobileMenuIcon) {
                     if (sidebar.classList.contains("open")) {
                         mobileMenuIcon.classList.remove("fa-bars");
@@ -724,21 +917,21 @@ font-size: 25px;
                         mobileMenuIcon.classList.add("fa-bars");
                     }
                 }
-            } else { 
+            } else { // Desktop view
                 if(document.getElementById('sidebar-toggle-btn')) document.getElementById('sidebar-toggle-btn').style.display = 'flex';
-                if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'none';
-                if (toggleIcon) {
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+                if (toggleIconDesktop) {
                     if (sidebar.classList.contains("collapsed")) {
-                        toggleIcon.classList.remove("fa-times");
-                        toggleIcon.classList.add("fa-bars");
+                        toggleIconDesktop.classList.remove("fa-times");
+                        toggleIconDesktop.classList.add("fa-bars");
                     } else {
-                        toggleIcon.classList.remove("fa-bars");
-                        toggleIcon.classList.add("fa-times");
+                        toggleIconDesktop.classList.remove("fa-bars");
+                        toggleIconDesktop.classList.add("fa-times");
                     }
                 }
             }
         }
-        
+
         function toggleDesktopSidebar() {
             if (window.innerWidth > 900) {
                 const sidebar = document.getElementById("sidebar");
@@ -752,8 +945,8 @@ font-size: 25px;
 
         function toggleMobileSidebar() {
             const sidebar = document.getElementById("sidebar");
-            sidebar.classList.toggle("open"); 
-            updateSidebarToggleIcon(); 
+            sidebar.classList.toggle("open"); // This class controls visibility on mobile
+            updateSidebarToggleIcon();
         }
 
 
@@ -766,26 +959,37 @@ font-size: 25px;
             element.classList.add('active');
 
             currentSheet = sheetName;
-            currentPage = 1;
-            document.getElementById("search-input").value = "";
+            currentPage = 1; // Reset to first page when switching tabs
+            document.getElementById("search-input").value = ""; // Clear search input
 
-            applyFiltersAndRenderCurrentTab();
+            applyFiltersAndRenderCurrentTab(); // This will filter and render the new tab's data
+            
+            // Close mobile sidebar if open
+            if (window.innerWidth <= 900) {
+                const sidebar = document.getElementById("sidebar");
+                if (sidebar.classList.contains("open")) {
+                    toggleMobileSidebar();
+                }
+            }
         }
 
         function updateTableHeader() {
             const thead = document.getElementById("table-head");
             const colgroup = document.getElementById("table-colgroup");
-            
-            colgroup.innerHTML = ""; 
-            thead.innerHTML = ""; 
-            
-            colgroup.className = `table-${displayHeaderKeys.length}-cols`;
 
+            if (!thead || !colgroup) return;
+
+            colgroup.innerHTML = ""; // Clear existing cols
+            thead.innerHTML = "";    // Clear existing header
+
+            // Set class for colgroup for potential specific styling based on column count
+            // colgroup.className = `table-${displayHeaderKeys.length}-cols`;
 
             let headerRowHTML = "<tr>";
             displayHeaderKeys.forEach(headerText => {
                 const col = document.createElement('col');
-                col.style.width = displayHeadersConfig[headerText].width;
+                // Use width from config. Ensure config has width for all keys.
+                col.style.width = displayHeadersConfig[headerText]?.width || 'auto'; 
                 colgroup.appendChild(col);
                 headerRowHTML += `<th>${headerText}</th>`;
             });
@@ -796,10 +1000,10 @@ font-size: 25px;
 
         function renderTable(dataToDisplay, page = 1) {
             const tbody = document.getElementById("table-body");
-            tbody.innerHTML = "";
+            tbody.innerHTML = ""; // Clear previous rows
 
             if (!Array.isArray(dataToDisplay) || dataToDisplay.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${displayHeaderKeys.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
+                tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
                 updatePagination(dataToDisplay || []);
                 document.getElementById("detail-body").innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
                 return;
@@ -808,6 +1012,8 @@ font-size: 25px;
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = dataToDisplay.slice(start, end);
+            const isMobile = window.innerWidth <= 768;
+
 
             paginatedData.forEach((row, index) => {
                 const tr = document.createElement("tr");
@@ -816,17 +1022,23 @@ font-size: 25px;
 
                 displayHeaderKeys.forEach(headerText => {
                     const dataKey = displayHeadersConfig[headerText].dataKey;
+                    let cellContent = "";
+                    let cellValue = "";
+
                     if (dataKey === "STT") {
-                        cellsHTML += `<td>${globalIndex}</td>`;
+                        cellValue = globalIndex;
                     } else {
-                        cellsHTML += `<td>${row[dataKey] || ""}</td>`;
+                        cellValue = row[dataKey] || "N/A";
                     }
+                    
+                    // Wrap content in span for mobile view data-label alignment
+                    cellContent = `<span class="value-mobile">${cellValue}</span>`;
+                    cellsHTML += `<td data-label="${headerText}">${cellContent}</td>`;
                 });
-                
+
                 tr.innerHTML = cellsHTML;
                 tr.onclick = () => showDetail(row);
 
-                // Kiểm tra và thêm class để highlight dòng chờ xuất hóa đơn
                 if (currentSheet === 'daghep' && (!row["Ngày xuất hóa đơn"] || String(row["Ngày xuất hóa đơn"]).trim() === "")) {
                     tr.classList.add('row-waiting-for-invoice');
                 }
@@ -837,7 +1049,7 @@ font-size: 25px;
             updatePagination(dataToDisplay);
 
             if (paginatedData.length > 0) {
-                showDetail(paginatedData[0]);
+                showDetail(paginatedData[0]); 
             } else {
                  document.getElementById("detail-body").innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
             }
@@ -867,36 +1079,41 @@ font-size: 25px;
         }
 
         function showDetail(row) {
-            const detailTableBody = document.querySelector("#detail-body tbody"); 
+            const detailTableBody = document.querySelector("#detail-body tbody");
             if (!detailTableBody) return;
 
             if (!row) {
                 detailTableBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có dữ liệu chi tiết.</td></tr>";
                 return;
             }
-            
+
             let htmlContent = "";
+            // Display configured headers first, excluding STT
             displayHeaderKeys.forEach(headerText => {
                  const dataKey = displayHeadersConfig[headerText].dataKey;
                  if (dataKey !== "STT") { 
                     htmlContent += `
                         <tr>
                             <th>${headerText}</th>
-                            <td>${row[dataKey] || ""}</td>
+                            <td>${row[dataKey] || "N/A"}</td>
                         </tr>`;
                  }
             });
-            const otherImportantKeys = ["Nội thất", "Số đơn hàng", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn"];
+            // Display other important keys that are not in displayHeadersConfig
+            const otherImportantKeys = ["Nội thất", "Số đơn hàng", "VIN", "Thời gian nhập", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"];
             otherImportantKeys.forEach(dataKey => {
-                if (!displayHeadersConfig[dataKey] && row[dataKey] !== undefined) { 
-                    let cellValue = row[dataKey] || "";
-                     if ((dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn") && cellValue) {
+                // Check if this key is already displayed via displayHeadersConfig
+                const isAlreadyDisplayed = displayHeaderKeys.some(ht => displayHeadersConfig[ht].dataKey === dataKey);
+
+                if (!isAlreadyDisplayed && row[dataKey] !== undefined) { 
+                    let cellValue = row[dataKey] || "N/A";
+                     if ((dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn") && cellValue && cellValue !== "N/A") {
                         const parsedDate = new Date(cellValue);
-                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900
-                            ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                            : (cellValue || "");
+                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 
+                            ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                            : (cellValue || "N/A"); 
                     }
-                    const isVin = dataKey === "VIN" && cellValue;
+                    const isVin = dataKey === "VIN" && cellValue && cellValue !== "N/A";
                      htmlContent += `
                         <tr>
                             <th>${dataKey.replace(/_/g, ' ')}</th>
@@ -906,7 +1123,7 @@ font-size: 25px;
             });
 
 
-            detailTableBody.innerHTML = htmlContent;
+            detailTableBody.innerHTML = htmlContent || "<tr><td colspan='2' style='text-align:center;'>Không có chi tiết bổ sung.</td></tr>";
         }
 
 
@@ -921,23 +1138,33 @@ font-size: 25px;
             }
 
             if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}" (mới nhất lên đầu) sang Excel không?`)) {
-                const excelHeaders = [...displayHeaderKeys]; 
-
-
+                // Define all possible headers that could be in the data
+                const allPossibleHeaders = [
+                    "STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ", 
+                    "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc", 
+                    "Thời gian nhập", "Trạng thái", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"
+                ];
+                
                 const wsData = currentDisplayData.map((row, index) => {
                     const rowData = {};
-                    excelHeaders.forEach(headerText => {
-                        const dataKey = displayHeadersConfig[headerText].dataKey;
-                        if (dataKey === "STT") {
-                            rowData[headerText] = index + 1;
+                    allPossibleHeaders.forEach(headerKey => {
+                        if (headerKey === "STT") {
+                            rowData[headerKey] = index + 1;
                         } else {
-                            rowData[headerText] = row[dataKey] || "";
+                            let value = row[headerKey] || "";
+                            if ((headerKey === "Thời gian nhập" || headerKey === "Thời gian ghép" || headerKey === "Ngày xuất hóa đơn" || headerKey === "Ngày cọc") && value) {
+                                const parsedDate = new Date(value);
+                                value = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 
+                                    ? parsedDate.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                                    : value;
+                            }
+                            rowData[headerKey] = value;
                         }
                     });
                     return rowData;
                 });
 
-                const ws = XLSX.utils.json_to_sheet(wsData, { header: excelHeaders });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: allPossibleHeaders });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép');
                 XLSX.writeFile(wb, `VinFast_Don_Hang_${currentSheet === 'daghep' ? 'Da_Ghep' : 'Chua_Ghep'}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
@@ -979,7 +1206,7 @@ font-size: 25px;
             tableToPrint.appendChild(thead);
 
             const tbody = document.createElement('tbody');
-            currentDisplayData.forEach((row, index) => {
+            currentDisplayData.forEach((row, index) => { // Print all filtered data, not just paginated
                 const tr = document.createElement("tr");
                 displayHeaderKeys.forEach(headerText => {
                     const td = document.createElement('td');
@@ -1002,10 +1229,11 @@ font-size: 25px;
                     <p style="margin: 2px 0; font-size: 9pt;">Hotline: 1900 232389</p>
                     <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE'} (Mới nhất lên đầu)</p>
                     <p style="margin: 2px 0; font-size: 8pt;">In lúc: ${now}</p>
+                     <p style="margin: 2px 0; font-size: 8pt;">Tổng số đơn: ${currentDisplayData.length}</p>
                 </div>
                 ${tableToPrint.outerHTML}
             `;
-            const win = window.open('', '', 'width=1123,height=794');
+            const win = window.open('', '', 'width=1123,height=794'); // A4 landscape dimensions in pixels (approx)
             win.document.write(`
                 <html>
                 <head>
@@ -1014,7 +1242,7 @@ font-size: 25px;
                         body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; }
                         table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
                         th, td { border: 1px solid #333; padding: 3px 4px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top;}
-                        th { background: #e0e0e0; color: #000; font-weight: bold; font-size: 7.5pt; }
+                        th { background: #e0e0e0 !important; color: #000 !important; font-weight: bold; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
                         td { font-size: 7.5pt; }
                         @page { size: A4 landscape; margin: 1cm; }
                     </style>
@@ -1023,7 +1251,7 @@ font-size: 25px;
                 </html>
             `);
             win.document.close();
-            setTimeout(() => {
+            setTimeout(() => { 
                 win.print();
                 win.close();
             }, 500);
@@ -1032,8 +1260,8 @@ font-size: 25px;
 
         async function refreshData() {
             showLoading();
-            document.getElementById("search-input").value = "";
-            currentPage = 1;
+            document.getElementById("search-input").value = ""; // Clear search on refresh
+            currentPage = 1; // Reset to first page
             const apiURL = "https://script.google.com/macros/s/AKfycby3HoOoC-EPX_SKPC9XqqusIo__gnXuVQZ3mzldBZgR_dUCuo-1IAphkeqj_dvkHySBGA/exec";
             try {
                 const response = await axios.get(apiURL);
@@ -1042,6 +1270,7 @@ font-size: 25px;
 
                 sessionStorage.setItem('daghep', JSON.stringify(globalApiData.daghep));
                 sessionStorage.setItem('chuaghep', JSON.stringify(globalApiData.chuaghep));
+                console.log("Data refreshed from API and cached.");
 
                 isDataFullyLoaded = true;
                 applyFiltersAndRenderCurrentTab();
@@ -1049,7 +1278,8 @@ font-size: 25px;
                 showNotification("Dữ liệu đã được làm mới thành công!", 'success', 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
-                 document.getElementById("table-body").innerHTML = `<tr><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
+                console.error("API refresh error:", errorMsg);
+                 document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
                 showNotification(errorMsg, 'error', 5000);
             } finally {
                 hideLoading();
@@ -1059,8 +1289,9 @@ font-size: 25px;
         function debounce(func, wait) {
             let timeout;
             return function (...args) {
+                const context = this;
                 clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
+                timeout = setTimeout(() => func.apply(context, args), wait);
             };
         }
 
@@ -1069,27 +1300,41 @@ font-size: 25px;
                 if (!isDataFullyLoaded) {
                     return;
                 }
-                currentPage = 1;
+                currentPage = 1; 
                 applyFiltersAndRenderCurrentTab();
-            }, 300));
+            }, 300)); 
         }
 
-        function showNotification(message, type = 'info', duration = 3000) { 
+        function showNotification(message, type = 'info', duration = 3000) {
             const notif = document.getElementById("notification");
             if (!notif) return;
-            
-            notif.classList.remove('success', 'error', 'info', 'important-info'); 
+
+            notif.classList.remove('success', 'error', 'info', 'important-info', 'warning'); // Clear previous types
             if (type) notif.classList.add(type); 
 
             let fullMessage = "";
+            let iconClass = "";
+
+            switch(type) {
+                case 'success': iconClass = 'fas fa-check-circle'; break;
+                case 'error': iconClass = 'fas fa-times-circle'; break;
+                case 'warning': iconClass = 'fas fa-exclamation-triangle'; break;
+                case 'important-info': iconClass = 'fas fa-info-circle'; break; // Or a more prominent icon
+                default: iconClass = 'fas fa-info-circle'; break;
+            }
+
             if (type === 'important-info') {
-                fullMessage = `<span class="icon"><i class="fas fa-exclamation-triangle"></i></span> <span>${message}</span>`;
+                fullMessage = `<span class="icon" style="font-size: 1.2em; margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
                 notif.innerHTML = fullMessage; 
             } else {
-                notif.textContent = message; 
+                 fullMessage = `<span style="margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
+                notif.innerHTML = fullMessage;
             }
             
+            // Reset display to flex before showing for proper calculation
+            notif.style.display = "flex";
             notif.classList.add('show');
+
 
             if (notif.timeoutId) {
                 clearTimeout(notif.timeoutId);
@@ -1101,12 +1346,12 @@ font-size: 25px;
                          notif.style.display = "none"; 
                     }
                 }, { once: true });
-                setTimeout(() => {
+                setTimeout(() => { // Fallback
                     if (!notif.classList.contains('show')) notif.style.display = "none";
                 }, 450); 
             }, duration);
         }
-        
+
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
@@ -1137,7 +1382,7 @@ font-size: 25px;
                 }
             }
         }, 200));
-        document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon);
+        document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon); 
     </script>
 </body>
 </html>
