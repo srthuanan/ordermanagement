@@ -31,6 +31,21 @@
             --color-info: #17a2b8;
             --font-primary: 'Roboto', sans-serif;
             --font-secondary: 'Montserrat', sans-serif;
+
+            /* CSS Variables for exterior colors (examples, adjust as needed) */
+            --exterior-default-text: var(--text-light); /* Default text color */
+            body.dark-mode --exterior-default-text: var(--text-dark);
+            --exterior-orange-text: #FFA500;
+            --exterior-red-text: #DC143C;
+            --exterior-blue-text: #1E90FF;
+            --exterior-yellow-text: #FFD700; /* Consider a darker yellow for better readability on light backgrounds if needed */
+            --exterior-pink-text: #FF69B4;
+            --exterior-green-text: #2E8B57;
+            --exterior-grey-text: #696969; /* Using a specific grey */
+            body.dark-mode --exterior-grey-text: #A9A9A9;
+            --exterior-white-text: #333333; /* Darker text for white backgrounds for readability */
+            body.dark-mode --exterior-white-text: #DDDDDD; /* Lighter text for white backgrounds in dark mode */
+            --exterior-bronze-text: #CD7F32;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -113,7 +128,7 @@
 
         .main-content {
             flex-grow: 1; /* Cho phép main-content chiếm không gian còn lại */
-            padding: 30px;
+            padding: 20px;
             margin: 0 auto;
             width: 100%;
             max-width: 1600px;
@@ -291,7 +306,6 @@
             text-align: center;
             padding: 10px 0;
             font-size: 12px;
-            /* margin-top: auto; Không cần thiết khi body là flex và main-content flex-grow */
             position: sticky; 
             bottom: 0;
             z-index: 1000; 
@@ -423,11 +437,190 @@
             { key: 2, header: "Số Đơn Hàng" },
             { key: 3, header: "Dòng Xe" },
             { key: 4, header: "Phiên Bản" },
-            { key: 5, header: "Ngoại Thất" },
+            { key: 5, header: "Ngoại Thất" }, // This is the "Exterior" column
             { key: 6, header: "Nội Thất" },
             { key: 8, header: "VIN" },
             { key: 9, header: "Chính Sách" },
         ];
+
+        // START of getExteriorColorStyle function
+        function getExteriorColorStyle(exteriorValue) {
+            // Outline style, only applied to CE18, outline color changed to #F0F8FF
+            const outlineStyle = "text-shadow: -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 1px 1px 0 #808080, 0 0 5px #808080;";
+            // Font-weight style for specific colors
+            const specificFontWeight = `font-weight: 600;`;
+            // Font-weight style for default case
+            const defaultFontWeight = `font-weight: normal;`;
+
+            // Default style: NO outline and normal font-weight
+            const defaultColorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`;
+
+            if (!exteriorValue) {
+                return defaultColorStyle; // Return default style without outline
+            }
+
+            const lowerExteriorValue = String(exteriorValue).toLowerCase(); // Ensure it's a string before toLowerCase()
+
+            // Prioritize full or most specific strings first
+            // ONLY CE18 COLOR KEEPS THE OUTLINE (now with #F0F8FF color)
+            if (lowerExteriorValue === "brahminy white (ce18)") {
+                return `color: white; ${outlineStyle} ${specificFontWeight}`; // Keep outline for CE18 with new outline color
+            }
+
+            // OTHER COLORS - REMOVE OUTLINE
+            if (lowerExteriorValue === "sunset orb (ce1a)") {
+                return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "crimson red (ce1m)") {
+                return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "vinfast blue (ce1n)") {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "neptune grey (ce14)") {
+                return `color: #778899; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black (ce11)") {
+                // For "jet black (ce11)", text color should be white for visibility on black background if cell bg is black
+                // Assuming cell background is not black, so black text is fine. If cell BG is black, change to white.
+                return `color: black; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "electric blue (ce1j)") {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "zenith grey (ce1v)") {
+                return `color: #B0C4DE; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") {
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") {
+                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") {
+                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "urbant mint (ce1w)") {
+                return `color: #3CB371; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "vinbus green (ce2b)") {
+                return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "deep ocean (ce1h)") {
+                return `color: #006400; ${specificFontWeight}`; // Dark Green
+            }
+            if (lowerExteriorValue === "iris berry (ce1x)") {
+                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") {
+                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "urbant mint green - desat silv (171w)") {
+                return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "ivy green-desat silver roof (1722)") {
+                return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black-champagne creme roof (2311)") {
+                // Assuming body color is champagne creme, so text should be dark or a contrasting color for yellow.
+                // If the primary color is jet black, text should be white.
+                // The function seems to return text color for the *body* part of two-tone.
+                // For "jet black-champagne creme roof", the body is likely champagne.
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`; // Changed from white to yellow-text
+            }
+            if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") {
+                return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "champagne creme - matte champa (2523)") {
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black - graphite roof (2811)") {
+                // Assuming body color is jet black, text should be white for visibility.
+                return `color: white; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") {
+                return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "ivy_green_gne (ce22)") {
+                return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "champagne_creme_ylg (ce23)") {
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "crimson red - jet black roof (111m)") {
+                return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") {
+                return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "deep ocean_jet black roof (111h)") {
+                 // Body is deep ocean, text should contrast. White is a good choice.
+                return `color: white; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") {
+                // Body is jet black, text should be white.
+                return `color: white; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") {
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue === "de sat silver ind12007 (ce17)") {
+                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            }
+
+            // .includes() cases - REMOVE OUTLINE
+            // These are more general, specific full matches above take precedence.
+            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) {
+                return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) {
+                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) {
+                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("deep ocean")) {
+                // For "deep ocean", white text provides good contrast.
+                return `color: white; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("sunset orb")) {
+                return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) {
+                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) {
+                return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("jet black")) {
+                // For any "jet black" variant, white text is best for visibility.
+                return `color: white; ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) {
+                // IMPORTANT: "brahminy white (ce18)" is handled above and keeps the outline.
+                // Other "brahminy white" or "infinity blanc" variants will not have an outline here.
+                return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) {
+                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            }
+            if (lowerExteriorValue.includes("mystery bronz")) {
+                return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
+            }
+
+            return defaultColorStyle;
+        }
+        // END of getExteriorColorStyle function
+
 
         document.addEventListener("DOMContentLoaded", () => {
             if (localStorage.getItem('theme') === 'dark') {
@@ -472,8 +665,6 @@
             }
             
             adjustToastPositionForStickyFooter();
-            // Gọi lại hàm điều chỉnh toast khi theme thay đổi vì footer có thể thay đổi chiều cao nhẹ (do border, shadow khác nhau)
-            // Hoặc nếu có resize event làm thay đổi chiều cao footer
             window.addEventListener('resize', adjustToastPositionForStickyFooter);
         });
 
@@ -492,8 +683,6 @@
 
             if (salespersonSalesData.length === 0) {
                 showEmptyState(`Không có dữ liệu đơn hàng nào cho ${salespersonName || 'TVBH này'}.`);
-                // paginationControls.style.display = "none"; // Đã xử lý trong showEmptyState
-                // salesTable.style.display = "none"; // Đã xử lý trong showEmptyState
                 return;
             }
             
@@ -513,7 +702,14 @@
                     if (col.isIndex) {
                         td.textContent = start + index + 1;
                     } else {
-                        td.textContent = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
+                        const cellValue = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
+                        td.textContent = cellValue;
+                        
+                        // Apply exterior color styling for the "Ngoại Thất" column
+                        if (col.key === 5) { // Key 5 is "Ngoại Thất"
+                            const exteriorStyle = getExteriorColorStyle(cellValue);
+                            td.style.cssText = exteriorStyle;
+                        }
                     }
                     tr.appendChild(td);
                 });
@@ -556,7 +752,7 @@
             const isDarkMode = document.body.classList.toggle('dark-mode');
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
             updateThemeButton(isDarkMode);
-            adjustToastPositionForStickyFooter(); // Cập nhật vị trí toast khi theme thay đổi
+            adjustToastPositionForStickyFooter(); 
         }
 
         function updateThemeButton(isDarkMode) {
@@ -621,8 +817,6 @@
                 return;
             }
             const printWindow = window.open('', '_blank');
-            // Lấy HTML của toàn bộ table-wrapper để bao gồm cả header dính chặt khi in (nếu trình duyệt hỗ trợ)
-            // Hoặc chỉ lấy sales-table nếu muốn đơn giản hơn
             const tableToPrintHTML = document.getElementById('sales-table').outerHTML; 
             const now = new Date().toLocaleString('vi-VN');
             const tvbhNameToPrint = salespersonName || "TVBH";
@@ -639,11 +833,14 @@
                         table { border-collapse: collapse; width: 100%; font-size: 10pt; }
                         th, td { border: 1px solid #ccc !important; padding: 6px 8px; text-align: left; word-wrap: break-word; }
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index:1; }
+                        /* Apply getExteriorColorStyle for printing */
+                        /* This part is tricky as JS styles won't directly transfer to print CSS easily without reprocessing */
+                        /* For simplicity, the inline styles applied by JS should carry over if -webkit-print-color-adjust: exact is effective */
                         @page { margin: 0.7in; }
                         @media print {
-                            body { overflow: visible !important; height: auto !important; } /* Cho phép nội dung tràn và in nhiều trang */
-                            #table-wrapper { max-height: none !important; overflow: visible !important; } /* Bỏ giới hạn chiều cao khi in */
-                            header, footer, .header-controls, .table-actions, .pagination, .toast-container, .theme-toggle-btn, .control-btn { display: none !important; } /* Ẩn các phần tử không cần thiết khi in */
+                            body { overflow: visible !important; height: auto !important; } 
+                            #table-wrapper { max-height: none !important; overflow: visible !important; } 
+                            header, footer, .header-controls, .table-actions, .pagination, .toast-container, .theme-toggle-btn, .control-btn { display: none !important; } 
                             .main-content, .table-card { padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important; }
                         }
                     </style>
@@ -686,13 +883,13 @@
             const toastContainer = document.getElementById('toast-container');
             if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
                 const footerHeight = footer.offsetHeight;
-                let bottomOffset = footerHeight + 20; // 20px là khoảng cách ban đầu
+                let bottomOffset = footerHeight + 20; 
                 
                 if (window.innerWidth <= 480) {
-                     bottomOffset = footerHeight + 10; // Khoảng cách nhỏ hơn cho mobile
+                     bottomOffset = footerHeight + 10; 
                 }
                 toastContainer.style.bottom = `${bottomOffset}px`;
-            } else if (toastContainer) { // Nếu footer không sticky, đặt lại vị trí mặc định
+            } else if (toastContainer) { 
                 toastContainer.style.bottom = (window.innerWidth <= 480) ? '10px' : '20px';
             }
         }
