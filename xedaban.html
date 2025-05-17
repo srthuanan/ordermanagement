@@ -132,11 +132,34 @@
             margin-bottom: 25px;
         }
         .slidebar .logo h1 {
-            font-size: 20px; /* Kích thước logo */
+            font-size: 25px; /* Kích thước gốc từ file của bạn */
             color: #fff;
             font-weight: 600;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* text-shadow gốc từ file của bạn */
+            /* Thêm animation */
+            animation: bounceGlowReduced 2s infinite alternate;
+        }
+
+        @keyframes bounceGlowReduced {
+            0%, 100% {
+                transform: translateY(0);
+                /* Kết hợp text-shadow gốc với hiệu ứng phát sáng đã giảm */
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), /* Bóng đổ gốc */
+                             0 0 3px #fff, /* Phát sáng trắng - đã giảm */
+                             0 0 6px #fff,
+                             0 0 9px #00aeff, /* Phát sáng xanh nhạt - đã giảm */
+                             0 0 12px #00aeff;
+            }
+            50% {
+                transform: translateY(-8px); /* Điều chỉnh độ nảy nếu cần, ví dụ: -8px */
+                /* Kết hợp text-shadow gốc với hiệu ứng phát sáng đã giảm ở đỉnh của cú nảy */
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), /* Bóng đổ gốc */
+                             0 0 6px #fff,
+                             0 0 12px #fff,
+                             0 0 18px #0077cc, /* Phát sáng xanh đậm hơn ở đỉnh - đã giảm */
+                             0 0 24px #0077cc;
+            }
         }
         .slidebar.collapsed .logo h1 {
             opacity: 0;
@@ -165,10 +188,25 @@
             font-weight: 500;
             border-radius: 6px;
             background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .slidebar .tabs a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transition: left var(--transition-speed) ease-out;
+        }
+        .slidebar .tabs a:hover::before {
+            left: 0;
         }
         body.dark-mode .slidebar .tabs a {
             color: var(--text-dark);
@@ -176,6 +214,9 @@
         .slidebar.collapsed .tabs a {
             padding: 10px;
             justify-content: center;
+        }
+        .slidebar.collapsed .tabs a::before {
+            display: none;
         }
         .slidebar .tabs a i {
             font-size: 16px;
@@ -197,12 +238,14 @@
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             padding-left: 15px;
+            transform: translateX(3px);
         }
          .slidebar.collapsed .tabs a:hover {
             padding-left: 10px; /* Giữ padding khi thu gọn */
+            transform: scale(1.05);
         }
         .slidebar .tabs a:hover i {
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(5deg);
         }
         body.dark-mode .slidebar .tabs a:hover {
             background: var(--primary-color-lighter);
@@ -212,9 +255,28 @@
             background: var(--secondary-color);
             color: #fff;
             font-weight: 600;
+            animation: activeLinkPulse 1.5s infinite ease-in-out;
+        }
+        .slidebar .tabs a.active::before {
+            left: 0;
+            background-color: #fff;
+        }
+        @keyframes activeLinkPulse {
+            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
+            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
         }
         body.dark-mode .slidebar .tabs a.active {
             background: var(--primary-color);
+            animation-name: activeLinkPulseDark;
+        }
+        body.dark-mode .slidebar .tabs a.active::before {
+            background-color: var(--secondary-color);
+        }
+        @keyframes activeLinkPulseDark {
+            0% { box-shadow: 0 0 5px var(--secondary-color); }
+            50% { box-shadow: 0 0 15px var(--secondary-color); }
+            100% { box-shadow: 0 0 5px var(--secondary-color); }
         }
 
         .toggle-btn {
@@ -238,7 +300,7 @@
         }
         .toggle-btn:hover {
             background: var(--primary-color-lighter);
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(180deg);
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
@@ -258,7 +320,7 @@
             color: var(--text-light);
             font-size: 14px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             width: 32px;
             height: 32px;
             display: flex;
@@ -268,8 +330,18 @@
         }
         .nav-btn:hover, .theme-toggle:hover {
             background: #e9ecef;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.1);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+         .nav-btn:active, .theme-toggle:active {
+            transform: translateY(0px) scale(0.95);
+            box-shadow: var(--shadow-light-inner);
+        }
+        .theme-toggle i {
+            transition: transform 0.5s ease-in-out; /* 0.5s là --transition-speed-slow */
+        }
+        .theme-toggle.spinning i {
+            transform: rotate(360deg);
         }
         body.dark-mode .nav-btn,
         body.dark-mode .theme-toggle {
@@ -283,6 +355,11 @@
             color: #fff;
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
+        body.dark-mode .nav-btn:active,
+        body.dark-mode .theme-toggle:active {
+            box-shadow: var(--shadow-dark-inner);
+        }
+
 
          /* Tooltip CSS */
         [data-tooltip] {
@@ -293,7 +370,7 @@
             position: absolute;
             bottom: 125%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(5px);
             background-color: #333;
             color: #fff;
             padding: 4px 8px;
@@ -302,12 +379,13 @@
             white-space: nowrap;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out;
             z-index: 10000;
         }
         [data-tooltip]:hover::after {
             opacity: 1;
             visibility: visible;
+            transform: translateX(-50%) translateY(0);
         }
         body.dark-mode [data-tooltip]::after {
             background-color: #f0f0f0;
@@ -420,8 +498,9 @@
              border: 1px solid var(--border-color-light);
         }
         .summary-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-light-outer); /* Đổ bóng ngoài khi hover */
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-light-outer), 0 0 10px var(--secondary-color); /* Đổ bóng ngoài và glow khi hover */
+            border-color: var(--secondary-color);
         }
         body.dark-mode .summary-card {
             background: var(--card-bg-dark);
@@ -429,11 +508,18 @@
             border: 1px solid var(--border-color-dark);
         }
          body.dark-mode .summary-card:hover {
-            box-shadow: var(--shadow-dark-outer);
-            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-dark-outer), 0 0 10px var(--primary-color-lighter);
+            border-color: var(--primary-color-lighter);
          }
-        .summary-card .icon { font-size: 24px; color: var(--primary-color); transition: transform var(--transition-speed) ease; }
-        .summary-card:hover .icon { transform: scale(1.1); color: var(--secondary-color); }
+        .summary-card .icon {
+            font-size: 24px;
+            color: var(--primary-color);
+            transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.320, 1.275), color var(--transition-speed) ease;
+        }
+        .summary-card:hover .icon {
+            transform: scale(1.2) rotate(-5deg);
+            color: var(--secondary-color);
+        }
         body.dark-mode .summary-card .icon { color: var(--secondary-color); }
         body.dark-mode .summary-card:hover .icon { color: var(--primary-color-lighter); }
 
@@ -453,6 +539,11 @@
             box-shadow: var(--shadow-light-inner);
             position: relative;
             border: 1px solid var(--border-color-light);
+            transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+        .chart-container:hover {
+            box-shadow: var(--shadow-light-outer), 0 0 8px var(--primary-color);
+            border-color: var(--primary-color);
         }
         .chart-container.full-width { width: 100%; }
         .chart-container.half-width { flex: 1; min-width: 300px; }
@@ -460,6 +551,10 @@
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
+        }
+        body.dark-mode .chart-container:hover {
+            box-shadow: var(--shadow-dark-outer), 0 0 8px var(--secondary-color);
+            border-color: var(--secondary-color);
         }
         .chart-container h3 { font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 15px; }
         body.dark-mode .chart-container h3 { color: var(--secondary-color); }
@@ -475,11 +570,11 @@
             width: 32px; height: 32px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
          .chart-container .download-btn:hover {
              background: #e9ecef;
-             transform: translateY(-2px);
+             transform: translateY(-2px) scale(1.1);
          }
         body.dark-mode .chart-container .download-btn {
             background: var(--card-bg-dark);
@@ -524,7 +619,7 @@
         .filter-section input:focus, .filter-section select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: var(--shadow-light-outer); /* Đổ bóng ngoài khi focus */
+            box-shadow: var(--shadow-light-outer), 0 0 0 2px rgba(0, 48, 135, 0.2);
         }
         body.dark-mode .filter-section input, body.dark-mode .filter-section select {
             background: var(--background-dark);
@@ -534,7 +629,7 @@
         }
         body.dark-mode .filter-section input:focus, body.dark-mode .filter-section select:focus {
             border-color: var(--secondary-color);
-            box-shadow: var(--shadow-dark-outer);
+            box-shadow: var(--shadow-dark-outer), 0 0 0 2px rgba(0, 174, 255, 0.2);
         }
 
         .filter-section .button-group { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
@@ -546,14 +641,18 @@
             color: var(--text-light);
             font-size: 14px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
             display: flex; align-items: center; justify-content: center;
         }
          .export-btn:hover, .refresh-btn:hover {
              background: #e9ecef;
-             transform: translateY(-2px);
+             transform: translateY(-2px) scale(1.05);
              box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+         }
+         .export-btn:active, .refresh-btn:active {
+            transform: translateY(0px) scale(0.98);
+            box-shadow: var(--shadow-light-inner);
          }
         .refresh-btn { color: var(--primary-color); } /* Màu cho refresh */
         body.dark-mode .export-btn, body.dark-mode .refresh-btn {
@@ -580,6 +679,11 @@
             max-height: 400px; /* Giới hạn chiều cao */
             position: relative;
             border: 1px solid var(--border-color-light);
+            transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+        .table-container:hover {
+            box-shadow: var(--shadow-light-outer);
+            border-color: var(--primary-color);
         }
          /* Điều chỉnh max-height cho bảng TVBH ở tab Total nếu cần */
         #total-tables .table-container:nth-child(2) table { max-height: 300px; }
@@ -588,6 +692,10 @@
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
+        }
+         body.dark-mode .table-container:hover {
+            box-shadow: var(--shadow-dark-outer);
+            border-color: var(--secondary-color);
         }
         .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
         .table-container::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
@@ -640,8 +748,11 @@
         td { color: var(--text-light); }
         body.dark-mode td { color: var(--text-dark); }
 
-        tbody tr { transition: background-color 0.2s ease; cursor: pointer; }
-        tbody tr:hover { background: rgba(0, 48, 135, 0.05); }
+        tbody tr { transition: background-color 0.2s ease, transform 0.15s ease; cursor: pointer; }
+        tbody tr:hover {
+            background: rgba(0, 48, 135, 0.05);
+            transform: scale(1.005); /* Hiệu ứng phóng to nhẹ khi hover */
+        }
         body.dark-mode tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
 
         .summary-row {
@@ -667,11 +778,20 @@
             box-shadow: var(--shadow-light-inner);
             overflow-y: auto;
             border: 1px solid var(--border-color-light);
+            transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+        .detail-panel:hover {
+            box-shadow: var(--shadow-light-outer);
+            border-color: var(--primary-color);
         }
         body.dark-mode .detail-panel {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
+        }
+        body.dark-mode .detail-panel:hover {
+            box-shadow: var(--shadow-dark-outer);
+            border-color: var(--secondary-color);
         }
          .detail-panel::-webkit-scrollbar { width: 8px; }
          .detail-panel::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
@@ -727,13 +847,17 @@
             color: var(--text-light);
             font-size: 13px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
         }
         .pagination button:hover {
             background: #e9ecef;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.05);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .pagination button:active {
+            transform: translateY(0px) scale(0.98);
+            box-shadow: var(--shadow-light-inner);
         }
         body.dark-mode .pagination button {
             background: var(--card-bg-dark);
@@ -796,10 +920,14 @@
             box-shadow: var(--shadow-light-outer);
             align-items: center;
             justify-content: center;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .mobile-menu-btn:hover {
             background: #e9ecef;
+            transform: scale(1.1);
+        }
+        .mobile-menu-btn:active {
+            transform: scale(0.95);
         }
         body.dark-mode .mobile-menu-btn {
             background: var(--card-bg-dark);
@@ -833,8 +961,8 @@
             align-items: center;
             gap: 10px;
             opacity: 0;
-            transform: translateX(100%);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateX(100%) scale(0.9);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275);
         }
          /* Toast ở chế độ sáng */
         body:not(.dark-mode) .toast {
@@ -844,15 +972,26 @@
         }
         .toast.show {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0) scale(1);
         }
         .toast i {
             font-size: 18px;
         }
-        .toast.success i { color: var(--color-success); }
-        .toast.error i { color: var(--color-danger); }
-        .toast.info i { color: var(--color-info); }
-        .toast.warning i { color: var(--color-warning); }
+        .toast.success i { color: var(--color-success); animation: iconPop 0.5s ease-out; }
+        .toast.error i { color: var(--color-danger); animation: iconShake 0.5s ease-out;}
+        .toast.info i { color: var(--color-info); animation: iconPop 0.5s ease-out;}
+        .toast.warning i { color: var(--color-warning); animation: iconPop 0.5s ease-out;}
+
+        @keyframes iconPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes iconShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
         .toast-message {
             font-size: 14px;
         }
@@ -991,10 +1130,10 @@
 </head>
 <body>
     <header>BÁO CÁO DOANH SỐ VINFAST THUẬN AN</header>
-    
+
     <div class="slidebar" id="slidebar">
         <div class="logo">
-            <h1>VinFast Thuận An</h1>
+            <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="tabs">
             <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1"><i class="fas fa-seedling"></i><span>January</span></a>
@@ -1162,23 +1301,23 @@
     <script>
     // --- Biến toàn cục và cấu hình ---
     let currentPage = 1;
-    const ROWS_PER_PAGE = 20; 
-    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = []; 
-    let currentSheet = "Total"; 
+    const ROWS_PER_PAGE = 20;
+    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
+    let currentSheet = "Total";
     const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    let carChart, monthlyChart, trendChart; 
-    let cachedData = {}; 
+    let carChart, monthlyChart, trendChart;
+    let cachedData = {};
 
     let allMonthlyDataForNavigation = [];
     let topSalespersonNameForNavigation = null;
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 
     // --- Khởi tạo khi DOM đã tải ---
     document.addEventListener("DOMContentLoaded", () => {
         // Kiểm tra đăng nhập
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; 
+            window.location.href = "index.html"; // Chuyển hướng về trang đăng nhập nếu chưa đăng nhập
             return;
         }
         // Thiết lập theme đã lưu
@@ -1187,7 +1326,7 @@
             updateThemeIcon(true);
         }
 
-        // MODIFIED: Load state from sessionStorage
+        // Khôi phục trạng thái từ sessionStorage
         try {
             const storedCache = sessionStorage.getItem('appCachedData');
             if (storedCache) {
@@ -1201,8 +1340,8 @@
                 currentPage = storedPage ? parseInt(storedPage, 10) : 1;
 
                 document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-                const activeTabLink = Array.from(document.querySelectorAll('.tabs a')).find(a => 
-                    (a.textContent.trim().toLowerCase() === currentSheet.toLowerCase()) || 
+                const activeTabLink = Array.from(document.querySelectorAll('.tabs a')).find(a =>
+                    (a.textContent.trim().toLowerCase() === currentSheet.toLowerCase()) ||
                     (currentSheet === "Total" && a.classList.contains('total-tab'))
                 );
 
@@ -1213,7 +1352,7 @@
                     } else {
                         fetchSheetData(currentSheet, activeTabLink, true); // true for isInitialLoad
                     }
-                } else { // Fallback if tab not found (e.g. sheet name changed)
+                } else { // Fallback nếu không tìm thấy tab (ví dụ tên sheet thay đổi)
                     fetchTotalData(document.querySelector('.tabs a.total-tab'));
                 }
             } else {
@@ -1222,12 +1361,12 @@
             }
         } catch (error) {
             console.error("Lỗi khi khôi phục trạng thái từ sessionStorage:", error);
-            sessionStorage.removeItem('appCachedData'); // Clear potentially corrupted data
+            sessionStorage.removeItem('appCachedData'); // Xóa dữ liệu có thể bị hỏng
             sessionStorage.removeItem('appCurrentSheet');
             sessionStorage.removeItem('appCurrentPage');
-            fetchTotalData(document.querySelector('.tabs a.total-tab')); // Fallback to default load
+            fetchTotalData(document.querySelector('.tabs a.total-tab')); // Fallback về tải mặc định
         }
-        
+
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
     });
 
@@ -1244,7 +1383,7 @@
     function hideLoading() {
         document.getElementById("loading-overlay").classList.remove("active");
     }
-    
+
     function updateThemeIcon(isDarkMode) {
         const themeIcon = document.querySelector('.theme-toggle i');
         if (isDarkMode) {
@@ -1260,17 +1399,17 @@
         const isDarkMode = document.body.classList.toggle('dark-mode');
         updateThemeIcon(isDarkMode);
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        updateAllChartColors(); 
+        updateAllChartColors(); // Cập nhật màu biểu đồ khi đổi theme
     }
 
-    function goBack() { 
-        window.location.href = "index.html"; 
-        showToast("Đã quay lại trang chủ!", 'info'); 
+    function goBack() {
+        window.location.href = "index.html"; // Quay lại trang chủ
+        showToast("Đã quay lại trang chủ!", 'info');
     }
-    function logout() { 
-        sessionStorage.clear(); // Clear all session storage on logout
-        window.location.href = "index.html"; 
-        showToast("Đã đăng xuất!", 'info'); 
+    function logout() {
+        sessionStorage.clear(); // Xóa tất cả sessionStorage khi đăng xuất
+        window.location.href = "index.html"; // Chuyển hướng về trang đăng nhập
+        showToast("Đã đăng xuất!", 'info');
     }
     function toggleSlidebar() {
         const slidebar = document.getElementById("slidebar");
@@ -1278,24 +1417,26 @@
         slidebar.classList.toggle("collapsed");
         mainContainer.classList.toggle("collapsed");
 
+        // Nếu đang ở chế độ mobile và sidebar đang mở, đóng lại khi toggle
         if (window.innerWidth <= 900 && slidebar.classList.contains('open')) {
             slidebar.classList.remove('open');
         }
-        
+
+        // Resize biểu đồ sau khi sidebar thay đổi kích thước để tránh bị méo
         if (window.Chart && (monthlyChart || carChart || trendChart)) {
             setTimeout(() => {
                 if (monthlyChart && monthlyChart.ctx) monthlyChart.resize();
                 if (carChart && carChart.ctx) carChart.resize();
                 if (trendChart && trendChart.ctx) trendChart.resize();
-            }, getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','') * 1000 + 50);
+            }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','')) * 1000 + 50);
         }
     }
 
     function toggleMobileMenu() {
         const slidebar = document.getElementById("slidebar");
-        slidebar.classList.toggle("open"); 
+        slidebar.classList.toggle("open"); // Mở/đóng sidebar trên mobile
     }
-    
+
     function showToast(message, type = 'info', duration = 3000) {
         const toastContainer = document.getElementById("toast-container");
         if (!toastContainer) {
@@ -1304,9 +1445,9 @@
         }
 
         const toast = document.createElement('div');
-        toast.classList.add('toast', type); 
+        toast.classList.add('toast', type); // Thêm class type (success, error, info, warning)
 
-        let iconClass = 'fas fa-info-circle'; 
+        let iconClass = 'fas fa-info-circle'; // Icon mặc định
         if (type === 'success') iconClass = 'fas fa-check-circle';
         else if (type === 'error') iconClass = 'fas fa-times-circle';
         else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
@@ -1318,17 +1459,20 @@
 
         toastContainer.appendChild(toast);
 
+        // Kích hoạt animation hiển thị
         setTimeout(() => {
             toast.classList.add('show');
-        }, 100); 
+        }, 100); // Delay nhỏ để CSS transition hoạt động
 
+        // Tự động ẩn toast sau một khoảng thời gian
         setTimeout(() => {
             toast.classList.remove('show');
+            // Xóa element sau khi animation ẩn hoàn tất
             setTimeout(() => {
-                if (toast.parentNode === toastContainer) { 
+                if (toast.parentNode === toastContainer) { // Kiểm tra xem toast còn là con của container không
                      toastContainer.removeChild(toast);
                 }
-            }, 500); 
+            }, 500); // Thời gian chờ bằng với transition của toast
         }, duration);
     }
 
@@ -1337,13 +1481,14 @@
     async function fetchDataFromAPI(sheetName, retries = 3) {
         const url = `${API_URL}?sheet=${sheetName}`;
         try {
-            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' }); // Không cache để luôn lấy dữ liệu mới nhất
             if (!response.ok) {
                 throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
             }
             const data = await response.json();
             if (data === null || data === undefined) throw new Error(`Dữ liệu trả về từ sheet '${sheetName}' là null hoặc undefined.`);
             if (!Array.isArray(data)) {
+                // Xử lý trường hợp API trả về object chứa sheet name làm key
                 if (typeof data === 'object' && data[sheetName] && Array.isArray(data[sheetName])) {
                     return data[sheetName];
                 }
@@ -1354,105 +1499,108 @@
             console.error(`Lỗi khi fetch dữ liệu từ sheet '${sheetName}':`, error);
             if (retries > 0) {
                 showToast(`Lỗi tải ${sheetName}. Thử lại (${retries} lần)...`, 'warning');
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Chờ 1.5 giây trước khi thử lại
                 return fetchDataFromAPI(sheetName, retries - 1);
             }
-            throw error; 
+            throw error; // Ném lỗi sau khi hết số lần thử lại
         }
     }
-    // MODIFIED: Added isInitialLoad parameter
+    // MODIFIED: Thêm tham số isInitialLoad
     async function fetchSheetData(sheetName, element, isInitialLoad = false) {
-        // If it's not an initial load, and user clicks the same tab, confirm re-fetch
+        // Nếu không phải tải lần đầu, và người dùng click vào tab hiện tại, xác nhận tải lại
         if (!isInitialLoad && currentSheet === sheetName && cachedData[sheetName] && !confirm(`Bạn đang ở tab ${sheetName}. Bạn có muốn tải lại dữ liệu không?`)) {
             document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
             if (element) element.classList.add('active');
-            // Even if not re-fetching, ensure UI reflects the current (cached) sheet
+            // Dù không tải lại, vẫn đảm bảo UI phản ánh sheet hiện tại (từ cache)
             processAndRenderMonthData(cachedData[sheetName], sheetName, true);
             return;
         }
 
         showLoading(`Đang tải dữ liệu tháng ${sheetName}...`);
         currentSheet = sheetName;
-        if (!isInitialLoad) { // Only reset page if it's a new tab click, not initial load
+        if (!isInitialLoad) { // Chỉ reset trang nếu là click tab mới, không phải tải lần đầu
              currentPage = 1;
         }
-        
+
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active'); 
-        
+        if (element) element.classList.add('active'); // Đánh dấu tab đang active
+
         document.getElementById("total-tables").style.display = "none";
         document.getElementById("month-data").style.display = "flex";
-        document.getElementById("detail-panel").style.display = "block"; 
+        document.getElementById("detail-panel").style.display = "block"; // Hiển thị panel chi tiết
         document.getElementById("pagination").style.display = "flex";
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
         document.getElementById("search-input").value = "";
-        // Filters will be repopulated by processAndRenderMonthData
+        // Filters sẽ được điền lại bởi processAndRenderMonthData
 
-        // Use cached data if available and not a forced refresh or initial load where cache might be stale
-        if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) { 
+        // Sử dụng dữ liệu cache nếu có và không phải là refresh bắt buộc hoặc tải lần đầu mà cache có thể cũ
+        if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) {
             fullData = cachedData[sheetName];
-            processAndRenderMonthData(fullData, sheetName, true); 
-            // MODIFIED: Save current sheet to sessionStorage even when loading from cache
+            processAndRenderMonthData(fullData, sheetName, true); // true nghĩa là từ cache
+            // MODIFIED: Lưu sheet hiện tại vào sessionStorage ngay cả khi tải từ cache
             sessionStorage.setItem('appCurrentSheet', currentSheet);
             sessionStorage.setItem('appCurrentPage', currentPage.toString());
             hideLoading();
-            if (element) element.classList.remove('refresh-triggered'); 
+            if (element) element.classList.remove('refresh-triggered'); // Xóa cờ refresh
             return;
         }
-        if (element) element.classList.remove('refresh-triggered'); 
+        if (element) element.classList.remove('refresh-triggered'); // Xóa cờ refresh
 
         try {
             const data = await fetchDataFromAPI(sheetName);
-            fullData = data; 
-            cachedData[sheetName] = data; 
-            processAndRenderMonthData(data, sheetName, false); 
-            // MODIFIED: Save to sessionStorage after successful fetch
+            fullData = data; // Lưu dữ liệu gốc
+            cachedData[sheetName] = data; // Cập nhật cache
+            processAndRenderMonthData(data, sheetName, false); // false nghĩa là không từ cache
+            // MODIFIED: Lưu vào sessionStorage sau khi fetch thành công
             sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
             sessionStorage.setItem('appCurrentSheet', currentSheet);
             sessionStorage.setItem('appCurrentPage', currentPage.toString());
         } catch (error) {
             showToast(`Không tải được dữ liệu ${sheetName}: ${error.message}`, 'error', 5000);
             document.getElementById("table-body").innerHTML = `<tr><td colspan="6" class="empty-state">⚠️ Lỗi: ${error.message}</td></tr>`;
-            processAndRenderMonthData([], sheetName, false); 
+            processAndRenderMonthData([], sheetName, false); // Hiển thị trạng thái rỗng
         } finally {
             hideLoading();
         }
     }
-    
+
     function processAndRenderMonthData(data, sheetName, fromCache = false) {
-        filteredMonthData = data ? [...data] : []; 
-        updateFilters(filteredMonthData); 
-        updateMonthOverview(data); 
-        renderTable(filteredMonthData); 
-        
-        if (!fromCache || document.getElementById("table-body").innerHTML.includes("empty-state")) { // Avoid redundant toast if loaded from cache and data is present
-            const message = fromCache 
+        filteredMonthData = data ? [...data] : []; // Tạo bản sao để lọc
+        updateFilters(filteredMonthData); // Cập nhật các bộ lọc
+        updateMonthOverview(data); // Cập nhật thông tin tổng quan của tháng
+        renderTable(filteredMonthData); // Hiển thị bảng dữ liệu
+
+        // Tránh toast thừa nếu tải từ cache và có dữ liệu
+        if (!fromCache || document.getElementById("table-body").innerHTML.includes("empty-state")) {
+            const message = fromCache
                 ? `Dữ liệu ${sheetName} từ cache (${(data || []).length} đơn hàng)`
                 : `Dữ liệu ${sheetName} đã tải (${(data || []).length} đơn hàng)`;
             showToast(message, (data || []).length > 0 ? 'success' : 'info');
         }
     }
 
-    // MODIFIED: Added isInitialLoad parameter
+    // MODIFIED: Thêm tham số isInitialLoad
     async function fetchTotalData(element, isInitialLoad = false) {
         showLoading("Đang tải dữ liệu tổng hợp...");
         currentSheet = "Total";
         if (!isInitialLoad) {
-            currentPage = 1; // Reset page for "Total" tab if not initial load
+            currentPage = 1; // Reset trang cho tab "Total" nếu không phải tải lần đầu
         }
-        
+
         document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
         if (element) element.classList.add('active');
-        
+
         document.getElementById("month-data").style.display = "none";
         document.getElementById("total-tables").style.display = "block";
-        document.getElementById("detail-panel").style.display = "none"; 
+        document.getElementById("detail-panel").style.display = "none"; // Ẩn panel chi tiết ở tab Total
         document.getElementById("pagination").style.display = "none";
 
         let allMonthlyData = [];
         let allFetchesSuccessful = true;
+        let results = []; // Khai báo results ở đây để có thể truy cập trong khối if/else
+
         try {
-            // Check if all monthly data is already in cache (e.g., from sessionStorage)
+            // Kiểm tra xem tất cả dữ liệu tháng đã có trong cache chưa (ví dụ, từ sessionStorage)
             let canReconstructFromCache = true;
             if (isInitialLoad) {
                 for (const month of MONTHS) {
@@ -1461,7 +1609,7 @@
                         break;
                     }
                 }
-            } else { // If not initial load, always try to fetch or use fresh cache
+            } else { // Nếu không phải tải lần đầu, luôn thử fetch hoặc dùng cache mới
                 canReconstructFromCache = false;
             }
 
@@ -1471,18 +1619,18 @@
                  results = MONTHS.map(month => cachedData[month]);
             } else {
                 const fetchPromises = MONTHS.map(async month => {
-                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { // Use existing cache if not refreshing
+                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { // Sử dụng cache hiện có nếu không refresh
                         return cachedData[month];
                     }
                     try {
                         const monthApiData = await fetchDataFromAPI(month);
-                        cachedData[month] = monthApiData; // Update cache
+                        cachedData[month] = monthApiData; // Cập nhật cache
                         return monthApiData;
                     } catch (monthError) {
                         allFetchesSuccessful = false;
                         console.warn(`Lỗi khi tải dữ liệu cho tháng ${month} trong fetchTotalData: ${monthError.message}`);
-                        cachedData[month] = []; // Ensure cache has an empty array on error
-                        return []; // Return empty array for this month on error
+                        cachedData[month] = []; // Đảm bảo cache có mảng rỗng khi lỗi
+                        return []; // Trả về mảng rỗng cho tháng này khi lỗi
                     }
                 });
                 results = await Promise.all(fetchPromises);
@@ -1494,9 +1642,10 @@
                     allMonthlyData.push(...monthData);
                 }
             });
-            
+
+            // Lọc bỏ các dòng không hợp lệ (ví dụ: không có Dòng Xe)
             const validData = allMonthlyData.filter(row => row && typeof row === 'object' && row[3] && String(row[3]).trim() !== "");
-            allMonthlyDataForNavigation = [...validData]; 
+            allMonthlyDataForNavigation = [...validData]; // Dữ liệu cho navigation
 
             if (validData.length === 0) {
                 if (allFetchesSuccessful) {
@@ -1504,43 +1653,44 @@
                 } else {
                     showToast("Một số tháng không tải được dữ liệu. Tổng hợp có thể chưa đầy đủ.", 'warning', 4000);
                 }
-                updateOverview([], [], 0); 
+                updateOverview([], [], 0); // Cập nhật tổng quan với dữ liệu rỗng
                 renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: (cachedData[m] || []).length })), {});
-                allMonthlyDataForNavigation = []; 
-                topSalespersonNameForNavigation = null; 
+                allMonthlyDataForNavigation = []; // Reset dữ liệu navigation
+                topSalespersonNameForNavigation = null; // Reset TVBH top
                 const prevTotalCarsCard = document.getElementById('total-cars-summary-card');
                 if (prevTotalCarsCard) prevTotalCarsCard.onclick = null;
                 const prevTopTvbhCard = document.getElementById('top-tvbh-summary-card');
                 if (prevTopTvbhCard) prevTopTvbhCard.onclick = null;
-                // MODIFIED: Save to sessionStorage even if no data
+                // MODIFIED: Lưu vào sessionStorage ngay cả khi không có dữ liệu
                 sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
                 sessionStorage.setItem('appCurrentSheet', "Total");
-                hideLoading(); 
+                hideLoading();
                 return;
             }
 
-            totalCarData = aggregateData(validData, 3); 
-            totalTvbhData = aggregateData(validData, 7); 
-            
+            totalCarData = aggregateData(validData, 3); // Tổng hợp theo Dòng Xe (cột index 3)
+            totalTvbhData = aggregateData(validData, 7); // Tổng hợp theo TVBH (cột index 7)
+
             if (totalTvbhData && totalTvbhData.length > 0) {
                 topSalespersonNameForNavigation = totalTvbhData[0].key;
             } else {
                 topSalespersonNameForNavigation = null;
             }
-            
+
             const monthlyCounts = MONTHS.map((month, idx) => ({
                 month: month,
                 count: (cachedData[month] && Array.isArray(cachedData[month])) ? cachedData[month].length : 0
             }));
-            
+
             const trendData = calculateTrendData(MONTHS.map(m => cachedData[m] || []), totalCarData);
 
-            filteredCarData = [...totalCarData]; 
+            filteredCarData = [...totalCarData]; // Dữ liệu xe đã lọc (ban đầu là toàn bộ)
 
             updateOverview(totalCarData, totalTvbhData, validData.length);
             renderTotalTables(totalCarData, totalTvbhData, monthlyCounts, trendData);
-            
-            if (!isInitialLoad || !canReconstructFromCache) { // Avoid redundant toast on initial load from session cache
+
+            // Tránh toast thừa khi tải lần đầu từ session cache
+            if (!isInitialLoad || !canReconstructFromCache) {
                  showToast(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 'success');
             }
 
@@ -1566,7 +1716,7 @@
                         const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && row[7] === topSalespersonNameForNavigation);
                         if (bestSalespersonData.length > 0) {
                             sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(bestSalespersonData));
-                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); 
+                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); // Lưu tên TVBH
                             window.location.href = 'bestsale.html';
                         } else {
                             showToast(`Không tìm thấy dữ liệu cho TVBH: ${topSalespersonNameForNavigation}`, 'warning');
@@ -1576,7 +1726,7 @@
                     }
                 };
             }
-            // MODIFIED: Save to sessionStorage after successful processing
+            // MODIFIED: Lưu vào sessionStorage sau khi xử lý thành công
             sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
             sessionStorage.setItem('appCurrentSheet', "Total");
 
@@ -1585,37 +1735,37 @@
             showToast(`Lỗi tải dữ liệu tổng: ${error.message}`, 'error', 5000);
             updateOverview([], [], 0);
             renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
-            allMonthlyDataForNavigation = []; 
-            topSalespersonNameForNavigation = null; 
+            allMonthlyDataForNavigation = []; // Reset dữ liệu navigation
+            topSalespersonNameForNavigation = null; // Reset TVBH top
         } finally {
             hideLoading();
         }
     }
-    
+
     // --- Hàm tổng hợp và tính toán dữ liệu ---
     function aggregateData(data, columnIndex) {
         const stats = {};
-        if (!Array.isArray(data)) return []; 
+        if (!Array.isArray(data)) return []; // Trả về mảng rỗng nếu data không phải mảng
         data.forEach(row => {
             if (row && row[columnIndex] !== undefined && row[columnIndex] !== null) {
-                const key = String(row[columnIndex]).trim();
-                if (key) { 
+                const key = String(row[columnIndex]).trim(); // Chuyển sang string và trim
+                if (key) { // Chỉ tính nếu key không rỗng
                     stats[key] = (stats[key] || 0) + 1;
                 }
             }
         });
         return Object.entries(stats)
             .map(([key, count]) => ({ key, count }))
-            .sort((a, b) => b.count - a.count); 
+            .sort((a, b) => b.count - a.count); // Sắp xếp giảm dần theo số lượng
     }
 
     function calculateTrendData(monthlyResults, topCarData) {
-        const topCars = topCarData.slice(0, 5).map(item => item.key);
+        const topCars = topCarData.slice(0, 5).map(item => item.key); // Lấy 5 dòng xe bán chạy nhất
         const trendData = {};
-        
+
         topCars.forEach(carModel => {
             trendData[carModel] = MONTHS.map((month, idx) => {
-                const monthData = monthlyResults[idx] || []; 
+                const monthData = monthlyResults[idx] || []; // Dữ liệu của tháng, hoặc mảng rỗng nếu không có
                 return Array.isArray(monthData) ? monthData.filter(row => row && row[3] === carModel).length : 0;
             });
         });
@@ -1626,11 +1776,11 @@
     function updateFilters(data) {
         const carFilter = document.getElementById("car-filter");
         const tvbhFilter = document.getElementById("tvbh-filter");
-        
+
         const uniqueCars = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[3]).filter(Boolean))].sort() : [];
         const uniqueTvbh = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[7]).filter(Boolean))].sort() : [];
-        
-        // Preserve selected filter values if they exist in the new dataset
+
+        // Giữ lại giá trị filter đã chọn nếu chúng tồn tại trong dataset mới
         const currentCarFilterValue = carFilter.value;
         const currentTvbhFilterValue = tvbhFilter.value;
 
@@ -1638,7 +1788,7 @@
         tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}" ${t === currentTvbhFilterValue ? 'selected' : ''}>${t}</option>`).join('');
     }
 
-    function updateOverview(carData, tvbhData, totalSales) { 
+    function updateOverview(carData, tvbhData, totalSales) { // Cập nhật tổng quan cho tab Total
         document.getElementById("total-cars").textContent = totalSales || 0;
         const topCar = carData && carData.length > 0 ? carData[0] : { key: "-", count: 0 };
         document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
@@ -1646,18 +1796,19 @@
         document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
 
-    function updateMonthOverview(data) { 
+    function updateMonthOverview(data) { // Cập nhật tổng quan cho tab tháng
         const totalSales = data ? data.length : 0;
-        const carDataAgg = aggregateData(data, 3); 
-        const tvbhDataAgg = aggregateData(data, 7); 
-        
+        const carDataAgg = aggregateData(data, 3); // Tổng hợp theo dòng xe
+        const tvbhDataAgg = aggregateData(data, 7); // Tổng hợp theo TVBH
+
         document.getElementById("month-total-cars").textContent = totalSales;
         const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
-        
+
         const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
 
+        // Thêm sự kiện click cho card TVBH của tháng
         const monthTvbhSummaryCard = document.getElementById("month-tvbh-summary-card");
 
         if (monthTvbhSummaryCard) {
@@ -1671,7 +1822,7 @@
                     if (salespersonSpecificData.length > 0) {
                         sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(salespersonSpecificData));
                         sessionStorage.setItem('bestSalespersonName', salespersonName);
-                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); 
+                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); // Lưu tháng hiện tại
                         window.location.href = 'bestsale.html';
                     } else {
                         showToast(`Không tìm thấy dữ liệu cho TVBH: ${salespersonName} trong tháng ${currentSheet}.`, 'warning');
@@ -1689,34 +1840,36 @@
         const tableHeader = document.getElementById("table-header");
         const tableBody = document.getElementById("table-body");
         const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
-        
-        if (!tableHeader.innerHTML.trim()) {
+
+        if (!tableHeader.innerHTML.trim()) { // Chỉ tạo header nếu chưa có
             tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         }
-        
+
         const start = (currentPage - 1) * ROWS_PER_PAGE;
         const paginatedData = dataToRender && Array.isArray(dataToRender) ? dataToRender.slice(start, start + ROWS_PER_PAGE) : [];
-        
+
         if (paginatedData.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
         } else {
             tableBody.innerHTML = paginatedData.map((row, idx) => {
-                if (!row || typeof row !== 'object') return ''; 
+                if (!row || typeof row !== 'object') return ''; // Bỏ qua dòng không hợp lệ
+                // Kiểm tra ghi chú để highlight
                 const ghiChuAdmin = row[11] ? String(row[11]).toLowerCase() : '';
                 const ghiChuTvbh = row[10] ? String(row[10]).toLowerCase() : '';
                 const isHighlight = (ghiChuAdmin.includes("ưu tiên") || ghiChuTvbh.includes("đặc biệt")) ? ' class="selected-row-highlight"' : '';
 
+                // Chuẩn bị dữ liệu cho hàm showDetail, đảm bảo escape ký tự đặc biệt
                 const detailArgs = [
-                    start + idx + 1, 
-                    row[0] || '', 
-                    row[2] || '', 
-                    row[3] || '', 
-                    row[4] || '', 
-                    row[5] || '', 
-                    row[6] || '', 
-                    row[7] || '', 
-                    row[8] || '', 
-                    row[9] || ''  
+                    start + idx + 1, // STT
+                    row[0] || '', // Tên KH
+                    row[2] || '', // Số ĐH
+                    row[3] || '', // Dòng Xe
+                    row[4] || '', // Phiên Bản
+                    row[5] || '', // Ngoại Thất
+                    row[6] || '', // Nội Thất
+                    row[7] || '', // TVBH
+                    row[8] || '', // VIN
+                    row[9] || ''  // Chính Sách
                 ].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
 
 
@@ -1742,29 +1895,29 @@
         if (!document.getElementById("total-tvbh-header").innerHTML.trim()){
             document.getElementById("total-tvbh-header").innerHTML = "<tr><th>STT</th><th>Tư Vấn Bán Hàng</th><th>Tổng Số Lượng Xe</th></tr>";
         }
-        
 
-        totalCarBody.innerHTML = carData && carData.length > 0 
-            ? carData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') + 
+
+        totalCarBody.innerHTML = carData && carData.length > 0
+            ? carData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') +
               `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
             : `<tr><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
 
-        totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0 
+        totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0
             ? tvbhData.map((row, idx) => `<tr><td>${idx + 1}</td><td>${row.key}</td><td>${row.count}</td></tr>`).join('') +
               `<tr class="summary-row"><td></td><td><strong>Tổng cộng</strong></td><td><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></td></tr>`
             : `<tr><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
-        
+
         renderAllCharts(carData || [], monthlySalesData || [], trendChartData || {});
     }
-    
+
     function updateDetailPanelWithMessage(message) {
         const detailBodyContent = document.getElementById("detail-body-content");
         detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
     }
 
     function showDetail(detailDataArray) {
-        if (currentSheet === "Total") return; 
-        
+        if (currentSheet === "Total") return; // Không hiển thị chi tiết ở tab Total
+
         const labels = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
         const detailBodyContent = document.getElementById("detail-body-content");
 
@@ -1772,7 +1925,7 @@
             updateDetailPanelWithMessage("Không có dữ liệu chi tiết để hiển thị.");
             return;
         }
-        
+
         let tableHTML = '<table class="detail-table"><tbody>';
         labels.forEach((label, i) => {
             const value = (detailDataArray[i] !== undefined && detailDataArray[i] !== null) ? String(detailDataArray[i]) : 'N/A';
@@ -1787,9 +1940,10 @@
         tableHTML += '</tbody></table>';
         detailBodyContent.innerHTML = tableHTML;
 
+        // Highlight dòng được chọn trong bảng chính
         const tableRows = document.querySelectorAll("#data-table tbody tr");
-        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); 
-        const sttToHighlight = detailDataArray[0];
+        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); // Xóa highlight cũ
+        const sttToHighlight = detailDataArray[0]; // Lấy STT từ dữ liệu chi tiết
         if (sttToHighlight) {
             const targetRow = Array.from(tableRows).find(row => row.cells[0] && parseInt(row.cells[0].textContent) === sttToHighlight);
             if (targetRow) {
@@ -1805,10 +1959,10 @@
         return {
             textColor: isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim(),
             gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            primarySet: [
+            primarySet: [ // Bộ màu chính cho biểu đồ
                 rootStyle.getPropertyValue('--primary-color').trim(),
                 rootStyle.getPropertyValue('--secondary-color').trim(),
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40' 
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40' // Thêm các màu khác
             ],
             monthlyBarColor: isDarkMode ? rootStyle.getPropertyValue('--secondary-color').trim() : rootStyle.getPropertyValue('--primary-color').trim(),
             chartBgColor: isDarkMode ? rootStyle.getPropertyValue('--card-bg-dark').trim() : rootStyle.getPropertyValue('--card-bg-light').trim(),
@@ -1817,12 +1971,14 @@
 
     function renderAllCharts(carData, monthlySalesData, trendChartData) {
         const colors = getChartColors();
-        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; 
+        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; // Tránh chia cho 0
 
+        // Hủy biểu đồ cũ nếu tồn tại
         if (monthlyChart && typeof monthlyChart.destroy === 'function') monthlyChart.destroy();
         if (carChart && typeof carChart.destroy === 'function') carChart.destroy();
         if (trendChart && typeof trendChart.destroy === 'function') trendChart.destroy();
 
+        // Biểu đồ doanh số theo tháng
         const monthlyCtx = document.getElementById('monthly-chart')?.getContext('2d');
         if (monthlyCtx) {
             monthlyChart = new Chart(monthlyCtx, {
@@ -1848,17 +2004,18 @@
             });
         }
 
+        // Biểu đồ tổng hợp theo dòng xe (Pie chart)
         const carCtx = document.getElementById('car-chart')?.getContext('2d');
         if (carCtx) {
             carChart = new Chart(carCtx, {
                 type: 'pie',
                 data: {
                     labels: carData.map(r => r.key),
-                    datasets: [{ 
-                        label: 'Số lượng xe', 
-                        data: carData.map(r => r.count), 
+                    datasets: [{
+                        label: 'Số lượng xe',
+                        data: carData.map(r => r.count),
                         backgroundColor: colors.primarySet,
-                        borderColor: colors.chartBgColor, 
+                        borderColor: colors.chartBgColor, // Màu viền giống màu nền chart
                         borderWidth: 2
                     }]
                 },
@@ -1880,6 +2037,7 @@
             });
         }
 
+        // Biểu đồ xu hướng dòng xe qua các tháng (Line chart)
         const trendCtx = document.getElementById('trend-chart')?.getContext('2d');
         if (trendCtx && trendChartData && Object.keys(trendChartData).length > 0) {
             trendChart = new Chart(trendCtx, {
@@ -1890,9 +2048,9 @@
                         label: car,
                         data: trendChartData[car],
                         borderColor: colors.primarySet[idx % colors.primarySet.length],
-                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', 
-                        fill: false,
-                        tension: 0.1
+                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', // Màu nền với độ mờ
+                        fill: false, // Không tô màu nền dưới đường line
+                        tension: 0.1 // Độ cong của đường line
                     }))
                 },
                 options: {
@@ -1904,16 +2062,16 @@
                     plugins: { legend: { position: 'top', labels: { color: colors.textColor } }, tooltip: { mode: 'index', intersect: false } }
                 }
             });
-        } else if (trendCtx) { 
+        } else if (trendCtx) { // Hiển thị thông báo nếu không có dữ liệu
              trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height);
              trendCtx.textAlign = 'center';
              trendCtx.fillStyle = colors.textColor;
              trendCtx.fillText('Không đủ dữ liệu để vẽ biểu đồ xu hướng.', trendCtx.canvas.width / 2, trendCtx.canvas.height / 2);
         }
     }
-    
+
     function updateAllChartColors() {
-        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { // Check if filteredCarData is defined
+        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { // Kiểm tra filteredCarData đã được định nghĩa
             const monthlySalesData = MONTHS.map(month => ({
                 month: month,
                 count: cachedData[month] ? cachedData[month].length : 0
@@ -1928,18 +2086,18 @@
 
     function downloadChart(chartId, fileName) {
         const chartCanvas = document.getElementById(chartId);
-        if (!chartCanvas || !chartCanvas.getContext) { 
+        if (!chartCanvas || !chartCanvas.getContext) { // Kiểm tra canvas và context
             showToast(`Không tìm thấy biểu đồ hoặc context của biểu đồ: ${chartId}`, 'error');
             return;
         }
         const chartContainer = chartCanvas.closest('.chart-container');
-        const originalBg = chartContainer.style.backgroundColor;
+        const originalBg = chartContainer.style.backgroundColor; // Lưu màu nền gốc
         const colors = getChartColors();
-        chartContainer.style.backgroundColor = colors.chartBgColor;
+        chartContainer.style.backgroundColor = colors.chartBgColor; // Set màu nền cho html2canvas
 
-        html2canvas(chartContainer, { 
-            backgroundColor: colors.chartBgColor, 
-            scale: 2 
+        html2canvas(chartContainer, {
+            backgroundColor: colors.chartBgColor, // Đảm bảo html2canvas sử dụng đúng màu nền
+            scale: 2 // Tăng độ phân giải ảnh
          })
             .then(canvas => {
                 const link = document.createElement('a');
@@ -1953,45 +2111,45 @@
                 showToast("Lỗi khi tải biểu đồ: " + err.message, 'error');
             })
             .finally(() => {
-                chartContainer.style.backgroundColor = originalBg; 
+                chartContainer.style.backgroundColor = originalBg; // Khôi phục màu nền gốc
             });
     }
 
 
     // --- Hàm xử lý sự kiện người dùng ---
     function applyFilters() {
-        if (currentSheet === "Total") return; 
-        
+        if (currentSheet === "Total") return; // Không áp dụng filter ở tab Total
+
         const carFilterValue = document.getElementById("car-filter").value;
         const tvbhFilterValue = document.getElementById("tvbh-filter").value;
         const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
-        
-        if (!Array.isArray(fullData)) { 
+
+        if (!Array.isArray(fullData)) { // Kiểm tra fullData có phải là mảng không
             filteredMonthData = [];
         } else {
             filteredMonthData = fullData.filter(row => {
-                if (!row || typeof row !== 'object') return false; 
+                if (!row || typeof row !== 'object') return false; // Bỏ qua dòng không hợp lệ
                 const tenKH = String(row[0] || '').toLowerCase();
-                const sdt = String(row[1] || '').toLowerCase(); 
-                const vin = String(row[8] || '').toLowerCase(); 
+                const sdt = String(row[1] || '').toLowerCase(); // Giả sử SĐT ở cột 1
+                const vin = String(row[8] || '').toLowerCase(); // VIN ở cột 8
                 const dongXe = String(row[3] || '');
                 const tvbh = String(row[7] || '');
 
                 const matchesCar = !carFilterValue || dongXe === carFilterValue;
                 const matchesTvbh = !tvbhFilterValue || tvbh === tvbhFilterValue;
-                const matchesSearch = !searchInputValue || 
+                const matchesSearch = !searchInputValue ||
                     tenKH.includes(searchInputValue) ||
-                    sdt.includes(searchInputValue) || 
-                    vin.includes(searchInputValue);  
+                    sdt.includes(searchInputValue) || // Thêm tìm kiếm theo SĐT
+                    vin.includes(searchInputValue);  // Thêm tìm kiếm theo VIN
                 return matchesCar && matchesTvbh && matchesSearch;
             });
         }
-        
-        currentPage = 1; 
-        renderTable(filteredMonthData); 
-        // updateMonthOverview(filteredMonthData); // Decide if overview should reflect filtered data
+
+        currentPage = 1; // Reset về trang đầu sau khi lọc
+        renderTable(filteredMonthData); // Hiển thị lại bảng với dữ liệu đã lọc
+        // updateMonthOverview(filteredMonthData); // Quyết định xem có cập nhật tổng quan theo dữ liệu lọc không
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
-        sessionStorage.setItem('appCurrentPage', currentPage.toString()); // Save page after filtering
+        sessionStorage.setItem('appCurrentPage', currentPage.toString()); // Lưu trang sau khi lọc
     }
 
     function changePage(delta) {
@@ -1999,14 +2157,15 @@
         const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE) || 1;
         currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
         renderTable(filteredMonthData);
-        
+
+        // Cuộn lên đầu bảng và panel chi tiết khi chuyển trang
         const tableContainer = document.querySelector('#table-container');
         if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         const detailPanel = document.querySelector('#detail-panel');
         if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // MODIFIED: Save currentPage to sessionStorage
+        // MODIFIED: Lưu currentPage vào sessionStorage
         sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
 
@@ -2018,12 +2177,12 @@
         }
 
         if (currentSheet === "Total") {
-             activeTabElement.classList.add('refresh-triggered'); // Add refresh trigger for fetchTotalData
-             fetchTotalData(activeTabElement); 
+             activeTabElement.classList.add('refresh-triggered'); // Thêm cờ refresh cho fetchTotalData
+             fetchTotalData(activeTabElement); // Gọi lại fetchTotalData
         } else {
-            activeTabElement.classList.add('refresh-triggered'); 
-            delete cachedData[currentSheet]; 
-            // Clear from sessionStorage as well to force re-fetch
+            activeTabElement.classList.add('refresh-triggered'); // Thêm cờ refresh
+            delete cachedData[currentSheet]; // Xóa cache của sheet hiện tại
+            // Xóa khỏi sessionStorage để ép fetch lại
             const tempCache = JSON.parse(sessionStorage.getItem('appCachedData') || '{}');
             delete tempCache[currentSheet];
             sessionStorage.setItem('appCachedData', JSON.stringify(tempCache));
@@ -2045,14 +2204,15 @@
 
         showLoading("Đang chuẩn bị file Excel...");
         try {
-            const ws_name = currentSheet.substring(0, 30); 
+            const ws_name = currentSheet.substring(0, 30); // Tên sheet tối đa 30 ký tự
             const wb = XLSX.utils.book_new();
-            
+
+            // Header cho file Excel (đầy đủ các cột)
             const excelHeaders = ["STT", "Tên Khách Hàng", "SĐT", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách", "Ghi Chú TVBH", "Ghi Chú Admin"];
             const dataToExport = [
                 excelHeaders,
                 ...filteredMonthData.map((row, index) => {
-                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); 
+                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); // Dòng rỗng nếu dữ liệu không hợp lệ
                     return [
                         index + 1,
                         row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '',
@@ -2063,8 +2223,9 @@
             ];
 
             const ws = XLSX.utils.aoa_to_sheet(dataToExport);
+            // Tự động điều chỉnh độ rộng cột
             const colWidths = excelHeaders.map((_, i) => ({
-                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 
+                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 // Thêm chút padding
             }));
             ws['!cols'] = colWidths;
 
@@ -2104,41 +2265,41 @@
                 <style>
                     @media print {
                         body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; } 
+                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; }
                         tr { page-break-inside: avoid; page-break-after: auto; }
-                        thead { display: table-header-group; } 
-                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; } 
+                        thead { display: table-header-group; } /* Đảm bảo header lặp lại trên mỗi trang */
+                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; }
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
-                        .month-header { 
-                            font-size: 1.2em; 
-                            margin-top: 20px; 
-                            margin-bottom: 8px; 
-                            font-weight: bold; 
-                            text-align: left; 
-                            color: #003087; 
-                            page-break-after: avoid; 
-                            page-break-before: auto; 
+                        .month-header {
+                            font-size: 1.2em;
+                            margin-top: 20px;
+                            margin-bottom: 8px;
+                            font-weight: bold;
+                            text-align: left;
+                            color: #003087;
+                            page-break-after: avoid; /* Tránh ngắt trang ngay sau header tháng */
+                            page-break-before: auto; /* Cho phép ngắt trang trước header tháng nếu cần */
                         }
                         .no-print { display: none !important; }
-                        @page { 
-                            margin: 0.5in; 
+                        @page {
+                            margin: 0.5in; /* Lề trang in */
                         }
                     }
                 </style>`;
 
             for (const month of MONTHS) {
                 let monthData = cachedData[month];
-                if (!monthData) {
+                if (!monthData) { // Nếu chưa có trong cache, fetch
                     try {
                         showLoading(`Đang tải dữ liệu tháng ${month} để in...`);
-                        monthData = await fetchDataFromAPI(month); 
-                        cachedData[month] = monthData; 
-                        // Save updated cache to sessionStorage
+                        monthData = await fetchDataFromAPI(month); // Fetch dữ liệu
+                        cachedData[month] = monthData; // Cập nhật cache
+                        // Lưu cache đã cập nhật vào sessionStorage
                         sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
                     } catch (fetchError) {
                         console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`);
                         allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`;
-                        continue; 
+                        continue; // Bỏ qua tháng này nếu không tải được
                     }
                 }
 
@@ -2148,9 +2309,11 @@
                 }
 
                 totalRecordsPrinted += monthData.length;
-                
+
+                // Tạo header cho bảng của tháng
                 const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
 
+                // Tạo body cho bảng của tháng
                 let tbodyToPrintHTML = "";
                 monthData.forEach((row, idx) => {
                     if (!row || typeof row !== 'object') return;
@@ -2169,7 +2332,7 @@
                     </table>
                 `;
             }
-            showLoading("Đang hoàn tất bản in..."); 
+            showLoading("Đang hoàn tất bản in..."); // Thông báo cho người dùng
 
             if (totalRecordsPrinted === 0 && !allMonthsPrintContent.includes("Không thể tải dữ liệu")) {
                  allMonthsPrintContent += "<p style='text-align:center; margin-top:20px;'>Không có dữ liệu nào để in từ tất cả các tháng.</p>";
@@ -2179,9 +2342,9 @@
             if (win) {
                 win.document.write(`<html><head><title>In Báo Cáo Doanh Số Tổng Hợp - VinFast Thuận An</title></head><body>${allMonthsPrintContent}</body></html>`);
                 win.document.close();
-                setTimeout(() => {
+                setTimeout(() => { // Chờ một chút để nội dung được render trước khi in
                     win.print();
-                }, 500); 
+                }, 500);
                 showToast("Đang mở cửa sổ in cho tất cả các tháng...", 'info');
             } else {
                 showToast("Không thể mở cửa sổ in. Vui lòng kiểm tra cài đặt trình duyệt.", 'warning');
@@ -2194,7 +2357,7 @@
             hideLoading();
         }
     }
-    
+
     function updatePagination(totalItems) {
         const paginationElement = document.getElementById("pagination");
         if (currentSheet === "Total" || !paginationElement) {
@@ -2208,6 +2371,7 @@
         document.getElementById("next-btn").disabled = currentPage === totalPages || totalItems === 0;
     }
 
+    // Đóng sidebar mobile khi click ra ngoài
     document.addEventListener('click', function(event) {
         const slidebar = document.getElementById('slidebar');
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
