@@ -31,6 +31,8 @@
             --transition-speed: 0.3s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
+            --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
+            --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -144,17 +146,37 @@
             font-weight: 500;
             border-radius: 6px;
             background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease; /* Thêm transform */
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative; /* Cho hiệu ứng gạch chân */
+            overflow: hidden; /* Cho hiệu ứng gạch chân */
         }
+        /* Hiệu ứng gạch chân khi hover cho menu sidebar */
+        .sidebar .menu a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -100%; /* Bắt đầu từ ngoài */
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before {
+            left: 0; /* Di chuyển vào trong */
+        }
+
         body.dark-mode .sidebar .menu a {
             color: var(--text-dark);
         }
         .sidebar.collapsed .menu a {
             padding: 10px;
             justify-content: center;
+        }
+        .sidebar.collapsed .menu a::before {
+            display: none; /* Ẩn gạch chân khi sidebar thu gọn */
         }
         .sidebar .menu a i {
             font-size: 16px;
@@ -176,12 +198,14 @@
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             padding-left: 15px;
+            transform: translateX(3px); /* Hiệu ứng nhích nhẹ */
         }
         .sidebar.collapsed .menu a:hover {
             padding-left: 10px;
+            transform: scale(1.05); /* Phóng to icon khi thu gọn */
         }
         .sidebar .menu a:hover i {
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(5deg); /* Icon xoay nhẹ và phóng to */
         }
         body.dark-mode .sidebar .menu a:hover {
             background: var(--primary-color-lighter);
@@ -192,9 +216,17 @@
             color: #fff;
             font-weight: 600;
         }
+        .sidebar .menu a.active::before {
+            left: 0; /* Hiển thị gạch chân cho mục active */
+            background-color: #fff; /* Màu gạch chân cho active item */
+        }
         body.dark-mode .sidebar .menu a.active {
             background: var(--primary-color);
         }
+        body.dark-mode .sidebar .menu a.active::before {
+            background-color: var(--secondary-color);
+        }
+
 
         .toggle-btn {
             position: absolute;
@@ -217,7 +249,7 @@
         }
         .toggle-btn:hover {
             background: var(--primary-color-lighter);
-            transform: scale(1.1);
+            transform: scale(1.1) rotate(180deg); /* Nút xoay khi hover */
         }
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
@@ -237,7 +269,7 @@
             color: var(--text-light);
             font-size: 14px;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Thêm cubic-bezier cho hiệu ứng nảy */
             width: 32px;
             height: 32px;
             display: flex;
@@ -247,9 +279,15 @@
         }
         .nav-btn:hover, .theme-toggle:hover, .language-btn:hover {
             background: #e9ecef;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.1); /* Hiệu ứng nảy lên và phóng to */
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+        /* Hiệu ứng active (khi nhấn) */
+        .nav-btn:active, .theme-toggle:active, .language-btn:active {
+            transform: translateY(0px) scale(0.95); /* Nhấn xuống */
+            box-shadow: var(--shadow-light-inner);
+        }
+
         body.dark-mode .nav-btn,
         body.dark-mode .theme-toggle,
         body.dark-mode .language-btn {
@@ -264,6 +302,11 @@
             color: #fff;
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
+        body.dark-mode .nav-btn:active,
+        body.dark-mode .theme-toggle:active,
+        body.dark-mode .language-btn:active {
+            box-shadow: var(--shadow-dark-inner);
+        }
 
         /* Tooltip CSS */
         [data-tooltip] {
@@ -274,7 +317,7 @@
             position: absolute;
             bottom: 125%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(5px); /* Bắt đầu từ dưới một chút */
             background-color: #333;
             color: #fff;
             padding: 4px 8px;
@@ -283,12 +326,13 @@
             white-space: nowrap;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s;
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out; /* Thêm transform vào transition */
             z-index: 10000;
         }
         [data-tooltip]:hover::after {
             opacity: 1;
             visibility: visible;
+            transform: translateX(-50%) translateY(0); /* Di chuyển lên vị trí cuối cùng */
         }
         body.dark-mode [data-tooltip]::after {
             background-color: #f0f0f0;
@@ -324,9 +368,9 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            overflow: hidden;
+            overflow: hidden; /* Quan trọng cho hiệu ứng particles */
         }
-        .hero::before {
+        .hero::before { /* Lớp phủ gradient */
             content: '';
             position: absolute;
             top: 0;
@@ -337,13 +381,73 @@
             border-radius: 12px;
             z-index: 1;
         }
+        /* Hiệu ứng hạt cho Hero */
+        .hero::after { /* Lớp chứa các hạt */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Để không cản trở tương tác */
+            z-index: 0; /* Nằm dưới lớp phủ gradient và nội dung */
+            /* Sử dụng box-shadow để tạo nhiều hạt */
+            /* Sẽ được tạo bằng JavaScript để có nhiều hạt hơn và ngẫu nhiên hơn */
+        }
+        .particle {
+            position: absolute;
+            background-color: var(--star-color-light);
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkle 5s infinite ease-in-out;
+            pointer-events: none;
+        }
+        body.dark-mode .particle {
+            background-color: var(--star-color-dark);
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.5) translateY(0px); }
+            25% { opacity: 0.8; transform: scale(1) translateY(-10px); }
+            50% { opacity: 1; transform: scale(0.8) translateY(5px); }
+            75% { opacity: 0.5; transform: scale(1.2) translateY(-5px); }
+        }
+
+
         .hero .hero-content {
             position: relative;
             z-index: 2;
         }
         .hero h2, .hero p, .hero .login-btn { color: #fff; }
-        .hero h2 { font-size: 32px; font-weight: 700; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .hero p { font-size: 18px; margin-bottom: 25px; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .hero h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: textFocusIn 1s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+        }
+        @keyframes textFocusIn { /* Hiệu ứng chữ hiện ra */
+            0% {
+                filter: blur(12px);
+                opacity: 0;
+            }
+            100% {
+                filter: blur(0px);
+                opacity: 1;
+            }
+        }
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 25px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            animation: fadeInDelayed 1.5s ease-out both;
+            animation-delay: 0.5s; /* Hiện ra sau tiêu đề */
+        }
+        @keyframes fadeInDelayed {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
         .hero .login-btn {
             padding: 12px 25px;
             background: var(--secondary-color);
@@ -353,14 +457,26 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4);
+            animation: pulse 2s infinite ease-in-out; /* Hiệu ứng nhấp nháy nhẹ */
+            animation-delay: 1s; /* Bắt đầu sau khi các text đã hiện */
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0, 174, 255, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 174, 255, 0.4); }
         }
         .hero .login-btn:hover {
             background: var(--primary-color);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 48, 135, 0.5);
+            transform: translateY(-3px) scale(1.1); /* Phóng to hơn khi hover */
+            box-shadow: 0 8px 20px rgba(0, 48, 135, 0.6);
+            animation-play-state: paused; /* Dừng animation pulse khi hover */
         }
+        .hero .login-btn:active {
+            transform: translateY(0px) scale(1.05);
+        }
+
 
         /* Khu vực nội bộ & Thẻ tính năng */
         .internal-section {
@@ -390,12 +506,36 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, border-color var(--transition-speed) ease;
             display: block;
             text-decoration: none;
             color: var(--text-light);
             border: 1px solid var(--border-color-light);
+            position: relative; /* Cho hiệu ứng background shine */
+            overflow: hidden; /* Cho hiệu ứng background shine */
         }
+        /* Hiệu ứng background shine cho feature card */
+        .feature-card::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+            body.dark-mode & {
+                 background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            }
+            transform: rotate(45deg);
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.7s ease;
+            pointer-events: none;
+        }
+        .feature-card:hover::after {
+            opacity: 1;
+            transform: rotate(20deg) scale(1.2); /* Điều chỉnh để hiệu ứng đẹp hơn */
+        }
+
         body.dark-mode .feature-card {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-outer);
@@ -403,22 +543,23 @@
             border: 1px solid var(--border-color-dark);
         }
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1);
+            transform: translateY(-8px) scale(1.02); /* Nâng cao hơn và phóng to nhẹ */
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.12);
+            border-color: var(--secondary-color); /* Viền đổi màu */
         }
         body.dark-mode .feature-card:hover {
-             box-shadow: 0 8px 20px rgba(0,0,0,0.3), 0 3px 8px rgba(0,0,0,0.22);
-             border-color: var(--secondary-color);
+             box-shadow: 0 12px 25px rgba(0,0,0,0.35), 0 5px 10px rgba(0,0,0,0.25);
+             border-color: var(--primary-color-lighter);
         }
         .feature-card i {
             font-size: 28px;
             color: var(--primary-color);
             margin-bottom: 15px;
             display: inline-block;
-            transition: transform var(--transition-speed) ease;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), color var(--transition-speed) ease; /* Thêm cubic-bezier cho hiệu ứng nảy của icon */
         }
         .feature-card:hover i {
-            transform: scale(1.15) rotate(-5deg);
+            transform: scale(1.25) rotate(-10deg) translateY(-5px); /* Icon nảy lên, phóng to và xoay */
             color: var(--secondary-color);
         }
         body.dark-mode .feature-card i { color: var(--secondary-color); }
@@ -451,8 +592,8 @@
             border: 1px solid var(--border-color-light);
         }
         .dashboard-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            transform: translateY(-5px) scale(1.01); /* Nâng cao hơn và phóng to nhẹ */
+            box-shadow: 0 8px 22px rgba(0,0,0,0.12);
         }
         body.dark-mode .dashboard-card {
             background: var(--card-bg-dark);
@@ -460,15 +601,27 @@
             border: 1px solid var(--border-color-dark);
         }
          body.dark-mode .dashboard-card:hover {
-            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.25);
             border-color: var(--primary-color-lighter);
         }
         .dashboard-card h4 { font-size: 17px; margin-bottom: 12px; font-weight: 600; color: var(--primary-color); }
         body.dark-mode .dashboard-card h4 { color: var(--secondary-color); }
         .dashboard-card p { font-size: 13px; margin-bottom: 10px; }
-        .dashboard-card a { color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 13px; transition: color var(--transition-speed) ease; }
+        .dashboard-card a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: color var(--transition-speed) ease, letter-spacing var(--transition-speed) ease; /* Thêm letter-spacing */
+            display: inline-block; /* Cho transform */
+        }
         body.dark-mode .dashboard-card a { color: var(--primary-color-lighter); }
-        .dashboard-card a:hover { text-decoration: underline; color: var(--secondary-color); }
+        .dashboard-card a:hover {
+            text-decoration: underline;
+            color: var(--secondary-color);
+            letter-spacing: 0.5px; /* Giãn chữ khi hover */
+            transform: translateX(2px);
+        }
         body.dark-mode .dashboard-card a:hover { color: var(--primary-color); }
 
 
@@ -514,8 +667,11 @@
         body.dark-mode .data-table th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        .data-table tr { transition: background-color 0.2s ease; }
-        .data-table tr:hover { background: rgba(0, 48, 135, 0.05); }
+        .data-table tr { transition: background-color 0.2s ease, transform 0.2s ease; } /* Thêm transform */
+        .data-table tr:hover {
+            background: rgba(0, 48, 135, 0.05);
+            transform: scale(1.005); /* Phóng to nhẹ hàng khi hover */
+        }
         body.dark-mode .data-table tr:hover { background: rgba(255, 255, 255, 0.05); }
         .data-table td.empty-state {
             text-align: center;
@@ -568,7 +724,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             transform: translateY(-20px) scale(0.95);
             opacity: 0;
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275), opacity 0.3s ease-out; /* Thêm cubic-bezier cho hiệu ứng nảy */
             position: relative;
         }
         .modal-content.active {
@@ -604,10 +760,11 @@
             color: var(--primary-color);
             font-size: 14px;
             z-index: 1;
-            transition: color var(--transition-speed) ease;
+            transition: color var(--transition-speed) ease, transform 0.2s ease; /* Thêm transform */
         }
         .input-group:focus-within .input-icon {
             color: var(--secondary-color);
+            transform: translateY(-50%) scale(1.1); /* Icon phóng to nhẹ khi focus */
         }
 
         .modal-content input {
@@ -619,7 +776,7 @@
             background: var(--background-light);
             color: var(--text-light);
             box-shadow: none;
-            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease;
+            transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease, box-shadow var(--transition-speed) ease; /* Thêm box-shadow */
         }
         body.dark-mode .modal-content input {
             background: var(--background-dark);
@@ -630,10 +787,12 @@
             outline: none;
             border-color: var(--primary-color);
             background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2); /* Viền sáng khi focus */
         }
         body.dark-mode .modal-content input:focus {
             border-color: var(--secondary-color);
             background: var(--card-bg-dark);
+            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.2);
         }
         .modal-content button {
             padding: 12px;
@@ -645,7 +804,7 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.15s ease-out; /* Điều chỉnh transition cho active */
             position: relative;
             display: flex;
             align-items: center;
@@ -655,8 +814,14 @@
         }
         .modal-content button:hover {
             background: var(--primary-color-lighter);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);
+            transform: translateY(-2px) scale(1.02); /* Nâng lên và phóng to nhẹ */
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+        /* Hiệu ứng khi nhấn nút trong modal */
+        .modal-content button:active {
+            transform: translateY(0px) scale(0.98); /* Nhấn xuống */
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .modal-content button .button-text,
@@ -686,9 +851,18 @@
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         .modal-links { display: flex; justify-content: space-between; margin-top: 15px; }
-        .modal-links span { font-size: 12px; color: var(--primary-color); cursor: pointer; transition: color var(--transition-speed) ease; }
+        .modal-links span {
+            font-size: 12px;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: color var(--transition-speed) ease, letter-spacing var(--transition-speed) ease; /* Thêm letter-spacing */
+        }
         body.dark-mode .modal-links span { color: var(--primary-color-lighter); }
-        .modal-links span:hover { text-decoration: underline; color: var(--secondary-color); }
+        .modal-links span:hover {
+            text-decoration: underline;
+            color: var(--secondary-color);
+            letter-spacing: 0.3px; /* Giãn chữ nhẹ */
+        }
         body.dark-mode .modal-links span:hover { color: var(--primary-color); }
 
         .close {
@@ -698,14 +872,14 @@
             font-size: 22px;
             color: var(--text-light);
             cursor: pointer;
-            transition: color var(--transition-speed) ease, transform var(--transition-speed) ease;
+            transition: color var(--transition-speed) ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Thêm cubic-bezier */
             padding: 5px;
             line-height: 1;
         }
         body.dark-mode .close { color: var(--text-dark); }
         .close:hover {
             color: var(--primary-color);
-            transform: rotate(90deg);
+            transform: rotate(90deg) scale(1.2); /* Xoay và phóng to */
         }
         body.dark-mode .close:hover { color: var(--primary-color-lighter); }
 
@@ -751,10 +925,14 @@
             box-shadow: var(--shadow-light-outer);
             align-items: center;
             justify-content: center;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .mobile-menu-btn:hover {
             background: #e9ecef;
+            transform: scale(1.1); /* Phóng to khi hover */
+        }
+        .mobile-menu-btn:active {
+            transform: scale(0.95); /* Nhấn xuống */
         }
         body.dark-mode .mobile-menu-btn {
             background: var(--card-bg-dark);
@@ -787,8 +965,8 @@
             align-items: center;
             gap: 10px;
             opacity: 0;
-            transform: translateX(100%);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: translateX(100%) scale(0.9); /* Bắt đầu nhỏ hơn và từ bên phải */
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275); /* Thêm cubic-bezier */
         }
         body.dark-mode .toast {
              background-color: var(--card-bg-light);
@@ -797,14 +975,26 @@
         }
         .toast.show {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0) scale(1); /* Hiện ra và phóng to về kích thước gốc */
         }
         .toast i {
             font-size: 18px;
         }
-        .toast.success i { color: #28a745; }
-        .toast.error i { color: #dc3545; }
-        .toast.info i { color: #17a2b8; }
+        .toast.success i { color: #28a745; animation: iconPop 0.5s ease-out; }
+        .toast.error i { color: #dc3545; animation: iconShake 0.5s ease-out; }
+        .toast.info i { color: #17a2b8; animation: iconPop 0.5s ease-out; }
+
+        @keyframes iconPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes iconShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
         .toast-message {
             font-size: 14px;
         }
@@ -847,11 +1037,14 @@
         }
         .introjs-elegant-theme .introjs-button:hover {
             background-color: var(--primary-color-lighter);
-            transform: translateY(-1px); /* Hiệu ứng nổi nhẹ khi hover */
+            transform: translateY(-1px) scale(1.03); /* Hiệu ứng nổi nhẹ và phóng to khi hover */
         }
         .introjs-elegant-theme .introjs-button:focus {
             outline: none;
             box-shadow: 0 0 0 2px var(--primary-color-lighter); /* Viền focus */
+        }
+        .introjs-elegant-theme .introjs-button:active {
+            transform: translateY(0px) scale(0.98);
         }
 
         /* Nút Bỏ qua/Hoàn thành có thể có style khác */
@@ -996,47 +1189,53 @@
             left: 0;          /* Vị trí bắt đầu logic trước khi áp dụng transform */
             font-size: 30px;  /* Kích thước của biểu tượng xe */
             color: var(--primary-color); /* Màu xe, có thể thay đổi */
-            /* Nếu dùng ảnh: */
-            /* width: 80px; */ /* Ví dụ chiều rộng ảnh */
-            /* height: 40px; */ /* Ví dụ chiều cao ảnh */
-            /* object-fit: contain; */
-
-            /* Bắt đầu cho xe ở ngoài màn hình bên trái */
-            transform: translateX(-100%) scaleX(1); /* Dịch chuyển sang trái bằng chính chiều rộng của nó */
-            animation: driveAcrossAndBack 15s linear infinite; /* Áp dụng animation */
+            transform: translateX(-100%) scaleX(1);
+            animation: driveAcrossAndBack 15s linear infinite;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5), /* Thêm hiệu ứng đèn xe */
+                         0 0 10px var(--secondary-color);
         }
 
         body.dark-mode #animatedCarElement {
             color: var(--secondary-color); /* Đổi màu xe trong dark mode nếu muốn */
+            text-shadow: 0 0 5px rgba(0,0,0,0.5),
+                         0 0 10px var(--primary-color-lighter);
         }
 
         @keyframes driveAcrossAndBack {
             0% {
-                /* Xe bắt đầu ở ngoài màn hình bên trái, hướng sang phải */
-                transform: translateX(-100%) scaleX(1);
+                transform: translateX(-100%) scaleX(1) translateY(0px); /* Bắt đầu từ trái, hướng phải */
             }
+            5% {
+                transform: translateX(-80vw) scaleX(1) translateY(-2px); /* Nhảy nhẹ */
+            }
+            10% {
+                transform: translateX(-60vw) scaleX(1) translateY(0px);
+            }
+            /* ... các keyframes khác cho xe chạy ... */
             45% {
-                /* Xe di chuyển đến ngoài màn hình bên phải, vẫn hướng sang phải */
-                /* 100vw là chiều rộng của viewport (khung nhìn) */
-                transform: translateX(100vw) scaleX(1);
+                transform: translateX(100vw) scaleX(1) translateY(0px); /* Đến phải, hướng phải */
             }
-            /* Khoảnh khắc xe đổi chiều */
+            49% {
+                transform: translateX(100vw) scaleX(1) translateY(-3px); /* Chuẩn bị đổi chiều, nảy nhẹ */
+            }
             50% {
-                /* Xe vẫn ở ngoài màn hình bên phải, nhưng lật ngược (hướng sang trái) */
-                transform: translateX(100vw) scaleX(-1);
+                transform: translateX(100vw) scaleX(-1) translateY(0px); /* Đổi chiều, hướng trái */
             }
-            /* Xe bắt đầu di chuyển về trái */
+            51% {
+                transform: translateX(100vw) scaleX(-1) translateY(-3px); /* Bắt đầu chạy về, nảy nhẹ */
+            }
             55% {
-                /* Xe bắt đầu xuất hiện từ mép phải, di chuyển sang trái */
-                transform: translateX(100vw) scaleX(-1);
+                transform: translateX(80vw) scaleX(-1) translateY(0px);
             }
+            /* ... các keyframes khác cho xe chạy về ... */
             95% {
-                /* Xe di chuyển đến ngoài màn hình bên trái, vẫn hướng sang trái */
-                transform: translateX(-100%) scaleX(-1);
+                transform: translateX(-100%) scaleX(-1) translateY(0px); /* Đến trái, hướng trái */
+            }
+            99% {
+                transform: translateX(-100%) scaleX(-1) translateY(-3px); /* Chuẩn bị đổi chiều, nảy nhẹ */
             }
             100% {
-                /* Quay lại trạng thái ban đầu để lặp lại mượt mà */
-                transform: translateX(-100%) scaleX(1);
+                transform: translateX(-100%) scaleX(1) translateY(0px); /* Quay lại ban đầu */
             }
         }
     </style>
@@ -1484,6 +1683,31 @@
             }
         };
 
+        // --- Chức năng tạo hạt cho Hero Section ---
+        function createParticles() {
+            const heroSection = document.getElementById('heroSection');
+            if (!heroSection) return;
+
+            // Xóa các hạt cũ nếu có
+            const existingParticles = heroSection.querySelectorAll('.particle');
+            existingParticles.forEach(p => p.remove());
+
+            const numParticles = 50; // Số lượng hạt
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                const size = Math.random() * 3 + 1; // Kích thước ngẫu nhiên từ 1px đến 4px
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.animationDelay = `${Math.random() * 5}s`; // Độ trễ animation ngẫu nhiên
+                particle.style.animationDuration = `${Math.random() * 3 + 3}s`; // Thời gian animation ngẫu nhiên
+                heroSection.appendChild(particle);
+            }
+        }
+
+
         // --- Chức năng Thông báo Toast ---
         function showToast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toastContainer');
@@ -1497,7 +1721,11 @@
             toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
             container.appendChild(toast);
 
-            setTimeout(() => toast.classList.add('show'), 10);
+            // Trigger reflow to enable transition
+            toast.offsetHeight; // eslint-disable-line no-unused-expressions
+
+            toast.classList.add('show');
+
 
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -1548,6 +1776,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             updateUIBasedOnLogin();
             updateLanguage();
+            createParticles(); // Tạo hạt khi DOM tải xong
             if (localStorage.getItem("theme") === "dark") {
                 document.body.classList.add("dark-mode");
                 const icon = document.querySelector(".theme-toggle i");
@@ -1987,9 +2216,9 @@
             if (!modal) return;
             const content = modal.querySelector(".modal-content");
             modal.style.display = "flex";
-            setTimeout(() => {
-                if (content) content.classList.add("active");
-            }, 10);
+            // Trigger reflow
+            modal.offsetHeight; // eslint-disable-line no-unused-expressions
+            if (content) content.classList.add("active");
         }
 
         function closeModal(id) {
@@ -2002,7 +2231,7 @@
                 if (id === "loginModal") {
                     resetModalToLogin();
                 }
-            }, 300);
+            }, 400); // Phù hợp với transition duration của modal-content
         }
 
         function resetModalToLogin() {
@@ -2021,6 +2250,7 @@
                 icon.classList.toggle("fa-sun");
             }
             localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+            createParticles(); // Tạo lại hạt khi đổi theme để màu sắc phù hợp
         }
 
         function toggleLanguage() {
