@@ -1206,178 +1206,169 @@
         const rowsPerPage = 15;
         let currentSelectedCarData = null; // Biến lưu trữ dữ liệu xe đang được chọn
 
-        function getExteriorColorStyle(exteriorValue) {
-            // Kiểu viền chữ cơ bản để tăng độ tương phản
-            const outlineStyle = "text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px #000;";
-            
-            // Kiểu mặc định với viền và font-weight normal
-            // Sử dụng CSS variable cho màu chữ mặc định để dễ dàng tùy chỉnh
-            let defaultColorStyle = `color: var(--exterior-default-text, #333); ${outlineStyle} font-weight: normal;`;
+function getExteriorColorStyle(exteriorValue) {
+    // Kiểu viền chữ, chỉ áp dụng cho CE18, NAY ĐỔI MÀU VIỀN THÀNH #F0F8FF
+    const outlineStyle = "text-shadow: -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 1px 1px 0 #808080, 0 0 5px #808080;";
+    // Kiểu font-weight cho các màu cụ thể
+    const specificFontWeight = `font-weight: 600;`;
+    // Kiểu font-weight cho trường hợp mặc định
+    const defaultFontWeight = `font-weight: normal;`;
 
-            // Nếu không có giá trị màu ngoại thất, trả về kiểu mặc định
-            if (!exteriorValue) {
-                return defaultColorStyle;
-            }
+    // Kiểu mặc định KHÔNG CÓ viền và font-weight normal
+    const defaultColorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`;
 
-            // Chuyển giá trị màu ngoại thất về chữ thường để xử lý không phân biệt hoa thường
-            const lowerExteriorValue = exteriorValue.toLowerCase();
-            // Kiểu font-weight đậm hơn cho các trường hợp màu chữ cụ thể
-            const fontWeight = `font-weight: 600;`; 
+    if (!exteriorValue) {
+        return defaultColorStyle; // Trả về kiểu mặc định không có viền
+    }
 
-            // Ưu tiên các chuỗi đầy đủ hoặc cụ thể nhất trước
-            // Các trường hợp này sẽ được kiểm tra trước các trường hợp chung chung hơn
-            if (lowerExteriorValue === "brahminy white (ce18)") {
-                return `color: white; ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "sunset orb (ce1a)") {
-                // Sử dụng CSS variable cho màu cam
-                return `color: var(--exterior-orange-text, orange); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "crimson red (ce1m)") {
-                // Sử dụng CSS variable cho màu đỏ
-                return `color: var(--exterior-red-text, red); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "vinfast blue (ce1n)") {
-                // Sử dụng CSS variable cho màu xanh dương
-                return `color: var(--exterior-blue-text, blue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "neptune grey (ce14)") {
-                // Nếu #4A4A4A là màu xám tối, cân nhắc chữ trắng nếu nền cũng tối.
-                // Giả sử nó đủ sáng để thấy viền đen, hoặc nền tương phản tốt.
-                return `color: #778899; /* LightSlateGray */ ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black (ce11)") {
-                // Chữ trắng trên nền đen để đảm bảo độ tương phản
-                return `color: white; /* Đổi từ black thành white cho dễ đọc trên nền đen */ ${outlineStyle} ${fontWeight}`; 
-            }
-            if (lowerExteriorValue === "electric blue (ce1j)") {
-                return `color: var(--exterior-blue-text, dodgerblue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "zenith grey (ce1v)") {
-                // Giả sử --exterior-grey-text đủ sáng, hoặc đổi màu chữ nếu cần
-                return `color: #B0C4DE; /* LightSteelBlue */ ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") {
-                return `color: var(--exterior-yellow-text, yellow); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") {
-                return `color: var(--exterior-blue-text, deepskyblue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") {
-                return `color: var(--exterior-pink-text, hotpink); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") {
-                return `color: var(--exterior-pink-text, mediumvioletred); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "urbant mint (ce1w)") {
-                return `color: #3CB371; /* MediumSeaGreen */ ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "vinbus green (ce2b)") {
-                return `color: var(--exterior-green-text, green); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "deep ocean (ce1h)") {
-                // Chữ trắng trên nền xanh đậm để đảm bảo độ tương phản
-                return `color: #228B22; /* Đổi từ #228B22 (ForestGreen) thành white */ ${outlineStyle} ${fontWeight}`; 
-            }
-            // Lưu ý: "brahminy white roof- summer yellow body (181u)" bị lặp lại, đã xử lý ở trên.
-            if (lowerExteriorValue === "iris berry (ce1x)") {
-                return `color: var(--exterior-pink-text, mediumvioletred); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") {
-                return `color: var(--exterior-grey-text, darkgray); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "urbant mint green - desat silv (171w)") {
-                return `color: var(--exterior-green-text, mediumseagreen); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "ivy green-desat silver roof (1722)") {
-                return `color: var(--exterior-green-text, darkolivegreen); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") {
-                return `color: var(--exterior-blue-text, steelblue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black-champagne creme roof (2311)") { // Body is Jet Black
-                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
-            }
-            if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") { // Body is Infinity Blanc
-                // Nếu --exterior-white-text là trắng, sẽ là chữ trắng viền đen trên nền trắng
-                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; // Dùng màu xám nhạt nếu nền trắng
-            }
-            if (lowerExteriorValue === "champagne creme - matte champa (2523)") { // Body is Champagne Creme
-                return `color: var(--exterior-yellow-text, palegoldenrod); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black - graphite roof (2811)") { // Body is Jet Black
-                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
-            }
-            if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") { // Body is Crimson Velvet
-                return `color: var(--exterior-red-text, crimson); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "ivy_green_gne (ce22)") {
-                return `color: var(--exterior-green-text, darkolivegreen); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "champagne_creme_ylg (ce23)") {
-                return `color: var(--exterior-yellow-text, khaki); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "crimson red - jet black roof (111m)") { // Body is Crimson Red
-                return `color: var(--exterior-red-text, firebrick); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") { // Body is Infinity Blanc
-                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; // Dùng màu xám nhạt nếu nền trắng
-            }
-            if (lowerExteriorValue === "deep ocean_jet black roof (111h)") { // Body is Deep Ocean
-                return `color: white; ${outlineStyle} ${fontWeight}`; // Quyết định dùng chữ trắng cho dễ đọc
-            }
-            if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") { // Body is Alantic Blue
-                return `color: var(--exterior-blue-text, cornflowerblue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") { // Body is Jet Black
-                return `color: white; ${outlineStyle} ${fontWeight}`; // Chữ trắng
-            }
-            if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") { // Body is Champagne Creme
-                return `color: var(--exterior-yellow-text, lightgoldenrodyellow); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue === "de sat silver ind12007 (ce17)") {
-                return `color: var(--exterior-grey-text, silver); ${outlineStyle} ${fontWeight}`;
-            }
+    const lowerExteriorValue = exteriorValue.toLowerCase();
 
-            // Fallback for more general terms using .includes()
-            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) {
-                return `color: var(--exterior-red-text, red); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) {
-                return `color: var(--exterior-pink-text, hotpink); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("deep ocean")) { 
-                return `color: white; ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) {
-                return `color: var(--exterior-blue-text, blue); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("sunset orb")) {
-                return `color: var(--exterior-orange-text, orange); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) {
-                return `color: var(--exterior-yellow-text, yellow); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) {
-                return `color: var(--exterior-green-text, green); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("jet black")) {
-                return `color: white; ${outlineStyle} ${fontWeight}`; 
-            }
-            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) {
-                return `color: var(--exterior-white-text, gainsboro); ${outlineStyle} ${fontWeight}`; 
-            }
-            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) {
-                return `color: var(--exterior-grey-text, dimgray); ${outlineStyle} ${fontWeight}`;
-            }
-            if (lowerExteriorValue.includes("mystery bronz")) {
-                return `color: var(--exterior-bronze-text, peru); ${outlineStyle} ${fontWeight}`;
-            }
-            
-            return defaultColorStyle;
-        }
-        // --- END: Hàm để lấy kiểu màu chữ ngoại thất ---
+    // Ưu tiên các chuỗi đầy đủ hoặc cụ thể nhất trước
+    // RIÊNG MÀU CE18 VẪN GIỮ MÀU VIỀN (nay là màu #F0F8FF)
+    if (lowerExteriorValue === "brahminy white (ce18)") {
+        return `color: white; ${outlineStyle} ${specificFontWeight}`; // Giữ viền cho CE18 với màu viền mới
+    }
 
+    // CÁC MÀU KHÁC BỎ VIỀN
+    if (lowerExteriorValue === "sunset orb (ce1a)") {
+        return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "crimson red (ce1m)") {
+        return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "vinfast blue (ce1n)") {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "neptune grey (ce14)") {
+        return `color: #778899; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "jet black (ce11)") {
+        return `color: black; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "electric blue (ce1j)") {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "zenith grey (ce1v)") {
+        return `color: #B0C4DE; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") {
+        return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") {
+        return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") {
+        return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "urbant mint (ce1w)") {
+        return `color: #3CB371; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "vinbus green (ce2b)") {
+        return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "deep ocean (ce1h)") {
+        return `color: #006400; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "iris berry (ce1x)") {
+        return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") {
+        return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "urbant mint green - desat silv (171w)") {
+        return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "ivy green-desat silver roof (1722)") {
+        return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "jet black-champagne creme roof (2311)") {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") {
+        return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "champagne creme - matte champa (2523)") {
+        return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "jet black - graphite roof (2811)") {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") {
+        return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "ivy_green_gne (ce22)") {
+        return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "champagne_creme_ylg (ce23)") {
+        return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "crimson red - jet black roof (111m)") {
+        return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") {
+        return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "deep ocean_jet black roof (111h)") {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") {
+        return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue === "de sat silver ind12007 (ce17)") {
+        return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+    }
+
+    // Các trường hợp .includes() - BỎ VIỀN
+    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) {
+        return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) {
+        return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) {
+        return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("deep ocean")) {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("sunset orb")) {
+        return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) {
+        return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) {
+        return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("jet black")) {
+        return `color: white; ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) {
+        // QUAN TRỌNG: "brahminy white (ce18)" đã được xử lý ở trên và giữ viền (với màu mới).
+        // Các biến thể "brahminy white" khác hoặc "infinity blanc" sẽ không có viền ở đây.
+        return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) {
+        return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+    }
+    if (lowerExteriorValue.includes("mystery bronz")) {
+        return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
+    }
+
+    return defaultColorStyle;
+}
 
         document.addEventListener("DOMContentLoaded", function () {
             if (!isLoggedIn) {
