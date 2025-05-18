@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>KPIs - VinFast Thuận An</title> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <style>
+        /* SAO CHÉP TOÀN BỘ NỘI DUNG <style> TỪ KHOXE.HTML VÀO ĐÂY */
+        :root {
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff;
+            --accent-color: #ffc107; /* Màu vàng cho điểm nhấn gợi ý */
+            --success-color: #28a745; /* Màu xanh lá cho thành công/ghép xe */
+            --danger-color: #dc3545; /* Thêm từ a.html nếu cần cho KPI */
+            --warning-color: #ffc107; /* Thêm từ a.html nếu cần cho KPI */
+            --info-color: #17a2b8; /* Thêm từ a.html nếu cần cho KPI */
+            --background-light: #f4f7fc;
+            --text-light: #2c3e50;
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e;
+            --border-color-light: #e1e4e8;
+            --border-color-dark: #30363d;
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
+            --skeleton-bg-light: #e0e0e0;
+            --skeleton-bg-dark: #3a3a4a;
+            --transition-easing: ease-in-out;
+
+            /* CSS Variables for text colors based on exteriorValue */
+            --exterior-default-text: #333;
+            --exterior-orange-text: orange;
+            --exterior-red-text: red;
+            --exterior-blue-text: blue;
+            --exterior-yellow-text: #B8860B;
+            --exterior-pink-text: hotpink;
+            --exterior-green-text: green;
+            --exterior-white-text: #333;
+            --exterior-grey-text: dimgray;
+            --exterior-bronze-text: peru;
+
+            /* === MÀU CHO TRẠNG THÁI KHO XE === */
+            --status-san-sang-bg-light: #d4edda;
+            --status-san-sang-text-light: #155724;
+            --status-san-sang-border-light: #b6dcc3;
+            --status-san-sang-bg-dark: #1e4620;
+            --status-san-sang-text-dark: #d4edda;
+            --status-san-sang-border-dark: #347c50;
+
+            --status-da-ghep-bg-light: #cfe2ff;
+            --status-da-ghep-text-light: #0a367e;
+            --status-da-ghep-border-light: #a9c7ff;
+            --status-da-ghep-bg-dark: #0e2a4f;
+            --status-da-ghep-text-dark: #cfe2ff;
+            --status-da-ghep-border-dark: #2958a0;
+
+            --status-chua-ghep-bg-light: #fff3cd;
+            --status-chua-ghep-text-light: #856404;
+            --status-chua-ghep-border-light: #ffecb5;
+            --status-chua-ghep-bg-dark: #533f03;
+            --status-chua-ghep-text-dark: #ffeeba;
+            --status-chua-ghep-border-dark: #a5850c;
+
+            --status-da-ban-bg-light: #e9ecef;
+            --status-da-ban-text-light: #495057;
+            --status-da-ban-border-light: #d6d8db;
+            --status-da-ban-bg-dark: #343a40;
+            --status-da-ban-text-dark: #adb5bd;
+            --status-da-ban-border-dark: #545b62;
+
+            --status-cho-vbc-bg-light: #d1ecf1;
+            --status-cho-vbc-text-light: #0c5460;
+            --status-cho-vbc-border-light: #bee5eb;
+            --status-cho-vbc-bg-dark: #0c3c44;
+            --status-cho-vbc-text-dark: #d1ecf1;
+            --status-cho-vbc-border-dark: #2b7a7f;
+            
+            --status-default-bg-light: #f8f9fa;
+            --status-default-text-light: #343a40;
+            --status-default-border-light: #ced4da;
+            --status-default-bg-dark: #212529;
+            --status-default-text-dark: #e9ecef;
+            --status-default-border-dark: #495057;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+            width: 100vw;
+            font-size: 14px;
+        }
+        body.dark-mode {
+            background: var(--background-dark);
+            color: var(--text-dark);
+            --exterior-default-text: #ccc;
+            --exterior-orange-text: #FFA500;
+            --exterior-red-text: #FF4747;
+            --exterior-blue-text: #5CADFF;
+            --exterior-yellow-text: #FFD700;
+            --exterior-pink-text: #FF69B4;
+            --exterior-green-text: #32CD32;
+            --exterior-white-text: #E0E0E0;
+            --exterior-grey-text: #A9A9A9;
+            --exterior-bronze-text: #CD7F32;
+
+            /* Dark mode status colors */
+            --status-san-sang-bg-light: var(--status-san-sang-bg-dark);
+            --status-san-sang-text-light: var(--status-san-sang-text-dark);
+            --status-san-sang-border-light: var(--status-san-sang-border-dark);
+            --status-da-ghep-bg-light: var(--status-da-ghep-bg-dark);
+            --status-da-ghep-text-light: var(--status-da-ghep-text-dark);
+            --status-da-ghep-border-light: var(--status-da-ghep-border-dark);
+            --status-chua-ghep-bg-light: var(--status-chua-ghep-bg-dark);
+            --status-chua-ghep-text-light: var(--status-chua-ghep-text-dark);
+            --status-chua-ghep-border-light: var(--status-chua-ghep-border-dark);
+            --status-da-ban-bg-light: var(--status-da-ban-bg-dark);
+            --status-da-ban-text-light: var(--status-da-ban-text-dark);
+            --status-da-ban-border-light: var(--status-da-ban-border-dark);
+            --status-cho-vbc-bg-light: var(--status-cho-vbc-bg-dark);
+            --status-cho-vbc-text-light: var(--status-cho-vbc-text-dark);
+            --status-cho-vbc-border-light: var(--status-cho-vbc-border-dark);
+            --status-default-bg-light: var(--status-default-bg-dark);
+            --status-default-text-light: var(--status-default-text-dark);
+            --status-default-border-light: var(--status-default-border-dark);
+        }
+
+        /* Thanh cuộn tùy chỉnh */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track {
+            background: var(--card-bg-light); 
+            border-radius: 4px;
+        }
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: var(--card-bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: background var(--transition-speed) ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color-lighter);
+        }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+
+        /* Header */
+        header { /* Đổi từ .navbar của a.html thành header */
+            position: fixed;
+            top: 0;
+            left: 0; /* Sẽ được điều chỉnh bởi JS khi có sidebar */
+            width: 100%; /* Sẽ được điều chỉnh bởi JS khi có sidebar */
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: #fff;
+            padding: 10px 20px; /* Từ khoxe.html */
+            height: 50px; /* Giữ chiều cao từ a.html nếu muốn, hoặc bỏ để theo padding */
+            font-size: 14px; /* Từ khoxe.html */
+            font-weight: 600; /* Từ khoxe.html */
+            text-transform: uppercase; /* Từ khoxe.html */
+            z-index: 999; /* Cao hơn sidebar một chút */
+            box-shadow: var(--shadow-light-outer);
+            transition: background var(--transition-speed) ease, width var(--transition-speed) ease, left var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Để đẩy controls sang phải */
+        }
+        body.dark-mode header {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        .header-title { /* Thêm class này cho title */
+            text-align: center;
+            flex-grow: 1; /* Để title chiếm không gian và controls ở cuối */
+             /* margin-left: 10px; /* Bỏ nếu có mobile menu button ở đầu */
+        }
+        /* Navbar controls (giữ nguyên từ khoxe.html, đã nằm trong header) */
+        .navbar-controls {
+            display: flex;
+            gap: 8px;
+            z-index: 1001; /* Đảm bảo các nút control trên header */
+            margin-left: auto; /* Đẩy sang phải nếu header-title không flex-grow */
+        }
+        .nav-btn, .theme-toggle, .theme-toggle-btn /* Thêm .theme-toggle-btn từ a.html */ {
+            border: none;
+            border-radius: 50%;
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            font-size: 14px;
+            cursor: pointer;
+            width: 32px; /* Kích thước từ khoxe.html */
+            height: 32px; /* Kích thước từ khoxe.html */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed) ease; /* Đảm bảo transition từ khoxe.html */
+        }
+        .nav-btn:hover, .theme-toggle:hover, .theme-toggle-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px) scale(1.1); /* Hiệu ứng hover từ a.html, có thể giữ lại hoặc dùng của khoxe */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        body.dark-mode .nav-btn,
+        body.dark-mode .theme-toggle,
+        body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .nav-btn:hover,
+        body.dark-mode .theme-toggle:hover,
+        body.dark-mode .theme-toggle-btn:hover {
+            background: var(--primary-color-darker);
+            color: #fff;
+        }
+
+        /* Sidebar (Sao chép từ khoxe.html và điều chỉnh) */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px; 
+            height: 100vh;
+            background: var(--primary-color-darker); /* khoxe.html style */
+            padding: 15px;
+            padding-top: 60px; /* Khoảng cách với header */
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+            z-index: 998; /* Dưới header một chút, nhưng trên main-content */
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.collapsed {
+            width: 60px;
+        }
+        body.dark-mode .sidebar {
+            background: var(--background-dark); /* khoxe.html dark style */
+            border-right: 1px solid var(--border-color-dark);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        }
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar .logo h1 {
+            font-size: 25px; 
+            color: #fff;
+            font-weight: 600;
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        .sidebar:not(.collapsed) .logo h1::after { /* hiệu ứng shimmer từ khoxe */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shimmer 3s infinite linear;
+            animation-delay: 1s;
+        }
+        @keyframes shimmer {
+            0% { left: -150%; }
+            50% { left: 150%; }
+            100% { left: 150%; }
+        }
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
+        .sidebar.collapsed .logo h1::after { display: none; }
+
+        .sidebar .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .sidebar .menu a {
+            padding: 10px 12px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            background: transparent;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar .menu a::before { /* hiệu ứng gạch chân từ khoxe */
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            transition: transform var(--transition-speed) ease;
+        }
+        .sidebar .menu a span {
+            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 100px;
+        }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding-left: 15px; /* hiệu ứng hover từ khoxe */
+            transform: translateX(3px); /* hiệu ứng hover từ khoxe */
+        }
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active {
+            background: var(--secondary-color);
+            color: #fff;
+            font-weight: 600;
+            animation: activeLinkPulse 1.5s infinite ease-in-out; /* hiệu ứng active từ khoxe */
+        }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
+        @keyframes activeLinkPulse {
+            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
+            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        }
+        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); animation-name: activeLinkPulseDark; }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+        @keyframes activeLinkPulseDark {
+            0% { box-shadow: 0 0 5px var(--secondary-color); }
+            50% { box-shadow: 0 0 15px var(--secondary-color); }
+            100% { box-shadow: 0 0 5px var(--secondary-color); }
+        }
+
+        .toggle-btn-sidebar { 
+            position: absolute;
+            top: 12px; 
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001; 
+        }
+        .toggle-btn-sidebar:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
+        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
+
+        /* Nút menu di động từ khoxe.html */
+        .mobile-menu-btn {
+            display: none; /* Sẽ được JS điều khiển */
+            position: fixed; /* Đặt cố định */
+            top: 8px; 
+            left: 10px;
+            z-index: 1002; /* Trên header */
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color-light);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: var(--shadow-light-outer);
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-speed) ease;
+        }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+
+
+        /* Tooltip (giữ nguyên từ khoxe.html) */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px); 
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; 
+            z-index: 10000;
+        }
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0); 
+        }
+        body.dark-mode [data-tooltip]::after {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        /* Main container (điều chỉnh margin-left và padding-top) */
+        .main-container {
+            background: var(--background-light); /* Thêm nếu a.html chưa có */
+            padding: 20px;
+            margin-left: 200px; /* Bằng chiều rộng sidebar */
+            padding-top: 70px; /* Cao hơn header một chút (50px header + 20px padding) */
+            min-height: calc(100vh - 50px - 30px); /* Giữ lại từ a.html, (header + footer height) */
+            display: flex; /* Thêm từ a.html nếu muốn content bên trong flex */
+            flex-direction: column; /* Thêm từ a.html */
+            gap: 20px; /* Thêm từ a.html */
+            transition: margin-left var(--transition-speed) ease, padding-top var(--transition-speed) ease;
+            padding-bottom: 50px; /* Để không bị footer che */
+        }
+        .main-container.collapsed {
+            margin-left: 60px; /* Bằng chiều rộng sidebar khi thu gọn */
+        }
+        body.dark-mode .main-container {
+            background: var(--background-dark); /* Thêm nếu a.html chưa có */
+        }
+        
+        /* Filter bar styling from a.html, adjusted to fit khoxe.html theme */
+        .filter-bar {
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        body.dark-mode .filter-bar {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .filter-bar label { font-weight: 500; margin-right: 5px; color: var(--text-light); }
+        body.dark-mode .filter-bar label { color: var(--text-dark); }
+        .filter-bar select, .filter-bar input[type="month"] {
+            padding: 8px 10px; /* Giữ padding của a.html */
+            border: 1px solid var(--border-color-light);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--background-light); /* Nền sáng cho input/select */
+            color: var(--text-light);
+            min-width: 150px;
+            box-shadow: var(--shadow-light-inner); /* Thêm inner shadow */
+        }
+        .filter-bar select:focus, .filter-bar input[type="month"]:focus {
+             outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2); 
+        }
+        body.dark-mode .filter-bar select, body.dark-mode .filter-bar input[type="month"] {
+            background: var(--card-bg-dark); 
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+            box-shadow: var(--shadow-dark-inner);
+        }
+        body.dark-mode .filter-bar select:focus, body.dark-mode .filter-bar input[type="month"]:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25); 
+        }
+
+        .filter-bar button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+            box-shadow: var(--shadow-light-outer);
+        }
+        .filter-bar button:hover { 
+            background-color: var(--primary-color-lighter);
+            transform: translateY(-1px);
+        }
+        .filter-bar button:disabled { 
+            background-color: var(--border-color-light); 
+            cursor: not-allowed;
+            box-shadow: none; transform: none;
+        }
+        body.dark-mode .filter-bar button {
+             background-color: var(--primary-color-darker);
+        }
+        body.dark-mode .filter-bar button:hover {
+            background-color: var(--primary-color);
+        }
+        body.dark-mode .filter-bar button:disabled { background-color: var(--border-color-dark); }
+
+
+        /* KPI Card Grid and Card styling (từ a.html, nhưng áp dụng biến màu từ khoxe.html) */
+        .kpi-consultant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .kpi-consultant-card {
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out; /* Thêm hiệu ứng hover */
+        }
+        .kpi-consultant-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        body.dark-mode .kpi-consultant-card {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        body.dark-mode .kpi-consultant-card:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .kpi-consultant-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color); /* Màu chính từ khoxe */
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color-light);
+            padding-bottom: 10px;
+        }
+        body.dark-mode .kpi-consultant-card h3 { 
+            color: var(--secondary-color); /* Màu phụ từ khoxe */
+            border-bottom-color: var(--border-color-dark); 
+        }
+
+        .kpi-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.95rem; }
+        .kpi-item strong { font-weight: 500; color: var(--text-light); }
+        body.dark-mode .kpi-item strong { color: var(--text-dark); }
+        .kpi-item .value { font-weight: 600; color: var(--primary-color); }
+        body.dark-mode .kpi-item .value { color: var(--secondary-color); }
+        
+        /* Sử dụng biến màu từ khoxe.html (success-color) và bổ sung danger-color, info-color nếu cần */
+        .kpi-item .value.positive { color: var(--success-color) !important; } /* Quan trọng để ghi đè */
+        .kpi-item .value.negative { color: var(--danger-color) !important; } /* Thêm biến --danger-color nếu chưa có ở root */
+        .kpi-item .value.neutral { color: var(--info-color) !important; } /* Thêm biến --info-color nếu chưa có ở root */
+        
+        .kpi-item input[type="number"].target-input-readonly {
+            background-color: var(--background-light);
+            color: var(--text-light);
+            border: 1px dashed var(--border-color-light);
+            cursor: default;
+            text-align: right;
+            width: 80px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-weight: 600; /* Thêm để giống .value */
+        }
+        body.dark-mode .kpi-item input[type="number"].target-input-readonly {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border-color: var(--border-color-dark);
+        }
+
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--border-color-light);
+            border-radius: 5px;
+            height: 20px;
+            overflow: hidden;
+            margin-top: 5px;
+            box-shadow: var(--shadow-light-inner);
+        }
+        body.dark-mode .progress-bar-container { 
+            background-color: var(--border-color-dark); 
+            box-shadow: var(--shadow-dark-inner);
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success-color);
+            border-radius: 5px; /* Bo tròn cả 2 đầu nếu width 100% */
+            text-align: center;
+            color: white;
+            font-size: 0.8rem;
+            line-height: 20px;
+            transition: width 0.5s ease-in-out;
+        }
+         .progress-bar.warning { background-color: var(--warning-color); color: var(--text-light); }
+         .progress-bar.danger { background-color: var(--danger-color); }
+
+        /* Summary Table styling (từ a.html, áp dụng biến màu từ khoxe.html) */
+        .summary-table-container {
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+            margin-top: 20px;
+        }
+        body.dark-mode .summary-table-container {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .summary-table-container h2 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        body.dark-mode .summary-table-container h2 { color: var(--secondary-color); }
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .summary-table th, .summary-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+        body.dark-mode .summary-table th, body.dark-mode .summary-table td { border-bottom-color: var(--border-color-dark); }
+        .summary-table th {
+            /* background: var(--primary-color-lighter); */ /* Đổi sang gradient của khoxe */
+            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            position: sticky; top: 0; /* Thêm sticky header cho bảng */
+            z-index: 1;
+        }
+        body.dark-mode .summary-table th { 
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
+        }
+        .summary-table tbody tr { /* Thêm hiệu ứng hover từ khoxe.html */
+             transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease;
+        }
+        .summary-table tbody tr:hover { 
+            background: rgba(0, 48, 135, 0.08); 
+            transform: translateY(-2px); 
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        }
+        body.dark-mode .summary-table tbody tr:hover { 
+            background: rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        }
+        /* Giữ màu cho các cell trong summary table từ a.html */
+        .summary-table td.positive { color: var(--success-color); font-weight: bold; }
+        .summary-table td.negative { color: var(--danger-color); font-weight: bold; }
+        .summary-table td.neutral { color: var(--info-color); font-weight: bold; }
+
+
+        /* Chart Container styling (từ a.html, áp dụng biến màu từ khoxe.html) */
+        .chart-container-wrapper {
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow-light-outer);
+            border: 1px solid var(--border-color-light);
+            margin-top: 20px;
+        }
+        body.dark-mode .chart-container-wrapper {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
+        .chart-container-wrapper h2 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+        body.dark-mode .chart-container-wrapper h2 { color: var(--secondary-color); }
+        .chart-container {
+            height: 300px; /* Giữ nguyên từ a.html */
+        }
+
+        /* Footer (style từ khoxe.html) */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 12px;
+            z-index: 997; /* Đảm bảo footer nằm dưới sidebar nếu có nhưng trên content cuộn */
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        body.dark-mode footer {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+        }
+
+        /* Notification (từ khoxe.html) */
+        #notification {
+            position: fixed;
+            bottom: 50px; 
+            right: 20px;
+            padding: 12px 18px;
+            background: var(--card-bg-dark); 
+            color: var(--text-dark);
+            border-radius: 8px;
+            display: none; 
+            z-index: 10001; 
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        #notification.show {
+            display: block; 
+            opacity: 1;
+            transform: translateX(0);
+        }
+        body.dark-mode #notification { 
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #notification.error { background-color: #dc3545; color: white; } /* var(--danger-color) có thể dùng ở đây */
+        body.dark-mode #notification.error { background-color: #f8d7da; color: #721c24;}
+        #notification.warning { background-color: var(--accent-color); color: #333; } 
+        body.dark-mode #notification.warning { background-color: #ffca2c; color: #333; }
+        
+        /* Loader (Sử dụng loader của khoxe nếu muốn, hoặc style lại loader của a.html) */
+        /* CSS cho .loading-overlay và .loading-spinner từ khoxe.html nếu thay thế loader của a.html */
+        .loading-overlay { /* Thêm nếu muốn dùng loader của khoxe */
+            position: fixed; /* Fixed để che toàn màn hình */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex; /* flex để căn giữa */
+            flex-direction: column; /* Để text ở dưới spinner */
+            justify-content: center;
+            align-items: center;
+            z-index: 10000; /* Rất cao */
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.active { opacity: 1; visibility: visible; }
+        .loading-spinner {
+            border: 4px solid #f0f0f0; 
+            border-top: 4px solid var(--primary-color); 
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-overlay span { /* Text đi kèm loader */
+            margin-top: 10px; /* Đổi từ margin-left */
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        body.dark-mode .loading-overlay { background: rgba(30, 36, 46, 0.8); }
+        body.dark-mode .loading-spinner { border: 4px solid var(--card-bg-dark); border-top: 4px solid var(--primary-color-lighter); }
+        body.dark-mode .loading-overlay span { color: var(--text-dark); }
+
+        .hidden { display: none !important; } /* Giữ từ a.html */
+
+        /* Responsive adjustments (từ khoxe.html, sẽ áp dụng cho cấu trúc mới) */
+        @media (max-width: 900px) { /* Tablet and smaller */
+            .sidebar {
+                transform: translateX(-100%); 
+                width: 220px; 
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+                padding-top: 50px; 
+                z-index: 1005; /* Đảm bảo sidebar trên header khi mở */
+            }
+            .sidebar.open { 
+                transform: translateX(0);
+            }
+            .sidebar.collapsed { 
+                transform: translateX(-100%); 
+            }
+            .sidebar.open .logo h1, .sidebar.open .menu a span { 
+                opacity: 1;
+                max-width: 100px;
+            }
+             .sidebar.open .logo h1 {
+                font-size: 18px; 
+            }
+            .toggle-btn-sidebar { display: none; } 
+            .mobile-menu-btn { display: flex !important; } /* Luôn hiển thị nút mobile */
+
+            header { /* Thay .navbar thành header */
+                padding-left: 50px; /* Tạo không gian cho nút mobile menu nếu nút đó nằm trong header */
+                                     /* Nếu nút mobile-menu-btn nằm ngoài header (như khoxe.html) thì không cần padding này */
+                left: 0 !important; /* Ghi đè JS nếu có */
+                width: 100% !important; /* Ghi đè JS nếu có */
+            }
+            .main-container {
+                margin-left: 0 !important; /* Ghi đè JS nếu có */
+                padding: 15px;
+                padding-top: 60px; /* Header height + chút space */
+            }
+            .main-container.collapsed { margin-left: 0 !important; }
+            
+            /* Responsive cho filter bar từ a.html, đã được style ở trên */
+            .filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+            .filter-bar > div { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+            .filter-bar select, .filter-bar input[type="month"] { width: 100%; }
+        }
+
+        /* Phone specific adjustments */
+        @media (max-width: 768px) {
+            header { /* Thay .navbar thành header */
+                padding: 12px 10px;
+                /* padding-left: 45px; /* Chỗ cho nút mobile nếu trong header */
+                height: auto; /* Để chiều cao tự động theo padding */
+                font-size: 13px;
+                flex-wrap: nowrap;
+            }
+            .header-title {
+                font-size: 13px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin: 0 5px; /* Điều chỉnh nếu cần */
+            }
+            .navbar-controls {
+                gap: 5px;
+            }
+            .nav-btn, .theme-toggle, .theme-toggle-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            .mobile-menu-btn { /* Nút này đã được định vị fixed ở ngoài header */
+                top: 9px; left: 8px; width: 30px; height: 30px; font-size: 14px;
+            }
+            .sidebar { padding-top: 50px; } 
+            .sidebar.open .logo h1 { font-size: 16px; }
+
+
+            .main-container {
+                padding-top: 60px; /* Header height + chút space */
+                min-height: calc(100vh - 50px - 34px); /* header height + footer height */
+                padding: 10px; 
+                gap: 10px;
+            }
+            
+            .kpi-consultant-card h3 { font-size: 1.1rem; }
+            .summary-table-container h2 { font-size: 1.2rem; }
+            .summary-table { font-size: 0.85rem; }
+            .summary-table th, .summary-table td { padding: 8px; }
+            .chart-container { height: 250px; }
+
+            #notification {
+                bottom: 50px; 
+                left: 10px;
+                right: 10px;
+                width: auto; 
+                text-align: center;
+                font-size: 13px;
+                padding: 10px 15px;
+            }
+            footer {
+                font-size: 11px;
+                padding: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light"> <header id="page-header"> <div class="header-title">VINFAST THUẬN AN</div> <div class="navbar-controls">
+            <button class="theme-toggle-btn" id="theme-toggle-button" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+                <i class="fas fa-moon" id="theme-icon"></i> </button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar"> <div class="logo">
+            <h1>VINFAST THUẬN AN</h1> </div>
+        <div class="menu" id="navMenu"> <a href="index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Ghép Xe"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="DS Ghép Xe"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+        </div>
+        <button class="toggle-btn-sidebar" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button> </div>
+    
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="main-container" id="main-container"> <div class="filter-bar">
+            <div>
+                <label for="month-filter">Chọn Tháng:</label>
+                <input type="month" id="month-filter" name="month-filter">
+            </div>
+            <div>
+                <label for="consultant-filter">Tư Vấn Viên:</label>
+                <select id="consultant-filter" name="consultant-filter">
+                    <option value="all">Tất cả TVBH</option>
+                </select>
+            </div>
+            <button id="view-kpi-btn" onclick="loadKpiData()"><i class="fas fa-eye"></i> Xem KPI</button>
+        </div>
+
+        <div class="loading-overlay hidden" id="kpi-loader-overlay"> <div class="loading-spinner"></div>
+            <span>Đang tải dữ liệu KPI...</span>
+        </div>
+        <div class="kpi-consultant-grid" id="kpi-consultant-grid">
+             <div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;">
+                <h3>Vui lòng chọn tháng và nhấn "Xem KPI"</h3>
+                <p style="color: var(--text-light); opacity: 0.7;">Dữ liệu KPI của Tư vấn viên sẽ được hiển thị ở đây.</p>
+            </div>
+        </div>
+
+        <div class="summary-table-container hidden" id="summary-table-container">
+            <h2>Tổng Kết KPI Tháng <span id="summary-month-year"></span></h2>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Tư Vấn Viên</th>
+                        <th>Chỉ Tiêu (Số xe)</th>
+                        <th>Thực Đạt (Số xe)</th>
+                        <th>Tỷ Lệ Hoàn Thành</th>
+                        <th>Chênh Lệch</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-table-body">
+                </tbody>
+            </table>
+        </div>
+
+         <div class="chart-container-wrapper hidden" id="consultant-progress-chart-container">
+            <h2>Biểu Đồ Tiến Độ Hoàn Thành Chỉ Tiêu (Top TVBH)</h2>
+            <div class="chart-container">
+                <canvas id="consultantProgressChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer><p>© 2025 VinFast Thuận An</p></footer> <div id="notification"></div> <script>
+// --- PHẦN JAVASCRIPT HỢP NHẤT ---
+
+// --- Biến toàn cục và cấu hình (Từ a.html, giữ lại phần quan trọng) ---
+const API_KPI_TARGET_URL = "https://script.google.com/macros/s/AKfycbzX83aFslavgB3nNOTMQqwN--hHOOECP2m5VnGDEaTz2KiWTBqf1GJBCUIvBWyuboJ21w/exec?sheet=ALL_KPI";
+const API_ANNUAL_SALES_URL = "https://script.google.com/macros/s/AKfycbzJkMDpnMvKTOQ0dN1QMyjoBHLkZw0yyr_8Al0KlAx0HEPTABTDxhrXo6Vquu7MEWel0w/exec?action=getannualinvoicecounts";
+const MONTH_ENGLISH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+let kpiTargetsData = null;
+let annualSalesData = null;
+let uniqueConsultantsOriginalList = [];
+let consultantProgressChartInstance = null;
+
+// --- Quản lý giao diện (Theme, Sidebar - chủ yếu từ khoxe.html, tích hợp với a.html) ---
+function toggleTheme() { // Từ khoxe.html, đã được tích hợp icon từ a.html
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    const themeIcon = document.querySelector('.theme-toggle i, .theme-toggle-btn i'); // Selector kết hợp
+    const loadingText = document.querySelector("#kpi-loader-overlay span"); // Nếu dùng loader overlay
+
+    if (body.classList.contains('dark-mode')) {
+        if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
+        localStorage.setItem('theme', 'dark');
+        if (loadingText) loadingText.style.color = "var(--text-dark)";
+        document.body.setAttribute('data-theme', 'dark'); // Cập nhật data-theme cho chart
+    } else {
+        if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
+        localStorage.setItem('theme', 'light');
+        if (loadingText) loadingText.style.color = "var(--text-light)";
+        document.body.setAttribute('data-theme', 'light'); // Cập nhật data-theme cho chart
+    }
+    updateChartColors(); // Từ a.html, gọi để cập nhật màu chart
+}
+
+function toggleSidebarDesktop() { // Từ khoxe.html
+    if (window.innerWidth > 900) {
+        const sidebar = document.getElementById("sidebar");
+        const mainContainer = document.getElementById("main-container");
+        const header = document.getElementById("page-header");
+
+        if (sidebar && mainContainer && header) {
+            sidebar.classList.toggle("collapsed");
+            mainContainer.classList.toggle("collapsed");
+            const isCollapsed = sidebar.classList.contains("collapsed");
+            localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+            header.style.left = isCollapsed ? '60px' : '200px';
+            header.style.width = `calc(100% - ${isCollapsed ? '60px' : '200px'})`;
+        }
+        updateSidebarToggleIcon();
+        resizeCharts(); // Từ a.html - gọi khi sidebar thay đổi kích thước content
+    }
+}
+
+function toggleMobileSidebar() { // Từ khoxe.html
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) {
+        sidebar.classList.toggle("open");
+        // Khi sidebar mobile mở, header không cần thay đổi vị trí
+    }
+    updateSidebarToggleIcon();
+}
+
+function updateSidebarToggleIcon() { // Từ khoxe.html
+    const sidebar = document.getElementById("sidebar");
+    const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i");
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
+
+    if (!sidebar) return;
+    const desktopToggleContainer = document.querySelector('.toggle-btn-sidebar');
+
+    if (window.innerWidth <= 900) { // Mobile/Tablet view
+        if(desktopToggleContainer) desktopToggleContainer.style.display = 'none';
+        if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
+        if (mobileMenuIcon) {
+            mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+        }
+    } else { // Desktop view
+        if(desktopToggleContainer) desktopToggleContainer.style.display = 'flex';
+        if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+        if (toggleIconDesktop) {
+            toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
+        }
+    }
+}
+
+function setActiveSidebarLink() { // Từ khoxe.html, logic active có thể cần xem lại cho a.html
+    const navLinks = document.querySelectorAll("#navMenu a");
+    // const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
+    // Vì a.html có thể không theo cấu trúc file, dựa vào link cụ thể của KPI
+    const kpiPageName = "kpi-tvbh.html"; 
+
+    navLinks.forEach(link => {
+        link.classList.remove("active");
+        const linkHref = link.getAttribute('href');
+        if (linkHref && linkHref.toLowerCase().includes(kpiPageName)) {
+            link.classList.add("active");
+        } else if (linkHref === (window.location.pathname.split("/").pop() || "index.html") && !(linkHref && linkHref.toLowerCase().includes(kpiPageName))) {
+            // Active cho các trang khác nếu không phải KPI page
+             link.classList.add("active");
+        }
+    });
+     // Đặc biệt active cho KPI TVBH nếu đang ở trang đó (logic từ a.html gốc)
+    const currentPath = window.location.pathname.split("/").pop() || "index.html";
+    if (currentPath.includes("kpi-tvbh.html")) {
+        document.querySelectorAll("#navMenu a").forEach(link => {
+            if (link.getAttribute('href') && link.getAttribute('href').includes("kpi-tvbh.html")) {
+                link.classList.add("active");
+            } else {
+                link.classList.remove("active");
+            }
+        });
+    }
+}
+
+// --- Điều hướng (Từ khoxe.html) ---
+function goBack() { window.location.href = "index.html"; } // Giả sử index.html là trang chủ chung
+function logout() { 
+    sessionStorage.clear(); 
+    localStorage.removeItem('sidebarState'); 
+    localStorage.removeItem('theme'); 
+    window.location.href = "index.html"; // Hoặc trang login
+}
+
+// --- Hàm tiện ích ---
+function showLoader(show) { // Từ a.html, nhưng dùng overlay loader của khoxe
+    const loaderOverlay = document.getElementById('kpi-loader-overlay');
+    if (loaderOverlay) loaderOverlay.classList.toggle('active', show); // 'active' thay vì 'hidden'
+    const viewKpiBtn = document.getElementById('view-kpi-btn');
+    if(viewKpiBtn) viewKpiBtn.disabled = show;
+}
+
+function debounce(func, wait) { // Từ khoxe.html
+    let timeout;
+    return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+function showNotification(message, type = "info", duration = 2000) { // Từ khoxe.html
+    const notif = document.getElementById("notification");
+    if (!notif) return;
+    notif.textContent = message;
+    notif.className = 'show'; 
+
+    let bgColor, textColor;
+    const isDarkMode = document.body.classList.contains('dark-mode');
+
+    switch (type) {
+        case "success": bgColor = "var(--success-color)"; textColor = "#fff"; break;
+        case "error":
+            bgColor = isDarkMode ? "#f8d7da" : "#dc3545"; // Dùng var(--danger-color)
+            textColor = isDarkMode ? "#721c24" : "#fff";
+            break;
+        case "warning":
+            bgColor = isDarkMode ? "#ffca2c" : "var(--accent-color)"; // Dùng var(--warning-color) hoặc --accent-color
+            textColor = "#333";
+            break;
+        default: // info
+            bgColor = isDarkMode ? "var(--card-bg-light)" : "var(--card-bg-dark)";
+            textColor = isDarkMode ? "var(--text-light)" : "var(--text-dark)";
+            break;
+    }
+    notif.style.backgroundColor = bgColor;
+    notif.style.color = textColor;
+
+    if (notif.timeout) clearTimeout(notif.timeout);
+    notif.timeout = setTimeout(() => {
+        notif.classList.remove("show");
+    }, duration);
+}
+
+
+// --- Logic cốt lõi của KPI Dashboard (Từ a.html - Giữ nguyên phần lớn) ---
+function getCurrentYearMonth() { /* ... giữ nguyên từ a.html ... */ 
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+}
+function getMonthNameEnglish(monthNumber) { /* ... giữ nguyên từ a.html ... */ 
+    return MONTH_ENGLISH_NAMES[monthNumber - 1] || null;
+}
+function getKpiMonthKey(monthNumber) { /* ... giữ nguyên từ a.html ... */ 
+    return `KPI ${monthNumber}`;
+}
+function normalizeConsultantName(name) { /* ... giữ nguyên từ a.html ... */ 
+    if (typeof name !== 'string') return '';
+    return name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/Đ/g, 'D')
+        .replace(/đ/g, 'd')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, ' ');
+}
+
+async function fetchKpiTargetsFromAPI() { /* ... giữ nguyên từ a.html ... */ 
+    showLoader(true);
+    console.log("Đang tải Chỉ tiêu KPI từ API...");
+    try {
+        const response = await fetch(API_KPI_TARGET_URL);
+        if (!response.ok) throw new Error(`Lỗi API Chỉ Tiêu: ${response.status}`);
+        kpiTargetsData = await response.json(); 
+        console.log("Đã tải Chỉ tiêu KPI:", JSON.parse(JSON.stringify(kpiTargetsData)));
+
+        let tempUniqueConsultants = new Set();
+        Object.values(kpiTargetsData).forEach(monthArray => {
+            if(Array.isArray(monthArray)) {
+                monthArray.forEach(item => {
+                    if (Array.isArray(item) && item[0] && typeof item[0] === 'string') {
+                        const originalName = item[0].trim();
+                        if (originalName) {
+                           tempUniqueConsultants.add(originalName);
+                        }
+                    }
+                });
+            }
+        });
+        uniqueConsultantsOriginalList = Array.from(tempUniqueConsultants).sort();
+        console.log("Các TVBH duy nhất từ TOÀN BỘ API chỉ tiêu (tên gốc):", uniqueConsultantsOriginalList);
+        populateConsultantFilterDropdown(uniqueConsultantsOriginalList); 
+        return { targets: kpiTargetsData, consultants: uniqueConsultantsOriginalList }; 
+    } catch (error) {
+        console.error("Lỗi khi tải Chỉ tiêu KPI:", error);
+        showNotification(`Lỗi tải dữ liệu chỉ tiêu: ${error.message}. Vui lòng thử lại.`, "error", 3000);
+        populateConsultantFilterDropdown([]); 
+        return { targets: null, consultants: [] }; 
+    } finally {
+        // showLoader(false); // Sẽ được gọi bởi hàm cha
+    }
+}
+
+async function fetchAnnualSalesData() { /* ... giữ nguyên từ a.html ... */ 
+    if (annualSalesData && Object.keys(annualSalesData).length > 0) {
+        console.log("Sử dụng Số liệu bán hàng hàng năm đã cache.");
+        return annualSalesData;
+    }
+    showLoader(true);
+    console.log("Đang tải Số liệu bán hàng hàng năm từ API...");
+    try {
+        const response = await fetch(API_ANNUAL_SALES_URL);
+        if (!response.ok) throw new Error(`Lỗi API Số liệu bán hàng: ${response.status}`);
+        annualSalesData = await response.json(); 
+        console.log("Đã tải Số liệu bán hàng hàng năm (Raw):", JSON.parse(JSON.stringify(annualSalesData)));
+        return annualSalesData;
+    } catch (error) {
+        console.error("Lỗi khi tải số liệu bán hàng hàng năm:", error);
+        showNotification(`Lỗi tải dữ liệu số liệu bán hàng: ${error.message}. Vui lòng thử lại.`, "error", 3000);
+        annualSalesData = {};
+        return null;
+    } finally {
+        // showLoader(false); // Sẽ được gọi bởi hàm cha
+    }
+}
+
+function getConsultantTarget(consultantOriginalName, yearMonth) { /* ... giữ nguyên từ a.html ... */ 
+    if (!kpiTargetsData) return 0;
+    const monthNumber = parseInt(yearMonth.split('-')[1], 10);
+    const kpiMonthKey = getKpiMonthKey(monthNumber);
+    const monthTargetData = kpiTargetsData[kpiMonthKey];
+    if (monthTargetData && Array.isArray(monthTargetData)) {
+        const consultantEntry = monthTargetData.find(entry =>
+            Array.isArray(entry) && entry[0] && entry[0].trim() === consultantOriginalName.trim()
+        );
+        if (consultantEntry && typeof consultantEntry[1] === 'number') return consultantEntry[1];
+    }
+    return 0;
+}
+
+function getActualSalesForConsultant(consultantOriginalName, yearMonth) { /* ... giữ nguyên từ a.html ... */ 
+    if (!annualSalesData) return 0;
+    const monthNumber = parseInt(yearMonth.split('-')[1], 10);
+    const monthNameKeyEnglish = getMonthNameEnglish(monthNumber); 
+    if (!monthNameKeyEnglish) return 0;
+    const normalizedSearchName = normalizeConsultantName(consultantOriginalName);
+    const monthDataFromApi = annualSalesData[monthNameKeyEnglish];
+    if (!monthDataFromApi || (monthDataFromApi.message && monthDataFromApi.message.toLowerCase().includes("sheet is empty"))) return 0;
+    if (monthDataFromApi.data && typeof monthDataFromApi.data === 'object' && Object.keys(monthDataFromApi.data).length > 0) {
+        const apiSalesKeysOriginal = Object.keys(monthDataFromApi.data);
+        for (const keyInApi_Original of apiSalesKeysOriginal) {
+            const normalizedKeyInApi = normalizeConsultantName(keyInApi_Original);
+            if (normalizedKeyInApi === normalizedSearchName) {
+                const salesCount = monthDataFromApi.data[keyInApi_Original];
+                return typeof salesCount === 'number' ? salesCount : 0;
+            }
+        }
+    }
+    return 0;
+}
+
+async function loadKpiData() { /* ... giữ nguyên phần lớn từ a.html ... */ 
+    const monthFilterInput = document.getElementById('month-filter');
+    const yearMonth = monthFilterInput.value;
+    const consultantFilterValue = document.getElementById('consultant-filter').value; 
+    if (!yearMonth) {
+        showNotification("Vui lòng chọn tháng để xem KPI.", "warning");
+        return;
+    }
+    showLoader(true);
+    if (!kpiTargetsData || Object.keys(kpiTargetsData).length === 0) {
+        const targetResult = await fetchKpiTargetsFromAPI();
+        if (!targetResult || !targetResult.targets) { showLoader(false); return; }
+    }
+    if (!annualSalesData || Object.keys(annualSalesData).length === 0) {
+        await fetchAnnualSalesData();
+        if (!annualSalesData) { showLoader(false); return; }
+    }
+
+    const kpiGrid = document.getElementById('kpi-consultant-grid');
+    const summaryTableBody = document.getElementById('summary-table-body');
+    kpiGrid.innerHTML = ''; 
+    summaryTableBody.innerHTML = '';
+
+    const monthNumberSelected = parseInt(yearMonth.split('-')[1], 10);
+    const kpiMonthKeySelected = getKpiMonthKey(monthNumberSelected);
+    let consultantsInMonthKpiTargets = [];
+    if (kpiTargetsData && kpiTargetsData[kpiMonthKeySelected] && Array.isArray(kpiTargetsData[kpiMonthKeySelected])) {
+        consultantsInMonthKpiTargets = kpiTargetsData[kpiMonthKeySelected]
+            .map(entry => (Array.isArray(entry) && entry[0] ? entry[0].trim() : null))
+            .filter(Boolean);
+    }
+    let displayConsultantsOriginalNames = consultantFilterValue === 'all' ? 
+        [...consultantsInMonthKpiTargets] : 
+        (consultantsInMonthKpiTargets.map(c => c.trim()).includes(consultantFilterValue.trim()) ? [consultantFilterValue] : []);
+     
+    if (displayConsultantsOriginalNames.length === 0) {
+         const msg = consultantFilterValue === 'all' 
+            ? `Không có TVBH nào được gán chỉ tiêu trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.`
+            : `TVBH "${consultantFilterValue}" không có chỉ tiêu trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.`;
+         kpiGrid.innerHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>${msg}</h3></div>`;
+         document.getElementById('summary-table-container').classList.add('hidden');
+         document.getElementById('consultant-progress-chart-container').classList.add('hidden');
+         showLoader(false);
+         return;
+    }
+
+    const consultantKpiData = [];
+    for (const originalConsultantName of displayConsultantsOriginalNames) {
+        const target = getConsultantTarget(originalConsultantName, yearMonth);
+        const actualSold = getActualSalesForConsultant(originalConsultantName, yearMonth);
+        const achievement = target > 0 ? (actualSold / target) * 100 : (actualSold > 0 ? 100 : 0);
+        const difference = actualSold - target;
+        consultantKpiData.push({ name: originalConsultantName, target, actual: actualSold, achievement, difference });
+        const card = document.createElement('div');
+        card.className = 'kpi-consultant-card';
+        card.innerHTML = `
+            <h3>${originalConsultantName}</h3>
+            <div class="kpi-item">
+                <strong>Chỉ Tiêu Tháng:</strong>
+                <input type="number" value="${target}" class="target-input-readonly" readonly>
+            </div>
+            <div class="kpi-item"><strong>Số Xe Bán Được:</strong><span class="value">${actualSold}</span></div>
+            <div class="kpi-item">
+                <strong>Tiến Độ Hoàn Thành:</strong>
+                <span class="value ${achievement >= 100 ? 'positive' : (achievement >= 70 ? 'neutral' : 'negative')}">${achievement.toFixed(1)}%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar ${achievement >= 100 ? '' : (achievement >= 50 ? 'warning' : 'danger')}" style="width: ${Math.min(achievement, 100)}%;">${achievement >= 10 ? achievement.toFixed(0)+'%' : ''}</div>
+            </div>
+            <div class="kpi-item" style="margin-top: 10px;"><strong>Chênh Lệch (Đạt - CT):</strong><span class="value ${difference >= 0 ? 'positive' : 'negative'}">${difference} xe</span></div>
+        `;
+        kpiGrid.appendChild(card);
+        const summaryRow = summaryTableBody.insertRow();
+        summaryRow.innerHTML = `<td>${originalConsultantName}</td><td class="target-cell">${target}</td><td>${actualSold}</td><td class="${achievement >= 100 ? 'positive' : (achievement >= 70 ? 'neutral' : 'negative')}">${achievement.toFixed(1)}%</td><td class="${difference >= 0 ? 'positive' : 'negative'}">${difference}</td>`;
+    }
+    
+    if (consultantKpiData.length > 0) {
+        document.getElementById('summary-month-year').textContent = `${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}`;
+        document.getElementById('summary-table-container').classList.remove('hidden');
+        document.getElementById('consultant-progress-chart-container').classList.remove('hidden');
+        renderConsultantProgressChart(consultantKpiData);
+    } else {
+        const selectedConsultantNameMsg = consultantFilterValue === 'all' ? 'các TVBH' : `TVBH "${consultantFilterValue}"`;
+        kpiGrid.innerHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>Không tìm thấy dữ liệu KPI cho ${selectedConsultantNameMsg} trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.</h3></div>`;
+        document.getElementById('summary-table-container').classList.add('hidden');
+        document.getElementById('consultant-progress-chart-container').classList.add('hidden');
+    }
+    showLoader(false);
+}
+        
+async function populateConsultantFilterDropdown(consultantsList) { /* ... giữ nguyên từ a.html ... */ 
+    const consultantSelect = document.getElementById('consultant-filter');
+    if (!consultantsList || consultantsList.length === 0) {
+        console.warn("populateConsultantFilterDropdown: Danh sách TVBH rỗng hoặc không được cung cấp.");
+        consultantSelect.innerHTML = '<option value="all">Tất cả TVBH</option><option value="" disabled>Không có TVBH</option>';
+        return;
+    }
+    consultantSelect.innerHTML = '<option value="all">Tất cả TVBH</option>';
+    consultantsList.forEach(consultantName => {
+        const option = document.createElement('option');
+        option.value = consultantName; 
+        option.textContent = consultantName;
+        consultantSelect.appendChild(option);
+    });
+}
+
+// --- Biểu đồ (Từ a.html - Giữ nguyên) ---
+function getChartBaseColors() { /* ... giữ nguyên từ a.html ... */ 
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+        textColor: isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim(),
+        gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        targetColor: isDarkMode ? 'rgba(0, 174, 255, 0.7)' : 'rgba(108, 117, 125, 0.7)', 
+        actualColor: isDarkMode ? 'rgba(40, 167, 69, 0.85)' : 'rgba(40, 167, 69, 0.85)' 
+    };
+}
+function renderConsultantProgressChart(kpiData) { /* ... giữ nguyên từ a.html ... */ 
+    const ctx = document.getElementById('consultantProgressChart').getContext('2d');
+    const chartColors = getChartBaseColors();
+    const consultantFilterVal = document.getElementById('consultant-filter').value;
+    let dataForChart = [...kpiData];
+    if (consultantFilterVal === 'all') {
+        dataForChart.sort((a,b) => b.achievement - a.achievement);
+        dataForChart = dataForChart.slice(0, Math.min(5, dataForChart.length));
+    }
+    const labels = dataForChart.map(item => item.name);
+    const targetData = dataForChart.map(item => item.target);
+    const actualData = dataForChart.map(item => item.actual);
+    if (consultantProgressChartInstance) consultantProgressChartInstance.destroy();
+    consultantProgressChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Chỉ Tiêu', data: targetData, backgroundColor: chartColors.targetColor, borderColor: chartColors.targetColor.replace(/[\d\.]+\)$/g, '1)'), borderWidth: 1, borderRadius: 3 },
+                { label: 'Thực Đạt', data: actualData, backgroundColor: chartColors.actualColor, borderColor: chartColors.actualColor.replace(/[\d\.]+\)$/g, '1)'), borderWidth: 1, borderRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+            scales: {
+                y: { beginAtZero: true, ticks: { color: chartColors.textColor, stepSize: 1 }, grid: { color: chartColors.gridColor }, title: { display: true, text: 'Số Lượng Xe', color: chartColors.textColor } },
+                x: { ticks: { color: chartColors.textColor, font: { size: labels.length > 3 ? 10 : 12 } }, grid: { display: false } }
+            },
+            plugins: {
+                legend: { position: 'top', labels: { color: chartColors.textColor, boxWidth: 12, padding: 15 } },
+                tooltip: { mode: 'index', intersect: false, callbacks: { label: function(context) { return `${context.dataset.label || ''}: ${context.parsed.y || 0} xe`; } } }
+            }
+        }
+    });
+}
+function updateChartColors() { /* ... giữ nguyên từ a.html ... */ 
+     if (consultantProgressChartInstance && consultantProgressChartInstance.ctx) {
+         const monthFilterVal = document.getElementById('month-filter').value;
+         if (monthFilterVal && document.getElementById('kpi-consultant-grid').children.length > 0 && !document.querySelector('.placeholder-card')) {
+             loadKpiData(); 
+         }
+     }
+}
+function resizeCharts() { /* ... giữ nguyên từ a.html ... */ 
+    if (consultantProgressChartInstance && consultantProgressChartInstance.ctx) {
+        consultantProgressChartInstance.resize();
+    }
+}
+
+// --- Khởi tạo khi DOM sẵn sàng (Hợp nhất từ cả hai file) ---
+document.addEventListener("DOMContentLoaded", async function() {
+    // Khởi tạo theme (từ khoxe.html logic)
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        const themeIcon = document.querySelector('.theme-toggle i, .theme-toggle-btn i');
+        if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
+        document.body.setAttribute('data-theme', 'dark');
+    } else {
+        document.body.setAttribute('data-theme', 'light');
+    }
+
+    // Khởi tạo trạng thái sidebar (từ khoxe.html logic)
+    if (window.innerWidth > 900) {
+        const sidebar = document.getElementById("sidebar");
+        const mainContainer = document.getElementById("main-container");
+        const header = document.getElementById("page-header");
+        if (sidebar && mainContainer && header) {
+            if (localStorage.getItem('sidebarState') === 'collapsed') {
+                sidebar.classList.add("collapsed");
+                mainContainer.classList.add("collapsed");
+                header.style.left = '60px';
+                header.style.width = 'calc(100% - 60px)';
+            } else {
+                sidebar.classList.remove("collapsed");
+                mainContainer.classList.remove("collapsed");
+                header.style.left = '200px';
+                header.style.width = 'calc(100% - 200px)';
+            }
+        }
+    } else { 
+        const header = document.getElementById("page-header");
+        const mainContainer = document.getElementById("main-container");
+        if (header) { header.style.left = '0px'; header.style.width = '100%';}
+        if (mainContainer) { mainContainer.classList.remove("collapsed"); mainContainer.style.marginLeft = '0px';}
+    }
+    setActiveSidebarLink();
+    updateSidebarToggleIcon();
+    
+    // Khởi tạo chức năng KPI (từ a.html)
+    showLoader(true); 
+    document.getElementById('month-filter').value = getCurrentYearMonth();
+    document.getElementById('consultant-filter').value = 'all';
+    
+    const targetResult = await fetchKpiTargetsFromAPI(); 
+    await fetchAnnualSalesData(); 
+
+    if (kpiTargetsData && Object.keys(kpiTargetsData).length > 0 &&
+        annualSalesData && Object.keys(annualSalesData).length > 0 &&
+        uniqueConsultantsOriginalList && uniqueConsultantsOriginalList.length > 0) {
+        loadKpiData(); 
+    } else {
+        const kpiGrid = document.getElementById('kpi-consultant-grid');
+        if (kpiGrid) { // Kiểm tra kpiGrid tồn tại
+             kpiGrid.innerHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>Không thể tải đủ dữ liệu ban đầu hoặc không có TVBH nào trong chỉ tiêu. Vui lòng kiểm tra console và thử lại.</h3></div>`;
+        }
+        const summaryTable = document.getElementById('summary-table-container');
+        if (summaryTable) summaryTable.classList.add('hidden');
+        const chartContainer = document.getElementById('consultant-progress-chart-container');
+        if (chartContainer) chartContainer.classList.add('hidden');
+        console.error("Lỗi DOMContentLoaded: Không thể tải đủ dữ liệu chỉ tiêu, dữ liệu bán hàng, hoặc không có TVBH nào trong danh sách chỉ tiêu ban đầu.");
+    }
+    showLoader(false); 
+    const viewKpiBtn = document.getElementById('view-kpi-btn');
+    if (viewKpiBtn) { viewKpiBtn.disabled = false; }
+
+    // Listener đóng sidebar mobile khi click ngoài (từ khoxe.html)
+    document.addEventListener('click', function(event) {
+        const sidebarElem = document.getElementById('sidebar');
+        const mobileMenuBtnElem = document.querySelector('.mobile-menu-btn');
+        if (window.innerWidth <= 900 && sidebarElem?.classList.contains('open')) {
+            if (!sidebarElem.contains(event.target) && (!mobileMenuBtnElem || !mobileMenuBtnElem.contains(event.target))) {
+                toggleMobileSidebar(); // Gọi hàm đã được định nghĩa ở trên
+            }
+        }
+    });
+});
+
+// Listener resize (Hợp nhất từ cả hai file)
+window.addEventListener('resize', debounce(() => {
+    updateSidebarToggleIcon(); // Chung
+    if (window.innerWidth > 900) { // Logic desktop từ khoxe.html
+        const sidebar = document.getElementById("sidebar"); 
+        const mainContainer = document.getElementById("main-container"); 
+        const header = document.getElementById("page-header");
+        if (sidebar && mainContainer && header) {
+            sidebar.classList.remove("open"); 
+            const storedState = localStorage.getItem('sidebarState');
+            if (storedState === 'collapsed') { 
+                sidebar.classList.add("collapsed"); mainContainer.classList.add("collapsed"); 
+                header.style.left = '60px'; header.style.width = 'calc(100% - 60px)'; 
+            } else { 
+                sidebar.classList.remove("collapsed"); mainContainer.classList.remove("collapsed"); 
+                header.style.left = '200px'; header.style.width = 'calc(100% - 200px)'; 
+            }
+        }
+    } else { // Logic mobile từ khoxe.html (đảm bảo header và main-container full width)
+        const header = document.getElementById("page-header"); 
+        const mainContainer = document.getElementById("main-container");
+        if(header) { header.style.left = '0px'; header.style.width = '100%';}
+        if(mainContainer) { mainContainer.classList.remove("collapsed"); mainContainer.style.marginLeft = '0px';}
+    }
+    resizeCharts(); // Từ a.html
+}, 200));
+</script>
+</body>
+</html>
