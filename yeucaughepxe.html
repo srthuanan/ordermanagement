@@ -2570,7 +2570,7 @@ async function xuLyAnhUyNhiemChiChic(event) {
         } else {
             statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Không tìm thấy ngày giờ.';
             statusElement.className = 'mt-1 text-xs italic text-yellow-600 dark:text-yellow-400 font-medium';
-            showNotification('Không tìm thấy ngày cọc. Nhập thủ công.', 'warning');
+            showNotification('Không tìm thấy ngày cọc. Vui lòng upload ảnh rõ hơn!!!', 'warning');
         }
     } catch (error) {
         console.error('Lỗi OCR (Chic UI):', error);
