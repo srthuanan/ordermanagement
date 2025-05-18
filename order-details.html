@@ -4,330 +4,553 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Chi Tiết Đơn Hàng - VinFast Thuận An</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script> <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --background: #f1f5f9;
-            --text-color: #1e293b;
-            --card-bg: #ffffff;
-            --accent-color: #003087;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --footer-bg: #003087;
+            /* Copied CSS Variables from yeucaughepxe.html */
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff;
+            --background-light: #f4f7fc; /* Changed from #f8f9fa of order-details */
+            --text-light: #2c3e50; /* Changed from #212529 of order-details */
+            --background-dark: #161b22; /* Changed from #1a1d21 of order-details */
+            --text-dark: #c9d1d9; /* Changed from #e9ecef of order-details */
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e; /* Changed from #212529 of order-details */
+            --border-color-light: #e1e4e8; /* Changed from #dee2e6 of order-details */
+            --border-color-dark: #30363d; /* Changed from #495057 of order-details */
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08); /* More detailed shadow */
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15); /* More detailed shadow */
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s;
+            --transition-easing: ease-in-out;
+            --skeleton-bg-light: #e0e0e0;
+            --skeleton-bg-dark: #3a3a4a;
+
+            --footer-bg: var(--primary-color);
             --footer-text: #ffffff;
+            --success-bg-light: #d4edda;
+            --success-text-light: #155724;
+            --success-icon-light: #155724;
+            --success-bg-dark: #1e4620;
+            --success-text-dark: #d4edda;
+            --success-icon-dark: #a3d9a5;
+            --loading-bg-light: var(--card-bg-light);
+            --loading-bg-dark: var(--card-bg-dark);
+            --no-data-text-color-light: #6c757d;
+            --no-data-text-color-dark: #adb5bd;
+            --scroll-to-top-bg: var(--primary-color);
+            --scroll-to-top-hover-bg: var(--primary-color-lighter);
+            --warning-bg-light: #fff3cd;
+            --warning-text-light: #856404;
+            --warning-icon-light: #ffc107;
+            --warning-bg-dark: #533f03;
+            --warning-text-dark: #ffeeba;
+            --warning-icon-dark: #ffca2c;
+
+            /* Highlight variables from order-details, adapted to new theme if needed */
+            --highlight-bg-light: #e7f3ff;
+            --highlight-text-light: var(--primary-color);
+            --highlight-border-light: var(--primary-color);
+            --highlight-bg-dark: #2c3e50; 
+            --highlight-text-dark: var(--secondary-color);
+            --highlight-border-dark: var(--secondary-color);
+
+            /* Star colors for potential future use, from yeucaughepxe */
+            --star-color-light: rgba(0, 48, 135, 0.6);
+            --star-color-dark: rgba(0, 174, 255, 0.5);
         }
 
-        [data-theme="dark"] {
-            --background: #1e293b;
-            --text-color: #f1f5f9;
-            --card-bg: #334155;
-            --accent-color: #3b82f6;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            --footer-bg: #005eb8;
-            --footer-text: #f1f5f9;
+        body.dark-mode {
+            /* Copied dark mode variables from yeucaughepxe.html */
+            --background-light: var(--background-dark);
+            --text-light: var(--text-dark);
+            --card-bg-light: var(--card-bg-dark);
+            --border-color-light: var(--border-color-dark);
+            --shadow-light-outer: var(--shadow-dark-outer);
+            --shadow-light-inner: var(--shadow-dark-inner);
+            --skeleton-bg-light: var(--skeleton-bg-dark);
+            --footer-bg: var(--primary-color-darker);
+            --success-bg-light: var(--success-bg-dark);
+            --success-text-light: var(--success-text-dark);
+            --success-icon-light: var(--success-icon-dark);
+            --loading-bg-light: var(--loading-bg-dark);
+            --no-data-text-color-light: var(--no-data-text-color-dark);
+            --scroll-to-top-bg: var(--primary-color-lighter);
+            --scroll-to-top-hover-bg: var(--secondary-color);
+            --warning-bg-light: var(--warning-bg-dark);
+            --warning-text-light: var(--warning-text-dark);
+            --warning-icon-light: var(--warning-icon-dark);
+
+            /* Dark mode for highlight variables */
+            --highlight-bg-light: var(--highlight-bg-dark);
+            --highlight-text-light: var(--highlight-text-dark);
+            --highlight-border-light: var(--highlight-border-dark);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Roboto', sans-serif;
-            background: var(--background);
-            color: var(--text-color);
+            background: var(--background-light);
+            color: var(--text-light);
             min-height: 100vh;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 56px;
-            background: var(--accent-color);
+            overflow-x: hidden; 
+            transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
+            font-size: 14px; 
             display: flex;
-            align-items: center;
-            padding: 0 16px;
-            box-shadow: var(--shadow);
-            z-index: 1000;
+            flex-direction: column;
         }
 
-        .navbar .logo h1 {
-            font-size: 18px;
-            color: #ffffff;
-            font-weight: 700;
-        }
-
-        .navbar-controls {
-            margin-left: auto;
-            display: flex;
-            gap: 12px;
-        }
-
-        .nav-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .main-container {
-            margin-top: 64px;
-            padding: 16px;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .order-details-container {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-        }
-
-        .order-details-container h2 {
-            font-size: 20px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 16px;
-            color: var(--accent-color);
-        }
-
-        .detail-group {
-            margin-bottom: 16px;
-        }
-
-        .detail-group h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--accent-color);
-            margin-bottom: 12px;
-            padding-left: 8px;
-            border-left: 4px solid #D4A017;
-        }
-
-        .order-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        [data-theme="dark"] .order-table {
-            border: 1px solid #4b5563;
-        }
-
-        .order-table th,
-        .order-table td {
-            padding: 14px 16px;
-            text-align: left;
-            border-right: 1px solid #d1d5db;
-            border-bottom: 1px solid #d1d5db;
-        }
-
-        [data-theme="dark"] .order-table th,
-        [data-theme="dark"] .order-table td {
-            border-right: 1px solid #4b5563;
-            border-bottom: 1px solid #4b5563;
-        }
-
-        .order-table th:last-child,
-        .order-table td:last-child {
-            border-right: none;
-        }
-
-        .order-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .order-table th {
-            background: linear-gradient(to bottom, var(--accent-color), #004aad);
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .order-table td {
-            color: var(--text-color);
-            font-size: 14px;
-            background: var(--card-bg);
-        }
-
-        /* Định dạng riêng cho cột "Thông Tin" */
-        .order-table td:first-child {
-            font-weight: 600;
-            color: #1e40af; /* Xanh đậm cho light theme */
-            background: #f0f5ff; /* Nền xanh rất nhạt */
-        }
-
-        [data-theme="dark"] .order-table td:first-child {
-            color: #93c5fd; /* Xanh sáng cho dark theme */
-            background: #1e293b; /* Nền tối hơn */
-        }
-
-        .order-table tr:nth-child(even) td {
-            background: #f9fafb;
-        }
-
-        [data-theme="dark"] .order-table tr:nth-child(even) td {
-            background: #2d3748;
-        }
-
-        .order-table tr:hover td {
-            background: #e0e7ff;
-            transition: background 0.2s ease;
-        }
-
-        [data-theme="dark"] .order-table tr:hover td {
-            background: #4b5e8e;
-        }
-
-        .order-table .vin-highlight {
-            font-weight: 700;
-            background: #eff6ff;
-            padding: 2px 8px;
+        /* Thanh cuộn tùy chỉnh */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track {
+            background: var(--background-light);
             border-radius: 4px;
         }
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: var(--card-bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: background var(--transition-speed) ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color-lighter);
+        }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        [data-theme="dark"] .order-table .vin-highlight {
-            background: #1e3a8a;
+        /* Navbar Styles */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 999; 
+            transition: background var(--transition-speed) var(--transition-easing);
+        }
+        body.dark-mode .navbar {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        .navbar .logo { 
+            margin-right: auto; 
+            animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; 
+        }
+        .navbar .logo h1 {
+            font-size: 18px; 
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase; 
+            animation: bounceGlow 2s infinite alternate; 
+        }
+        @keyframes bounceGlow {
+            0%, 100% {
+                transform: translateY(0);
+                text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
+            }
+            50% {
+                transform: translateY(-2px);
+                text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
+            }
         }
 
-        .button-container {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 24px;
+        .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .nav-btn, .theme-toggle-btn {
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) var(--transition-easing);
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        .nav-btn:hover, .theme-toggle-btn:hover {
+            background: #e9ecef; transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15); 
+        }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+            background: var(--primary-color-darker); color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25); 
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
+            background: var(--primary-color-darker); padding: 15px; padding-top: 60px; 
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+            z-index: 999; box-shadow: 3px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 60px; }
+        body.dark-mode .sidebar { 
+            background: var(--background-dark); 
+            border-right: 1px solid var(--border-color-dark);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        }
+        .sidebar .logo { text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .sidebar .logo h1 { 
+            font-size: 25px; color: #fff; font-weight: 600; 
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); display: inline-block;
+        }
+        .sidebar:not(.collapsed) .logo h1::after { 
+            content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg); animation: shimmer 3s infinite linear; animation-delay: 1s;
+        }
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
+        .sidebar.collapsed .logo h1::after { display: none; }
+
+        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; }
+        .sidebar .menu a {
+            padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500;
+            border-radius: 6px; background: transparent; display: flex; align-items: center; gap: 10px;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+            position: relative; overflow: hidden;
+        }
+        .sidebar .menu a::before { 
+            content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
+            background-color: var(--secondary-color); transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
+        .sidebar .menu a span { 
+            transition: opacity 0.2s ease, max-width var(--transition-speed) ease; 
+            white-space: nowrap; overflow: hidden; max-width: 100px; 
+        }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover { 
+            background: rgba(255, 255, 255, 0.1); color: #fff; 
+            padding-left: 15px; transform: translateX(3px); 
+        }
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active { 
+            background: var(--secondary-color); color: #fff; font-weight: 600; 
+            animation: activeLinkPulse 1.5s infinite ease-in-out; 
+        }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
+        body.dark-mode .sidebar .menu a.active { 
+            background: var(--primary-color); 
+            animation-name: activeLinkPulseDark; 
+        }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+
+        .toggle-btn { 
+            position: absolute; top: 12px; right: -15px; width: 30px; height: 30px;
+            background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1001; 
+        }
+        .toggle-btn:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
+        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
+        
+        .mobile-menu-btn { 
+            background: var(--card-bg-light); color: var(--text-light);
+            border: 1px solid var(--border-color-light); border-radius: 50%;
+            width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+            box-shadow: var(--shadow-light-outer); display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-right: 10px; display: none; 
+        }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        .mobile-menu-btn:active { transform: scale(0.95); }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+
+        /* Main Content Area Styling */
+        .main-container-wrapper { 
+            display: flex; flex-grow: 1; 
+            padding-top: 50px; 
+            padding-bottom: 40px; 
+        }
+        .main-content-area { 
+            margin-left: 200px; 
+            flex-grow: 1; padding: 20px;
+            transition: margin-left var(--transition-speed) ease;
+            display: flex; justify-content: center; align-items: flex-start; 
+            overflow-y: auto; 
+        }
+        .main-content-area.collapsed { margin-left: 60px; } 
+
+        .order-details-card {
+            background: var(--card-bg-light); border-radius: 10px; 
+            padding: 28px; 
+            box-shadow: var(--shadow-light-outer); width: 100%; max-width: 780px;
+            border: 1px solid var(--border-color-light); 
+            animation: fadeInUp 0.5s var(--transition-easing) backwards; 
+        }
+        body.dark-mode .order-details-card {
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark); 
         }
 
-        .action-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+        .order-details-card h2 {
+            font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 28px;
+            color: var(--primary-color);
+        }
+        body.dark-mode .order-details-card h2 { color: var(--secondary-color); }
+
+        .detail-group { margin-bottom: 20px; }
+        .detail-group h3 {
+            font-size: 18px; font-weight: 600; color: var(--primary-color);
+            margin-bottom: 16px; padding-bottom: 10px;
+            border-bottom: 1.5px solid var(--primary-color-lighter);
+            display: flex; align-items: center;
+        }
+        .detail-group h3 i {
+            color: var(--primary-color); margin-right: 8px; font-size: 1.05em;
+        }
+        body.dark-mode .detail-group h3 {
+            color: var(--secondary-color); border-bottom-color: var(--primary-color); 
+        }
+        body.dark-mode .detail-group h3 i { color: var(--secondary-color); }
+
+        .order-table-enhanced {
+            width: 100%; border-collapse: collapse; margin-top: 8px;
+            border-radius: 6px; overflow: hidden;
+            box-shadow: var(--shadow-light-inner); 
+            border: 1px solid var(--border-color-light);
+        }
+        body.dark-mode .order-table-enhanced {
+            border-color: var(--border-color-dark);
+            box-shadow: var(--shadow-dark-inner); 
+        }
+        .order-table-enhanced tr td {
+            padding: 14px 18px; border-bottom: 1px solid var(--border-color-light);
+            font-size: 1.05em; line-height: 1.6; vertical-align: middle;
+        }
+        body.dark-mode .order-table-enhanced tr td { border-bottom-color: var(--border-color-dark); }
+        .order-table-enhanced tr:last-child td { border-bottom: none; }
+        .order-table-enhanced .label-cell {
+            font-weight: 500; color: var(--text-light); opacity: 0.9; width: 40%;
+            background-color: var(--background-light); 
+            border-right: 1px solid var(--border-color-light); text-align: left;
+        }
+        body.dark-mode .order-table-enhanced .label-cell {
+            background-color: var(--background-dark); 
+            border-right-color: var(--border-color-dark);
+        }
+        .order-table-enhanced .value-cell {
+            font-weight: 500; color: var(--text-light); text-align: center; word-break: break-word;
+        }
+        body.dark-mode .order-table-enhanced .value-cell { color: var(--text-dark); }
+        .order-table-enhanced tr.highlight-field-row td { background-color: var(--highlight-bg-light) !important; }
+        body.dark-mode .order-table-enhanced tr.highlight-field-row td { background-color: var(--highlight-bg-dark) !important; }
+        .order-table-enhanced tr.highlight-field-row .label-cell {
+            color: var(--highlight-text-light); font-weight: 600;
+            border-right-color: var(--highlight-border-light);
+        }
+        body.dark-mode .order-table-enhanced tr.highlight-field-row .label-cell {
+            color: var(--highlight-text-dark); border-right-color: var(--highlight-border-dark);
+        }
+        .order-table-enhanced .value-cell.highlight-field-value {
+            color: var(--highlight-text-light); font-weight: 700; font-size: 1.15em;
+        }
+        body.dark-mode .order-table-enhanced .value-cell.highlight-field-value { color: var(--highlight-text-dark); }
+        .order-table-enhanced .value-cell.vin-text {
+            font-family: 'Consolas', 'SF Mono', 'Courier New', Courier, monospace;
+            letter-spacing: 0.5px; font-size: 1.15em;
+        }
+
+        .button-container { display: flex; gap: 10px; justify-content: center; margin-top: 28px; }
+        .action-btn { 
+            padding: 10px 20px; font-size: 0.95em; border: none; border-radius: 6px; color: #ffffff;
+            font-weight: 600; 
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
+            transition: all var(--transition-speed-fast) var(--transition-easing); min-width: 120px;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3); 
         }
-
-        .action-btn:hover {
-            transform: scale(1.05);
+        .action-btn.primary { background: var(--primary-color); }
+        .action-btn.primary:hover { 
+            background: var(--primary-color-lighter); transform: translateY(-2px) scale(1.02); 
+            box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4); 
         }
-
-        .back-btn {
-            background: var(--accent-color);
-            color: #ffffff;
+        .action-btn.secondary { 
+            background: #6c757d; 
+            box-shadow: 0 2px 5px rgba(108, 117, 125, 0.3); 
         }
-
-        .pdf-btn {
-            background: #16a34a;
-            color: #ffffff;
+        .action-btn.secondary:hover { 
+            background: #5a6268; transform: translateY(-2px) scale(1.02); 
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4); 
         }
+        body.dark-mode .action-btn.primary { background: var(--secondary-color); } 
+        body.dark-mode .action-btn.primary:hover { background: #0095e0; }
+        body.dark-mode .action-btn.secondary { background: #495057; } 
+        body.dark-mode .action-btn.secondary:hover { background: #343a40; }
 
+        /* Footer Styles */
         footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: var(--footer-bg);
-            color: var(--footer-text);
-            padding: 12px;
-            text-align: center;
-            font-size: 12px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px;
+            z-index: 998; position: fixed; bottom: 0; width: 100%;
+            transition: background var(--transition-speed) var(--transition-easing);
+        }
+        body.dark-mode footer {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
 
+        /* Notification Styles */
         .notification {
-            position: fixed;
-            top: 70px;
-            right: 16px;
-            background: #16a34a;
-            color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            z-index: 2000;
-            animation: slideIn 0.3s ease, fadeOut 0.3s ease forwards;
-            animation-delay: 0s, calc(var(--duration) - 0.3s);
+            position: fixed; bottom: 50px; 
+            right: 20px;
+            background-color: var(--card-bg-dark); color: var(--text-dark); 
+            padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000; opacity: 0; transform: translateX(100%) scale(0.95);
+            transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; align-items: center; gap: 10px;
         }
-
-        .notification.error {
-            background: #dc2626;
+        body:not(.dark-mode) .notification { 
+             background-color: var(--card-bg-light); color: var(--text-light); 
+             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        .notification.show { opacity: 1; transform: translateX(0) scale(1); }
+        
+        .notification.error { background-color: #e53e3e; color: white; } 
+        body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;} 
+        
+        .notification.success { background-color: #38a169; color: white; } 
+        body.dark-mode .notification.success { background-color: #d4edda; color: #155724;} 
 
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .notification.info { background-color: #3182ce; color: white; } 
+        body.dark-mode .notification.info { background-color: #bee3f8; color: #2c5282;} 
+
+        .notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
+        body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
+
+        /* Tooltip CSS */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after {
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background-color: #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); 
+            z-index: 10000;
+        }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+
+        /* Scroll to Top Button */
+        #scrollToTopBtn {
+            display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999;
+            border: none; outline: none; background-color: var(--scroll-to-top-bg);
+            color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px;
+            box-shadow: var(--shadow-light-outer);
+            transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+            width: 40px; height: 40px; align-items: center; justify-content: center;
+            opacity: 0; transform: translateY(20px);
+        }
+        #scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
+        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
+        .hidden { display: none !important; } 
+
+        /* Keyframe Animations */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes subtleScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 70% { opacity: 1; transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes subtlePulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+        @keyframes subtleShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
+        @keyframes shimmer { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
+        @keyframes activeLinkPulse { 0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); } 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } }
+        @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
+
+        /* Responsive Adjustments */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); width: 220px; z-index: 1005; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar.collapsed { transform: translateX(-100%); } 
+            .main-content-area { margin-left: 0; }
+            .main-content-area.collapsed { margin-left: 0; } 
+            .toggle-btn { display: none; } 
+            .mobile-menu-btn { display: flex !important; } 
+        }
 
         @media (max-width: 768px) {
-            .main-container { padding: 12px; }
-            .button-container { flex-direction: column; }
-            .action-btn { width: 100%; }
-            .order-table th,
-            .order-table td {
-                padding: 10px 12px;
-                font-size: 13px;
-            }
-            .order-table th {
-                font-size: 14px;
-            }
+            body { font-size: 14px; }
+            .navbar .logo h1 { font-size: 16px; } 
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; }
+
+            .main-content-area { padding: 12px; }
+            .order-details-card { padding: 18px; }
+            .order-details-card h2 { font-size: 20px; margin-bottom: 20px; }
+            .detail-group h3 { font-size: 17px; margin-bottom: 12px; padding-bottom: 8px; }
+            
+            .order-table-enhanced tr td { padding: 12px 14px; font-size: 1em; }
+            .order-table-enhanced .label-cell { width: 40%; } 
+            .order-table-enhanced .value-cell.highlight-field-value,
+            .order-table-enhanced .value-cell.vin-text { font-size: 1.1em; }
+
+            .button-container { flex-direction: column; gap: 12px; margin-top: 20px; }
+            .action-btn { width: 100%; padding: 10px 15px; font-size: 0.95em; }
+            .notification { bottom: 50px; right: 10px; width: calc(100% - 20px); padding: 10px 15px; font-size: 13px; }
+            #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
         }
     </style>
 </head>
-<body>
+<body data-theme="light">
+
     <div class="navbar">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
+            <i class="fas fa-bars"></i>
+        </button>
         <div class="logo">
-            <h1>VinFast Thuận An</h1>
+             <h1></h1> 
         </div>
         <div class="navbar-controls">
-            <button class="nav-btn" onclick="toggleTheme()" title="Đổi giao diện">
-                <i class="fas fa-moon"></i>
+            <button class="theme-toggle-btn" onclick="toggleThemeGlobal()" aria-label="Chuyển đổi giao diện" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+                <i class="fas fa-moon" id="theme-icon"></i>
             </button>
-            <button class="nav-btn" onclick="goBack()" title="Quay lại">
+            <button class="nav-btn" onclick="goBackToYeucau()" aria-label="Quay lại trang ghép xe" data-tooltip="Quay lại trang ghép xe">
                 <i class="fas fa-arrow-left"></i>
             </button>
         </div>
     </div>
 
-    <div class="main-container">
-        <div class="order-details-container">
-            <h2>Chi Tiết Đơn Hàng</h2>
-            <div id="order-details">
-                <div class="detail-group">
-                    <h3>Thông Tin Đơn Hàng</h3>
-                    <table class="order-table">
-                        <thead>
-                            <tr>
-                                <th>Thông Tin</th>
-                                <th>Chi Tiết</th>
-                            </tr>
-                        </thead>
-                        <tbody class="detail-group-items"></tbody>
-                    </table>
+    <div class="sidebar" id="sidebar">
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
+        <div class="menu" id="navMenu">
+            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-tooltip="Xem Chính Sách và Tài Liệu"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
+        </div>
+        <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </div>
+
+    <div class="main-container-wrapper">
+        <div class="main-content-area" id="main-content-area">
+            <div class="order-details-card">
+                <h2>Chi Tiết Yêu Cầu Ghép Xe</h2>
+                <div id="order-info-content">
+                     <p style="text-align: center; padding: 20px;">Đang tải thông tin chi tiết...</p>
                 </div>
-            </div>
-            <div class="button-container">
-                <button class="action-btn back-btn" onclick="goBack()">Quay Lại</button>
-                <button class="action-btn pdf-btn" onclick="exportToPDF()">Tải PDF</button>
+                <div class="button-container">
+                    <button class="action-btn secondary" onclick="goBackToYeucau()">Quay Lại</button>
+                    <button class="action-btn primary" onclick="exportOrderToPDF()">Tải PDF</button>
+                </div>
             </div>
         </div>
     </div>
@@ -336,149 +559,341 @@
         <span>© 2025 VinFast Minh Đạo Thuận An</span>
     </footer>
 
+    <div id="notification-container"></div>
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <script>
-        const labelMap = {
-            "ten_ban_hang": "Tên Tư Vấn Bán Hàng",
-            "ten_khach_hang": "Tên Khách Hàng",
-            "dong_xe": "Dòng Xe",
-            "phien_ban": "Phiên Bản",
-            "ngoai_that": "Ngoại Thất",
-            "noi_that": "Nội Thất",
-            "so_don_hang": "Số Đơn Hàng",
-            "ngay_coc": "Ngày Cọc",
-            "thoi_gian_nhap": "Thời Gian Nhập",
-            "trang_thai": "Trạng Thái",
-            "thoi_gian_ghep": "Thời Gian Ghép",
-            "so_ngay_ghep": "Số Ngày Ghép",
-            "ket_qua": "Kết Quả",
-            "VIN": "VIN"
-        };
-
-        function formatDateTime(dtString) {
-            if (!dtString) return "Chưa có dữ liệu";
-            const d = new Date(dtString);
-            if (isNaN(d.getTime())) return "Dữ liệu không hợp lệ";
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            const seconds = String(d.getSeconds()).padStart(2, '0');
-            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        // --- Sidebar JS ---
+        function toggleSidebarDesktop() {
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById("sidebar");
+                const mainContainer = document.getElementById("main-content-area"); 
+                const toggleBtnIcon = document.querySelector(".sidebar .toggle-btn i"); 
+                if (sidebar && mainContainer) {
+                    sidebar.classList.toggle("collapsed");
+                    mainContainer.classList.toggle("collapsed");
+                    if (sidebar.classList.contains("collapsed")) {
+                        localStorage.setItem('sidebarState', 'collapsed');
+                        if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-right';
+                    } else {
+                        localStorage.setItem('sidebarState', 'expanded');
+                        if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-left';
+                    }
+                }
+            }
         }
 
-        function goBack() {
-            window.location.href = "yeucaughepxe.html";
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+                if (sidebar.classList.contains("open")) {
+                    sidebar.classList.remove("collapsed"); 
+                }
+            }
         }
 
-        function toggleTheme() {
-            const currentTheme = document.body.getAttribute("data-theme") || "light";
-            const newTheme = currentTheme === "light" ? "dark" : "light";
-            document.body.setAttribute("data-theme", newTheme);
-            localStorage.setItem("theme", newTheme);
+        function applyInitialSidebarState() {
+            if (window.innerWidth > 900) { 
+                const sidebar = document.getElementById("sidebar");
+                const mainContainer = document.getElementById("main-content-area");
+                const toggleBtnIcon = document.querySelector(".sidebar .toggle-btn i");
+                if (localStorage.getItem('sidebarState') === 'collapsed') {
+                    sidebar?.classList.add("collapsed");
+                    mainContainer?.classList.add("collapsed");
+                    if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-right';
+                } else {
+                    sidebar?.classList.remove("collapsed");
+                    mainContainer?.classList.remove("collapsed");
+                     if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-left';
+                }
+            } else { 
+                const sidebar = document.getElementById("sidebar");
+                const mainContainer = document.getElementById("main-content-area");
+                sidebar?.classList.remove("collapsed");
+                mainContainer?.classList.remove("collapsed");
+            }
         }
 
-        function showNotification(message, duration, isError = false) {
+        function setActiveSidebarLink() {
+            const navLinks = document.querySelectorAll("#navMenu a");
+            const currentPageFile = "yeucaughepxe.html"; 
+
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute('href') === currentPageFile) {
+                    link.classList.add("active");
+                }
+            });
+        }
+        
+        // --- Theme JS ---
+        function applyInitialTheme() {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.body.classList.toggle("dark-mode", savedTheme === "dark");
+            const themeIcon = document.getElementById("theme-icon");
+            if (themeIcon) {
+                themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+            }
+            document.body.setAttribute("data-theme", savedTheme); 
+        }
+
+        function toggleThemeGlobal() { 
+            document.body.classList.toggle("dark-mode");
+            const isDarkMode = document.body.classList.contains("dark-mode");
+            localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+            const themeIcon = document.getElementById("theme-icon");
+            if (themeIcon) {
+                themeIcon.className = isDarkMode ? "fas fa-sun" : "fas fa-moon";
+            }
+            document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+        }
+
+        // --- Notification JS ---
+        function showGlobalNotification(message, type = "info", duration = 3000) {
+            const container = document.getElementById("notification-container") || document.body;
             const notification = document.createElement("div");
-            notification.className = `notification ${isError ? 'error' : ''}`;
-            notification.textContent = message;
-            notification.style.setProperty("--duration", `${duration}ms`);
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), duration);
+            notification.className = `notification ${type}`;
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            if (type === 'error') iconClass = 'fas fa-times-circle';
+            if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+
+            notification.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
+            container.appendChild(notification);
+            notification.offsetHeight; 
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => notification.remove());
+            }, duration);
+        }
+        
+        // --- Scroll to Top JS ---
+        function initScrollToTopButton() {
+            const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
+            window.onscroll = () => { 
+                const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; 
+                if (show) {
+                    btn.classList.add('visible');
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            };
+        }
+        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+
+        // --- Order Details JS ---
+        const DATA_FIELDS_TO_DISPLAY = [
+            { internalKey: "ten_ban_hang", actualDataKey: "Tên tư vấn bán hàng", displayLabel: "Tên TVBH" },
+            { internalKey: "ten_khach_hang", actualDataKey: "Tên khách hàng", displayLabel: "Tên Khách Hàng" },
+            { internalKey: "so_don_hang", actualDataKey: "Số đơn hàng", displayLabel: "Số Đơn Hàng" },
+            { internalKey: "dong_xe", actualDataKey: "Dòng xe", displayLabel: "Dòng Xe" },
+            { internalKey: "phien_ban", actualDataKey: "Phiên bản", displayLabel: "Phiên Bản" },
+            { internalKey: "ngoai_that", actualDataKey: "Ngoại thất", displayLabel: "Ngoại Thất" },
+            { internalKey: "noi_that", actualDataKey: "Nội thất", displayLabel: "Nội Thất" },
+            { internalKey: "ngay_coc", actualDataKey: "Ngày cọc", displayLabel: "Ngày Cọc" },
+            { internalKey: "thoi_gian_nhap", actualDataKey: "Thời gian nhập", displayLabel: "TG Yêu Cầu" },
+            { internalKey: "ket_qua", actualDataKey: "Kết quả", displayLabel: "Kết Quả VIN" },
+            { internalKey: "vin", actualDataKey: "VIN", displayLabel: "Số VIN Ghép" },
+            { internalKey: "thoi_gian_ghep", actualDataKey: "Thời gian ghép", displayLabel: "TG Ghép VIN" },
+            { internalKey: "so_ngay_ghep", actualDataKey: "Số ngày ghép", displayLabel: "Số Ngày Chờ Ghép" }
+        ];
+
+        function formatGeneralDateTime(dtString) {
+            if (!dtString) return "N/A";
+            const d = new Date(dtString);
+            if (isNaN(d.getTime())) return "N/A"; 
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
 
-        function exportToPDF() {
+        function goBackToYeucau() {
+            window.location.href = "yeucaughepxe.html#history-section";
+        }
+
+        function populateOrderDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderNumber = urlParams.get('orderNumber');
+            const detailsContentElement = document.getElementById("order-info-content");
+
+            if (!detailsContentElement) {
+                 console.error("Lỗi: Không tìm thấy phần tử #order-info-content.");
+                 return;
+            }
+            detailsContentElement.innerHTML = '<p style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Đang tìm thông tin yêu cầu...</p>';
+
+            if (!orderNumber) {
+                detailsContentElement.innerHTML = "<p style='text-align: center; color: red;'>Không có số đơn hàng được cung cấp.</p>";
+                showGlobalNotification("Không có số đơn hàng để hiển thị chi tiết.", "error", 4000);
+                return;
+            }
+
+            const cachedHistoryDataString = sessionStorage.getItem('globalHistoryData_v1'); 
+            let orderData = null;
+
+            if (cachedHistoryDataString) {
+                try {
+                    const history = JSON.parse(cachedHistoryDataString);
+                    if (Array.isArray(history)) {
+                        orderData = history.find(item => item && item["Số đơn hàng"] === orderNumber);
+                    } else {
+                        showGlobalNotification("Lỗi định dạng dữ liệu lịch sử.", "error", 4000);
+                         console.error("Cached history data is not an array:", history);
+                    }
+                } catch (e) {
+                    showGlobalNotification("Lỗi đọc dữ liệu lịch sử từ cache.", "error", 4000);
+                    console.error("Error parsing cached history data:", e);
+                }
+            }
+
+            if (orderData) {
+                renderOrderDetails(orderData, detailsContentElement);
+            } else {
+                detailsContentElement.innerHTML = `<p style='text-align: center; color: orange;'>Không tìm thấy thông tin cho đơn hàng <strong>${orderNumber}</strong> trong dữ liệu tạm. Vui lòng quay lại và thử làm mới trang Yêu Cầu Ghép Xe.</p>`;
+                showGlobalNotification(`Chi tiết cho đơn ${orderNumber} không có trong cache.`, "info", 5000);
+            }
+        }
+
+        function renderOrderDetails(data, containerElement) {
+            let tableRowsHtml = '';
+            let hasVisibleFields = false; // Flag to check if any data is actually displayed
+
+            DATA_FIELDS_TO_DISPLAY.forEach(field => {
+                const displayLabel = field.displayLabel;
+                const actualDataKey = field.actualDataKey;
+                let value = data[actualDataKey];
+                let formattedValue;
+
+                if (field.internalKey === "ngay_coc" || field.internalKey === "thoi_gian_nhap" || field.internalKey === "thoi_gian_ghep") {
+                    formattedValue = formatGeneralDateTime(value);
+                } else {
+                    // Ensure value is not just whitespace before considering it non-empty
+                    formattedValue = (value !== undefined && value !== null && String(value).trim() !== "") ? String(value) : "N/A";
+                }
+
+                // MODIFIED: Only add row if formattedValue is not "N/A"
+                if (formattedValue !== "N/A") { 
+                    hasVisibleFields = true;
+                    let rowClass = '';
+                    let valueCellClasses = 'value-cell';
+
+                    if (field.internalKey === "ket_qua" || field.internalKey === "vin") {
+                        rowClass = 'highlight-field-row';
+                        valueCellClasses += ' highlight-field-value';
+                        if (field.internalKey === "vin") {
+                            valueCellClasses += ' vin-text';
+                        }
+                    }
+
+                    tableRowsHtml += `
+                        <tr class="${rowClass}">
+                            <td class="label-cell">${displayLabel}</td>
+                            <td class="${valueCellClasses}">${formattedValue}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (hasVisibleFields) {
+                containerElement.innerHTML = `
+                    <div class="detail-group">
+                        <h3><i class="fas fa-file-invoice-dollar"></i>Thông Tin Yêu Cầu</h3>
+                        <table class="order-table-enhanced">
+                            <tbody>
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                    </div>`;
+            } else {
+                 // This message will show if ALL fields were "N/A"
+                 containerElement.innerHTML = '<p style="text-align: center; padding: 20px;">Không có thông tin chi tiết nào để hiển thị cho đơn hàng này.</p>';
+            }
+        }
+
+       function exportOrderToPDF() {
             if (typeof window.jspdf === "undefined" || typeof html2canvas === "undefined") {
-                showNotification("Không thể tải thư viện jsPDF hoặc html2canvas. Vui lòng kiểm tra kết nối mạng!", 5000, true);
+                showGlobalNotification("Không thể tải thư viện PDF.", "error", 4000);
                 return;
             }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-            const element = document.getElementById("order-details");
+            const contentToCapture = document.querySelector(".order-details-card");
 
-            if (!element || element.innerHTML.trim() === "") {
-                showNotification("Không tìm thấy nội dung đơn hàng để xuất PDF!", 5000, true);
+            if (!contentToCapture || contentToCapture.innerText.includes("Đang tải") || contentToCapture.innerText.includes("Không có số đơn hàng") || contentToCapture.innerText.includes("Không có thông tin chi tiết")) {
+                showGlobalNotification("Nội dung chưa sẵn sàng hoặc không hợp lệ để xuất PDF.", "error", 4000);
                 return;
             }
 
-            const orderDetails = JSON.parse(sessionStorage.getItem("orderDetails"));
-            if (!orderDetails) {
-                showNotification("Dữ liệu đơn hàng không hợp lệ!", 5000, true);
-                return;
+            showGlobalNotification("Đang chuẩn bị tệp PDF...", "info", 2000);
+
+            const isOriginallyDarkMode = document.body.classList.contains('dark-mode');
+            if (isOriginallyDarkMode) {
+                document.body.classList.remove('dark-mode');
             }
 
-            const tempContainer = document.createElement("div");
-            tempContainer.style.background = "var(--card-bg)";
-            tempContainer.style.borderRadius = "12px";
-            tempContainer.style.padding = "24px";
-            tempContainer.style.boxShadow = "var(--shadow)";
-            tempContainer.style.maxWidth = "800px";
-            tempContainer.style.margin = "0 auto";
-            tempContainer.style.fontFamily = "'Roboto', sans-serif";
-            tempContainer.innerHTML = `
-                <h2 style="font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 16px; color: var(--accent-color);">Chi Tiết Đơn Hàng</h2>
-                ${element.innerHTML}
-            `;
-            document.body.appendChild(tempContainer);
+            setTimeout(() => {
+                html2canvas(contentToCapture, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--card-bg-light').trim(), 
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight(); 
+                    const margin = 10;
+                    const contentWidth = pageWidth - 2 * margin;
+                    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = margin;
 
-            html2canvas(tempContainer, {
-                scale: 3,
-                useCORS: true,
-                logging: false,
-                backgroundColor: null,
-                width: tempContainer.offsetWidth,
-                height: tempContainer.offsetHeight
-            }).then(canvas => {
-                const imgData = canvas.toDataURL("image/png", 1.0);
-                const imgWidth = 190;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                let position = 10;
+                    pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+                    heightLeft -= (pageHeight - (2*margin)); 
 
-                doc.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+                    while (heightLeft > 0) {
+                        position = position - (pageHeight - margin); 
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', margin, position, contentWidth, imgHeight);
+                        heightLeft -= (pageHeight - 2*margin);
+                    }
 
-                const orderNumber = orderDetails.so_don_hang?.replace(/[^a-zA-Z0-9-_]/g, "_") || "chi_tiet_don_hang";
-                doc.save(`chi_tiet_don_hang_${orderNumber}.pdf`);
-                showNotification("Đã tải file PDF thành công!", 3000);
-
-                document.body.removeChild(tempContainer);
-            }).catch(error => {
-                console.error("Lỗi khi xuất PDF:", error);
-                showNotification(`Lỗi khi xuất PDF: ${error.message}`, 5000, true);
-                document.body.removeChild(tempContainer);
-            });
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const orderNumForFile = urlParams.get('orderNumber') || "don_hang";
+                    pdf.save(`ChiTiet_${orderNumForFile.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+                    showGlobalNotification("Đã tải tệp PDF thành công!", "success", 3000);
+                }).catch(error => {
+                    console.error("Lỗi khi xuất PDF:", error);
+                    showGlobalNotification(`Lỗi xuất PDF: ${error.message}`, "error", 5000);
+                }).finally(() => {
+                    if (isOriginallyDarkMode) {
+                        document.body.classList.add('dark-mode');
+                    }
+                });
+            }, 100); 
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            const orderDetails = JSON.parse(sessionStorage.getItem("orderDetails"));
-            const orderDetailsContainer = document.querySelector("#order-details .detail-group-items");
+            applyInitialTheme();
+            applyInitialSidebarState();
+            setActiveSidebarLink();
+            populateOrderDetails();
+            initScrollToTopButton(); 
 
-            if (!orderDetails) {
-                orderDetailsContainer.innerHTML = "<tr><td colspan='2'>Không tìm thấy thông tin đơn hàng.</td></tr>";
-                showNotification("Không tìm thấy dữ liệu đơn hàng!", 5000, true);
-                return;
-            }
-
-            let html = "";
-            for (const [key, value] of Object.entries(orderDetails)) {
-                const label = labelMap[key] || key;
-                const formattedValue = (key === "ngay_coc" || key === "thoi_gian_nhap" || key === "thoi_gian_ghep")
-                    ? formatDateTime(value)
-                    : (value || "Chưa có dữ liệu");
-                const isVIN = key === "VIN";
-                html += `
-                    <tr>
-                        <td>${label}</td>
-                        <td ${isVIN ? 'class="vin-highlight"' : ''}>${formattedValue}</td>
-                    </tr>
-                `;
-            }
-            orderDetailsContainer.innerHTML = html;
-
-            const savedTheme = localStorage.getItem("theme") || "light";
-            document.body.setAttribute("data-theme", savedTheme);
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+                    if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93546a5e2c16c024',t:'MTc0NTQ4NTI4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
