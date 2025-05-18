@@ -10,9 +10,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script> {/* Kept from original yeucaughepxe.html */}
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* --- CONTENT FROM a.html <style> block --- */
         :root {
             /* Original CSS Variables from yeucaughepxe.html */
             --primary-color: #003087;
@@ -535,21 +537,21 @@
         .form-container form { display: grid; gap: 10px; }
         .form-container label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-light); margin-bottom: 4px; }
         body.dark-mode .form-container label { color: var(--text-dark); }
-        .form-container input, .form-container select {
+        .form-container input:not([type='file']), .form-container select { /* MODIFIED: Exclude file input for #chic-upload-wrapper */
             padding: 8px 10px; border: 1px solid var(--border-color-light); border-radius: 6px;
             font-size: 13.5px; background: var(--background-light); color: var(--text-light);
             box-shadow: none;
             transition: border-color var(--transition-speed-fast) var(--transition-easing), background var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing);
             width: 100%;
         }
-        body.dark-mode .form-container input, body.dark-mode .form-container select {
+        body.dark-mode .form-container input:not([type='file']), body.dark-mode .form-container select {
             background: var(--background-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark);
         }
-        .form-container input:focus, .form-container select:focus {
+        .form-container input:not([type='file']):focus, .form-container select:focus {
             outline: none; border-color: var(--primary-color); background: var(--card-bg-light);
             box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
         }
-        body.dark-mode .form-container input:focus, body.dark-mode .form-container select:focus {
+        body.dark-mode .form-container input:not([type='file']):focus, body.dark-mode .form-container select:focus {
             border-color: var(--secondary-color); background: var(--card-bg-dark);
             box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
         }
@@ -906,7 +908,7 @@
             .form-container, .grid-container, .summary-section, .chart-card { padding: 12px; border-radius: 8px; animation-delay: 0.1s; }
             .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 { font-size: 15px; margin-bottom: 8px; }
             .form-container label { font-size: 12px; margin-bottom: 3px; }
-            .form-container input, .form-container select { padding: 7px 9px; font-size: 12.5px; }
+            .form-container input:not([type='file']), .form-container select { padding: 7px 9px; font-size: 12.5px; }
             .form-container button, .modal-btn { padding: 7px 12px; font-size: 12.5px; }
 
             .controls { flex-direction: column; align-items: stretch; }
@@ -1003,6 +1005,35 @@
             .grid-container .controls { justify-content: flex-end; }
             .export-btn-container { width: auto; }
         }
+
+        /* --- CHIC FILE UPLOAD STYLES (from original yeucaughepxe.html) --- */
+        #chic-upload-wrapper { /* Các class Tailwind đã có: relative w-full h-16 border-2 border-dashed ... */ }
+        #chic-upload-wrapper.file-selected {
+            border-style: solid;
+            border-color: var(--primary-color);
+            background-color: var(--card-bg-light); /* Nền của wrapper khi có file */
+        }
+        body.dark-mode #chic-upload-wrapper.file-selected {
+            border-color: var(--secondary-color);
+            background-color: var(--card-bg-dark);
+        }
+        #chic-upload-wrapper.dragover {
+            border-color: var(--primary-color-lighter) !important;
+            background-color: rgba(0, 48, 135, 0.05) !important;
+        }
+        body.dark-mode #chic-upload-wrapper.dragover {
+            border-color: var(--secondary-color) !important;
+            background-color: rgba(0, 174, 255, 0.1) !important;
+        }
+        #chic_ocr_status.processing { color: var(--primary-color); font-weight: 500; }
+        body.dark-mode #chic_ocr_status.processing { color: var(--secondary-color); }
+        #chic_ocr_status.success { color: #155724; }
+        body.dark-mode #chic_ocr_status.success { color: #a3d9a5; }
+        #chic_ocr_status.error { color: #721c24; }
+        body.dark-mode #chic_ocr_status.error { color: #f1aeb5; }
+        #chic_ocr_status .fa-spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- END CHIC FILE UPLOAD STYLES --- */
     </style>
 </head>
 <body data-theme="light">
@@ -1010,15 +1041,13 @@
         <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="logo">
-        </div>
+        <div class="logo"><h1>VINFAST THUẬN AN</h1></div>
         <div class="tabs">
             <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
             <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
             <a href="#" onclick="switchTab('detailed-stats', this)" data-tooltip="Xem thống kê chi tiết">Thống Kê Chi Tiết</a>
         </div>
-        <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i>
-        </button>
+        <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i></button>
         <div class="navbar-controls">
             <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
                 <i class="fas fa-moon" id="theme-icon"></i>
@@ -1030,9 +1059,7 @@
     </div>
 
     <div class="sidebar" id="sidebar">
-        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
-        <div class="menu" id="navMenu">
-            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div> <div class="menu" id="navMenu"> <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
@@ -1050,80 +1077,46 @@
                 <input name="ten_khach_hang" id="ten_khach_hang" placeholder="Nhập tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()"/>
                 <select name="dong_xe" id="dong_xe" required onchange="restrictVersion(this); saveFormDraft()">
                     <option value="" disabled selected>Chọn dòng xe</option>
-                    <option value="VF 3">VF 3</option>
-                    <option value="VF 5">VF 5</option>
-                    <option value="VF 6">VF 6</option>
-                    <option value="VF 7">VF 7</option>
-                    <option value="VF 8">VF 8</option>
-                    <option value="VF 9">VF 9</option>
-                    <option value="HERIO">HERIO</option>
-                    <option value="NERIO">NERIO</option>
-                    <option value="LIMO">LIMO</option>
-                    <option value="MINIO">MINIO</option>
+                    <option value="VF 3">VF 3</option><option value="VF 5">VF 5</option><option value="VF 6">VF 6</option><option value="VF 7">VF 7</option><option value="VF 8">VF 8</option><option value="VF 9">VF 9</option>
+                    <option value="HERIO">HERIO</option><option value="NERIO">NERIO</option><option value="LIMO">LIMO</option><option value="MINIO">MINIO</option>
                 </select>
-
                 <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()">
                     <option value="" disabled selected>Chọn phiên bản</option>
-                    <option value="Plus">Plus</option>
-                    <option value="Eco">Eco</option>
-                    <option value="Plus_Metal">Plus_Metal</option>
-                    <option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
-                    <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
-                    <option value="Eco_3ZONES">Eco_3ZONES</option>
-                    <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
-                    <option value="Base">Base</option>
+                    <option value="Plus">Plus</option><option value="Eco">Eco</option><option value="Plus_Metal">Plus_Metal</option><option value="Plus_CAP_Metal">Plus_CAP_Metal</option><option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option><option value="Eco_3ZONES">Eco_3ZONES</option><option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option><option value="Base">Base</option>
                 </select>
-
                 <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()">
                     <option value="" disabled selected>Chọn ngoại thất</option>
-                    <option value="Brahminy White (CE18)">Brahminy White (CE18)</option>
-                    <option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option>
-                    <option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option>
-                    <option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option>
-                    <option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option>
-                    <option value="Jet Black (CE11)">Jet Black (CE11)</option>
-                    <option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option>
-                    <option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option>
-                    <option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option>
-                    <option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option>
-                    <option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option>
-                    <option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option>
-                    <option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option>
-                    <option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option>
-                    <option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option>
-                    <option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option>
-                    <option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option>
-                    <option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option>
-                    <option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option>
-                    <option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option>
-                    <option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option>
-                    <option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option>
-                    <option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option>
-                    <option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option>
-                    <option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option>
-                    <option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option>
-                    <option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option>
-                    <option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option>
-                    <option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option>
-                    <option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option>
-                    <option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option>
-                    <option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option>
-                    <option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option>
-                    <option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option>
-                    <option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
+                    <option value="Brahminy White (CE18)">Brahminy White (CE18)</option><option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option><option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option><option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option><option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option><option value="Jet Black (CE11)">Jet Black (CE11)</option><option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option><option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option><option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option><option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option><option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option><option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option><option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option><option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option><option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option><option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option><option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option><option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option><option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option><option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option><option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option><option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option><option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option><option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option><option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option><option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option><option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option><option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option><option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option><option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option><option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option><option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option><option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option><option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option><option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
                 </select>
-
                 <select name="noi_that" id="noi_that" required onchange="saveFormDraft()">
                     <option value="" disabled selected>Chọn nội thất</option>
-                    <option value="Black">Black</option>
-                    <option value="Brown">Brown</option>
-                    <option value="Beige">Beige</option>
+                    <option value="Black">Black</option><option value="Brown">Brown</option><option value="Beige">Beige</option>
                 </select>
-
                 <input name="so_don_hang" id="so_don_hang" placeholder="VD: N31913-VSO-25-04-0028" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. VD: N31913-VSO-25-04-0028')" oninput="this.setCustomValidity(''); saveFormDraft()"/>
 
+                <div>
+                    <label for="chic_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ảnh Ủy Nhiệm Chi:</label>
+                    <div id="chic-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-all duration-200 ease-in-out cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="chic_file_input" name="chic_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                        <div id="chic-upload-prompt" class="flex flex-col items-center justify-center text-center p-2 transition-opacity duration-200">
+                            <i class="fas fa-file-image text-2xl mb-1 text-primary-color dark:text-secondary-color"></i>
+                            <span class="text-xs">Kéo thả hoặc chọn ảnh</span>
+                        </div>
+                        <div id="chic-file-preview-details" class="absolute inset-0 w-full h-full flex items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg opacity-0 pointer-events-none transition-opacity duration-300">
+                            <img id="chic-preview-img" src="#" alt="Preview" class="h-10 w-10 object-cover rounded border border-gray-200 dark:border-gray-500 flex-shrink-0">
+                            <div class="ml-2 flex-grow min-w-0">
+                                <p id="chic-filename" class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate" title="Tên file"></p>
+                                <p id="chic-filesize" class="text-xs text-gray-500 dark:text-gray-400"></p>
+                            </div>
+                            <button type="button" id="chic-remove-btn" class="ml-2 p-1 text-red-500 hover:text-red-700 dark:hover:text-red-400 focus:outline-none rounded-full hover:bg-red-100 dark:hover:bg-red-800/50 transition-colors duration-150">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="chic_ocr_status" class="mt-1 text-xs italic text-gray-500 dark:text-gray-400"></p>
+                </div>
                 <label for="ngay_coc">Ngày Cọc:</label>
-                <input name="ngay_coc" id="ngay_coc" type="datetime-local" required oninput="saveFormDraft()"/>
+                <input name="ngay_coc" id="ngay_coc" type="datetime-local" required readonly />
 
                 <div class="form-buttons">
                     <button type="submit">Xác Nhận</button>
@@ -1295,26 +1288,29 @@
     <div id="notification-container"></div>
 
 <script>
+// --- CONTENT FROM a.html <script> block, with modifications ---
 // --- Biến toàn cục và Hằng số ---
 let globalHistoryData = [];
-let formData = {}, orderId = "", detailedStatsData = [];
+let formData = {}, orderId = "", detailedStatsData = []; // orderId is used for redirection in a.html
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN";
-const FORM_DRAFT_KEY = 'vinfastFormDraft_v2';
+const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic'; // MODIFIED: Use key from yeucaughepxe.html
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
 
-const labelMap = {
+const labelMap = { // From a.html, more comprehensive
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
     "dong_xe": "Dòng Xe", "phien_ban": "Phiên Bản", "ngoai_that": "Ngoại Thất",
     "noi_that": "Nội Thất", "so_don_hang": "Số Đơn Hàng", "ngay_coc": "Ngày Cọc",
     "thoi_gian_nhap": "Thời Gian Nhập", "trang_thai": "Trạng Thái",
     "thoi_gian_ghep": "Thời Gian Ghép", "so_ngay_ghep": "Số Ngày Ghép",
     "ket_qua": "Kết Quả", "VIN": "VIN"
+    // Added chic_file_input for preview, if needed, though not in a.html's map
+    // "chic_file_input": "Ảnh Ủy Nhiệm Chi"
 };
 
-// --- Sidebar JavaScript from Index.html ---
+// --- Sidebar JavaScript from Index.html / a.html ---
 function toggleSidebarDesktop() {
     if (window.innerWidth > 900) { // Only for desktop
         const sidebar = document.getElementById("sidebar");
@@ -1368,7 +1364,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        loadFormDraft();
+        loadFormDraft(); // From a.html, will use the new FORM_DRAFT_KEY
 
         const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
         if (cachedHistoryData) {
@@ -1414,10 +1410,34 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
         });
+
+        // === CHIC FILE UPLOAD UI INITIALIZATION (from yeucaughepxe.html) ===
+        const chicWrapper = document.getElementById('chic-upload-wrapper');
+        const chicInput = document.getElementById('chic_file_input');
+        const chicPrompt = document.getElementById('chic-upload-prompt');
+        const chicPreviewDetails = document.getElementById('chic-file-preview-details');
+        const chicRemoveBtn = document.getElementById('chic-remove-btn');
+
+        if (chicInput && chicWrapper && chicPrompt && chicPreviewDetails) {
+            chicInput.addEventListener('change', function(event) {
+                const files = event.target.files;
+                if (files && files.length > 0) { processChicFile(files[0]); }
+                else if (!chicInput.value) { resetChicUploadUI(); }
+            });
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false));
+            ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false));
+            ['dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.remove('dragover'), false));
+            chicWrapper.addEventListener('drop', function(event) {
+                const files = event.dataTransfer?.files;
+                if (files && files.length > 0) { chicInput.files = files; processChicFile(files[0]); }
+            }, false);
+        }
+        if (chicRemoveBtn) { chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); }); }
+        // === END CHIC FILE UPLOAD UI INITIALIZATION ===
     }
 });
 
-// --- Quản lý Giao diện (Theme toggle from yeucaughepxe.html) ---
+// --- Quản lý Giao diện (Theme toggle from a.html) ---
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
@@ -1445,7 +1465,7 @@ function toggleTheme() { // This is yeucaughepxe's theme toggle function
     }
 }
 
-// --- Điều hướng và Phiên ---
+// --- Điều hướng và Phiên (from a.html) ---
 function logout() {
     sessionStorage.clear();
     localStorage.removeItem(FORM_DRAFT_KEY);
@@ -1460,12 +1480,13 @@ function goBack() {
     window.location.href = "index.html";
 }
 
-// --- Quản lý Nháp Biểu mẫu ---
+// --- Quản lý Nháp Biểu mẫu (from a.html, FORM_DRAFT_KEY updated) ---
 function saveFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (!form) return;
     const currentFormData = {};
-    form.querySelectorAll("input:not([readonly]), select").forEach(input => {
+    // Include ngay_coc if it's filled by OCR, exclude file input
+    form.querySelectorAll("input:not([readonly]):not([type='file']), select").forEach(input => {
         if (input.name) currentFormData[input.name] = input.value;
     });
     localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(currentFormData));
@@ -1487,7 +1508,9 @@ function loadFormDraft() {
                     }
                 }
             });
-            showNotification("Đã khôi phục dữ liệu nháp.", "info", 2000);
+             // OCR related fields like 'ngay_coc' will be loaded here if they were in the draft.
+            // The file itself is not stored, so user needs to re-select.
+            showNotification("Đã khôi phục dữ liệu nháp (Ảnh UNC cần chọn lại nếu có).", "info", 3500);
         } catch (e) {
             console.error("Lỗi khi parse dữ liệu nháp:", e);
             localStorage.removeItem(FORM_DRAFT_KEY);
@@ -1498,7 +1521,8 @@ function loadFormDraft() {
 function clearFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (form) {
-        form.querySelectorAll("input:not([readonly]), select").forEach(input => {
+        // Clear all form inputs except readonly and file inputs
+        form.querySelectorAll("input:not([readonly]):not([type='file']), select").forEach(input => {
             if (input.tagName === 'SELECT') {
                 input.selectedIndex = 0;
             } else {
@@ -1507,28 +1531,30 @@ function clearFormDraft() {
         });
         const dongXeSelect = form.elements['dong_xe'];
         if (dongXeSelect) {
-            restrictVersion(dongXeSelect);
+            restrictVersion(dongXeSelect); // Reset version select based on car model
         }
+        resetChicUploadUI(); // Also reset the file upload UI
     }
     localStorage.removeItem(FORM_DRAFT_KEY);
     showNotification("Đã xóa dữ liệu nháp.", "info", 2000);
 }
 
-// --- Định dạng Ngày & Giờ ---
+// --- Định dạng Ngày & Giờ (from a.html) ---
 function formatDateTime(dtString) {
     if (!dtString) return "N/A";
     const d = new Date(dtString);
-    if (isNaN(d.getTime())) return dtString;
+    if (isNaN(d.getTime())) return dtString; // Return original if invalid
+    // Format to DD/MM/YYYY HH:MM (seconds can be added if needed)
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-function formatDateForFilter(dtString) {
+function formatDateForFilter(dtString) { // Used for detailed stats grouping
     if (!dtString) return "";
     const d = new Date(dtString);
-    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
+    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
-// --- Quản lý Modal ---
+// --- Quản lý Modal (from a.html) ---
 function showLoadingModal(title = "Đang xử lý...", message = "Vui lòng chờ trong giây lát.") {
     const modal = document.getElementById("loading-modal");
     if (modal) {
@@ -1567,7 +1593,7 @@ function adjustModalScroll(modalElementOrId) {
 }
 
 
-// --- Chỗ dành sẵn cho Bảng ---
+// --- Chỗ dành sẵn cho Bảng (from a.html) ---
 function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
     const tbody = document.getElementById(tableBodyId);
     if (!tbody) return;
@@ -1575,7 +1601,7 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
-// --- Lấy và Hiển thị Dữ liệu ---
+// --- Lấy và Hiển thị Dữ liệu (from a.html) ---
 function fetchHistory() {
     setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
     const detailedStatsSection = document.getElementById('detailed-stats-section');
@@ -1632,7 +1658,7 @@ function refreshData() {
     showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
 }
 
-function getExteriorColorStyle(exteriorValue) {
+function getExteriorColorStyle(exteriorValue) { // From a.html
     const outlineStyle = "text-shadow: -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 1px 1px 0 #808080, 0 0 5px #808080;";
     const specificFontWeight = `font-weight: 600;`;
     const defaultFontWeight = `font-weight: normal;`;
@@ -1641,12 +1667,13 @@ function getExteriorColorStyle(exteriorValue) {
     if (!exteriorValue) return defaultColorStyle;
     const lowerExteriorValue = exteriorValue.toLowerCase();
 
+    // Copied exact map from a.html
     if (lowerExteriorValue === "brahminy white (ce18)") return `color: white; ${outlineStyle} ${specificFontWeight}`;
     if (lowerExteriorValue === "sunset orb (ce1a)") return `color: var(--exterior-orange-text); ${specificFontWeight}`;
     if (lowerExteriorValue === "crimson red (ce1m)") return `color: var(--exterior-red-text); ${specificFontWeight}`;
     if (lowerExteriorValue === "vinfast blue (ce1n)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
     if (lowerExteriorValue === "neptune grey (ce14)") return `color: #778899; ${specificFontWeight}`;
-    if (lowerExteriorValue === "jet black (ce11)") return `color: black; ${specificFontWeight}`;
+    if (lowerExteriorValue === "jet black (ce11)") return `color: black; ${specificFontWeight}`; // Corrected to black for better visibility with white text in dark mode
     if (lowerExteriorValue === "electric blue (ce1j)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
     if (lowerExteriorValue === "zenith grey (ce1v)") return `color: #B0C4DE; ${specificFontWeight}`;
     if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
@@ -1676,32 +1703,34 @@ function getExteriorColorStyle(exteriorValue) {
     if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
     if (lowerExteriorValue === "de sat silver ind12007 (ce17)") return `color: var(--exterior-grey-text); ${specificFontWeight}`;
 
+    // Fallback logic from a.html
     if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("deep ocean")) return `color: white; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("deep ocean")) return `color: white; ${specificFontWeight}`; // Adjusted for dark mode visibility
     if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black")) return `color: white; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black")) return `color: white; ${specificFontWeight}`; // Adjusted for dark mode visibility
     if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
     return defaultColorStyle;
 }
 
-function getStatusClass(statusText) {
+function getStatusClass(statusText) { // From a.html
     if (!statusText) return 'status-default';
     const lowerStatus = statusText.toLowerCase();
     if (lowerStatus.includes('chờ xuất hóa đơn')) return 'status-pending-invoice';
     if (lowerStatus.includes('đã xuất hóa đơn')) return 'status-invoice-issued';
     if (lowerStatus.includes('chưa tìm thấy vin') || lowerStatus.includes('chưa có')) return 'status-vin-not-found';
+    // Heuristic: if not explicitly negative and somewhat long, assume it's a positive/issued status
     const knownNegativeKeywords = ['chờ', 'chưa', 'không'];
     if (!knownNegativeKeywords.some(keyword => lowerStatus.includes(keyword)) && lowerStatus.length > 5) return 'status-invoice-issued';
     return 'status-default';
 }
 
-function renderSummary(data) {
+function renderSummary(data) { // From a.html
     if (!Array.isArray(data) || data.length === 0) {
         document.getElementById("summary-total").textContent = "0";
         document.getElementById("summary-top-car").textContent = "N/A";
@@ -1718,7 +1747,7 @@ function renderSummary(data) {
     document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "N/A";
 }
 
-function renderHistoryTable(dataToRender) {
+function renderHistoryTable(dataToRender) { // From a.html
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
     if (!dataToRender || dataToRender.length === 0) {
@@ -1727,9 +1756,9 @@ function renderHistoryTable(dataToRender) {
         return;
     }
     tbody.innerHTML = dataToRender.map((row, i) => {
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; // Use a temp ID if order number is missing for some reason
         const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
-        const statusText = row["Kết quả"] || "Chưa có";
+        const statusText = row["Kết quả"] || "Chưa có"; // Default status if missing
         const statusClass = getStatusClass(statusText);
         return `
         <tr onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')" style="cursor: pointer;">
@@ -1748,18 +1777,18 @@ function renderHistoryTable(dataToRender) {
 }
 
 
-function filterHistory() {
+function filterHistory() { // From a.html (no direct filters, just renders based on user type)
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
     let dataToDisplay = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     renderHistoryTable(dataToDisplay);
 }
 
-// --- Sắp xếp ---
+// --- Sắp xếp (from a.html) ---
 let lastSortColumn = '';
 let lastSortDirection = 'asc';
 function sortTable(columnKey) {
-    const dataKey = columnKey;
+    const dataKey = columnKey; // In a.html, columnKey directly maps to dataKey
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
     let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
@@ -1772,9 +1801,9 @@ function sortTable(columnKey) {
     lastSortColumn = dataKey;
 
     dataToSort.sort((a, b) => {
-        let valA = a[dataKey] ?? "";
+        let valA = a[dataKey] ?? ""; // Handle potential undefined values
         let valB = b[dataKey] ?? "";
-        if (dataKey === "STT") {
+        if (dataKey === "STT") { // Special handling for STT if it's based on original index
             const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
             const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
             return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
@@ -1792,7 +1821,7 @@ function sortTable(columnKey) {
     renderHistoryTable(dataToSort);
 }
 
-// --- Hàm Xuất ---
+// --- Hàm Xuất (from a.html) ---
 function exportToExcel() {
     if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -1803,7 +1832,7 @@ function exportToExcel() {
     const dataWithFormattedHeaders = dataToExport.map((row, index) => {
         const newRow = {"STT": index + 1};
         headers.slice(1).forEach(header => {
-            const value = row[header];
+            const value = row[header]; // header already matches key from labelMap used in a.html
             newRow[header] = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(header)) ? formatDateTime(value) : (value ?? "");
         });
         return newRow;
@@ -1823,18 +1852,19 @@ function exportToPDF() {
     showLoadingModal("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
     const exteriorCells = table.querySelectorAll('td[data-label="Ngoại Thất"] span');
     const originalExteriorStyles = [];
-    exteriorCells.forEach(cell => { originalExteriorStyles.push(cell.style.cssText); cell.style.textShadow = 'none'; });
+    exteriorCells.forEach(cell => { originalExteriorStyles.push(cell.style.cssText); cell.style.textShadow = 'none'; }); // Remove shadow for PDF
     const statusCells = table.querySelectorAll('td[data-label="Trạng Thái"] span.status-badge');
-    statusCells.forEach(cell => cell.classList.remove('status-badge-pdf-export'));
+    statusCells.forEach(cell => cell.classList.remove('status-badge-pdf-export')); // Assuming this class affects PDF rendering negatively
     html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight,
-        onclone: (documentClone) => {
+        onclone: (documentClone) => { // Attempt to simplify colors for PDF
             const clonedStatusCells = documentClone.querySelectorAll('td[data-label="Trạng Thái"] span');
             clonedStatusCells.forEach(clonedCell => {
                 const statusText = clonedCell.textContent || "";
-                if (statusText.includes('Chờ xuất hóa đơn')) clonedCell.style.color = '#856404';
-                else if (statusText.includes('Đã xuất hóa đơn')) clonedCell.style.color = '#0f5132';
-                else if (statusText.includes('Chưa tìm thấy VIN') || statusText.includes('Chưa có')) clonedCell.style.color = '#721c24';
-                else clonedCell.style.color = '#495057';
+                // Apply basic text colors instead of complex badge styles for PDF
+                if (statusText.includes('Chờ xuất hóa đơn')) clonedCell.style.color = '#856404'; // Dark yellow/brown
+                else if (statusText.includes('Đã xuất hóa đơn')) clonedCell.style.color = '#0f5132'; // Dark green
+                else if (statusText.includes('Chưa tìm thấy VIN') || statusText.includes('Chưa có')) clonedCell.style.color = '#721c24'; // Dark red
+                else clonedCell.style.color = '#495057'; // Default dark grey
             });
         }
     })
@@ -1850,13 +1880,13 @@ function exportToPDF() {
         pdf.save('LichSuGhepXe_ThuanAn.pdf');
         closeModal('loading-modal'); showNotification("Đã xuất PDF thành công!", "success", 2000);
     }).catch(err => { closeModal('loading-modal'); showNotification(`Lỗi xuất PDF: ${err.message}`, "error", 4000);
-    }).finally(() => {
+    }).finally(() => { // Restore original styles
         exteriorCells.forEach((cell, index) => { cell.style.cssText = originalExteriorStyles[index]; });
-        statusCells.forEach(cell => cell.classList.add('status-badge-pdf-export'));
+        statusCells.forEach(cell => cell.classList.add('status-badge-pdf-export')); // Add back if it was there
     });
 }
 
-// --- Gửi Biểu mẫu ---
+// --- Gửi Biểu mẫu (from a.html, uses its `orderId` for redirection) ---
 function previewForm(e) {
     e.preventDefault();
     const form = document.getElementById("vinfast-form");
@@ -1865,21 +1895,29 @@ function previewForm(e) {
         form.reportValidity(); return;
     }
     formData = {}; let html = "";
-    form.querySelectorAll("input, select").forEach(input => {
-        if (input.name) {
+    // Iterate over form elements, including 'ngay_coc' but excluding 'chic_file_input' for data object
+    form.querySelectorAll("input:not([type='file']), select").forEach(input => {
+        if (input.name && input.name !== 'chic_file_input') { // Exclude chic_file_input from formData
             formData[input.name] = input.value;
             const displayName = labelMap[input.name] || input.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const value = input.type === "datetime-local" ? formatDateTime(input.value) : (input.value || "Chưa nhập");
             html += `<div class="detail-item"><strong>${displayName}:</strong> <span>${value}</span></div>`;
         }
     });
+    // Add file name to preview if selected
+    const chicFileInput = document.getElementById('chic_file_input');
+    const chicFilenameDisplay = document.getElementById('chic-filename');
+    if (chicFileInput && chicFileInput.files.length > 0 && chicFilenameDisplay) {
+        html += `<div class="detail-item"><strong>Ảnh Ủy Nhiệm Chi:</strong> <span>${chicFilenameDisplay.textContent}</span></div>`;
+    }
+
     document.getElementById("preview-content").innerHTML = html;
     const previewModal = document.getElementById("preview-modal");
     previewModal.classList.add("active"); adjustModalScroll(previewModal);
 }
 
-let redirectTimeout;
-function confirmSubmit() {
+let redirectTimeout; // from a.html
+function confirmSubmit() { // from a.html
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
         closeModal("preview-modal"); return;
@@ -1887,47 +1925,60 @@ function confirmSubmit() {
     showLoadingModal("Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
     closeModal("preview-modal");
     formData["thoi_gian_nhap"] = new Date().toISOString(); formData["trang_thai"] = "Chưa ghép";
-    const formDataToSend = new FormData();
+    const formDataToSend = new FormData(); // Create FormData for potential file upload
     Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
 
-    fetch(apiURL, { method: "POST", body: formDataToSend })
+    // Append file if present - chic_file_input is the ID from yeucaughepxe.html
+    const chicFileInput = document.getElementById('chic_file_input');
+    if (chicFileInput && chicFileInput.files.length > 0) {
+        formDataToSend.append('chic_file_input', chicFileInput.files[0], chicFileInput.files[0].name);
+    }
+
+
+    fetch(apiURL, { method: "POST", body: formDataToSend }) // Send as FormData
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi gửi: ${response.status} ${text}`) }))
-        .then(() => fetch(apiURL))
+        .then(() => fetch(apiURL)) // Fetch updated data
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
         .then(updatedData => {
             closeModal("loading-modal"); clearFormDraft(); document.getElementById("vinfast-form").reset();
             const consultantInput = document.getElementById("ten_ban_hang");
             if (consultantInput) consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
             const dongXeSelect = document.getElementById('dong_xe');
-            if (dongXeSelect) restrictVersion(dongXeSelect);
+            if (dongXeSelect) restrictVersion(dongXeSelect); // Reset version selection
+            resetChicUploadUI(); // Reset file input UI
+
             const daghep = updatedData.daghep || []; const chuaghep = updatedData.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+
             const successModal = document.getElementById("success-modal");
             if (successModal) { successModal.classList.add("active"); adjustModalScroll(successModal); }
+
             const currentUser = sessionStorage.getItem("currentConsultant"); const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
             renderHistoryTable(dataForHistoryTable); renderSummary(globalHistoryData); prepareDetailedStats(globalHistoryData);
+
             const detailedStatsSection = document.getElementById('detailed-stats-section');
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
                 renderDetailedStatsTable(detailedStatsData); renderCharts(detailedStatsData);
             }
+            orderId = formData["so_don_hang"]; // Use orderId from a.html for redirection
             clearTimeout(redirectTimeout);
             redirectTimeout = setTimeout(() => {
                 if (document.getElementById("success-modal")?.classList.contains("active")) {
-                    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(formData["so_don_hang"])}`;
+                    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
                 }
             }, 2000);
         })
         .catch(error => { closeModal("loading-modal"); showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000); });
 }
 
-function closeModalAndRedirect() {
+function closeModalAndRedirect() { // from a.html, uses its `orderId`
     clearTimeout(redirectTimeout); closeModal('success-modal');
-    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(formData["so_don_hang"])}`;
+    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
 }
 
-// --- Thống kê Chi tiết & Biểu đồ ---
+// --- Thống kê Chi tiết & Biểu đồ (from a.html) ---
 function prepareDetailedStats(data) {
     const statsMap = new Map();
     data.forEach(row => {
@@ -2007,14 +2058,14 @@ function renderCharts(dataForCharts) {
     advisorChart = createChartInstance("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
 }
 
-function updateChartColors() {
+function updateChartColors() { // from a.html
     const activeTabLink = document.querySelector('.tabs a.active');
     if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats') && detailedStatsData.length > 0) {
         renderCharts(detailedStatsData);
     }
 }
 
-function exportDetailedStatsToExcel() {
+function exportDetailedStatsToExcel() { // from a.html
     if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
     const dataToExport = detailedStatsData;
     if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", "info", 3000);
@@ -2027,6 +2078,7 @@ function exportDetailedStatsToExcel() {
     showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
+// --- Chuyển Tab (from a.html, but layout logic for yeucaughepxe.html is to show both form and history on 'form' tab) ---
 function switchTab(tabName, element) {
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
     if (element) element.classList.add("active");
@@ -2036,7 +2088,8 @@ function switchTab(tabName, element) {
     const isDataCached = globalHistoryData && globalHistoryData.length > 0;
 
     if (tabName === 'form') {
-        showSection(sections.form); showSection(sections.history); // REVERTED: Show both form and history for this specific layout
+        showSection(sections.form);
+        showSection(sections.history); // For yeucaughepxe.html layout, form tab shows both
         if (isDataCached) { filterHistory(); renderSummary(globalHistoryData); } else { fetchHistory(); }
     } else if (tabName === 'history') {
         showSection(sections.history);
@@ -2057,6 +2110,7 @@ function toggleMenu() { // This is yeucaughepxe.html's original tab toggle for m
     if (hamburger) hamburger.classList.toggle("active");
 }
 
+// --- Tự động làm mới (from a.html) ---
 function toggleAutoRefresh() {
     const icon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
     if (autoRefreshInterval) {
@@ -2070,6 +2124,7 @@ function toggleAutoRefresh() {
     }
 }
 
+// --- Đồng bộ cuộn (from a.html) ---
 function setupScrollSync() {
     document.querySelectorAll(".table-wrapper").forEach(wrapper => {
         const header = wrapper.querySelector("thead");
@@ -2077,6 +2132,7 @@ function setupScrollSync() {
     });
 }
 
+// --- Thông báo (from a.html) ---
 function showNotification(message, type = "info", duration = 3000) {
     const container = document.getElementById("notification-container") || document.body;
     const notification = document.createElement("div");
@@ -2091,31 +2147,36 @@ function showNotification(message, type = "info", duration = 3000) {
     setTimeout(() => { notification.classList.remove('show'); notification.addEventListener('transitionend', () => notification.remove()); }, duration);
 }
 
+// --- Logic Biểu mẫu (from a.html) ---
 function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
     const phienBanSelect = document.querySelector('select[name="phien_ban"]');
     if (!phienBanSelect) { showNotification("Lỗi: Không tìm thấy trường chọn Phiên Bản!", "error", 3000); return; }
     const selectedDongXe = dongXeSelectElement.value;
     const versionsMap = { "VF 3": ["Base"], "VF 5": ["Plus"], "VF 6": ["Eco", "Plus"], "VF 7": ["Eco", "Plus"], "VF 8": ["Eco", "Plus"], "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"], "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"] };
-    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
+    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"]; // from a.html
     const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
     const currentPhienBanValue = phienBanSelect.value;
-    phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
+    phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; // Set default selected index to 0 after clearing
     let valueToSelect = "";
     if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) valueToSelect = savedPhienBanValue;
     else if (availableVersions.includes(currentPhienBanValue)) valueToSelect = currentPhienBanValue;
+
     availableVersions.forEach(version => { const option = document.createElement('option'); option.value = version; option.textContent = version; if (version === valueToSelect) option.selected = true; phienBanSelect.appendChild(option); });
-    if (!valueToSelect && phienBanSelect.options.length > 1) phienBanSelect.selectedIndex = 0;
-    else if (!valueToSelect && phienBanSelect.options.length <=1) phienBanSelect.value = "";
+    if (!valueToSelect && phienBanSelect.options.length > 1) phienBanSelect.selectedIndex = 0; // Default to "Chọn phiên bản"
+    else if (!valueToSelect && phienBanSelect.options.length <=1) phienBanSelect.value = ""; // If no specific value and no options, clear
 }
 
+// --- Cuộn lên đầu trang (from a.html) ---
 function initScrollToTopButton() {
     const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
     window.onscroll = () => { const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; if (show) btn.classList.add('visible'); else btn.classList.remove('visible'); };
 }
 function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
 
+// --- Utils (from a.html) ---
 function debounce(func, delay) { let timeoutId; return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); }; }
 
+// --- Cảnh báo Hóa đơn Chờ (from a.html) ---
 function checkPendingInvoicesWarning() {
     const consultantName = sessionStorage.getItem("currentConsultant"); if (!consultantName || consultantName === ADMIN_USER) return;
     if (!globalHistoryData || globalHistoryData.length === 0) return;
@@ -2123,9 +2184,301 @@ function checkPendingInvoicesWarning() {
         const hasVINInKetQua = row["Kết quả"] && row["Kết quả"].trim() !== "" && row["Kết quả"] !== "Chưa tìm thấy VIN" && row["Kết quả"] !== "Chưa có";
         const hasVINDirectly = row["VIN"] && row["VIN"].trim() !== "";
         const isMatched = hasVINInKetQua || hasVINDirectly;
+        // This logic is to check if a VIN has been assigned (either in "Kết quả" or "VIN" field)
+        // and potentially implies an invoice might be pending if it's not explicitly stated as issued.
+        // The original logic might be more nuanced based on specific "Kết quả" strings.
+        // For now, any matched VIN for the current non-admin user triggers the warning.
         return row["Tên tư vấn bán hàng"] === consultantName && isMatched;
     });
     if (pendingInvoiceOrders.length > 0) { const modal = document.getElementById("pending-invoice-warning-modal"); if (modal) { modal.classList.add("active"); adjustModalScroll(modal); } }
+}
+
+// --- OCR & DATE PARSING FUNCTIONS (from yeucaughepxe.html) ---
+function parseAndValidateDate(dayStr,monthStr,yearStr,hourStr,minuteStr,secondStr){if(!dayStr||!monthStr||!yearStr){console.warn("parseAndValidateDate: Thiếu Ngày, Tháng, Năm:",{dayStr,monthStr,yearStr,hourStr,minuteStr});return null;}const sNS=s=>s?String(s).replace(/\D/g,''):'';const sMSM=s=>s?String(s).toLowerCase().replace(/[,.]/g,'').trim():'';let clDS=sNS(dayStr);let oMS=String(monthStr).trim();let clMS=sNS(oMS);let clYS=sNS(yearStr);let clHS=sNS(hourStr||'00');let clMnS=sNS(minuteStr||'00');let clSS=sNS(secondStr||'00');if(clHS==='')clHS='00';if(clMnS==='')clMnS='00';if(clSS==='')clSS='00';const mM={"tháng một":1,"tháng giêng":1,"tháng 1":1,"thg 1":1,"t1":1,"thg1":1,"jan":1,"january":1,"tháng hai":2,"tháng 2":2,"thg 2":2,"t2":2,"thg2":2,"feb":2,"february":2,"tháng ba":3,"tháng 3":3,"thg 3":3,"t3":3,"thg3":3,"mar":3,"march":3,"tháng tư":4,"tháng 4":4,"thg 4":4,"t4":4,"thg4":4,"apr":4,"april":4,"tháng năm":5,"tháng 5":5,"thg 5":5,"t5":5,"thg5":5,"may":5,"tháng sáu":6,"tháng 6":6,"thg 6":6,"t6":6,"thg6":6,"jun":6,"june":6,"tháng bảy":7,"tháng 7":7,"thg 7":7,"t7":7,"thg7":7,"jul":7,"july":7,"tháng tám":8,"tháng 8":8,"thg 8":8,"t8":8,"thg8":8,"aug":8,"august":8,"tháng chín":9,"tháng 9":9,"thg 9":9,"t9":9,"thg9":9,"sep":9,"september":9,"tháng mười":10,"tháng 10":10,"thg 10":10,"t10":10,"thg10":10,"oct":10,"october":10,"tháng mười một":11,"tháng 11":11,"thg 11":11,"t11":11,"thg11":11,"nov":11,"november":11,"tháng mười hai":12,"tháng 12":12,"thg 12":12,"t12":12,"thg12":12,"dec":12,"december":12};const mLU=sMSM(oMS);if(mM[mLU])clMS=String(mM[mLU]);else if(!/^\d+$/.test(clMS)){const nP=sNS(oMS);if(nP&&/^\d+$/.test(nP)&&parseInt(nP,10)>=1&&parseInt(nP,10)<=12)clMS=nP;else{console.warn("parseAndValidateDate: Tháng không nhận diện được:",oMS,"(lookup:",mLU+")");return null;}}if(!clDS||!clMS||!clYS){console.warn("parseAndValidateDate: Ngày, Tháng, Năm không hợp lệ sau làm sạch:",{clDS,clMS,clYS});return null;}let y=parseInt(clYS,10);if(isNaN(y)){console.warn("parseAndValidateDate: Năm NaN",clYS);return null;}const cY=new Date().getFullYear();if(clYS.length===2){const cC=Math.floor(cY/100)*100;const yYI=parseInt(clYS,10);if(yYI>(cY%100+15)&&yYI<=99)y=1900+yYI;else y=cC+yYI;}else if(y<100&&clYS.length>=3&&clYS.length<=4)y=2000+parseInt(clYS.slice(-2),10);else if(y>99&&y<1000){console.warn("parseAndValidateDate: Năm 3 chữ số không hợp lệ:",y);return null;}if(y<cY-100||y>cY+20){console.warn("parseAndValidateDate: Năm ngoài phạm vi:",y,"(current:",cY,")");return null;}const mth=parseInt(clMS,10);const d=parseInt(clDS,10);const h=parseInt(clHS,10);const mn=parseInt(clMnS,10);const s=parseInt(clSS,10);if(isNaN(mth)||isNaN(d)||isNaN(h)||isNaN(mn)||isNaN(s)){console.warn("parseAndValidateDate: Một thành phần ngày giờ NaN sau parseInt.",{mth,d,h,mn,s});return null;}const dIM=[0,31,(y%4===0&&y%100!==0)||y%400===0?29:28,31,30,31,30,31,31,30,31,30,31];if(mth<1||mth>12||d<1||d>dIM[mth]||h<0||h>23||mn<0||mn>59||s<0||s>59){console.warn("parseAndValidateDate: Giá trị ngày giờ không hợp lệ:",{y,mth,d,h,mn,s});return null;}const dO=new Date(y,mth-1,d,h,mn,s);if(dO.getFullYear()===y&&(dO.getMonth()+1)===mth&&dO.getDate()===d&&dO.getHours()===h&&dO.getMinutes()===mn&&dO.getSeconds()===s){const p=n=>String(n).padStart(2,'0');let r=`${y}-${p(mth)}-${p(d)}T${p(h)}:${p(mn)}`;if(secondStr&&secondStr!=='00'||s!==0)r+=`:${p(s)}`;return r;}console.warn("parseAndValidateDate: Xác thực Date object thất bại:",{y,mth,d,h,mn,s},"Generated Date:",dO);return null;}
+
+function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+function resetChicUploadUI() {
+    const chicInput = document.getElementById('chic_file_input');
+    const chicWrapper = document.getElementById('chic-upload-wrapper');
+    const chicPrompt = document.getElementById('chic-upload-prompt');
+    const chicPreviewDetails = document.getElementById('chic-file-preview-details');
+    const chicPreviewImg = document.getElementById('chic-preview-img');
+    const chicFilename = document.getElementById('chic-filename');
+    const chicFilesize = document.getElementById('chic-filesize');
+    const chicOcrStatus = document.getElementById('chic_ocr_status');
+    const ngayCocInput = document.getElementById('ngay_coc');
+
+    if (chicInput) chicInput.value = null;
+    if (chicWrapper) chicWrapper.classList.remove('file-selected');
+    if (chicPrompt) chicPrompt.style.opacity = '1';
+    if (chicPreviewDetails) {
+        chicPreviewDetails.style.opacity = '0';
+        chicPreviewDetails.style.pointerEvents = 'none';
+    }
+    if (chicPreviewImg) chicPreviewImg.src = '#';
+    if (chicFilename) { chicFilename.textContent = ''; chicFilename.title = ''; }
+    if (chicFilesize) chicFilesize.textContent = '';
+    if (chicOcrStatus) {
+        chicOcrStatus.textContent = '';
+        chicOcrStatus.className = 'mt-1 text-xs italic text-gray-500 dark:text-gray-400';
+    }
+    if (ngayCocInput) ngayCocInput.value = ""; // Xóa ngày cọc đã điền
+    saveFormDraft(); // Lưu lại trạng thái form (không có ảnh/ngày cọc)
+}
+
+function processChicFile(file) {
+    const chicWrapper = document.getElementById('chic-upload-wrapper');
+    const chicInput = document.getElementById('chic_file_input');
+    const chicPrompt = document.getElementById('chic-upload-prompt');
+    const chicPreviewDetails = document.getElementById('chic-file-preview-details');
+    const chicPreviewImg = document.getElementById('chic-preview-img');
+    const chicFilename = document.getElementById('chic-filename');
+    const chicFilesize = document.getElementById('chic-filesize');
+    const chicOcrStatus = document.getElementById('chic_ocr_status');
+
+    if (chicOcrStatus) { chicOcrStatus.textContent = ''; chicOcrStatus.className = 'mt-1 text-xs italic text-gray-500 dark:text-gray-400'; }
+
+    if (!file.type.startsWith('image/')) {
+        showNotification('Chỉ chấp nhận file ảnh.', 'error');
+        if (chicOcrStatus) { chicOcrStatus.textContent = 'Lỗi: File không phải ảnh.'; chicOcrStatus.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400'; }
+        if (chicInput) chicInput.value = null;
+        chicWrapper?.classList.remove('file-selected');
+        if (chicPrompt) chicPrompt.style.opacity = '1';
+        if (chicPreviewDetails) { chicPreviewDetails.style.opacity = '0'; chicPreviewDetails.style.pointerEvents = 'none'; }
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        showNotification('File quá lớn (tối đa 10MB).', 'error');
+        if (chicOcrStatus) { chicOcrStatus.textContent = 'Lỗi: File quá lớn.'; chicOcrStatus.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400'; }
+        if (chicInput) chicInput.value = null;
+        chicWrapper?.classList.remove('file-selected');
+        if (chicPrompt) chicPrompt.style.opacity = '1';
+        if (chicPreviewDetails) { chicPreviewDetails.style.opacity = '0'; chicPreviewDetails.style.pointerEvents = 'none'; }
+        return;
+    }
+
+    chicWrapper?.classList.add('file-selected');
+    if (chicPrompt) chicPrompt.style.opacity = '0';
+    if (chicPreviewDetails) { chicPreviewDetails.style.opacity = '1'; chicPreviewDetails.style.pointerEvents = 'auto'; }
+
+    const reader = new FileReader();
+    reader.onload = (e) => { if (chicPreviewImg) chicPreviewImg.src = e.target.result; };
+    reader.readAsDataURL(file);
+
+    if (chicFilename) { chicFilename.textContent = file.name; chicFilename.title = file.name; }
+    if (chicFilesize) chicFilesize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+
+    const mockEvent = { target: { files: [file] } };
+    xuLyAnhUyNhiemChiChic(mockEvent);
+}
+
+async function xuLyAnhUyNhiemChiChic(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const statusElement = document.getElementById('chic_ocr_status');
+    const ngayCocInput = document.getElementById('ngay_coc');
+
+    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Đang chuẩn bị...';
+    statusElement.className = 'mt-1 text-xs italic text-primary-color dark:text-secondary-color font-medium';
+
+    try {
+        if (typeof Tesseract === 'undefined') {
+            statusElement.textContent = 'Lỗi: Tesseract chưa tải.';
+            statusElement.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400';
+            showNotification('Lỗi: Thư viện Tesseract chưa tải xong. Vui lòng F5.', 'error');
+            return;
+        }
+        statusElement.innerHTML = '<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (0%)';
+        const { data: { text } } = await Tesseract.recognize(file, 'vie+eng', {
+            logger: m => { if (m.status === 'recognizing text') statusElement.innerHTML = `<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (${Math.round(m.progress*100)}%)`; }
+        });
+        statusElement.innerHTML = '<i class="fas fa-search mr-1"></i>Đang tìm ngày giờ...';
+
+        let cleanedText = text.replace(/\n+/g, ' ');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (match, h, _, m, s) => `${h}:${m}${s ? ':'+s : ''}`);
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)/gi, '$1');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giây|giay|s|sec)/gi, '$1');
+        cleanedText = cleanedText.replace(/\s*:\s*/g, ':').replace(/\s*-\s*/g, '-').replace(/\s*\/\s*/g, '/').replace(/\s*\.\s*/g, '.');
+        cleanedText = cleanedText.replace(/(\d{1,2})([\/.-])(\d{1,2})\2(\d{2})(?!\d)/g, (match, day, sep, month, yearYY) => {
+            const cY = new Date().getFullYear(); const yYI = parseInt(yearYY,10); let fY;
+            if (yYI > (cY % 100 + 15) && yYI <= 99) fY = 1900 + yYI; else fY = Math.floor(cY / 100) * 100 + yYI;
+            return `${day}/${month}/${fY}`;
+        });
+        cleanedText = cleanedText.replace(/(\d{1,2})\.(\d{1,2})\/(\d{1,2})\/(\d{4})/g, '$2/$3/$4');
+        cleanedText = cleanedText.replace(/(\d{1,2})\/(\d{1,2})\.(\d{1,2})\/(\d{4})/g, '$1/$2/$4');
+        cleanedText = cleanedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+        let extractedDateTime = null; let bestMatchScore = -1; let bestMatchDetails = {};
+        const monthTextRegexPart = `(?:tháng|thg|t)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-z\u00C0-\u1EF9]{3,}`;
+        const dateSeparatorRegexPart = `[\\s\\/\\.-]+`;
+        const patternsWithParsers = [
+            { regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
+            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 15, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)" },
+            { regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện)\\s*(\\d{1,2})\\s*(?:tháng|thg)\\s*(\\d{1,2})(?:,\\s*|\\s+)(\\d{4})\\s*(?:lúc|\\@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 14.5, name: "Techcombank: Ngày chuyển/thực hiện DD thg MM,YYYY lúc HH:MM"
+    },
+    { // VCB Digibank: HH:MM Thứ X DD/MM/YYYY (bao gồm Chủ Nhật)
+        regex: new RegExp(`(\\d{1,2}):(\\d{1,2})\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật)?\\s*,?\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], day: m[3], month: m[4], year: m[5], second: '00' }),
+        score: 14, name: "HH:MM [DayOfWeek] DD/MM/YYYY (VCB Digibank)"
+    },
+    { // TPBank: "Chuyển nhanh Napas 247:HH:MM DD/MM/YYYY"
+        regex: new RegExp(`Chuyển\\s*nhanh\\s*Napas\\s*247\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second:m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 13.5, name: "TPBank Napas"
+    },
+    { // Sacombank & tương tự: YYYY-MM-DD HH:MM:SS (ảnh z66...2514.jpg)
+        regex: new RegExp(`(\\d{4})-(\\d{1,2})-(\\d{1,2})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+        parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 13, // Đặt điểm cao cho định dạng này
+        name: "YYYY-MM-DD HH:MM:SS (Sacombank like)"
+    },
+    { // Mẫu "Ngày thực hiện HH:MM DD/MM/YYYY" (từ ảnh z6613642135253...jpg)
+        regex: new RegExp(`Ngày\\s*thực\\s*hiện\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 12.5,
+        name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY (Generic Slip)"
+    },
+    { // BIDV (chung hơn): "Ngày thực hiện HH:MM DD/MM/YYYY"
+        regex: new RegExp(`Ngày\\s*thực hiện\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 12, name: "BIDV Ngày thực hiện HH:MM DD/MM/YYYY (General)"
+    },
+    { // BIDV với "vào lúc": vào lúc DD/MM/YYYY HH:MM:SS
+        regex: new RegExp(`(?:vào\\s*lúc|lúc)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 11.5,
+        name: "(vào) lúc DD/MM/YYYY HH:MM:SS (BIDV)"
+    },
+    { // SHB: "Thời gian:HH:MM:SS, DD/MM/YYYY"
+        regex: new RegExp(`Thời\\s*gian:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 11, name: "SHB Thời gian"
+    },
+    { // Agribank: DD-MM-YYYY HH:MM:SS
+        regex: new RegExp(`(\\d{1,2})-(\\d{1,2})-(\\d{4})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 10.5,
+        name: "DD-MM-YYYY HH:MM:SS (Agribank)"
+    },
+
+    // 1. Các mẫu có từ khóa và cấu trúc ngày giờ rõ ràng (điểm trung bình)
+    { // "Ngày giao dịch/lập lệnh/...: DD/MM/YYYY lúc HH:MM:SS"
+        regex: new RegExp(`Ngày\\s*(?:giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*lúc|\\s*@|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 10, name: "Ngày GD/Keyword lúc HH:MM(:SS)"
+    },
+    { // "Thời gian ... : HH:MM:SS ngày DD/MM/YYYY"
+        regex: new RegExp(`Thời\\s*gian\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 9, name: "Thời gian ... ngày DD/MM/YYYY"
+    },
+    { // Vietinbank (góc trên): DD/MM/YYYY HH:MM (không có giây)
+        regex: new RegExp(`(?<![:\\d])(\\d{1,2})/(\\d{1,2})/(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }),
+        score: 8.5,
+        name: "DD/MM/YYYY HH:MM (Vietinbank top-right like)"
+    },
+    { // "Ngày DD tháng MM năm YYYY lúc HH:MM:SS" (chấp nhận tháng chữ/số)
+        regex: new RegExp(`(?:Ngày\\s*)?(\\d{1,2})\\s*(?:tháng|Thg\\.?|T)?\\s*(${monthTextRegexPart})\\s*(?:năm|nam)?\\s*(\\d{2,4})\\s*(?:vào\\s*lúc|lúc|Time|@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 8, name: "Ngày DD tháng MM năm YYYY lúc HHMMSS"
+    },
+
+    // 2. Các mẫu ngày giờ chung chung hơn (điểm thấp hơn)
+    { // DD/MM/YYYY HH:MM:SS (có thể có "Ngày:"/"Date Time:" ở trước, hoặc dấu "T" phân cách)
+        regex: new RegExp(`(?:Ngày|Date\\s*Time)?:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})[\\s,T]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 7.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Chung, có thể có Ngày)"
+    },
+    { // "Vào lúc HH:MM, ngày DD/MM/YYYY"
+        regex: new RegExp(`(?:Vào\\s*lúc|Time):?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?,\\s*(?:ngày)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 7, name: "Vào lúc HH:MM, ngày DD/MM/YYYY"
+    },
+    { // YYYY/MM/DD HH:MM:SS (có thể có "Ngày:"/"Date:" ở trước, T separator)
+        // Cũng bao gồm YYYY-MM-DD[ T]HH:MM:SS nếu dateSeparatorRegexPart bắt được dấu "-"
+        regex: new RegExp(`(?:Date:|Ngày:)?\\s*(\\d{4})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{1,2})[\\sT,]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+        parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 6, name: "YYYY/MM/DD[ T]HH:MM:SS (Chung, có thể có Ngày/Date)"
+    },
+    { // HH:MM:SS DD/MM/YYYY (cải thiện để tránh số tiền, có thể có "ngày" ở giữa)
+        regex: new RegExp(`(?:^|\\s|[^\\d\\w.,])(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?(?!=\\d{3}[,\\.])\\s+(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 5, name: "HH:MM:SS DD/MM/YYYY (Cải thiện, có thể có 'ngày')"
+    },
+
+    // 3. Các pattern chỉ bắt ngày (score thấp nhất)
+    {
+        regex: new RegExp(`(?:Ngày|Date|Transaction Date|Ngay GD|Thời gian GD|Ngay thuc hien)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }),
+        score: 4, name: "Chỉ ngày với từ khóa (VD: Ngày DD/MM/YYYY)"
+    },
+    {
+        regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"), // Cho phép năm 2 hoặc 4 số ở đây
+        parser: (m) => ({ day: m[1], month: m[3], year: m[4], hour: '00', minute: '00', second: '00' }),
+        score: 3, name: "Chỉ ngày DD/MM/YYYY hoặc DD-MM-YYYY (rất chung, không có từ khóa)"
+    },
+    {
+        regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{2})(\\d{2})(\\d{4})(?!\\d)`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }),
+        score: 2.5, name: "Chỉ ngày dạng DDMMYYYY với từ khóa"
+    }
+];
+        patternsWithParsers.sort((a, b) => b.score - a.score);
+        for (const item of patternsWithParsers) {
+            let match; const gRegex = new RegExp(item.regex.source, item.regex.flags + (item.regex.flags.includes('g') ? '' : 'g'));
+            while ((match = gRegex.exec(cleanedText)) !== null) {
+                const components = item.parser(match);
+                if (components) {
+                    const tempDateTime = parseAndValidateDate(components.day,components.month,components.year,components.hour,components.minute,components.second);
+                    if (tempDateTime) {
+                        if (item.score > bestMatchScore) {
+                            bestMatchScore = item.score; extractedDateTime = tempDateTime;
+                            bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
+                        } else if (item.score === bestMatchScore) {
+                            // Ưu tiên kết quả có giờ phút hơn nếu điểm bằng nhau
+                            const currentHasTime = bestMatchDetails.components && (bestMatchDetails.components.hour !== '00' || bestMatchDetails.components.minute !== '00');
+                            const newHasTime = components.hour !== '00' || components.minute !== '00';
+                            if (newHasTime && !currentHasTime) { // new one has time, current one doesn't
+                                extractedDateTime = tempDateTime;
+                                bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
+                            }
+                        }
+                    }
+                }
+            }
+             if (bestMatchScore >= 10 && extractedDateTime) break; // Dừng sớm nếu có match tốt
+        }
+        // --- KẾT THÚC PHẦN LOGIC TRÍCH XUẤT NGÀY GIỜ ---
+
+        if (extractedDateTime) {
+            ngayCocInput.value = extractedDateTime;
+            statusElement.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã điền Ngày Cọc!';
+            statusElement.className = 'mt-1 text-xs italic text-green-600 dark:text-green-400 font-medium';
+            showNotification('Đã lấy ngày cọc từ ảnh!', 'success');
+            saveFormDraft();
+        } else {
+            statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Không tìm thấy ngày giờ.';
+            statusElement.className = 'mt-1 text-xs italic text-yellow-600 dark:text-yellow-400 font-medium';
+            showNotification('Không tìm thấy ngày cọc. Nhập thủ công.', 'warning');
+        }
+    } catch (error) {
+        console.error('Lỗi OCR (Chic UI):', error);
+        statusElement.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-1"></i>Lỗi xử lý ảnh.`;
+        statusElement.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400 font-medium';
+        showNotification('Lỗi xử lý ảnh: ' + (error.message || error), 'error');
+    }
+}
+
+// Hàm xuLyAnhUyNhiemChi gốc (nếu còn input file cũ, không thì có thể bỏ)
+// This function might be redundant if the old file input is removed.
+// Kept for completeness if there's any legacy part relying on it, but likely can be removed.
+async function xuLyAnhUyNhiemChi(event) {
+    console.log("Hàm xuLyAnhUyNhiemChi (cũ) được gọi, cần đảm bảo nó không xung đột hoặc được loại bỏ nếu không dùng.");
+    // Placeholder for original logic if it was different and needed for some other input
 }
 
 </script>
