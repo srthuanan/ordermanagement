@@ -88,7 +88,7 @@
             --status-default-bg-dark: #343a40;
             --status-default-text-dark: #adb5bd;
 
-             /* CSS Variables from index.html for sidebar - some might be duplicates, ensure they are harmonized */
+             /* CSS Variables from Index.html for sidebar - some might be duplicates, ensure they are harmonized */
             --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
             --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
         }
@@ -141,12 +141,12 @@
             background: var(--background-light);
             color: var(--text-light);
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow-x: auto; /* MODIFIED: Allow horizontal scroll for the whole page if necessary */
             transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
             font-size: 14px; /* Base font size from yeucaughepxe */
         }
 
-        /* Thanh cuộn tùy chỉnh (from index.html, slightly adapted) */
+        /* Thanh cuộn tùy chỉnh (from Index.html, slightly adapted) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
             background: var(--background-light); /* Use current page's variable */
@@ -244,7 +244,7 @@
         .hamburger.active { transform: rotate(90deg); }
 
 
-        /* Sidebar CSS from index.html */
+        /* Sidebar CSS from Index.html */
         .sidebar {
             position: fixed;
             top: 0; /* Will be adjusted by padding-top to sit below navbar */
@@ -482,7 +482,7 @@
         /* End Sidebar CSS */
 
 
-        /* Chú giải công cụ (Tooltip CSS from index.html - ensure it's not conflicting) */
+        /* Chú giải công cụ (Tooltip CSS from Index.html - ensure it's not conflicting) */
         [data-tooltip] { position: relative; }
         [data-tooltip]::after {
             content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
@@ -611,20 +611,34 @@
             background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color-light); white-space: nowrap; }
+        table {
+            border-collapse: collapse;
+            font-size: 13px;
+            width: 100%; /* MODIFIED: Ensure table takes full width of its wrapper */
+        }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color-light); }
         body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
         th {
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10;
             text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
             transition: background var(--transition-speed-fast) var(--transition-easing);
+            white-space: nowrap; /* MODIFIED: Keep header text on one line */
         }
         th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
 
-        td { overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        /* MODIFIED: td styles for full content display */
+        td {
+            /* overflow: hidden; */ /* REMOVED */
+            /* text-overflow: ellipsis; */ /* REMOVED */
+            /* max-width: 150px; */ /* REMOVED or adjust as needed */
+            white-space: normal; /* ALLOWS TEXT TO WRAP */
+            word-break: break-word; /* BREAKS LONG WORDS TO PREVENT OVERFLOW */
+            overflow: visible; /* ENSURES CONTENT IS NOT CLIPPED */
+            text-overflow: clip; /* REMOVES ELLIPSIS */
+        }
         td[title]:hover { cursor: pointer; }
         tbody tr { transition: background-color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing); }
         tbody tr:hover {
@@ -830,7 +844,7 @@
 
 
         /* Điều chỉnh đáp ứng */
-        @media (max-width: 900px) { /* Breakpoint from index.html for sidebar behavior */
+        @media (max-width: 900px) { /* Breakpoint from Index.html for sidebar behavior */
             .sidebar {
                 transform: translateX(-100%);
                 width: 220px; /* Sidebar width on mobile when open */
@@ -900,8 +914,9 @@
             .export-btn, .refresh-btn { width: 32px; height: 32px; font-size: 13px; }
 
             .table-wrapper { max-height: calc(100vh - 300px); }
+            /* MODIFIED: Table responsive styles - td styles are handled globally now */
             table { display: block; min-width: 0; font-size: 12px; }
-            thead { display: none; }
+            thead { display: none; } /* Keep thead hidden on mobile as per original design */
             tbody, tr { display: block; }
             tr {
                 margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
@@ -915,10 +930,11 @@
                 background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
                 border: 1px solid var(--border-color-dark);
             }
+            /* td styles for mobile are now more consistent with desktop, but with data-label */
             td {
                 display: flex; justify-content: space-between; align-items: baseline;
-                padding: 6px 0; border: none; font-size: 13px; max-width: none;
-                white-space: normal; text-overflow: clip;
+                padding: 6px 0; border: none; font-size: 13px; /* max-width: none; */ /* Already handled globally */
+                /* white-space: normal; text-overflow: clip; */ /* Already handled globally */
             }
             td:before {
                 content: attr(data-label); font-weight: 600; color: var(--primary-color);
@@ -960,25 +976,25 @@
         }
 
         @media (min-width: 768px) { /* Original tablet+ styles from yeucaughepxe */
-            .main-container:not(.collapsed) { 
-                 margin-left: 200px; 
+            .main-container:not(.collapsed) {
+                 margin-left: 200px;
             }
              .main-container.collapsed {
-                 margin-left: 60px; 
+                 margin-left: 60px;
             }
             .main-container {
                 flex-direction: row; padding: 15px; gap: 20px;
             }
-            .form-container { 
+            .form-container {
                 flex: 3; /* MODIFIED: Changed from 1 for 3:7 ratio */
                 /* max-width: 380px; */ /* MODIFIED: Removed to allow flex ratio to control width */
-                padding: 15px; 
-                animation-delay: 0.1s; 
+                padding: 15px;
+                animation-delay: 0.1s;
             }
             .grid-container { /* Base for detailed-stats and history (when history is alone) */
-                flex: 2; 
-                padding: 15px; 
-                animation-delay: 0.2s; 
+                flex: 2;
+                padding: 15px;
+                animation-delay: 0.2s;
             }
             #history-section { /* Specific override for history-section for 3:7 ratio */
                 flex: 7; /* MODIFIED: Added for 3:7 ratio */
@@ -1298,7 +1314,7 @@ const labelMap = {
     "ket_qua": "Kết Quả", "VIN": "VIN"
 };
 
-// --- Sidebar JavaScript from index.html ---
+// --- Sidebar JavaScript from Index.html ---
 function toggleSidebarDesktop() {
     if (window.innerWidth > 900) { // Only for desktop
         const sidebar = document.getElementById("sidebar");
@@ -2018,8 +2034,9 @@ function switchTab(tabName, element) {
     Object.values(sections).forEach(section => { if (section) section.classList.add('hidden'); });
     const showSection = (sectionElement) => { if (sectionElement) { sectionElement.classList.remove('hidden'); sectionElement.style.animation = 'none'; sectionElement.offsetHeight; sectionElement.style.animation = ''; } };
     const isDataCached = globalHistoryData && globalHistoryData.length > 0;
+
     if (tabName === 'form') {
-        showSection(sections.form); showSection(sections.history); // Show both form and history for this specific layout
+        showSection(sections.form); showSection(sections.history); // REVERTED: Show both form and history for this specific layout
         if (isDataCached) { filterHistory(); renderSummary(globalHistoryData); } else { fetchHistory(); }
     } else if (tabName === 'history') {
         showSection(sections.history);
@@ -2028,6 +2045,7 @@ function switchTab(tabName, element) {
         showSection(sections['detailed-stats']);
         if (isDataCached) { if(detailedStatsData.length === 0 && globalHistoryData.length > 0) prepareDetailedStats(globalHistoryData); renderDetailedStatsTable(detailedStatsData); renderCharts(detailedStatsData); } else { fetchHistory(); }
     }
+
     const mobileMenu = document.querySelector(".navbar .tabs"); if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger"); if (hamburger) hamburger.classList.remove("active");
 }
