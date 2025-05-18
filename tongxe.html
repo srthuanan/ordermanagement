@@ -638,6 +638,12 @@
     </button>
 
     <script>
+            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+
+    if (!isLoggedIn || isLoggedIn !== 'true') {
+        // Nếu chưa đăng nhập hoặc giá trị không đúng, chuyển về trang đăng nhập
+        window.location.href = 'index.html';
+    }
         let allSalesData = [];
         let currentPage = 1;
         const ROWS_PER_PAGE = 25; 
