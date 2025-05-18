@@ -1195,7 +1195,7 @@
         </button>
         <button class="hamburger" id="navbar-tabs-hamburger" aria-label="Mở menu trạng thái" data-tooltip="Mở/Đóng menu trạng thái">
             <i class="fas fa-layer-group"></i> </button>
-        <div class="logo-title" data-aos="fade-down" data-aos-delay="100">DANH SÁCH ĐƠN HÀNG GHÉP XE</div>
+        <div class="logo-title" data-aos="fade-down" data-aos-delay="100"></div>
         <div class="tabs" id="navbar-custom-tabs-container">
              <a href="#" onclick="switchTab('daghep', this)" class="active" data-tooltip="Đã Ghép">Đã Ghép</a>
              <a href="#" onclick="switchTab('chuaghep', this)" data-tooltip="Chưa Ghép">Chưa Ghép</a>
@@ -1356,7 +1356,7 @@
                 "time-greeting-evening": "Chào buổi tối",
                 "welcome-static-text": "Chào mừng, "
             },
-            en: { 
+            en: {
                 "homepage": "Homepage",
                 "theme-toggle-tooltip": "Toggle Light/Dark Theme",
                 "user-guide-tooltip": "Open user guide",
@@ -1390,11 +1390,11 @@
                 "welcome-static-text": "Welcome, "
             }
         };
-        let language = localStorage.getItem("language") || "vi"; 
-
+        let language = localStorage.getItem("language") || "vi";
+        let typingTimeout; // For welcome message typewriter
 
         document.addEventListener("DOMContentLoaded", function () {
-            AOS.init({ 
+            AOS.init({
                 duration: 700,
                 easing: "ease-out-cubic",
                 once: true
@@ -1414,11 +1414,11 @@
                 document.body.classList.remove('dark-mode');
                 if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
             }
-            
+
             // Navbar and Sidebar state based on screen width and localStorage
             const sidebar = document.getElementById("sidebar");
             const mainContent = document.getElementById("main-content");
-            const pageNavbar = document.getElementById("page-navbar"); // Use navbar ID
+            const pageNavbar = document.getElementById("page-navbar");
 
             if (window.innerWidth > 900) { // Desktop
                 if (localStorage.getItem('sidebarState') === 'collapsed') {
@@ -1437,15 +1437,14 @@
                     }
                 }
             } else { // Mobile
-                 if(pageNavbar) { // Navbar full width on mobile
+                 if(pageNavbar) {
                     pageNavbar.style.left = '0px';
                     pageNavbar.style.width = '100%';
                 }
             }
 
-            updateSidebarToggleIcon(); // Handles visibility of sidebar toggles
-            
-            // Navbar tabs hamburger logic
+            updateSidebarToggleIcon();
+
             const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
             const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
 
@@ -1455,19 +1454,23 @@
                     navbarCustomTabsContainer.classList.toggle('active');
                 });
             }
-            
-            // Set active link based on currentSheet or page
-            // This needs to be called *after* potential data load that might set currentSheet
-            // setActiveNavigationLink(); // Moved to be called after initial data load attempt
 
-            updateLanguage(); 
+            updateLanguage();
             updateTableHeader();
-            loadInitialData(); // This will call setActiveNavigationLink internally after data load
+            loadInitialData(); // This will now handle setting both navbar and sidebar active links
             setupSearch();
+
+            // Interactive welcome message logic can be called here if needed
+            // const username = sessionStorage.getItem("username");
+            // if (username && !sessionStorage.getItem("welcomeMessageShown_danhsach")) {
+            //    displayInteractiveWelcomeMessage(username);
+            //    sessionStorage.setItem("welcomeMessageShown_danhsach", "true");
+            // }
+
 
             document.addEventListener('click', function(event) {
                 const sidebarElem = document.getElementById('sidebar');
-                const mobileMenuBtnElem = document.querySelector('.mobile-menu-btn'); // For sidebar
+                const mobileMenuBtnElem = document.querySelector('.mobile-menu-btn');
                 const isClickInsideSidebar = sidebarElem && sidebarElem.contains(event.target);
                 const isClickOnMobileMenuBtn = mobileMenuBtnElem && mobileMenuBtnElem.contains(event.target);
 
@@ -1475,7 +1478,6 @@
                     toggleMobileSidebar();
                 }
 
-                // Click outside to close navbar tabs dropdown (if open)
                 const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
                 const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
                 const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
@@ -1483,17 +1485,19 @@
 
                 if (window.innerWidth <= 1024 && navbarTabsMenu && navbarTabsMenu.classList.contains('active') && !isClickInsideNavbarTabs && !isClickOnNavbarTabsBtn) {
                     navbarTabsMenu.classList.remove('active');
-                    navbarTabsBtn.classList.remove('active');
+                    if (navbarTabsBtn) navbarTabsBtn.classList.remove('active');
                 }
             });
         });
 
         function showLoading() {
-            document.getElementById("loading-overlay").classList.add("active");
+            const loadingOverlay = document.getElementById("loading-overlay");
+            if (loadingOverlay) loadingOverlay.classList.add("active");
         }
 
         function hideLoading() {
-            document.getElementById("loading-overlay").classList.remove("active");
+            const loadingOverlay = document.getElementById("loading-overlay");
+            if (loadingOverlay) loadingOverlay.classList.remove("active");
         }
 
         async function loadInitialData() {
@@ -1512,7 +1516,7 @@
                         throw new Error("Dữ liệu trong sessionStorage không hợp lệ.");
                     }
                     isDataFullyLoaded = true;
-                    applyFiltersAndRenderCurrentTab(); // This will also call setActiveNavigationLink
+                    applyFiltersAndRenderCurrentTab(); // Renders table and sets navbar tab active
                     checkAndNotifyPendingInvoices();
                     loadedFromCache = true;
                     console.log("Data loaded from cache.");
@@ -1534,7 +1538,7 @@
                 console.log("Data fetched from API and cached.");
 
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab(); // This will also call setActiveNavigationLink
+                applyFiltersAndRenderCurrentTab(); // Renders table and sets navbar tab active
                 checkAndNotifyPendingInvoices();
                 if (!loadedFromCache) {
                     showNotification("Dữ liệu đã được tải thành công!", 'success', 2000);
@@ -1544,17 +1548,31 @@
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status} - ${error.response.data || error.message}` : `Lỗi mạng: ${error.message}`;
                 console.error("API fetch error:", errorMsg);
-                if (!loadedFromCache) {
-                     document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
+                const tableBody = document.getElementById("table-body");
+                if (tableBody && !loadedFromCache) {
+                     tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
                     showNotification(errorMsg, 'error', 5000);
-                } else {
+                } else if (loadedFromCache) { // If loaded from cache, still show warning but data is there
                     showNotification("Không thể làm mới dữ liệu từ máy chủ. Hiển thị dữ liệu từ cache.", 'warning', 3000);
                 }
             } finally {
                 hideLoading();
-                // Ensure active link is set after all data operations
-                const activeTabElement = document.querySelector(`.navbar .tabs a[onclick*="switchTab('${currentSheet}'"]`) || document.querySelector(`.sidebar .menu a[href="Index.html"]`);
-                setActiveNavigationLink(activeTabElement);
+                // This is where we ensure both navbar and sidebar links are correctly set.
+                // setActiveNavigationLink is called inside applyFiltersAndRenderCurrentTab for the navbar.
+                // Now, set the sidebar link for this page.
+                const currentPageFilename = window.location.pathname.split('/').pop();
+                if (currentPageFilename === "danhsach.html") {
+                    const danhsachSidebarLink = document.querySelector(".sidebar .menu a[href='danhsach.html']");
+                    if (danhsachSidebarLink) {
+                        // Ensure other sidebar links are not active before activating the current one.
+                        document.querySelectorAll('.sidebar .menu a.active').forEach(el => {
+                            if (el !== danhsachSidebarLink) { // Avoid removing from itself if already somehow active
+                                el.classList.remove('active');
+                            }
+                        });
+                        danhsachSidebarLink.classList.add('active');
+                    }
+                }
             }
         }
 
@@ -1592,7 +1610,8 @@
                 dataForSheet = dataForSheet.filter(row => row["Tên tư vấn bán hàng"] === currentConsultant);
             }
 
-            const searchValue = document.getElementById("search-input").value.trim().toLowerCase();
+            const searchInput = document.getElementById("search-input");
+            const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : "";
             if (searchValue) {
                 dataForSheet = dataForSheet.filter(row =>
                     Object.values(row).some(cell => cell?.toString().toLowerCase().includes(searchValue))
@@ -1602,19 +1621,22 @@
             currentDisplayData = dataForSheet.sort((a, b) => {
                  const dateA = new Date(a["Thời gian nhập"] || 0);
                  const dateB = new Date(b["Thời gian nhập"] || 0);
-                 return dateB - dateA;
+                 return dateB - dateA; // Sort descending by entry time
             });
             renderTable(currentDisplayData, currentPage);
-            // Set active navigation link after data is processed for the current tab
-            const activeTabElement = document.querySelector(`.navbar .tabs a[onclick*="switchTab('${currentSheet}'"]`);
-            setActiveNavigationLink(activeTabElement);
+
+            // Set active navigation link for the current navbar tab
+            const activeNavbarTabElement = document.querySelector(`.navbar .tabs a[onclick*="switchTab('${currentSheet}'"]`);
+            if (activeNavbarTabElement) {
+                 setActiveNavigationLink(activeNavbarTabElement); // This handles clearing others and setting the navbar tab
+            }
         }
 
 
         function logout() {
             sessionStorage.clear();
             localStorage.removeItem('sidebarState');
-            localStorage.removeItem('theme'); // Clear theme on logout
+            localStorage.removeItem('theme');
             window.location.href = "index.html";
         }
 
@@ -1624,8 +1646,8 @@
 
         function toggleTheme() {
             const body = document.body;
-            const themeToggleBtn = document.querySelector('.theme-toggle'); 
-            const themeIcon = themeToggleBtn.querySelector('i');
+            const themeToggleBtn = document.querySelector('.theme-toggle');
+            const themeIcon = themeToggleBtn ? themeToggleBtn.querySelector('i') : null;
 
             body.classList.toggle('dark-mode');
             if (themeToggleBtn) themeToggleBtn.classList.add("spinning");
@@ -1648,59 +1670,65 @@
 
         function updateSidebarToggleIcon() {
             const sidebar = document.getElementById("sidebar");
-            const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i");
-            const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); // For sidebar
-            const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
+            const toggleIconDesktopEl = document.querySelector(".toggle-btn-sidebar i");
+            const mobileMenuBtnEl = document.querySelector(".mobile-menu-btn");
+            const mobileMenuIconEl = mobileMenuBtnEl ? mobileMenuBtnEl.querySelector("i") : null;
 
             if (!sidebar) return;
 
+            const desktopToggleContainer = document.querySelector('.toggle-btn-sidebar');
+
             if (window.innerWidth <= 900) { // Mobile view
-                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
-                if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
-                if (mobileMenuIcon) {
-                    mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+                if(desktopToggleContainer) desktopToggleContainer.style.display = 'none';
+                if(mobileMenuBtnEl) mobileMenuBtnEl.style.display = 'flex';
+                if (mobileMenuIconEl) {
+                    mobileMenuIconEl.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
                 }
             } else { // Desktop view
-                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
-                if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
-                if (toggleIconDesktop) {
-                    toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
+                if(desktopToggleContainer) desktopToggleContainer.style.display = 'flex';
+                if(mobileMenuBtnEl) mobileMenuBtnEl.style.display = 'none';
+                if (toggleIconDesktopEl) {
+                    toggleIconDesktopEl.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
                 }
             }
         }
 
-        function toggleDesktopSidebar() { // For desktop sidebar
+        function toggleDesktopSidebar() {
             if (window.innerWidth > 900) {
                 const sidebar = document.getElementById("sidebar");
                 const mainContent = document.getElementById("main-content");
                 const pageNavbar = document.getElementById("page-navbar");
 
-                sidebar.classList.toggle("collapsed");
-                mainContent.classList.toggle("collapsed");
-                localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+                if (sidebar) sidebar.classList.toggle("collapsed");
+                if (mainContent) mainContent.classList.toggle("collapsed");
 
-                if (sidebar.classList.contains("collapsed")) {
-                    pageNavbar.style.left = '60px';
-                    pageNavbar.style.width = 'calc(100% - 60px)';
-                } else {
-                    pageNavbar.style.left = '200px';
-                    pageNavbar.style.width = 'calc(100% - 200px)';
+                if (sidebar && pageNavbar) {
+                     localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+                    if (sidebar.classList.contains("collapsed")) {
+                        pageNavbar.style.left = '60px';
+                        pageNavbar.style.width = 'calc(100% - 60px)';
+                    } else {
+                        pageNavbar.style.left = '200px';
+                        pageNavbar.style.width = 'calc(100% - 200px)';
+                    }
                 }
                 updateSidebarToggleIcon();
             }
         }
 
-        function toggleMobileSidebar() { // For mobile sidebar
+        function toggleMobileSidebar() {
             const sidebar = document.getElementById("sidebar");
-            sidebar.classList.toggle("open");
-            if (sidebar.classList.contains("open")) { // Ensure not collapsed when opening on mobile
-                sidebar.classList.remove("collapsed");
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+                if (sidebar.classList.contains("open")) {
+                    sidebar.classList.remove("collapsed");
+                }
             }
             updateSidebarToggleIcon();
         }
 
         function setActiveNavigationLink(clickedElement) {
-            // Remove active class from all sidebar links
+            // Remove active class from all sidebar links (will be re-added specifically later if needed)
             document.querySelectorAll('.sidebar .menu a').forEach(el => el.classList.remove('active'));
             // Remove active class from all navbar tabs
             document.querySelectorAll('.navbar .tabs a').forEach(el => el.classList.remove('active'));
@@ -1708,7 +1736,6 @@
             if (clickedElement) {
                 clickedElement.classList.add('active');
 
-                // If the clicked element is a navbar tab and the navbar tabs are in dropdown mode, close the dropdown
                 if (window.innerWidth <= 1024 && clickedElement.closest('.navbar .tabs')) {
                     const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
                     const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
@@ -1717,16 +1744,9 @@
                         navbarCustomTabsContainer.classList.remove('active');
                     }
                 }
-            } else {
-                 // Fallback for initial load if no specific tab is pre-selected by currentSheet
-                const homeLink = document.querySelector(".sidebar .menu a[href='Index.html']");
-                if (homeLink && (window.location.pathname.endsWith("Index.html") || window.location.pathname.endsWith("/"))) {
-                     homeLink.classList.add("active");
-                } else { // If not homepage, default to the 'daghep' tab in navbar
-                    const defaultNavbarTab = document.querySelector(".navbar .tabs a[onclick*=\"switchTab('daghep'\"]");
-                    if (defaultNavbarTab) defaultNavbarTab.classList.add("active");
-                }
             }
+            // The specific sidebar link for the current page (e.g., danhsach.html)
+            // will be set in the `finally` block of `loadInitialData` after this function is called for the navbar tab.
         }
 
 
@@ -1735,19 +1755,18 @@
                 showNotification("Dữ liệu đang được tải, vui lòng chờ một lát.", 'info', 2000);
                 return;
             }
-            // No longer need to querySelectorAll('.menu a') as tabs are in navbar
-            setActiveNavigationLink(element); // This will handle active states for both locations
+            // setActiveNavigationLink(element); // This will be handled by applyFiltersAndRenderCurrentTab
 
             currentSheet = sheetName;
             currentPage = 1;
-            document.getElementById("search-input").value = "";
+            const searchInput = document.getElementById("search-input");
+            if (searchInput) searchInput.value = "";
 
-            applyFiltersAndRenderCurrentTab(); // This will re-render and also call setActiveNavigationLink
+            applyFiltersAndRenderCurrentTab(); // This will re-render and also call setActiveNavigationLink for the navbar
 
-            // Close mobile sidebar if open
             if (window.innerWidth <= 900) {
                 const sidebar = document.getElementById("sidebar");
-                if (sidebar.classList.contains("open")) {
+                if (sidebar && sidebar.classList.contains("open")) {
                     toggleMobileSidebar();
                 }
             }
@@ -1776,19 +1795,22 @@
 
         function renderTable(dataToDisplay, page = 1) {
             const tbody = document.getElementById("table-body");
-            tbody.innerHTML = "";
+            const detailBody = document.getElementById("detail-body");
+
+            if (!tbody || !detailBody) return;
+            tbody.innerHTML = ""; // Clear existing rows
 
             if (!Array.isArray(dataToDisplay) || dataToDisplay.length === 0) {
-                tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
+                const colspan = displayHeaderKeys.length || 1;
+                tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
                 updatePagination(dataToDisplay || []);
-                document.getElementById("detail-body").innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
+                detailBody.innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
                 return;
             }
 
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = dataToDisplay.slice(start, end);
-            // const isMobile = window.innerWidth <= 768; // Already declared globally if needed, or pass as param
 
 
             paginatedData.forEach((row, index) => {
@@ -1798,16 +1820,8 @@
 
                 displayHeaderKeys.forEach(headerText => {
                     const dataKey = displayHeadersConfig[headerText].dataKey;
-                    let cellContent = "";
-                    let cellValue = "";
-
-                    if (dataKey === "STT") {
-                        cellValue = globalIndex;
-                    } else {
-                        cellValue = row[dataKey] || "N/A";
-                    }
-
-                    cellContent = `<span class="value-mobile">${cellValue}</span>`;
+                    let cellValue = (dataKey === "STT") ? globalIndex : (row[dataKey] || "N/A");
+                    let cellContent = `<span class="value-mobile">${cellValue}</span>`;
                     cellsHTML += `<td data-label="${headerText}">${cellContent}</td>`;
                 });
 
@@ -1824,18 +1838,27 @@
             updatePagination(dataToDisplay);
 
             if (paginatedData.length > 0) {
-                showDetail(paginatedData[0]);
+                showDetail(paginatedData[0]); // Show detail of the first row of the current page
             } else {
-                 document.getElementById("detail-body").innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
+                 detailBody.innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
             }
         }
 
 
         function updatePagination(data) {
-            const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
-            document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
-            document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = currentPage === totalPages || totalPages === 0;
+            const paginationEl = document.getElementById("pagination");
+            const pageInfoEl = document.getElementById("page-info");
+            const prevBtnEl = document.getElementById("prev-btn");
+            const nextBtnEl = document.getElementById("next-btn");
+
+            if (!paginationEl || !pageInfoEl || !prevBtnEl || !nextBtnEl) return;
+
+            const totalItems = Array.isArray(data) ? data.length : 0;
+            const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
+
+            pageInfoEl.textContent = `Trang ${currentPage} / ${totalPages}`;
+            prevBtnEl.disabled = currentPage === 1;
+            nextBtnEl.disabled = currentPage === totalPages || totalItems === 0;
         }
 
         function changePage(delta) {
@@ -1843,13 +1866,15 @@
                 showNotification("Dữ liệu chưa tải xong, vui lòng chờ.", 'info', 2000);
                 return;
             }
-            const totalPages = Math.ceil(currentDisplayData.length / rowsPerPage) || 1;
+            const totalItems = Array.isArray(currentDisplayData) ? currentDisplayData.length : 0;
+            const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
             const newPage = currentPage + delta;
 
             if (newPage >= 1 && newPage <= totalPages) {
                 currentPage = newPage;
                 renderTable(currentDisplayData, currentPage);
-                document.querySelector('.table-container').scrollTo({ top: 0, behavior: 'smooth' });
+                const tableContainer = document.querySelector('.table-container');
+                if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
@@ -1857,41 +1882,45 @@
             const detailTableBody = document.querySelector("#detail-body tbody");
             if (!detailTableBody) return;
 
-            if (!row) {
+            if (!row || typeof row !== 'object') {
                 detailTableBody.innerHTML = "<tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có dữ liệu chi tiết.</td></tr>";
                 return;
             }
 
             let htmlContent = "";
+            // Display headers from config first
             displayHeaderKeys.forEach(headerText => {
                  const dataKey = displayHeadersConfig[headerText].dataKey;
                  if (dataKey !== "STT") { // Don't show STT in detail view
+                    let cellValue = row[dataKey] || "N/A";
                     htmlContent += `
                         <tr>
                             <th>${headerText}</th>
-                            <td>${row[dataKey] || "N/A"}</td>
+                            <td>${cellValue}</td>
                         </tr>`;
                  }
             });
-            // Add other important keys not in displayHeadersConfig
-            const otherImportantKeys = ["Nội thất", "Số đơn hàng", "VIN", "Thời gian nhập", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"];
-            otherImportantKeys.forEach(dataKey => {
-                const isAlreadyDisplayed = displayHeaderKeys.some(ht => displayHeadersConfig[ht].dataKey === dataKey);
 
-                if (!isAlreadyDisplayed && row[dataKey] !== undefined) { // Check if key exists in row
+            // Add other important keys not in displayHeadersConfig
+            const allRowKeys = Object.keys(row);
+            const displayedKeys = displayHeaderKeys.map(ht => displayHeadersConfig[ht].dataKey);
+
+            allRowKeys.forEach(dataKey => {
+                if (!displayedKeys.includes(dataKey) && dataKey !== "STT") { // If not already displayed and not STT
                     let cellValue = row[dataKey] || "N/A";
-                     // Format dates
-                     if ((dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn") && cellValue && cellValue !== "N/A") {
+                     if ((dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn" || dataKey === "Ngày cọc") && cellValue && cellValue !== "N/A") {
                         const parsedDate = new Date(cellValue);
-                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 // Basic date validation
+                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900
                             ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                            : (cellValue || "N/A"); // Keep original if not a valid date
+                            : (String(cellValue) || "N/A");
                     }
                     const isVin = dataKey === "VIN" && cellValue && cellValue !== "N/A";
+                    const formattedDataKey = dataKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); // Capitalize words
+
                      htmlContent += `
                         <tr>
-                            <th>${dataKey.replace(/_/g, ' ')}</th>
-                            <td${isVin ? ' class="vin-highlight"' : ''}>${cellValue}</td>
+                            <th>${formattedDataKey}</th>
+                            <td${isVin ? ' class="vin-highlight"' : ''}>${String(cellValue)}</td>
                         </tr>`;
                 }
             });
@@ -1906,25 +1935,35 @@
                 showNotification("Dữ liệu chưa tải xong để xuất.", 'info', 2000);
                 return;
             }
-            if (!currentDisplayData || currentDisplayData.length === 0) {
+            if (!Array.isArray(currentDisplayData) || currentDisplayData.length === 0) {
                 showNotification("Không có dữ liệu để xuất.", 'info', 2000);
                 return;
             }
-
-            if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}" (mới nhất lên đầu) sang Excel không?`)) {
-                const allPossibleHeaders = [
+            const sheetDisplayName = currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép';
+            if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${sheetDisplayName}" (mới nhất lên đầu) sang Excel không?`)) {
+                const allPossibleHeaders = [ // Define a comprehensive list of all potential headers in order
                     "STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ",
                     "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc",
                     "Thời gian nhập", "Trạng thái", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"
-                ];
+                    // Add any other keys that might exist in your data rows
+                ].concat(Object.keys(currentDisplayData[0] || {})
+                    .filter(key => ![ // Filter out keys already explicitly listed
+                        "STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ",
+                        "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc",
+                        "Thời gian nhập", "Trạng thái", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"
+                    ].includes(key))
+                );
+                // Remove duplicates from headers if any from concat
+                const uniqueHeaders = [...new Set(allPossibleHeaders)];
+
 
                 const wsData = currentDisplayData.map((row, index) => {
                     const rowData = {};
-                    allPossibleHeaders.forEach(headerKey => {
+                    uniqueHeaders.forEach(headerKey => {
                         if (headerKey === "STT") {
                             rowData[headerKey] = index + 1;
                         } else {
-                            let value = row[headerKey] || "";
+                            let value = row[headerKey] === undefined ? "" : row[headerKey]; // Handle undefined gracefully
                             if ((headerKey === "Thời gian nhập" || headerKey === "Thời gian ghép" || headerKey === "Ngày xuất hóa đơn" || headerKey === "Ngày cọc") && value) {
                                 const parsedDate = new Date(value);
                                 value = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900
@@ -1937,10 +1976,10 @@
                     return rowData;
                 });
 
-                const ws = XLSX.utils.json_to_sheet(wsData, { header: allPossibleHeaders });
+                const ws = XLSX.utils.json_to_sheet(wsData, { header: uniqueHeaders });
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép');
-                XLSX.writeFile(wb, `VinFast_Don_Hang_${currentSheet === 'daghep' ? 'Da_Ghep' : 'Chua_Ghep'}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, sheetDisplayName);
+                XLSX.writeFile(wb, `VinFast_Don_Hang_${sheetDisplayName.replace(/\s+/g, '_')}_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.xlsx`);
                 showNotification("Đã xuất file Excel thành công!", 'success', 2000);
             }
         }
@@ -1950,7 +1989,7 @@
                 showNotification("Dữ liệu chưa tải xong để in.", 'info', 2000);
                 return;
             }
-             if (!currentDisplayData || currentDisplayData.length === 0) {
+             if (!Array.isArray(currentDisplayData) || currentDisplayData.length === 0) {
                 showNotification("Không có dữ liệu để in.", 'info', 2000);
                 return;
             }
@@ -1958,13 +1997,12 @@
             const tableToPrint = document.createElement('table');
             tableToPrint.style.width = "100%";
             tableToPrint.style.borderCollapse = "collapse";
-            tableToPrint.style.tableLayout = "fixed"; // Ensure consistent column widths
+            tableToPrint.style.tableLayout = "fixed";
 
-            // Create colgroup for width control
             const colgroupElement = document.createElement('colgroup');
             displayHeaderKeys.forEach(headerText => {
                 const col = document.createElement('col');
-                col.style.width = displayHeadersConfig[headerText].width; // Use defined widths
+                col.style.width = displayHeadersConfig[headerText].width;
                 colgroupElement.appendChild(col);
             });
             tableToPrint.appendChild(colgroupElement);
@@ -1980,16 +2018,12 @@
             tableToPrint.appendChild(thead);
 
             const tbody = document.createElement('tbody');
-            currentDisplayData.forEach((row, index) => { // Iterate over all filtered data, not just paginated
+            currentDisplayData.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 displayHeaderKeys.forEach(headerText => {
                     const td = document.createElement('td');
                     const dataKey = displayHeadersConfig[headerText].dataKey;
-                    if (dataKey === "STT") {
-                        td.textContent = index + 1; // Use the overall index
-                    } else {
-                        td.textContent = row[dataKey] || "";
-                    }
+                    td.textContent = (dataKey === "STT") ? (index + 1) : (row[dataKey] || "");
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
@@ -1997,45 +2031,51 @@
             tableToPrint.appendChild(tbody);
 
             const now = new Date().toLocaleString('vi-VN');
+            const sheetDisplayName = currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE';
             const printContent = `
                 <div style="text-align:center; margin-bottom: 15px;">
                     <h2 style="color: #2c3e50; margin-bottom: 5px; font-size: 14pt;">VINFAST MINH ĐẠO THUẬN AN</h2>
                     <p style="margin: 2px 0; font-size: 9pt;">Hotline: 1900 232389</p>
-                    <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${currentSheet === 'daghep' ? 'ĐƠN HÀNG ĐÃ GHÉP XE' : 'ĐƠN HÀNG CHƯA GHÉP XE'} (Mới nhất lên đầu)</p>
+                    <p style="margin: 2px 0; font-size: 10pt; font-weight: bold;">Bảng: ${sheetDisplayName} (Mới nhất lên đầu)</p>
                     <p style="margin: 2px 0; font-size: 8pt;">In lúc: ${now}</p>
                      <p style="margin: 2px 0; font-size: 8pt;">Tổng số đơn: ${currentDisplayData.length}</p>
                 </div>
                 ${tableToPrint.outerHTML}
             `;
-            const win = window.open('', '', 'width=1123,height=794'); // A4 landscape approx
-            win.document.write(`
-                <html>
-                <head>
-                    <title>In Danh Sách - ${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}</title>
-                    <style>
-                        body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; }
-                        table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
-                        th, td { border: 1px solid #333; padding: 3px 4px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top;}
-                        th { background: #e0e0e0 !important; color: #000 !important; font-weight: bold; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
-                        td { font-size: 7.5pt; }
-                        @page { size: A4 landscape; margin: 1cm; }
-                    </style>
-                </head>
-                <body>${printContent}</body>
-                </html>
-            `);
-            win.document.close();
-            setTimeout(() => {
-                win.print();
-                win.close();
-            }, 500); // Delay to ensure content is loaded
+            const win = window.open('', '', 'width=1123,height=794');
+            if (win) {
+                win.document.write(`
+                    <html>
+                    <head>
+                        <title>In Danh Sách - ${sheetDisplayName}</title>
+                        <style>
+                            body { font-family: 'Roboto', sans-serif; margin: 20px; font-size: 8pt; }
+                            table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; }
+                            th, td { border: 1px solid #333; padding: 3px 4px; text-align: left; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top;}
+                            th { background: #e0e0e0 !important; color: #000 !important; font-weight: bold; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+                            td { font-size: 7.5pt; }
+                            @page { size: A4 landscape; margin: 1cm; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                    </html>
+                `);
+                win.document.close();
+                setTimeout(() => {
+                    win.print();
+                    win.close();
+                }, 500);
+            } else {
+                showNotification("Không thể mở cửa sổ in. Vui lòng kiểm tra cài đặt trình chặn pop-up.", "warning", 3000);
+            }
         }
 
 
         async function refreshData() {
             showLoading();
-            document.getElementById("search-input").value = ""; // Reset search
-            currentPage = 1; // Reset to first page
+            const searchInput = document.getElementById("search-input");
+            if (searchInput) searchInput.value = "";
+            currentPage = 1;
             const apiURL = "https://script.google.com/macros/s/AKfycby3HoOoC-EPX_SKPC9XqqusIo__gnXuVQZ3mzldBZgR_dUCuo-1IAphkeqj_dvkHySBGA/exec";
             try {
                 const response = await axios.get(apiURL);
@@ -2047,16 +2087,19 @@
                 console.log("Data refreshed from API and cached.");
 
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab(); // This will re-filter and render
+                applyFiltersAndRenderCurrentTab();
                 checkAndNotifyPendingInvoices();
                 showNotification("Dữ liệu đã được làm mới thành công!", 'success', 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
                 console.error("API refresh error:", errorMsg);
-                 document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
+                const tableBody = document.getElementById("table-body");
+                if (tableBody) tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
                 showNotification(errorMsg, 'error', 5000);
             } finally {
                 hideLoading();
+                // Logic to set active links is now within the finally block of loadInitialData
+                // and also within applyFiltersAndRenderCurrentTab for navbar tabs.
             }
         }
 
@@ -2070,64 +2113,61 @@
         }
 
         function setupSearch() {
-            document.getElementById("search-input").addEventListener("input", debounce(function () {
-                if (!isDataFullyLoaded) {
-                    // Optionally, notify user data is still loading
-                    return;
-                }
-                currentPage = 1; // Reset to first page on new search
-                applyFiltersAndRenderCurrentTab();
-            }, 300));
+            const searchInput = document.getElementById("search-input");
+            if (searchInput) {
+                searchInput.addEventListener("input", debounce(function () {
+                    if (!isDataFullyLoaded) {
+                        return;
+                    }
+                    currentPage = 1;
+                    applyFiltersAndRenderCurrentTab();
+                }, 300));
+            }
         }
 
         function showNotification(message, type = 'info', duration = 3000) {
             const notif = document.getElementById("notification");
             if (!notif) return;
 
-            // Clear previous classes and set new type
-            notif.classList.remove('success', 'error', 'info', 'important-info', 'warning'); // Add 'warning' if used
+            notif.classList.remove('success', 'error', 'info', 'important-info', 'warning');
             if (type) notif.classList.add(type);
 
-            let fullMessage = "";
             let iconClass = "";
-
             switch(type) {
                 case 'success': iconClass = 'fas fa-check-circle'; break;
                 case 'error': iconClass = 'fas fa-times-circle'; break;
                 case 'warning': iconClass = 'fas fa-exclamation-triangle'; break;
-                case 'important-info': iconClass = 'fas fa-info-circle'; break; // Special styling for this
-                default: iconClass = 'fas fa-info-circle'; break; // Default to info
+                case 'important-info': iconClass = 'fas fa-info-circle'; break;
+                default: iconClass = 'fas fa-info-circle'; break;
             }
 
-            // Construct message with icon
-            if (type === 'important-info') { // Special handling for important-info styling
-                fullMessage = `<span class="icon" style="font-size: 1.2em; margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
-                notif.innerHTML = fullMessage;
+            if (type === 'important-info') {
+                notif.innerHTML = `<span class="icon" style="font-size: 1.2em; margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
             } else {
-                 fullMessage = `<span style="margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
-                notif.innerHTML = fullMessage;
+                 notif.innerHTML = `<span style="margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
             }
 
-            notif.style.display = "flex"; // Ensure it's flex for alignment
-            notif.classList.add('show');
+            notif.style.display = "flex";
+            requestAnimationFrame(() => { // Ensure display is set before adding class for transition
+                 notif.classList.add('show');
+            });
 
 
-            // Clear existing timeout if any
-            if (notif.timeoutId) {
-                clearTimeout(notif.timeoutId);
-            }
+            if (notif.timeoutId) clearTimeout(notif.timeoutId);
+
             notif.timeoutId = setTimeout(() => {
                 notif.classList.remove('show');
-                // Use transitionend to hide after animation, robust for varying transition durations
-                notif.addEventListener('transitionend', () => {
-                    if (!notif.classList.contains('show')) { // Check if it wasn't re-shown
+                const hideTransitionHandler = () => {
+                    if (!notif.classList.contains('show')) {
                          notif.style.display = "none";
                     }
-                }, { once: true }); // Ensure listener is removed after firing once
-                // Fallback for browsers that might not fire transitionend reliably or if transition is none
+                    notif.removeEventListener('transitionend', hideTransitionHandler);
+                };
+                notif.addEventListener('transitionend', hideTransitionHandler);
+                // Fallback for safety
                 setTimeout(() => {
                     if (!notif.classList.contains('show')) notif.style.display = "none";
-                }, 450); // A bit longer than transition
+                }, 450);
             }, duration);
         }
 
@@ -2137,10 +2177,9 @@
                 if (translations[language] && translations[language][key] !== undefined) {
                     if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                         element.placeholder = translations[language][key];
-                    } else if (element.querySelector('span')) { 
+                    } else if (element.querySelector('span') && (element.classList.contains('menu-item-text') || element.closest('.menu a span'))) { // More specific for sidebar spans
                         element.querySelector('span').textContent = translations[language][key];
-                    }
-                     else {
+                    } else {
                         element.textContent = translations[language][key];
                     }
                 }
@@ -2159,13 +2198,11 @@
             });
         }
 
-
-        let typingTimeout;
         function typeWriter(element, text, speed, callback) {
             let i = 0;
-            element.innerHTML = ""; // Clear previous text
+            element.innerHTML = "";
             const cursor = document.getElementById('typewriterCursor');
-            if(cursor) cursor.style.display = 'inline-block'; // Show cursor
+            if(cursor) cursor.style.display = 'inline-block';
 
             function type() {
                 if (i < text.length) {
@@ -2173,7 +2210,7 @@
                     i++;
                     typingTimeout = setTimeout(type, speed);
                 } else {
-                    if(cursor) cursor.style.display = 'none'; // Hide cursor when done
+                    if(cursor) cursor.style.display = 'none';
                     if (callback) callback();
                 }
             }
@@ -2186,56 +2223,51 @@
             const timeGreetingSpan = document.getElementById('interactiveTimeGreeting');
             const staticTextSpan = document.getElementById('interactiveStaticText');
 
-            // Clear any ongoing typing animation
-            if (typingTimeout) {
-                clearTimeout(typingTimeout);
-            }
-            if (!usernameTypedSpan) return; // Element might not exist if user isn't supposed to see it
-            usernameTypedSpan.innerHTML = ""; // Clear previous username
+            if (typingTimeout) clearTimeout(typingTimeout);
+            if (!usernameTypedSpan || !welcomeElement || !timeGreetingSpan || !staticTextSpan) return;
 
-            if (welcomeElement && usernameTypedSpan && timeGreetingSpan && staticTextSpan) {
-                const currentHour = new Date().getHours();
-                let timeGreetingKey = "time-greeting-evening"; // Default
-                let staticWelcomeTextKey = "welcome-static-text";
+            usernameTypedSpan.innerHTML = "";
 
-                if (currentHour >= 5 && currentHour < 12) timeGreetingKey = "time-greeting-morning";
-                else if (currentHour >= 12 && currentHour < 18) timeGreetingKey = "time-greeting-afternoon";
+            const currentHour = new Date().getHours();
+            let timeGreetingKey = "time-greeting-evening";
+            let staticWelcomeTextKey = "welcome-static-text";
 
-                timeGreetingSpan.textContent = translations[language]?.[timeGreetingKey] || "Chào bạn";
-                staticTextSpan.textContent = translations[language]?.[staticWelcomeTextKey] || "Chào mừng, ";
+            if (currentHour >= 5 && currentHour < 12) timeGreetingKey = "time-greeting-morning";
+            else if (currentHour >= 12 && currentHour < 18) timeGreetingKey = "time-greeting-afternoon";
 
-                welcomeElement.classList.remove('hide'); // Remove hide if it was there
-                welcomeElement.style.display = 'block'; // Make sure it's block before adding show
-                requestAnimationFrame(() => { // Ensure display:block is applied before transition
-                    welcomeElement.classList.add('show');
+            timeGreetingSpan.textContent = translations[language]?.[timeGreetingKey] || "Chào bạn";
+            staticTextSpan.textContent = translations[language]?.[staticWelcomeTextKey] || "Chào mừng, ";
+
+            welcomeElement.classList.remove('hide');
+            welcomeElement.style.display = 'block';
+            requestAnimationFrame(() => {
+                welcomeElement.classList.add('show');
+            });
+
+            setTimeout(() => {
+                typeWriter(usernameTypedSpan, username + "!", 100, () => {
+                    setTimeout(() => {
+                        welcomeElement.classList.remove('show');
+                        welcomeElement.classList.add('hide');
+                        const hideWelcomeHandler = () => {
+                            if(welcomeElement.classList.contains('hide')) {
+                                welcomeElement.style.display = 'none';
+                            }
+                            welcomeElement.removeEventListener('transitionend', hideWelcomeHandler);
+                        };
+                        welcomeElement.addEventListener('transitionend', hideWelcomeHandler);
+                         setTimeout(() => { // Fallback for safety
+                            if (welcomeElement.classList.contains('hide')) welcomeElement.style.display = 'none';
+                        }, 600); // A bit longer than transition
+                    }, 2500);
                 });
-
-
-                // Start typing after a short delay to allow the box to appear
-                setTimeout(() => {
-                    typeWriter(usernameTypedSpan, username + "!", 100, () => {
-                        // After typing, wait then hide
-                        setTimeout(() => {
-                            welcomeElement.classList.remove('show');
-                            welcomeElement.classList.add('hide');
-                            // Set display to none after animation
-                            welcomeElement.addEventListener('transitionend', () => {
-                                if(welcomeElement.classList.contains('hide')) { // Check if it's still supposed to be hidden
-                                    welcomeElement.style.display = 'none';
-                                }
-                            }, { once: true });
-                        }, 2500); // Duration to show the full message
-                    });
-                }, 500); // Delay before typing starts
-            }
+            }, 500);
         }
 
         function startUserGuide() {
             const intro = introJs();
-            const currentTranslations = translations[language] || translations.vi; 
-            const steps = [
-                { intro: currentTranslations["guide-welcome"] }
-            ];
+            const currentTranslations = translations[language] || translations.vi;
+            const steps = [ { intro: currentTranslations["guide-welcome"] } ];
 
             const mobileMenuBtnEl = document.querySelector('.mobile-menu-btn');
             if (mobileMenuBtnEl && getComputedStyle(mobileMenuBtnEl).display !== 'none') {
@@ -2246,16 +2278,14 @@
                  steps.push({ element: '#navbar-tabs-hamburger', intro: currentTranslations["guide-navbar-tabs-hamburger"], position: 'bottom' });
             }
             const navbarTabsContainerEl = document.getElementById('navbar-custom-tabs-container');
-            if (navbarTabsContainerEl && getComputedStyle(navbarTabsContainerEl).display === 'flex' && window.innerWidth > 1024) { // Only show if tabs are visible directly
+            if (navbarTabsContainerEl && getComputedStyle(navbarTabsContainerEl).display === 'flex' && window.innerWidth > 1024) {
                 steps.push({ element: '#navbar-custom-tabs-container', intro: currentTranslations["guide-navbar-tabs"], position: 'bottom' });
             }
 
-
             const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl && getComputedStyle(sidebarEl).visibility !== 'hidden' && getComputedStyle(sidebarEl).display !== 'none' && !sidebarEl.classList.contains('open') && window.innerWidth > 900) { // Only if desktop sidebar is visible
+            if (sidebarEl && getComputedStyle(sidebarEl).visibility !== 'hidden' && getComputedStyle(sidebarEl).display !== 'none' && !sidebarEl.classList.contains('open') && window.innerWidth > 900) {
                 steps.push({ element: '#sidebar', intro: currentTranslations["guide-sidebar"], position: 'right' });
             }
-
 
             const navbarControlsEl = document.querySelector('.navbar-controls');
             if (navbarControlsEl) {
@@ -2280,7 +2310,6 @@
             if (document.getElementById('detail-panel')) steps.push({ element: '#detail-panel', intro: currentTranslations["guide-detail-panel"], position: 'left' });
             if (document.getElementById('pagination')) steps.push({ element: '#pagination', intro: currentTranslations["guide-pagination"], position: 'top' });
 
-
             steps.push({ intro: currentTranslations["guide-end"] });
 
             intro.setOptions({
@@ -2299,25 +2328,25 @@
 
 
         window.addEventListener('resize', debounce(() => {
-            updateSidebarToggleIcon(); 
+            updateSidebarToggleIcon();
             const sidebar = document.getElementById("sidebar");
             const mainContent = document.getElementById("main-content");
-            const pageNavbar = document.getElementById("page-navbar"); // Use navbar ID
+            const pageNavbar = document.getElementById("page-navbar");
             const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
             const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
 
 
             if (window.innerWidth <= 900) { // Mobile
                 if (sidebar && sidebar.classList.contains("collapsed") && !sidebar.classList.contains("open")) {
-                     sidebar.classList.remove("collapsed"); 
+                     sidebar.classList.remove("collapsed");
                 }
-                if(pageNavbar) { 
+                if(pageNavbar) {
                     pageNavbar.style.left = '0px';
                     pageNavbar.style.width = '100%';
                 }
-                if(mainContent) mainContent.classList.remove('collapsed'); 
+                if(mainContent) mainContent.classList.remove('collapsed');
             } else { // Desktop
-                if(sidebar) sidebar.classList.remove("open"); 
+                if(sidebar) sidebar.classList.remove("open");
                 const storedState = localStorage.getItem('sidebarState');
 
                 if (sidebar && storedState === 'collapsed') {
@@ -2335,15 +2364,13 @@
                         pageNavbar.style.width = 'calc(100% - 200px)';
                     }
                 }
-                // Ensure navbar tabs are not in mobile dropdown state on desktop
                 if (window.innerWidth > 1024) {
                     if (navbarTabsMenu) navbarTabsMenu.classList.remove('active');
                     if (navbarTabsBtn) navbarTabsBtn.classList.remove('active');
-                    if (navbarTabsMenu) navbarTabsMenu.style.display = ''; // Reset display for flex layout
+                    if (navbarTabsMenu) navbarTabsMenu.style.display = '';
                 }
             }
         }, 200));
-        document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon);
     </script>
 </body>
 </html>
