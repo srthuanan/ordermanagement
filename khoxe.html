@@ -221,7 +221,7 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
 
-        /* Sidebar (Sao chép từ Index.html và điều chỉnh) */
+        /* Sidebar (Sao chép từ index.html và điều chỉnh) */
         .sidebar {
     position: fixed;
     top: 0;
@@ -1440,7 +1440,7 @@
             <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="menu" id="navMenu">
-            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
@@ -1646,7 +1646,7 @@
 
         function setActiveSidebarLink() {
             const navLinks = document.querySelectorAll("#navMenu a");
-            const currentPageFile = window.location.pathname.split("/").pop() || "Index.html"; // Mặc định là Index.html nếu không có file cụ thể
+            const currentPageFile = window.location.pathname.split("/").pop() || "index.html"; // Mặc định là index.html nếu không có file cụ thể
 
             navLinks.forEach(link => {
                 link.classList.remove("active");
