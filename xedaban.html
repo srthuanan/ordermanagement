@@ -930,7 +930,7 @@
             <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="menu" id="navMenu">
-            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
@@ -1389,10 +1389,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         } else {
-            // Handle Index.html active state if no specific sheet/total tab is active
-            // This logic might need refinement based on how Index.html is treated
-            if (window.location.pathname.endsWith("Index.html") || window.location.pathname.endsWith("/")) {
-                 const homeLink = document.querySelector(".sidebar .menu a[href='Index.html']");
+            // Handle index.html active state if no specific sheet/total tab is active
+            // This logic might need refinement based on how index.html is treated
+            if (window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/")) {
+                 const homeLink = document.querySelector(".sidebar .menu a[href='index.html']");
                  if (homeLink) homeLink.classList.add("active");
             }
         }
@@ -1400,7 +1400,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // --- Navigation ---
-    function goBack() { window.location.href = "Index.html"; }
+    function goBack() { window.location.href = "index.html"; }
     function logout() {
         sessionStorage.clear();
         localStorage.removeItem('sidebarState'); 
