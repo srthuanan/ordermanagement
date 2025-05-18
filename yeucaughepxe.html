@@ -1909,34 +1909,82 @@ function exportToPDF() {
 
 // --- Gửi Biểu mẫu (from a.html, uses its `orderId` for redirection) ---
 function previewForm(e) {
-    e.preventDefault();
+    e.preventDefault(); // Ngăn chặn hành vi gửi form mặc định
+
+    // ===== KIỂM TRA 1: BẮT BUỘC UPLOAD ỦY NHIỆM CHI TRÊN ĐIỆN THOẠI =====
+    const chicFileInput = document.getElementById('chic_file_input');
+    const isMobile = window.innerWidth <= 768; // Ngưỡng xác định giao diện điện thoại
+
+    if (isMobile && (!chicFileInput || chicFileInput.files.length === 0)) {
+        showNotification("Vui lòng tải lên ảnh Ủy nhiệm chi để gửi yêu cầu trên điện thoại.", "warning", 4000);
+        const chicWrapper = document.getElementById('chic-upload-wrapper');
+        if (chicWrapper) {
+            chicWrapper.style.transition = 'border-color 0.3s ease';
+            chicWrapper.style.borderColor = 'red'; // Nhấn mạnh khu vực upload ảnh
+            setTimeout(() => {
+                chicWrapper.style.borderColor = '';
+            }, 3000);
+        }
+        return; // Dừng xử lý
+    }
+
+    // ===== KIỂM TRA 2: BẮT BUỘC PHẢI CÓ DỮ LIỆU NGÀY CỌC =====
+    const ngayCocInput = document.getElementById('ngay_coc');
+    if (!ngayCocInput || !ngayCocInput.value) { // Kiểm tra xem input ngày cọc có tồn tại và có giá trị không
+        showNotification("Vui lòng quét ảnh Ủy nhiệm chi để có thông tin Ngày cọc.", "warning", 4000);
+        // Có thể làm nổi bật trường Ngày cọc hoặc khu vực upload ảnh nếu ngày cọc trống
+        if (ngayCocInput) {
+             ngayCocInput.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+             ngayCocInput.style.borderColor = 'orange'; // Ví dụ: làm nổi bật viền trường ngày cọc
+             ngayCocInput.style.boxShadow = '0 0 5px orange';
+             setTimeout(() => {
+                ngayCocInput.style.borderColor = '';
+                ngayCocInput.style.boxShadow = '';
+             }, 3000);
+        }
+        // Vì trường này là readonly, việc focus() có thể không hữu ích bằng việc làm nổi bật khu vực upload ảnh
+        const chicWrapperHighlight = document.getElementById('chic-upload-wrapper');
+        if (chicWrapperHighlight && (!chicFileInput || chicFileInput.files.length === 0)) { // Chỉ highlight nếu chưa có ảnh
+            chicWrapperHighlight.style.transition = 'border-color 0.3s ease';
+            chicWrapperHighlight.style.borderColor = 'orange';
+            setTimeout(() => {
+                chicWrapperHighlight.style.borderColor = '';
+            }, 3000);
+        }
+        return; // Dừng xử lý
+    }
+    // ===== KẾT THÚC KIỂM TRA NGÀY CỌC =====
+
     const form = document.getElementById("vinfast-form");
+    // Kiểm tra các trường required khác của form theo chuẩn HTML5
     if (!form || !form.checkValidity()) {
         showNotification("Vui lòng điền đầy đủ các trường bắt buộc!", "error", 3000);
-        form.reportValidity(); return;
+        form.reportValidity(); // Trình duyệt sẽ tự động làm nổi bật các trường required bị thiếu
+        return;
     }
-    formData = {}; let html = "";
-    // Iterate over form elements, including 'ngay_coc' but excluding 'chic_file_input' for data object
+
+    // Thu thập dữ liệu từ form nếu tất cả kiểm tra đều qua
+    formData = {};
+    let html = "";
     form.querySelectorAll("input:not([type='file']), select").forEach(input => {
-        if (input.name && input.name !== 'chic_file_input') { // Exclude chic_file_input from formData
+        if (input.name && input.name !== 'chic_file_input') {
             formData[input.name] = input.value;
             const displayName = labelMap[input.name] || input.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const value = input.type === "datetime-local" ? formatDateTime(input.value) : (input.value || "Chưa nhập");
             html += `<div class="detail-item"><strong>${displayName}:</strong> <span>${value}</span></div>`;
         }
     });
-    // Add file name to preview if selected
-    const chicFileInput = document.getElementById('chic_file_input');
+
     const chicFilenameDisplay = document.getElementById('chic-filename');
     if (chicFileInput && chicFileInput.files.length > 0 && chicFilenameDisplay) {
-        html += `<div class="detail-item"><strong>Ảnh Ủy Nhiệm Chi:</strong> <span>${chicFilenameDisplay.textContent}</span></div>`;
+        html += `<div class="detail-item"><strong>Ảnh Ủy Nhiệm Chi:</strong> <span>${chicFilenameDisplay.textContent || chicFileInput.files[0].name}</span></div>`;
     }
 
     document.getElementById("preview-content").innerHTML = html;
     const previewModal = document.getElementById("preview-modal");
-    previewModal.classList.add("active"); adjustModalScroll(previewModal);
+    previewModal.classList.add("active");
+    adjustModalScroll(previewModal);
 }
-
 let redirectTimeout; // from a.html
 function confirmSubmit() { // from a.html
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
