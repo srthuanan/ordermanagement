@@ -2384,116 +2384,154 @@ async function xuLyAnhUyNhiemChiChic(event) {
         const monthTextRegexPart = `(?:tháng|thg|t)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-z\u00C0-\u1EF9]{3,}`;
         const dateSeparatorRegexPart = `[\\s\\/\\.-]+`;
         const patternsWithParsers = [
-            { regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
-            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 15, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)" },
-            { regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện)\\s*(\\d{1,2})\\s*(?:tháng|thg)\\s*(\\d{1,2})(?:,\\s*|\\s+)(\\d{4})\\s*(?:lúc|\\@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 14.5, name: "Techcombank: Ngày chuyển/thực hiện DD thg MM,YYYY lúc HH:MM"
+    // === CÁC MẪU CÓ ĐỘ ƯU TIÊN CAO NHẤT (Rất đặc hiệu hoặc phổ biến) ===
+    {
+        regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), // BIDV/Specific DD-MM-YYYY with Keyword (format ngày chắc chắn)
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}),
+        score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword"
     },
-    { // VCB Digibank: HH:MM Thứ X DD/MM/YYYY (bao gồm Chủ Nhật)
-        regex: new RegExp(`(\\d{1,2}):(\\d{1,2})\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật)?\\s*,?\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
-        parser: (m) => ({ hour: m[1], minute: m[2], day: m[3], month: m[4], year: m[5], second: '00' }),
-        score: 14, name: "HH:MM [DayOfWeek] DD/MM/YYYY (VCB Digibank)"
+    {
+        regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), // HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
+        score: 15.5, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.) - Higher Score"
+    },
+    {
+        regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện|Transaction Date)\\s*[:\\s]*?(\\d{1,2})\\s*(?:tháng|thg|/|-|\\.)\\s*(\\d{1,2})(?:,\\s*|\\s+|/|-|\\.)(\\d{4})\\s*(?:lúc|\\@|at|\\s)\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), // Techcombank & similar: Ngày chuyển/thực hiện DD thg MM,YYYY lúc HH:MM
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 15, name: "Techcombank & similar: Ngày Keyword DD MM YYYY lúc HH:MM"
+    },
+    { // VCB Digibank: HH:MM Thứ X DD/MM/YYYY
+        regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật|Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\\s*,?\\s*(?:ngày\\s*|date\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3] || '00', day: m[4], month: m[5], year: m[6] }), // Added second: m[3] || '00'
+        score: 14.5, name: "HH:MM(:SS) [DayOfWeek] DD/MM/YYYY (VCB Digibank like)"
     },
     { // TPBank: "Chuyển nhanh Napas 247:HH:MM DD/MM/YYYY"
         regex: new RegExp(`Chuyển\\s*nhanh\\s*Napas\\s*247\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second:m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 13.5, name: "TPBank Napas"
+        score: 14, name: "TPBank Napas"
     },
-    { // Sacombank & tương tự: YYYY-MM-DD HH:MM:SS (ảnh z66...2514.jpg)
-        regex: new RegExp(`(\\d{4})-(\\d{1,2})-(\\d{1,2})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+    { // Sacombank & ISO-like with time: YYYY-MM-DD HH:MM:SS
+        regex: new RegExp(`(\\d{4})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})[\\sT]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 13, // Đặt điểm cao cho định dạng này
-        name: "YYYY-MM-DD HH:MM:SS (Sacombank like)"
+        score: 13.5, name: "YYYY-MM-DD[ T]HH:MM:SS (Sacombank, ISO like)"
     },
-    { // Mẫu "Ngày thực hiện HH:MM DD/MM/YYYY" (từ ảnh z6613642135253...jpg)
-        regex: new RegExp(`Ngày\\s*thực\\s*hiện\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+    { // Mẫu "Ngày thực hiện HH:MM DD/MM/YYYY" - chung cho nhiều phiếu
+        regex: new RegExp(`(?:Ngày\\s*thực\\s*hiện|Date\\s*of\\s*transaction)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 12.5,
-        name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY (Generic Slip)"
-    },
-    { // BIDV (chung hơn): "Ngày thực hiện HH:MM DD/MM/YYYY"
-        regex: new RegExp(`Ngày\\s*thực hiện\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
-        parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 12, name: "BIDV Ngày thực hiện HH:MM DD/MM/YYYY (General)"
+        score: 13, name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY (Generic Slip)"
     },
     { // BIDV với "vào lúc": vào lúc DD/MM/YYYY HH:MM:SS
-        regex: new RegExp(`(?:vào\\s*lúc|lúc)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+        regex: new RegExp(`(?:vào\\s*lúc|lúc|at)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*,?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 11.5,
-        name: "(vào) lúc DD/MM/YYYY HH:MM:SS (BIDV)"
+        score: 12.5, name: "(vào) lúc/at DD/MM/YYYY HH:MM:SS (BIDV like)"
     },
     { // SHB: "Thời gian:HH:MM:SS, DD/MM/YYYY"
-        regex: new RegExp(`Thời\\s*gian:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+        regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 11, name: "SHB Thời gian"
+        score: 12, name: "SHB Thời gian/Time"
     },
-    { // Agribank: DD-MM-YYYY HH:MM:SS
-        regex: new RegExp(`(\\d{1,2})-(\\d{1,2})-(\\d{4})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"),
+    { // Agribank & common DD-MM-YYYY HH:MM:SS
+        regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 10.5,
-        name: "DD-MM-YYYY HH:MM:SS (Agribank)"
+        score: 11.5, name: "DD-MM-YYYY HH:MM:SS (Agribank & Common)"
+    },
+    { // Mới: Định dạng DD/MM/YY (năm 2 chữ số) HH:MM:SS
+        regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2})(?!\\d)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+        parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
+        score: 11.2, name: "DD/MM/YY HH:MM:SS (2-digit year)"
     },
 
-    // 1. Các mẫu có từ khóa và cấu trúc ngày giờ rõ ràng (điểm trung bình)
-    { // "Ngày giao dịch/lập lệnh/...: DD/MM/YYYY lúc HH:MM:SS"
-        regex: new RegExp(`Ngày\\s*(?:giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*lúc|\\s*@|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
+    // === CÁC MẪU CÓ TỪ KHÓA VÀ CẤU TRÚC RÕ RÀNG (Điểm trung bình) ===
+    { // "Ngày giao dịch/lập lệnh/...: DD/MM/YYYY lúc HH:MM:SS" (mở rộng từ khóa)
+        regex: new RegExp(`(?:Ngày|Date)\\s*(?:giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực|ghi nhận|transaction|payment|value)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*(?:lúc|at|@|thời gian|time)|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 10, name: "Ngày GD/Keyword lúc HH:MM(:SS)"
+        score: 11, name: "Ngày GD/Keyword DD/MM/YYYY lúc/time HH:MM(:SS)"
     },
-    { // "Thời gian ... : HH:MM:SS ngày DD/MM/YYYY"
-        regex: new RegExp(`Thời\\s*gian\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
+    { // "Thời gian ... : HH:MM:SS ngày DD/MM/YYYY" (mở rộng từ khóa)
+        regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện|record)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,|on)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 9, name: "Thời gian ... ngày DD/MM/YYYY"
+        score: 10, name: "Thời gian/Time ... HH:MM:SS ngày/on DD/MM/YYYY"
     },
-    { // Vietinbank (góc trên): DD/MM/YYYY HH:MM (không có giây)
-        regex: new RegExp(`(?<![:\\d])(\\d{1,2})/(\\d{1,2})/(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"),
+    { // Vietinbank (góc trên) và tương tự: DD/MM/YYYY HH:MM (không có giây, đứng một mình)
+        regex: new RegExp(`(?<![:\\d\\w])(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }),
-        score: 8.5,
-        name: "DD/MM/YYYY HH:MM (Vietinbank top-right like)"
+        score: 9.5, name: "DD/MM/YYYY HH:MM (Standalone, Vietinbank like)"
     },
-    { // "Ngày DD tháng MM năm YYYY lúc HH:MM:SS" (chấp nhận tháng chữ/số)
+    { // "Ngày DD tháng MM năm YYYY lúc HH:MM:SS" (chấp nhận tháng chữ/số, năm 2 hoặc 4 chữ số) - đã có, giữ nguyên
         regex: new RegExp(`(?:Ngày\\s*)?(\\d{1,2})\\s*(?:tháng|Thg\\.?|T)?\\s*(${monthTextRegexPart})\\s*(?:năm|nam)?\\s*(\\d{2,4})\\s*(?:vào\\s*lúc|lúc|Time|@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 8, name: "Ngày DD tháng MM năm YYYY lúc HHMMSS"
+        score: 9, name: "Ngày DD tháng MM năm YYYY lúc HHMMSS"
+    },
+    { // Mới: Ngày DD tháng MM, YYYY HH:MM (có dấu phẩy sau tháng)
+        regex: new RegExp(`(?:Ngày\\s*)?(${monthTextRegexPart})\\s+(\\d{1,2}),\\s*(\\d{4})\\s+at\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM)?`, "i"),
+        parser: (m) => {
+            let hour = parseInt(m[4], 10);
+            const ampm = m[7];
+            if (ampm) {
+                if (ampm.toUpperCase() === 'PM' && hour < 12) hour += 12;
+                if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0; // Midnight
+            }
+            return { month: m[1], day: m[2], year: m[3], hour: String(hour), minute: m[5], second: m[6] };
+        },
+        score: 8.8, name: "Month DD, YYYY at HH:MM(:SS) AM/PM"
     },
 
-    // 2. Các mẫu ngày giờ chung chung hơn (điểm thấp hơn)
-    { // DD/MM/YYYY HH:MM:SS (có thể có "Ngày:"/"Date Time:" ở trước, hoặc dấu "T" phân cách)
+
+    // === CÁC MẪU NGÀY GIỜ CHUNG CHUNG HƠN (Điểm thấp hơn) ===
+    { // DD/MM/YYYY HH:MM:SS (có thể có "Ngày:"/"Date Time:" ở trước, hoặc dấu "T" phân cách) - đã có, giữ nguyên
         regex: new RegExp(`(?:Ngày|Date\\s*Time)?:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})[\\s,T]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 7.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Chung, có thể có Ngày)"
+        score: 8.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Chung, có thể có Ngày)"
     },
-    { // "Vào lúc HH:MM, ngày DD/MM/YYYY"
+    { // "Vào lúc HH:MM, ngày DD/MM/YYYY" - đã có, giữ nguyên
         regex: new RegExp(`(?:Vào\\s*lúc|Time):?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?,\\s*(?:ngày)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 7, name: "Vào lúc HH:MM, ngày DD/MM/YYYY"
+        score: 8, name: "Vào lúc HH:MM, ngày DD/MM/YYYY"
     },
-    { // YYYY/MM/DD HH:MM:SS (có thể có "Ngày:"/"Date:" ở trước, T separator)
-        // Cũng bao gồm YYYY-MM-DD[ T]HH:MM:SS nếu dateSeparatorRegexPart bắt được dấu "-"
+    { // YYYY/MM/DD HH:MM:SS (đã có, nhưng đảm bảo dateSeparatorRegexPart linh hoạt) - giữ nguyên
         regex: new RegExp(`(?:Date:|Ngày:)?\\s*(\\d{4})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{1,2})[\\sT,]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"),
         parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }),
-        score: 6, name: "YYYY/MM/DD[ T]HH:MM:SS (Chung, có thể có Ngày/Date)"
+        score: 7.5, name: "YYYY/MM/DD[ T]HH:MM:SS (Chung, có thể có Ngày/Date)"
     },
-    { // HH:MM:SS DD/MM/YYYY (cải thiện để tránh số tiền, có thể có "ngày" ở giữa)
+    { // HH:MM:SS DD/MM/YYYY (cải thiện để tránh số tiền, có thể có "ngày" ở giữa) - đã có, giữ nguyên
         regex: new RegExp(`(?:^|\\s|[^\\d\\w.,])(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?(?!=\\d{3}[,\\.])\\s+(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"),
         parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }),
-        score: 5, name: "HH:MM:SS DD/MM/YYYY (Cải thiện, có thể có 'ngày')"
+        score: 7, name: "HH:MM:SS DD/MM/YYYY (Cải thiện, có thể có 'ngày')"
+    },
+    { // Mới: Định dạng giờ có AM/PM đi kèm với ngày (khá chung)
+        regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM|SA|CH)`, "i"),
+        parser: (m) => {
+            let hour = parseInt(m[4], 10);
+            const ampm = m[7] ? m[7].toUpperCase() : null;
+            if (ampm) {
+                if ((ampm === 'PM' || ampm === 'CH') && hour < 12) hour += 12;
+                if ((ampm === 'AM' || ampm === 'SA') && hour === 12) hour = 0; // Midnight case for 12 AM
+            }
+            return { day: m[1], month: m[2], year: m[3], hour: String(hour), minute: m[5], second: m[6] };
+        },
+        score: 6.5, name: "DD/MM/YYYY HH:MM(:SS) AM/PM/SA/CH"
     },
 
-    // 3. Các pattern chỉ bắt ngày (score thấp nhất)
-    {
-        regex: new RegExp(`(?:Ngày|Date|Transaction Date|Ngay GD|Thời gian GD|Ngay thuc hien)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"),
+    // === CÁC MẪU CHỈ BẮT NGÀY (Điểm thấp nhất, khi không có giờ) ===
+    { // Chỉ ngày với từ khóa (VD: Ngày DD/MM/YYYY) - đã có, giữ nguyên
+        regex: new RegExp(`(?:Ngày|Date|Transaction Date|Ngay GD|Thời gian GD|Ngay thuc hien|Date of issue)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }),
-        score: 4, name: "Chỉ ngày với từ khóa (VD: Ngày DD/MM/YYYY)"
+        score: 5, name: "Chỉ ngày với từ khóa (VD: Ngày DD/MM/YYYY)"
     },
-    {
-        regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"), // Cho phép năm 2 hoặc 4 số ở đây
+    { // Chỉ ngày DD/MM/YYYY hoặc DD-MM-YYYY (rất chung, không có từ khóa) - đã có, giữ nguyên
+        regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"),
         parser: (m) => ({ day: m[1], month: m[3], year: m[4], hour: '00', minute: '00', second: '00' }),
-        score: 3, name: "Chỉ ngày DD/MM/YYYY hoặc DD-MM-YYYY (rất chung, không có từ khóa)"
+        score: 4, name: "Chỉ ngày DD/MM/YYYY hoặc DD-MM-YYYY (rất chung, không có từ khóa)"
     },
-    {
+    { // Chỉ ngày dạng DDMMYYYY với từ khóa - đã có, giữ nguyên
         regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{2})(\\d{2})(\\d{4})(?!\\d)`, "i"),
         parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }),
-        score: 2.5, name: "Chỉ ngày dạng DDMMYYYY với từ khóa"
+        score: 3.5, name: "Chỉ ngày dạng DDMMYYYY với từ khóa"
+    },
+    { // Mới: Chỉ ngày dạng YYYYMMDD với từ khóa
+        regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{4})(\\d{2})(\\d{2})(?!\\d)`, "i"),
+        parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: '00', minute: '00', second: '00' }),
+        score: 3, name: "Chỉ ngày dạng YYYYMMDD với từ khóa"
     }
 ];
         patternsWithParsers.sort((a, b) => b.score - a.score);
