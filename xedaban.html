@@ -211,12 +211,45 @@
             position: relative;
             overflow: hidden;
         }
+.sidebar:not(.collapsed) .logo h1::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%; /* Start position of the shimmer */
+    width: 50%;   /* Width of the shimmer highlight */
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg); /* Angle of the shimmer */
+    animation: shimmerEffect 3s infinite linear;
+    animation-delay: 1s; /* Optional: delay before the animation starts */
+}
+
+@keyframes shimmerEffect { /* Renamed to avoid potential conflicts if 'shimmer' is used elsewhere */
+    0% {
+        left: -150%;
+    }
+    50% {
+        left: 150%; /* Move across the text */
+    }
+    100% {
+        left: 150%; /* Keep it off-screen at the end before restarting */
+    }
+}
+
+/* Ensure the shimmer is hidden when collapsed if H1 itself is hidden */
+.sidebar.collapsed .logo h1::after {
+    display: none;
+}
         .sidebar .logo h1 { /* Sidebar's H1 */
             font-size: 25px; /* Adjusted to fit, original was 25px */
             color: #fff;
             font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease; /* MODIFIED: Added font-size transition */
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            /* ADDED: display, position, overflow for shimmer */
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
         }
         .sidebar.collapsed .logo h1 {
             opacity: 0;
@@ -897,7 +930,7 @@
             <h1>VINFAST THUẬN AN</h1>
         </div>
         <div class="menu" id="navMenu">
-            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
@@ -1064,129 +1097,186 @@
     let topSalespersonNameForNavigation = null;
     const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 
-    // --- Khởi tạo khi DOM đã tải ---
-    document.addEventListener("DOMContentLoaded", () => {
-        if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; // Redirect if not logged in
-            return;
+document.addEventListener("DOMContentLoaded", () => {
+    // --- Biến toàn cục và cấu hình ---
+    let currentPage = 1;
+    const ROWS_PER_PAGE = 20;
+    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
+    let currentSheet = "Total"; // Default sheet
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let carChart, monthlyChart, trendChart;
+    let cachedData = {};
+    let allMonthlyDataForNavigation = [];
+    let topSalespersonNameForNavigation = null;
+    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "index.html"; // Redirect if not logged in
+        return;
+    }
+    applyInitialTheme();
+
+    // Sidebar and Navbar setup
+    if (window.innerWidth > 900) {
+        const sidebar = document.getElementById("sidebar");
+        const mainContainer = document.getElementById("main-container");
+        const pageNavbar = document.getElementById("page-navbar");
+
+        if (localStorage.getItem('sidebarState') === 'collapsed') {
+            sidebar?.classList.add("collapsed");
+            mainContainer?.classList.add("collapsed");
+            if(pageNavbar) {
+                pageNavbar.style.left = '60px';
+                pageNavbar.style.width = 'calc(100% - 60px)';
+            }
+        } else {
+            sidebar?.classList.remove("collapsed");
+            mainContainer?.classList.remove("collapsed");
+             if(pageNavbar) {
+                pageNavbar.style.left = '200px';
+                pageNavbar.style.width = 'calc(100% - 200px)';
+            }
         }
-        applyInitialTheme(); 
-
-        // Sidebar and Navbar setup 
-        if (window.innerWidth > 900) { 
-            const sidebar = document.getElementById("sidebar");
-            const mainContainer = document.getElementById("main-container");
-            const pageNavbar = document.getElementById("page-navbar"); 
-
-            if (localStorage.getItem('sidebarState') === 'collapsed') {
-                sidebar?.classList.add("collapsed");
-                mainContainer?.classList.add("collapsed");
-                if(pageNavbar) { 
-                    pageNavbar.style.left = '60px';
-                    pageNavbar.style.width = 'calc(100% - 60px)';
-                }
-            } else {
-                sidebar?.classList.remove("collapsed");
-                mainContainer?.classList.remove("collapsed");
-                 if(pageNavbar) {
-                    pageNavbar.style.left = '200px';
-                    pageNavbar.style.width = 'calc(100% - 200px)';
-                }
-            }
-        } else { 
-             const pageNavbar = document.getElementById("page-navbar");
-             if(pageNavbar) { 
-                pageNavbar.style.left = '0px';
-                pageNavbar.style.width = '100%';
-            }
+    } else {
+         const pageNavbar = document.getElementById("page-navbar");
+         if(pageNavbar) {
+            pageNavbar.style.left = '0px';
+            pageNavbar.style.width = '100%';
         }
-        updateSidebarToggleIcon(); 
-        
-        // Navbar tabs hamburger logic
-        const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
-        const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
+    }
+    updateSidebarToggleIcon();
 
-        if (navbarTabsHamburger && navbarCustomTabsContainer) {
-            navbarTabsHamburger.addEventListener('click', () => {
-                navbarTabsHamburger.classList.toggle('active');
-                navbarCustomTabsContainer.classList.toggle('active');
-            });
-        }
+    // Navbar tabs hamburger logic
+    const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
+    const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
 
-
-        // Restore state or fetch initial data
-        try {
-            const storedCache = sessionStorage.getItem('appCachedData');
-            if (storedCache) cachedData = JSON.parse(storedCache);
-
-            const storedSheet = sessionStorage.getItem('appCurrentSheet');
-            const storedPage = sessionStorage.getItem('appCurrentPage');
-
-            currentSheet = storedSheet || "Total"; 
-            currentPage = storedPage ? parseInt(storedPage, 10) : 1;
-
-            // Clear active class from all potential navigation links first
-            document.querySelectorAll('.sidebar .menu a, .navbar .tabs a').forEach(el => el.classList.remove('active'));
-            
-            // Find the active tab link in either sidebar or navbar
-            const activeTabLink = Array.from(document.querySelectorAll('.sidebar .menu a, .navbar .tabs a')).find(a =>
-                (a.getAttribute('onclick')?.includes(`fetchSheetData('${currentSheet}'`)) ||
-                (currentSheet === "Total" && a.classList.contains('total-tab'))
-            );
-
-            if (activeTabLink) {
-                // activeTabLink.classList.add('active'); // setActiveNavigationLink will handle this
-                if (currentSheet === "Total") {
-                    fetchTotalData(activeTabLink, true);
-                } else {
-                    fetchSheetData(currentSheet, activeTabLink, true);
-                }
-            } else { 
-                const totalTabFallback = document.querySelector('.navbar .tabs a.total-tab'); // Prefer navbar total tab
-                if (totalTabFallback) {
-                    fetchTotalData(totalTabFallback, true);
-                } else { // Fallback to sidebar if still necessary (though it shouldn't be)
-                    const sidebarTotalTab = document.querySelector('.sidebar .menu a.total-tab');
-                     if(sidebarTotalTab) fetchTotalData(sidebarTotalTab, true);
-                }
-            }
-        } catch (error) {
-            console.error("Lỗi khi khôi phục trạng thái từ sessionStorage:", error);
-            sessionStorage.removeItem('appCachedData');
-            sessionStorage.removeItem('appCurrentSheet');
-            sessionStorage.removeItem('appCurrentPage');
-            const totalTabFallback = document.querySelector('.navbar .tabs a.total-tab') || document.querySelector('.sidebar .menu a.total-tab');
-            if(totalTabFallback) fetchTotalData(totalTabFallback, true);
-        }
-
-        updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
-
-        // Click outside to close mobile sidebar
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); // For sidebar
-            const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
-            const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
-
-            if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
-                sidebar.classList.remove('open');
-                updateSidebarToggleIcon(); 
-            }
-
-            // Click outside to close navbar tabs dropdown (if open)
-            const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
-            const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
-            const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
-            const isClickOnNavbarTabsBtn = navbarTabsBtn && navbarTabsBtn.contains(event.target);
-
-            if (window.innerWidth <= 1024 && navbarTabsMenu && navbarTabsMenu.classList.contains('active') && !isClickInsideNavbarTabs && !isClickOnNavbarTabsBtn) {
-                navbarTabsMenu.classList.remove('active');
-                navbarTabsBtn.classList.remove('active');
-            }
+    if (navbarTabsHamburger && navbarCustomTabsContainer) {
+        navbarTabsHamburger.addEventListener('click', () => {
+            navbarTabsHamburger.classList.toggle('active');
+            navbarCustomTabsContainer.classList.toggle('active');
         });
-    });
+    }
 
-    // --- Theme Management ---
+    // Restore state or fetch initial data
+    try {
+        const storedCache = sessionStorage.getItem('appCachedData');
+        if (storedCache) cachedData = JSON.parse(storedCache);
+
+        const storedSheet = sessionStorage.getItem('appCurrentSheet');
+        const storedPage = sessionStorage.getItem('appCurrentPage');
+
+        currentSheet = storedSheet || "Total";
+        currentPage = storedPage ? parseInt(storedPage, 10) : 1;
+
+        // Determine the default element to make active in the navbar (for data view)
+        let defaultNavbarTabElement;
+        if (currentSheet === "Total") {
+            defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
+        } else {
+            defaultNavbarTabElement = Array.from(document.querySelectorAll('.navbar .tabs a')).find(a =>
+                a.getAttribute('onclick')?.includes(`WorkspaceSheetData('${currentSheet}'`)
+            );
+        }
+        // Fallback if no specific sheet is found or if the element is not found (e.g. after a code change)
+        if (!defaultNavbarTabElement) {
+            defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
+            currentSheet = "Total"; // Ensure currentSheet reflects this fallback
+        }
+
+        // Load data based on currentSheet and activate the navbar tab
+        if (defaultNavbarTabElement) {
+            if (currentSheet === "Total") {
+                fetchTotalData(defaultNavbarTabElement, true); // This calls setActiveNavigationLink for the navbar tab
+            } else {
+                // Ensure the sheet actually exists in MONTHS array before fetching
+                if (MONTHS.includes(currentSheet)) {
+                    fetchSheetData(currentSheet, defaultNavbarTabElement, true); // This also calls setActiveNavigationLink for the navbar tab
+                } else {
+                    // If currentSheet from storage is invalid (e.g. "Total" but was expected to be a month, or an old month name)
+                    // Fallback to "Total"
+                    console.warn(`Invalid sheet name '${currentSheet}' from storage. Falling back to Total.`);
+                    currentSheet = "Total";
+                    defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
+                    if (defaultNavbarTabElement) {
+                         fetchTotalData(defaultNavbarTabElement, true);
+                    } else {
+                        console.error("Fallback Total navbar tab could not be determined.");
+                    }
+                }
+            }
+        } else {
+             console.error("Default navbar tab could not be determined initially. This might indicate an issue with navbar tab selectors or stored sheet state.");
+             // Attempt a final fallback to load Total data if possible, without a specific element to activate
+             fetchTotalData(null, true);
+        }
+
+        // ---- MODIFIED/NEW PART for sidebar activation ----
+        // After initial data load, explicitly set the "Xe Đã Bán" sidebar link as active
+        // if the current page is xedaban.html.
+        const currentPageFilename = window.location.pathname.split('/').pop();
+        if (currentPageFilename === "xedaban.html") {
+            const xedabanSidebarLink = document.querySelector(".sidebar .menu a[href='xedaban.html']");
+            if (xedabanSidebarLink) {
+                // First, ensure no other *sidebar* link is active.
+                document.querySelectorAll('.sidebar .menu a.active').forEach(el => el.classList.remove('active'));
+                xedabanSidebarLink.classList.add('active');
+            }
+        }
+        // ---- END OF MODIFIED/NEW PART ----
+
+    } catch (error) {
+        console.error("Lỗi khi khôi phục trạng thái hoặc tải dữ liệu ban đầu:", error);
+        sessionStorage.removeItem('appCachedData'); // Clear potentially corrupted cache
+        sessionStorage.removeItem('appCurrentSheet');
+        sessionStorage.removeItem('appCurrentPage');
+
+        // Fallback to loading total data if there was an error
+        const totalTabFallbackOnError = document.querySelector('.navbar .tabs a.total-tab');
+        if (totalTabFallbackOnError) {
+            fetchTotalData(totalTabFallbackOnError, true);
+        } else {
+            // If even the total tab isn't found, something is seriously wrong with the HTML structure.
+            // Attempt to load total data without an element.
+            fetchTotalData(null, true);
+        }
+
+        // Also attempt to set the sidebar link active on error if on xedaban.html
+        const currentPageFilenameOnError = window.location.pathname.split('/').pop();
+        if (currentPageFilenameOnError === "xedaban.html") {
+            const xedabanSidebarLinkOnError = document.querySelector(".sidebar .menu a[href='xedaban.html']");
+            if (xedabanSidebarLinkOnError) {
+                document.querySelectorAll('.sidebar .menu a.active').forEach(el => el.classList.remove('active'));
+                xedabanSidebarLinkOnError.classList.add('active');
+            }
+        }
+    }
+
+    updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
+
+    // Click outside to close mobile sidebar
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); // For sidebar
+        const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
+        const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
+
+        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
+            sidebar.classList.remove('open');
+            updateSidebarToggleIcon();
+        }
+
+        // Click outside to close navbar tabs dropdown (if open)
+        const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
+        const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
+        const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
+        const isClickOnNavbarTabsBtn = navbarTabsBtn && navbarTabsBtn.contains(event.target);
+
+        if (window.innerWidth <= 1024 && navbarTabsMenu && navbarTabsMenu.classList.contains('active') && !isClickInsideNavbarTabs && !isClickOnNavbarTabsBtn) {
+            navbarTabsMenu.classList.remove('active');
+            if(navbarTabsBtn) navbarTabsBtn.classList.remove('active');
+        }
+    });
+});    // --- Theme Management ---
     function applyInitialTheme() {
         const savedTheme = localStorage.getItem("theme") || "light"; 
         document.body.setAttribute('data-theme', savedTheme); 
@@ -1299,10 +1389,10 @@
                 }
             }
         } else {
-            // Handle index.html active state if no specific sheet/total tab is active
-            // This logic might need refinement based on how index.html is treated
-            if (window.location.pathname.endsWith("index.html") || window.location.pathname.endsWith("/")) {
-                 const homeLink = document.querySelector(".sidebar .menu a[href='index.html']");
+            // Handle Index.html active state if no specific sheet/total tab is active
+            // This logic might need refinement based on how Index.html is treated
+            if (window.location.pathname.endsWith("Index.html") || window.location.pathname.endsWith("/")) {
+                 const homeLink = document.querySelector(".sidebar .menu a[href='Index.html']");
                  if (homeLink) homeLink.classList.add("active");
             }
         }
@@ -1310,7 +1400,7 @@
 
 
     // --- Navigation ---
-    function goBack() { window.location.href = "index.html"; }
+    function goBack() { window.location.href = "Index.html"; }
     function logout() {
         sessionStorage.clear();
         localStorage.removeItem('sidebarState'); 
