@@ -88,7 +88,7 @@
             --status-default-bg-dark: #343a40;
             --status-default-text-dark: #adb5bd;
 
-             /* CSS Variables from Index.html for sidebar - some might be duplicates, ensure they are harmonized */
+             /* CSS Variables from index.html for sidebar - some might be duplicates, ensure they are harmonized */
             --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
             --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
         }
@@ -146,7 +146,7 @@
             font-size: 14px; /* Base font size from yeucaughepxe */
         }
 
-        /* Thanh cuộn tùy chỉnh (from Index.html, slightly adapted) */
+        /* Thanh cuộn tùy chỉnh (from index.html, slightly adapted) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
             background: var(--background-light); /* Use current page's variable */
@@ -244,7 +244,7 @@
         .hamburger.active { transform: rotate(90deg); }
 
 
-        /* Sidebar CSS from Index.html */
+        /* Sidebar CSS from index.html */
         .sidebar {
             position: fixed;
             top: 0; /* Will be adjusted by padding-top to sit below navbar */
@@ -482,7 +482,7 @@
         /* End Sidebar CSS */
 
 
-        /* Chú giải công cụ (Tooltip CSS from Index.html - ensure it's not conflicting) */
+        /* Chú giải công cụ (Tooltip CSS from index.html - ensure it's not conflicting) */
         [data-tooltip] { position: relative; }
         [data-tooltip]::after {
             content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
@@ -830,7 +830,7 @@
 
 
         /* Điều chỉnh đáp ứng */
-        @media (max-width: 900px) { /* Breakpoint from Index.html for sidebar behavior */
+        @media (max-width: 900px) { /* Breakpoint from index.html for sidebar behavior */
             .sidebar {
                 transform: translateX(-100%);
                 width: 220px; /* Sidebar width on mobile when open */
@@ -1016,7 +1016,7 @@
     <div class="sidebar" id="sidebar">
         <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
         <div class="menu" id="navMenu">
-            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
@@ -1298,7 +1298,7 @@ const labelMap = {
     "ket_qua": "Kết Quả", "VIN": "VIN"
 };
 
-// --- Sidebar JavaScript from Index.html ---
+// --- Sidebar JavaScript from index.html ---
 function toggleSidebarDesktop() {
     if (window.innerWidth > 900) { // Only for desktop
         const sidebar = document.getElementById("sidebar");
