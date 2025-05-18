@@ -2,13 +2,14 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chi Tiết Doanh Số TVBH - VinFast Thuận An</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
+            /* Variables from yeucaughepxe.html */
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
@@ -26,38 +27,56 @@
             --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
             --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
-            --color-danger: #dc3545;
-            --color-success: #28a745;
-            --color-info: #17a2b8;
-            --font-primary: 'Roboto', sans-serif;
-            --font-secondary: 'Montserrat', sans-serif;
+            --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s;
+            --transition-easing: ease-in-out;
+            
+            --footer-bg: var(--primary-color);
+            --footer-text: #ffffff;
+            --success-bg-light: #d4edda;
+            --success-text-light: #155724;
+            --success-icon-light: #155724;
+            --success-bg-dark: #1e4620;
+            --success-text-dark: #d4edda;
+            --success-icon-dark: #a3d9a5;
+            --scroll-to-top-bg: var(--primary-color);
+            --scroll-to-top-hover-bg: var(--primary-color-lighter);
+            --warning-bg-light: #fff3cd;
+            --warning-text-light: #856404;
+            --warning-icon-light: #ffc107;
+            --warning-bg-dark: #533f03;
+            --warning-text-dark: #ffeeba;
+            --warning-icon-dark: #ffca2c;
+             --color-danger: #dc3545; /* Retained from bestsale */
+             --color-info: #17a2b8; /* Retained from bestsale */
+
 
             /* CSS Variables for exterior colors (examples, adjust as needed) */
-            --exterior-default-text: var(--text-light); /* Default text color */
+            --exterior-default-text: var(--text-light); 
             body.dark-mode --exterior-default-text: var(--text-dark);
             --exterior-orange-text: #FFA500;
             --exterior-red-text: #DC143C;
             --exterior-blue-text: #1E90FF;
-            --exterior-yellow-text: #FFD700; /* Consider a darker yellow for better readability on light backgrounds if needed */
+            --exterior-yellow-text: #FFD700; 
             --exterior-pink-text: #FF69B4;
             --exterior-green-text: #2E8B57;
-            --exterior-grey-text: #696969; /* Using a specific grey */
+            --exterior-grey-text: #696969; 
             body.dark-mode --exterior-grey-text: #A9A9A9;
-            --exterior-white-text: #333333; /* Darker text for white backgrounds for readability */
-            body.dark-mode --exterior-white-text: #DDDDDD; /* Lighter text for white backgrounds in dark mode */
+            --exterior-white-text: #333333; 
+            body.dark-mode --exterior-white-text: #DDDDDD; 
             --exterior-bronze-text: #CD7F32;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
-            height: 100%; /* Đảm bảo html chiếm toàn bộ chiều cao */
-            overflow: hidden; /* Ngăn cuộn ở mức html */
+            height: 100%; 
+            overflow: hidden; 
         }
         body {
-            font-family: var(--font-primary);
+            font-family: Roboto;
             background: var(--background-light);
             color: var(--text-light);
-            height: 100%; /* Body chiếm toàn bộ chiều cao của html */
-            overflow: hidden; /* Loại bỏ thanh cuộn tổng thể của body */
+            height: 100%; 
+            overflow: hidden; 
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
             display: flex;
             flex-direction: column;
@@ -65,77 +84,201 @@
         body.dark-mode {
             background: var(--background-dark);
             color: var(--text-dark);
+             --footer-bg: var(--primary-color-darker);
+            --scroll-to-top-bg: var(--primary-color-lighter);
+            --scroll-to-top-hover-bg: var(--secondary-color);
+            --warning-bg-light: var(--warning-bg-dark);
+            --warning-text-light: var(--warning-text-dark);
+            --warning-icon-light: var(--warning-icon-dark);
         }
-        /* Tùy chỉnh thanh cuộn cho #table-wrapper và các phần tử khác nếu cần */
-        #table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
-        #table-wrapper::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
-        body.dark-mode #table-wrapper::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-        #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
-        #table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
-        body.dark-mode #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+        /* Custom scrollbar */
+        #table-wrapper::-webkit-scrollbar, .sidebar .menu::-webkit-scrollbar { width: 8px; height: 8px; }
+        #table-wrapper::-webkit-scrollbar-track, .sidebar .menu::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-track, body.dark-mode .sidebar .menu::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        #table-wrapper::-webkit-scrollbar-thumb, .sidebar .menu::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+        #table-wrapper::-webkit-scrollbar-thumb:hover, .sidebar .menu::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-thumb, body.dark-mode .sidebar .menu::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-
-        header {
+        /* Navbar (Adapted from yeucaughepxe.html) */
+        .navbar { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            padding: 15px 20px;
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: 600;
-            box-shadow: var(--shadow-light-outer);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky; 
-            top: 0;
-            z-index: 1000; 
-            flex-shrink: 0; /* Ngăn header co lại */
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 999;
+            transition: background var(--transition-speed) var(--transition-easing);
         }
-        body.dark-mode header {
+        body.dark-mode .navbar {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
             box-shadow: var(--shadow-dark-outer);
         }
-        header .header-title {
+        .navbar .logo { 
+            animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; 
+            margin-right: auto; 
+        }
+        .navbar .logo h1 {
+            font-size: 18px; 
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            animation: bounceGlow 2s infinite alternate;
+        }
+        @keyframes bounceGlow { 
+            0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
+            50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
+        }
+        .navbar-controls { display: flex; align-items: center; gap: 8px; } 
+        .nav-btn, .theme-toggle-btn { 
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) var(--transition-easing);
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        .nav-btn:hover, .theme-toggle-btn:hover {
+            background: #e9ecef; transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+            background: var(--primary-color-darker); color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        }
+
+        /* Sidebar (Adapted from yeucaughepxe.html) */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
+            background: var(--primary-color-darker); padding: 15px; padding-top: 60px; 
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+            z-index: 999; 
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 60px; }
+        .sidebar.open { transform: translateX(0); }
+        body.dark-mode .sidebar {
+            background: var(--background-dark); border-right: 1px solid var(--border-color-dark);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        }
+        .sidebar .logo { text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .sidebar .logo h1 {
+            font-size: 25px; color: #fff; font-weight: 600;
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); display: inline-block;
+        }
+        .sidebar:not(.collapsed) .logo h1::after { 
+            content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg); animation: shimmer 3s infinite linear; animation-delay: 1s;
+        }
+        @keyframes shimmer { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
+        .sidebar.collapsed .logo h1::after { display: none; }
+
+        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
+        .sidebar .menu a {
+            padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8);
+            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex; align-items: center; gap: 10px; position: relative; overflow: hidden;
+        }
+        .sidebar .menu a::before { 
+            content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
+            background-color: var(--secondary-color); transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
+        .sidebar .menu a span {
+            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
+            white-space: nowrap; overflow: hidden; max-width: 100px;
+        }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover {
+            background: rgba(255, 255, 255, 0.1); color: #fff;
+            padding-left: 15px; transform: translateX(3px);
+        }
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active {
+            background: var(--secondary-color); color: #fff; font-weight: 600;
+            animation: activeLinkPulse 1.5s infinite ease-in-out;
+        }
+        @keyframes activeLinkPulse { 0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); } 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
+        body.dark-mode .sidebar .menu a.active {
+            background: var(--primary-color); animation-name: activeLinkPulseDark;
+        }
+        @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+        
+        .toggle-btn-sidebar { /* Renamed from .toggle-btn for specificity */
+            position: absolute; top: 12px; right: -15px; width: 30px; height: 30px;
+            background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+        .toggle-btn-sidebar:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
+        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
+
+        .mobile-menu-btn { 
+            background: var(--card-bg-light); color: var(--text-light);
+            border: 1px solid var(--border-color-light); border-radius: 50%;
+            width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+            box-shadow: var(--shadow-light-outer); display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-right: 10px; display: none; 
+        }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        .mobile-menu-btn:active { transform: scale(0.95); }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+        
+        /* Tooltip (from yeucaughepxe.html) */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after {
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background-color: #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); 
+        }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+
+
+        .main-content-wrapper { /* New wrapper to handle sidebar offset */
+            margin-left: 200px; /* Initial space for expanded sidebar */
+            padding-top: 50px; /* Navbar height */
             flex-grow: 1;
-            text-align: center;
-        }
-        .header-controls {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            transition: margin-left var(--transition-speed) ease;
+            min-height: 0; /* Important for flex children */
         }
-        .control-btn, .theme-toggle-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background var(--transition-speed) ease;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .control-btn:hover, .theme-toggle-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        body.dark-mode .control-btn, body.dark-mode .theme-toggle-btn {
-            background: rgba(0,0,0,0.2);
-        }
-        body.dark-mode .control-btn:hover, body.dark-mode .theme-toggle-btn:hover {
-            background: rgba(0,0,0,0.3);
+        .main-content-wrapper.collapsed {
+            margin-left: 60px; /* When sidebar is collapsed */
         }
 
         .main-content {
-            flex-grow: 1; /* Cho phép main-content chiếm không gian còn lại */
+            flex-grow: 1; 
             padding: 20px;
             margin: 0 auto;
             width: 100%;
             max-width: 1600px;
             display: flex; 
             flex-direction: column;
-            overflow: hidden; /* Ngăn main-content tự tạo scrollbar */
-            min-height: 0; /* Quan trọng cho flex item để co giãn đúng */
+            overflow: hidden; 
+            min-height: 0; 
         }
         .page-subtitle {
             font-size: 1.3em;
@@ -143,7 +286,7 @@
             margin-bottom: 15px;
             text-align: center;
             font-weight: 500;
-            flex-shrink: 0; /* Ngăn co lại */
+            flex-shrink: 0; 
         }
         body.dark-mode .page-subtitle {
             color: var(--secondary-color);
@@ -157,23 +300,26 @@
             display: flex; 
             flex-direction: column;
             flex-grow: 1; 
-            min-height: 0; /* Quan trọng cho flex item để co giãn đúng */
-            overflow: hidden; /* Đảm bảo table-card không tự tạo scrollbar */
+            min-height: 0; 
+            overflow: hidden; 
+            animation: fadeInUp 0.5s var(--transition-easing) backwards; /* Added animation */
         }
         body.dark-mode .table-card {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-outer);
             border: 1px solid var(--border-color-dark);
         }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
 
         #table-wrapper {
             overflow-y: auto; 
             overflow-x: auto; 
-            max-height: calc(100vh - 335px); /* Điều chỉnh dựa trên chiều cao thực tế của header, footer và các khoảng đệm/lề khác */
+            max-height: calc(100vh - 335px); 
             flex-grow: 1; 
             min-height: 0; 
-            border: 1px solid var(--border-color-light); /* Thêm border nhẹ để tách biệt */
-            border-radius: 8px; /* Bo góc nhẹ cho table wrapper */
+            border: 1px solid var(--border-color-light); 
+            border-radius: 8px; 
         }
         body.dark-mode #table-wrapper {
             border-color: var(--border-color-dark);
@@ -187,29 +333,38 @@
             margin-bottom: 15px;
             flex-shrink: 0; 
         }
-        .action-btn {
+        .action-btn { /* Styled like yeucaughepxe's form buttons */
             padding: 8px 15px;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             background: var(--primary-color);
             color: #fff;
             font-size: 13px;
+            font-weight: 600; /* Bolder */
             cursor: pointer;
-            transition: background var(--transition-speed) ease, transform 0.2s ease;
-            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
             display: flex;
             align-items: center;
             gap: 5px;
         }
         .action-btn:hover {
             background: var(--primary-color-lighter);
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
+             box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+        .action-btn:active {
+            transform: translateY(0px) scale(0.98);
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         body.dark-mode .action-btn {
             background: var(--primary-color-lighter);
+            box-shadow: 0 2px 5px rgba(0,0,0, 0.3);
         }
         body.dark-mode .action-btn:hover {
             background: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0, 0.4);
         }
         .action-btn i { margin-right: 5px; }
 
@@ -227,32 +382,43 @@
         body.dark-mode th, body.dark-mode td {
             border-bottom: 1px solid var(--border-color-dark);
         }
-        th {
+        th { /* From yeucaughepxe */
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff;
             font-weight: 600;
             position: sticky;
             top: 0; 
             z-index: 1; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        tbody tr:hover {
-            background: rgba(0, 48, 135, 0.05);
+        body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+
+        tbody tr:hover { /* From yeucaughepxe */
+            background: rgba(0, 48, 135, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
         }
         body.dark-mode tbody tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
         }
-        .empty-state, .loading-state {
+        .empty-state, .loading-state { /* From yeucaughepxe */
             text-align: center;
             padding: 30px;
             font-size: 1.1em;
-            color: #777;
+            color: var(--no-data-text-color-light);
         }
          body.dark-mode .empty-state, body.dark-mode .loading-state {
-            color: #aaa;
+            color: var(--no-data-text-color-dark);
         }
+        .loading-state .fas { animation: spin 1.5s linear infinite; margin-right: 8px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
 
         .pagination {
             display: flex;
@@ -262,45 +428,53 @@
             margin-top: 20px;
             flex-shrink: 0; 
         }
-        .pagination button {
+        .pagination button { /* Styled like yeucaughepxe's pagination */
             padding: 8px 15px;
             border: none;
-            border-radius: 8px;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all var(--transition-speed) ease;
-            box-shadow: var(--shadow-light-outer);
-        }
-        .pagination button:hover {
-            background: #e9ecef;
-            transform: translateY(-2px);
-        }
-        body.dark-mode .pagination button {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .pagination button:hover {
-            background: var(--primary-color-darker);
+            border-radius: 6px;
+            background: var(--primary-color);
             color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2);
+        }
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary-color-lighter);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+        .pagination button:active:not(:disabled) {
+            transform: translateY(0px) scale(0.98);
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         .pagination button:disabled {
             background: var(--border-color-light);
-            color: #999;
+            color: #aaa;
             cursor: not-allowed;
             opacity: 0.7;
             box-shadow: none;
             transform: none;
         }
+        body.dark-mode .pagination button {
+            background: var(--primary-color-lighter);
+            box-shadow: 0 2px 5px rgba(0,0,0, 0.3);
+        }
+        body.dark-mode .pagination button:hover:not(:disabled) {
+            background: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0, 0.4);
+        }
         body.dark-mode .pagination button:disabled {
              background: var(--border-color-dark);
-             color: #666;
+             color: #777;
         }
-        .pagination span { font-size: 13px; }
+        .pagination span { font-size: 13px; color: var(--text-light); }
+        body.dark-mode .pagination span { color: var(--text-dark); }
 
-        footer {
+
+        footer { /* From yeucaughepxe */
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: #fff;
             text-align: center;
@@ -308,24 +482,24 @@
             font-size: 12px;
             position: sticky; 
             bottom: 0;
-            z-index: 1000; 
+            z-index: 999; 
             width: 100%;
-            flex-shrink: 0; /* Ngăn footer co lại */
+            flex-shrink: 0; 
         }
         body.dark-mode footer {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
-        .toast-container {
+        .toast-container { /* From yeucaughepxe's .notification, adapted */
             position: fixed;
-            bottom: 20px; 
+            bottom: calc(var(--footer-height, 35px) + 20px); /* Ensure above footer */
             right: 20px;
-            z-index: 1005;
+            z-index: 2000;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .toast {
-            background-color: var(--card-bg-dark);
+        .toast { /* From yeucaughepxe's .notification */
+            background-color: var(--card-bg-dark); /* Default dark mode style */
             color: var(--text-dark);
             padding: 12px 18px;
             border-radius: 8px;
@@ -335,23 +509,63 @@
             gap: 10px;
             opacity: 0;
             transform: translateX(100%);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        body:not(.dark-mode) .toast {
+        body:not(.dark-mode) .toast { /* Light mode style */
              background-color: var(--card-bg-light);
              color: var(--text-light);
              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .toast.show { opacity: 1; transform: translateX(0); }
         .toast i { font-size: 18px; }
-        .toast.success i { color: var(--color-success); }
-        .toast.error i { color: var(--color-danger); }
-        .toast.info i { color: var(--color-info); }
+        .toast.success { background-color: var(--success-bg-light); color: var(--success-text-light); }
+        body.dark-mode .toast.success { background-color: var(--success-bg-dark); color: var(--success-text-dark); }
+        .toast.error { background-color: #dc3545; color: white; } /* Using var(--color-danger) might be better */
+        body.dark-mode .toast.error { background-color: #f8d7da; color: #721c24;} /* From yeucaughepxe */
+        .toast.info { background-color: #17a2b8; color: white; } /* Using var(--color-info) */
+        body.dark-mode .toast.info { background-color: var(--secondary-color); color: var(--background-dark); }
+        .toast.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
+        body.dark-mode .toast.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
         .toast-message { font-size: 14px; }
 
+        /* Scroll to Top Button (from yeucaughepxe.html) */
+        #scrollToTopBtn {
+            display: none; position: fixed; bottom: 60px; /* Ensure above footer */ right: 20px; z-index: 999;
+            border: none; outline: none; background-color: var(--scroll-to-top-bg);
+            color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px;
+            box-shadow: var(--shadow-light-outer);
+            transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+            width: 40px; height: 40px; align-items: center; justify-content: center;
+            opacity: 0; transform: translateY(20px);
+        }
+        #scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
+        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
+        .hidden { display: none !important; }
+
+
+         @media (max-width: 900px) { /* Responsive for sidebar */
+            .sidebar { transform: translateX(-100%); width: 220px; z-index: 1005; }
+            .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+            .sidebar.collapsed { transform: translateX(-100%); } 
+            .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
+            .sidebar.open .logo h1 { font-size: 20px; }
+            .main-content-wrapper { margin-left: 0; } 
+            .main-content-wrapper.collapsed { margin-left: 0; } 
+            .toggle-btn-sidebar { display: none; } 
+            .mobile-menu-btn { display: flex !important; } 
+            .navbar { padding-left: 50px; }
+            .navbar .logo { margin-left: 0; }
+        }
+
          @media (max-width: 768px) {
-            header { padding: 12px 15px; font-size: 1em; }
-            .header-title { text-align: left; margin-left: 0;}
+            :root { --header-height: 50px; --footer-height: 30px; }
+            .navbar { height: var(--header-height); padding-left: 45px; }
+            .navbar .logo h1 { font-size: 16px; }
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; top: 8px; left: 8px; }
+
+            .main-content-wrapper { padding-top: var(--header-height); }
             .main-content { padding: 15px; }
             .page-subtitle { font-size: 1.1em; }
             .table-card { padding: 15px; }
@@ -359,72 +573,101 @@
             .action-btn { font-size: 12px; padding: 7px 12px; }
             .pagination button { padding: 7px 12px; font-size: 12px; }
             .pagination span { font-size: 12px; }
-            .control-btn, .theme-toggle-btn { padding: 7px 10px; font-size: 13px; }
             #table-wrapper {
-                 max-height: calc(100vh - 285px); 
+                 max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 30px - 45px - 50px - 20px); /* Extra 20px for subtitle */
             }
+            footer { height: var(--footer-height); font-size: 11px; padding: 0; display:flex; align-items:center; justify-content:center;}
+            .toast-container { bottom: calc(var(--footer-height) + 10px); }
+            #scrollToTopBtn { bottom: calc(var(--footer-height) + 15px); }
         }
         @media (max-width: 480px) {
+             :root { --header-height: 45px; --footer-height: 28px; }
+            .navbar { height: var(--header-height); }
+            .navbar-controls { gap: 5px;}
+            .nav-btn, .theme-toggle-btn, .mobile-menu-btn { width: 28px; height: 28px; font-size: 12px; }
+            .mobile-menu-btn { top: 9px; left: 8px; }
+            .main-content-wrapper { padding-top: var(--header-height); }
+            .main-content { padding: 10px; }
+            .table-card { padding: 10px; }
             .table-actions { flex-direction: column; align-items: stretch; }
             .action-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
             .action-btn:last-child { margin-bottom: 0; }
+            th, td { font-size: 10px; padding: 5px; }
+            .toast-container {
+                bottom: calc(var(--footer-height) + 5px);
+                left: 5px; right: 5px; align-items: center;
+            }
+            .toast { width: auto; max-width: calc(100% - 10px); }
             #table-wrapper {
-                 max-height: calc(100vh - 265px); 
+                 max-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px - 20px - 70px - 45px - 15px); /* actions: (2*30+5)=65 */
             }
-             .toast-container {
-                bottom: 10px; /* Giảm bottom khi footer dính chặt và màn hình nhỏ */
-                right: 10px;
-                left: 10px;
-                align-items: center;
-            }
-            .toast {
-                width: auto;
-                max-width: calc(100% - 20px);
-            }
+            #scrollToTopBtn { bottom: calc(var(--footer-height) + 10px); }
          }
     </style>
 </head>
 <body>
-    <header>
-        <span class="header-title" id="page-main-title">Chi Tiết Doanh Số TVBH</span>
-        <div class="header-controls">
-            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện">
-                <i class="fas fa-moon"></i> <span class="theme-text">Tối</span>
-            </button>
-            <button class="control-btn" onclick="goBack()" aria-label="Quay lại">
-                <i class="fas fa-arrow-left"></i> Quay Lại
+    <nav class="navbar">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo">
+            <h1>VINFAST THUẬN AN</h1>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện" data-tooltip="Sáng/Tối">
+                <i class="fas fa-moon"></i> <span class="theme-text" style="display:none;">Tối</span> </button>
+            <button class="nav-btn" onclick="goBack()" aria-label="Quay lại" data-tooltip="Quay lại trang Xe Đã Bán">
+                <i class="fas fa-arrow-left"></i>
             </button>
         </div>
-    </header>
+    </nav>
 
-    <div class="main-content">
-        <h2 class="page-subtitle" id="salesperson-name-title">Đang tải tên TVBH...</h2>
-        <div class="table-card">
-            <div class="table-actions">
-                <button class="action-btn" onclick="exportToExcel()" aria-label="Xuất Excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
-                <button class="action-btn" onclick="printPage()" aria-label="In Bảng"><i class="fas fa-print"></i> In Bảng</button>
-            </div>
-            <div id="table-wrapper">
-                <p class="loading-state" id="loading-message">Đang tải dữ liệu...</p>
-                <table id="sales-table" style="display:none;">
-                    <thead>
-                        <tr id="table-header-row">
-                            </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        </tbody>
-                </table>
-            </div>
-            <div class="pagination" id="pagination-controls" style="display:none;">
-                <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
-                <span id="page-info">Trang 1 / 1</span>
-                <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
+    <aside class="sidebar" id="sidebar">
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
+        <nav class="menu" id="navMenu">
+             <a href="Index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-tooltip="Xem Chính Sách và Tài Liệu"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
+        </nav>
+        <button class="toggle-btn-sidebar" onclick="toggleDesktopSidebar()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </aside>
+
+    <div class="main-content-wrapper" id="main-content-wrapper">
+        <div class="main-content">
+            <h2 class="page-subtitle" id="salesperson-name-title">Đang tải tên TVBH...</h2>
+            <div class="table-card">
+                <div class="table-actions">
+                    <button class="action-btn" onclick="exportToExcel()" aria-label="Xuất Excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                    <button class="action-btn" onclick="printPage()" aria-label="In Bảng"><i class="fas fa-print"></i> In Bảng</button>
+                </div>
+                <div id="table-wrapper">
+                    <p class="loading-state" id="loading-message"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
+                    <table id="sales-table" style="display:none;">
+                        <thead>
+                            <tr id="table-header-row">
+                                </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination-controls" style="display:none;">
+                    <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
+                    <span id="page-info">Trang 1 / 1</span>
+                    <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
+                </div>
             </div>
         </div>
     </div>
 
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
     <div class="toast-container" id="toast-container"></div>
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <script>
         let salespersonSalesData = [];
@@ -437,210 +680,215 @@
             { key: 2, header: "Số Đơn Hàng" },
             { key: 3, header: "Dòng Xe" },
             { key: 4, header: "Phiên Bản" },
-            { key: 5, header: "Ngoại Thất" }, // This is the "Exterior" column
+            { key: 5, header: "Ngoại Thất" }, 
             { key: 6, header: "Nội Thất" },
             { key: 8, header: "VIN" },
             { key: 9, header: "Chính Sách" },
         ];
 
-        // START of getExteriorColorStyle function
+        // --- Theme Management (from yeucaughepxe.html) ---
+        function applyInitialTheme() {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.body.classList.toggle("dark-mode", savedTheme === "dark");
+            updateThemeButton(savedTheme === "dark");
+        }
+
+        function toggleTheme() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeButton(isDarkMode);
+            adjustToastPositionForStickyFooter(); 
+        }
+
+        function updateThemeButton(isDarkMode) { // Combined from bestsale and yeucaughepxe
+            const themeToggleBtn = document.querySelector('.theme-toggle-btn'); // Use the class from navbar
+            if (!themeToggleBtn) return;
+            const themeIcon = themeToggleBtn.querySelector('i');
+            const themeText = themeToggleBtn.querySelector('span.theme-text'); // Assuming span exists for text
+            if (isDarkMode) {
+                themeIcon.className = 'fas fa-sun';
+                if(themeText) themeText.textContent = " Sáng";
+            } else {
+                themeIcon.className = 'fas fa-moon';
+                if(themeText) themeText.textContent = " Tối";
+            }
+        }
+        
+        // --- Sidebar Management (from yeucaughepxe.html) ---
+        function toggleDesktopSidebar() { 
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById("sidebar");
+                const mainWrapper = document.getElementById("main-content-wrapper");
+                if (sidebar && mainWrapper) {
+                    sidebar.classList.toggle("collapsed");
+                    mainWrapper.classList.toggle("collapsed");
+                    localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+                }
+                updateSidebarToggleIcon(); 
+            }
+        }
+
+        function toggleMobileSidebar() { 
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+                if (sidebar.classList.contains("open")) {
+                    sidebar.classList.remove("collapsed");
+                }
+            }
+            updateSidebarToggleIcon(); 
+        }
+        
+        function applyInitialSidebarState() { 
+            const mainWrapper = document.getElementById("main-content-wrapper");
+            if (!mainWrapper) return; 
+
+            if (window.innerWidth > 900) { 
+                const sidebar = document.getElementById("sidebar");
+                if (localStorage.getItem('sidebarState') === 'collapsed') {
+                    sidebar?.classList.add("collapsed");
+                    mainWrapper.classList.add("collapsed"); 
+                } else {
+                    sidebar?.classList.remove("collapsed");
+                    mainWrapper.classList.remove("collapsed"); 
+                }
+            } else { 
+                const sidebar = document.getElementById("sidebar");
+                sidebar?.classList.remove("collapsed"); 
+                mainWrapper.classList.remove("collapsed");
+                sidebar?.classList.remove("open"); 
+            }
+            updateSidebarToggleIcon();
+        }
+        
+        function updateSidebarToggleIcon() { 
+            const sidebar = document.getElementById("sidebar");
+            const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i"); 
+            const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); 
+            const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
+
+            if (!sidebar) return;
+
+            if (window.innerWidth <= 900) { 
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
+                if (mobileMenuIcon) {
+                    mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+                }
+            } else { 
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+                if (toggleIconDesktop) {
+                    // For desktop, the icon on .toggle-btn-sidebar should reflect the expanded/collapsed state
+                    toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times"; // Or chevron-left/right
+                }
+            }
+        }
+
+        function setActiveSidebarLink() { 
+            const navLinks = document.querySelectorAll("#navMenu a");
+            const targetPage = "xedaban.html"; // Highlight "Xe Đã Bán" as this is a detail view from it
+
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute('href') === targetPage) {
+                    link.classList.add("active");
+                }
+            });
+        }
+        
+        // --- Scroll to Top (from yeucaughepxe.html) ---
+        function initScrollToTopButton() {
+            const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
+            window.onscroll = () => { 
+                const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; 
+                if (show) {
+                    btn.classList.add('visible');
+                    btn.classList.remove('hidden'); 
+                } else {
+                    btn.classList.remove('visible');
+                }
+            };
+        }
+        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+
+
+        // START of getExteriorColorStyle function (from bestsale.html, kept as is)
         function getExteriorColorStyle(exteriorValue) {
-            // Outline style, only applied to CE18, outline color changed to #F0F8FF
             const outlineStyle = "text-shadow: -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 1px 1px 0 #808080, 0 0 5px #808080;";
-            // Font-weight style for specific colors
             const specificFontWeight = `font-weight: 600;`;
-            // Font-weight style for default case
             const defaultFontWeight = `font-weight: normal;`;
-
-            // Default style: NO outline and normal font-weight
             const defaultColorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`;
-
-            if (!exteriorValue) {
-                return defaultColorStyle; // Return default style without outline
-            }
-
-            const lowerExteriorValue = String(exteriorValue).toLowerCase(); // Ensure it's a string before toLowerCase()
-
-            // Prioritize full or most specific strings first
-            // ONLY CE18 COLOR KEEPS THE OUTLINE (now with #F0F8FF color)
-            if (lowerExteriorValue === "brahminy white (ce18)") {
-                return `color: white; ${outlineStyle} ${specificFontWeight}`; // Keep outline for CE18 with new outline color
-            }
-
-            // OTHER COLORS - REMOVE OUTLINE
-            if (lowerExteriorValue === "sunset orb (ce1a)") {
-                return `color: var(--exterior-orange-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "crimson red (ce1m)") {
-                return `color: var(--exterior-red-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "vinfast blue (ce1n)") {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "neptune grey (ce14)") {
-                return `color: #778899; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black (ce11)") {
-                // For "jet black (ce11)", text color should be white for visibility on black background if cell bg is black
-                // Assuming cell background is not black, so black text is fine. If cell BG is black, change to white.
-                return `color: black; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "electric blue (ce1j)") {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "zenith grey (ce1v)") {
-                return `color: #B0C4DE; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") {
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") {
-                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") {
-                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "urbant mint (ce1w)") {
-                return `color: #3CB371; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "vinbus green (ce2b)") {
-                return `color: var(--exterior-green-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "deep ocean (ce1h)") {
-                return `color: #006400; ${specificFontWeight}`; // Dark Green
-            }
-            if (lowerExteriorValue === "iris berry (ce1x)") {
-                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") {
-                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "urbant mint green - desat silv (171w)") {
-                return `color: var(--exterior-green-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "ivy green-desat silver roof (1722)") {
-                return `color: var(--exterior-green-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black-champagne creme roof (2311)") {
-                // Assuming body color is champagne creme, so text should be dark or a contrasting color for yellow.
-                // If the primary color is jet black, text should be white.
-                // The function seems to return text color for the *body* part of two-tone.
-                // For "jet black-champagne creme roof", the body is likely champagne.
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`; // Changed from white to yellow-text
-            }
-            if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") {
-                return `color: var(--exterior-white-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "champagne creme - matte champa (2523)") {
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black - graphite roof (2811)") {
-                // Assuming body color is jet black, text should be white for visibility.
-                return `color: white; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") {
-                return `color: var(--exterior-red-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "ivy_green_gne (ce22)") {
-                return `color: var(--exterior-green-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "champagne_creme_ylg (ce23)") {
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "crimson red - jet black roof (111m)") {
-                return `color: var(--exterior-red-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") {
-                return `color: var(--exterior-white-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "deep ocean_jet black roof (111h)") {
-                 // Body is deep ocean, text should contrast. White is a good choice.
-                return `color: white; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") {
-                // Body is jet black, text should be white.
-                return `color: white; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") {
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue === "de sat silver ind12007 (ce17)") {
-                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-            }
-
-            // .includes() cases - REMOVE OUTLINE
-            // These are more general, specific full matches above take precedence.
-            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) {
-                return `color: var(--exterior-red-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) {
-                return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) {
-                return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("deep ocean")) {
-                // For "deep ocean", white text provides good contrast.
-                return `color: white; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("sunset orb")) {
-                return `color: var(--exterior-orange-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) {
-                return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) {
-                return `color: var(--exterior-green-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("jet black")) {
-                // For any "jet black" variant, white text is best for visibility.
-                return `color: white; ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) {
-                // IMPORTANT: "brahminy white (ce18)" is handled above and keeps the outline.
-                // Other "brahminy white" or "infinity blanc" variants will not have an outline here.
-                return `color: var(--exterior-white-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) {
-                return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-            }
-            if (lowerExteriorValue.includes("mystery bronz")) {
-                return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
-            }
-
+            if (!exteriorValue) return defaultColorStyle;
+            const lowerExteriorValue = String(exteriorValue).toLowerCase();
+            if (lowerExteriorValue === "brahminy white (ce18)") return `color: white; ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue === "sunset orb (ce1a)") return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "crimson red (ce1m)") return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "vinfast blue (ce1n)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "neptune grey (ce14)") return `color: #778899; ${specificFontWeight}`;
+            if (lowerExteriorValue === "jet black (ce11)") return `color: black; ${specificFontWeight}`;
+            if (lowerExteriorValue === "electric blue (ce1j)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "zenith grey (ce1v)") return `color: #B0C4DE; ${specificFontWeight}`;
+            if (lowerExteriorValue === "jet black roof- summer yellow body (111u)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "brahminy white roof- aquatic azure body (181y)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "brahminy white roof- rose pink body (1821)") return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "brahminy white roof - iris berry body (181x)") return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "urbant mint (ce1w)") return `color: #3CB371; ${specificFontWeight}`;
+            if (lowerExteriorValue === "vinbus green (ce2b)") return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "deep ocean (ce1h)") return `color: #006400; ${specificFontWeight}`;
+            if (lowerExteriorValue === "iris berry (ce1x)") return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "zenith grey-desat silver roof (171v)") return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "urbant mint green - desat silv (171w)") return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "ivy green-desat silver roof (1722)") return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "atlantic blue-aquatic azure ro (1y26)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "jet black-champagne creme roof (2311)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "infinity blanc _ silky white r (2418)") return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "champagne creme - matte champa (2523)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "jet black - graphite roof (2811)") return `color: white; ${specificFontWeight}`;
+            if (lowerExteriorValue === "crimson velvet - mystery bronz (2927)") return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "ivy_green_gne (ce22)") return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "champagne_creme_ylg (ce23)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "crimson red - jet black roof (111m)") return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "infinity blanc_zenith grey roof (1v18)") return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "deep ocean_jet black roof (111h)") return `color: white; ${specificFontWeight}`;
+            if (lowerExteriorValue === "alantic blue_denim blue roof (2a26)") return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "jet black_mystery bronze roof (2911)") return `color: white; ${specificFontWeight}`;
+            if (lowerExteriorValue === "champagne creme_infinity blanc roof (1823)") return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue === "de sat silver ind12007 (ce17)") return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("deep ocean")) return `color: white; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black")) return `color: white; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
             return defaultColorStyle;
         }
         // END of getExteriorColorStyle function
 
 
         document.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                updateThemeButton(true);
-            } else {
-                updateThemeButton(false);
-            }
+            applyInitialTheme(); // From yeucaughepxe
+            applyInitialSidebarState(); // From yeucaughepxe
+            setActiveSidebarLink(); // From yeucaughepxe
+            initScrollToTopButton(); // From yeucaughepxe
 
             salespersonName = sessionStorage.getItem('bestSalespersonName');
             const rawData = sessionStorage.getItem('bestSalespersonDataForBestSale');
 
-            const titleElement = document.getElementById("page-main-title");
+            const titleElement = document.querySelector(".navbar .logo h1"); // Updated selector
             const nameTitleElement = document.getElementById("salesperson-name-title");
 
             if (salespersonName) {
-                titleElement.textContent = `Chi Tiết Doanh Số TVBH: ${salespersonName}`;
+                // Navbar title can remain generic or be updated if desired
+                // titleElement.textContent = `Doanh Số: ${salespersonName}`; 
                 nameTitleElement.textContent = `Danh sách đơn hàng của ${salespersonName}`;
             } else {
-                titleElement.textContent = "Chi Tiết Doanh Số TVBH";
+                // titleElement.textContent = "Chi Tiết Doanh Số TVBH";
                 nameTitleElement.textContent = "Không tìm thấy tên TVBH.";
             }
 
@@ -665,7 +913,20 @@
             }
             
             adjustToastPositionForStickyFooter();
-            window.addEventListener('resize', adjustToastPositionForStickyFooter);
+            window.addEventListener('resize', () => {
+                applyInitialSidebarState(); // Re-apply sidebar on resize
+                adjustToastPositionForStickyFooter();
+            });
+            // Click outside to close mobile sidebar
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); 
+                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+                    if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                        toggleMobileSidebar();
+                    }
+                }
+            });
         });
 
         function renderTableHeader() {
@@ -705,8 +966,7 @@
                         const cellValue = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
                         td.textContent = cellValue;
                         
-                        // Apply exterior color styling for the "Ngoại Thất" column
-                        if (col.key === 5) { // Key 5 is "Ngoại Thất"
+                        if (col.key === 5) { 
                             const exteriorStyle = getExteriorColorStyle(cellValue);
                             td.style.cssText = exteriorStyle;
                         }
@@ -723,7 +983,7 @@
             const salesTable = document.getElementById("sales-table");
             const paginationControls = document.getElementById("pagination-controls");
 
-            loadingMessage.textContent = message;
+            loadingMessage.innerHTML = `<i class="fas fa-folder-open"></i> ${message}`; // Added icon
             loadingMessage.style.display = "block";
             salesTable.style.display = "none";
             paginationControls.style.display = "none";
@@ -746,32 +1006,11 @@
             if (currentPage < 1) currentPage = 1;
             if (currentPage > totalPages) currentPage = totalPages;
             renderTable();
-        }
-
-        function toggleTheme() {
-            const isDarkMode = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            updateThemeButton(isDarkMode);
-            adjustToastPositionForStickyFooter(); 
-        }
-
-        function updateThemeButton(isDarkMode) {
-            const themeToggleBtn = document.querySelector('.theme-toggle-btn');
-            const themeIcon = themeToggleBtn.querySelector('i');
-            const themeText = themeToggleBtn.querySelector('span.theme-text');
-            if (isDarkMode) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-                if(themeText) themeText.textContent = " Sáng";
-            } else {
-                themeIcon.classList.remove('fa-sun');
-                themeIcon.classList.add('fa-moon');
-                if(themeText) themeText.textContent = " Tối";
-            }
+            document.getElementById('table-wrapper').scrollTop = 0; // Scroll to top of table
         }
 
         function goBack() {
-            window.location.href = "xedaban.html";
+            window.location.href = "xedaban.html"; 
         }
 
         function exportToExcel() {
@@ -831,17 +1070,14 @@
                         h2 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.2em; margin-bottom: 5px;}
                         p { text-align: center; font-size: 0.9em; margin-bottom: 15px;}
                         table { border-collapse: collapse; width: 100%; font-size: 10pt; }
-                        th, td { border: 1px solid #ccc !important; padding: 6px 8px; text-align: left; word-wrap: break-word; }
+                        th, td { border: 1px solid #ccc !important; padding: 6px 8px; text-align: left; word-wrap: break-word; } 
                         th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index:1; }
-                        /* Apply getExteriorColorStyle for printing */
-                        /* This part is tricky as JS styles won't directly transfer to print CSS easily without reprocessing */
-                        /* For simplicity, the inline styles applied by JS should carry over if -webkit-print-color-adjust: exact is effective */
                         @page { margin: 0.7in; }
                         @media print {
                             body { overflow: visible !important; height: auto !important; } 
                             #table-wrapper { max-height: none !important; overflow: visible !important; } 
-                            header, footer, .header-controls, .table-actions, .pagination, .toast-container, .theme-toggle-btn, .control-btn { display: none !important; } 
-                            .main-content, .table-card { padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important; }
+                            header, footer, .header-controls, .table-actions, .pagination, .toast-container, .theme-toggle-btn, .control-btn, .sidebar, #scrollToTopBtn { display: none !important; } 
+                            .main-content-wrapper, .main-content, .table-card { margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
                         }
                     </style>
                 </head>
@@ -860,7 +1096,7 @@
             printWindow.document.close();
         }
 
-        function showToast(message, type = 'info', duration = 3000) {
+        function showToast(message, type = 'info', duration = 3000) { // Adapted from yeucaughepxe
             const toastContainer = document.getElementById("toast-container");
             if (!toastContainer) return;
             const toast = document.createElement('div');
@@ -884,16 +1120,12 @@
             if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
                 const footerHeight = footer.offsetHeight;
                 let bottomOffset = footerHeight + 20; 
-                
-                if (window.innerWidth <= 480) {
-                     bottomOffset = footerHeight + 10; 
-                }
+                if (window.innerWidth <= 480) bottomOffset = footerHeight + 10; 
                 toastContainer.style.bottom = `${bottomOffset}px`;
             } else if (toastContainer) { 
                 toastContainer.style.bottom = (window.innerWidth <= 480) ? '10px' : '20px';
             }
         }
-
     </script>
 </body>
 </html>
