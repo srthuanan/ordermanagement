@@ -8,14 +8,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
     <style>
         :root {
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
             --secondary-color: #00aeff;
-            --accent-color: #ffc107; 
-            --success-color: #28a745; 
+            --accent-color: #ffc107;
+            --success-color: #28a745;
             --background-light: #f4f7fc;
             --text-light: #2c3e50;
             --background-dark: #161b22;
@@ -30,24 +32,26 @@
             --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
             --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s; 
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
 
-            /* Warning colors for rows waiting for invoice */
-            --warning-color-light-bg: #fffde7;  /* Softer yellow */
-            --warning-color-light-text: #795548; /* Brownish text */
-            --warning-color-light-border: #fff59d; /* Lighter yellow border */
-            --warning-color-dark-bg: #3e2723;  /* Dark brown for dark mode */
-            --warning-color-dark-text: #fff176; /* Lighter yellow text for dark mode */
-            --warning-color-dark-border: #795548; /* Brown border for dark mode */
+            --warning-color-light-bg: #fffde7;
+            --warning-color-light-text: #795548;
+            --warning-color-light-border: #fff59d;
+            --warning-color-dark-bg: #3e2723;
+            --warning-color-dark-text: #fff176;
+            --warning-color-dark-border: #795548;
 
-            /* Status Badge Colors (can be expanded if needed) */
             --status-default-bg-light: #e9ecef;
             --status-default-text-light: #495057;
             --status-default-border-light: #d6d8db;
             --status-default-bg-dark: #343a40;
             --status-default-text-dark: #adb5bd;
             --status-default-border-dark: #545b62;
+            
+            --star-color-light: rgba(0, 48, 135, 0.6);
+            --star-color-dark: rgba(0, 174, 255, 0.5);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -73,7 +77,7 @@
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
-            background: var(--card-bg-light); 
+            background: var(--card-bg-light);
             border-radius: 4px;
         }
         body.dark-mode ::-webkit-scrollbar-track {
@@ -89,27 +93,144 @@
         }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        header {
+        /* Navbar (repurposed from header) */
+        .navbar { /* Changed from header to .navbar for consistency */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
+            height: 50px; /* Standard navbar height */
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: #fff;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            z-index: 999;
+            padding: 0 15px; /* Standard padding */
+            z-index: 1000; /* Higher z-index */
             box-shadow: var(--shadow-light-outer);
-            transition: background var(--transition-speed) ease;
+            transition: background var(--transition-speed) ease, width var(--transition-speed) ease, left var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            /* justify-content: space-between; Will be handled by flex items */
         }
-        body.dark-mode header {
+        body.dark-mode .navbar {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
             box-shadow: var(--shadow-dark-outer);
         }
+        .navbar .logo-title { /* Renamed from .header-title */
+            font-size: 16px; 
+            font-weight: 600;
+            text-transform: uppercase;
+            /* flex-grow: 1; /* Allow title to take space, or adjust based on tab layout */
+            text-align: left; /* Align to left if sidebar hamburger is present */
+            margin-left: 10px; /* Space from mobile menu button if present */
+            white-space: nowrap;
+            color: #fff; /* Ensure color is set */
+        }
 
+        /* Tabs in Navbar */
+        .navbar .tabs {
+            display: flex;
+            margin: 0 auto; /* Center the tabs */
+            gap: 10px; 
+            transition: all var(--transition-speed) ease;
+            overflow-x: auto; 
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
+        }
+        .navbar .tabs::-webkit-scrollbar { display: none; }
+
+        .navbar .tabs a {
+            padding: 8px 12px; 
+            text-decoration: none; color: rgba(255,255,255,0.85);
+            font-size: 13px; 
+            font-weight: 500; border-radius: 6px; background: transparent;
+            transition: background var(--transition-speed-fast) ease, color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+            position: relative;
+            white-space: nowrap; 
+        }
+        .navbar .tabs a::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
+            background-color: #fff; transform: translateX(-50%);
+            transition: width var(--transition-speed-fast) ease;
+        }
+        .navbar .tabs a:hover, .navbar .tabs a.active { 
+            background: rgba(255, 255, 255, 0.15); 
+            color: #ffffff; 
+            transform: translateY(-1px); 
+        }
+        .navbar .tabs a.active::after { width: 70%; }
+        .navbar .tabs a:hover::after { width: 50%; }
+        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active { background: rgba(0, 0, 0, 0.2); }
+        body.dark-mode .navbar .tabs a::after { background-color: var(--secondary-color); }
+
+        /* Hamburger for Navbar Tabs */
+        .hamburger { 
+            display: none; 
+            background: none; border: none; color: #ffffff; 
+            font-size: 18px; 
+            cursor: pointer; 
+            transition: transform var(--transition-speed-fast) ease;
+            padding: 5px;
+            margin-right: 8px; /* Space from title or other elements */
+        }
+        .hamburger.active { transform: rotate(90deg); }
+
+
+        .navbar-controls { /* Existing controls, ensure they are at the end */
+            display: flex;
+            align-items: center; /* Align items vertically */
+            gap: 8px;
+            margin-left: auto; /* Push to the right */
+        }
+        .nav-btn, .theme-toggle { 
+            border: none;
+            border-radius: 50%;
+            background: var(--card-bg-light);
+            color: var(--text-light);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+        }
+        .nav-btn:hover, .theme-toggle:hover { 
+            background: #e9ecef;
+            transform: translateY(-2px) scale(1.1); 
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .nav-btn:active, .theme-toggle:active { 
+            transform: translateY(0px) scale(0.95); 
+            box-shadow: var(--shadow-light-inner);
+        }
+        .theme-toggle i { 
+            transition: transform var(--transition-speed-slow) ease-in-out;
+        }
+        .theme-toggle.spinning i { 
+            transform: rotate(360deg);
+        }
+
+        body.dark-mode .nav-btn,
+        body.dark-mode .theme-toggle { 
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .nav-btn:hover,
+        body.dark-mode .theme-toggle:hover { 
+            background: var(--primary-color-darker);
+            color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        }
+         body.dark-mode .nav-btn:active,
+        body.dark-mode .theme-toggle:active { 
+            box-shadow: var(--shadow-dark-inner);
+        }
+
+
+        /* Sidebar */
         .sidebar {
             position: fixed;
             top: 0;
@@ -118,9 +239,9 @@
             height: 100vh;
             background: var(--primary-color-darker);
             padding: 15px;
-            padding-top: 50px; 
+            padding-top: 60px; /* Space for navbar */
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 1000;
+            z-index: 999; /* Below navbar */
             box-shadow: 3px 0 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
@@ -128,99 +249,251 @@
         .sidebar.collapsed {
             width: 60px;
         }
+        .sidebar.open { /* For mobile */
+            transform: translateX(0);
+        }
         body.dark-mode .sidebar {
             background: var(--background-dark);
             border-right: 1px solid var(--border-color-dark);
             box-shadow: 3px 0 10px rgba(0,0,0,0.2);
         }
-
-        .sidebar .logo { text-align: center; margin-bottom: 25px; }
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative; 
+            overflow: hidden; 
+        }
         .sidebar .logo h1 {
-            font-size: 25px;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-            animation: bounceGlow 2s infinite alternate;
+            font-size: 20px; /* Adjusted from 25px */
+            color: #fff;
+            font-weight: 600;
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); 
+            position: relative; 
+            display: inline-block; 
+        }
+        .sidebar:not(.collapsed) .logo h1::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shimmer 3s infinite linear;
+            animation-delay: 1s;
+        }
+        .sidebar.collapsed .logo h1 {
+            opacity: 0;
+            font-size: 0;
+        }
+        .sidebar.collapsed .logo h1::after { 
+            display: none;
         }
 
-        @keyframes bounceGlow {
-            0%, 100% {
-                transform: translateY(0);
-                text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
-            }
-            50% {
-                transform: translateY(-10px); 
-                text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
-            }
+        .sidebar .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
         }
-        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
-        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
-        .sidebar .menu a {
-            padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8);
-            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease;
-            display: flex; align-items: center; gap: 10px;
+        .sidebar .menu a { /* This now only applies to "Trang Chủ" if other tabs moved */
+            padding: 10px 12px;
+            text-decoration: none;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 6px;
+            background: transparent;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
         }
+        .sidebar .menu a::before { 
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--secondary-color);
+            transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before { left: 0; }
         body.dark-mode .sidebar .menu a { color: var(--text-dark); }
         .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
-        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            transition: transform var(--transition-speed) ease;
+        }
         .sidebar .menu a span {
             transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
-            white-space: nowrap; overflow: hidden; max-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 100px;
         }
         .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
-        .sidebar .menu a:hover { background: rgba(255, 255, 255, 0.1); color: #fff; padding-left: 15px; }
-        .sidebar.collapsed .menu a:hover { padding-left: 10px; }
-        .sidebar .menu a:hover i { transform: scale(1.1); }
+        .sidebar .menu a:hover { 
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding-left: 15px;
+            transform: translateX(3px);
+        }
+         .sidebar.collapsed .menu a:hover { 
+            padding-left: 10px;
+            transform: scale(1.05);
+        }
+        .sidebar .menu a:hover i { 
+            transform: scale(1.1) rotate(5deg);
+        }
         body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
-        .sidebar .menu a.active { background: var(--secondary-color); color: #fff; font-weight: 600; }
-        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); }
 
-        .toggle-btn {
-            position: absolute; top: 12px; right: -15px; width: 30px; height: 30px;
-            background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
-            font-size: 14px; cursor: pointer; transition: all var(--transition-speed) ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 1001;
+        .sidebar .menu a.active { 
+            background: var(--secondary-color);
+            color: #fff;
+            font-weight: 600;
+            animation: activeLinkPulse 1.5s infinite ease-in-out;
         }
-        .toggle-btn:hover { background: var(--primary-color-lighter); transform: scale(1.1); }
-        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
 
-        .navbar-controls { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 1001; }
-        .nav-btn, .theme-toggle {
-            border: none; border-radius: 50%; background: var(--card-bg-light); color: var(--text-light);
-            font-size: 14px; cursor: pointer; transition: all var(--transition-speed) ease;
-            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+        body.dark-mode .sidebar .menu a.active { 
+            background: var(--primary-color);
+            animation-name: activeLinkPulseDark;
+        }
+        body.dark-mode .sidebar .menu a.active::before {
+            background-color: var(--secondary-color);
+        }
+
+        .sidebar-menu-label { /* Hide if no items under it */
+            display: none; /* Initially hide, can be shown if other items are added back */
+            padding: 8px 12px 4px;
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+        .sidebar.collapsed .sidebar-menu-label {
+            display: none;
+        }
+
+
+        .toggle-btn-sidebar { /* For desktop sidebar collapse/expand */
+            position: absolute;
+            top: 12px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        .toggle-btn-sidebar:hover {
+            background: var(--primary-color-lighter);
+            transform: scale(1.1) rotate(180deg);
+        }
+        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
+
+        /* Mobile Menu Button for Sidebar (moved into navbar structure) */
+        .mobile-menu-btn { 
+            background: var(--card-bg-light); color: var(--text-light);
+            border: 1px solid var(--border-color-light); border-radius: 50%;
+            width: 32px; height: 32px; font-size: 16px; cursor: pointer;
             box-shadow: var(--shadow-light-outer);
+            display: none; /* Controlled by media query */
+            align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            margin-right: 8px; /* Space from navbar tabs hamburger */
         }
-        .nav-btn:hover, .theme-toggle:hover { background: #e9ecef; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle { background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer); }
-        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle:hover { background: var(--primary-color-darker); color: #fff; box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); } 
+        .mobile-menu-btn:active { transform: scale(0.95); } 
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+
 
         [data-tooltip] { position: relative; }
         [data-tooltip]::after {
-            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
-            transform: translateX(-50%) translateY(5px); 
-            background-color: #333; color: #fff; padding: 4px 8px;
-            border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; 
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out;
             z-index: 10000;
         }
-        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        body.dark-mode [data-tooltip]::after {
+            background-color: #f0f0f0;
+            color: #333;
+        }
 
         .main-content {
-            margin-left: 200px; padding: 20px; margin-top: 45px;
-            min-height: calc(100vh - 45px - 30px); transition: margin-left var(--transition-speed) ease;
-            padding-bottom: 50px; display: flex; flex-direction: column;
+            margin-left: 200px; /* Initial for expanded sidebar */
+            padding: 20px;
+            padding-top: 70px; /* Navbar height + top padding */
+            min-height: calc(100vh - 50px - 30px); /* Navbar height - footer height */
+            transition: margin-left var(--transition-speed) ease;
+            padding-bottom: 70px; 
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        .main-content.collapsed { margin-left: 60px; }
+        .main-content.collapsed { /* When sidebar is collapsed */
+            margin-left: 60px;
+        }
 
         .grid-container {
-            flex: 1; background: var(--card-bg-light); border-radius: 10px; padding: 20px;
-            box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light);
-            display: flex; flex-direction: column; gap: 15px; overflow: hidden;
+            flex: 1;
+            background: var(--card-bg-light);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow-light-outer);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            position: relative;
+            overflow: hidden; /* Prevent content spill */
+            border: 1px solid var(--border-color-light);
         }
-        body.dark-mode .grid-container { background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer); border: 1px solid var(--border-color-dark); }
+        body.dark-mode .grid-container {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
+        }
 
         .filter-section {
             display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
@@ -233,115 +506,125 @@
             transition: border-color var(--transition-speed) ease, background var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
         body.dark-mode .filter-section input[type="text"] { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-inner); }
-        .filter-section input[type="text"]:focus { 
-            outline: none; border-color: var(--primary-color); background: var(--card-bg-light); 
+        .filter-section input[type="text"]:focus {
+            outline: none; border-color: var(--primary-color); background: var(--card-bg-light);
             box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
         }
-        body.dark-mode .filter-section input[type="text"]:focus { 
-            border-color: var(--secondary-color); background: var(--card-bg-dark); 
+        body.dark-mode .filter-section input[type="text"]:focus {
+            border-color: var(--secondary-color); background: var(--card-bg-dark);
             box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
         }
         .filter-section .button-group { display: flex; gap: 10px; }
         .filter-section .button-group button {
             padding: 8px 15px; background: var(--primary-color); color: #fff; border: none;
             border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
-            transition: all var(--transition-speed-fast) ease; display: flex; align-items: center; gap: 8px;
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out; 
+            display: flex; align-items: center; gap: 8px;
             box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
         }
-        .filter-section .button-group button:hover { background: var(--primary-color-lighter); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);}
+        .filter-section .button-group button:hover { 
+            background: var(--primary-color-lighter);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+         .filter-section .button-group button:active { 
+            transform: translateY(0px) scale(0.98);
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
         .filter-section .button-group button.refresh-btn { background: var(--secondary-color); }
-        .filter-section .button-group button.refresh-btn:hover { background: #0095dd; }
+        .filter-section .button-group button.refresh-btn:hover { background: #0095dd; transform: translateY(-2px) scale(1.02); }
         body.dark-mode .filter-section .button-group button { background: var(--primary-color-lighter); box-shadow: 0 2px 5px rgba(0,0,0, 0.3); }
         body.dark-mode .filter-section .button-group button:hover { background: var(--secondary-color); box-shadow: 0 4px 8px rgba(0,0,0, 0.4);}
         body.dark-mode .filter-section .button-group button.refresh-btn { background: var(--primary-color); }
         body.dark-mode .filter-section .button-group button.refresh-btn:hover { background: var(--primary-color-darker); }
 
         .tables-section { display: flex; gap: 15px; flex: 1; min-height: 0; width: 100%; }
-        .table-container { /* Adapted from khoxe_updated_styles */
-            flex: 0 0 70%; 
+        .table-container {
+            flex: 0 0 70%;
             background: var(--card-bg-light);
-            border-radius: 10px; 
-            padding: 0; 
+            border-radius: 10px;
+            padding: 0;
             box-shadow: var(--shadow-light-outer);
-            overflow: auto; 
-            max-height: 550px; /* Adjusted max-height for this page */
+            overflow: auto;
+            max-height: calc(100vh - 260px); /* Adjust based on other elements */
             position: relative;
             border: 1px solid var(--border-color-light);
             transition: all var(--transition-speed) ease;
         }
-        .detail-panel { 
-            flex: 0 0 30%; 
-            min-width: 250px; 
-            background: var(--card-bg-light); 
-            border-radius: 8px; 
+        .detail-panel {
+            flex: 0 0 30%;
+            min-width: 250px;
+            background: var(--card-bg-light);
+            border-radius: 8px;
             padding: 15px;
-            box-shadow: var(--shadow-light-inner); 
+            box-shadow: var(--shadow-light-inner);
             border: 1px solid var(--border-color-light);
-            overflow: auto; 
-            display: flex; 
+            overflow: auto;
+            display: flex;
             flex-direction: column;
-            max-height: 500px; /* Match table-container max-height */
+            max-height: calc(100vh - 260px); /* Adjust based on other elements */
         }
 
-        body.dark-mode .table-container, body.dark-mode .detail-panel { 
-            background: var(--card-bg-dark); 
-            box-shadow: var(--shadow-dark-outer); 
-            border: 1px solid var(--border-color-dark); 
+        body.dark-mode .table-container, body.dark-mode .detail-panel {
+            background: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-outer);
+            border: 1px solid var(--border-color-dark);
         }
-        
-        .data-table { /* Renamed from table to .data-table to be specific */
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 12.5px; 
-            table-layout: fixed; 
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            table-layout: fixed;
         }
         .data-table th, .data-table td {
             padding: 10px 12px;
-            text-align: left; 
+            text-align: left;
             border-bottom: 1px solid var(--border-color-light);
-            white-space: nowrap; 
+            white-space: nowrap;
         }
         .data-table th {
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff; 
-            font-weight: 600; 
-            position: sticky; 
-            top: 0; 
+            color: #fff;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
             z-index: 10;
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             vertical-align: middle;
             transition: background var(--transition-speed-fast) ease;
         }
-        .data-table td { 
-            padding: 8px 12px; 
-            vertical-align: middle; 
+        .data-table td {
+            padding: 8px 12px;
+            vertical-align: middle;
             color: var(--text-light);
-            overflow: hidden; 
-            text-overflow: ellipsis; 
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         body.dark-mode .data-table th, body.dark-mode .data-table td { border-bottom: 1px solid var(--border-color-dark); }
         body.dark-mode .data-table th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode .data-table td { color: var(--text-dark); }
 
         .data-table tbody tr { transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease; }
-        .data-table tbody tr:not(.row-waiting-for-invoice):hover { 
-            background: rgba(0, 48, 135, 0.08); 
+        .data-table tbody tr:not(.row-waiting-for-invoice):hover {
+            background: rgba(0, 48, 135, 0.08);
             cursor: pointer;
-            transform: translateY(-2px); 
+            transform: translateY(-2px);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
         }
-        body.dark-mode .data-table tbody tr:not(.row-waiting-for-invoice):hover { 
-            background: rgba(255, 255, 255, 0.08); 
+        body.dark-mode .data-table tbody tr:not(.row-waiting-for-invoice):hover {
+            background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
         }
-        .data-table .empty-state td, .data-table .table-placeholder td { /* Combined for loading/no data */
-            text-align: center; 
-            padding: 20px; 
-            color: var(--text-light); 
+        .data-table .empty-state td, .data-table .table-placeholder td {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
         }
-        body.dark-mode .data-table .empty-state td, body.dark-mode .data-table .table-placeholder td { 
-            color: var(--text-dark); 
+        body.dark-mode .data-table .empty-state td, body.dark-mode .data-table .table-placeholder td {
+            color: var(--text-dark);
         }
         .data-table .table-placeholder .fas { margin-right: 8px; }
         .data-table .table-placeholder .fas.fa-spinner { animation: spin 1.5s linear infinite; }
@@ -353,11 +636,11 @@
         .row-waiting-for-invoice td {
             background-color: var(--warning-color-light-bg) !important;
             color: var(--warning-color-light-text) !important;
-            font-weight: 500; 
+            font-weight: 500;
             border-bottom-color: var(--warning-color-light-border) !important;
         }
-        .row-waiting-for-invoice:hover td { 
-             background-color: var(--warning-color-light-border) !important; 
+        .row-waiting-for-invoice:hover td {
+             background-color: var(--warning-color-light-border) !important;
              cursor: pointer;
         }
         body.dark-mode .row-waiting-for-invoice td {
@@ -369,17 +652,6 @@
             background-color: var(--warning-color-dark-border) !important;
         }
 
-        /* Colgroup for .data-table based on displayHeadersConfig */
-        /* This will be dynamically set by JS if widths are different per tab, or fixed here if consistent */
-        /* Example for a 6-column layout, adjust as per displayHeadersConfig */
-        .data-table colgroup col:nth-child(1) { width: 5%; }  /* STT */
-        .data-table colgroup col:nth-child(2) { width: 20%; } /* TƯ VẤN BÁN HÀNG */
-        .data-table colgroup col:nth-child(3) { width: 25%; } /* TÊN KHÁCH HÀNG */
-        .data-table colgroup col:nth-child(4) { width: 15%; } /* DÒNG XE */
-        .data-table colgroup col:nth-child(5) { width: 15%; } /* PHIÊN BẢN */
-        .data-table colgroup col:nth-child(6) { width: 20%; } /* NGOẠI THẤT */
-
-
         .loading-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.7); display: flex; justify-content: center; align-items: center;
@@ -390,7 +662,7 @@
             border: 4px solid var(--border-color-light); border-top: 4px solid var(--primary-color);
             border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         body.dark-mode .loading-overlay { background: rgba(0, 0, 0, 0.7); }
         body.dark-mode .loading-spinner { border: 4px solid var(--border-color-dark); border-top: 4px solid var(--secondary-color); }
         .loading-overlay span { margin-left: 10px; font-size: 14px; color: var(--text-light); }
@@ -415,10 +687,19 @@
         .pagination button {
             padding: 8px 15px; background: var(--primary-color); color: #fff; border: none;
             border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
-            transition: all var(--transition-speed-fast) ease;
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out; 
             box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2);
         }
-        .pagination button:hover:not(:disabled) { background: var(--primary-color-lighter); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 48, 135, 0.3);}
+        .pagination button:hover:not(:disabled) { 
+            background: var(--primary-color-lighter);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+        .pagination button:active:not(:disabled) { 
+            transform: translateY(0px) scale(0.98);
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
         .pagination button:disabled { background: var(--border-color-light); color: #aaa; cursor: not-allowed; transform: none; box-shadow: none;}
         body.dark-mode .pagination button { background: var(--primary-color-lighter); box-shadow: 0 2px 5px rgba(0,0,0, 0.3);}
         body.dark-mode .pagination button:hover:not(:disabled) { background: var(--secondary-color); box-shadow: 0 4px 8px rgba(0,0,0, 0.4);}
@@ -429,7 +710,7 @@
         footer {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff; text-align: center; padding: 10px 0; font-size: 12px; z-index: 998;
+            color: #fff; text-align: center; padding: 10px 0; font-size: 12px; z-index: 990; 
             transition: background var(--transition-speed) ease;
         }
         body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
@@ -438,25 +719,25 @@
             position: fixed;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%) scale(0.9); 
+            transform: translate(-50%, -50%) scale(0.9);
             background-color: var(--card-bg-dark);
             color: var(--text-dark);
             padding: 12px 18px;
             border-radius: 8px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.25); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
             display: none;
             align-items: center;
             gap: 10px;
             z-index: 1005;
             font-size: 14px;
             opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease; 
+            transition: opacity 0.3s ease, transform 0.3s ease;
             max-width: 90%;
-            width: auto; 
+            width: auto;
         }
         #notification.show {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1); 
+            transform: translate(-50%, -50%) scale(1);
             display: flex;
         }
         body.dark-mode #notification {
@@ -465,24 +746,24 @@
              box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         #notification.success { background-color: var(--success-color); color: white; }
-        #notification.error { background-color: #dc3545; color: white; } /* Bootstrap danger red */
-        body.dark-mode #notification.error { background-color: #f8d7da; color: #721c24;} /* Light red for dark mode error */
+        #notification.error { background-color: #dc3545; color: white; }
+        body.dark-mode #notification.error { background-color: #f8d7da; color: #721c24;}
 
 
         #notification.important-info {
             background-color: var(--warning-color-light-bg);
             color: var(--warning-color-light-text);
             border: 1px solid var(--warning-color-light-border);
-            border-left-width: 6px; 
+            border-left-width: 6px;
             border-left-color: var(--warning-color-light-text);
             font-weight: 600;
-            font-size: 15px; 
-            padding: 18px 25px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            font-size: 15px;
+            padding: 18px 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         #notification.important-info .icon {
-            font-size: 1.5em; 
-            margin-right: 5px; 
+            font-size: 1.5em;
+            margin-right: 5px;
         }
         body.dark-mode #notification.important-info {
             background-color: var(--warning-color-dark-bg);
@@ -493,61 +774,332 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
-        .mobile-menu-btn {
-            display: none; position: fixed; top: 8px; left: 10px; z-index: 1002;
-            background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-color-light);
-            border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer;
-            box-shadow: var(--shadow-light-outer); align-items: center; justify-content: center;
-            transition: all var(--transition-speed) ease;
+        @keyframes shimmer {
+            0% { left: -150%; }
+            50% { left: 150%; }
+            100% { left: 150%; }
         }
-        .mobile-menu-btn:hover { background: #e9ecef; }
-        body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer); }
-        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+        @keyframes activeLinkPulse {
+            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
+            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+        }
+        @keyframes activeLinkPulseDark {
+            0% { box-shadow: 0 0 5px var(--secondary-color); }
+            50% { box-shadow: 0 0 15px var(--secondary-color); }
+            100% { box-shadow: 0 0 5px var(--secondary-color); }
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @keyframes iconPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes iconShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
 
-        /* Responsive adjustments - Adopting yeucaughepxe.html's mobile table style */
-        @media (max-width: 900px) { /* Tablet and smaller */
-            .sidebar { transform: translateX(-100%); width: 220px; }
+        #animatedCarContainer {
+            position: fixed;
+            bottom: 35px; 
+            left: 0;
+            width: 100%;
+            height: 40px; 
+            overflow: hidden; 
+            z-index: 997; 
+            pointer-events: none; 
+        }
+        #animatedCarElement {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            font-size: 30px; 
+            color: var(--primary-color);
+            transform: translateX(-100%) scaleX(1); 
+            animation: driveAcrossAndBack 15s linear infinite;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5),
+                         0 0 10px var(--secondary-color); 
+        }
+        body.dark-mode #animatedCarElement {
+            color: var(--secondary-color);
+            text-shadow: 0 0 5px rgba(0,0,0,0.5),
+                         0 0 10px var(--primary-color-lighter);
+        }
+        @keyframes driveAcrossAndBack { 
+            0% { transform: translateX(-100%) scaleX(1) translateY(0px); }
+            5% { transform: translateX(-80vw) scaleX(1) translateY(-2px); }
+            10% { transform: translateX(-60vw) scaleX(1) translateY(0px); }
+            45% { transform: translateX(100vw) scaleX(1) translateY(0px); }
+            49% { transform: translateX(100vw) scaleX(1) translateY(-3px); }
+            50% { transform: translateX(100vw) scaleX(-1) translateY(0px); }
+            51% { transform: translateX(100vw) scaleX(-1) translateY(-3px); }
+            55% { transform: translateX(80vw) scaleX(-1) translateY(0px); }
+            95% { transform: translateX(-100%) scaleX(-1) translateY(0px); }
+            99% { transform: translateX(-100%) scaleX(-1) translateY(-3px); }
+            100% { transform: translateX(-100%) scaleX(1) translateY(0px); }
+        }
+
+        .interactive-welcome-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+            padding: 22px 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out, transform 0.5s cubic-bezier(0.175, 0.885, 0.320, 1.275);
+            border: 1px solid var(--border-color-light);
+            text-align: center;
+            min-width: 300px;
+        }
+        body.dark-mode .interactive-welcome-message {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+        .interactive-welcome-message .welcome-content-interactive {
+            position: relative;
+            z-index: 1;
+        }
+        .interactive-welcome-message .time-greeting-interactive {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .interactive-welcome-message .main-welcome-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        body.dark-mode .interactive-welcome-message .main-welcome-text {
+            color: var(--secondary-color);
+        }
+        .interactive-welcome-message .username-typed {
+            font-weight: 700;
+        }
+        .typewriter-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: var(--primary-color);
+            animation: blink-cursor 0.7s step-end infinite;
+            margin-left: 3px;
+            vertical-align: bottom;
+        }
+        body.dark-mode .typewriter-cursor {
+            background-color: var(--secondary-color);
+        }
+        @keyframes blink-cursor {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--primary-color); }
+        }
+        body.dark-mode @keyframes blink-cursor {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--secondary-color); }
+        }
+        .interactive-welcome-message.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .interactive-welcome-message.hide {
+            opacity: 0;
+            visibility: hidden;
+            transform: translate(-50%, -60%) scale(0.85);
+        }
+        .welcome-sparkle-container-interactive {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; pointer-events: none; z-index: 0;
+        }
+        .sparkle-interactive {
+            position: absolute; width: 5px; height: 5px;
+            background-color: var(--secondary-color);
+            border-radius: 50%; opacity: 0;
+            animation: sparkle-animation-interactive 1.3s ease-out forwards;
+        }
+        body.dark-mode .sparkle-interactive {
+            background-color: var(--primary-color-lighter);
+        }
+        @keyframes sparkle-animation-interactive {
+            0% { transform: scale(0.3) translate(0, 0); opacity: 0; }
+            30% { opacity: 1; transform: scale(1) translate(var(--tx-start, 0px), var(--ty-start, 0px)); }
+            100% { transform: scale(0.5) translate(var(--tx-end, 0px), var(--ty-end, 0px)); opacity: 0; }
+        }
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(1) { top: 15%; left: 10%; animation-delay: 0.5s; --tx-start: 0px; --ty-start:0px; --tx-end: -60px; --ty-end: -40px; background-color: #FFD700;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(2) { top: 85%; left: 25%; animation-delay: 0.7s; --tx-start: 0px; --ty-start:0px; --tx-end: -50px; --ty-end: 50px; background-color: #FF69B4;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(3) { top: 50%; left: 90%; animation-delay: 0.6s; --tx-start: 0px; --ty-start:0px; --tx-end: 60px; --ty-end: 0px; background-color: var(--secondary-color);}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(4) { top: 5%; left: 75%; animation-delay: 0.8s; --tx-start: 0px; --ty-start:0px; --tx-end: 40px; --ty-end: -60px;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(5) { top: 95%; left: 55%; animation-delay: 0.55s; --tx-start: 0px; --ty-start:0px; --tx-end: 30px; --ty-end: 60px; background-color: #ADFF2F;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(6) { top: 25%; left: 45%; animation-delay: 0.75s; --tx-start: 0px; --ty-start:0px; --tx-end: -30px; --ty-end: -30px;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(7) { top: 65%; left: 5%; animation-delay: 0.65s; --tx-start: 0px; --ty-start:0px; --tx-end: -70px; --ty-end: 30px; background-color: #FFAC33;}
+        .interactive-welcome-message.show .sparkle-interactive:nth-child(8) { top: 35%; left: 95%; animation-delay: 0.85s; --tx-start: 0px; --ty-start:0px; --tx-end: 70px; --ty-end: -40px; background-color: #8A2BE2;}
+
+        .introjs-tooltip.introjs-elegant-theme {
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            padding: 18px;
+            font-family: 'Roboto', sans-serif;
+        }
+        body.dark-mode .introjs-tooltip.introjs-elegant-theme {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border-color: var(--border-color-dark);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .introjs-elegant-theme .introjs-tooltiptext {
+            font-size: 14px;
+            line-height: 1.6;
+            color: inherit;
+        }
+        .introjs-elegant-theme .introjs-button {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            font-size: 13px;
+            font-weight: 500;
+            text-shadow: none;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .introjs-elegant-theme .introjs-button:hover {
+            background-color: var(--primary-color-lighter);
+            transform: translateY(-1px) scale(1.03);
+        }
+        .introjs-elegant-theme .introjs-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-color-lighter);
+        }
+        .introjs-elegant-theme .introjs-button:active {
+            transform: translateY(0px) scale(0.98);
+        }
+        .introjs-elegant-theme .introjs-skipbutton {
+            color: var(--text-light);
+            background-color: transparent;
+            font-size: 13px;
+            padding: 8px 10px;
+            box-shadow: none;
+        }
+        body.dark-mode .introjs-elegant-theme .introjs-skipbutton {
+             color: var(--text-dark);
+        }
+        .introjs-elegant-theme .introjs-skipbutton:hover {
+            background-color: rgba(0,0,0,0.05);
+             color: var(--primary-color);
+        }
+        body.dark-mode .introjs-elegant-theme .introjs-skipbutton:hover {
+            background-color: rgba(255,255,255,0.08);
+            color: var(--primary-color-lighter);
+        }
+        .introjs-elegant-theme .introjs-arrow.top { border-bottom-color: var(--card-bg-light); }
+        body.dark-mode .introjs-elegant-theme .introjs-arrow.top { border-bottom-color: var(--card-bg-dark); }
+        .introjs-elegant-theme .introjs-arrow.right { border-left-color: var(--card-bg-light); }
+        body.dark-mode .introjs-elegant-theme .introjs-arrow.right { border-left-color: var(--card-bg-dark); }
+        .introjs-elegant-theme .introjs-arrow.bottom { border-top-color: var(--card-bg-light); }
+        body.dark-mode .introjs-elegant-theme .introjs-arrow.bottom { border-top-color: var(--card-bg-dark); }
+        .introjs-elegant-theme .introjs-arrow.left { border-right-color: var(--card-bg-light); }
+        body.dark-mode .introjs-elegant-theme .introjs-arrow.left { border-right-color: var(--card-bg-dark); }
+        .introjs-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        body.dark-mode .introjs-overlay {
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) { /* Breakpoint for navbar tabs to become hamburger controlled */
+            .navbar .tabs {
+                display: none; 
+                flex-direction: column; position: fixed; top: 50px; 
+                left: 0; width: 100%;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+                padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                opacity: 0; transform: translateY(-10px);
+                transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+                z-index: 995; 
+                max-height: calc(100vh - 100px); 
+                overflow-y: auto;
+            }
+            body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
+            .navbar .tabs.active { display: flex; opacity: 1; transform: translateY(0); } 
+            .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
+            .hamburger { display: block !important;  }
+            .navbar .logo-title { margin-left: 5px; }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); width: 220px; padding-top: 60px; z-index: 1005;} /* Ensure sidebar is above navbar tabs dropdown if both open */
             .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
-            .sidebar.collapsed { transform: translateX(-100%); } /* Keep collapsed hidden */
+            .sidebar.collapsed { transform: translateX(-100%); width: 220px; } /* Ensure collapsed is also hidden */
             .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
             .sidebar.open .logo h1 { font-size: 20px; }
-            .main-content { margin-left: 0; padding: 15px; }
-            .main-content.collapsed { margin-left: 0; } /* No effect from desktop collapsed state */
-            .toggle-btn { display: none; } /* Hide desktop toggle */
-            .mobile-menu-btn { display: flex; } /* Show mobile toggle */
+            
+            .main-content { margin-left: 0; padding: 15px; padding-top: 60px; } /* Adjusted padding-top for navbar */
+            .main-content.collapsed { margin-left: 0; }
+            
+            .toggle-btn-sidebar { display: none !important; } 
+            .mobile-menu-btn { display: flex !important; } /* This is for sidebar */
+
+            .navbar { padding-left: 10px; } /* Adjust navbar padding */
+            .navbar .logo-title { margin-left: 5px; font-size: 14px; }
+
+
             .tables-section { flex-direction: column; }
-            .table-container, .detail-panel { flex-basis: auto; width: 100%; max-height: none; } /* Allow full height */
+            .table-container, .detail-panel { flex-basis: auto; width: 100%; max-height: none; }
             .detail-panel { min-height: 200px; }
+            
+            /* .navbar-controls { top: 10px; right: 10px; gap: 5px;} /* No longer needed as they are part of flex */
+            .nav-btn, .theme-toggle, .mobile-menu-btn, .hamburger { width: 30px; height: 30px; font-size: 14px;}
+            /* .mobile-menu-btn { left: 10px; top: 8px;} /* Positioned by flex now */
         }
 
-        @media (max-width: 768px) { /* Phone specific adjustments */
-            header { font-size: 12px; padding: 8px 0; }
-            .main-content { margin-top: 38px; padding-bottom: 38px; }
+        @media (max-width: 767px) {
+            .navbar { height: 45px; padding: 0 10px; }
+            .navbar .logo-title { font-size: 13px; margin-left: 5px; } 
+            .navbar .tabs { top: 45px; } /* Adjust dropdown position for smaller navbar */
+            .main-content { padding-top: 55px; min-height: calc(100vh - 45px - 34px); } /* Adjust for smaller navbar */
+            
             .grid-container { padding: 15px; gap: 10px;}
             .filter-section { flex-direction: column; align-items: stretch; gap: 10px;}
             .filter-section input[type="text"] { width: 100%; font-size: 13px;}
             .filter-section .button-group { justify-content: flex-start; flex-wrap: wrap;}
             .filter-section .button-group button { font-size: 12px; padding: 7px 12px;}
-            
-            /* Mobile Table Styling from yeucaughepxe.html */
+
             .table-container {
-                padding: 10px; 
-                max-height: none; 
-                overflow-x: hidden; 
-                background: transparent; 
-                box-shadow: none; 
-                border: none; 
+                padding: 10px;
+                max-height: none;
+                overflow-x: hidden;
+                background: transparent;
+                box-shadow: none;
+                border: none;
             }
-            .data-table { 
+            .data-table {
                 display: block;
                 width: 100%;
-                font-size: 12px; 
+                font-size: 12px;
             }
             .data-table thead {
-                display: none; 
+                display: none;
             }
             .data-table tbody, .data-table tr {
-                display: block; 
+                display: block;
             }
             .data-table tr {
                 margin-bottom: 10px;
@@ -563,20 +1115,20 @@
                 border: 1px solid var(--border-color-dark);
             }
             .data-table td {
-                display: flex; 
+                display: flex;
                 justify-content: space-between;
-                align-items: baseline; 
-                padding: 8px 0; 
-                border: none; 
-                border-bottom: 1px dashed var(--border-color-light); 
+                align-items: baseline;
+                padding: 8px 0;
+                border: none;
+                border-bottom: 1px dashed var(--border-color-light);
                 font-size: 13px;
-                max-width: none; 
-                white-space: normal; 
-                text-overflow: clip; 
-                overflow: visible; 
+                max-width: none;
+                white-space: normal;
+                text-overflow: clip;
+                overflow: visible;
             }
             .data-table td:last-child {
-                border-bottom: none; 
+                border-bottom: none;
             }
             body.dark-mode .data-table td {
                  border-bottom: 1px dashed var(--border-color-dark);
@@ -586,23 +1138,23 @@
             }
 
             .data-table td::before {
-                content: attr(data-label); 
+                content: attr(data-label);
                 font-weight: 600;
                 color: var(--primary-color);
-                padding-right: 10px; 
-                white-space: nowrap; 
-                flex-shrink: 0; 
+                padding-right: 10px;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
             body.dark-mode .data-table td::before {
                 color: var(--secondary-color);
             }
-            .data-table td span.value-mobile { 
+            .data-table td span.value-mobile {
                 text-align: right;
-                word-break: break-word; 
-                flex-grow: 1; 
-                min-width: 0; 
+                word-break: break-word;
+                flex-grow: 1;
+                min-width: 0;
             }
-            .data-table colgroup { display: none; } /* Hide colgroup on mobile */
+            .data-table colgroup { display: none; }
 
 
             .detail-panel h3 { font-size: 14px; } .detail-table { font-size: 11px; } .detail-table th, .detail-table td { padding: 7px 8px;}
@@ -611,19 +1163,22 @@
             #notification { font-size: 13px; padding: 10px 15px; max-width: calc(100% - 30px); }
             #notification.important-info { font-size: 13.5px; padding: 12px 18px;}
         }
+        @media (min-width: 768px) and (max-width: 900px) { /* Tablet range where desktop sidebar logic might apply */
+             .main-content:not(.collapsed) { margin-left: 200px; }
+             .main-content.collapsed { margin-left: 60px; }
+        }
 
         @media (max-width: 480px) {
-            header { padding: 10px 0; font-size: 11px; }
-            .navbar-controls { gap: 5px; top: 8px; right: 8px;}
-            .nav-btn, .theme-toggle, .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; }
-            .mobile-menu-btn { left: 8px; top: 9px;}
-            .main-content { padding: 10px; margin-top: 40px; padding-bottom: 40px; }
+            .navbar .logo-title { font-size: 11px; margin-left: 3px; }
+            .nav-btn, .theme-toggle, .mobile-menu-btn, .hamburger { width: 28px; height: 28px; font-size: 12px; }
+            .main-content { padding: 10px; padding-top: 50px; min-height: calc(100vh - 45px - 34px);} /* Adjusted for 45px navbar */
+            
             .grid-container { padding: 10px; }
             .filter-section input[type="text"] { padding: 8px 12px; }
             .filter-section .button-group button { padding: 6px 10px; gap: 5px; }
             .filter-section .button-group button i { font-size: 11px; }
-            
-            .data-table td { font-size: 12px; padding: 7px 0;} /* Slightly adjust td font for very small screens */
+
+            .data-table td { font-size: 12px; padding: 7px 0;}
             .data-table td::before { font-size: 11.5px; }
 
 
@@ -635,29 +1190,65 @@
     </style>
 </head>
 <body>
-    <header>DANH SÁCH ĐƠN HÀNG GHÉP XE VINFAST THUẬN AN</header>
+    <nav class="navbar" id="page-navbar"> <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu sidebar" data-tooltip="Mở/Đóng menu sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="hamburger" id="navbar-tabs-hamburger" aria-label="Mở menu trạng thái" data-tooltip="Mở/Đóng menu trạng thái">
+            <i class="fas fa-layer-group"></i> </button>
+        <div class="logo-title" data-aos="fade-down" data-aos-delay="100">DANH SÁCH ĐƠN HÀNG GHÉP XE</div>
+        <div class="tabs" id="navbar-custom-tabs-container">
+             <a href="#" onclick="switchTab('daghep', this)" class="active" data-tooltip="Đã Ghép">Đã Ghép</a>
+             <a href="#" onclick="switchTab('chuaghep', this)" data-tooltip="Chưa Ghép">Chưa Ghép</a>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Sáng/Tối" data-lang-tooltip="theme-toggle-tooltip" aria-label="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
+            <button class="nav-btn" onclick="startUserGuide()" id="userGuideBtn"
+                data-tooltip="Hướng dẫn sử dụng" data-lang-tooltip="user-guide-tooltip"
+                aria-label="Hướng dẫn sử dụng" data-lang-aria-label="user-guide-tooltip">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại" data-lang-tooltip="back-tooltip" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" data-lang-tooltip="logout-tooltip" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </nav>
 
-    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <div class="sidebar" id="sidebar"> <div class="logo">
+    <div class="sidebar" id="sidebar">
+        <div class="logo" data-aos="fade-right" data-aos-delay="200">
             <h1>VINFAST THUẬN AN</h1>
         </div>
-        <div class="menu" id="menuTabs"> <a href="#" onclick="switchTab('daghep', this)" class="active" data-tooltip="Đã Ghép"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
-            <a href="#" onclick="switchTab('chuaghep', this)" data-tooltip="Chưa Ghép"><i class="fas fa-hourglass-half fa-fw"></i><span>Chưa Ghép</span></a>
+        <div class="menu" id="navMenu">
+            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ" data-aos="fade-right" data-aos-delay="300"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-lang="pairing-list"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
         </div>
-        <button class="toggle-btn" onclick="toggleDesktopSidebar()" id="sidebar-toggle-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        <button class="toggle-btn-sidebar" onclick="toggleDesktopSidebar()" id="sidebar-toggle-btn"><i class="fas fa-bars"></i></button>
     </div>
 
-    <div class="navbar-controls">
-        <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Sáng/Tối"><i class="fas fa-moon"></i></button>
-        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại"><i class="fas fa-arrow-left"></i></button>
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+    <div id="interactiveWelcomeMessage" class="interactive-welcome-message" style="display: none;">
+        <div class="welcome-sparkle-container-interactive">
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+            <div class="sparkle-interactive"></div> <div class="sparkle-interactive"></div>
+        </div>
+        <div class="welcome-content-interactive">
+            <span id="interactiveTimeGreeting" class="time-greeting-interactive"></span>
+            <div class="main-welcome-text">
+                <span id="interactiveStaticText">Chào mừng, </span>
+                <span id="interactiveUsernameTyped" class="username-typed"></span>
+                <span id="typewriterCursor" class="typewriter-cursor" style="display: none;"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="main-content" id="main-content"> <div class="grid-container">
-            <div class="filter-section">
+
+    <div class="main-content" id="main-content">
+        <div class="grid-container" data-aos="fade-up" data-aos-delay="100">
+            <div class="filter-section" data-aos="fade-up" data-aos-delay="200">
                 <div>
                     <input type="text" id="search-input" placeholder="Tìm kiếm trong bảng hiện tại...">
                 </div>
@@ -667,13 +1258,13 @@
                     <button onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i> In</button>
                 </div>
             </div>
-            <div class="tables-section">
+            <div class="tables-section" data-aos="fade-up" data-aos-delay="300">
                 <div class="table-container">
                     <div class="loading-overlay" id="loading-overlay">
                         <div class="loading-spinner"></div>
                         <span>Đang tải dữ liệu...</span>
                     </div>
-                    <table id="data-table" class="data-table"> 
+                    <table id="data-table" class="data-table">
                         <colgroup id="table-colgroup"></colgroup>
                         <thead id="table-head"></thead>
                         <tbody id="table-body">
@@ -681,7 +1272,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="detail-panel" id="detail-panel">
+                <div class="detail-panel" id="detail-panel" data-aos="fade-left" data-aos-delay="400">
                     <h3>Chi Tiết Đơn Hàng</h3>
                     <table id="detail-body" class="detail-table"> <tbody>
                             <tr><td colspan="2" style="text-align:center; padding-top: 20px;">Chọn một đơn hàng để xem chi tiết.</td></tr>
@@ -689,16 +1280,23 @@
                     </table>
                 </div>
             </div>
-            <div class="pagination" id="pagination">
+            <div class="pagination" id="pagination" data-aos="fade-up" data-aos-delay="200">
                 <button onclick="changePage(-1)" id="prev-btn" disabled>Trước</button>
                 <span id="page-info">Trang 1 / 1</span>
                 <button onclick="changePage(1)" id="next-btn" disabled>Sau</button>
             </div>
         </div>
     </div>
+
+    <div id="animatedCarContainer">
+        <i class="fas fa-car" id="animatedCarElement"></i>
+    </div>
+
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
     <div id="notification"></div>
 
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
     <script>
         // Stores the full unfiltered data from API/sessionStorage
         let globalApiData = { daghep: [], chuaghep: [] };
@@ -724,8 +1322,84 @@
         // Order of headers for display
         const displayHeaderKeys = Object.keys(displayHeadersConfig);
 
+        const translations = {
+            vi: {
+                "homepage": "Trang Chủ",
+                "theme-toggle-tooltip": "Chuyển đổi giao diện Sáng/Tối",
+                "user-guide-tooltip": "Mở hướng dẫn sử dụng trang web",
+                "back-tooltip": "Quay lại trang chủ",
+                "logout-tooltip": "Đăng xuất khỏi hệ thống",
+                "guide-welcome": "Chào mừng bạn đến với hướng dẫn sử dụng trang này!",
+                "guide-sidebar": "Đây là thanh điều hướng phụ, chứa liên kết về Trang Chủ. Trên máy tính, bạn có thể thu gọn/mở rộng bằng nút ở cuối thanh. Trên di động, sử dụng nút menu (ba thanh ngang) ở góc trên bên trái.",
+                "guide-navbar-tabs": "Đây là các tab chính để xem danh sách đơn hàng 'Đã Ghép' hoặc 'Chưa Ghép'. Nhấp vào để chuyển đổi.",
+                "guide-mobile-menu": "Trên thiết bị di động, sử dụng nút này (biểu tượng ba thanh ngang) để mở/đóng thanh điều hướng phụ (sidebar).",
+                "guide-navbar-tabs-hamburger": "Trên thiết bị di động hoặc màn hình nhỏ, sử dụng nút này (biểu tượng layer) để mở/đóng menu các tab 'Đã Ghép' / 'Chưa Ghép'.",
+                "guide-navbar-controls": "Tại đây, bạn có thể chuyển đổi giao diện sáng/tối, mở hướng dẫn này, quay lại trang chủ và đăng xuất.",
+                "guide-theme-toggle": "Sử dụng nút này để chuyển đổi giữa chế độ sáng và tối.",
+                "guide-user-guide-btn": "Bạn có thể mở lại hướng dẫn này bất cứ lúc nào bằng nút này.",
+                "guide-logout-btn": "Nhấp vào đây để đăng xuất khỏi tài khoản của bạn.",
+                "guide-back-btn": "Nhấp vào đây để quay lại trang chủ.",
+                "guide-search-input": "Nhập từ khóa vào đây để tìm kiếm nhanh trong bảng dữ liệu hiện tại.",
+                "guide-refresh-btn": "Nhấn nút này để tải lại dữ liệu mới nhất từ máy chủ.",
+                "guide-export-btn": "Xuất bảng dữ liệu hiện tại (đã lọc) ra file Excel.",
+                "guide-print-btn": "In bảng dữ liệu hiện tại (đã lọc).",
+                "guide-main-table": "Đây là bảng hiển thị danh sách các đơn hàng. Nhấp vào một hàng để xem chi tiết ở khung bên phải.",
+                "guide-detail-panel": "Khung này sẽ hiển thị thông tin chi tiết của đơn hàng bạn chọn từ bảng chính.",
+                "guide-pagination": "Sử dụng các nút này để duyệt qua các trang dữ liệu nếu có nhiều hơn một trang.",
+                "guide-active-tab": "Đây là tab dữ liệu bạn đang xem. Nhấp vào các tab khác trong menu để chuyển đổi.",
+                "guide-end": "Bạn đã hoàn thành hướng dẫn cơ bản. Nhấn 'Hoàn thành' để kết thúc. Chúc bạn làm việc hiệu quả!",
+                "guide-next": "Tiếp",
+                "guide-prev": "Trước",
+                "guide-done": "Hoàn thành",
+                "time-greeting-morning": "Chào buổi sáng",
+                "time-greeting-afternoon": "Chào buổi chiều",
+                "time-greeting-evening": "Chào buổi tối",
+                "welcome-static-text": "Chào mừng, "
+            },
+            en: { 
+                "homepage": "Homepage",
+                "theme-toggle-tooltip": "Toggle Light/Dark Theme",
+                "user-guide-tooltip": "Open user guide",
+                "back-tooltip": "Back to Homepage",
+                "logout-tooltip": "Logout",
+                "guide-welcome": "Welcome to the user guide for this page!",
+                "guide-sidebar": "This is the auxiliary navigation bar, containing a link to the Homepage. On desktop, collapse/expand it with the button at its bottom. On mobile, use the menu button (three horizontal lines) in the top-left.",
+                "guide-navbar-tabs": "These are the main tabs to view 'Paired' or 'Unpaired' order lists. Click to switch.",
+                "guide-mobile-menu": "On mobile devices, use this button (three horizontal lines icon) to open/close the auxiliary navigation bar (sidebar).",
+                "guide-navbar-tabs-hamburger": "On mobile devices or small screens, use this button (layer icon) to open/close the 'Paired' / 'Unpaired' tabs menu.",
+                "guide-navbar-controls": "Here, you can toggle light/dark theme, open this guide, go back to homepage, and log out.",
+                "guide-theme-toggle": "Use this button to toggle between light and dark mode.",
+                "guide-user-guide-btn": "You can reopen this guide anytime using this button.",
+                "guide-logout-btn": "Click here to log out of your account.",
+                "guide-back-btn": "Click here to go back to the homepage.",
+                "guide-search-input": "Enter keywords here to quickly search the current data table.",
+                "guide-refresh-btn": "Press this button to reload the latest data from the server.",
+                "guide-export-btn": "Export the current (filtered) data table to an Excel file.",
+                "guide-print-btn": "Print the current (filtered) data table.",
+                "guide-main-table": "This table displays the list of orders. Click on a row to see details in the right panel.",
+                "guide-detail-panel": "This panel will display detailed information of the order you select from the main table.",
+                "guide-pagination": "Use these buttons to navigate through data pages if there's more than one page.",
+                "guide-active-tab": "This is the data tab you are currently viewing. Click other tabs in the menu to switch.",
+                "guide-end": "You have completed the basic guide. Press 'Done' to finish. Work effectively!",
+                "guide-next": "Next",
+                "guide-prev": "Previous",
+                "guide-done": "Done",
+                "time-greeting-morning": "Good morning",
+                "time-greeting-afternoon": "Good afternoon",
+                "time-greeting-evening": "Good evening",
+                "welcome-static-text": "Welcome, "
+            }
+        };
+        let language = localStorage.getItem("language") || "vi"; 
+
 
         document.addEventListener("DOMContentLoaded", function () {
+            AOS.init({ 
+                duration: 700,
+                easing: "ease-out-cubic",
+                once: true
+            });
+
             if (sessionStorage.getItem("isLoggedIn") !== "true") {
                 window.location.href = "index.html";
                 return;
@@ -740,22 +1414,78 @@
                 document.body.classList.remove('dark-mode');
                 if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
             }
+            
+            // Navbar and Sidebar state based on screen width and localStorage
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            const pageNavbar = document.getElementById("page-navbar"); // Use navbar ID
 
             if (window.innerWidth > 900) { // Desktop
                 if (localStorage.getItem('sidebarState') === 'collapsed') {
-                    document.getElementById("sidebar").classList.add("collapsed");
-                    document.getElementById("main-content").classList.add("collapsed");
+                    sidebar?.classList.add("collapsed");
+                    mainContent?.classList.add("collapsed");
+                    if(pageNavbar) {
+                        pageNavbar.style.left = '60px';
+                        pageNavbar.style.width = 'calc(100% - 60px)';
+                    }
+                } else {
+                    sidebar?.classList.remove("collapsed");
+                    mainContent?.classList.remove("collapsed");
+                    if(pageNavbar) {
+                        pageNavbar.style.left = '200px';
+                        pageNavbar.style.width = 'calc(100% - 200px)';
+                    }
                 }
-            } else { // Mobile/Tablet
-                 document.getElementById("sidebar").classList.remove("open"); // Ensure it's closed by default on mobile
-                 document.getElementById("sidebar").classList.remove("collapsed"); // Not relevant for mobile
+            } else { // Mobile
+                 if(pageNavbar) { // Navbar full width on mobile
+                    pageNavbar.style.left = '0px';
+                    pageNavbar.style.width = '100%';
+                }
             }
-            updateSidebarToggleIcon(); // Update icon based on initial state
 
+            updateSidebarToggleIcon(); // Handles visibility of sidebar toggles
+            
+            // Navbar tabs hamburger logic
+            const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
+            const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
 
-            updateTableHeader(); // Setup table header and colgroup
-            loadInitialData();   // Load data
-            setupSearch();       // Setup search functionality
+            if (navbarTabsHamburger && navbarCustomTabsContainer) {
+                navbarTabsHamburger.addEventListener('click', () => {
+                    navbarTabsHamburger.classList.toggle('active');
+                    navbarCustomTabsContainer.classList.toggle('active');
+                });
+            }
+            
+            // Set active link based on currentSheet or page
+            // This needs to be called *after* potential data load that might set currentSheet
+            // setActiveNavigationLink(); // Moved to be called after initial data load attempt
+
+            updateLanguage(); 
+            updateTableHeader();
+            loadInitialData(); // This will call setActiveNavigationLink internally after data load
+            setupSearch();
+
+            document.addEventListener('click', function(event) {
+                const sidebarElem = document.getElementById('sidebar');
+                const mobileMenuBtnElem = document.querySelector('.mobile-menu-btn'); // For sidebar
+                const isClickInsideSidebar = sidebarElem && sidebarElem.contains(event.target);
+                const isClickOnMobileMenuBtn = mobileMenuBtnElem && mobileMenuBtnElem.contains(event.target);
+
+                if (window.innerWidth <= 900 && sidebarElem && sidebarElem.classList.contains('open') && !isClickInsideSidebar && !isClickOnMobileMenuBtn) {
+                    toggleMobileSidebar();
+                }
+
+                // Click outside to close navbar tabs dropdown (if open)
+                const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
+                const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
+                const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
+                const isClickOnNavbarTabsBtn = navbarTabsBtn && navbarTabsBtn.contains(event.target);
+
+                if (window.innerWidth <= 1024 && navbarTabsMenu && navbarTabsMenu.classList.contains('active') && !isClickInsideNavbarTabs && !isClickOnNavbarTabsBtn) {
+                    navbarTabsMenu.classList.remove('active');
+                    navbarTabsBtn.classList.remove('active');
+                }
+            });
         });
 
         function showLoading() {
@@ -782,7 +1512,7 @@
                         throw new Error("Dữ liệu trong sessionStorage không hợp lệ.");
                     }
                     isDataFullyLoaded = true;
-                    applyFiltersAndRenderCurrentTab(); // Render from cache first
+                    applyFiltersAndRenderCurrentTab(); // This will also call setActiveNavigationLink
                     checkAndNotifyPendingInvoices();
                     loadedFromCache = true;
                     console.log("Data loaded from cache.");
@@ -790,7 +1520,7 @@
                     console.error("Error loading from cache:", error);
                     sessionStorage.removeItem('daghep');
                     sessionStorage.removeItem('chuaghep');
-                    globalApiData = { daghep: [], chuaghep: [] }; // Reset data
+                    globalApiData = { daghep: [], chuaghep: [] };
                 }
             }
 
@@ -804,7 +1534,7 @@
                 console.log("Data fetched from API and cached.");
 
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab(); // Re-render with fresh data
+                applyFiltersAndRenderCurrentTab(); // This will also call setActiveNavigationLink
                 checkAndNotifyPendingInvoices();
                 if (!loadedFromCache) {
                     showNotification("Dữ liệu đã được tải thành công!", 'success', 2000);
@@ -814,7 +1544,7 @@
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status} - ${error.response.data || error.message}` : `Lỗi mạng: ${error.message}`;
                 console.error("API fetch error:", errorMsg);
-                if (!loadedFromCache) { // Only show error if cache also failed or didn't exist
+                if (!loadedFromCache) {
                      document.getElementById("table-body").innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">⚠️ ${errorMsg}</td></tr>`;
                     showNotification(errorMsg, 'error', 5000);
                 } else {
@@ -822,6 +1552,9 @@
                 }
             } finally {
                 hideLoading();
+                // Ensure active link is set after all data operations
+                const activeTabElement = document.querySelector(`.navbar .tabs a[onclick*="switchTab('${currentSheet}'"]`) || document.querySelector(`.sidebar .menu a[href="Index.html"]`);
+                setActiveNavigationLink(activeTabElement);
             }
         }
 
@@ -842,7 +1575,7 @@
 
                 if (pendingInvoiceOrders.length > 0) {
                     const message = `Bạn có ${pendingInvoiceOrders.length} đơn hàng "Đã ghép" đang Chờ Xuất Hóa Đơn.`;
-                    showNotification(message, 'important-info', 5000); // Display for 5 seconds
+                    showNotification(message, 'important-info', 5000);
                 }
             }
         }
@@ -866,87 +1599,134 @@
                 );
             }
 
-            currentDisplayData = dataForSheet.sort((a, b) => { // Sort by "Thời gian nhập" descending
+            currentDisplayData = dataForSheet.sort((a, b) => {
                  const dateA = new Date(a["Thời gian nhập"] || 0);
                  const dateB = new Date(b["Thời gian nhập"] || 0);
                  return dateB - dateA;
             });
             renderTable(currentDisplayData, currentPage);
+            // Set active navigation link after data is processed for the current tab
+            const activeTabElement = document.querySelector(`.navbar .tabs a[onclick*="switchTab('${currentSheet}'"]`);
+            setActiveNavigationLink(activeTabElement);
         }
 
 
         function logout() {
             sessionStorage.clear();
-            localStorage.removeItem('sidebarState'); // Also clear sidebar state
+            localStorage.removeItem('sidebarState');
+            localStorage.removeItem('theme'); // Clear theme on logout
             window.location.href = "index.html";
         }
 
         function goBack() {
-            window.location.href = "index.html"; // Or previous page: history.back();
+            window.location.href = "index.html";
         }
 
         function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (document.body.classList.contains('dark-mode')) {
+            const body = document.body;
+            const themeToggleBtn = document.querySelector('.theme-toggle'); 
+            const themeIcon = themeToggleBtn.querySelector('i');
+
+            body.classList.toggle('dark-mode');
+            if (themeToggleBtn) themeToggleBtn.classList.add("spinning");
+
+
+            if (body.classList.contains('dark-mode')) {
                 if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
                 localStorage.setItem('theme', 'dark');
             } else {
                 if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
                 localStorage.setItem('theme', 'light');
             }
+
+            if (themeToggleBtn) {
+                setTimeout(() => {
+                    themeToggleBtn.classList.remove("spinning");
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed-slow') || '0.5s') * 1000);
+            }
         }
 
         function updateSidebarToggleIcon() {
             const sidebar = document.getElementById("sidebar");
-            const toggleIconDesktop = document.querySelector("#sidebar-toggle-btn i");
-            const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+            const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i");
+            const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); // For sidebar
             const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
 
             if (!sidebar) return;
 
-            if (window.innerWidth <= 900) { // Mobile/Tablet view
-                if(document.getElementById('sidebar-toggle-btn')) document.getElementById('sidebar-toggle-btn').style.display = 'none';
+            if (window.innerWidth <= 900) { // Mobile view
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
                 if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
                 if (mobileMenuIcon) {
-                    if (sidebar.classList.contains("open")) {
-                        mobileMenuIcon.classList.remove("fa-bars");
-                        mobileMenuIcon.classList.add("fa-times");
-                    } else {
-                        mobileMenuIcon.classList.remove("fa-times");
-                        mobileMenuIcon.classList.add("fa-bars");
-                    }
+                    mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
                 }
             } else { // Desktop view
-                if(document.getElementById('sidebar-toggle-btn')) document.getElementById('sidebar-toggle-btn').style.display = 'flex';
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
                 if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
                 if (toggleIconDesktop) {
-                    if (sidebar.classList.contains("collapsed")) {
-                        toggleIconDesktop.classList.remove("fa-times");
-                        toggleIconDesktop.classList.add("fa-bars");
-                    } else {
-                        toggleIconDesktop.classList.remove("fa-bars");
-                        toggleIconDesktop.classList.add("fa-times");
-                    }
+                    toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
                 }
             }
         }
 
-        function toggleDesktopSidebar() {
+        function toggleDesktopSidebar() { // For desktop sidebar
             if (window.innerWidth > 900) {
                 const sidebar = document.getElementById("sidebar");
                 const mainContent = document.getElementById("main-content");
+                const pageNavbar = document.getElementById("page-navbar");
+
                 sidebar.classList.toggle("collapsed");
                 mainContent.classList.toggle("collapsed");
                 localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+
+                if (sidebar.classList.contains("collapsed")) {
+                    pageNavbar.style.left = '60px';
+                    pageNavbar.style.width = 'calc(100% - 60px)';
+                } else {
+                    pageNavbar.style.left = '200px';
+                    pageNavbar.style.width = 'calc(100% - 200px)';
+                }
                 updateSidebarToggleIcon();
             }
         }
 
-        function toggleMobileSidebar() {
+        function toggleMobileSidebar() { // For mobile sidebar
             const sidebar = document.getElementById("sidebar");
-            sidebar.classList.toggle("open"); // This class controls visibility on mobile
+            sidebar.classList.toggle("open");
+            if (sidebar.classList.contains("open")) { // Ensure not collapsed when opening on mobile
+                sidebar.classList.remove("collapsed");
+            }
             updateSidebarToggleIcon();
+        }
+
+        function setActiveNavigationLink(clickedElement) {
+            // Remove active class from all sidebar links
+            document.querySelectorAll('.sidebar .menu a').forEach(el => el.classList.remove('active'));
+            // Remove active class from all navbar tabs
+            document.querySelectorAll('.navbar .tabs a').forEach(el => el.classList.remove('active'));
+
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+
+                // If the clicked element is a navbar tab and the navbar tabs are in dropdown mode, close the dropdown
+                if (window.innerWidth <= 1024 && clickedElement.closest('.navbar .tabs')) {
+                    const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
+                    const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
+                    if (navbarTabsHamburger && navbarCustomTabsContainer) {
+                        navbarTabsHamburger.classList.remove('active');
+                        navbarCustomTabsContainer.classList.remove('active');
+                    }
+                }
+            } else {
+                 // Fallback for initial load if no specific tab is pre-selected by currentSheet
+                const homeLink = document.querySelector(".sidebar .menu a[href='Index.html']");
+                if (homeLink && (window.location.pathname.endsWith("Index.html") || window.location.pathname.endsWith("/"))) {
+                     homeLink.classList.add("active");
+                } else { // If not homepage, default to the 'daghep' tab in navbar
+                    const defaultNavbarTab = document.querySelector(".navbar .tabs a[onclick*=\"switchTab('daghep'\"]");
+                    if (defaultNavbarTab) defaultNavbarTab.classList.add("active");
+                }
+            }
         }
 
 
@@ -955,15 +1735,15 @@
                 showNotification("Dữ liệu đang được tải, vui lòng chờ một lát.", 'info', 2000);
                 return;
             }
-            document.querySelectorAll('.menu a').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
+            // No longer need to querySelectorAll('.menu a') as tabs are in navbar
+            setActiveNavigationLink(element); // This will handle active states for both locations
 
             currentSheet = sheetName;
-            currentPage = 1; // Reset to first page when switching tabs
-            document.getElementById("search-input").value = ""; // Clear search input
+            currentPage = 1;
+            document.getElementById("search-input").value = "";
 
-            applyFiltersAndRenderCurrentTab(); // This will filter and render the new tab's data
-            
+            applyFiltersAndRenderCurrentTab(); // This will re-render and also call setActiveNavigationLink
+
             // Close mobile sidebar if open
             if (window.innerWidth <= 900) {
                 const sidebar = document.getElementById("sidebar");
@@ -979,17 +1759,13 @@
 
             if (!thead || !colgroup) return;
 
-            colgroup.innerHTML = ""; // Clear existing cols
-            thead.innerHTML = "";    // Clear existing header
-
-            // Set class for colgroup for potential specific styling based on column count
-            // colgroup.className = `table-${displayHeaderKeys.length}-cols`;
+            colgroup.innerHTML = "";
+            thead.innerHTML = "";
 
             let headerRowHTML = "<tr>";
             displayHeaderKeys.forEach(headerText => {
                 const col = document.createElement('col');
-                // Use width from config. Ensure config has width for all keys.
-                col.style.width = displayHeadersConfig[headerText]?.width || 'auto'; 
+                col.style.width = displayHeadersConfig[headerText]?.width || 'auto';
                 colgroup.appendChild(col);
                 headerRowHTML += `<th>${headerText}</th>`;
             });
@@ -1000,7 +1776,7 @@
 
         function renderTable(dataToDisplay, page = 1) {
             const tbody = document.getElementById("table-body");
-            tbody.innerHTML = ""; // Clear previous rows
+            tbody.innerHTML = "";
 
             if (!Array.isArray(dataToDisplay) || dataToDisplay.length === 0) {
                 tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${displayHeaderKeys.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
@@ -1012,7 +1788,7 @@
             const start = (page - 1) * rowsPerPage;
             const end = start + rowsPerPage;
             const paginatedData = dataToDisplay.slice(start, end);
-            const isMobile = window.innerWidth <= 768;
+            // const isMobile = window.innerWidth <= 768; // Already declared globally if needed, or pass as param
 
 
             paginatedData.forEach((row, index) => {
@@ -1030,8 +1806,7 @@
                     } else {
                         cellValue = row[dataKey] || "N/A";
                     }
-                    
-                    // Wrap content in span for mobile view data-label alignment
+
                     cellContent = `<span class="value-mobile">${cellValue}</span>`;
                     cellsHTML += `<td data-label="${headerText}">${cellContent}</td>`;
                 });
@@ -1049,7 +1824,7 @@
             updatePagination(dataToDisplay);
 
             if (paginatedData.length > 0) {
-                showDetail(paginatedData[0]); 
+                showDetail(paginatedData[0]);
             } else {
                  document.getElementById("detail-body").innerHTML = "<tbody><tr><td colspan='2' style='text-align:center; padding-top: 20px;'>Không có chi tiết để hiển thị.</td></tr></tbody>";
             }
@@ -1088,10 +1863,9 @@
             }
 
             let htmlContent = "";
-            // Display configured headers first, excluding STT
             displayHeaderKeys.forEach(headerText => {
                  const dataKey = displayHeadersConfig[headerText].dataKey;
-                 if (dataKey !== "STT") { 
+                 if (dataKey !== "STT") { // Don't show STT in detail view
                     htmlContent += `
                         <tr>
                             <th>${headerText}</th>
@@ -1099,19 +1873,19 @@
                         </tr>`;
                  }
             });
-            // Display other important keys that are not in displayHeadersConfig
+            // Add other important keys not in displayHeadersConfig
             const otherImportantKeys = ["Nội thất", "Số đơn hàng", "VIN", "Thời gian nhập", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"];
             otherImportantKeys.forEach(dataKey => {
-                // Check if this key is already displayed via displayHeadersConfig
                 const isAlreadyDisplayed = displayHeaderKeys.some(ht => displayHeadersConfig[ht].dataKey === dataKey);
 
-                if (!isAlreadyDisplayed && row[dataKey] !== undefined) { 
+                if (!isAlreadyDisplayed && row[dataKey] !== undefined) { // Check if key exists in row
                     let cellValue = row[dataKey] || "N/A";
+                     // Format dates
                      if ((dataKey === "Thời gian nhập" || dataKey === "Thời gian ghép" || dataKey === "Ngày xuất hóa đơn") && cellValue && cellValue !== "N/A") {
                         const parsedDate = new Date(cellValue);
-                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 
+                        cellValue = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 // Basic date validation
                             ? parsedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                            : (cellValue || "N/A"); 
+                            : (cellValue || "N/A"); // Keep original if not a valid date
                     }
                     const isVin = dataKey === "VIN" && cellValue && cellValue !== "N/A";
                      htmlContent += `
@@ -1138,13 +1912,12 @@
             }
 
             if (confirm(`Bạn có muốn xuất ${currentDisplayData.length} dòng của bảng "${currentSheet === 'daghep' ? 'Đã Ghép' : 'Chưa Ghép'}" (mới nhất lên đầu) sang Excel không?`)) {
-                // Define all possible headers that could be in the data
                 const allPossibleHeaders = [
-                    "STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ", 
-                    "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc", 
+                    "STT", "Tên tư vấn bán hàng", "Tên khách hàng", "Số điện thoại", "Địa chỉ",
+                    "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc",
                     "Thời gian nhập", "Trạng thái", "VIN", "Thời gian ghép", "Số ngày ghép", "Ngày xuất hóa đơn", "Kết quả"
                 ];
-                
+
                 const wsData = currentDisplayData.map((row, index) => {
                     const rowData = {};
                     allPossibleHeaders.forEach(headerKey => {
@@ -1154,7 +1927,7 @@
                             let value = row[headerKey] || "";
                             if ((headerKey === "Thời gian nhập" || headerKey === "Thời gian ghép" || headerKey === "Ngày xuất hóa đơn" || headerKey === "Ngày cọc") && value) {
                                 const parsedDate = new Date(value);
-                                value = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900 
+                                value = !isNaN(parsedDate) && parsedDate.getFullYear() > 1900
                                     ? parsedDate.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
                                     : value;
                             }
@@ -1185,12 +1958,13 @@
             const tableToPrint = document.createElement('table');
             tableToPrint.style.width = "100%";
             tableToPrint.style.borderCollapse = "collapse";
-            tableToPrint.style.tableLayout = "fixed";
+            tableToPrint.style.tableLayout = "fixed"; // Ensure consistent column widths
 
+            // Create colgroup for width control
             const colgroupElement = document.createElement('colgroup');
             displayHeaderKeys.forEach(headerText => {
                 const col = document.createElement('col');
-                col.style.width = displayHeadersConfig[headerText].width;
+                col.style.width = displayHeadersConfig[headerText].width; // Use defined widths
                 colgroupElement.appendChild(col);
             });
             tableToPrint.appendChild(colgroupElement);
@@ -1206,13 +1980,13 @@
             tableToPrint.appendChild(thead);
 
             const tbody = document.createElement('tbody');
-            currentDisplayData.forEach((row, index) => { // Print all filtered data, not just paginated
+            currentDisplayData.forEach((row, index) => { // Iterate over all filtered data, not just paginated
                 const tr = document.createElement("tr");
                 displayHeaderKeys.forEach(headerText => {
                     const td = document.createElement('td');
                     const dataKey = displayHeadersConfig[headerText].dataKey;
                     if (dataKey === "STT") {
-                        td.textContent = index + 1;
+                        td.textContent = index + 1; // Use the overall index
                     } else {
                         td.textContent = row[dataKey] || "";
                     }
@@ -1233,7 +2007,7 @@
                 </div>
                 ${tableToPrint.outerHTML}
             `;
-            const win = window.open('', '', 'width=1123,height=794'); // A4 landscape dimensions in pixels (approx)
+            const win = window.open('', '', 'width=1123,height=794'); // A4 landscape approx
             win.document.write(`
                 <html>
                 <head>
@@ -1251,16 +2025,16 @@
                 </html>
             `);
             win.document.close();
-            setTimeout(() => { 
+            setTimeout(() => {
                 win.print();
                 win.close();
-            }, 500);
+            }, 500); // Delay to ensure content is loaded
         }
 
 
         async function refreshData() {
             showLoading();
-            document.getElementById("search-input").value = ""; // Clear search on refresh
+            document.getElementById("search-input").value = ""; // Reset search
             currentPage = 1; // Reset to first page
             const apiURL = "https://script.google.com/macros/s/AKfycby3HoOoC-EPX_SKPC9XqqusIo__gnXuVQZ3mzldBZgR_dUCuo-1IAphkeqj_dvkHySBGA/exec";
             try {
@@ -1273,8 +2047,8 @@
                 console.log("Data refreshed from API and cached.");
 
                 isDataFullyLoaded = true;
-                applyFiltersAndRenderCurrentTab();
-                checkAndNotifyPendingInvoices(); 
+                applyFiltersAndRenderCurrentTab(); // This will re-filter and render
+                checkAndNotifyPendingInvoices();
                 showNotification("Dữ liệu đã được làm mới thành công!", 'success', 2000);
             } catch (error) {
                 const errorMsg = error.response ? `Lỗi API: ${error.response.status}` : `Lỗi mạng: ${error.message}`;
@@ -1298,19 +2072,21 @@
         function setupSearch() {
             document.getElementById("search-input").addEventListener("input", debounce(function () {
                 if (!isDataFullyLoaded) {
+                    // Optionally, notify user data is still loading
                     return;
                 }
-                currentPage = 1; 
+                currentPage = 1; // Reset to first page on new search
                 applyFiltersAndRenderCurrentTab();
-            }, 300)); 
+            }, 300));
         }
 
         function showNotification(message, type = 'info', duration = 3000) {
             const notif = document.getElementById("notification");
             if (!notif) return;
 
-            notif.classList.remove('success', 'error', 'info', 'important-info', 'warning'); // Clear previous types
-            if (type) notif.classList.add(type); 
+            // Clear previous classes and set new type
+            notif.classList.remove('success', 'error', 'info', 'important-info', 'warning'); // Add 'warning' if used
+            if (type) notif.classList.add(type);
 
             let fullMessage = "";
             let iconClass = "";
@@ -1319,70 +2095,255 @@
                 case 'success': iconClass = 'fas fa-check-circle'; break;
                 case 'error': iconClass = 'fas fa-times-circle'; break;
                 case 'warning': iconClass = 'fas fa-exclamation-triangle'; break;
-                case 'important-info': iconClass = 'fas fa-info-circle'; break; // Or a more prominent icon
-                default: iconClass = 'fas fa-info-circle'; break;
+                case 'important-info': iconClass = 'fas fa-info-circle'; break; // Special styling for this
+                default: iconClass = 'fas fa-info-circle'; break; // Default to info
             }
 
-            if (type === 'important-info') {
+            // Construct message with icon
+            if (type === 'important-info') { // Special handling for important-info styling
                 fullMessage = `<span class="icon" style="font-size: 1.2em; margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
-                notif.innerHTML = fullMessage; 
+                notif.innerHTML = fullMessage;
             } else {
                  fullMessage = `<span style="margin-right: 8px;"><i class="${iconClass}"></i></span> <span>${message}</span>`;
                 notif.innerHTML = fullMessage;
             }
-            
-            // Reset display to flex before showing for proper calculation
-            notif.style.display = "flex";
+
+            notif.style.display = "flex"; // Ensure it's flex for alignment
             notif.classList.add('show');
 
 
+            // Clear existing timeout if any
             if (notif.timeoutId) {
                 clearTimeout(notif.timeoutId);
             }
             notif.timeoutId = setTimeout(() => {
                 notif.classList.remove('show');
+                // Use transitionend to hide after animation, robust for varying transition durations
                 notif.addEventListener('transitionend', () => {
-                    if (!notif.classList.contains('show')) { 
-                         notif.style.display = "none"; 
+                    if (!notif.classList.contains('show')) { // Check if it wasn't re-shown
+                         notif.style.display = "none";
                     }
-                }, { once: true });
-                setTimeout(() => { // Fallback
+                }, { once: true }); // Ensure listener is removed after firing once
+                // Fallback for browsers that might not fire transitionend reliably or if transition is none
+                setTimeout(() => {
                     if (!notif.classList.contains('show')) notif.style.display = "none";
-                }, 450); 
+                }, 450); // A bit longer than transition
             }, duration);
         }
 
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
-                if (!sidebar.contains(event.target) && (mobileMenuBtn && !mobileMenuBtn.contains(event.target))) {
-                    toggleMobileSidebar(); 
+        function updateLanguage() {
+            document.querySelectorAll("[data-lang]").forEach(element => {
+                const key = element.getAttribute("data-lang");
+                if (translations[language] && translations[language][key] !== undefined) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        element.placeholder = translations[language][key];
+                    } else if (element.querySelector('span')) { 
+                        element.querySelector('span').textContent = translations[language][key];
+                    }
+                     else {
+                        element.textContent = translations[language][key];
+                    }
+                }
+            });
+            document.querySelectorAll("[data-lang-tooltip]").forEach(element => {
+                const key = element.getAttribute("data-lang-tooltip");
+                if (translations[language] && translations[language][key] !== undefined) {
+                    element.setAttribute('data-tooltip', translations[language][key]);
+                }
+            });
+            document.querySelectorAll("[data-lang-aria-label]").forEach(element => {
+                const key = element.getAttribute("data-lang-aria-label");
+                if (translations[language] && translations[language][key] !== undefined) {
+                    element.setAttribute('aria-label', translations[language][key]);
+                }
+            });
+        }
+
+
+        let typingTimeout;
+        function typeWriter(element, text, speed, callback) {
+            let i = 0;
+            element.innerHTML = ""; // Clear previous text
+            const cursor = document.getElementById('typewriterCursor');
+            if(cursor) cursor.style.display = 'inline-block'; // Show cursor
+
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    typingTimeout = setTimeout(type, speed);
+                } else {
+                    if(cursor) cursor.style.display = 'none'; // Hide cursor when done
+                    if (callback) callback();
                 }
             }
-        });
+            type();
+        }
+
+        function displayInteractiveWelcomeMessage(username) {
+            const welcomeElement = document.getElementById('interactiveWelcomeMessage');
+            const usernameTypedSpan = document.getElementById('interactiveUsernameTyped');
+            const timeGreetingSpan = document.getElementById('interactiveTimeGreeting');
+            const staticTextSpan = document.getElementById('interactiveStaticText');
+
+            // Clear any ongoing typing animation
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+            if (!usernameTypedSpan) return; // Element might not exist if user isn't supposed to see it
+            usernameTypedSpan.innerHTML = ""; // Clear previous username
+
+            if (welcomeElement && usernameTypedSpan && timeGreetingSpan && staticTextSpan) {
+                const currentHour = new Date().getHours();
+                let timeGreetingKey = "time-greeting-evening"; // Default
+                let staticWelcomeTextKey = "welcome-static-text";
+
+                if (currentHour >= 5 && currentHour < 12) timeGreetingKey = "time-greeting-morning";
+                else if (currentHour >= 12 && currentHour < 18) timeGreetingKey = "time-greeting-afternoon";
+
+                timeGreetingSpan.textContent = translations[language]?.[timeGreetingKey] || "Chào bạn";
+                staticTextSpan.textContent = translations[language]?.[staticWelcomeTextKey] || "Chào mừng, ";
+
+                welcomeElement.classList.remove('hide'); // Remove hide if it was there
+                welcomeElement.style.display = 'block'; // Make sure it's block before adding show
+                requestAnimationFrame(() => { // Ensure display:block is applied before transition
+                    welcomeElement.classList.add('show');
+                });
+
+
+                // Start typing after a short delay to allow the box to appear
+                setTimeout(() => {
+                    typeWriter(usernameTypedSpan, username + "!", 100, () => {
+                        // After typing, wait then hide
+                        setTimeout(() => {
+                            welcomeElement.classList.remove('show');
+                            welcomeElement.classList.add('hide');
+                            // Set display to none after animation
+                            welcomeElement.addEventListener('transitionend', () => {
+                                if(welcomeElement.classList.contains('hide')) { // Check if it's still supposed to be hidden
+                                    welcomeElement.style.display = 'none';
+                                }
+                            }, { once: true });
+                        }, 2500); // Duration to show the full message
+                    });
+                }, 500); // Delay before typing starts
+            }
+        }
+
+        function startUserGuide() {
+            const intro = introJs();
+            const currentTranslations = translations[language] || translations.vi; 
+            const steps = [
+                { intro: currentTranslations["guide-welcome"] }
+            ];
+
+            const mobileMenuBtnEl = document.querySelector('.mobile-menu-btn');
+            if (mobileMenuBtnEl && getComputedStyle(mobileMenuBtnEl).display !== 'none') {
+                steps.push({ element: '.mobile-menu-btn', intro: currentTranslations["guide-mobile-menu"], position: 'right' });
+            }
+            const navbarTabsHamburgerEl = document.getElementById('navbar-tabs-hamburger');
+            if (navbarTabsHamburgerEl && getComputedStyle(navbarTabsHamburgerEl).display !== 'none') {
+                 steps.push({ element: '#navbar-tabs-hamburger', intro: currentTranslations["guide-navbar-tabs-hamburger"], position: 'bottom' });
+            }
+            const navbarTabsContainerEl = document.getElementById('navbar-custom-tabs-container');
+            if (navbarTabsContainerEl && getComputedStyle(navbarTabsContainerEl).display === 'flex' && window.innerWidth > 1024) { // Only show if tabs are visible directly
+                steps.push({ element: '#navbar-custom-tabs-container', intro: currentTranslations["guide-navbar-tabs"], position: 'bottom' });
+            }
+
+
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl && getComputedStyle(sidebarEl).visibility !== 'hidden' && getComputedStyle(sidebarEl).display !== 'none' && !sidebarEl.classList.contains('open') && window.innerWidth > 900) { // Only if desktop sidebar is visible
+                steps.push({ element: '#sidebar', intro: currentTranslations["guide-sidebar"], position: 'right' });
+            }
+
+
+            const navbarControlsEl = document.querySelector('.navbar-controls');
+            if (navbarControlsEl) {
+                steps.push({ element: '.navbar-controls', intro: currentTranslations["guide-navbar-controls"], position: 'left' });
+                if (document.querySelector('.theme-toggle')) steps.push({ element: '.theme-toggle', intro: currentTranslations["guide-theme-toggle"], position: 'bottom' });
+                if (document.getElementById('userGuideBtn')) steps.push({ element: '#userGuideBtn', intro: currentTranslations["guide-user-guide-btn"], position: 'bottom' });
+                if (document.querySelector('.nav-btn[onclick="goBack()"]')) steps.push({ element: '.nav-btn[onclick="goBack()"]', intro: currentTranslations["guide-back-btn"], position: 'bottom' });
+                if (document.querySelector('.nav-btn[onclick="logout()"]')) steps.push({ element: '.nav-btn[onclick="logout()"]', intro: currentTranslations["guide-logout-btn"], position: 'bottom' });
+            }
+
+            if (document.getElementById('search-input')) steps.push({ element: '#search-input', intro: currentTranslations["guide-search-input"], position: 'bottom' });
+            if (document.querySelector('.button-group .refresh-btn')) steps.push({ element: '.button-group .refresh-btn', intro: currentTranslations["guide-refresh-btn"], position: 'bottom' });
+            if (document.querySelector('.button-group button[onclick="exportToExcel()"]')) steps.push({ element: '.button-group button[onclick="exportToExcel()"]', intro: currentTranslations["guide-export-btn"], position: 'bottom' });
+            if (document.querySelector('.button-group button[onclick="printTable()"]')) steps.push({ element: '.button-group button[onclick="printTable()"]', intro: currentTranslations["guide-print-btn"], position: 'bottom' });
+
+            const activeTabLink = document.querySelector('.navbar .tabs a.active') || document.querySelector('.sidebar .menu a.active');
+            if (activeTabLink) {
+                 steps.push({ element: activeTabLink, intro: currentTranslations["guide-active-tab"], position: 'bottom' });
+            }
+
+            if (document.getElementById('data-table')) steps.push({ element: '#data-table', intro: currentTranslations["guide-main-table"], position: 'top' });
+            if (document.getElementById('detail-panel')) steps.push({ element: '#detail-panel', intro: currentTranslations["guide-detail-panel"], position: 'left' });
+            if (document.getElementById('pagination')) steps.push({ element: '#pagination', intro: currentTranslations["guide-pagination"], position: 'top' });
+
+
+            steps.push({ intro: currentTranslations["guide-end"] });
+
+            intro.setOptions({
+                steps: steps,
+                nextLabel: currentTranslations["guide-next"] || 'Tiếp',
+                prevLabel: currentTranslations["guide-prev"] || 'Trước',
+                doneLabel: currentTranslations["guide-done"] || 'Hoàn thành',
+                tooltipClass: 'introjs-elegant-theme',
+                exitOnEsc: true,
+                exitOnOverlayClick: true,
+                showBullets: false,
+                showStepNumbers: false
+            });
+            intro.start();
+        }
+
 
         window.addEventListener('resize', debounce(() => {
             updateSidebarToggleIcon(); 
-            if (window.innerWidth <= 900) {
-                const sidebar = document.getElementById("sidebar");
-                if (sidebar.classList.contains("collapsed") && !sidebar.classList.contains("open")) {
+            const sidebar = document.getElementById("sidebar");
+            const mainContent = document.getElementById("main-content");
+            const pageNavbar = document.getElementById("page-navbar"); // Use navbar ID
+            const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
+            const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
+
+
+            if (window.innerWidth <= 900) { // Mobile
+                if (sidebar && sidebar.classList.contains("collapsed") && !sidebar.classList.contains("open")) {
                      sidebar.classList.remove("collapsed"); 
                 }
-            } else { 
-                const sidebar = document.getElementById("sidebar");
-                sidebar.classList.remove("open"); 
+                if(pageNavbar) { 
+                    pageNavbar.style.left = '0px';
+                    pageNavbar.style.width = '100%';
+                }
+                if(mainContent) mainContent.classList.remove('collapsed'); 
+            } else { // Desktop
+                if(sidebar) sidebar.classList.remove("open"); 
                 const storedState = localStorage.getItem('sidebarState');
-                if (storedState === 'collapsed') {
+
+                if (sidebar && storedState === 'collapsed') {
                     sidebar.classList.add('collapsed');
-                    document.getElementById('main-content').classList.add('collapsed');
-                } else {
+                    if(mainContent) mainContent.classList.add('collapsed');
+                    if(pageNavbar) {
+                        pageNavbar.style.left = '60px';
+                        pageNavbar.style.width = 'calc(100% - 60px)';
+                    }
+                } else if (sidebar) {
                     sidebar.classList.remove('collapsed');
-                    document.getElementById('main-content').classList.remove('collapsed');
+                    if(mainContent) mainContent.classList.remove('collapsed');
+                    if(pageNavbar) {
+                        pageNavbar.style.left = '200px';
+                        pageNavbar.style.width = 'calc(100% - 200px)';
+                    }
+                }
+                // Ensure navbar tabs are not in mobile dropdown state on desktop
+                if (window.innerWidth > 1024) {
+                    if (navbarTabsMenu) navbarTabsMenu.classList.remove('active');
+                    if (navbarTabsBtn) navbarTabsBtn.classList.remove('active');
+                    if (navbarTabsMenu) navbarTabsMenu.style.display = ''; // Reset display for flex layout
                 }
             }
         }, 200));
-        document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon); 
+        document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon);
     </script>
 </body>
 </html>
