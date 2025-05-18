@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Danh Sách Xe Đã Xuất Hóa Đơn</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,18 +12,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
+            /* CSS Variables from yeucaughepxe.html */
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff; 
-            --accent-color: #ffc107; 
-            --success-color: #28a745; 
-            --background-light: #f4f7fc; 
+            --secondary-color: #00aeff;
+            --background-light: #f4f7fc;
             --text-light: #2c3e50;
-            --background-dark: #161b22; 
-            --text-dark: #c9d1d9;   
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
             --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;  
+            --card-bg-dark: #1e242e;
             --border-color-light: #e1e4e8;
             --border-color-dark: #30363d;
             --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -34,33 +33,45 @@
             --transition-speed-fast: 0.2s;
             --skeleton-bg-light: #e0e0e0;
             --skeleton-bg-dark: #3a3a4a;
-            --color-danger: #dc3545; 
-            --color-success: #28a745; 
-            --color-warning: #ffc107; 
-            --color-info: #17a2b8; 
+            --footer-bg: var(--primary-color); /* from yeucaughepxe */
+            --footer-text: #ffffff; /* from yeucaughepxe */
 
+            /* Additional variables from xedaban.html if needed, ensure no conflicts */
+            --accent-color: #ffc107;
+            --success-color: #28a745;
+            --color-danger: #dc3545;
+            --color-warning: #ffc107;
+            --color-info: #17a2b8;
             --font-primary: 'Roboto', sans-serif;
-            --font-secondary: 'Montserrat', sans-serif; 
+            --font-secondary: 'Montserrat', sans-serif;
+        }
+
+        body.dark-mode {
+            /* Dark mode variables from yeucaughepxe.html */
+            --background-light: var(--background-dark);
+            --text-light: var(--text-dark);
+            --card-bg-light: var(--card-bg-dark);
+            --border-color-light: var(--border-color-dark);
+            --shadow-light-outer: var(--shadow-dark-outer);
+            --shadow-light-inner: var(--shadow-dark-inner);
+            --skeleton-bg-light: var(--skeleton-bg-dark);
+            --footer-bg: var(--primary-color-darker); /* from yeucaughepxe */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: var(--font-primary);
+            font-family: var(--font-primary); /* Keep xedaban's primary font */
             background: var(--background-light);
-            color: var(--text-light); 
+            color: var(--text-light);
             min-height: 100vh;
             overflow-x: hidden;
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
             font-size: 14px;
         }
-        body.dark-mode {
-            background: var(--background-dark);
-            color: var(--text-dark); 
-        }
-
+        /* Custom Scrollbar from yeucaughepxe.html */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track {
-            background: var(--card-bg-light); 
+            background: var(--background-light);
             border-radius: 4px;
         }
         body.dark-mode ::-webkit-scrollbar-track {
@@ -76,96 +87,150 @@
         }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+
+        /* Navbar Styles from yeucaughepxe.html */
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            z-index: 999;
-            box-shadow: var(--shadow-light-outer);
-            transition: background var(--transition-speed) ease;
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 1000; /* Increased z-index */
+            transition: background var(--transition-speed) ease, width var(--transition-speed) ease, left var(--transition-speed) ease;
         }
-        body.dark-mode header {
+        body.dark-mode .navbar {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
             box-shadow: var(--shadow-dark-outer);
         }
+        .navbar .logo-title { 
+            font-size: 16px; 
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: uppercase;
+            /* flex-grow: 1; Remove or adjust if tabs are centered */
+            text-align: left; /* Changed from center */
+            margin-left: 10px; 
+            white-space: nowrap;
+        }
+        
+        .navbar .tabs { /* This is for the new month/total tabs */
+            display: flex;
+            /* position: absolute; left: 50%; transform: translateX(-50%); */ /* Centering */
+            margin: 0 auto; /* Alternative centering or use flex-grow on title/controls */
+            gap: 5px; /* Reduced gap for more tabs */
+            transition: all var(--transition-speed) ease;
+            overflow-x: auto; /* Allow horizontal scrolling on small screens if not using hamburger */
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+        }
+        .navbar .tabs::-webkit-scrollbar { display: none; /* Hide scrollbar for Chrome, Safari, Edge */ }
 
-        .slidebar { /* Renamed from sidebar to slidebar to match HTML */
+        .navbar .tabs a {
+            padding: 7px 9px; /* Slightly reduced padding */
+            text-decoration: none; color: rgba(255,255,255,0.85);
+            font-size: 12px; /* Slightly reduced font size */
+            font-weight: 500; border-radius: 6px; background: transparent;
+            transition: background var(--transition-speed-fast) ease, color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+            position: relative;
+            white-space: nowrap; /* Prevent wrapping */
+        }
+        .navbar .tabs a::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
+            background-color: #fff; transform: translateX(-50%);
+            transition: width var(--transition-speed-fast) ease;
+        }
+        .navbar .tabs a:hover, .navbar .tabs a.active { 
+            background: rgba(255, 255, 255, 0.15); 
+            color: #ffffff; 
+            transform: translateY(-1px); /* Adjusted transform */
+        }
+        .navbar .tabs a.active::after { width: 60%; /* Adjusted width */ }
+        .navbar .tabs a:hover::after { width: 40%; /* Adjusted width */ }
+        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active { background: rgba(0, 0, 0, 0.2); }
+        body.dark-mode .navbar .tabs a::after { background-color: var(--secondary-color); }
+
+        .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .nav-btn, .theme-toggle-btn {
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) ease;
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        .nav-btn:hover, .theme-toggle-btn:hover {
+            background: #e9ecef; transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+            background: var(--primary-color-darker); color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+        }
+        
+        .hamburger { /* For navbar tabs on mobile */
+            display: none; 
+            background: none; border: none; color: #ffffff; 
+            font-size: 18px; /* Adjusted size */
+            cursor: pointer; 
+            transition: transform var(--transition-speed-fast) ease;
+            padding: 5px;
+            margin-right: 5px; /* Space from title */
+        }
+        .hamburger.active { transform: rotate(90deg); }
+
+
+        /* Sidebar Styles from yeucaughepxe.html (largely compatible with xedaban.html's existing sidebar) */
+        .sidebar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 200px; 
+            width: 200px;
             height: 100vh;
             background: var(--primary-color-darker);
             padding: 15px;
-            padding-top: 50px; 
+            padding-top: 60px; /* Space for 50px navbar + 10px margin */
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 1000;
+            z-index: 999; /* Below navbar */
             box-shadow: 3px 0 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
         }
-        .slidebar.collapsed {
-            width: 60px; 
+        .sidebar.collapsed {
+            width: 60px;
         }
-        .slidebar.open { /* For mobile */
-            transform: translateX(0);
-        }
-        body.dark-mode .slidebar {
+        body.dark-mode .sidebar {
             background: var(--background-dark);
             border-right: 1px solid var(--border-color-dark);
             box-shadow: 3px 0 10px rgba(0,0,0,0.2);
         }
-
-        .slidebar .logo {
+        .sidebar .logo { /* Sidebar's own logo section */
             text-align: center;
             margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
         }
-        .slidebar .logo h1 {
-            font-size: 25px; 
+        .sidebar .logo h1 { /* Sidebar's H1 */
+            font-size: 20px; /* Adjusted to fit, original was 25px */
             color: #fff;
-            font-weight: 600; /* Adjusted from 700 to match overall feel */
+            font-weight: 600;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            animation: bounceGlowReduced 2s infinite alternate;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
-
-        @keyframes bounceGlowReduced {
-            0%, 100% {
-                transform: translateY(0);
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
-            }
-            50% {
-                transform: translateY(-8px); 
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
-            }
-        }
-        .slidebar.collapsed .logo h1 {
+        .sidebar.collapsed .logo h1 {
             opacity: 0;
-            font-size: 0; 
+            font-size: 0;
         }
 
-        .slidebar .tabs { 
+        .sidebar .menu {
             display: flex;
             flex-direction: column;
             gap: 8px;
             overflow-y: auto;
             flex-grow: 1;
         }
-         .slidebar .tabs::-webkit-scrollbar { width: 4px; }
-         .slidebar .tabs::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
-         .slidebar .tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-         body.dark-mode .slidebar .tabs::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-         body.dark-mode .slidebar .tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
-
-
-        .slidebar .tabs a {
+        .sidebar .menu a {
             padding: 10px 12px;
             text-decoration: none;
             color: rgba(255,255,255,0.8);
@@ -180,7 +245,7 @@
             position: relative;
             overflow: hidden;
         }
-        .slidebar .tabs a::before {
+        .sidebar .menu a::before { /* Underline effect from yeucaughepxe */
             content: '';
             position: absolute;
             bottom: 0;
@@ -190,217 +255,154 @@
             background-color: var(--secondary-color);
             transition: left var(--transition-speed) ease-out;
         }
-        .slidebar .tabs a:hover::before {
-            left: 0;
-        }
-        body.dark-mode .slidebar .tabs a {
-            color: var(--text-dark);
-        }
-        .slidebar.collapsed .tabs a {
-            padding: 10px;
-            justify-content: center;
-        }
-        .slidebar.collapsed .tabs a::before {
-            display: none;
-        }
-        .slidebar .tabs a i {
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+
+        .sidebar .menu a i {
             font-size: 16px;
             width: 20px;
             text-align: center;
             transition: transform var(--transition-speed) ease;
         }
-        .slidebar .tabs a span {
+        .sidebar .menu a span {
             transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
             white-space: nowrap;
             overflow: hidden;
-            max-width: 100px; 
+            max-width: 100px;
         }
-        .slidebar.collapsed .tabs a span {
-            opacity: 0;
-            max-width: 0; 
-        }
-        .slidebar .tabs a:hover {
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover {
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
             padding-left: 15px;
             transform: translateX(3px);
         }
-         .slidebar.collapsed .tabs a:hover {
-            padding-left: 10px; 
-            transform: scale(1.05);
-        }
-        .slidebar .tabs a:hover i {
-            transform: scale(1.1) rotate(5deg);
-        }
-        body.dark-mode .slidebar .tabs a:hover {
-            background: var(--primary-color-lighter);
-            color: #fff;
-        }
-        .slidebar .tabs a.active {
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active { 
             background: var(--secondary-color);
             color: #fff;
             font-weight: 600;
-            animation: activeLinkPulse 1.5s infinite ease-in-out;
+            animation: activeLinkPulse 1.5s infinite ease-in-out; 
         }
-        .slidebar .tabs a.active::before {
-            left: 0;
-            background-color: #fff;
-        }
-        @keyframes activeLinkPulse {
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; } 
+        @keyframes activeLinkPulse { 
             0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
             50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
             100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
         }
-        body.dark-mode .slidebar .tabs a.active {
-            background: var(--primary-color);
-            animation-name: activeLinkPulseDark;
-        }
-        body.dark-mode .slidebar .tabs a.active::before {
-            background-color: var(--secondary-color);
-        }
-        @keyframes activeLinkPulseDark {
+        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); animation-name: activeLinkPulseDark; }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+        @keyframes activeLinkPulseDark { 
             0% { box-shadow: 0 0 5px var(--secondary-color); }
             50% { box-shadow: 0 0 15px var(--secondary-color); }
             100% { box-shadow: 0 0 5px var(--secondary-color); }
         }
+        
+        .sidebar-menu-label { /* This was for "Doanh số tháng", will be hidden if no items under it */
+            padding: 8px 12px 4px;
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+        .sidebar.collapsed .sidebar-menu-label { display: none; }
 
-        .toggle-btn { /* Desktop sidebar toggle */
+
+        /* Desktop Sidebar Toggle Button (from yeucaughepxe.html, was .toggle-btn) */
+        .toggle-btn-sidebar { 
             position: absolute;
-            top: 12px;
+            top: 12px; 
             right: -15px; 
-            width: 30px;
-            height: 30px;
-            background: var(--primary-color);
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
+            width: 30px; height: 30px;
+            background: var(--primary-color); border: none; border-radius: 50%;
+            color: #fff; font-size: 14px; cursor: pointer;
             transition: all var(--transition-speed) ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1001;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1001; 
         }
-        .toggle-btn:hover {
+        .toggle-btn-sidebar:hover {
             background: var(--primary-color-lighter);
             transform: scale(1.1) rotate(180deg);
         }
-        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
+        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
 
-        .navbar-controls {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 1001;
-        }
-        .nav-btn, .theme-toggle {
-            border: none;
-            border-radius: 50%;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Mobile Menu Button (Sidebar Toggle - from yeucaughepxe.html, to be placed in navbar) */
+        .mobile-menu-btn { /* This is for the main sidebar */
+            background: var(--card-bg-light); color: var(--text-light);
+            border: 1px solid var(--border-color-light); border-radius: 50%;
+            width: 32px; height: 32px; font-size: 16px; cursor: pointer;
             box-shadow: var(--shadow-light-outer);
+            display: none; 
+            align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-right: 5px; /* Space from navbar tabs hamburger */
         }
-        .nav-btn:hover, .theme-toggle:hover {
-            background: #e9ecef;
-            transform: translateY(-2px) scale(1.1);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        .mobile-menu-btn:active { transform: scale(0.95); }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
         }
-         .nav-btn:active, .theme-toggle:active {
-            transform: translateY(0px) scale(0.95);
-            box-shadow: var(--shadow-light-inner);
-        }
-        .theme-toggle i {
-            transition: transform 0.5s ease-in-out; 
-        }
-        .theme-toggle.spinning i {
-            transform: rotate(360deg);
-        }
-        body.dark-mode .nav-btn,
-        body.dark-mode .theme-toggle {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .nav-btn:hover,
-        body.dark-mode .theme-toggle:hover {
-            background: var(--primary-color-darker);
-            color: #fff;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-        }
-        body.dark-mode .nav-btn:active,
-        body.dark-mode .theme-toggle:active {
-            box-shadow: var(--shadow-dark-inner);
-        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
 
-        [data-tooltip] {
-            position: relative;
-        }
+
+        /* Tooltip from yeucaughepxe.html */
+        [data-tooltip] { position: relative; }
         [data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
             transform: translateX(-50%) translateY(5px);
-            background-color: #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s, visibility 0.2s, transform 0.2s ease-out;
-            z-index: 10000;
+            background-color: #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease; z-index: 10000;
         }
-        [data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
-        body.dark-mode [data-tooltip]::after {
-            background-color: #f0f0f0;
-            color: #333;
-        }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 
+        /* Main Container Adjustments (from yeucaughepxe.html) */
         .main-container {
             margin-left: 200px; 
-            padding: 20px; 
-            margin-top: 45px; 
-            min-height: calc(100vh - 45px - 30px); 
+            padding: 20px;
+            padding-top: 70px; 
+            min-height: calc(100vh - 50px - 30px); 
             transition: margin-left var(--transition-speed) ease;
             padding-bottom: 50px; 
             display: flex;
-            flex-direction: column; 
-            gap: 15px; 
+            flex-direction: column;
+            gap: 15px;
         }
-        .main-container.collapsed {
-            margin-left: 60px; 
+        .main-container.collapsed { 
+            margin-left: 60px;
         }
-        
+
+        /* Footer from yeucaughepxe.html */
+        footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(135deg, var(--footer-bg) 0%, var(--primary-color-lighter) 100%);
+            color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px;
+            z-index: 998; transition: background var(--transition-speed) ease;
+        }
+        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+
+
+        /* --- Existing styles from xedaban.html below, to be reviewed for conflicts/redundancy --- */
         .grid-container {
             flex: 1;
-            background: var(--card-bg-light); 
-            border-radius: 12px; 
-            padding: 20px; 
-            box-shadow: var(--shadow-light-outer); 
+            background: var(--card-bg-light);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-light-outer);
             display: flex;
             flex-direction: column;
-            gap: 15px; 
+            gap: 15px;
             width: 100%;
-            position: relative; 
-            overflow-y: auto; 
+            position: relative;
             border: 1px solid var(--border-color-light);
         }
         body.dark-mode .grid-container {
@@ -410,92 +412,49 @@
         }
 
         .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7); 
-            display: none; 
-            align-items: center;
-            justify-content: center;
-            z-index: 1000; 
-            border-radius: 12px; 
-            flex-direction: column; 
-            gap: 10px;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.7); display: none;
+            align-items: center; justify-content: center; z-index: 1000;
+            border-radius: 12px; flex-direction: column; gap: 10px;
         }
-        body.dark-mode .loading-overlay {
-            background-color: rgba(30, 36, 46, 0.8); 
-        }
-        .loading-overlay.active {
-            display: flex; 
-        }
+        body.dark-mode .loading-overlay { background-color: rgba(30, 36, 46, 0.8); }
+        .loading-overlay.active { display: flex; }
         .loading-spinner {
-            border: 5px solid var(--background-light); 
-            border-top: 5px solid var(--primary-color); 
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
+            border: 5px solid var(--background-light); border-top: 5px solid var(--primary-color);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
         }
-        body.dark-mode .loading-spinner {
-            border-color: var(--card-bg-dark);
-            border-top-color: var(--secondary-color);
-        }
-        .loading-overlay .loading-text {
-            font-size: 14px;
-            color: var(--text-light);
-            font-weight: 500;
-        }
-        body.dark-mode .loading-overlay .loading-text {
-            color: var(--text-dark);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body.dark-mode .loading-spinner { border-color: var(--card-bg-dark); border-top-color: var(--secondary-color); }
+        .loading-overlay .loading-text { font-size: 14px; color: var(--text-light); font-weight: 500; }
+        body.dark-mode .loading-overlay .loading-text { color: var(--text-dark); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .summary-cards { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         .summary-card {
-            flex: 1 1 220px; 
-            max-width: 250px; 
-            background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: var(--shadow-light-inner); 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all var(--transition-speed) ease;
-             border: 1px solid var(--border-color-light);
+            flex: 1 1 220px; max-width: 250px; background: var(--card-bg-light);
+            border-radius: 10px; padding: 15px; box-shadow: var(--shadow-light-inner);
+            display: flex; align-items: center; gap: 10px; transition: all var(--transition-speed) ease;
+            border: 1px solid var(--border-color-light);
         }
         .summary-card:hover {
             transform: translateY(-5px) scale(1.02);
-            box-shadow: var(--shadow-light-outer), 0 0 10px var(--secondary-color); 
+            box-shadow: var(--shadow-light-outer), 0 0 10px var(--secondary-color);
             border-color: var(--secondary-color);
         }
         body.dark-mode .summary-card {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-inner);
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
-         body.dark-mode .summary-card:hover {
+        body.dark-mode .summary-card:hover {
             box-shadow: var(--shadow-dark-outer), 0 0 10px var(--primary-color-lighter);
             border-color: var(--primary-color-lighter);
-         }
+        }
         .summary-card .icon {
-            font-size: 24px;
-            color: var(--primary-color);
+            font-size: 24px; color: var(--primary-color);
             transition: transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.320, 1.275), color var(--transition-speed) ease;
         }
-        .summary-card:hover .icon {
-            transform: scale(1.2) rotate(-5deg);
-            color: var(--secondary-color);
-        }
+        .summary-card:hover .icon { transform: scale(1.2) rotate(-5deg); color: var(--secondary-color); }
         body.dark-mode .summary-card .icon { color: var(--secondary-color); }
         body.dark-mode .summary-card:hover .icon { color: var(--primary-color-lighter); }
-
         .summary-card .info h3 { font-size: 13px; color: var(--text-light); margin-bottom: 5px; font-weight: 500; }
         body.dark-mode .summary-card .info h3 { color: var(--text-dark); }
         .summary-card .info p { font-size: 16px; font-weight: 700; color: var(--primary-color); }
@@ -504,11 +463,8 @@
         .charts-section { display: flex; flex-direction: column; gap: 15px; }
         .chart-row { display: flex; gap: 15px; flex-wrap: wrap; }
         .chart-container {
-            background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: var(--shadow-light-inner);
-            position: relative;
+            background: var(--card-bg-light); border-radius: 10px; padding: 15px;
+            box-shadow: var(--shadow-light-inner); position: relative;
             border: 1px solid var(--border-color-light);
             transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
         }
@@ -519,8 +475,7 @@
         .chart-container.full-width { width: 100%; }
         .chart-container.half-width { flex: 1; min-width: 300px; }
         body.dark-mode .chart-container {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-inner);
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
         body.dark-mode .chart-container:hover {
@@ -529,723 +484,428 @@
         }
         .chart-container h3 { font-size: 15px; font-weight: 600; color: var(--primary-color); margin-bottom: 15px; }
         body.dark-mode .chart-container h3 { color: var(--secondary-color); }
-        .chart-container canvas { height: 250px !important; width: 100% !important; } 
+        .chart-container canvas { height: 250px !important; width: 100% !important; }
         .chart-container .download-btn {
-            position: absolute; top: 10px; right: 10px;
-            padding: 6px;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
+            position: absolute; top: 10px; right: 10px; padding: 6px;
+            background: var(--card-bg-light); color: var(--text-light);
+            border: none; border-radius: 50%; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
             box-shadow: var(--shadow-light-outer);
             transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-         .chart-container .download-btn:hover {
-             background: #e9ecef;
-             transform: translateY(-2px) scale(1.1);
-         }
+        .chart-container .download-btn:hover { background: #e9ecef; transform: translateY(-2px) scale(1.1); }
         body.dark-mode .chart-container .download-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
         }
-        body.dark-mode .chart-container .download-btn:hover {
-             background: var(--primary-color-darker);
-             color: #fff;
-        }
+        body.dark-mode .chart-container .download-btn:hover { background: var(--primary-color-darker); color: #fff; }
 
-        .filter-section { /* Styles for filter section in month view */
-            display: flex; flex-wrap: wrap; gap: 10px;
-            align-items: center;
-            padding-bottom: 10px;
-            width: 100%;
-            border-bottom: 1px solid var(--border-color-light);
-             margin-bottom: 15px;
+        .filter-section {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+            padding-bottom: 10px; width: 100%;
+            border-bottom: 1px solid var(--border-color-light); margin-bottom: 15px;
         }
-         body.dark-mode .filter-section {
-             border-bottom: 1px solid var(--border-color-dark);
-         }
-        .filter-section > div { 
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            flex-grow: 1; 
-        }
+        body.dark-mode .filter-section { border-bottom: 1px solid var(--border-color-dark); }
+        .filter-section > div { display: flex; flex-wrap: wrap; gap: 10px; flex-grow: 1; }
         .filter-section input, .filter-section select {
-            padding: 8px 12px; 
-            border: 1px solid var(--border-color-light);
-            border-radius: 8px; 
-            font-size: 13px;
-            background: var(--background-light);
-            color: var(--text-light);
-            box-shadow: var(--shadow-light-inner); 
-            width: 200px; 
-            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            padding: 8px 12px; border: 1px solid var(--border-color-light);
+            border-radius: 8px; font-size: 13px; background: var(--background-light);
+            color: var(--text-light); box-shadow: var(--shadow-light-inner);
+            width: 200px; transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
         }
         .filter-section input:focus, .filter-section select:focus {
-            outline: none;
-            border-color: var(--primary-color);
+            outline: none; border-color: var(--primary-color);
             box-shadow: var(--shadow-light-outer), 0 0 0 2px rgba(0, 48, 135, 0.2);
         }
         body.dark-mode .filter-section input, body.dark-mode .filter-section select {
-            background: var(--card-bg-dark); /* Changed from --background-dark */
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-            box-shadow: var(--shadow-dark-inner);
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-inner);
         }
         body.dark-mode .filter-section input:focus, body.dark-mode .filter-section select:focus {
             border-color: var(--secondary-color);
             box-shadow: var(--shadow-dark-outer), 0 0 0 2px rgba(0, 174, 255, 0.2);
         }
-
         .filter-section .button-group { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-        .export-btn, .refresh-btn { /* General style for these buttons */
-            padding: 8px; 
-            border: none;
-            border-radius: 8px; 
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            font-size: 14px;
-            cursor: pointer;
+        .export-btn, .refresh-btn { 
+            padding: 8px; border: none; border-radius: 8px; 
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
             transition: all var(--transition-speed-fast) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
             display: flex; align-items: center; justify-content: center;
-            min-width: 36px; /* Ensure consistent button size */
-            height: 36px;
+            min-width: 36px; height: 36px;
         }
-         .export-btn:hover, .refresh-btn:hover {
-             background: #e9ecef;
-             transform: translateY(-2px) scale(1.05);
-             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-         }
-         .export-btn:active, .refresh-btn:active {
-            transform: translateY(0px) scale(0.98);
-            box-shadow: var(--shadow-light-inner);
-         }
+        .export-btn:hover, .refresh-btn:hover {
+            background: #e9ecef; transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .export-btn:active, .refresh-btn:active {
+            transform: translateY(0px) scale(0.98); box-shadow: var(--shadow-light-inner);
+        }
         .refresh-btn { color: var(--primary-color); } 
         body.dark-mode .export-btn, body.dark-mode .refresh-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
         }
-         body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
-             background: var(--primary-color-darker);
-             color: #fff;
-         }
+        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover { background: var(--primary-color-darker); color: #fff; }
         body.dark-mode .refresh-btn { color: var(--primary-color-lighter); }
 
 
-        /* Tables Section - Applied styles from yeucaughepxe.html and khoxe.html */
-        .tables-section { display: flex; gap: 15px; flex: 1; min-height: 300px; width: 100%; } 
-        #table-container, /* For month data */
-        #total-tables .table-container /* For total data tables */
-         {
-            flex: 1; /* Allow table containers to share space */
-            background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 0; /* Remove padding from container, apply to table/cells if needed */
-            box-shadow: var(--shadow-light-outer);
-            overflow: auto; 
-            max-height: 400px; 
-            position: relative;
-            border: 1px solid var(--border-color-light);
+        .tables-section { display: flex; gap: 15px; flex: 1; min-height: 300px; width: 100%; }
+        #table-container, #total-tables .table-container {
+            flex: 1; background: var(--card-bg-light); border-radius: 10px;
+            padding: 0; 
+            box-shadow: var(--shadow-light-outer); overflow: auto; max-height: 400px;
+            position: relative; border: 1px solid var(--border-color-light);
             transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
         }
-        #table-container:hover,
-        #total-tables .table-container:hover {
+        #table-container:hover, #total-tables .table-container:hover {
             box-shadow: var(--shadow-light-outer), 0 0 8px var(--primary-color);
             border-color: var(--primary-color);
         }
-        body.dark-mode #table-container,
-        body.dark-mode #total-tables .table-container {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-inner);
+        body.dark-mode #table-container, body.dark-mode #total-tables .table-container {
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
-         body.dark-mode #table-container:hover,
-         body.dark-mode #total-tables .table-container:hover {
+        body.dark-mode #table-container:hover, body.dark-mode #total-tables .table-container:hover {
             box-shadow: var(--shadow-dark-outer), 0 0 8px var(--secondary-color);
             border-color: var(--secondary-color);
         }
-        
-        /* Common styles for all tables that need this new look */
-        #data-table, #total-car-table, #total-tvbh-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 13px; 
-            table-layout: auto; /* Changed to auto for these tables for better content fitting */
+
+        #data-table, #total-car-table, #total-tvbh-table {
+            width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto;
         }
         #data-table th, #data-table td,
         #total-car-table th, #total-car-table td,
         #total-tvbh-table th, #total-tvbh-table td {
-            padding: 10px 12px; 
-            text-align: left;
+            padding: 10px 12px; text-align: left;
             border-bottom: 1px solid var(--border-color-light);
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        /* Allow wrap for specific columns if needed */
-        #data-table td:nth-child(2), /* Tên KH in month view */
-        #data-table td:nth-child(3)  /* Số ĐH in month view */
-        {
-             white-space: normal;
-             word-wrap: break-word;
-        }
-
-        #data-table th, 
-        #total-car-table th, 
-        #total-tvbh-table th {
+        #data-table td:nth-child(2), #data-table td:nth-child(3) { white-space: normal; word-wrap: break-word; }
+        #data-table th, #total-car-table th, #total-tvbh-table th { 
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 2;
+            text-transform: uppercase; letter-spacing: 0.5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
         }
-        body.dark-mode #data-table th, 
-        body.dark-mode #total-car-table th, 
-        body.dark-mode #total-tvbh-table th {
+        body.dark-mode #data-table th, body.dark-mode #total-car-table th, body.dark-mode #total-tvbh-table th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        
-        #data-table td, 
-        #total-car-table td, 
-        #total-tvbh-table td { color: var(--text-light); }
-        body.dark-mode #data-table td, 
-        body.dark-mode #total-car-table td, 
-        body.dark-mode #total-tvbh-table td { color: var(--text-dark); }
-
-        #data-table tbody tr, 
-        #total-car-table tbody tr, 
-        #total-tvbh-table tbody tr { 
-            transition: background-color 0.2s ease, transform 0.15s ease; 
+        #data-table td, #total-car-table td, #total-tvbh-table td { color: var(--text-light); }
+        body.dark-mode #data-table td, body.dark-mode #total-car-table td, body.dark-mode #total-tvbh-table td { color: var(--text-dark); }
+        #data-table tbody tr, #total-car-table tbody tr, #total-tvbh-table tbody tr {
+            transition: background-color 0.2s ease, transform 0.15s ease;
         }
-        #data-table tbody tr:hover, 
-        #total-car-table tbody tr:hover, 
-        #total-tvbh-table tbody tr:hover {
-            background: rgba(0, 48, 135, 0.05);
-            transform: scale(1.005); 
+        #data-table tbody tr:hover, #total-car-table tbody tr:hover, #total-tvbh-table tbody tr:hover {
+            background: rgba(0, 48, 135, 0.05); transform: scale(1.005); 
         }
-        body.dark-mode #data-table tbody tr:hover, 
-        body.dark-mode #total-car-table tbody tr:hover, 
-        body.dark-mode #total-tvbh-table tbody tr:hover { 
-            background: rgba(255, 255, 255, 0.05); 
+        body.dark-mode #data-table tbody tr:hover, body.dark-mode #total-car-table tbody tr:hover, body.dark-mode #total-tvbh-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
-        
-        /* Placeholder for tables */
-        .table-placeholder td { 
-            text-align: center;
-            padding: 20px;
-            color: var(--text-light); 
-            font-style: italic;
-        }
-        body.dark-mode .table-placeholder td {
-            color: var(--text-dark);
-        }
+        .table-placeholder td { text-align: center; padding: 20px; color: var(--text-light); font-style: italic; }
+        body.dark-mode .table-placeholder td { color: var(--text-dark); }
         .table-placeholder .fas { margin-right: 8px; }
         .table-placeholder .fas.fa-spinner { animation: spin 1.5s linear infinite; }
 
+        .summary-row { font-weight: 600; background: rgba(0, 48, 135, 0.1); color: var(--primary-color); }
+        body.dark-mode .summary-row { background: rgba(255, 255, 255, 0.1); color: var(--secondary-color); }
+        .summary-row td { border-top: 2px solid var(--primary-color); }
+        body.dark-mode .summary-row td { border-top: 2px solid var(--secondary-color); }
 
-        .summary-row { /* For total rows in summary tables */
-            font-weight: 600;
-            background: rgba(0, 48, 135, 0.1); 
-            color: var(--primary-color);
-        }
-        body.dark-mode .summary-row {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--secondary-color);
-        }
-         .summary-row td { border-top: 2px solid var(--primary-color); }
-         body.dark-mode .summary-row td { border-top: 2px solid var(--secondary-color); }
-
-
-        /* Detail Panel */
         .detail-panel {
-            flex: 0 0 350px; 
-            min-width: 300px; 
-            background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: var(--shadow-light-inner);
-            overflow-y: auto;
-            border: 1px solid var(--border-color-light);
+            flex: 0 0 350px; min-width: 300px; background: var(--card-bg-light);
+            border-radius: 10px; padding: 15px; box-shadow: var(--shadow-light-inner);
+            overflow-y: auto; border: 1px solid var(--border-color-light);
             transition: box-shadow var(--transition-speed) ease, border-color var(--transition-speed) ease;
         }
-        .detail-panel:hover {
-            box-shadow: var(--shadow-light-outer);
-            border-color: var(--primary-color);
-        }
+        .detail-panel:hover { box-shadow: var(--shadow-light-outer); border-color: var(--primary-color); }
         body.dark-mode .detail-panel {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-inner);
+            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
         }
-        body.dark-mode .detail-panel:hover {
-            box-shadow: var(--shadow-dark-outer);
-            border-color: var(--secondary-color);
-        }
-         .detail-panel::-webkit-scrollbar { width: 8px; }
-         .detail-panel::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
-         body.dark-mode .detail-panel::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-         .detail-panel::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
-         body.dark-mode .detail-panel::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
-
+        body.dark-mode .detail-panel:hover { box-shadow: var(--shadow-dark-outer); border-color: var(--secondary-color); }
+        .detail-panel::-webkit-scrollbar { width: 8px; }
+        .detail-panel::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode .detail-panel::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        .detail-panel::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+        body.dark-mode .detail-panel::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
         .detail-panel h3 { font-size: 15px; color: var(--primary-color); margin-bottom: 15px; font-weight: 600; }
         body.dark-mode .detail-panel h3 { color: var(--secondary-color); }
-
         .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .detail-table th, .detail-table td {
-            padding: 8px 10px;
-            text-align: left;
+            padding: 8px 10px; text-align: left;
             border-bottom: 1px solid var(--border-color-light);
             white-space: normal; word-wrap: break-word;
         }
-         body.dark-mode .detail-table th, body.dark-mode .detail-table td {
-             border-bottom: 1px solid var(--border-color-dark);
-         }
-        .detail-table th {
-            color: var(--text-light); font-weight: 500; width: 40%;
-            background: var(--background-light); 
-        }
-         body.dark-mode .detail-table th {
-             color: var(--text-dark);
-             background: var(--background-dark);
-         }
+        body.dark-mode .detail-table th, body.dark-mode .detail-table td { border-bottom: 1px solid var(--border-color-dark); }
+        .detail-table th { color: var(--text-light); font-weight: 500; width: 40%; background: var(--background-light); }
+        body.dark-mode .detail-table th { color: var(--text-dark); background: var(--background-dark); }
         .detail-table td { color: var(--text-light); }
         body.dark-mode .detail-table td { color: var(--text-dark); }
-
         .detail-table .vin-highlight { font-weight: 700; color: var(--secondary-color); }
         body.dark-mode .detail-table .vin-highlight { color: var(--primary-color-lighter); }
-
-        .detail-panel .no-detail-message {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-light);
-            font-style: italic;
-        }
-         body.dark-mode .detail-panel .no-detail-message {
-             color: var(--text-dark);
-         }
+        .detail-panel .no-detail-message { text-align: center; padding: 20px; color: var(--text-light); font-style: italic; }
+        body.dark-mode .detail-panel .no-detail-message { color: var(--text-dark); }
 
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 15px; width: 100%; align-items: center; }
         .pagination button {
-            padding: 8px 15px; 
-            border: none;
-            border-radius: 8px; 
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            font-size: 13px;
-            cursor: pointer;
+            padding: 8px 15px; border: none; border-radius: 8px;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 13px; cursor: pointer;
             transition: all var(--transition-speed-fast) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: var(--shadow-light-outer);
         }
         .pagination button:hover {
-            background: #e9ecef;
-            transform: translateY(-2px) scale(1.05);
+            background: #e9ecef; transform: translateY(-2px) scale(1.05);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
-        .pagination button:active {
-            transform: translateY(0px) scale(0.98);
-            box-shadow: var(--shadow-light-inner);
-        }
+        .pagination button:active { transform: translateY(0px) scale(0.98); box-shadow: var(--shadow-light-inner); }
         body.dark-mode .pagination button {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
         }
-         body.dark-mode .pagination button:hover {
-             background: var(--primary-color-darker);
-             color: #fff;
-         }
+        body.dark-mode .pagination button:hover { background: var(--primary-color-darker); color: #fff; }
         .pagination button:disabled {
-            background: var(--border-color-light); 
-            color: #999;
-            cursor: not-allowed; opacity: 0.7;
-            box-shadow: none;
-            transform: none;
+            background: var(--border-color-light); color: #999;
+            cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none;
         }
-        body.dark-mode .pagination button:disabled {
-             background: var(--border-color-dark);
-             color: #666;
-        }
+        body.dark-mode .pagination button:disabled { background: var(--border-color-dark); color: #666; }
         .pagination span { padding: 0 10px; font-size: 13px; color: var(--text-light); }
         body.dark-mode .pagination span { color: var(--text-dark); }
 
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 12px;
-            z-index: 998;
-            transition: background var(--transition-speed) ease;
-        }
-        body.dark-mode footer {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-            color: var(--text-dark);
-        }
-
-        .mobile-menu-btn {
-            display: none; 
-            position: fixed;
-            top: 8px;
-            left: 10px;
-            z-index: 1002;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            border: 1px solid var(--border-color-light);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: var(--shadow-light-outer);
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .mobile-menu-btn:hover {
-            background: #e9ecef;
-            transform: scale(1.1);
-        }
-        .mobile-menu-btn:active {
-            transform: scale(0.95);
-        }
-        body.dark-mode .mobile-menu-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .mobile-menu-btn:hover {
-            background: var(--primary-color-darker);
-            color: #fff;
-        }
-
         .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1005;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            position: fixed; bottom: 20px; right: 20px; z-index: 1005;
+            display: flex; flex-direction: column; gap: 10px;
         }
         .toast {
-            background-color: var(--card-bg-dark); 
-            color: var(--text-dark); 
-            padding: 12px 18px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            opacity: 0;
+            background-color: var(--card-bg-dark); color: var(--text-dark);
+            padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex; align-items: center; gap: 10px; opacity: 0;
             transform: translateX(100%) scale(0.9);
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.320, 1.275);
         }
         body:not(.dark-mode) .toast {
-             background-color: var(--card-bg-light);
-             color: var(--text-light);
-             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: var(--card-bg-light); color: var(--text-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0) scale(1);
-        }
-        .toast i {
-            font-size: 18px;
-        }
+        .toast.show { opacity: 1; transform: translateX(0) scale(1); }
+        .toast i { font-size: 18px; }
         .toast.success i { color: var(--color-success); animation: iconPop 0.5s ease-out; }
         .toast.error i { color: var(--color-danger); animation: iconShake 0.5s ease-out;}
         .toast.info i { color: var(--color-info); animation: iconPop 0.5s ease-out;}
         .toast.warning i { color: var(--color-warning); animation: iconPop 0.5s ease-out;}
-
         @keyframes iconPop {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+            0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; }
         }
         @keyframes iconShake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
+            0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); }
         }
-        .toast-message {
-            font-size: 14px;
-        }
+        .toast-message { font-size: 14px; }
 
-        .skeleton-row td {
-            padding: 10px 12px; 
-        }
+        .skeleton-row td { padding: 10px 12px; }
         .skeleton-row td div {
             height: 1em;
             background: linear-gradient(90deg, var(--skeleton-bg-light) 25%, #f0f0f0 50%, var(--skeleton-bg-light) 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite linear;
-            border-radius: 4px;
+            background-size: 200% 100%; animation: skeleton-loading 1.5s infinite linear; border-radius: 4px;
         }
         body.dark-mode .skeleton-row td div {
-             background: linear-gradient(90deg, var(--skeleton-bg-dark) 25%, #4a4a5a 50%, var(--skeleton-bg-dark) 75%);
-             background-size: 200% 100%; 
+            background: linear-gradient(90deg, var(--skeleton-bg-dark) 25%, #4a4a5a 50%, var(--skeleton-bg-dark) 75%);
+            background-size: 200% 100%;
         }
-        @keyframes skeleton-loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-         .empty-state {
-            text-align: center;
-            padding: 20px;
-            color: #777;
-            font-style: italic;
-        }
-         body.dark-mode .empty-state {
-             color: #888;
-         }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .empty-state { text-align: center; padding: 20px; color: #777; font-style: italic; }
+        body.dark-mode .empty-state { color: #888; }
+        tbody tr.selected-row-highlight { background-color: rgba(0, 174, 255, 0.15); font-weight: 500; }
+        body.dark-mode tbody tr.selected-row-highlight { background-color: rgba(0, 48, 135, 0.3); }
 
-         tbody tr.selected-row-highlight {
-             background-color: rgba(0, 174, 255, 0.15); 
-             font-weight: 500;
-         }
-         body.dark-mode tbody tr.selected-row-highlight {
-             background-color: rgba(0, 48, 135, 0.3); 
-         }
 
-        /* Responsive adjustments */
-        @media (max-width: 900px) { 
-            .slidebar {
-                transform: translateX(-100%); 
+        /* Responsive adjustments for Navbar and Sidebar */
+        @media (max-width: 1024px) { /* Breakpoint for navbar tabs to become hamburger controlled */
+            .navbar .tabs {
+                display: none; /* Hide tabs by default */
+                flex-direction: column; position: fixed; top: 50px; /* Position below navbar */
+                left: 0; width: 100%;
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+                padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                opacity: 0; transform: translateY(-10px);
+                transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+                z-index: 995; /* Below main navbar controls, above sidebar if open */
+                max-height: calc(100vh - 100px); /* Limit height and allow scroll */
+                overflow-y: auto;
+            }
+            body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
+            .navbar .tabs.active { display: flex; opacity: 1; transform: translateY(0); } /* Show when hamburger is active */
+            .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
+            .hamburger { display: block !important; /* Show hamburger for navbar tabs */ }
+            .navbar .logo-title { margin-left: 5px; /* Adjust title margin */ }
+        }
+
+
+        @media (max-width: 900px) { /* Breakpoint from yeucaughepxe for sidebar behavior */
+            .navbar {
+                padding-left: 10px; /* Adjust padding */
+            }
+            .navbar .logo-title {
+                margin-left: 5px; /* Make space for mobile menu button if it's on the left */
+                /* text-align: left; /* Already set */
+                font-size: 14px; /* Slightly smaller title on mobile */
+            }
+            .sidebar {
+                transform: translateX(-100%);
                 width: 220px; 
-                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+                padding-top: 60px; 
+                z-index: 1005; 
             }
-            .slidebar.open {
-                transform: translateX(0); 
-            }
-             .slidebar.collapsed { 
-                 transform: translateX(-100%);
-                 width: 220px;
-             }
-             .slidebar.open .logo h1, .slidebar.open .tabs a span {
-                opacity: 1;
-                max-width: 100px;
-            }
-             .slidebar.open .logo h1 {
-                font-size: 20px;
-            }
-             .slidebar .tabs a i { margin-right: 10px; } 
+            .sidebar.open { transform: translateX(0); }
+            .sidebar.collapsed { transform: translateX(-100%); width: 220px; } 
+            .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
+            .sidebar.open .logo h1 { font-size: 18px; }
 
-
-            .main-container {
-                margin-left: 0; 
-                padding: 15px;
-                margin-top: 40px; 
-                min-height: calc(100vh - 40px - 40px); 
-                padding-bottom: 40px; 
-            }
+            .main-container { margin-left: 0; padding-top: 60px; } 
             .main-container.collapsed { margin-left: 0; } 
 
+            .toggle-btn-sidebar { display: none !important; } 
+            .mobile-menu-btn { display: flex !important; /* Show mobile toggle for sidebar */ }
 
-            .toggle-btn { display: none; } 
-            .mobile-menu-btn { display: flex; } 
-
+            /* Adjustments from xedaban's original responsive */
             .summary-cards { justify-content: space-around; gap: 10px; }
-            .summary-card { flex: 1 1 180px; max-width: none; width: calc(50% - 10px); } 
-
+            .summary-card { flex: 1 1 180px; max-width: none; width: calc(50% - 10px); }
             .chart-row { flex-direction: column; gap: 15px; }
             .chart-container.half-width { width: 100%; min-width: 0; }
-
             .tables-section { flex-direction: column; gap: 15px; }
             .detail-panel { flex: 0 0 auto; width: 100%; min-width: 0; max-height: 300px; order: -1;  }
-            #table-container, #total-tables .table-container { max-height: 400px; } 
-
+            #table-container, #total-tables .table-container { max-height: 400px; }
             .filter-section { flex-direction: column; align-items: stretch; gap: 10px; }
             .filter-section > div { flex-direction: column; gap: 10px; }
             .filter-section input, .filter-section select { width: 100%; }
             .filter-section .button-group { justify-content: center; margin-top: 5px; }
-
-             .pagination { margin-top: 10px; }
-
-            header { padding: 12px 0; font-size: 15px;}
+            .pagination { margin-top: 10px; }
             footer { padding: 8px 0; font-size: 11px; }
-            .navbar-controls { top: 8px; right: 8px; gap: 5px;}
-            .nav-btn, .theme-toggle, .mobile-menu-btn { width: 30px; height: 30px; font-size: 14px;}
-            .mobile-menu-btn { left: 8px; top: 9px;}
         }
-        
-        /* Mobile Table Styling from yeucaughepxe.html and khoxe.html */
-        @media (max-width: 768px) { 
-            header { font-size: 12px; padding: 8px 0; }
-            .main-container { margin-top: 38px; padding-bottom: 38px; }
+
+        @media (max-width: 767px) {
+            .navbar { height: 45px; padding: 0 10px; }
+            .navbar .logo-title { font-size: 13px; margin-left: 5px; } 
+            .navbar .tabs { top: 45px; /* Adjust for smaller navbar */ }
+
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 14px; }
+            .hamburger { font-size: 16px; } /* Adjust navbar tabs hamburger */
+
+            .main-container { margin-top: 45px; padding: 10px; gap: 10px; } 
+
+            /* xedaban's original mobile table styling */
             .grid-container { padding: 15px; gap: 10px;}
-            .filter-section { flex-direction: column; align-items: stretch; gap: 10px;}
-            .filter-section input[type="text"], .filter-section select { width: 100%; font-size: 13px;}
-            .filter-section .button-group { justify-content: flex-start; flex-wrap: wrap;}
+            .filter-section input[type="text"], .filter-section select { font-size: 13px;}
             .filter-section .button-group button { font-size: 12px; padding: 7px 12px;}
-            
             #table-container, #total-tables .table-container {
-                padding: 10px; 
-                max-height: none; 
-                overflow-x: hidden; 
-                background: transparent; 
-                box-shadow: none; 
-                border: none; 
+                padding: 10px; max-height: none; overflow-x: hidden;
+                background: transparent; box-shadow: none; border: none;
             }
-            #data-table, #total-car-table, #total-tvbh-table { 
-                display: block;
-                width: 100%;
-                font-size: 12px; 
-            }
-            #data-table thead, #total-car-table thead, #total-tvbh-table thead {
-                display: none; 
-            }
+            #data-table, #total-car-table, #total-tvbh-table { display: block; width: 100%; font-size: 12px; }
+            #data-table thead, #total-car-table thead, #total-tvbh-table thead { display: none; }
             #data-table tbody, #data-table tr,
             #total-car-table tbody, #total-car-table tr,
-            #total-tvbh-table tbody, #total-tvbh-table tr {
-                display: block; 
-            }
+            #total-tvbh-table tbody, #total-tvbh-table tr { display: block; }
             #data-table tr, #total-car-table tr, #total-tvbh-table tr {
-                margin-bottom: 10px;
-                border-radius: 8px;
-                background: var(--card-bg-light);
-                padding: 12px;
-                box-shadow: var(--shadow-light-outer);
-                border: 1px solid var(--border-color-light);
+                margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
+                padding: 12px; box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light);
             }
-            body.dark-mode #data-table tr, 
-            body.dark-mode #total-car-table tr, 
-            body.dark-mode #total-tvbh-table tr {
-                background: var(--card-bg-dark);
-                box-shadow: var(--shadow-dark-outer);
+            body.dark-mode #data-table tr, body.dark-mode #total-car-table tr, body.dark-mode #total-tvbh-table tr {
+                background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
                 border: 1px solid var(--border-color-dark);
             }
             #data-table td, #total-car-table td, #total-tvbh-table td {
-                display: flex; 
-                justify-content: space-between;
-                align-items: baseline; 
-                padding: 8px 0; 
-                border: none; 
-                border-bottom: 1px dashed var(--border-color-light); 
-                font-size: 13px;
-                max-width: none; 
-                white-space: normal; 
-                text-overflow: clip; 
-                overflow: visible; 
+                display: flex; justify-content: space-between; align-items: baseline;
+                padding: 8px 0; border: none; border-bottom: 1px dashed var(--border-color-light);
+                font-size: 13px; max-width: none; white-space: normal; text-overflow: clip; overflow: visible;
             }
-            #data-table td:last-child, 
-            #total-car-table td:last-child, 
-            #total-tvbh-table td:last-child {
-                border-bottom: none; 
-            }
-            body.dark-mode #data-table td, 
-            body.dark-mode #total-car-table td, 
-            body.dark-mode #total-tvbh-table td {
+            #data-table td:last-child, #total-car-table td:last-child, #total-tvbh-table td:last-child { border-bottom: none; }
+            body.dark-mode #data-table td, body.dark-mode #total-car-table td, body.dark-mode #total-tvbh-table td {
                  border-bottom: 1px dashed var(--border-color-dark);
             }
-             body.dark-mode #data-table td:last-child, 
-             body.dark-mode #total-car-table td:last-child, 
-             body.dark-mode #total-tvbh-table td:last-child {
-                border-bottom: none;
+            body.dark-mode #data-table td:last-child, body.dark-mode #total-car-table td:last-child, body.dark-mode #total-tvbh-table td:last-child { border-bottom: none; }
+            #data-table td::before, #total-car-table td::before, #total-tvbh-table td::before {
+                content: attr(data-label); font-weight: 600; color: var(--primary-color);
+                padding-right: 10px; white-space: nowrap; flex-shrink: 0;
             }
-
-            #data-table td::before, 
-            #total-car-table td::before, 
-            #total-tvbh-table td::before {
-                content: attr(data-label); 
-                font-weight: 600;
-                color: var(--primary-color);
-                padding-right: 10px; 
-                white-space: nowrap; 
-                flex-shrink: 0; 
+            body.dark-mode #data-table td::before, body.dark-mode #total-car-table td::before, body.dark-mode #total-tvbh-table td::before { color: var(--secondary-color); }
+            #data-table td span.value-mobile, #total-car-table td span.value-mobile, #total-tvbh-table td span.value-mobile {
+                text-align: right; word-break: break-word; flex-grow: 1; min-width: 0;
             }
-            body.dark-mode #data-table td::before, 
-            body.dark-mode #total-car-table td::before, 
-            body.dark-mode #total-tvbh-table td::before {
-                color: var(--secondary-color);
-            }
-            #data-table td span.value-mobile, 
-            #total-car-table td span.value-mobile, 
-            #total-tvbh-table td span.value-mobile { 
-                text-align: right;
-                word-break: break-word; 
-                flex-grow: 1; 
-                min-width: 0; 
-            }
-            #data-table colgroup, #total-car-table colgroup, #total-tvbh-table colgroup { display: none; } 
-
-
+            #data-table colgroup, #total-car-table colgroup, #total-tvbh-table colgroup { display: none; }
             .detail-panel h3 { font-size: 14px; } .detail-table { font-size: 11px; } .detail-table th, .detail-table td { padding: 7px 8px;}
             .pagination button, .pagination span { font-size: 12px; padding: 7px 10px;}
-            footer { font-size: 11px; padding: 8px 0; }
             #notification { font-size: 13px; padding: 10px 15px; max-width: calc(100% - 30px); }
-            #notification.important-info { font-size: 13.5px; padding: 12px 18px;}
         }
 
+        @media (min-width: 768px) and (max-width: 900px) { 
+             .main-container:not(.collapsed) { margin-left: 200px; }
+             .main-container.collapsed { margin-left: 60px; }
+        }
+
+
         @media (max-width: 480px) {
-            header { padding: 10px 0; font-size: 11px; }
-            .navbar-controls { gap: 5px; top: 8px; right: 8px;}
-            .nav-btn, .theme-toggle, .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; }
-            .mobile-menu-btn { left: 8px; top: 9px;}
-            .main-container { padding: 10px; margin-top: 40px; padding-bottom: 40px; }
-            .grid-container { padding: 10px; }
+            .navbar .logo-title { font-size: 11px; margin-left: 3px; } /* Further reduce for very small screens */
+            .nav-btn, .theme-toggle-btn, .mobile-menu-btn, .hamburger { width: 28px; height: 28px; font-size: 12px; }
+            .main-container { padding: 10px; padding-top: 50px; }
             .filter-section input[type="text"], .filter-section select { padding: 8px 12px; }
             .filter-section .button-group button { padding: 6px 10px; gap: 5px; }
             .filter-section .button-group button i { font-size: 11px; }
-            
-            #data-table td, #total-car-table td, #total-tvbh-table td { font-size: 12px; padding: 7px 0;} 
+            #data-table td, #total-car-table td, #total-tvbh-table td { font-size: 12px; padding: 7px 0;}
             #data-table td::before, #total-car-table td::before, #total-tvbh-table td::before { font-size: 11.5px; }
-
-
             .detail-panel h3 { font-size: 13px; } .detail-table { font-size: 10px; } .detail-table th, .detail-table td { padding: 5px 6px; }
             .pagination button, .pagination span { font-size: 11px; padding: 6px 8px;}
             #notification { font-size: 12px; padding: 8px 12px; max-width: calc(100% - 20px); }
-            #notification.important-info { font-size: 12.5px; padding: 10px 15px;}
         }
 
     </style>
 </head>
-<body>
-    <header>BÁO CÁO DOANH SỐ VINFAST THUẬN AN</header>
+<body data-theme="light"> 
+    <div class="navbar" id="page-navbar"> 
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu sidebar" data-tooltip="Mở/Đóng menu sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <button class="hamburger" id="navbar-tabs-hamburger" aria-label="Mở menu báo cáo" data-tooltip="Mở/Đóng menu báo cáo">
+            <i class="fas fa-layer-group"></i>
+        </button>
+        <div class="logo-title">BÁO CÁO DOANH SỐ VINFAST THUẬN AN</div>
+        <div class="tabs" id="navbar-custom-tabs-container">
+            <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1">Tháng 1</a>
+            <a href="#" onclick="fetchSheetData('February', this)" data-tooltip="Tháng 2">Tháng 2</a>
+            <a href="#" onclick="fetchSheetData('March', this)" data-tooltip="Tháng 3">Tháng 3</a>
+            <a href="#" onclick="fetchSheetData('April', this)" data-tooltip="Tháng 4">Tháng 4</a>
+            <a href="#" onclick="fetchSheetData('May', this)" data-tooltip="Tháng 5">Tháng 5</a>
+            <a href="#" onclick="fetchSheetData('June', this)" data-tooltip="Tháng 6">Tháng 6</a>
+            <a href="#" onclick="fetchSheetData('July', this)" data-tooltip="Tháng 7">Tháng 7</a>
+            <a href="#" onclick="fetchSheetData('August', this)" data-tooltip="Tháng 8">Tháng 8</a>
+            <a href="#" onclick="fetchSheetData('September', this)" data-tooltip="Tháng 9">Tháng 9</a>
+            <a href="#" onclick="fetchSheetData('October', this)" data-tooltip="Tháng 10">Tháng 10</a>
+            <a href="#" onclick="fetchSheetData('November', this)" data-tooltip="Tháng 11">Tháng 11</a>
+            <a href="#" onclick="fetchSheetData('December', this)" data-tooltip="Tháng 12">Tháng 12</a>
+            <a href="#" onclick="fetchTotalData(this)" class="total-tab" data-tooltip="Tổng hợp">Tổng Hợp</a>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" id="theme-toggle-button" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối" aria-label="Chuyển đổi giao diện">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ" aria-label="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </div>
 
-    <div class="slidebar" id="slidebar">
+    <div class="sidebar" id="sidebar">
         <div class="logo">
             <h1>VINFAST THUẬN AN</h1>
         </div>
-        <div class="tabs">
-            <a href="#" onclick="fetchSheetData('January', this)" data-tooltip="Tháng 1"><i class="fas fa-seedling"></i><span>Tháng 1</span></a>
-            <a href="#" onclick="fetchSheetData('February', this)" data-tooltip="Tháng 2"><i class="fas fa-fan"></i><span>Tháng 2</span></a>
-            <a href="#" onclick="fetchSheetData('March', this)" data-tooltip="Tháng 3"><i class="fas fa-leaf"></i><span>Tháng 3</span></a>
-            <a href="#" onclick="fetchSheetData('April', this)" data-tooltip="Tháng 4"><i class="fas fa-sun"></i><span>Tháng 4</span></a>
-            <a href="#" onclick="fetchSheetData('May', this)" data-tooltip="Tháng 5"><i class="fas fa-umbrella-beach"></i><span>Tháng 5</span></a>
-            <a href="#" onclick="fetchSheetData('June', this)" data-tooltip="Tháng 6"><i class="fas fa-temperature-high"></i><span>Tháng 6</span></a>
-            <a href="#" onclick="fetchSheetData('July', this)" data-tooltip="Tháng 7"><i class="fas fa-leaf"></i><span>Tháng 7</span></a>
-            <a href="#" onclick="fetchSheetData('August', this)" data-tooltip="Tháng 8"><i class="fas fa-cloud-sun"></i><span>Tháng 8</span></a>
-            <a href="#" onclick="fetchSheetData('September', this)" data-tooltip="Tháng 9"><i class="fas fa-tree"></i><span>Tháng 9</span></a>
-            <a href="#" onclick="fetchSheetData('October', this)" data-tooltip="Tháng 10"><i class="fas fa-snowflake"></i><span>Tháng 10</span></a>
-            <a href="#" onclick="fetchSheetData('November', this)" data-tooltip="Tháng 11"><i class="fas fa-wind"></i><span>Tháng 11</span></a>
-            <a href="#" onclick="fetchSheetData('December', this)" data-tooltip="Tháng 12"><i class="fas fa-icicles"></i><span>Tháng 12</span></a>
-            <a href="#" onclick="fetchTotalData(this)" class="total-tab active" data-tooltip="Tổng hợp"><i class="fas fa-chart-bar"></i><span>Tổng Hợp</span></a>
-        </div>
-        <button class="toggle-btn" onclick="toggleSlidebar()" aria-label="Thu gọn/Mở rộng sidebar"><i class="fas fa-bars"></i></button>
+        <div class="menu" id="navMenu">
+            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-lang="pairing-list"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-lang="policy-docs"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
+            </div>
+        <button class="toggle-btn-sidebar" onclick="toggleSidebarDesktop()" aria-label="Thu gọn/Mở rộng sidebar"><i class="fas fa-bars"></i></button>
     </div>
-
-    <div class="navbar-controls">
-        <button class="theme-toggle" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện" aria-label="Chuyển đổi giao diện"><i class="fas fa-moon"></i></button>
-        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-
-     <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Mở menu"><i class="fas fa-bars"></i></button>
 
     <div class="main-container" id="main-container">
         <div class="grid-container" id="grid-container">
@@ -1396,229 +1056,306 @@
     let currentPage = 1;
     const ROWS_PER_PAGE = 20;
     let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
-    let currentSheet = "Total";
+    let currentSheet = "Total"; // Default sheet
     const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let carChart, monthlyChart, trendChart;
     let cachedData = {};
-
     let allMonthlyDataForNavigation = [];
     let topSalespersonNameForNavigation = null;
-
     const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 
     // --- Khởi tạo khi DOM đã tải ---
     document.addEventListener("DOMContentLoaded", () => {
         if (sessionStorage.getItem("isLoggedIn") !== "true") {
-            window.location.href = "index.html"; 
+            window.location.href = "index.html"; // Redirect if not logged in
             return;
         }
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            updateThemeIcon(true);
+        applyInitialTheme(); 
+
+        // Sidebar and Navbar setup 
+        if (window.innerWidth > 900) { 
+            const sidebar = document.getElementById("sidebar");
+            const mainContainer = document.getElementById("main-container");
+            const pageNavbar = document.getElementById("page-navbar"); 
+
+            if (localStorage.getItem('sidebarState') === 'collapsed') {
+                sidebar?.classList.add("collapsed");
+                mainContainer?.classList.add("collapsed");
+                if(pageNavbar) { 
+                    pageNavbar.style.left = '60px';
+                    pageNavbar.style.width = 'calc(100% - 60px)';
+                }
+            } else {
+                sidebar?.classList.remove("collapsed");
+                mainContainer?.classList.remove("collapsed");
+                 if(pageNavbar) {
+                    pageNavbar.style.left = '200px';
+                    pageNavbar.style.width = 'calc(100% - 200px)';
+                }
+            }
+        } else { 
+             const pageNavbar = document.getElementById("page-navbar");
+             if(pageNavbar) { 
+                pageNavbar.style.left = '0px';
+                pageNavbar.style.width = '100%';
+            }
+        }
+        updateSidebarToggleIcon(); 
+        
+        // Navbar tabs hamburger logic
+        const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
+        const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
+
+        if (navbarTabsHamburger && navbarCustomTabsContainer) {
+            navbarTabsHamburger.addEventListener('click', () => {
+                navbarTabsHamburger.classList.toggle('active');
+                navbarCustomTabsContainer.classList.toggle('active');
+            });
         }
 
+
+        // Restore state or fetch initial data
         try {
             const storedCache = sessionStorage.getItem('appCachedData');
-            if (storedCache) {
-                cachedData = JSON.parse(storedCache);
-            }
+            if (storedCache) cachedData = JSON.parse(storedCache);
+
             const storedSheet = sessionStorage.getItem('appCurrentSheet');
             const storedPage = sessionStorage.getItem('appCurrentPage');
 
-            if (storedSheet) {
-                currentSheet = storedSheet;
-                currentPage = storedPage ? parseInt(storedPage, 10) : 1;
+            currentSheet = storedSheet || "Total"; 
+            currentPage = storedPage ? parseInt(storedPage, 10) : 1;
 
-                document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-                const activeTabLink = Array.from(document.querySelectorAll('.tabs a')).find(a =>
-                    (a.textContent.trim().toLowerCase() === currentSheet.toLowerCase()) ||
-                    (currentSheet === "Total" && a.classList.contains('total-tab'))
-                );
+            // Clear active class from all potential navigation links first
+            document.querySelectorAll('.sidebar .menu a, .navbar .tabs a').forEach(el => el.classList.remove('active'));
+            
+            // Find the active tab link in either sidebar or navbar
+            const activeTabLink = Array.from(document.querySelectorAll('.sidebar .menu a, .navbar .tabs a')).find(a =>
+                (a.getAttribute('onclick')?.includes(`fetchSheetData('${currentSheet}'`)) ||
+                (currentSheet === "Total" && a.classList.contains('total-tab'))
+            );
 
-                if (activeTabLink) {
-                    activeTabLink.classList.add('active');
-                    if (currentSheet === "Total") {
-                        fetchTotalData(activeTabLink, true); 
-                    } else {
-                        fetchSheetData(currentSheet, activeTabLink, true); 
-                    }
-                } else { 
-                    fetchTotalData(document.querySelector('.tabs a.total-tab'));
+            if (activeTabLink) {
+                // activeTabLink.classList.add('active'); // setActiveNavigationLink will handle this
+                if (currentSheet === "Total") {
+                    fetchTotalData(activeTabLink, true);
+                } else {
+                    fetchSheetData(currentSheet, activeTabLink, true);
                 }
-            } else {
-                fetchTotalData(document.querySelector('.tabs a.total-tab'));
+            } else { 
+                const totalTabFallback = document.querySelector('.navbar .tabs a.total-tab'); // Prefer navbar total tab
+                if (totalTabFallback) {
+                    fetchTotalData(totalTabFallback, true);
+                } else { // Fallback to sidebar if still necessary (though it shouldn't be)
+                    const sidebarTotalTab = document.querySelector('.sidebar .menu a.total-tab');
+                     if(sidebarTotalTab) fetchTotalData(sidebarTotalTab, true);
+                }
             }
         } catch (error) {
             console.error("Lỗi khi khôi phục trạng thái từ sessionStorage:", error);
-            sessionStorage.removeItem('appCachedData'); 
+            sessionStorage.removeItem('appCachedData');
             sessionStorage.removeItem('appCurrentSheet');
             sessionStorage.removeItem('appCurrentPage');
-            fetchTotalData(document.querySelector('.tabs a.total-tab')); 
+            const totalTabFallback = document.querySelector('.navbar .tabs a.total-tab') || document.querySelector('.sidebar .menu a.total-tab');
+            if(totalTabFallback) fetchTotalData(totalTabFallback, true);
         }
 
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
-        updateSidebarToggleIcon(); // Cập nhật icon sidebar
+
+        // Click outside to close mobile sidebar
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); // For sidebar
+            const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
+            const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
+
+            if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
+                sidebar.classList.remove('open');
+                updateSidebarToggleIcon(); 
+            }
+
+            // Click outside to close navbar tabs dropdown (if open)
+            const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
+            const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
+            const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
+            const isClickOnNavbarTabsBtn = navbarTabsBtn && navbarTabsBtn.contains(event.target);
+
+            if (window.innerWidth <= 1024 && navbarTabsMenu && navbarTabsMenu.classList.contains('active') && !isClickInsideNavbarTabs && !isClickOnNavbarTabsBtn) {
+                navbarTabsMenu.classList.remove('active');
+                navbarTabsBtn.classList.remove('active');
+            }
+        });
     });
 
-    // --- Hàm tiện ích giao diện ---
-    function showLoading(message = "Đang tải dữ liệu...") {
-        const loadingOverlay = document.getElementById("loading-overlay");
-        const loadingText = loadingOverlay.querySelector(".loading-text");
-        if (loadingText) {
-            loadingText.textContent = message;
+    // --- Theme Management ---
+    function applyInitialTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light"; 
+        document.body.setAttribute('data-theme', savedTheme); 
+        document.body.classList.toggle("dark-mode", savedTheme === "dark");
+        const themeIcon = document.getElementById("theme-icon");
+        if (themeIcon) {
+            themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
         }
-        loadingOverlay.classList.add("active");
-    }
-
-    function hideLoading() {
-        document.getElementById("loading-overlay").classList.remove("active");
-    }
-
-    function updateThemeIcon(isDarkMode) {
-        const themeIcon = document.querySelector('.theme-toggle i');
-        if(!themeIcon) return;
-        if (isDarkMode) {
-            themeIcon.classList.remove('fa-moon');
-            themeIcon.classList.add('fa-sun');
-        } else {
-            themeIcon.classList.remove('fa-sun');
-            themeIcon.classList.add('fa-moon');
-        }
+        updateAllChartColors(); 
     }
 
     function toggleTheme() {
-        const themeToggleBtn = document.querySelector('.theme-toggle');
-        themeToggleBtn.classList.add('spinning');
+        const isDarkModeCurrently = document.body.classList.contains("dark-mode");
+        const newTheme = isDarkModeCurrently ? "light" : "dark";
 
-        const isDarkMode = document.body.classList.toggle('dark-mode');
-        updateThemeIcon(isDarkMode);
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        document.body.classList.toggle("dark-mode");
+        document.body.setAttribute('data-theme', newTheme);
+        localStorage.setItem("theme", newTheme);
+
+        const themeIcon = document.getElementById("theme-icon");
+        if (themeIcon) {
+            themeIcon.className = newTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+        }
         updateAllChartColors(); 
-
-        setTimeout(() => {
-            themeToggleBtn.classList.remove('spinning');
-        }, 500); // Duration of the spin animation
     }
 
-    function goBack() {
-        window.location.href = "index.html"; 
-        showToast("Đã quay lại trang chủ!", 'info');
-    }
-    function logout() {
-        sessionStorage.clear(); 
-        window.location.href = "index.html"; 
-        showToast("Đã đăng xuất!", 'info');
-    }
-    function toggleSlidebar() { // For desktop
-        const slidebar = document.getElementById("slidebar");
-        const mainContainer = document.getElementById("main-container");
-        slidebar.classList.toggle("collapsed");
-        mainContainer.classList.toggle("collapsed");
-        localStorage.setItem('sidebarState', slidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
-        updateSidebarToggleIcon();
+    // --- Sidebar and Navbar JS ---
+    function toggleSidebarDesktop() {
+        if (window.innerWidth > 900) { 
+            const sidebar = document.getElementById("sidebar");
+            const mainContainer = document.getElementById("main-container");
+            const pageNavbar = document.getElementById("page-navbar"); 
 
+            if (sidebar && mainContainer && pageNavbar) {
+                sidebar.classList.toggle("collapsed");
+                mainContainer.classList.toggle("collapsed");
 
-        if (window.Chart && (monthlyChart || carChart || trendChart)) {
-            setTimeout(() => {
-                if (monthlyChart && monthlyChart.ctx) monthlyChart.resize();
-                if (carChart && carChart.ctx) carChart.resize();
-                if (trendChart && trendChart.ctx) trendChart.resize();
-            }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','')) * 1000 + 50);
+                const isCollapsed = sidebar.classList.contains("collapsed");
+                localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+
+                if (isCollapsed) {
+                    pageNavbar.style.left = '60px';
+                    pageNavbar.style.width = 'calc(100% - 60px)';
+                } else {
+                    pageNavbar.style.left = '200px';
+                    pageNavbar.style.width = 'calc(100% - 200px)';
+                }
+            }
+            updateSidebarToggleIcon();
+            
+            if (window.Chart && (monthlyChart || carChart || trendChart)) {
+                setTimeout(() => {
+                    if (monthlyChart?.ctx) monthlyChart.resize();
+                    if (carChart?.ctx) carChart.resize();
+                    if (trendChart?.ctx) trendChart.resize();
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','')) * 1000 + 50);
+            }
         }
     }
 
-    function toggleMobileMenu() { // For mobile
-        const slidebar = document.getElementById("slidebar");
-        slidebar.classList.toggle("open"); 
+    function toggleMobileSidebar() { 
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar) {
+            sidebar.classList.toggle("open");
+            if (sidebar.classList.contains("open")) {
+                sidebar.classList.remove("collapsed");
+            }
+        }
         updateSidebarToggleIcon();
     }
-    
-    function updateSidebarToggleIcon() {
-        const sidebar = document.getElementById("slidebar");
-        const toggleIconDesktop = document.querySelector(".toggle-btn i"); // Desktop toggle
-        const mobileMenuBtnIcon = document.querySelector(".mobile-menu-btn i"); // Mobile toggle
+
+    function updateSidebarToggleIcon() { 
+        const sidebar = document.getElementById("sidebar");
+        const desktopToggleIcon = document.querySelector(".toggle-btn-sidebar i");
+        const mobileToggleIcon = document.querySelector(".mobile-menu-btn i"); // For sidebar
 
         if (!sidebar) return;
 
-        if (window.innerWidth <= 900) { // Mobile/Tablet view
-            if(document.querySelector('.toggle-btn')) document.querySelector('.toggle-btn').style.display = 'none';
+        if (window.innerWidth <= 900) { 
+            if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
             if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'flex';
-            if (mobileMenuBtnIcon) {
-                if (sidebar.classList.contains("open")) {
-                    mobileMenuBtnIcon.classList.remove("fa-bars");
-                    mobileMenuBtnIcon.classList.add("fa-times");
-                } else {
-                    mobileMenuBtnIcon.classList.remove("fa-times");
-                    mobileMenuBtnIcon.classList.add("fa-bars");
+            if (mobileToggleIcon) {
+                mobileToggleIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+            }
+        } else { 
+            if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
+            if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'none';
+            if (desktopToggleIcon) {
+                desktopToggleIcon.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
+            }
+        }
+    }
+
+    function setActiveNavigationLink(clickedElement) {
+        // Remove active class from all sidebar links
+        document.querySelectorAll('.sidebar .menu a').forEach(el => el.classList.remove('active'));
+        // Remove active class from all navbar tabs
+        document.querySelectorAll('.navbar .tabs a').forEach(el => el.classList.remove('active'));
+
+        if (clickedElement) {
+            clickedElement.classList.add('active');
+
+            // If the clicked element is a navbar tab and the navbar tabs are in dropdown mode, close the dropdown
+            if (window.innerWidth <= 1024 && clickedElement.closest('.navbar .tabs')) {
+                const navbarTabsHamburger = document.getElementById('navbar-tabs-hamburger');
+                const navbarCustomTabsContainer = document.getElementById('navbar-custom-tabs-container');
+                if (navbarTabsHamburger && navbarCustomTabsContainer) {
+                    navbarTabsHamburger.classList.remove('active');
+                    navbarCustomTabsContainer.classList.remove('active');
                 }
             }
-        } else { // Desktop view
-            if(document.querySelector('.toggle-btn')) document.querySelector('.toggle-btn').style.display = 'flex';
-            if(document.querySelector('.mobile-menu-btn')) document.querySelector('.mobile-menu-btn').style.display = 'none';
-            if (toggleIconDesktop) {
-                if (sidebar.classList.contains("collapsed")) {
-                    toggleIconDesktop.classList.remove("fa-times");
-                    toggleIconDesktop.classList.add("fa-bars");
-                } else {
-                    toggleIconDesktop.classList.remove("fa-bars");
-                    toggleIconDesktop.classList.add("fa-times");
-                }
+        } else {
+            // Handle Index.html active state if no specific sheet/total tab is active
+            // This logic might need refinement based on how Index.html is treated
+            if (window.location.pathname.endsWith("Index.html") || window.location.pathname.endsWith("/")) {
+                 const homeLink = document.querySelector(".sidebar .menu a[href='Index.html']");
+                 if (homeLink) homeLink.classList.add("active");
             }
         }
     }
 
 
+    // --- Navigation ---
+    function goBack() { window.location.href = "Index.html"; }
+    function logout() {
+        sessionStorage.clear();
+        localStorage.removeItem('sidebarState'); 
+        localStorage.removeItem('theme'); 
+        window.location.href = "index.html";
+    }
+
+    // --- Utility Functions ---
+    function showLoading(message = "Đang tải dữ liệu...") {
+        const loadingOverlay = document.getElementById("loading-overlay");
+        const loadingText = loadingOverlay.querySelector(".loading-text");
+        if (loadingText) loadingText.textContent = message;
+        loadingOverlay.classList.add("active");
+    }
+    function hideLoading() { document.getElementById("loading-overlay").classList.remove("active"); }
+
     function showToast(message, type = 'info', duration = 3000) {
         const toastContainer = document.getElementById("toast-container");
-        if (!toastContainer) {
-            console.error("Toast container not found!");
-            return;
-        }
-
+        if (!toastContainer) { console.error("Toast container not found!"); return; }
         const toast = document.createElement('div');
-        toast.classList.add('toast', type); 
-
-        let iconClass = 'fas fa-info-circle'; 
+        toast.classList.add('toast', type);
+        let iconClass = 'fas fa-info-circle';
         if (type === 'success') iconClass = 'fas fa-check-circle';
         else if (type === 'error') iconClass = 'fas fa-times-circle';
         else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
-
-        toast.innerHTML = `
-            <i class="${iconClass}"></i>
-            <span class="toast-message">${message}</span>
-        `;
-
+        toast.innerHTML = `<i class="${iconClass}"></i><span class="toast-message">${message}</span>`;
         toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 100); 
-
+        setTimeout(() => toast.classList.add('show'), 100);
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => {
-                if (toast.parentNode === toastContainer) { 
-                     toastContainer.removeChild(toast);
-                }
-            }, 500); 
+            setTimeout(() => { if (toast.parentNode === toastContainer) toastContainer.removeChild(toast); }, 500);
         }, duration);
     }
 
 
-    // --- Hàm xử lý dữ liệu và API ---
+    // --- Core Data Fetching and Rendering Logic ---
     async function fetchDataFromAPI(sheetName, retries = 3) {
         const url = `${API_URL}?sheet=${sheetName}`;
         try {
-            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' }); 
-            if (!response.ok) {
-                throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
-            }
+            const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+            if (!response.ok) throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
             const data = await response.json();
             if (data === null || data === undefined) throw new Error(`Dữ liệu trả về từ sheet '${sheetName}' là null hoặc undefined.`);
             if (!Array.isArray(data)) {
-                if (typeof data === 'object' && data[sheetName] && Array.isArray(data[sheetName])) {
-                    return data[sheetName];
-                }
+                if (typeof data === 'object' && data[sheetName] && Array.isArray(data[sheetName])) return data[sheetName];
                 throw new Error(`Dữ liệu từ sheet '${sheetName}' không phải là mảng.`);
             }
             return data;
@@ -1626,51 +1363,53 @@
             console.error(`Lỗi khi fetch dữ liệu từ sheet '${sheetName}':`, error);
             if (retries > 0) {
                 showToast(`Lỗi tải ${sheetName}. Thử lại (${retries} lần)...`, 'warning');
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 return fetchDataFromAPI(sheetName, retries - 1);
             }
-            throw error; 
+            throw error;
         }
     }
-    
+
     async function fetchSheetData(sheetName, element, isInitialLoad = false) {
         if (!isInitialLoad && currentSheet === sheetName && cachedData[sheetName] && !confirm(`Bạn đang ở tab ${sheetName}. Bạn có muốn tải lại dữ liệu không?`)) {
-            document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-            if (element) element.classList.add('active');
+            setActiveNavigationLink(element); // Set active link
             processAndRenderMonthData(cachedData[sheetName], sheetName, true);
+            if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('open')) {
+                toggleMobileSidebar(); // Close sidebar if open on mobile
+            }
             return;
         }
 
         showLoading(`Đang tải dữ liệu tháng ${sheetName}...`);
         currentSheet = sheetName;
-        if (!isInitialLoad) { 
-             currentPage = 1;
-        }
+        if (!isInitialLoad) currentPage = 1;
 
-        document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active'); 
+        setActiveNavigationLink(element); // Set active link using the new function
 
         document.getElementById("total-tables").style.display = "none";
         document.getElementById("month-data").style.display = "flex";
         document.getElementById("detail-panel").style.display = "block"; 
         document.getElementById("pagination").style.display = "flex";
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
-        document.getElementById("search-input").value = "";
-        
-        if (cachedData[sheetName] && !element.classList.contains('refresh-triggered')) {
+        document.getElementById("search-input").value = ""; 
+
+        if (cachedData[sheetName] && !element?.classList.contains('refresh-triggered')) {
             fullData = cachedData[sheetName];
             processAndRenderMonthData(fullData, sheetName, true); 
             sessionStorage.setItem('appCurrentSheet', currentSheet);
             sessionStorage.setItem('appCurrentPage', currentPage.toString());
             hideLoading();
-            if (element) element.classList.remove('refresh-triggered'); 
+            if (element) element.classList.remove('refresh-triggered');
+            if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('open')) {
+                toggleMobileSidebar();
+            }
             return;
         }
-        if (element) element.classList.remove('refresh-triggered'); 
+        if (element) element.classList.remove('refresh-triggered');
 
         try {
             const data = await fetchDataFromAPI(sheetName);
-            fullData = data; 
+            fullData = data;
             cachedData[sheetName] = data; 
             processAndRenderMonthData(data, sheetName, false); 
             sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
@@ -1682,17 +1421,20 @@
             processAndRenderMonthData([], sheetName, false); 
         } finally {
             hideLoading();
+            if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('open')) {
+                toggleMobileSidebar();
+            }
         }
     }
 
     function processAndRenderMonthData(data, sheetName, fromCache = false) {
-        filteredMonthData = data ? [...data] : []; 
+        filteredMonthData = data ? [...data] : [];
         updateFilters(filteredMonthData); 
         updateMonthOverview(data); 
         renderTable(filteredMonthData); 
 
         if (!fromCache || document.getElementById("table-body").innerHTML.includes("empty-state")) {
-            const message = fromCache
+             const message = fromCache
                 ? `Dữ liệu ${sheetName} từ cache (${(data || []).length} đơn hàng)`
                 : `Dữ liệu ${sheetName} đã tải (${(data || []).length} đơn hàng)`;
             showToast(message, (data || []).length > 0 ? 'success' : 'info');
@@ -1702,25 +1444,20 @@
     async function fetchTotalData(element, isInitialLoad = false) {
         showLoading("Đang tải dữ liệu tổng hợp...");
         currentSheet = "Total";
-        if (!isInitialLoad) {
-            currentPage = 1; 
-        }
+        if (!isInitialLoad) currentPage = 1;
 
-        document.querySelectorAll('.tabs a').forEach(el => el.classList.remove('active'));
-        if (element) element.classList.add('active');
+        setActiveNavigationLink(element); // Set active link using the new function
 
         document.getElementById("month-data").style.display = "none";
         document.getElementById("total-tables").style.display = "block";
-        document.getElementById("detail-panel").style.display = "none"; 
-        document.getElementById("pagination").style.display = "none";
-
+        
         let allMonthlyData = [];
         let allFetchesSuccessful = true;
-        let results = []; 
+        let results = [];
 
         try {
             let canReconstructFromCache = true;
-            if (isInitialLoad) {
+            if (isInitialLoad) { 
                 for (const month of MONTHS) {
                     if (!cachedData[month]) {
                         canReconstructFromCache = false;
@@ -1735,9 +1472,9 @@
             if (canReconstructFromCache) {
                  showToast("Đang tải dữ liệu tổng hợp từ cache...", 'info', 1500);
                  results = MONTHS.map(month => cachedData[month]);
-            } else {
+            } else { 
                 const fetchPromises = MONTHS.map(async month => {
-                    if (cachedData[month] && !element.classList.contains('refresh-triggered')) { 
+                    if (cachedData[month] && !element?.classList.contains('refresh-triggered')) {
                         return cachedData[month];
                     }
                     try {
@@ -1754,6 +1491,8 @@
                 results = await Promise.all(fetchPromises);
             }
 
+            if (element) element.classList.remove('refresh-triggered');
+
 
             results.forEach((monthData, index) => {
                 if (monthData && Array.isArray(monthData)) {
@@ -1762,27 +1501,33 @@
             });
 
             const validData = allMonthlyData.filter(row => row && typeof row === 'object' && row[3] && String(row[3]).trim() !== "");
-            allMonthlyDataForNavigation = [...validData]; 
+            allMonthlyDataForNavigation = [...validData];
 
             if (validData.length === 0) {
                 if (allFetchesSuccessful) {
                     showToast("Không có dữ liệu hợp lệ từ 12 tháng để tổng hợp.", 'warning', 3000);
                 } else {
-                    showToast("Một số tháng không tải được dữ liệu. Tổng hợp có thể chưa đầy đủ.", 'warning', 4000);
+                     showToast("Một số tháng không tải được dữ liệu. Tổng hợp có thể chưa đầy đủ.", 'warning', 4000);
                 }
-                updateOverview([], [], 0); 
+                updateOverview([], [], 0);
                 renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: (cachedData[m] || []).length })), {});
-                allMonthlyDataForNavigation = []; 
-                topSalespersonNameForNavigation = null; 
+                allMonthlyDataForNavigation = [];
+                topSalespersonNameForNavigation = null;
+                
                 const prevTotalCarsCard = document.getElementById('total-cars-summary-card');
                 if (prevTotalCarsCard) prevTotalCarsCard.onclick = null;
                 const prevTopTvbhCard = document.getElementById('top-tvbh-summary-card');
                 if (prevTopTvbhCard) prevTopTvbhCard.onclick = null;
-                sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
+
+                sessionStorage.setItem('appCachedData', JSON.stringify(cachedData)); 
                 sessionStorage.setItem('appCurrentSheet', "Total");
                 hideLoading();
+                if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('open')) {
+                    toggleMobileSidebar();
+                }
                 return;
             }
+
 
             totalCarData = aggregateData(validData, 3); 
             totalTvbhData = aggregateData(validData, 7); 
@@ -1805,10 +1550,9 @@
             updateOverview(totalCarData, totalTvbhData, validData.length);
             renderTotalTables(totalCarData, totalTvbhData, monthlyCounts, trendData);
 
-            if (!isInitialLoad || !canReconstructFromCache) {
+            if (!isInitialLoad || !canReconstructFromCache) { 
                  showToast(`Dữ liệu tổng hợp (${validData.length} đơn hàng) đã cập nhật.`, 'success');
             }
-
 
             const totalCarsCard = document.getElementById('total-cars-summary-card');
             if (totalCarsCard) {
@@ -1831,7 +1575,7 @@
                         const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && row[7] === topSalespersonNameForNavigation);
                         if (bestSalespersonData.length > 0) {
                             sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(bestSalespersonData));
-                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); 
+                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation);
                             window.location.href = 'bestsale.html';
                         } else {
                             showToast(`Không tìm thấy dữ liệu cho TVBH: ${topSalespersonNameForNavigation}`, 'warning');
@@ -1841,88 +1585,77 @@
                     }
                 };
             }
-            sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
+            sessionStorage.setItem('appCachedData', JSON.stringify(cachedData)); 
             sessionStorage.setItem('appCurrentSheet', "Total");
 
         } catch (error) {
             console.error("Lỗi tải dữ liệu tổng:", error);
             showToast(`Lỗi tải dữ liệu tổng: ${error.message}`, 'error', 5000);
-            updateOverview([], [], 0);
-            renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {});
-            allMonthlyDataForNavigation = []; 
-            topSalespersonNameForNavigation = null; 
+            updateOverview([], [], 0); 
+            renderTotalTables([], [], MONTHS.map(m => ({ month: m, count: 0 })), {}); 
+            allMonthlyDataForNavigation = [];
+            topSalespersonNameForNavigation = null;
         } finally {
             hideLoading();
+            if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('open')) {
+                toggleMobileSidebar();
+            }
         }
     }
 
-    // --- Hàm tổng hợp và tính toán dữ liệu ---
+
+    // --- Aggregate and Calculate Data ---
     function aggregateData(data, columnIndex) {
         const stats = {};
-        if (!Array.isArray(data)) return []; 
+        if (!Array.isArray(data)) return [];
         data.forEach(row => {
             if (row && row[columnIndex] !== undefined && row[columnIndex] !== null) {
-                const key = String(row[columnIndex]).trim(); 
-                if (key) { 
-                    stats[key] = (stats[key] || 0) + 1;
-                }
+                const key = String(row[columnIndex]).trim();
+                if (key) stats[key] = (stats[key] || 0) + 1;
             }
         });
-        return Object.entries(stats)
-            .map(([key, count]) => ({ key, count }))
-            .sort((a, b) => b.count - a.count); 
+        return Object.entries(stats).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
     }
-
     function calculateTrendData(monthlyResults, topCarData) {
-        const topCars = topCarData.slice(0, 5).map(item => item.key); 
+        const topCars = topCarData.slice(0, 5).map(item => item.key);
         const trendData = {};
-
         topCars.forEach(carModel => {
             trendData[carModel] = MONTHS.map((month, idx) => {
-                const monthData = monthlyResults[idx] || []; 
+                const monthData = monthlyResults[idx] || [];
                 return Array.isArray(monthData) ? monthData.filter(row => row && row[3] === carModel).length : 0;
             });
         });
         return trendData;
     }
 
-    // --- Hàm cập nhật giao diện (DOM manipulation) ---
+    // --- DOM Update Functions ---
     function updateFilters(data) {
         const carFilter = document.getElementById("car-filter");
         const tvbhFilter = document.getElementById("tvbh-filter");
-
         const uniqueCars = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[3]).filter(Boolean))].sort() : [];
         const uniqueTvbh = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[7]).filter(Boolean))].sort() : [];
-
         const currentCarFilterValue = carFilter.value;
         const currentTvbhFilterValue = tvbhFilter.value;
-
         carFilter.innerHTML = '<option value="">Tất cả Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}" ${m === currentCarFilterValue ? 'selected' : ''}>${m}</option>`).join('');
         tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}" ${t === currentTvbhFilterValue ? 'selected' : ''}>${t}</option>`).join('');
     }
-
-    function updateOverview(carData, tvbhData, totalSales) { 
+    function updateOverview(carData, tvbhData, totalSales) {
         document.getElementById("total-cars").textContent = totalSales || 0;
         const topCar = carData && carData.length > 0 ? carData[0] : { key: "-", count: 0 };
         document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
         const topTvbh = tvbhData && tvbhData.length > 0 ? tvbhData[0] : { key: "-", count: 0 };
         document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
-
-    function updateMonthOverview(data) { 
+    function updateMonthOverview(data) {
         const totalSales = data ? data.length : 0;
-        const carDataAgg = aggregateData(data, 3); 
-        const tvbhDataAgg = aggregateData(data, 7); 
-
+        const carDataAgg = aggregateData(data, 3);
+        const tvbhDataAgg = aggregateData(data, 7);
         document.getElementById("month-total-cars").textContent = totalSales;
         const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
-
         const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
-
         const monthTvbhSummaryCard = document.getElementById("month-tvbh-summary-card");
-
         if (monthTvbhSummaryCard) {
             if (topTvbh.key !== "-" && topTvbh.count > 0) {
                 monthTvbhSummaryCard.style.cursor = 'pointer';
@@ -1930,11 +1663,10 @@
                 monthTvbhSummaryCard.onclick = () => {
                     const salespersonName = topTvbh.key;
                     const salespersonSpecificData = data.filter(row => row && row[7] === salespersonName);
-
                     if (salespersonSpecificData.length > 0) {
                         sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(salespersonSpecificData));
                         sessionStorage.setItem('bestSalespersonName', salespersonName);
-                        sessionStorage.setItem('currentMonthForBestSale', currentSheet); 
+                        sessionStorage.setItem('currentMonthForBestSale', currentSheet);
                         window.location.href = 'bestsale.html';
                     } else {
                         showToast(`Không tìm thấy dữ liệu cho TVBH: ${salespersonName} trong tháng ${currentSheet}.`, 'warning');
@@ -1947,638 +1679,299 @@
             }
         }
     }
-
     function renderTable(dataToRender) {
         const tableHeader = document.getElementById("table-header");
         const tableBody = document.getElementById("table-body");
-        // Define headers for the monthly data table
         const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
-        const dataKeys = [null, 0, 2, 3, 4, 5]; // Index mapping for row data, STT is generated
-
-        if (!tableHeader.innerHTML.trim()) { 
-            tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        }
-
+        const dataKeys = [null, 0, 2, 3, 4, 5];
+        if (!tableHeader.innerHTML.trim()) tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         const start = (currentPage - 1) * ROWS_PER_PAGE;
         const paginatedData = dataToRender && Array.isArray(dataToRender) ? dataToRender.slice(start, start + ROWS_PER_PAGE) : [];
-        const isMobile = window.innerWidth <= 768;
-
         if (paginatedData.length === 0) {
             tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="${headers.length}" class="empty-state">Không có dữ liệu phù hợp.</td></tr>`;
         } else {
             tableBody.innerHTML = paginatedData.map((row, idx) => {
-                if (!row || typeof row !== 'object') return ''; 
-                
+                if (!row || typeof row !== 'object') return '';
                 const ghiChuAdmin = row[11] ? String(row[11]).toLowerCase() : '';
                 const ghiChuTvbh = row[10] ? String(row[10]).toLowerCase() : '';
                 const isHighlight = (ghiChuAdmin.includes("ưu tiên") || ghiChuTvbh.includes("đặc biệt")) ? ' class="selected-row-highlight"' : '';
-
                 let cellsHTML = "";
                 headers.forEach((headerText, cellIdx) => {
-                    let cellValue = "";
-                    if (headerText === "STT") {
-                        cellValue = start + idx + 1;
-                    } else {
-                        cellValue = row[dataKeys[cellIdx]] || 'N/A';
-                    }
+                    let cellValue = headerText === "STT" ? start + idx + 1 : (row[dataKeys[cellIdx]] || 'N/A');
                     cellsHTML += `<td data-label="${headerText}"><span class="value-mobile">${cellValue}</span></td>`;
                 });
-                
-                // Prepare data for showDetail, ensuring all necessary fields are passed
-                const detailArgs = [
-                    start + idx + 1, // STT
-                    row[0] || '', // Tên KH
-                    row[2] || '', // Số ĐH
-                    row[3] || '', // Dòng Xe
-                    row[4] || '', // Phiên Bản
-                    row[5] || '', // Ngoại Thất
-                    row[6] || '', // Nội Thất
-                    row[7] || '', // TVBH
-                    row[8] || '', // VIN
-                    row[9] || ''  // Chính Sách
-                ].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
-
-
+                const detailArgs = [start + idx + 1, row[0] || '', row[2] || '', row[3] || '', row[4] || '', row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || ''].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
                 return `<tr${isHighlight} onclick="showDetail([${detailArgs}])" style="cursor:pointer;">${cellsHTML}</tr>`;
             }).join('');
         }
         updatePagination(dataToRender ? dataToRender.length : 0);
-         if (paginatedData.length > 0) {
-            // Show detail of the first row by default
-            const firstRowDetailData = [
-                start + 1, paginatedData[0][0] || '', paginatedData[0][2] || '', paginatedData[0][3] || '',
-                paginatedData[0][4] || '', paginatedData[0][5] || '', paginatedData[0][6] || '',
-                paginatedData[0][7] || '', paginatedData[0][8] || '', paginatedData[0][9] || ''
-            ];
+        if (paginatedData.length > 0) {
+            const firstRowDetailData = [start + 1, paginatedData[0][0] || '', paginatedData[0][2] || '', paginatedData[0][3] || '', paginatedData[0][4] || '', paginatedData[0][5] || '', paginatedData[0][6] || '', paginatedData[0][7] || '', paginatedData[0][8] || '', paginatedData[0][9] || ''];
             showDetail(firstRowDetailData);
         } else {
             updateDetailPanelWithMessage("Không có dữ liệu để hiển thị chi tiết.");
         }
     }
-
-
     function renderTotalTables(carData, tvbhData, monthlySalesData, trendChartData) {
         const totalCarBody = document.getElementById("total-car-body");
         const totalTvbhBody = document.getElementById("total-tvbh-body");
         const totalCarHeader = document.getElementById("total-car-header");
         const totalTvbhHeader = document.getElementById("total-tvbh-header");
-
         const carTableHeaders = ["STT", "Dòng Xe", "Tổng Số Lượng"];
         const tvbhTableHeaders = ["STT", "Tư Vấn Bán Hàng", "Tổng Số Lượng Xe"];
-
-        if (totalCarHeader && !totalCarHeader.innerHTML.trim()) {
-            totalCarHeader.innerHTML = `<tr>${carTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        }
-        if (totalTvbhHeader && !totalTvbhHeader.innerHTML.trim()){
-            totalTvbhHeader.innerHTML = `<tr>${tvbhTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        }
-
-        totalCarBody.innerHTML = carData && carData.length > 0
-            ? carData.map((row, idx) => `<tr onclick="navigateToCarDetail('${row.key}')" style="cursor:pointer;">
-                                            <td data-label="${carTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td>
-                                            <td data-label="${carTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td>
-                                            <td data-label="${carTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td>
-                                         </tr>`).join('') +
-              `<tr class="summary-row">
-                    <td data-label="${carTableHeaders[0]}"><span class="value-mobile"></span></td>
-                    <td data-label="${carTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td>
-                    <td data-label="${carTableHeaders[2]}"><span class="value-mobile"><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></span></td>
-               </tr>`
-            : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
-
-        totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0
-            ? tvbhData.map((row, idx) => `<tr onclick="navigateToTvbhDetail('${row.key}')" style="cursor:pointer;">
-                                            <td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td>
-                                            <td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td>
-                                            <td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td>
-                                          </tr>`).join('') +
-              `<tr class="summary-row">
-                    <td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile"></span></td>
-                    <td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td>
-                    <td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile"><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></span></td>
-               </tr>`
-            : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
-
+        if (totalCarHeader && !totalCarHeader.innerHTML.trim()) totalCarHeader.innerHTML = `<tr>${carTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        if (totalTvbhHeader && !totalTvbhHeader.innerHTML.trim()) totalTvbhHeader.innerHTML = `<tr>${tvbhTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        totalCarBody.innerHTML = carData && carData.length > 0 ? carData.map((row, idx) => `<tr onclick="navigateToCarDetail('${row.key}')" style="cursor:pointer;"><td data-label="${carTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td><td data-label="${carTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td><td data-label="${carTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td></tr>`).join('') + `<tr class="summary-row"><td data-label="${carTableHeaders[0]}"><span class="value-mobile"></span></td><td data-label="${carTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td><td data-label="${carTableHeaders[2]}"><span class="value-mobile"><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></span></td></tr>` : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
+        totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0 ? tvbhData.map((row, idx) => `<tr onclick="navigateToTvbhDetail('${row.key}')" style="cursor:pointer;"><td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td><td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td><td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td></tr>`).join('') + `<tr class="summary-row"><td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile"></span></td><td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td><td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile"><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></span></td></tr>` : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
         renderAllCharts(carData || [], monthlySalesData || [], trendChartData || {});
     }
-    
     function navigateToCarDetail(carModel) {
         if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
             const carSpecificData = allMonthlyDataForNavigation.filter(row => row && row[3] === carModel);
             if (carSpecificData.length > 0) {
                 sessionStorage.setItem('carSpecificSalesData', JSON.stringify(carSpecificData));
                 sessionStorage.setItem('carModelForDetail', carModel);
-                window.location.href = 'tongxe.html'; // Chuyển đến trang chi tiết dòng xe
-            } else {
-                showToast(`Không có dữ liệu chi tiết cho dòng xe: ${carModel}`, 'warning');
-            }
-        } else {
-            showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
-        }
+                window.location.href = 'tongxe.html';
+            } else showToast(`Không có dữ liệu chi tiết cho dòng xe: ${carModel}`, 'warning');
+        } else showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
     }
-
     function navigateToTvbhDetail(tvbhName) {
         if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
             const tvbhSpecificData = allMonthlyDataForNavigation.filter(row => row && row[7] === tvbhName);
             if (tvbhSpecificData.length > 0) {
                 sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(tvbhSpecificData));
                 sessionStorage.setItem('bestSalespersonName', tvbhName);
-                window.location.href = 'bestsale.html'; // Chuyển đến trang chi tiết TVBH
-            } else {
-                showToast(`Không có dữ liệu chi tiết cho TVBH: ${tvbhName}`, 'warning');
-            }
-        } else {
-            showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
-        }
+                window.location.href = 'bestsale.html';
+            } else showToast(`Không có dữ liệu chi tiết cho TVBH: ${tvbhName}`, 'warning');
+        } else showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
     }
-
-
     function updateDetailPanelWithMessage(message) {
         const detailBodyContent = document.getElementById("detail-body-content");
-        if (detailBodyContent) {
-            detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
-        }
+        if (detailBodyContent) detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
     }
-
     function showDetail(detailDataArray) {
-        if (currentSheet === "Total") return; 
-
+        if (currentSheet === "Total") return;
         const labels = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
         const detailBodyContent = document.getElementById("detail-body-content");
-
-        if (!detailDataArray || detailDataArray.length === 0) {
-            updateDetailPanelWithMessage("Không có dữ liệu chi tiết để hiển thị.");
-            return;
-        }
-
+        if (!detailDataArray || detailDataArray.length === 0) { updateDetailPanelWithMessage("Không có dữ liệu chi tiết để hiển thị."); return; }
         let tableHTML = '<table class="detail-table"><tbody>';
         labels.forEach((label, i) => {
             const value = (detailDataArray[i] !== undefined && detailDataArray[i] !== null) ? String(detailDataArray[i]) : 'N/A';
-            const isVin = label === "VIN";
-            tableHTML += `
-                <tr>
-                    <th>${label}</th>
-                    <td${isVin ? ' class="vin-highlight"' : ''}>${value}</td>
-                </tr>
-            `;
+            tableHTML += `<tr><th>${label}</th><td${label === "VIN" ? ' class="vin-highlight"' : ''}>${value}</td></tr>`;
         });
         tableHTML += '</tbody></table>';
         if (detailBodyContent) detailBodyContent.innerHTML = tableHTML;
-
         const tableRows = document.querySelectorAll("#data-table tbody tr");
-        tableRows.forEach(row => row.classList.remove("selected-row-highlight")); 
-        const sttToHighlight = detailDataArray[0]; 
+        tableRows.forEach(row => row.classList.remove("selected-row-highlight"));
+        const sttToHighlight = detailDataArray[0];
         if (sttToHighlight) {
             const targetRow = Array.from(tableRows).find(row => row.cells[0] && parseInt(row.cells[0].textContent) === sttToHighlight);
-            if (targetRow) {
-                targetRow.classList.add("selected-row-highlight");
-            }
+            if (targetRow) targetRow.classList.add("selected-row-highlight");
         }
     }
 
-    // --- Hàm xử lý biểu đồ ---
+    // --- Charting Functions ---
     function getChartColors() {
         const isDarkMode = document.body.classList.contains('dark-mode');
         const rootStyle = getComputedStyle(document.documentElement);
         return {
             textColor: isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim(),
             gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            primarySet: [ 
-                rootStyle.getPropertyValue('--primary-color').trim(),
-                rootStyle.getPropertyValue('--secondary-color').trim(),
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                '#E74C3C', '#2ECC71', '#F1C40F', '#8E44AD', '#3498DB', '#1ABC9C' // Thêm nhiều màu hơn
-            ],
+            primarySet: [rootStyle.getPropertyValue('--primary-color').trim(), rootStyle.getPropertyValue('--secondary-color').trim(), '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E74C3C', '#2ECC71', '#F1C40F', '#8E44AD', '#3498DB', '#1ABC9C'],
             monthlyBarColor: isDarkMode ? rootStyle.getPropertyValue('--secondary-color').trim() : rootStyle.getPropertyValue('--primary-color').trim(),
             chartBgColor: isDarkMode ? rootStyle.getPropertyValue('--card-bg-dark').trim() : rootStyle.getPropertyValue('--card-bg-light').trim(),
         };
     }
-
     function renderAllCharts(carData, monthlySalesData, trendChartData) {
         const colors = getChartColors();
-        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1; 
-
+        const totalCarsForPie = carData.reduce((sum, row) => sum + row.count, 0) || 1;
         if (monthlyChart && typeof monthlyChart.destroy === 'function') monthlyChart.destroy();
         if (carChart && typeof carChart.destroy === 'function') carChart.destroy();
         if (trendChart && typeof trendChart.destroy === 'function') trendChart.destroy();
-
         const monthlyCtx = document.getElementById('monthly-chart')?.getContext('2d');
-        if (monthlyCtx) {
-            monthlyChart = new Chart(monthlyCtx, {
-                type: 'bar',
-                data: {
-                    labels: MONTHS,
-                    datasets: [{
-                        label: 'Số lượng xe bán',
-                        data: monthlySalesData.map(m => m.count),
-                        backgroundColor: colors.monthlyBarColor,
-                        borderColor: colors.monthlyBarColor,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } },
-                        x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } }
-                    },
-                    plugins: { legend: { display: false, labels: { color: colors.textColor } }, tooltip: { callbacks: { label: context => `${context.raw} xe` } } }
-                }
-            });
-        }
-
+        if (monthlyCtx) monthlyChart = new Chart(monthlyCtx, { type: 'bar', data: { labels: MONTHS, datasets: [{ label: 'Số lượng xe bán', data: monthlySalesData.map(m => m.count), backgroundColor: colors.monthlyBarColor, borderColor: colors.monthlyBarColor, borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } }, x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } } }, plugins: { legend: { display: false, labels: { color: colors.textColor } }, tooltip: { callbacks: { label: context => `${context.raw} xe` } } } } });
         const carCtx = document.getElementById('car-chart')?.getContext('2d');
-        if (carCtx) {
-            carChart = new Chart(carCtx, {
-                type: 'pie',
-                data: {
-                    labels: carData.map(r => r.key),
-                    datasets: [{
-                        label: 'Số lượng xe',
-                        data: carData.map(r => r.count),
-                        backgroundColor: colors.primarySet,
-                        borderColor: colors.chartBgColor, 
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { color: colors.textColor, boxWidth: 12, padding: 15 } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const percentage = totalCarsForPie > 0 ? ((value / totalCarsForPie) * 100).toFixed(1) : 0;
-                                    return `${context.label}: ${value} xe (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
+        if (carCtx) carChart = new Chart(carCtx, { type: 'pie', data: { labels: carData.map(r => r.key), datasets: [{ label: 'Số lượng xe', data: carData.map(r => r.count), backgroundColor: colors.primarySet, borderColor: colors.chartBgColor, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: colors.textColor, boxWidth: 12, padding: 15 } }, tooltip: { callbacks: { label: function(context) { const value = context.raw; const percentage = totalCarsForPie > 0 ? ((value / totalCarsForPie) * 100).toFixed(1) : 0; return `${context.label}: ${value} xe (${percentage}%)`; } } } } } });
         const trendCtx = document.getElementById('trend-chart')?.getContext('2d');
-        if (trendCtx && trendChartData && Object.keys(trendChartData).length > 0) {
-            trendChart = new Chart(trendCtx, {
-                type: 'line',
-                data: {
-                    labels: MONTHS,
-                    datasets: Object.keys(trendChartData).map((car, idx) => ({
-                        label: car,
-                        data: trendChartData[car],
-                        borderColor: colors.primarySet[idx % colors.primarySet.length],
-                        backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', 
-                        fill: false, 
-                        tension: 0.1 
-                    }))
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } },
-                        x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } }
-                    },
-                    plugins: { legend: { position: 'top', labels: { color: colors.textColor, boxWidth: 12, padding: 10 } }, tooltip: { mode: 'index', intersect: false } }
-                }
-            });
-        } else if (trendCtx) { 
-             trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height);
-             trendCtx.textAlign = 'center';
-             trendCtx.fillStyle = colors.textColor;
-             trendCtx.fillText('Không đủ dữ liệu để vẽ biểu đồ xu hướng.', trendCtx.canvas.width / 2, trendCtx.canvas.height / 2);
-        }
+        if (trendCtx && trendChartData && Object.keys(trendChartData).length > 0) trendChart = new Chart(trendCtx, { type: 'line', data: { labels: MONTHS, datasets: Object.keys(trendChartData).map((car, idx) => ({ label: car, data: trendChartData[car], borderColor: colors.primarySet[idx % colors.primarySet.length], backgroundColor: colors.primarySet[idx % colors.primarySet.length] + '33', fill: false, tension: 0.1 })) }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Số lượng xe', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } }, x: { title: { display: true, text: 'Tháng', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor, borderColor: colors.gridColor } } }, plugins: { legend: { position: 'top', labels: { color: colors.textColor, boxWidth: 12, padding: 10 } }, tooltip: { mode: 'index', intersect: false } } } });
+        else if (trendCtx) { trendCtx.clearRect(0, 0, trendCtx.canvas.width, trendCtx.canvas.height); trendCtx.textAlign = 'center'; trendCtx.fillStyle = colors.textColor; trendCtx.fillText('Không đủ dữ liệu để vẽ biểu đồ xu hướng.', trendCtx.canvas.width / 2, trendCtx.canvas.height / 2); }
     }
-
     function updateAllChartColors() {
-        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) { 
-            const monthlySalesData = MONTHS.map(month => ({
-                month: month,
-                count: cachedData[month] ? cachedData[month].length : 0
-            }));
+        if (currentSheet === "Total" && (typeof filteredCarData !== 'undefined' && filteredCarData.length > 0)) {
+            const monthlySalesData = MONTHS.map(month => ({ month: month, count: cachedData[month] ? cachedData[month].length : 0 }));
             const allMonthlyRawData = MONTHS.map(month => cachedData[month] || []);
             const trendData = calculateTrendData(allMonthlyRawData, filteredCarData);
-
             renderAllCharts(filteredCarData, monthlySalesData, trendData);
         }
     }
-
-
     function downloadChart(chartId, fileName) {
         const chartCanvas = document.getElementById(chartId);
-        if (!chartCanvas || !chartCanvas.getContext) { 
-            showToast(`Không tìm thấy biểu đồ hoặc context của biểu đồ: ${chartId}`, 'error');
-            return;
-        }
+        if (!chartCanvas || !chartCanvas.getContext) { showToast(`Không tìm thấy biểu đồ: ${chartId}`, 'error'); return; }
         const chartContainer = chartCanvas.closest('.chart-container');
-        const originalBg = chartContainer.style.backgroundColor; 
+        const originalBg = chartContainer.style.backgroundColor;
         const colors = getChartColors();
-        chartContainer.style.backgroundColor = colors.chartBgColor; 
-
-        html2canvas(chartContainer, {
-            backgroundColor: colors.chartBgColor, 
-            scale: 2 
-         })
-            .then(canvas => {
-                const link = document.createElement('a');
-                link.download = `${fileName}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast("Đã tải biểu đồ!", 'success');
-            })
-            .catch(err => {
-                console.error("Lỗi khi tải biểu đồ:", err);
-                showToast("Lỗi khi tải biểu đồ: " + err.message, 'error');
-            })
-            .finally(() => {
-                chartContainer.style.backgroundColor = originalBg; 
-            });
+        chartContainer.style.backgroundColor = colors.chartBgColor;
+        html2canvas(chartContainer, { backgroundColor: colors.chartBgColor, scale: 2 })
+            .then(canvas => { const link = document.createElement('a'); link.download = `${fileName}.png`; link.href = canvas.toDataURL('image/png'); link.click(); showToast("Đã tải biểu đồ!", 'success'); })
+            .catch(err => { console.error("Lỗi khi tải biểu đồ:", err); showToast("Lỗi khi tải biểu đồ: " + err.message, 'error'); })
+            .finally(() => { chartContainer.style.backgroundColor = originalBg; });
     }
 
-
-    // --- Hàm xử lý sự kiện người dùng ---
+    // --- Event Handlers ---
     function applyFilters() {
-        if (currentSheet === "Total") return; 
-
+        if (currentSheet === "Total") return;
         const carFilterValue = document.getElementById("car-filter").value;
         const tvbhFilterValue = document.getElementById("tvbh-filter").value;
         const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
-
-        if (!Array.isArray(fullData)) { 
-            filteredMonthData = [];
-        } else {
-            filteredMonthData = fullData.filter(row => {
-                if (!row || typeof row !== 'object') return false; 
-                const tenKH = String(row[0] || '').toLowerCase();
-                const sdt = String(row[1] || '').toLowerCase(); 
-                const vin = String(row[8] || '').toLowerCase(); 
-                const dongXe = String(row[3] || '');
-                const tvbh = String(row[7] || '');
-
-                const matchesCar = !carFilterValue || dongXe === carFilterValue;
-                const matchesTvbh = !tvbhFilterValue || tvbh === tvbhFilterValue;
-                const matchesSearch = !searchInputValue ||
-                    tenKH.includes(searchInputValue) ||
-                    sdt.includes(searchInputValue) || 
-                    vin.includes(searchInputValue);  
-                return matchesCar && matchesTvbh && matchesSearch;
-            });
-        }
-
-        currentPage = 1; 
-        renderTable(filteredMonthData); 
+        if (!Array.isArray(fullData)) filteredMonthData = [];
+        else filteredMonthData = fullData.filter(row => {
+            if (!row || typeof row !== 'object') return false;
+            const tenKH = String(row[0] || '').toLowerCase(); const sdt = String(row[1] || '').toLowerCase(); const vin = String(row[8] || '').toLowerCase(); const dongXe = String(row[3] || ''); const tvbh = String(row[7] || '');
+            const matchesCar = !carFilterValue || dongXe === carFilterValue;
+            const matchesTvbh = !tvbhFilterValue || tvbh === tvbhFilterValue;
+            const matchesSearch = !searchInputValue || tenKH.includes(searchInputValue) || sdt.includes(searchInputValue) || vin.includes(searchInputValue);
+            return matchesCar && matchesTvbh && matchesSearch;
+        });
+        currentPage = 1; renderTable(filteredMonthData);
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
-        sessionStorage.setItem('appCurrentPage', currentPage.toString()); 
+        sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
-
     function changePage(delta) {
         const totalItems = filteredMonthData ? filteredMonthData.length : 0;
         const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE) || 1;
         currentPage = Math.min(Math.max(1, currentPage + delta), totalPages);
         renderTable(filteredMonthData);
-
-        const tableContainer = document.querySelector('#table-container');
-        if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
-
-        const detailPanel = document.querySelector('#detail-panel');
-        if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
-
+        const tableContainer = document.querySelector('#table-container'); if (tableContainer) tableContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        const detailPanel = document.querySelector('#detail-panel'); if (detailPanel) detailPanel.scrollTo({ top: 0, behavior: 'smooth' });
         sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
-
     function refreshData() {
-        const activeTabElement = document.querySelector('.tabs a.active');
-        if (!activeTabElement) {
-            showToast("Không tìm thấy tab đang hoạt động để làm mới.", 'error');
-            return;
-        }
-
-        if (currentSheet === "Total") {
-             activeTabElement.classList.add('refresh-triggered'); 
-             fetchTotalData(activeTabElement); 
-        } else {
-            activeTabElement.classList.add('refresh-triggered'); 
+        const activeTabElement = document.querySelector('.navbar .tabs a.active, .sidebar .menu a.active'); // Check both
+        if (!activeTabElement) { showToast("Không tìm thấy tab đang hoạt động.", 'error'); return; }
+        activeTabElement.classList.add('refresh-triggered'); 
+        if (currentSheet === "Total") fetchTotalData(activeTabElement);
+        else {
             delete cachedData[currentSheet]; 
             const tempCache = JSON.parse(sessionStorage.getItem('appCachedData') || '{}');
             delete tempCache[currentSheet];
             sessionStorage.setItem('appCachedData', JSON.stringify(tempCache));
-
             fetchSheetData(currentSheet, activeTabElement);
         }
     }
-
     function exportToExcel() {
-        if (currentSheet === "Total") {
-            showToast("Chức năng xuất Excel chưa hỗ trợ cho tab Tổng hợp.", 'info');
-            return;
-        }
-        if (!filteredMonthData || filteredMonthData.length === 0) {
-            showToast("Không có dữ liệu để xuất.", 'warning');
-            return;
-        }
+        if (currentSheet === "Total") { showToast("Xuất Excel chưa hỗ trợ cho tab Tổng hợp.", 'info'); return; }
+        if (!filteredMonthData || filteredMonthData.length === 0) { showToast("Không có dữ liệu để xuất.", 'warning'); return; }
         if (!confirm(`Bạn có muốn xuất ${filteredMonthData.length} dòng dữ liệu của tháng ${currentSheet} sang Excel không?`)) return;
-
         showLoading("Đang chuẩn bị file Excel...");
         try {
-            const ws_name = currentSheet.substring(0, 30); 
-            const wb = XLSX.utils.book_new();
-
+            const ws_name = currentSheet.substring(0, 30); const wb = XLSX.utils.book_new();
             const excelHeaders = ["STT", "Tên Khách Hàng", "SĐT", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách", "Ghi Chú TVBH", "Ghi Chú Admin"];
-            const dataToExport = [
-                excelHeaders,
-                ...filteredMonthData.map((row, index) => {
-                    if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); 
-                    return [
-                        index + 1,
-                        row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '',
-                        row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || '',
-                        row[10] || '', row[11] || ''
-                    ];
-                })
-            ];
-
+            const dataToExport = [excelHeaders, ...filteredMonthData.map((row, index) => { if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); return [index + 1, row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '', row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || '', row[10] || '', row[11] || '']; })];
             const ws = XLSX.utils.aoa_to_sheet(dataToExport);
-            const colWidths = excelHeaders.map((_, i) => ({
-                wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 
-            }));
-            ws['!cols'] = colWidths;
-
+            ws['!cols'] = excelHeaders.map((_, i) => ({ wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 }));
             XLSX.utils.book_append_sheet(wb, ws, ws_name);
-
             XLSX.writeFile(wb, `VinFast_Data_${currentSheet}_${new Date().toISOString().slice(0,10)}.xlsx`);
             showToast("Đã xuất file Excel!", 'success');
-        } catch (error) {
-            console.error("Lỗi xuất Excel:", error);
-            showToast("Lỗi khi xuất Excel: " + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
+        } catch (error) { console.error("Lỗi xuất Excel:", error); showToast("Lỗi khi xuất Excel: " + error.message, 'error'); }
+        finally { hideLoading(); }
     }
-
     async function printTable() {
-        if (currentSheet === "Total") {
-            showToast("Chức năng in chưa hỗ trợ cho tab Tổng hợp.", 'info');
-            return;
-        }
-
-        if (!confirm("Bạn có muốn in dữ liệu của TẤT CẢ các tháng không? Thao tác này có thể mất chút thời gian.")) {
-            return;
-        }
-
+        if (currentSheet === "Total") { showToast("In chưa hỗ trợ cho tab Tổng hợp.", 'info'); return; }
+        if (!confirm("Bạn có muốn in dữ liệu của TẤT CẢ các tháng không?")) return;
         showLoading("Đang chuẩn bị bản in cho tất cả các tháng...");
-        let allMonthsPrintContent = "";
-        const now = new Date().toLocaleString('vi-VN');
-        let totalRecordsPrinted = 0;
-
+        let allMonthsPrintContent = ""; const now = new Date().toLocaleString('vi-VN'); let totalRecordsPrinted = 0;
         const printHeaders = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
-
         try {
-            allMonthsPrintContent += `
-                <h2 style="color: #2c3e50; font-family: 'Montserrat', sans-serif; text-align:center;">BÁO CÁO DOANH SỐ VINFAST THUẬN AN - TỔNG HỢP THEO THÁNG</h2>
-                <p style="text-align:center; font-family: 'Montserrat', sans-serif;">Hotline: 1900 232389 | In lúc: ${now}</p>
-                <style>
-                    @media print {
-                        body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; }
-                        tr { page-break-inside: avoid; page-break-after: auto; }
-                        thead { display: table-header-group; } 
-                        th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; }
-                        th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
-                        .month-header {
-                            font-size: 1.2em;
-                            margin-top: 20px;
-                            margin-bottom: 8px;
-                            font-weight: bold;
-                            text-align: left;
-                            color: #003087;
-                            page-break-after: avoid; 
-                            page-break-before: auto; 
-                        }
-                        .no-print { display: none !important; }
-                        @page {
-                            margin: 0.5in; 
-                        }
-                    }
-                </style>`;
-
+            allMonthsPrintContent += `<h2 style="color: #2c3e50; font-family: 'Montserrat', sans-serif; text-align:center;">BÁO CÁO DOANH SỐ VINFAST THUẬN AN - TỔNG HỢP THEO THÁNG</h2><p style="text-align:center; font-family: 'Montserrat', sans-serif;">Hotline: 1900 232389 | In lúc: ${now}</p><style>@media print { body { font-family: 'Roboto', sans-serif; margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } table { border-collapse: collapse; width: 100%; font-size: 9pt; margin-bottom: 20px; page-break-inside: auto; } tr { page-break-inside: avoid; page-break-after: auto; } thead { display: table-header-group; } th, td { border: 1px solid #ccc !important; padding: 5px 7px; text-align: left; word-wrap: break-word; } th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; } .month-header { font-size: 1.2em; margin-top: 20px; margin-bottom: 8px; font-weight: bold; text-align: left; color: #003087; page-break-after: avoid; page-break-before: auto; } .no-print { display: none !important; } @page { margin: 0.5in; } }</style>`;
             for (const month of MONTHS) {
                 let monthData = cachedData[month];
-                if (!monthData) { 
-                    try {
-                        showLoading(`Đang tải dữ liệu tháng ${month} để in...`);
-                        monthData = await fetchDataFromAPI(month); 
-                        cachedData[month] = monthData; 
-                        sessionStorage.setItem('appCachedData', JSON.stringify(cachedData));
-                    } catch (fetchError) {
-                        console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`);
-                        allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`;
-                        continue; 
-                    }
+                if (!monthData) {
+                    try { showLoading(`Đang tải dữ liệu tháng ${month} để in...`); monthData = await fetchDataFromAPI(month); cachedData[month] = monthData; sessionStorage.setItem('appCachedData', JSON.stringify(cachedData)); }
+                    catch (fetchError) { console.warn(`Không thể tải dữ liệu cho tháng ${month} để in: ${fetchError.message}`); allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không thể tải dữ liệu cho tháng này.</p>`; continue; }
                 }
-
-                if (!monthData || monthData.length === 0) {
-                    allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không có dữ liệu cho tháng này.</p>`;
-                    continue;
-                }
-
+                if (!monthData || monthData.length === 0) { allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không có dữ liệu cho tháng này.</p>`; continue; }
                 totalRecordsPrinted += monthData.length;
-
                 const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
-
-                let tbodyToPrintHTML = "";
-                monthData.forEach((row, idx) => {
-                    if (!row || typeof row !== 'object') return;
-                    tbodyToPrintHTML += `
-                        <tr>
-                            <td>${idx + 1}</td>
-                            <td>${row[0] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td>${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> <td>${row[7] || ''}</td> <td>${row[8] || ''}</td> <td>${row[9] || ''}</td> </tr>
-                    `;
-                });
-
-                allMonthsPrintContent += `
-                    <h3 class="month-header">Tháng ${month.toUpperCase()} (${monthData.length} đơn hàng)</h3>
-                    <table>
-                        <thead>${theadToPrintHTML}</thead>
-                        <tbody>${tbodyToPrintHTML}</tbody>
-                    </table>
-                `;
+                let tbodyToPrintHTML = ""; monthData.forEach((row, idx) => { if (!row || typeof row !== 'object') return; tbodyToPrintHTML += `<tr><td>${idx + 1}</td><td>${row[0] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td>${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> <td>${row[7] || ''}</td> <td>${row[8] || ''}</td> <td>${row[9] || ''}</td> </tr>`; });
+                allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()} (${monthData.length} đơn hàng)</h3><table><thead>${theadToPrintHTML}</thead><tbody>${tbodyToPrintHTML}</tbody></table>`;
             }
-            showLoading("Đang hoàn tất bản in..."); 
-
-            if (totalRecordsPrinted === 0 && !allMonthsPrintContent.includes("Không thể tải dữ liệu")) {
-                 allMonthsPrintContent += "<p style='text-align:center; margin-top:20px;'>Không có dữ liệu nào để in từ tất cả các tháng.</p>";
-            }
-
+            showLoading("Đang hoàn tất bản in...");
+            if (totalRecordsPrinted === 0 && !allMonthsPrintContent.includes("Không thể tải dữ liệu")) allMonthsPrintContent += "<p style='text-align:center; margin-top:20px;'>Không có dữ liệu nào để in từ tất cả các tháng.</p>";
             const win = window.open('', '_blank');
-            if (win) {
-                win.document.write(`<html><head><title>In Báo Cáo Doanh Số Tổng Hợp - VinFast Thuận An</title></head><body>${allMonthsPrintContent}</body></html>`);
-                win.document.close();
-                setTimeout(() => { 
-                    win.print();
-                }, 500);
-                showToast("Đang mở cửa sổ in cho tất cả các tháng...", 'info');
-            } else {
-                showToast("Không thể mở cửa sổ in. Vui lòng kiểm tra cài đặt trình duyệt.", 'warning');
-            }
-
-        } catch (error) {
-            console.error("Lỗi khi chuẩn bị bản in tổng hợp:", error);
-            showToast("Lỗi khi chuẩn bị bản in tổng hợp: " + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
+            if (win) { win.document.write(`<html><head><title>In Báo Cáo Doanh Số Tổng Hợp - VinFast Thuận An</title></head><body>${allMonthsPrintContent}</body></html>`); win.document.close(); setTimeout(() => win.print(), 500); showToast("Đang mở cửa sổ in...", 'info'); }
+            else showToast("Không thể mở cửa sổ in.", 'warning');
+        } catch (error) { console.error("Lỗi khi chuẩn bị bản in tổng hợp:", error); showToast("Lỗi khi chuẩn bị bản in: " + error.message, 'error'); }
+        finally { hideLoading(); }
     }
-
     function updatePagination(totalItems) {
         const paginationElement = document.getElementById("pagination");
-        if (currentSheet === "Total" || !paginationElement) {
-            if (paginationElement) paginationElement.style.display = "none";
-            return;
-        }
+        if (currentSheet === "Total" || !paginationElement) { if (paginationElement) paginationElement.style.display = "none"; return; }
         paginationElement.style.display = "flex";
         const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE) || 1;
         document.getElementById("page-info").textContent = `Trang ${currentPage} / ${totalPages}`;
         document.getElementById("prev-btn").disabled = currentPage === 1;
         document.getElementById("next-btn").disabled = currentPage === totalPages || totalItems === 0;
     }
+    function debounce(func, delay) { let timeoutId; return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); }; }
 
-    document.addEventListener('click', function(event) {
-        const slidebar = document.getElementById('slidebar');
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        // Check if slidebar and mobileMenuBtn exist before accessing contains
-        const isClickInsideSidebar = slidebar && slidebar.contains(event.target);
-        const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
-
-        if (window.innerWidth <= 900 && slidebar && slidebar.classList.contains('open') && !isClickInsideSidebar && !isClickOnMenuBtn) {
-            slidebar.classList.remove('open');
-            updateSidebarToggleIcon(); // Update icon when sidebar closes
-        }
-    });
-    
+    // Resize listener to handle navbar/sidebar adjustments
     window.addEventListener('resize', debounce(() => {
         updateSidebarToggleIcon(); 
-        if (window.innerWidth <= 900) {
-            const sidebar = document.getElementById("slidebar");
+        const sidebar = document.getElementById("sidebar");
+        const mainContainer = document.getElementById("main-container");
+        const pageNavbar = document.getElementById("page-navbar");
+        const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
+        const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
+
+
+        if (window.innerWidth <= 900) { 
             if (sidebar && sidebar.classList.contains("collapsed") && !sidebar.classList.contains("open")) {
                  sidebar.classList.remove("collapsed"); 
             }
-        } else { 
-            const sidebar = document.getElementById("slidebar");
+            if(pageNavbar) { 
+                pageNavbar.style.left = '0px';
+                pageNavbar.style.width = '100%';
+            }
+            if(mainContainer) mainContainer.classList.remove('collapsed'); 
+        } else { // Desktop
             if(sidebar) sidebar.classList.remove("open"); 
             const storedState = localStorage.getItem('sidebarState');
+
             if (sidebar && storedState === 'collapsed') {
                 sidebar.classList.add('collapsed');
-               if(document.getElementById('main-content')) document.getElementById('main-content').classList.add('collapsed');
+                if(mainContainer) mainContainer.classList.add('collapsed');
+                if(pageNavbar) {
+                    pageNavbar.style.left = '60px';
+                    pageNavbar.style.width = 'calc(100% - 60px)';
+                }
             } else if (sidebar) {
                 sidebar.classList.remove('collapsed');
-                if(document.getElementById('main-content')) document.getElementById('main-content').classList.remove('collapsed');
+                if(mainContainer) mainContainer.classList.remove('collapsed');
+                if(pageNavbar) {
+                    pageNavbar.style.left = '200px';
+                    pageNavbar.style.width = 'calc(100% - 200px)';
+                }
+            }
+            // Ensure navbar tabs are not in mobile dropdown state on desktop
+            if (window.innerWidth > 1024) {
+                if (navbarTabsMenu) navbarTabsMenu.classList.remove('active');
+                if (navbarTabsBtn) navbarTabsBtn.classList.remove('active');
+                if (navbarTabsMenu) navbarTabsMenu.style.display = ''; // Reset display for flex
+            }
+
+
+            if (window.Chart && (monthlyChart || carChart || trendChart)) {
+                setTimeout(() => {
+                    if (monthlyChart?.ctx) monthlyChart.resize();
+                    if (carChart?.ctx) carChart.resize();
+                    if (trendChart?.ctx) trendChart.resize();
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','')) * 1000 + 50);
             }
         }
     }, 200));
-    document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon); 
+    
+    document.addEventListener('DOMContentLoaded', updateSidebarToggleIcon);
 
     </script>
 </body>
 </html>
-
