@@ -2,13 +2,14 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tổng Hợp Đơn Hàng 12 Tháng - VinFast Thuận An</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
+            /* Variables from yeucaughepxe.html */
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
@@ -23,14 +24,34 @@
             --border-color-dark: #30363d;
             --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
             --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
             --transition-speed: 0.3s;
-            --color-danger: #dc3545;
-            --color-success: #28a745;
-            --color-info: #17a2b8;
-            --font-primary: 'Roboto', sans-serif;
-            --font-secondary: 'Montserrat', sans-serif;
-            --header-height: 55px; /* Giảm chiều cao header */
-            --footer-height: 35px; /* Giảm chiều cao footer */
+            --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s;
+            --transition-easing: ease-in-out;
+            
+            --footer-bg: var(--primary-color);
+            --footer-text: #ffffff;
+            --success-bg-light: #d4edda;
+            --success-text-light: #155724;
+            --success-icon-light: #155724;
+            --success-bg-dark: #1e4620;
+            --success-text-dark: #d4edda;
+            --success-icon-dark: #a3d9a5;
+            --scroll-to-top-bg: var(--primary-color);
+            --scroll-to-top-hover-bg: var(--primary-color-lighter);
+            --warning-bg-light: #fff3cd;
+            --warning-text-light: #856404;
+            --warning-icon-light: #ffc107;
+            --warning-bg-dark: #533f03;
+            --warning-text-dark: #ffeeba;
+            --warning-icon-dark: #ffca2c;
+            --color-danger: #dc3545; 
+            --color-info: #17a2b8; 
+            
+            --header-height: 50px; /* Harmonized with yeucaughepxe */
+            --footer-height: 40px; /* Harmonized with yeucaughepxe */
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
@@ -38,7 +59,7 @@
             overflow: hidden; 
         }
         body {
-            font-family: var(--font-primary);
+            font-family: Roboto;
             background: var(--background-light);
             color: var(--text-light);
             height: 100%;
@@ -50,101 +71,220 @@
         body.dark-mode {
             background: var(--background-dark);
             color: var(--text-dark);
+            --footer-bg: var(--primary-color-darker);
+            --scroll-to-top-bg: var(--primary-color-lighter);
+            --scroll-to-top-hover-bg: var(--secondary-color);
+            --warning-bg-light: var(--warning-bg-dark);
+            --warning-text-light: var(--warning-text-dark);
+            --warning-icon-light: var(--warning-icon-dark);
         }
         
-        /* Custom scrollbar for #table-wrapper */
-        #table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
-        #table-wrapper::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
-        body.dark-mode #table-wrapper::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-        #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
-        #table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
-        body.dark-mode #table-wrapper::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+        /* Custom scrollbar */
+        #table-wrapper::-webkit-scrollbar, .sidebar .menu::-webkit-scrollbar { width: 8px; height: 8px; }
+        #table-wrapper::-webkit-scrollbar-track, .sidebar .menu::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-track, body.dark-mode .sidebar .menu::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        #table-wrapper::-webkit-scrollbar-thumb, .sidebar .menu::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+        #table-wrapper::-webkit-scrollbar-thumb:hover, .sidebar .menu::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
+        body.dark-mode #table-wrapper::-webkit-scrollbar-thumb, body.dark-mode .sidebar .menu::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        header {
+        /* Navbar (Adapted from yeucaughepxe.html) */
+        .navbar { 
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            padding: 0 15px; 
-            height: var(--header-height);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-light-outer);
-            flex-shrink: 0;
-            position: sticky; 
-            top: 0;
-            z-index: 1000;
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 999;
+            transition: background var(--transition-speed) var(--transition-easing);
         }
-        body.dark-mode header {
+        body.dark-mode .navbar {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
             box-shadow: var(--shadow-dark-outer);
         }
-        header .header-title {
-            flex-grow: 1;
-            text-align: center;
-            font-size: 1.05em; 
-            font-weight: 500;
+        .navbar .logo { 
+            animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; 
+            margin-right: auto; 
         }
-        .header-controls {
-            display: flex;
-            gap: 8px;
+        .navbar .logo h1 {
+            font-size: 18px; 
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            animation: bounceGlow 2s infinite alternate;
         }
-        .control-btn, .theme-toggle-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: #fff;
-            padding: 6px 10px; 
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background var(--transition-speed) ease;
-            font-size: 12.5px; 
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        @keyframes bounceGlow { 
+            0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
+            50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
         }
-        .control-btn:hover, .theme-toggle-btn:hover {
-            background: rgba(255,255,255,0.25);
+        .navbar-controls { display: flex; align-items: center; gap: 8px; } 
+        .nav-btn, .theme-toggle-btn { 
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) var(--transition-easing);
         }
-        body.dark-mode .control-btn, body.dark-mode .theme-toggle-btn {
-            background: rgba(0,0,0,0.15);
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
         }
-        body.dark-mode .control-btn:hover, body.dark-mode .theme-toggle-btn:hover {
-            background: rgba(0,0,0,0.25);
+        .nav-btn:hover, .theme-toggle-btn:hover {
+            background: #e9ecef; transform: translateY(-2px) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+            background: var(--primary-color-darker); color: #fff;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
 
+        /* Sidebar (Adapted from yeucaughepxe.html) */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
+            background: var(--primary-color-darker); padding: 15px; padding-top: calc(var(--header-height) + 10px); /* Adjust for navbar */
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+            z-index: 999; 
+            box-shadow: 3px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 60px; }
+        .sidebar.open { transform: translateX(0); }
+        body.dark-mode .sidebar {
+            background: var(--background-dark); border-right: 1px solid var(--border-color-dark);
+            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+        }
+        .sidebar .logo { text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .sidebar .logo h1 {
+            font-size: 25px; color: #fff; font-weight: 600;
+            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); display: inline-block;
+        }
+        .sidebar:not(.collapsed) .logo h1::after { 
+            content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg); animation: shimmer 3s infinite linear; animation-delay: 1s;
+        }
+        @keyframes shimmer { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
+        .sidebar.collapsed .logo h1::after { display: none; }
+
+        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
+        .sidebar .menu a {
+            padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8);
+            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
+            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+            display: flex; align-items: center; gap: 10px; position: relative; overflow: hidden;
+        }
+        .sidebar .menu a::before { 
+            content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
+            background-color: var(--secondary-color); transition: left var(--transition-speed) ease-out;
+        }
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
+        .sidebar .menu a span {
+            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
+            white-space: nowrap; overflow: hidden; max-width: 100px;
+        }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover {
+            background: rgba(255, 255, 255, 0.1); color: #fff;
+            padding-left: 15px; transform: translateX(3px);
+        }
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active {
+            background: var(--secondary-color); color: #fff; font-weight: 600;
+            animation: activeLinkPulse 1.5s infinite ease-in-out;
+        }
+        @keyframes activeLinkPulse { 0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); } 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
+        body.dark-mode .sidebar .menu a.active {
+            background: var(--primary-color); animation-name: activeLinkPulseDark;
+        }
+        @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+        
+        .toggle-btn-sidebar { 
+            position: absolute; top: calc(var(--header-height) / 2 - 15px); /* Vertically center with navbar */ right: -15px; width: 30px; height: 30px;
+            background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
+            font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+        .toggle-btn-sidebar:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
+        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
+
+        .mobile-menu-btn { 
+            background: var(--card-bg-light); color: var(--text-light);
+            border: 1px solid var(--border-color-light); border-radius: 50%;
+            width: 32px; height: 32px; font-size: 16px; cursor: pointer;
+            box-shadow: var(--shadow-light-outer); display: flex; align-items: center; justify-content: center;
+            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-right: 10px; display: none; 
+        }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        .mobile-menu-btn:active { transform: scale(0.95); }
+        body.dark-mode .mobile-menu-btn {
+            background: var(--card-bg-dark); color: var(--text-dark);
+            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+
+        /* Tooltip (from yeucaughepxe.html) */
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after {
+            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background-color: #333; color: #fff;
+            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; 
+            transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); 
+        }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+
         .main-content-wrapper { 
+            margin-left: 200px; 
+            padding-top: var(--header-height); 
             flex-grow: 1;
-            /* overflow-y: auto; Không cần cuộn ở đây nữa, body đã fixed */
             display: flex; 
-            flex-direction: column; /* Để main-content có thể co giãn */
-            min-height: 0; /* Cần thiết cho flex item */
+            flex-direction: column;
+            transition: margin-left var(--transition-speed) ease;
+            min-height: 0; 
+        }
+        .main-content-wrapper.collapsed {
+            margin-left: 60px; 
         }
         .main-content {
             padding: 15px; 
             margin: 0 auto;
             width: 100%;
-            max-width: 1500px; /* Tăng nhẹ max-width */
+            max-width: 1500px; 
             display: flex;
             flex-direction: column;
             flex-grow: 1; 
-            min-height: 0; /* Cần thiết cho flex item */
+            min-height: 0; 
         }
         .table-card {
             background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 25px;
+            border-radius: 10px; /* Harmonized */
+            padding: 20px; /* Harmonized */
             box-shadow: var(--shadow-light-outer);
             border: 1px solid var(--border-color-light);
             display: flex;
             flex-direction: column;
             flex-grow: 1;
-            min-height: 0; /* Cần thiết cho flex item */
+            min-height: 0; 
             overflow: hidden; 
+            animation: fadeInUp 0.5s var(--transition-easing) backwards;
         }
         body.dark-mode .table-card {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-outer);
             border: 1px solid var(--border-color-dark);
         }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         .table-actions {
             display: flex;
             justify-content: flex-end;
@@ -152,44 +292,46 @@
             margin-bottom: 10px;
             flex-shrink: 0;
         }
-        .action-btn {
-            padding: 7px 12px;
+        .action-btn { /* Styled like yeucaughepxe's form buttons */
+            padding: 8px 15px;
+            border: none;
             border-radius: 6px;
-            font-size: 12px;
-            /* Các thuộc tính khác của action-btn giữ nguyên từ file gốc */
             background: var(--primary-color);
             color: #fff;
+            font-size: 13px;
+            font-weight: 600; 
             cursor: pointer;
-            transition: background var(--transition-speed) ease, transform 0.2s ease;
-            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
             display: flex;
             align-items: center;
             gap: 5px;
-            border: none;
         }
         .action-btn:hover {
             background: var(--primary-color-lighter);
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
+             box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+        }
+        .action-btn:active {
+            transform: translateY(0px) scale(0.98);
+            background: var(--primary-color-darker);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         body.dark-mode .action-btn {
             background: var(--primary-color-lighter);
+            box-shadow: 0 2px 5px rgba(0,0,0, 0.3);
         }
         body.dark-mode .action-btn:hover {
             background: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0, 0.4);
         }
          .action-btn i { margin-right: 5px; }
         
         #table-wrapper { 
             overflow: auto; 
             flex-grow: 1; 
-            min-height: 0; /* Cần thiết cho flex item */
-            /* max-height được tính toán dựa trên các thành phần khác */
-            /* Ví dụ: calc(100vh - header - footer - main_padding - card_padding - actions_height - pagination_height) */
-            max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 30px - 45px - 50px); 
-            /* 30px = main-content padding (15*2) */
-            /* 30px = table-card padding (15*2) */
-            /* 45px = table-actions height + margin (ước lượng 35px + 10px) */
-            /* 50px = pagination height + margin (ước lượng 35px + 15px) */
+            min-height: 0; 
+            max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 40px - 45px - 50px); 
             border-radius: 6px; 
             border: 1px solid var(--border-color-light); 
         }
@@ -200,141 +342,124 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px; /* Giảm nhẹ font size bảng */
+            font-size: 12px; 
         }
         th, td {
             padding: 8px 10px; 
             text-align: left;
             border-bottom: 1px solid var(--border-color-light);
         }
-        /* Text wrapping rules from original file - kept */
-        th:nth-child(1), td:nth-child(1) { white-space: nowrap; } /* STT */
-        th:nth-child(2), td:nth-child(2), /* Tên KH */
-        th:nth-child(3), td:nth-child(3), /* Số ĐH */
-        th:nth-child(9), td:nth-child(9), /* Chính Sách */
-        th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
-        th:nth-child(11), td:nth-child(11) { /* Ghi Chú Admin */
-             white-space: normal;
-             word-break: break-word; 
-             min-width: 120px; 
+        th:nth-child(1), td:nth-child(1) { white-space: nowrap; } 
+        th:nth-child(2), td:nth-child(2), 
+        th:nth-child(3), td:nth-child(3), 
+        th:nth-child(9), td:nth-child(9), 
+        th:nth-child(10), td:nth-child(10), 
+        th:nth-child(11), td:nth-child(11) { 
+             white-space: normal; word-break: break-word; min-width: 120px; 
         }
-        /* Các cột khác có thể để nowrap mặc định hoặc thêm nowrap nếu cần */
-        th:nth-child(4), td:nth-child(4), /* Dòng Xe */
-        th:nth-child(5), td:nth-child(5), /* Phiên Bản */
-        th:nth-child(6), td:nth-child(6), /* Ngoại Thất */
-        th:nth-child(7), td:nth-child(7), /* Nội Thất */
-        th:nth-child(8), td:nth-child(8)  /* TVBH, VIN */
-        {
-            white-space: nowrap;
-        }
-
+        th:nth-child(4), td:nth-child(4), 
+        th:nth-child(5), td:nth-child(5), 
+        th:nth-child(6), td:nth-child(6), 
+        th:nth-child(7), td:nth-child(7), 
+        th:nth-child(8), td:nth-child(8)  
+        { white-space: nowrap; }
 
         body.dark-mode th, body.dark-mode td {
             border-bottom: 1px solid var(--border-color-dark);
         }
-        th {
+        th { /* From yeucaughepxe */
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff;
-            font-weight: 500; 
-            position: sticky;
-            top: 0; 
-            z-index: 1; 
+            color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 1; 
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
+        th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode th {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
         }
-        tbody tr:hover {
-            background: rgba(0, 48, 135, 0.04); 
+        body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+        
+        tbody tr:hover { /* From yeucaughepxe */
+            background: rgba(0, 48, 135, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
         }
         body.dark-mode tbody tr:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
         }
-        .empty-state, .loading-state {
-            text-align: center;
-            padding: 25px; 
-            font-size: 1em; 
+        .empty-state, .loading-state { /* From yeucaughepxe */
+            text-align: center; padding: 25px; font-size: 1em; 
+            color: var(--no-data-text-color-light);
         }
+        body.dark-mode .empty-state, body.dark-mode .loading-state {
+             color: var(--no-data-text-color-dark);
+        }
+        .loading-state .fas { animation: spin 1.5s linear infinite; margin-right: 8px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-top: 15px; 
-            flex-shrink: 0; 
+            display: flex; justify-content: center; align-items: center;
+            gap: 8px; margin-top: 15px; flex-shrink: 0; 
         }
-        .pagination button {
-            padding: 6px 10px; /* Giảm padding nút pagination */
-            font-size: 11.5px; /* Giảm font nút pagination */
-            /* Các thuộc tính khác của pagination button giữ nguyên từ file gốc */
-            border: none;
-            border-radius: 6px;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            cursor: pointer;
-            transition: all var(--transition-speed) ease;
-            box-shadow: var(--shadow-light-outer);
+        .pagination button { /* Styled like yeucaughepxe */
+            padding: 8px 15px; border: none; border-radius: 6px;
+            background: var(--primary-color); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out;
+            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.2);
         }
-         .pagination button:hover {
-            background: #e9ecef;
-            transform: translateY(-1px); /* Giảm hiệu ứng hover */
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary-color-lighter);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
         }
-        body.dark-mode .pagination button {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .pagination button:hover {
+        .pagination button:active:not(:disabled) {
+            transform: translateY(0px) scale(0.98);
             background: var(--primary-color-darker);
-            color: #fff;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
         .pagination button:disabled {
-            background: var(--border-color-light);
-            color: #999;
-            cursor: not-allowed;
-            opacity: 0.7;
-            box-shadow: none;
-            transform: none;
+            background: var(--border-color-light); color: #aaa;
+            cursor: not-allowed; opacity: 0.7; box-shadow: none; transform: none;
+        }
+        body.dark-mode .pagination button {
+            background: var(--primary-color-lighter);
+            box-shadow: 0 2px 5px rgba(0,0,0, 0.3);
+        }
+        body.dark-mode .pagination button:hover:not(:disabled) {
+            background: var(--secondary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0, 0.4);
         }
         body.dark-mode .pagination button:disabled {
-             background: var(--border-color-dark);
-             color: #666;
+             background: var(--border-color-dark); color: #777;
         }
-        .pagination span { font-size: 11.5px; }
+        .pagination span { font-size: 11.5px; color: var(--text-light); }
+        body.dark-mode .pagination span { color: var(--text-dark); }
 
-        footer {
+        footer { /* From yeucaughepxe */
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            text-align: center;
-            padding: 0;
-            height: var(--footer-height);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px; 
-            flex-shrink: 0; 
-            position: sticky; 
-            bottom: 0;
-            z-index: 1000;
-            width: 100%;
+            color: #fff; text-align: center; padding: 0;
+            height: var(--footer-height); display: flex; align-items: center; justify-content: center;
+            font-size: 11px; flex-shrink: 0; 
+            position: sticky; bottom: 0; z-index: 999; width: 100%;
+            transition: background var(--transition-speed) ease;
         }
         body.dark-mode footer {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
-        .toast-container {
+        .toast-container { /* From yeucaughepxe's .notification */
             position: fixed;
-            bottom: calc(var(--footer-height) + 10px); /* Điều chỉnh vị trí toast */
+            bottom: calc(var(--footer-height) + 10px); 
             right: 10px;
-            z-index: 1005;
+            z-index: 2000;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        .toast {
+        .toast { /* From yeucaughepxe's .notification */
             padding: 10px 15px; 
             font-size: 13px; 
             border-radius: 6px;
-            /* Các thuộc tính khác của toast giữ nguyên */
             background-color: var(--card-bg-dark);
             color: var(--text-dark);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -343,7 +468,7 @@
             gap: 10px;
             opacity: 0;
             transform: translateX(100%);
-            transition: opacity 0.4s ease, transform 0.4s ease;
+            transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         body:not(.dark-mode) .toast {
              background-color: var(--card-bg-light);
@@ -351,85 +476,135 @@
              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .toast.show { opacity: 1; transform: translateX(0); }
-        .toast i { font-size: 16px; } /* Giảm icon toast */
-        .toast.success i { color: var(--color-success); }
-        .toast.error i { color: var(--color-danger); }
-        .toast.info i { color: var(--color-info); }
+        .toast i { font-size: 16px; } 
+        .toast.success { background-color: var(--success-bg-light); color: var(--success-text-light); }
+        body.dark-mode .toast.success { background-color: var(--success-bg-dark); color: var(--success-text-dark); }
+        .toast.error { background-color: #dc3545; color: white; } 
+        body.dark-mode .toast.error { background-color: #f8d7da; color: #721c24;} 
+        .toast.info { background-color: #17a2b8; color: white; } 
+        body.dark-mode .toast.info { background-color: var(--secondary-color); color: var(--background-dark); }
+        .toast.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
+        body.dark-mode .toast.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
         .toast-message { font-size: 13px; }
 
+        /* Scroll to Top Button (from yeucaughepxe.html) */
+        #scrollToTopBtn {
+            display: none; position: fixed; bottom: calc(var(--footer-height) + 15px); /* Adjusted for footer */ right: 15px; z-index: 999;
+            border: none; outline: none; background-color: var(--scroll-to-top-bg);
+            color: white; cursor: pointer; padding: 8px; border-radius: 50%; font-size: 16px;
+            box-shadow: var(--shadow-light-outer);
+            transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+            width: 36px; height: 36px; align-items: center; justify-content: center;
+            opacity: 0; transform: translateY(20px);
+        }
+        #scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
+        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
+        .hidden { display: none !important; }
+
+
+        @media (max-width: 900px) { /* Responsive for sidebar */
+            .sidebar { transform: translateX(-100%); width: 220px; z-index: 1005; }
+            .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+            .sidebar.collapsed { transform: translateX(-100%); } 
+            .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
+            .sidebar.open .logo h1 { font-size: 20px; }
+            .main-content-wrapper { margin-left: 0; } 
+            .main-content-wrapper.collapsed { margin-left: 0; } 
+            .toggle-btn-sidebar { display: none; } 
+            .mobile-menu-btn { display: flex !important; } 
+            .navbar { padding-left: 50px; }
+            .navbar .logo { margin-left: 0; }
+        }
 
         @media (max-width: 768px) {
-            :root {
-                --header-height: 50px;
-                --footer-height: 30px;
-            }
-            header .header-title { font-size: 0.95em; }
+            :root { --header-height: 50px; --footer-height: 30px; }
+            .navbar { height: var(--header-height); padding-left: 45px; }
+            .navbar .logo h1 { font-size: 16px; }
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; top: 8px; left: 8px; }
+
+            .main-content-wrapper { padding-top: var(--header-height); }
             .main-content { padding: 10px; }
             .table-card { padding: 10px; }
             th, td { font-size: 11px; padding: 6px 8px; }
-            th:nth-child(2), td:nth-child(2), /* Tên KH */
-            th:nth-child(3), td:nth-child(3), /* Số ĐH */
-            th:nth-child(9), td:nth-child(9), /* Chính Sách */
-            th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
+            th:nth-child(2), td:nth-child(2), 
+            th:nth-child(3), td:nth-child(3), 
+            th:nth-child(9), td:nth-child(9), 
+            th:nth-child(10), td:nth-child(10), 
             th:nth-child(11), td:nth-child(11) {min-width: 100px;}
 
             .action-btn { font-size: 11px; padding: 6px 10px; }
             .pagination button, .pagination span { font-size: 11px; padding: 6px 10px; }
-            .control-btn, .theme-toggle-btn { padding: 5px 8px; font-size: 11.5px; }
-            footer { font-size: 10px; }
+            footer { height: var(--footer-height); font-size: 10px; padding:0; display:flex; align-items:center; justify-content:center;}
             .toast-container { bottom: calc(var(--footer-height) + 8px); right: 8px; }
             #table-wrapper {
-                /* Recalculate max-height for tablet */
-                /* header:50, footer:30, main_pad:20, card_pad:20, actions:40, pagination:45 = 205 */
-                max-height: calc(100vh - 205px); 
+                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px - 20px - 40px - 45px); 
             }
+            #scrollToTopBtn { bottom: calc(var(--footer-height) + 10px); }
         }
          @media (max-width: 480px) {
-            :root {
-                --header-height: 45px;
-                --footer-height: 28px;
-            }
-            header { padding: 0 10px;}
-            .header-controls { gap: 5px;}
-            .control-btn, .theme-toggle-btn { padding: 4px 6px; font-size: 11px; }
+            :root { --header-height: 45px; --footer-height: 28px; }
+            .navbar { height: var(--header-height); }
+            .navbar-controls { gap: 5px;}
+            .nav-btn, .theme-toggle-btn, .mobile-menu-btn { width: 28px; height: 28px; font-size: 12px; }
+            .mobile-menu-btn { top: 9px; left: 8px; }
+            .main-content-wrapper { padding-top: var(--header-height); }
+            .main-content { padding: 5px; } /* Reduced padding */
+            .table-card { padding: 5px; }
             .table-actions { flex-direction: column; align-items: stretch; }
             .action-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
             .action-btn:last-child { margin-bottom: 0; }
-            th, td { font-size: 10px; padding: 5px; }
-             th:nth-child(2), td:nth-child(2), /* Tên KH */
-            th:nth-child(3), td:nth-child(3), /* Số ĐH */
-            th:nth-child(9), td:nth-child(9), /* Chính Sách */
-            th:nth-child(10), td:nth-child(10), /* Ghi Chú TVBH */
+            th, td { font-size: 9.5px; padding: 4px 5px; } /* Further reduced */
+             th:nth-child(2), td:nth-child(2), 
+            th:nth-child(3), td:nth-child(3), 
+            th:nth-child(9), td:nth-child(9), 
+            th:nth-child(10), td:nth-child(10), 
             th:nth-child(11), td:nth-child(11) {min-width: 80px;}
             .toast-container {
                 bottom: calc(var(--footer-height) + 5px);
-                left: 5px;
-                right: 5px;
-                align-items: center;
+                left: 5px; right: 5px; align-items: center;
             }
             .toast { width: auto; max-width: calc(100% - 10px); }
              #table-wrapper {
-                /* Recalculate max-height for mobile */
-                /* header:45, footer:28, main_pad:20, card_pad:20, actions: (2*30+5)=65, pagination:45 = 223 */
-                max-height: calc(100vh - 223px); 
+                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 10px - 10px - 65px - 45px); 
             }
+            #scrollToTopBtn { bottom: calc(var(--footer-height) + 5px); }
          }
     </style>
 </head>
 <body>
-    <header>
-        <span class="header-title">Tổng Hợp Đơn Hàng 12 Tháng</span>
-        <div class="header-controls">
-            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện">
-                <i class="fas fa-moon"></i> <span class="theme-text">Tối</span>
+    <nav class="navbar">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo">
+            <h1></h1>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện" data-tooltip="Sáng/Tối">
+                <i class="fas fa-moon"></i> <span class="theme-text" style="display:none;">Tối</span>
             </button>
-            <button class="control-btn" onclick="goBack()" aria-label="Quay lại">
-                <i class="fas fa-arrow-left"></i> Quay Lại
+            <button class="nav-btn" onclick="goBack()" aria-label="Quay lại" data-tooltip="Quay lại trang Xe Đã Bán">
+                <i class="fas fa-arrow-left"></i>
             </button>
         </div>
-    </header>
+    </nav>
 
-    <div class="main-content-wrapper">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
+        <nav class="menu" id="navMenu">
+            <a href="Index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-tooltip="Xem Chính Sách và Tài Liệu"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
+        </nav>
+        <button class="toggle-btn-sidebar" onclick="toggleDesktopSidebar()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </aside>
+
+    <div class="main-content-wrapper" id="main-content-wrapper">
         <div class="main-content">
             <div class="table-card">
                 <div class="table-actions">
@@ -437,7 +612,7 @@
                     <button class="action-btn" onclick="printPage()" aria-label="In Bảng"><i class="fas fa-print"></i> In Bảng</button>
                 </div>
                 <div id="table-wrapper">
-                    <p class="loading-state" id="loading-message">Đang tải dữ liệu...</p>
+                    <p class="loading-state" id="loading-message"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
                     <table id="sales-table" style="display:none;">
                         <thead>
                             <tr id="table-header-row">
@@ -458,6 +633,9 @@
 
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
     <div class="toast-container" id="toast-container"></div>
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <script>
         let allSalesData = [];
@@ -474,16 +652,138 @@
             { key: 7, header: "TVBH" },
             { key: 8, header: "VIN" },
             { key: 9, header: "Chính Sách" },
-
         ];
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                updateThemeButton(true);
+        // --- Theme Management (from yeucaughepxe.html) ---
+        function applyInitialTheme() {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.body.classList.toggle("dark-mode", savedTheme === "dark");
+            updateThemeButton(savedTheme === "dark");
+        }
+
+        function toggleTheme() {
+            const isDarkMode = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateThemeButton(isDarkMode);
+            adjustToastPositionForStickyFooter(); 
+        }
+
+        function updateThemeButton(isDarkMode) { 
+            const themeToggleBtn = document.querySelector('.theme-toggle-btn'); 
+            if (!themeToggleBtn) return;
+            const themeIcon = themeToggleBtn.querySelector('i');
+            const themeText = themeToggleBtn.querySelector('span.theme-text'); 
+            if (isDarkMode) {
+                themeIcon.className = 'fas fa-sun';
+                if(themeText) themeText.textContent = " Sáng";
             } else {
-                updateThemeButton(false);
+                themeIcon.className = 'fas fa-moon';
+                if(themeText) themeText.textContent = " Tối";
             }
+        }
+        
+        // --- Sidebar Management (from yeucaughepxe.html) ---
+        function toggleDesktopSidebar() { 
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById("sidebar");
+                const mainWrapper = document.getElementById("main-content-wrapper");
+                if (sidebar && mainWrapper) {
+                    sidebar.classList.toggle("collapsed");
+                    mainWrapper.classList.toggle("collapsed");
+                    localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
+                }
+                updateSidebarToggleIcon(); 
+            }
+        }
+
+        function toggleMobileSidebar() { 
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+                if (sidebar.classList.contains("open")) {
+                    sidebar.classList.remove("collapsed");
+                }
+            }
+            updateSidebarToggleIcon(); 
+        }
+        
+        function applyInitialSidebarState() { 
+            const mainWrapper = document.getElementById("main-content-wrapper");
+            if (!mainWrapper) return; 
+
+            if (window.innerWidth > 900) { 
+                const sidebar = document.getElementById("sidebar");
+                if (localStorage.getItem('sidebarState') === 'collapsed') {
+                    sidebar?.classList.add("collapsed");
+                    mainWrapper.classList.add("collapsed"); 
+                } else {
+                    sidebar?.classList.remove("collapsed");
+                    mainWrapper.classList.remove("collapsed"); 
+                }
+            } else { 
+                const sidebar = document.getElementById("sidebar");
+                sidebar?.classList.remove("collapsed"); 
+                mainWrapper.classList.remove("collapsed");
+                sidebar?.classList.remove("open"); 
+            }
+            updateSidebarToggleIcon();
+        }
+        
+        function updateSidebarToggleIcon() { 
+            const sidebar = document.getElementById("sidebar");
+            const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i"); 
+            const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); 
+            const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
+
+            if (!sidebar) return;
+
+            if (window.innerWidth <= 900) { 
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
+                if (mobileMenuIcon) {
+                    mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+                }
+            } else { 
+                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
+                if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+                if (toggleIconDesktop) {
+                    toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times"; 
+                }
+            }
+        }
+
+        function setActiveSidebarLink() { 
+            const navLinks = document.querySelectorAll("#navMenu a");
+            const targetPage = "xedaban.html"; // This page is related to "Xe Đã Bán"
+
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute('href') === targetPage) {
+                    link.classList.add("active");
+                }
+            });
+        }
+        
+        // --- Scroll to Top (from yeucaughepxe.html) ---
+        function initScrollToTopButton() {
+            const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
+            window.onscroll = () => { 
+                const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; 
+                if (show) {
+                    btn.classList.add('visible');
+                    btn.classList.remove('hidden'); 
+                } else {
+                    btn.classList.remove('visible');
+                }
+            };
+        }
+        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            applyInitialTheme();
+            applyInitialSidebarState();
+            setActiveSidebarLink();
+            initScrollToTopButton();
 
             const rawData = sessionStorage.getItem('allSalesDataForTongXe');
             if (rawData) {
@@ -505,8 +805,22 @@
             } else {
                 showEmptyState("Không tìm thấy dữ liệu tổng hợp. Vui lòng quay lại trang trước và thử lại.");
             }
+            
             adjustToastPositionForStickyFooter();
-            window.addEventListener('resize', adjustToastPositionForStickyFooter);
+            window.addEventListener('resize', () => {
+                applyInitialSidebarState();
+                adjustToastPositionForStickyFooter();
+            });
+             // Click outside to close mobile sidebar
+            document.addEventListener('click', function(event) {
+                const sidebar = document.getElementById('sidebar');
+                const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); 
+                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+                    if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                        toggleMobileSidebar();
+                    }
+                }
+            });
         });
 
         function renderTableHeader() {
@@ -527,7 +841,7 @@
                 return;
             }
             
-            salesTable.style.display = "";
+            salesTable.style.display = ""; 
             loadingMessage.style.display = "none";
             paginationControls.style.display = "flex";
 
@@ -553,7 +867,7 @@
 
         function showEmptyState(message) {
             const loadingMessage = document.getElementById("loading-message");
-            loadingMessage.textContent = message;
+            loadingMessage.innerHTML = `<i class="fas fa-folder-open"></i> ${message}`;
             loadingMessage.style.display = "block";
             document.getElementById("sales-table").style.display = "none";
             document.getElementById("pagination-controls").style.display = "none";
@@ -578,31 +892,9 @@
             renderTable();
             document.getElementById('table-wrapper').scrollTop = 0;
         }
-
-        function toggleTheme() {
-            const isDarkMode = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            updateThemeButton(isDarkMode);
-            adjustToastPositionForStickyFooter();
-        }
-
-        function updateThemeButton(isDarkMode) {
-            const themeToggleBtn = document.querySelector('.theme-toggle-btn');
-            const themeIcon = themeToggleBtn.querySelector('i');
-            const themeText = themeToggleBtn.querySelector('span.theme-text');
-            if (isDarkMode) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-                if(themeText) themeText.textContent = " Sáng";
-            } else {
-                themeIcon.classList.remove('fa-sun');
-                themeIcon.classList.add('fa-moon');
-                 if(themeText) themeText.textContent = " Tối";
-            }
-        }
-
+        
         function goBack() {
-            window.location.href = "xedaban.html"; // Hoặc trang chính của bạn
+            window.location.href = "xedaban.html"; 
         }
 
         function exportToExcel() {
@@ -610,33 +902,26 @@
                 showToast("Không có dữ liệu để xuất.", 'warning');
                 return;
             }
-            // Lấy toàn bộ dữ liệu để xuất, không chỉ trang hiện tại
             const dataToExport = allSalesData.map((row, index) => {
                 return columnConfig.map(col => {
-                    if (col.isIndex) return index + 1; // STT cho toàn bộ dữ liệu
+                    if (col.isIndex) return index + 1; 
                     return (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
                 });
             });
-
-            const excelData = [
-                columnConfig.map(col => col.header),
-                ...dataToExport 
-            ];
-
+            const excelData = [ columnConfig.map(col => col.header), ...dataToExport ];
             const ws = XLSX.utils.aoa_to_sheet(excelData);
             const colWidths = columnConfig.map((colConf) => ({
                 wch: Math.max(
                     colConf.header.length, 
-                    ...allSalesData.map(row => { // Tính toán độ rộng cột dựa trên toàn bộ dữ liệu
+                    ...allSalesData.map(row => { 
                         let val = '';
                         if (colConf.isIndex) val = String(allSalesData.indexOf(row) + 1);
                         else val = (row && row[colConf.key] !== undefined && row[colConf.key] !== null) ? String(row[colConf.key]) : '';
                         return val.length;
                     })
-                ) + 3 // Thêm chút padding cho cột
+                ) + 3 
             }));
             ws['!cols'] = colWidths;
-
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "TongHopDonHang");
             XLSX.writeFile(wb, `TongHopDonHang_12Thang_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -649,65 +934,47 @@
                 return;
             }
             let fullTableHtml = '<table><thead><tr>';
-            columnConfig.forEach(col => {
-                fullTableHtml += `<th>${col.header}</th>`;
-            });
+            columnConfig.forEach(col => { fullTableHtml += `<th>${col.header}</th>`; });
             fullTableHtml += '</tr></thead><tbody>';
             allSalesData.forEach((row, index) => {
                 fullTableHtml += '<tr>';
                 columnConfig.forEach(col => {
                     let cellData = '';
-                    if (col.isIndex) {
-                        cellData = index + 1;
-                    } else {
-                        cellData = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
-                    }
+                    if (col.isIndex) cellData = index + 1;
+                    else cellData = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
                     fullTableHtml += `<td>${cellData}</td>`;
                 });
                 fullTableHtml += '</tr>';
             });
             fullTableHtml += '</tbody></table>';
-
-
             const printWindow = window.open('', '_blank');
             const now = new Date().toLocaleString('vi-VN');
-
             printWindow.document.write(`
-                <html>
-                <head>
-                    <title>In Tổng Hợp Đơn Hàng - VinFast Thuận An</title>
-                    <style>
-                        body { font-family: 'Roboto', sans-serif; margin: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        h1 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.5em; margin-bottom: 10px;}
-                        p { text-align: center; font-size: 0.85em; margin-bottom: 10px;}
-                        table { border-collapse: collapse; width: 100%; font-size: 8.5pt; } 
-                        th, td { border: 1px solid #ccc !important; padding: 4px 6px; text-align: left; word-wrap: break-word; } 
-                        th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index: 1;}
-                        @page { margin: 0.5in; size: a4 landscape; } 
-                        @media print {
-                            html, body { width: 100%; height: auto; overflow: visible !important; }
-                            header, footer, .header-controls, .table-actions, .pagination, .toast-container { display: none !important; }
-                            .main-content-wrapper, .main-content, .table-card { 
-                                margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; overflow: visible !important;
-                            }
-                            #table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
-                        }
-                    </style>
-                </head>
-                <body>
+                <html><head><title>In Tổng Hợp Đơn Hàng - VinFast Thuận An</title>
+                <style>
+                    body { font-family: 'Roboto', sans-serif; margin: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    h1 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.5em; margin-bottom: 10px;}
+                    p { text-align: center; font-size: 0.85em; margin-bottom: 10px;}
+                    table { border-collapse: collapse; width: 100%; font-size: 8.5pt; } 
+                    th, td { border: 1px solid #ccc !important; padding: 4px 6px; text-align: left; word-wrap: break-word; } 
+                    th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index: 1;}
+                    @page { margin: 0.5in; size: a4 landscape; } 
+                    @media print {
+                        html, body { width: 100%; height: auto; overflow: visible !important; }
+                        header, footer, .header-controls, .table-actions, .pagination, .toast-container, .sidebar, #scrollToTopBtn, .mobile-menu-btn, .toggle-btn-sidebar { display: none !important; }
+                        .main-content-wrapper, .main-content, .table-card { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; overflow: visible !important;}
+                        #table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
+                    }
+                </style></head><body>
                     <h1>BÁO CÁO TỔNG HỢP ĐƠN HÀNG 12 THÁNG</h1>
                     <p>VinFast Thuận An | In lúc: ${now}</p>
                     ${fullTableHtml} 
-                    <script>
-                        setTimeout(() => { window.print(); window.close(); }, 300); // Tăng nhẹ timeout
-                    <\/script>
-                </body>
-                </html>
-            `);
+                    <script> setTimeout(() => { window.print(); window.close(); }, 300); <\/script>
+                </body></html>`);
             printWindow.document.close();
         }
 
-        function showToast(message, type = 'info', duration = 3000) {
+        function showToast(message, type = 'info', duration = 3000) { // Adapted from yeucaughepxe
             const toastContainer = document.getElementById("toast-container");
             if (!toastContainer) return;
             const toast = document.createElement('div');
@@ -730,11 +997,8 @@
             const toastContainer = document.getElementById('toast-container');
             if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
                 const footerHeight = footer.offsetHeight;
-                let bottomOffset = footerHeight + 10; // 10px là khoảng cách từ footer
-                
-                if (window.innerWidth <= 480) { // Cho màn hình mobile
-                     bottomOffset = footerHeight + 5; 
-                }
+                let bottomOffset = footerHeight + 10; 
+                if (window.innerWidth <= 480) bottomOffset = footerHeight + 5; 
                 toastContainer.style.bottom = `${bottomOffset}px`;
             } else if (toastContainer) { 
                 toastContainer.style.bottom = (window.innerWidth <= 480) ? '5px' : '10px';
