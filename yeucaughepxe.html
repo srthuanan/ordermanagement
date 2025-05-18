@@ -1435,27 +1435,29 @@ document.addEventListener("DOMContentLoaded", function () {
         if (chicRemoveBtn) { chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); }); }
         // === END CHIC FILE UPLOAD UI INITIALIZATION ===
 
-        // --- Bổ sung: Đoạn mã xử lý sự kiện cho trường Ngày cọc ---
-        // Đoạn mã này được thêm vào để giải quyết vấn đề nhập thủ công trên di động
+        // =======================================================================
+        // ===== BẮT ĐẦU ĐOẠN MÃ BỔ SUNG ĐỂ KHÓA TRƯỜNG "NGÀY CỌC" ============
+        // =======================================================================
         const ngayCocInput = document.getElementById('ngay_coc');
         if (ngayCocInput) {
             ngayCocInput.addEventListener('focus', function(event) {
-                // Ngăn hành động mặc định (có thể không cần thiết trên mọi trình duyệt)
-                event.preventDefault(); 
-                // Ngay lập tức làm mất focus khỏi trường
-                this.blur(); 
+                // Ngăn hành động mặc định của trình duyệt (ví dụ: mở trình chọn ngày)
+                event.preventDefault();
+                // Ngay lập tức làm mất focus (tiêu điểm) khỏi trường input
+                this.blur();
             });
 
-            // Có thể thêm cả sự kiện click nếu cần, để tăng cường việc ngăn chặn
+            // Thêm sự kiện 'click' để tăng cường việc ngăn chặn trên một số trình duyệt/thiết bị
             ngayCocInput.addEventListener('click', function(event) {
                 event.preventDefault();
                 this.blur();
             });
         }
-        // --- Kết thúc đoạn mã bổ sung ---
+        // =======================================================================
+        // ===== KẾT THÚC ĐOẠN MÃ BỔ SUNG ĐỂ KHÓA TRƯỜNG "NGÀY CỌC" ===========
+        // =======================================================================
     }
 });
-
 // --- Quản lý Giao diện (Theme toggle from a.html) ---
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
