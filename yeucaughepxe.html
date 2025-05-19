@@ -2365,26 +2365,34 @@ function exportToPDF() {
         exteriorCells.forEach((cell, index) => { cell.style.cssText = originalExteriorStyles[index]; });
     });
 }
+// Cập nhật hàm previewForm(event)
 function previewForm(e) {
     e.preventDefault();
 
     const chicFileInput = document.getElementById('chic_file_input');
-    const isMobile = window.innerWidth <= 768;
+    const ngayCocInput = document.getElementById('ngay_coc'); // Di chuyển lên để dùng chung
 
-    if (isMobile && (!chicFileInput || chicFileInput.files.length === 0)) {
-        showNotification("Vui lòng tải lên ảnh Ủy nhiệm chi để gửi yêu cầu trên điện thoại.", "warning", 4000);
+    // --- BẮT ĐẦU THAY ĐỔI ---
+    // Bỏ điều kiện isMobile, áp dụng cho tất cả thiết bị
+    if (!chicFileInput || chicFileInput.files.length === 0) {
+        showNotification("Vui lòng tải lên ảnh Ủy nhiệm chi để gửi yêu cầu.", "warning", 4000);
         const chicWrapper = document.getElementById('chic-upload-wrapper');
         if (chicWrapper) {
-            chicWrapper.style.transition = 'border-color 0.3s ease';
-            chicWrapper.style.borderColor = 'red';
-            setTimeout(() => { chicWrapper.style.borderColor = ''; }, 3000);
+            chicWrapper.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+            chicWrapper.style.borderColor = 'red'; // Hoặc màu cảnh báo bạn muốn
+            chicWrapper.style.boxShadow = '0 0 5px red';
+            setTimeout(() => {
+                chicWrapper.style.borderColor = '';
+                chicWrapper.style.boxShadow = '';
+            }, 3000);
         }
-        return;
+        return; // Ngăn chặn việc tiếp tục nếu không có UNC
     }
+    // --- KẾT THÚC THAY ĐỔI ---
 
-    const ngayCocInput = document.getElementById('ngay_coc');
+    // Kiểm tra xem trường ngày cọc có giá trị không (sau khi UNC được xử lý)
     if (!ngayCocInput || !ngayCocInput.value) {
-        showNotification("Vui lòng quét ảnh Ủy nhiệm chi để có thông tin Ngày cọc.", "warning", 4000);
+        showNotification("Vui lòng quét ảnh Ủy nhiệm chi để có thông tin Ngày cọc, hoặc chờ quá trình xử lý hoàn tất.", "warning", 4500);
         if (ngayCocInput) {
              ngayCocInput.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
              ngayCocInput.style.borderColor = 'orange';
@@ -2394,26 +2402,31 @@ function previewForm(e) {
                 ngayCocInput.style.boxShadow = '';
              }, 3000);
         }
+        // Cũng có thể làm nổi bật lại phần tải UNC nếu ngày cọc trống
         const chicWrapperHighlight = document.getElementById('chic-upload-wrapper');
-        if (chicWrapperHighlight && (!chicFileInput || chicFileInput.files.length === 0)) {
-            chicWrapperHighlight.style.transition = 'border-color 0.3s ease';
+        if (chicWrapperHighlight) {
+            chicWrapperHighlight.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
             chicWrapperHighlight.style.borderColor = 'orange';
-            setTimeout(() => { chicWrapperHighlight.style.borderColor = ''; }, 3000);
+            chicWrapperHighlight.style.boxShadow = '0 0 5px orange';
+            setTimeout(() => {
+                chicWrapperHighlight.style.borderColor = '';
+                chicWrapperHighlight.style.boxShadow = '';
+             }, 3000);
         }
         return;
     }
 
     const form = document.getElementById("vinfast-form");
     if (!form || !form.checkValidity()) {
-        showNotification("Vui lòng điền đầy đủ các trường bắt buộc!", "error", 3000);
-        form.reportValidity();
+        showNotification("Vui lòng điền đầy đủ các trường bắt buộc khác!", "error", 3000);
+        form.reportValidity(); // Hiển thị thông báo lỗi chuẩn của trình duyệt cho các trường required
         return;
     }
 
     formData = {};
     let html = "";
     form.querySelectorAll("input:not([type='file']), select").forEach(input => {
-        if (input.name && input.name !== 'chic_file_input') {
+        if (input.name && input.name !== 'chic_file_input') { // Bỏ qua input file trong preview
             formData[input.name] = input.value;
             const displayName = labelMap[input.name] || input.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             const value = input.type === "datetime-local" ? formatDateTime(input.value) : (input.value || "Chưa nhập");
@@ -2426,19 +2439,18 @@ function previewForm(e) {
         html += `<div class="detail-item"><strong>Ảnh Ủy Nhiệm Chi:</strong> <span>${chicFilenameDisplay.textContent || chicFileInput.files[0].name}</span></div>`;
     }
 
+
     document.getElementById("preview-content").innerHTML = html;
     const previewModal = document.getElementById("preview-modal");
-    previewModal.style.position = 'fixed';
+    previewModal.style.position = 'fixed'; // Đảm bảo modal hiển thị đúng
     previewModal.style.top = '0';
     previewModal.style.left = '0';
     previewModal.style.width = '100%';
     previewModal.style.height = '100%';
     previewModal.style.borderRadius = '';
     previewModal.classList.add("active");
-    adjustModalScroll(previewModal);
+    adjustModalScroll(previewModal); // Gọi hàm điều chỉnh scroll nếu có
 }
-let redirectTimeout;
-
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
@@ -3677,6 +3689,7 @@ function updateBulkTableSummary() {
 
 // --- Hàm Kiểm Tra Dữ Liệu Bảng ---
 // --- Hàm Kiểm Tra Dữ Liệu Bảng ---
+// Cập nhật hàm processAndValidateBulkTable()
 function processAndValidateBulkTable() {
     if (!bulkTableBody) {
         console.error("processAndValidateBulkTable: bulkTableBody is not initialized.");
@@ -3690,30 +3703,21 @@ function processAndValidateBulkTable() {
     }
 
     let overallValid = true;
-    const currentOrderNumbersInTable = new Set(); // Để kiểm tra số đơn hàng trùng trong bảng
-    let firstErrorRow = null; // Để focus vào dòng lỗi đầu tiên (nếu có)
+    const currentOrderNumbersInTable = new Set();
+    let firstErrorRow = null;
 
-    // Bước 1: Thu thập tất cả số đơn hàng trong bảng hiện tại để kiểm tra trùng lặp nội bộ
-    rows.forEach(row => {
-        const soDonHangInput = row.querySelector('input[name="so_don_hang"]');
-        if (soDonHangInput) {
-            const soDonHangValue = soDonHangInput.value.trim();
-            if (soDonHangValue) {
-                // Kiểm tra trùng lặp sẽ được thực hiện trong vòng lặp chính bên dưới
-            }
-        }
-    });
-
+    // Bước 1: Thu thập số đơn hàng trong bảng hiện tại (đã có)
+    // (Không cần thay đổi bước này)
 
     rows.forEach((row, rowIndex) => {
         row.classList.remove('valid-row', 'invalid-row');
         const statusCell = row.querySelector('.row-status');
         if (!statusCell) {
             console.warn("Không tìm thấy ô trạng thái cho dòng:", row);
-            return; // Bỏ qua dòng này nếu không có ô trạng thái
+            return;
         }
         statusCell.classList.remove('error', 'success');
-        statusCell.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...'; // Sử dụng innerHTML để cho phép icon
+        statusCell.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...';
 
         const inputs = {
             ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
@@ -3722,18 +3726,23 @@ function processAndValidateBulkTable() {
             ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
             noi_that: row.querySelector('select[name="noi_that"]').value,
             so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
-            ngay_coc: row.querySelector('input[name="ngay_coc"]').value // Lấy giá trị từ trường datetime-local (readonly)
+            ngay_coc: row.querySelector('input[name="ngay_coc"]').value
         };
+
+        // --- BẮT ĐẦU THAY ĐỔI ---
+        const rowIdNum = row.getAttribute('data-row-id');
+        const uniqueRowIdSuffix = `_row_${rowIdNum}`;
+        const fileInputBulk = row.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
+        // --- KẾT THÚC THAY ĐỔI ---
 
         let errors = [];
 
-        // 1. Kiểm tra các trường bắt buộc
+        // 1. Kiểm tra các trường bắt buộc (ngoại trừ ngày cọc sẽ kiểm tra riêng)
         if (!inputs.ten_khach_hang) errors.push("Tên KH trống");
         if (!inputs.dong_xe) errors.push("Chưa chọn Dòng xe");
         if (!inputs.phien_ban) {
             errors.push("Chưa chọn Phiên bản");
         } else {
-            // Kiểm tra phiên bản có hợp lệ với dòng xe không (dùng versionsMap đã định nghĩa toàn cục)
             if (versionsMap[inputs.dong_xe] && !versionsMap[inputs.dong_xe].includes(inputs.phien_ban)) {
                 errors.push(`Phiên bản '${inputs.phien_ban}' không phù hợp với dòng xe '${inputs.dong_xe}'`);
             }
@@ -3747,11 +3756,9 @@ function processAndValidateBulkTable() {
         } else if (!/^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(inputs.so_don_hang)) {
             errors.push("Số ĐH sai định dạng (VD: N12345-VSO-25-04-0001)");
         } else {
-            // Kiểm tra trùng với lịch sử (globalHistoryData đã được fetch)
             if (globalHistoryData && globalHistoryData.some(histRow => histRow["Số đơn hàng"] === inputs.so_don_hang)) {
                 errors.push("Số ĐH đã tồn tại trong lịch sử");
             }
-            // Kiểm tra trùng trong bảng hiện tại
             if (currentOrderNumbersInTable.has(inputs.so_don_hang)) {
                 errors.push("Số ĐH trùng lặp trong bảng này");
             } else {
@@ -3759,48 +3766,68 @@ function processAndValidateBulkTable() {
             }
         }
 
-        // 3. Kiểm tra Ngày Cọc (đã được điền từ OCR hoặc dán vào)
-        if (!inputs.ngay_coc) {
-            errors.push("Ngày cọc trống (UNC chưa được quét/xử lý hoặc lỗi)");
+        // --- BẮT ĐẦU THAY ĐỔI: Kiểm tra Ủy Nhiệm Chi và Ngày Cọc ---
+        if (!fileInputBulk || !fileInputBulk.files || fileInputBulk.files.length === 0) {
+            errors.push("Chưa tải ảnh Ủy nhiệm chi");
+            // Nếu không có file, rất có thể inputs.ngay_coc cũng sẽ trống,
+            // nên không cần thêm lỗi cho ngay_coc trống ở đây nữa.
+        } else if (!inputs.ngay_coc) {
+            // File đã được chọn, nhưng trường ngày cọc vẫn trống
+            // => có thể do OCR chưa chạy, đang chạy, hoặc lỗi OCR.
+            const ocrStatusElement = row.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`);
+            let ocrError = "Ngày cọc trống (lỗi xử lý UNC";
+            if (ocrStatusElement && ocrStatusElement.textContent.includes("Đang nhận dạng")) {
+                ocrError += " hoặc đang xử lý";
+            }
+            ocrError += ")";
+            errors.push(ocrError);
         } else {
+            // File đã chọn và ngày cọc có giá trị, giờ kiểm tra tính hợp lệ của ngày cọc
             const dateValue = new Date(inputs.ngay_coc);
             if (isNaN(dateValue.getTime())) {
                 errors.push("Ngày cọc có định dạng không hợp lệ");
             } else {
                 const today = new Date();
-                today.setHours(0,0,0,0); // So sánh với đầu ngày hôm nay
-                const tenYearsAgo = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
-                const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+                today.setHours(0, 0, 0, 0);
+                const tenYearsAgo = new Date(new Date().setFullYear(today.getFullYear() - 10));
+                const oneYearFromNow = new Date(new Date().setFullYear(today.getFullYear() + 1));
 
                 if (dateValue < tenYearsAgo) {
-                    errors.push("Ngày cọc quá xa trong quá khứ (hơn 10 năm)");
+                    errors.push("Ngày cọc quá xa trong quá khứ (>10 năm)");
                 }
-                // Cho phép ngày cọc trong tương lai gần (ví dụ: 1 năm tới), nhưng không quá xa.
                 if (dateValue > oneYearFromNow) {
-                     errors.push("Ngày cọc quá xa trong tương lai (hơn 1 năm)");
+                    errors.push("Ngày cọc quá xa trong tương lai (>1 năm)");
                 }
             }
         }
+        // --- KẾT THÚC THAY ĐỔI ---
+
 
         // Cập nhật trạng thái dòng
         if (errors.length > 0) {
             row.classList.add('invalid-row');
-            statusCell.innerHTML = errors.map(err => `<span class="block">- ${err}</span>`).join('');
+            // Hiển thị tối đa 2-3 lỗi đầu tiên để không làm vỡ UI
+            const maxErrorsToShow = 2;
+            let errorHtml = errors.slice(0, maxErrorsToShow).map(err => `<span class="block">- ${err}</span>`).join('');
+            if (errors.length > maxErrorsToShow) {
+                errorHtml += `<span class="block">- Và ${errors.length - maxErrorsToShow} lỗi khác...</span>`;
+            }
+            statusCell.innerHTML = errorHtml;
             statusCell.classList.add('error');
             statusCell.title = errors.join('; '); // Tooltip cho tất cả lỗi
             overallValid = false;
             if (!firstErrorRow) {
-                firstErrorRow = row.querySelector('input, select'); // Lấy phần tử input/select đầu tiên của dòng lỗi
+                firstErrorRow = row.querySelector('input:not([type="file"]), select');
             }
         } else {
             row.classList.add('valid-row');
-            statusCell.textContent = 'Hợp lệ';
+            statusCell.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Hợp lệ';
             statusCell.classList.add('success');
             statusCell.title = 'Dữ liệu dòng này hợp lệ';
         }
-    }); // Kết thúc vòng lặp qua các dòng
+    });
 
-    updateBulkTableSummary(); // Cập nhật số lượng dòng hợp lệ/lỗi
+    updateBulkTableSummary();
 
     const validRowCount = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row').length;
     const errorRowCount = bulkTableBody.querySelectorAll('.bulk-order-row.invalid-row').length;
@@ -3811,33 +3838,22 @@ function processAndValidateBulkTable() {
     } else if (rows.length > 0) {
         if (validRowCount > 0) {
             showNotification(`Có ${validRowCount} dòng hợp lệ. Các dòng khác có lỗi. Vui lòng kiểm tra lại.`, "warning", 4000);
-            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'inline-block'; // Vẫn cho phép gửi các dòng hợp lệ
+            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'inline-block';
         } else {
-            showNotification("Tất cả các dòng đều có lỗi hoặc chưa được kiểm tra. Vui lòng kiểm tra lại.", "error", 4000);
+            showNotification("Tất cả các dòng đều có lỗi hoặc chưa được kiểm tra đầy đủ. Vui lòng kiểm tra lại.", "error", 4000);
             if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
         }
-        if (firstErrorRow) {
-            // firstErrorRow.focus(); // Tự động focus vào dòng lỗi đầu tiên
-            // Cuộn đến dòng lỗi đầu tiên một cách mượt mà
+        if (firstErrorRow && firstErrorRow.closest('tr')) {
             firstErrorRow.closest('tr').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Có thể thêm hiệu ứng nhấp nháy nhẹ cho dòng lỗi đầu tiên
-            firstErrorRow.closest('tr').style.transition = 'background-color 0.3s ease-out';
             setTimeout(() => {
-                firstErrorRow.closest('tr').classList.add('flash-error'); // Cần định nghĩa class 'flash-error'
+                if (firstErrorRow.closest('tr')) firstErrorRow.closest('tr').classList.add('flash-error');
             }, 100);
             setTimeout(() => {
-                firstErrorRow.closest('tr').classList.remove('flash-error');
+                if (firstErrorRow.closest('tr')) firstErrorRow.closest('tr').classList.remove('flash-error');
             }, 1500);
-
         }
     }
-    // Cần đảm bảo `versionsMap` và `globalHistoryData` đã được khởi tạo và có dữ liệu.
-    // `versionsMap` nên được định nghĩa ở phạm vi toàn cục.
-    // `globalHistoryData` nên được fetch khi tải trang hoặc khi chuyển tab.
 }
-// --- Hàm Gửi Các Đơn Hàng Hợp Lệ Từ Bảng ---
-// Trong yeucaughepxe.html
-
 async function submitValidBulkTableOrders() {
     if (!bulkTableBody || !document.getElementById('submit-valid-bulk-table-orders-btn')) {
         console.error("submitValidBulkTableOrders: bulkTableBody hoặc nút submit chưa được khởi tạo.");
