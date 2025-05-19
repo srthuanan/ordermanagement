@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Chi Tiết Đơn Hàng Yêu Cầu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            /* Copied CSS Variables from yeucaughepxe.html/order-details.html */
+            --primary-color: #003087;
+            --primary-color-darker: #00205b;
+            --primary-color-lighter: #0040c1;
+            --secondary-color: #00aeff;
+            --background-light: #f4f7fc;
+            --text-light: #2c3e50;
+            --background-dark: #161b22;
+            --text-dark: #c9d1d9;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e242e;
+            --border-color-light: #e1e4e8;
+            --border-color-dark: #30363d;
+            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.3s;
+            --transition-speed-fast: 0.2s;
+            --transition-speed-slow: 0.5s;
+            --transition-easing: ease-in-out;
+            --skeleton-bg-light: #e0e0e0;
+            --skeleton-bg-dark: #3a3a4a;
+            --footer-bg: var(--primary-color);
+            --footer-text: #ffffff;
+            --success-bg-light: #d4edda;
+            --success-text-light: #155724;
+            --success-icon-light: #155724; /* Màu cho icon check thành công */
+            --success-bg-dark: #1e4620;
+            --success-text-dark: #d4edda;
+            --success-icon-dark: #a3d9a5;
+            --loading-bg-light: var(--card-bg-light);
+            --loading-bg-dark: var(--card-bg-dark);
+            --no-data-text-color-light: #6c757d;
+            --no-data-text-color-dark: #adb5bd;
+            --scroll-to-top-bg: var(--primary-color);
+            --scroll-to-top-hover-bg: var(--primary-color-lighter);
+            --warning-bg-light: #fff3cd;
+            --warning-text-light: #856404;
+            --warning-icon-light: #ffc107;
+            --warning-bg-dark: #533f03;
+            --warning-text-dark: #ffeeba;
+            --warning-icon-dark: #ffca2c;
+            --highlight-bg-light: #e7f3ff;
+            --highlight-text-light: var(--primary-color);
+            --highlight-border-light: var(--primary-color);
+            --highlight-bg-dark: #2c3e50;
+            --highlight-text-dark: var(--secondary-color);
+            --highlight-border-dark: var(--secondary-color);
+            --star-color-light: rgba(0, 48, 135, 0.6);
+            --star-color-dark: rgba(0, 174, 255, 0.5);
+        }
+
+        body.dark-mode {
+            --background-light: var(--background-dark);
+            --text-light: var(--text-dark);
+            --card-bg-light: var(--card-bg-dark);
+            --border-color-light: var(--border-color-dark);
+            --shadow-light-outer: var(--shadow-dark-outer);
+            --shadow-light-inner: var(--shadow-dark-inner);
+            --skeleton-bg-light: var(--skeleton-bg-dark);
+            --footer-bg: var(--primary-color-darker);
+            --success-bg-light: var(--success-bg-dark);
+            --success-text-light: var(--success-text-dark);
+            --success-icon-light: var(--success-icon-dark);
+            --loading-bg-light: var(--loading-bg-dark);
+            --no-data-text-color-light: var(--no-data-text-color-dark);
+            --scroll-to-top-bg: var(--primary-color-lighter);
+            --scroll-to-top-hover-bg: var(--secondary-color);
+            --warning-bg-light: var(--warning-bg-dark);
+            --warning-text-light: var(--warning-text-dark);
+            --warning-icon-light: var(--warning-icon-dark);
+            --highlight-bg-light: var(--highlight-bg-dark);
+            --highlight-text-light: var(--highlight-text-dark);
+            --highlight-border-light: var(--highlight-border-dark);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
+        body.dark-mode ::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; transition: background var(--transition-speed) ease; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
+        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+
+        .navbar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            display: flex; align-items: center; padding: 0 15px;
+            box-shadow: var(--shadow-light-outer); z-index: 999;
+            transition: background var(--transition-speed) var(--transition-easing);
+        }
+        body.dark-mode .navbar { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); box-shadow: var(--shadow-dark-outer); }
+        .navbar .logo { margin-right: auto; animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; }
+        .navbar .logo h1 { font-size: 18px; color: #ffffff; font-weight: 700; text-transform: uppercase; animation: bounceGlow 2s infinite alternate; }
+        @keyframes bounceGlow {
+            0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
+            50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
+        }
+        .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .nav-btn, .theme-toggle-btn {
+            padding: 6px; border: none; border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-light);
+            font-size: 14px; cursor: pointer;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow-light-outer);
+            transition: all var(--transition-speed-fast) var(--transition-easing);
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn { background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer); }
+        .nav-btn:hover, .theme-toggle-btn:hover { background: #e9ecef; transform: translateY(-2px) scale(1.1); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover { background: var(--primary-color-darker); color: #fff; box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
+            background: var(--primary-color-darker); padding: 15px; padding-top: 60px;
+            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+            z-index: 999; box-shadow: 3px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 60px; }
+        body.dark-mode .sidebar { background: var(--background-dark); border-right: 1px solid var(--border-color-dark); box-shadow: 3px 0 10px rgba(0,0,0,0.2); }
+        .sidebar .logo { text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; }
+        .sidebar .logo h1 { font-size: 25px; color: #fff; font-weight: 600; transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease; text-shadow: 0 1px 2px rgba(0,0,0,0.2); display: inline-block; }
+        .sidebar:not(.collapsed) .logo h1::after { content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%); transform: skewX(-25deg); animation: shimmer 3s infinite linear; animation-delay: 1s; }
+        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
+        .sidebar.collapsed .logo h1::after { display: none; }
+        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; }
+        .sidebar .menu a { padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent; display: flex; align-items: center; gap: 10px; transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease; position: relative; overflow: hidden; }
+        .sidebar .menu a::before { content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px; background-color: var(--secondary-color); transition: left var(--transition-speed) ease-out; }
+        .sidebar .menu a:hover::before { left: 0; }
+        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
+        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
+        .sidebar.collapsed .menu a::before { display: none; }
+        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
+        .sidebar .menu a span { transition: opacity 0.2s ease, max-width var(--transition-speed) ease; white-space: nowrap; overflow: hidden; max-width: 100px; }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover { background: rgba(255, 255, 255, 0.1); color: #fff; padding-left: 15px; transform: translateX(3px); }
+        .sidebar.collapsed .menu a:hover { padding-left: 10px; transform: scale(1.05); }
+        .sidebar .menu a:hover i { transform: scale(1.1) rotate(5deg); }
+        body.dark-mode .sidebar .menu a:hover { background: var(--primary-color-lighter); color: #fff; }
+        .sidebar .menu a.active { background: var(--secondary-color); color: #fff; font-weight: 600; animation: activeLinkPulse 1.5s infinite ease-in-out; }
+        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
+        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); animation-name: activeLinkPulseDark; }
+        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
+        .toggle-btn { position: absolute; top: 12px; right: -15px; width: 30px; height: 30px; background: var(--primary-color); border: none; border-radius: 50%; color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001; }
+        .toggle-btn:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
+        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
+        .mobile-menu-btn { background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-color-light); border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; box-shadow: var(--shadow-light-outer); display: flex; align-items: center; justify-content: center; transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin-right: 10px; display: none; }
+        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
+        .mobile-menu-btn:active { transform: scale(0.95); }
+        body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer); }
+        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
+
+        .main-container-wrapper { display: flex; flex-grow: 1; padding-top: 50px; padding-bottom: 40px; }
+        .main-content-area { margin-left: 200px; flex-grow: 1; padding: 20px; transition: margin-left var(--transition-speed) ease; overflow-y: auto; }
+        .main-content-area.collapsed { margin-left: 60px; }
+
+        .bulk-summary-page-title { font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 28px; color: var(--primary-color); padding-top: 10px; }
+        body.dark-mode .bulk-summary-page-title { color: var(--secondary-color); }
+        .individual-order-card { background: var(--card-bg-light); border-radius: 10px; padding: 20px; box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light); margin-bottom: 20px; animation: fadeInUp 0.5s var(--transition-easing) backwards; }
+        body.dark-mode .individual-order-card { background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer); border: 1px solid var(--border-color-dark); }
+        .individual-order-card:last-child { margin-bottom: 0; }
+        .order-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1.5px solid var(--primary-color-lighter); }
+        body.dark-mode .order-card-header { border-bottom-color: var(--primary-color); }
+        .order-card-header .order-number-title { font-size: 18px; font-weight: 600; color: var(--primary-color); }
+        body.dark-mode .order-card-header .order-number-title { color: var(--secondary-color); }
+        .order-card-header .view-details-link { font-size: 0.9em; color: var(--primary-color-lighter); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+        .order-card-header .view-details-link:hover { color: var(--secondary-color); text-decoration: underline; }
+        body.dark-mode .order-card-header .view-details-link { color: var(--secondary-color); }
+        body.dark-mode .order-card-header .view-details-link:hover { color: var(--primary-color-lighter); }
+        .order-card-content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px 15px; }
+        .order-card-content-grid p { font-size: 1.0em; line-height: 1.6; margin-bottom: 0; word-break: break-word; }
+        .order-card-content-grid .label { font-weight: 500; color: var(--text-light); opacity: 0.9; margin-right: 6px; }
+        body.dark-mode .order-card-content-grid .label { color: var(--text-dark); }
+        .order-card-content-grid .value { font-weight: 500; }
+        .order-card-content-grid .status-value { font-style: italic; font-weight: bold; }
+        .status-pending { color: #dd6b20; } body.dark-mode .status-pending { color: #f6ad55; }
+        .status-error { color: #c53030; } body.dark-mode .status-error { color: #fc8181; }
+        .status-success { color: #38a169; } body.dark-mode .status-success { color: #68d391; }
+        .main-content-area .bulk-summary-wrapper { width: 100%; max-width: 960px; margin: 0 auto; }
+
+        footer { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%); color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px; z-index: 998; position: fixed; bottom: 0; width: 100%; transition: background var(--transition-speed) var(--transition-easing); }
+        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+        .notification { position: fixed; bottom: 50px; right: 20px; background-color: var(--card-bg-dark); color: var(--text-dark); padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; opacity: 0; transform: translateX(100%) scale(0.95); transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; align-items: center; gap: 10px; }
+        body:not(.dark-mode) .notification { background-color: var(--card-bg-light); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .notification.show { opacity: 1; transform: translateX(0) scale(1); }
+        .notification.error { background-color: #e53e3e; color: white; } body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
+        .notification.success { background-color: #38a169; color: white; } body.dark-mode .notification.success { background-color: #d4edda; color: #155724;}
+        .notification.info { background-color: #3182ce; color: white; } body.dark-mode .notification.info { background-color: #bee3f8; color: #2c5282;}
+        .notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); } body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
+        [data-tooltip] { position: relative; }
+        [data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%) translateY(5px); background-color: #333; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); z-index: 10000; }
+        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+        #scrollToTopBtn { display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999; border: none; outline: none; background-color: var(--scroll-to-top-bg); color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px; box-shadow: var(--shadow-light-outer); transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing); width: 40px; height: 40px; align-items: center; justify-content: center; opacity: 0; transform: translateY(20px); }
+        #scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
+        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
+        .hidden { display: none !important; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes subtleScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 70% { opacity: 1; transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes subtlePulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+        @keyframes subtleShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
+        @keyframes shimmer { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
+        @keyframes activeLinkPulse { 0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); } 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } }
+        @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); width: 220px; z-index: 1005; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar.collapsed { transform: translateX(-100%); }
+            .main-content-area { margin-left: 0; }
+            .main-content-area.collapsed { margin-left: 0; }
+            .toggle-btn { display: none; }
+            .mobile-menu-btn { display: flex !important; }
+        }
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .navbar .logo h1 { font-size: 16px; }
+            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; }
+            .main-content-area { padding: 12px; }
+            /* Điều chỉnh cho bulk summary */
+            .main-content-area .bulk-summary-wrapper { padding: 0; } /* Bỏ padding của wrapper nếu main-content-area đã có */
+            .bulk-summary-page-title { font-size: 20px; margin-bottom: 20px; }
+            .individual-order-card { padding: 15px; }
+            .order-card-header .order-number-title { font-size: 17px; }
+            .order-card-content-grid { grid-template-columns: 1fr; gap: 8px; }
+            .order-card-content-grid p { font-size: 0.95em; }
+            .notification { bottom: 50px; right: 10px; width: calc(100% - 20px); padding: 10px 15px; font-size: 13px; }
+            #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="navbar">
+        <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo">
+             <h1>VINFAST MINH ĐẠO</h1>
+        </div>
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" onclick="toggleThemeGlobal()" aria-label="Chuyển đổi giao diện" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="nav-btn" onclick="goBackToYeucauGhepXe()" aria-label="Quay lại" data-tooltip="Quay lại trang Yêu Cầu Ghép Xe">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
+        <div class="menu" id="navMenu">
+            <a href="Index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới" class="active"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+             <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+        </div>
+        <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </div>
+
+    <div class="main-container-wrapper">
+        <div class="main-content-area" id="main-content-area">
+            <div class="bulk-summary-wrapper">
+                <h2 id="bulk-summary-page-title" class="bulk-summary-page-title">
+                    Kết Quả Gửi Đơn Hàng Hàng Loạt
+                </h2>
+                <div id="bulk-orders-content-cards">
+                     <p style="text-align: center; padding: 20px; font-size: 1.1em;">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tải kết quả...
+                     </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <span>© 2025 VinFast Minh Đạo Thuận An</span>
+    </footer>
+
+    <div id="notification-container"></div>
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // --- CÁC HÀM JAVASCRIPT TIỆN ÍCH (SAO CHÉP TỪ order-details.html hoặc yeucaughepxe.html) ---
+        function toggleSidebarDesktop() {
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById("sidebar");
+                const mainContainer = document.getElementById("main-content-area");
+                const toggleBtnIcon = document.querySelector(".sidebar .toggle-btn i");
+                if (sidebar && mainContainer) {
+                    sidebar.classList.toggle("collapsed");
+                    mainContainer.classList.toggle("collapsed");
+                    const isCollapsed = sidebar.classList.contains("collapsed");
+                    localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+                    if(toggleBtnIcon) toggleBtnIcon.className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+                }
+            }
+        }
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            if (sidebar) {
+                sidebar.classList.toggle("open");
+                if (sidebar.classList.contains("open")) sidebar.classList.remove("collapsed");
+            }
+        }
+        function applyInitialSidebarState() {
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById("sidebar");
+                const mainContainer = document.getElementById("main-content-area");
+                const toggleBtnIcon = document.querySelector(".sidebar .toggle-btn i");
+                const sidebarState = localStorage.getItem('sidebarState');
+                if (sidebarState === 'collapsed') {
+                    sidebar?.classList.add("collapsed");
+                    mainContainer?.classList.add("collapsed");
+                    if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-right';
+                } else {
+                    sidebar?.classList.remove("collapsed");
+                    mainContainer?.classList.remove("collapsed");
+                    if(toggleBtnIcon) toggleBtnIcon.className = 'fas fa-chevron-left';
+                }
+            } else {
+                document.getElementById("sidebar")?.classList.remove("collapsed");
+                document.getElementById("main-content-area")?.classList.remove("collapsed");
+            }
+        }
+        function setActiveSidebarLink() {
+            const navLinks = document.querySelectorAll("#navMenu a");
+            const targetPage = "yeucaughepxe.html"; // Module "Ghép Xe"
+            navLinks.forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute('href') && link.getAttribute('href').includes(targetPage)) {
+                    link.classList.add("active");
+                }
+            });
+        }
+        function applyInitialTheme() {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.body.classList.toggle("dark-mode", savedTheme === "dark");
+            const themeIcon = document.getElementById("theme-icon");
+            if (themeIcon) themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+            document.body.setAttribute("data-theme", savedTheme);
+        }
+        function toggleThemeGlobal() {
+            document.body.classList.toggle("dark-mode");
+            const isDarkMode = document.body.classList.contains("dark-mode");
+            localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+            const themeIcon = document.getElementById("theme-icon");
+            if (themeIcon) themeIcon.className = isDarkMode ? "fas fa-sun" : "fas fa-moon";
+            document.body.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+        }
+        function showGlobalNotification(message, type = "info", duration = 3000) {
+            const container = document.getElementById("notification-container") || document.body;
+            const notification = document.createElement("div");
+            notification.className = `notification ${type}`;
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            if (type === 'error') iconClass = 'fas fa-times-circle';
+            if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+            notification.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
+            container.appendChild(notification);
+            requestAnimationFrame(() => { notification.classList.add('show'); });
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => notification.remove(), { once: true });
+            }, duration);
+        }
+        function initScrollToTopButton() {
+            const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
+            const checkScroll = () => {
+                const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200;
+                if (show) { btn.classList.add('visible'); btn.classList.remove('hidden'); }
+                else { btn.classList.remove('visible'); btn.classList.add('hidden'); }
+            };
+            window.onscroll = checkScroll;
+            checkScroll(); // Initial check
+        }
+        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
+        function formatGeneralDateTime(dtString) {
+            if (!dtString) return "N/A";
+            const d = new Date(dtString);
+            if (isNaN(d.getTime())) return "N/A";
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        // --- KẾT THÚC PHẦN JS TIỆN ÍCH ---
+
+        function goBackToYeucauGhepXe() {
+            window.location.href = 'yeucaughepxe.html#bulk-entry-table';
+        }
+
+        const SUMMARY_FIELDS_TO_DISPLAY_BULK = [
+            { actualDataKey: "Tên tư vấn bán hàng", displayLabel: "TVBH" },
+            { actualDataKey: "Tên khách hàng", displayLabel: "Khách Hàng" },
+            { actualDataKey: "Dòng xe", displayLabel: "Dòng Xe" },
+            { actualDataKey: "Phiên bản", displayLabel: "Phiên Bản" },
+            { actualDataKey: "Ngoại thất", displayLabel: "Ngoại Thất" },
+            { actualDataKey: "Nội thất", displayLabel: "Nội Thất" },
+            { actualDataKey: "Ngày cọc", displayLabel: "Ngày Cọc", isDate: true },
+            { actualDataKey: "Thời gian nhập", displayLabel: "TG Yêu Cầu", isDate: true },
+            { actualDataKey: "Kết quả", displayLabel: "Trạng Thái VIN", isStatus: true },
+            { actualDataKey: "VIN", displayLabel: "Số VIN Ghép" }
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            applyInitialTheme();
+            applyInitialSidebarState();
+            setActiveSidebarLink();
+            initScrollToTopButton();
+
+            const bulkOrdersContentEl = document.getElementById("bulk-orders-content-cards");
+            const pageTitleEl = document.getElementById("bulk-summary-page-title");
+
+            let successfulOrderNumbers = [];
+            const storedOrderNumbersJson = sessionStorage.getItem('bulkSubmissionResults_OrderNumbers');
+
+            if (storedOrderNumbersJson) {
+                try { successfulOrderNumbers = JSON.parse(storedOrderNumbersJson); }
+                catch (e) {
+                    console.error("Lỗi parse JSON số đơn hàng:", e);
+                    pageTitleEl.textContent = "Lỗi Hiển Thị Kết Quả";
+                    bulkOrdersContentEl.innerHTML = "<p style='text-align:center; color:red; font-size:1.1em;'>Đã có lỗi xảy ra khi đọc thông tin các đơn hàng đã gửi.</p>";
+                    return;
+                }
+            }
+
+            if (!successfulOrderNumbers || successfulOrderNumbers.length === 0) {
+                pageTitleEl.textContent = "Không Có Kết Quả";
+                bulkOrdersContentEl.innerHTML = "<p style='text-align:center; font-size:1.1em;'>Không có đơn hàng nào được ghi nhận hoặc không tìm thấy thông tin.</p>";
+                return;
+            }
+
+            pageTitleEl.innerHTML = `Đã Gửi Thành Công ${successfulOrderNumbers.length} Đơn Hàng <i class="fas fa-check-circle" style="color:var(--success-icon-light)"></i>`;
+            bulkOrdersContentEl.innerHTML = "";
+
+            const cachedHistoryDataString = sessionStorage.getItem('globalHistoryData_v1');
+            let allHistoryData = [];
+            if (cachedHistoryDataString) {
+                try { allHistoryData = JSON.parse(cachedHistoryDataString); }
+                catch (e) {
+                    console.error("Lỗi parse JSON dữ liệu lịch sử:", e);
+                    showGlobalNotification("Cache lịch sử lỗi. Chi tiết có thể thiếu.", "warning", 4000);
+                }
+            } else {
+                 showGlobalNotification("Cache lịch sử trống. Chi tiết có thể thiếu.", "info", 4000);
+            }
+
+            let foundDetailsCount = 0;
+            successfulOrderNumbers.forEach((orderNum, index) => {
+                const orderDetail = allHistoryData.find(item => item && item["Số đơn hàng"] === orderNum);
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'individual-order-card';
+                cardDiv.style.animationDelay = `${index * 0.05}s`;
+
+                let cardHeaderHTML = `
+                    <div class="order-card-header">
+                        <span class="order-number-title">Số Đơn Hàng: ${orderNum}</span>
+                        <a href="order-details.html?orderNumber=${encodeURIComponent(orderNum)}" target="_blank" class="view-details-link" data-tooltip="Xem chi tiết đầy đủ cho đơn hàng ${orderNum}">
+                            <i class="fas fa-external-link-alt"></i> Chi Tiết
+                        </a>
+                    </div>`;
+                let cardContentHTML = '<div class="order-card-content-grid">';
+
+                if (orderDetail) {
+                    foundDetailsCount++;
+                    SUMMARY_FIELDS_TO_DISPLAY_BULK.forEach(field => {
+                        let value = orderDetail[field.actualDataKey];
+                        let formattedValue = "N/A";
+                        let valueClass = "value";
+
+                        if (value !== undefined && value !== null && String(value).trim() !== "") {
+                            formattedValue = field.isDate ? formatGeneralDateTime(value) : String(value);
+                        }
+
+                        if (field.isStatus) {
+                            valueClass += " status-value";
+                            const lowerFV = formattedValue.toLowerCase();
+                            if (lowerFV.includes("chưa ghép") || lowerFV.includes("chờ") || lowerFV.includes("đang xử lý")) {
+                                valueClass += " status-pending";
+                            } else if (formattedValue !== "N/A" && (lowerFV.includes("tìm thấy vin") || lowerFV.includes("đã ghép") || lowerFV.includes("đã xuất hóa đơn"))) {
+                                valueClass += " status-success";
+                            } else if (lowerFV.includes("lỗi") || lowerFV.includes("không tìm thấy")) {
+                                valueClass += " status-error";
+                            }
+                        }
+                        if (formattedValue !== "N/A") {
+                           cardContentHTML += `<p><span class="label">${field.displayLabel}:</span> <span class="${valueClass}">${formattedValue}</span></p>`;
+                        }
+                    });
+                } else {
+                    cardContentHTML += `<p style="grid-column: 1 / -1; text-align:center; color:var(--warning-text-light); font-style:italic;">
+                                            <i class="fas fa-info-circle"></i> Yêu cầu đã được gửi. Chi tiết đầy đủ sẽ sớm cập nhật.
+                                       </p>`;
+                }
+                cardContentHTML += '</div>';
+                cardDiv.innerHTML = cardHeaderHTML + cardContentHTML;
+                bulkOrdersContentEl.appendChild(cardDiv);
+            });
+
+            if (allHistoryData.length > 0 && foundDetailsCount < successfulOrderNumbers.length && successfulOrderNumbers.length > 0) {
+                 const noticeP = document.createElement('p');
+                 noticeP.innerHTML = `<i class="fas fa-info-circle"></i> ${successfulOrderNumbers.length - foundDetailsCount} đơn hàng đã được gửi nhưng chi tiết chưa kịp đồng bộ vào cache. Vui lòng kiểm tra "Lịch Sử Ghép" sau ít phút.`;
+                 noticeP.style.cssText = "text-align:center; font-style:italic; margin-top:25px; padding:10px; background:var(--warning-bg-light); color:var(--warning-text-light); border-radius:6px; border:1px solid var(--warning-icon-light);";
+                 bulkOrdersContentEl.appendChild(noticeP);
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && (!mobileMenuBtn || !mobileMenuBtn.contains(event.target))) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
