@@ -3073,7 +3073,6 @@ function getInitialSelectOptions(selectName, includeDisabledPlaceholder = true) 
 }
 
 // --- Hàm Thêm Dòng Mới Vào Bảng ---
-// --- Hàm Thêm Dòng Mới Vào Bảng ---
 function addBulkOrderRow(data = {}, isPastedRow = false) {
     if (!bulkTableBody) {
         console.error("bulkTableBody is not initialized.");
@@ -3086,7 +3085,11 @@ function addBulkOrderRow(data = {}, isPastedRow = false) {
     tr.setAttribute('data-row-id', bulkOrderRowCount); // Quan trọng để định danh dòng
 
     const dongXeOptions = getInitialSelectOptions('dong_xe');
-    const phienBanOptions = '<option value="" disabled selected>Chọn dòng xe</option>'; // Sẽ được cập nhật bởi restrictVersionForRow
+    // Sửa: Khởi tạo phienBanOptions để bao gồm tùy chọn mặc định có thể chọn được nếu không có dòng xe nào được chọn ban đầu
+    const phienBanOptions = getInitialSelectOptions('phien_ban', true); // Giả sử getInitialSelectOptions có thể xử lý placeholder
+                                                                      // Hoặc '<option value="" disabled selected>Chọn phiên bản</option>' nếu bạn muốn kiểm soát hoàn toàn.
+                                                                      // Tốt nhất là để trống và restrictVersionForRow xử lý dựa trên dòng xe.
+                                                                      // Vì vậy, '<option value="" disabled selected>Chọn dòng xe trước</option>' là hợp lý.
     const ngoaiThatOptions = getInitialSelectOptions('ngoai_that');
     const noiThatOptions = getInitialSelectOptions('noi_that');
 
@@ -3101,7 +3104,7 @@ function addBulkOrderRow(data = {}, isPastedRow = false) {
                 ${dongXeOptions}
             </select>
         </td>
-        <td class="px-3 py-2"><select name="phien_ban" class="form-select w-full text-sm" required>${phienBanOptions}</select></td>
+        <td class="px-3 py-2"><select name="phien_ban" class="form-select w-full text-sm" required><option value="" disabled selected>Chọn dòng xe trước</option></select></td>
         <td class="px-3 py-2"><select name="ngoai_that" class="form-select w-full text-sm" required>${ngoaiThatOptions}</select></td>
         <td class="px-3 py-2"><select name="noi_that" class="form-select w-full text-sm" required>${noiThatOptions}</select></td>
         <td class="px-3 py-2"><input type="text" name="so_don_hang" class="form-input w-full text-sm" value="${data.so_don_hang || ''}" required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"></td>
@@ -3134,92 +3137,116 @@ function addBulkOrderRow(data = {}, isPastedRow = false) {
     const previewDetailsBulk = tr.querySelector(`#chic-file-preview-details-bulk${uniqueRowIdSuffix}`);
     const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
 
-    fileInputBulk.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            wrapperBulk.classList.add('file-selected-bulk');
-            promptBulk.style.display = 'none';
-            previewDetailsBulk.style.display = 'flex';
-            previewDetailsBulk.style.alignItems = 'center';
-            previewDetailsBulk.style.justifyContent = 'space-between';
-            filenameBulkEl.textContent = file.name.length > 15 ? file.name.substring(0,12) + '...' : file.name;
-            filenameBulkEl.title = file.name;
-            removeBtnBulk.style.display = 'inline';
-            xuLyAnhUNCRow(event.target, tr);
-        }
-    });
+    if (fileInputBulk && wrapperBulk && promptBulk && previewDetailsBulk && filenameBulkEl && removeBtnBulk) {
+        fileInputBulk.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                wrapperBulk.classList.add('file-selected-bulk');
+                promptBulk.style.display = 'none';
+                previewDetailsBulk.style.display = 'flex'; // Hiển thị phần preview
+                previewDetailsBulk.style.alignItems = 'center';
+                previewDetailsBulk.style.justifyContent = 'space-between';
+                filenameBulkEl.textContent = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+                filenameBulkEl.title = file.name;
+                removeBtnBulk.style.display = 'inline'; // Hiển thị nút xóa
+                xuLyAnhUNCRow(event.target, tr); // Gọi hàm xử lý OCR
+            } else { // Nếu người dùng hủy chọn file
+                wrapperBulk.classList.remove('file-selected-bulk');
+                promptBulk.style.display = 'flex';
+                previewDetailsBulk.style.display = 'none';
+                filenameBulkEl.textContent = '';
+                filenameBulkEl.title = '';
+                removeBtnBulk.style.display = 'none';
+                 // Cân nhắc có nên xóa ngày cọc và trạng thái OCR ở đây không
+                // tr.querySelector('input[name="ngay_coc"]').value = '';
+                // tr.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`).textContent = '';
+            }
+        });
 
-    removeBtnBulk.addEventListener('click', function() {
-        fileInputBulk.value = null; // Xóa file đã chọn
-        wrapperBulk.classList.remove('file-selected-bulk');
-        promptBulk.style.display = 'flex';
-        previewDetailsBulk.style.display = 'none';
-        filenameBulkEl.textContent = '';
-        filenameBulkEl.title = '';
-        removeBtnBulk.style.display = 'none';
-        tr.querySelector('input[name="ngay_coc"]').value = ''; // Xóa ngày cọc
-        tr.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`).textContent = ''; // Xóa trạng thái OCR
-        // Trigger validation or status update if needed
-        tr.classList.remove('valid-row', 'invalid-row');
-        const statusCell = tr.querySelector('.row-status');
-        if(statusCell) {
-            statusCell.textContent = 'Chưa kiểm tra';
-            statusCell.classList.remove('error', 'success');
-        }
-        updateBulkTableSummary();
-    });
+        removeBtnBulk.addEventListener('click', function() {
+            fileInputBulk.value = null; // Xóa file đã chọn
+            wrapperBulk.classList.remove('file-selected-bulk');
+            promptBulk.style.display = 'flex';
+            previewDetailsBulk.style.display = 'none';
+            filenameBulkEl.textContent = '';
+            filenameBulkEl.title = '';
+            removeBtnBulk.style.display = 'none';
+            tr.querySelector('input[name="ngay_coc"]').value = ''; // Xóa ngày cọc
+            tr.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`).textContent = ''; // Xóa trạng thái OCR
+            // Trigger validation or status update if needed
+            tr.classList.remove('valid-row', 'invalid-row');
+            const statusCell = tr.querySelector('.row-status');
+            if (statusCell) {
+                statusCell.textContent = 'Chưa kiểm tra';
+                statusCell.classList.remove('error', 'success');
+            }
+            updateBulkTableSummary();
+        });
+    }
 
+    // *** BẮT ĐẦU THAY ĐỔI: Thêm event listeners để khóa trường Ngày Cọc ***
+    const ngayCocBulkInput = tr.querySelector(`input[name="ngay_coc"]`);
+    if (ngayCocBulkInput) {
+        ngayCocBulkInput.addEventListener('focus', function(event) {
+            event.preventDefault(); // Ngăn hành vi mặc định (ví dụ mở picker)
+            this.blur(); // Bỏ focus khỏi trường
+        });
+        ngayCocBulkInput.addEventListener('click', function(event) {
+            event.preventDefault(); // Ngăn hành vi mặc định
+            this.blur(); // Bỏ focus
+        });
+    }
+    // *** KẾT THÚC THAY ĐỔI ***
 
     // Xử lý dữ liệu được truyền vào (ví dụ khi dán từ Excel)
+    // Cần đảm bảo restrictVersionForRow được gọi sau khi dòng xe có giá trị
     if (data.dong_xe) {
         const dongXeSelect = tr.querySelector('select[name="dong_xe"]');
-        dongXeSelect.value = data.dong_xe;
+        dongXeSelect.value = data.dong_xe; // Set giá trị cho dòng xe
+        restrictVersionForRow(tr, dongXeSelect, data.phien_ban); // Sau đó cập nhật phiên bản
+    } else {
+        // Nếu không có data.dong_xe, vẫn gọi restrictVersionForRow để nó có thể thiết lập phiên bản dựa trên
+        // placeholder hoặc trạng thái rỗng của dòng xe, nếu logic của restrictVersionForRow hỗ trợ.
+        // Hoặc đảm bảo rằng select phiên bản được reset đúng cách.
+        const dongXeSelect = tr.querySelector('select[name="dong_xe"]');
         restrictVersionForRow(tr, dongXeSelect, data.phien_ban);
     }
-    if (data.phien_ban && data.dong_xe) {
-         const phienBanSelectCurrent = tr.querySelector('select[name="phien_ban"]');
-         if (Array.from(phienBanSelectCurrent.options).some(opt => opt.value === data.phien_ban)) {
-            phienBanSelectCurrent.value = data.phien_ban;
-         }
-    }
+
+    // Set giá trị cho các select khác nếu có trong data
     if (data.ngoai_that) tr.querySelector('select[name="ngoai_that"]').value = data.ngoai_that;
     if (data.noi_that) tr.querySelector('select[name="noi_that"]').value = data.noi_that;
 
-    // Nếu dữ liệu dán có 'ngay_coc' và không phải là file, ta có thể bỏ qua hoặc log cảnh báo
-    // Hiện tại, 'ngay_coc' sẽ đến từ OCR
-    if (data.ngay_coc && !isPastedRow) { // Nếu `ngay_coc` là ngày (không phải file) thì vẫn điền
-        // Tuy nhiên, nếu dán từ Excel, `data.ngay_coc` có thể là chuỗi ngày
-        // Logic này cần xem xét kỹ: nếu dán, người dùng muốn ngày đó hay muốn upload file?
-        // Tạm thời: nếu `data.ngay_coc` có giá trị (tức là không phải file đã được xử lý thành công)
-        // thì có thể bỏ qua, vì giờ đây ta ưu tiên file.
-        // Nếu có file được dán (dưới dạng base64 chẳng hạn), logic sẽ phức tạp hơn nhiều.
-        // Hiện tại, giả định là nếu `data.ngay_coc` có giá trị, đó là giá trị ngày tháng được dán từ excel.
-        // Chúng ta sẽ cho phép nó ghi đè, nhưng nếu người dùng chọn file, file sẽ được ưu tiên.
-        const ngayCocInput = tr.querySelector('input[name="ngay_coc"]');
-        if (ngayCocInput && data.ngay_coc) {
-           try {
-                // Chuyển đổi định dạng dd/mm/yyyy hoặc yyyy-mm-dd sang yyyy-mm-ddTHH:MM
+    // Xử lý ngày cọc nếu được dán (và không phải là từ việc upload file)
+    // Điều này cho phép dán ngày từ excel, nhưng OCR từ file sẽ ghi đè.
+    if (data.ngay_coc && !isPastedRow && typeof data.ngay_coc === 'string') {
+        const ngayCocInputFromData = tr.querySelector('input[name="ngay_coc"]');
+        if (ngayCocInputFromData) {
+            try {
                 let dateObj;
-                if (data.ngay_coc.includes('T')) { // Already datetime-local
-                    dateObj = new Date(data.ngay_coc);
-                } else if (data.ngay_coc.includes('/')) { // dd/mm/yyyy
-                    const parts = data.ngay_coc.split('/');
-                    dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-                } else if (data.ngay_coc.match(/^\d{4}-\d{2}-\d{2}$/)) { // yyyy-mm-dd
-                     dateObj = new Date(data.ngay_coc + "T00:00:00"); // Thêm giờ để tránh lệch múi giờ
+                const dateString = data.ngay_coc.trim();
+                if (dateString.includes('T')) { // Đã là định dạng datetime-local
+                    dateObj = new Date(dateString);
+                } else if (dateString.includes('/')) { // dd/mm/yyyy [HH:MM[:SS]]
+                    const parts = dateString.split(' ');
+                    const dateParts = parts[0].split('/');
+                    let timeParts = [0,0,0];
+                    if(parts.length > 1 && parts[1].includes(':')){
+                        timeParts = parts[1].split(':').map(Number);
+                    }
+                    dateObj = new Date(parseInt(dateParts[2], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[0], 10), timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+                } else if (dateString.match(/^\d{4}-\d{2}-\d{2}/)) { // yyyy-mm-dd [HH:MM[:SS]]
+                    dateObj = new Date(dateString); // new Date() có thể xử lý "YYYY-MM-DD HH:MM:SS"
                 }
 
                 if (dateObj && !isNaN(dateObj)) {
-                    // Format to yyyy-MM-ddTHH:mm
                     const year = dateObj.getFullYear();
                     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                     const day = String(dateObj.getDate()).padStart(2, '0');
-                    // Mặc định giờ cọc là 08:00 nếu không có, hoặc giữ nguyên nếu có
-                    const hours = data.ngay_coc.includes('T') ? String(dateObj.getHours()).padStart(2, '0') : '08';
-                    const minutes = data.ngay_coc.includes('T') ? String(dateObj.getMinutes()).padStart(2, '0') : '00';
-                    ngayCocInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    ngayCocInputFromData.value = `${year}-${month}-${day}T${hours}:${minutes}`;
                 } else {
-                    console.warn("Ngày cọc dán vào không hợp lệ:", data.ngay_coc);
+                    console.warn("Ngày cọc dán vào không hợp lệ hoặc không thể phân tích:", data.ngay_coc);
                 }
             } catch (e) {
                 console.warn("Lỗi định dạng ngày cọc khi dán:", data.ngay_coc, e);
@@ -3227,18 +3254,30 @@ function addBulkOrderRow(data = {}, isPastedRow = false) {
         }
     }
 
-
-    tr.querySelectorAll('input:not([type="file"]), select').forEach(el => { // Bỏ qua input file vì đã có listener riêng
+    // Gắn event listener cho các input/select để reset trạng thái kiểm tra khi thay đổi
+    tr.querySelectorAll('input:not([type="file"]), select').forEach(el => {
         el.addEventListener('input', () => {
             tr.classList.remove('valid-row', 'invalid-row');
             const statusCell = tr.querySelector('.row-status');
-            if(statusCell) {
+            if (statusCell) {
                 statusCell.textContent = 'Chưa kiểm tra';
                 statusCell.classList.remove('error', 'success');
             }
             updateBulkTableSummary();
-            if(submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
+            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
         });
+        if (el.tagName === 'SELECT') { // Thêm cho select để bắt sự kiện change
+             el.addEventListener('change', () => {
+                tr.classList.remove('valid-row', 'invalid-row');
+                const statusCell = tr.querySelector('.row-status');
+                if (statusCell) {
+                    statusCell.textContent = 'Chưa kiểm tra';
+                    statusCell.classList.remove('error', 'success');
+                }
+                updateBulkTableSummary();
+                if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
+            });
+        }
     });
 
     if (!isPastedRow && bulkTableBody.firstChild === tr) {
