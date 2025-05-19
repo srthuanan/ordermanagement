@@ -1180,7 +1180,7 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
         <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="logo"><h1>VINFAST THUẬN AN</h1></div>
+        <div class="logo"><h1></h1></div>
         <div class="tabs">
             <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
             <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
@@ -2206,7 +2206,7 @@ function confirmSubmit() {
 
     fetch(apiURL, { method: "POST", body: formDataToSend })
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi gửi: ${response.status} ${text}`) }))
-        .then(() => fetch(apiURL))
+        .then(() => fetch(apiURL)) // Tải lại dữ liệu sau khi gửi
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
         .then(updatedData => {
             closeModal("loading-modal");
@@ -2219,49 +2219,43 @@ function confirmSubmit() {
 
             const dongXeSelect = document.getElementById('dong_xe');
             if (dongXeSelect) restrictVersion(dongXeSelect);
-            resetChicUploadUI();
+            resetChicUploadUI(); // Reset cả phần upload ảnh UNC
 
-            const daghep = updatedData.daghep || []; const chuaghep = updatedData.chuaghep || [];
+            const daghep = updatedData.daghep || [];
+            const chuaghep = updatedData.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
 
-            const successModal = document.getElementById("success-modal");
-            if (successModal) {
-                const headerTitleEl = successModal.querySelector('.modal-header h2');
-                const bodyMessageEl = successModal.querySelector('.modal-body p:first-of-type');
-                const successIconInHeader = `<i class="fas fa-check-circle" style="margin-right: 8px; color: var(--success-icon-light);"></i>`;
+            // Lưu số đơn hàng để chuyển hướng
+            orderId = formData["so_don_hang"];
 
-                if (headerTitleEl) headerTitleEl.innerHTML = `${successIconInHeader} Đã Gửi Dữ Liệu`;
-                if (bodyMessageEl) bodyMessageEl.textContent = `Yêu cầu ghép xe của bạn đã được gửi thành công!`;
-                const redirectMsgEl = successModal.querySelector('.modal-body p:nth-of-type(2)');
-                if (redirectMsgEl) redirectMsgEl.textContent = 'Bạn sẽ được chuyển đến trang chi tiết sau giây lát.';
-
-                successModal.style.position = 'fixed';
-                successModal.style.top = '0';
-                successModal.style.left = '0';
-                successModal.style.width = '100%';
-                successModal.style.height = '100%';
-                successModal.style.borderRadius = '';
-                successModal.classList.add("active");
-                adjustModalScroll(successModal);
-            }
-
-            const currentUser = sessionStorage.getItem("currentConsultant"); const isAdmin = currentUser === ADMIN_USER;
+            // Cập nhật giao diện (nếu cần thiết và người dùng có thể thấy trước khi chuyển trang nhanh)
+            const currentUser = sessionStorage.getItem("currentConsultant");
+            const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            renderHistoryTable(dataForHistoryTable); renderSummary(globalHistoryData); prepareDetailedStats(globalHistoryData);
+            renderHistoryTable(dataForHistoryTable);
+            renderSummary(globalHistoryData);
+            prepareDetailedStats(globalHistoryData);
 
             const detailedStatsSection = document.getElementById('detailed-stats-section');
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                renderDetailedStatsTable(detailedStatsData); renderCharts(detailedStatsData);
+                renderDetailedStatsTable(detailedStatsData);
+                renderCharts(detailedStatsData);
             }
-            orderId = formData["so_don_hang"];
-            clearTimeout(redirectTimeout);
-            redirectTimeout = setTimeout(() => {
-                if (document.getElementById("success-modal")?.classList.contains("active")) {
-                    closeModal('success-modal');
-                    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
-                }
-            }, 2000);
+
+            // ---- THAY ĐỔI CHÍNH: CHUYỂN HƯỚNG NGAY LẬP TỨC ----
+            // Đảm bảo orderId đã được gán giá trị từ formData
+            if (orderId) {
+                window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
+            } else {
+                // Nếu không có orderId, có thể chuyển về trang chính hoặc hiển thị lỗi
+                console.error("Không có orderId để chuyển hướng.");
+                showNotification("Đã gửi thành công! Không thể chuyển hướng tự động do thiếu mã đơn hàng.", "warning", 4000);
+                // Hoặc chuyển về một trang mặc định
+                // window.location.href = 'index.html';
+            }
+            // ---- KẾT THÚC THAY ĐỔI ----
+
         })
         .catch(error => {
             const loadingModal = document.getElementById("loading-modal");
@@ -2270,12 +2264,14 @@ function confirmSubmit() {
                 const loadingModalMessage = loadingModal.querySelector("#loading-message");
                 if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Gửi Dữ Liệu";
                 if (loadingModalMessage) loadingModalMessage.textContent = `Gửi yêu cầu thất bại: ${error.message}. Vui lòng thử lại.`;
+                // Không tự động đóng modal lỗi ở đây, để người dùng đọc
             } else {
                 showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
             }
+            // Cân nhắc có nên fetch lại history ở đây không nếu gửi thất bại
+            // fetchHistory(); // Có thể gọi để đảm bảo dữ liệu trên bảng là mới nhất dù gửi lỗi
         });
 }
-
 function closeModalAndRedirect() {
     clearTimeout(redirectTimeout); closeModal('success-modal');
     window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
