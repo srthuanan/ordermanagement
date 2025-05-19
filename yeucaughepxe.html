@@ -14,782 +14,904 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* --- CONTENT FROM a.html <style> block --- */
-/* --- CONTENT FROM a.html <style> block --- */
-        :root {
-            /* Original CSS Variables from yeucaughepxe.html */
-            --primary-color: #003087;
-            --primary-color-darker: #00205b;
-            --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff;
-            --background-light: #f4f7fc;
-            --text-light: #2c3e50;
-            --background-dark: #161b22;
-            --text-dark: #c9d1d9;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;
-            --border-color-light: #e1e4e8;
-            --border-color-dark: #30363d;
-            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
-            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
-            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-            --transition-speed: 0.3s;
-            --transition-speed-fast: 0.2s;
-            --transition-speed-slow: 0.5s;
-            --transition-easing: ease-in-out;
-            --skeleton-bg-light: #e0e0e0;
-            --skeleton-bg-dark: #3a3a4a;
+:root {
+    /* Original CSS Variables from yeucaughepxe.html */
+    --primary-color: #003087;
+    --primary-color-darker: #00205b;
+    --primary-color-lighter: #0040c1;
+    --secondary-color: #00aeff;
+    --background-light: #f4f7fc;
+    --text-light: #2c3e50;
+    --background-dark: #161b22;
+    --text-dark: #c9d1d9;
+    --card-bg-light: #ffffff;
+    --card-bg-dark: #1e242e;
+    --border-color-light: #e1e4e8;
+    --border-color-dark: #30363d;
+    --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
+    --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+    --transition-speed: 0.3s;
+    --transition-speed-fast: 0.2s;
+    --transition-speed-slow: 0.5s;
+    --transition-easing: ease-in-out;
+    --skeleton-bg-light: #e0e0e0;
+    --skeleton-bg-dark: #3a3a4a;
 
-            --footer-bg: var(--primary-color);
-            --footer-text: #ffffff;
-            --success-bg-light: #d4edda;
-            --success-text-light: #155724;
-            --success-icon-light: #155724;
-            --success-bg-dark: #1e4620;
-            --success-text-dark: #d4edda;
-            --success-icon-dark: #a3d9a5;
-            --loading-bg-light: var(--card-bg-light);
-            --loading-bg-dark: var(--card-bg-dark);
-            --no-data-text-color-light: #6c757d;
-            --no-data-text-color-dark: #adb5bd;
-            --scroll-to-top-bg: var(--primary-color);
-            --scroll-to-top-hover-bg: var(--primary-color-lighter);
-            --warning-bg-light: #fff3cd;
-            --warning-text-light: #856404;
-            --warning-icon-light: #ffc107;
-            --warning-bg-dark: #533f03;
-            --warning-text-dark: #ffeeba;
-            --warning-icon-dark: #ffca2c;
+    --footer-bg: var(--primary-color);
+    --footer-text: #ffffff;
+    --success-bg-light: #d4edda;
+    --success-text-light: #155724;
+    --success-icon-light: #155724;
+    --success-bg-dark: #1e4620;
+    --success-text-dark: #d4edda;
+    --success-icon-dark: #a3d9a5;
+    --loading-bg-light: var(--card-bg-light); /* Retained for potential use, but enhanced modal will override */
+    --loading-bg-dark: var(--card-bg-dark);   /* Retained for potential use */
+    --no-data-text-color-light: #6c757d;
+    --no-data-text-color-dark: #adb5bd;
+    --scroll-to-top-bg: var(--primary-color);
+    --scroll-to-top-hover-bg: var(--primary-color-lighter);
+    --warning-bg-light: #fff3cd;
+    --warning-text-light: #856404;
+    --warning-icon-light: #ffc107;
+    --warning-bg-dark: #533f03;
+    --warning-text-dark: #ffeeba;
+    --warning-icon-dark: #ffca2c;
 
-            --exterior-white-text: #5f6368;
-            --exterior-red-text: #c93737;
-            --exterior-black-text: #202124;
-            --exterior-blue-text: #1a73e8;
-            --exterior-grey-text: #70757a;
-            --exterior-yellow-text: #e27100;
-            --exterior-green-text: #1e8e3e;
-            --exterior-pink-text: #d01884;
-            --exterior-orange-text: #fa7b17;
-            --exterior-bronze-text: #8c5a41;
-            --exterior-default-text: inherit;
+    --exterior-white-text: #5f6368;
+    --exterior-red-text: #c93737;
+    --exterior-black-text: #202124;
+    --exterior-blue-text: #1a73e8;
+    --exterior-grey-text: #70757a;
+    --exterior-yellow-text: #e27100;
+    --exterior-green-text: #1e8e3e;
+    --exterior-pink-text: #d01884;
+    --exterior-orange-text: #fa7b17;
+    --exterior-bronze-text: #8c5a41;
+    --exterior-default-text: inherit;
 
-            --status-pending-invoice-bg-light: #fff3cd;
-            --status-pending-invoice-text-light: #856404;
-            --status-pending-invoice-bg-dark: #533f03;
-            --status-pending-invoice-text-dark: #ffeeba;
-            --status-invoice-issued-bg-light: #d1e7dd;
-            --status-invoice-issued-text-light: #0f5132;
-            --status-invoice-issued-bg-dark: #143624;
-            --status-invoice-issued-text-dark: #a3cfbb;
-            --status-vin-not-found-bg-light: #f8d7da;
-            --status-vin-not-found-text-light: #721c24;
-            --status-vin-not-found-bg-dark: #58151c;
-            --status-vin-not-found-text-dark: #f1aeb5;
-            --status-default-bg-light: #e9ecef;
-            --status-default-text-light: #495057;
-            --status-default-bg-dark: #343a40;
-            --status-default-text-dark: #adb5bd;
+    --status-pending-invoice-bg-light: #fff3cd;
+    --status-pending-invoice-text-light: #856404;
+    --status-pending-invoice-bg-dark: #533f03;
+    --status-pending-invoice-text-dark: #ffeeba;
+    --status-invoice-issued-bg-light: #d1e7dd;
+    --status-invoice-issued-text-light: #0f5132;
+    --status-invoice-issued-bg-dark: #143624;
+    --status-invoice-issued-text-dark: #a3cfbb;
+    --status-vin-not-found-bg-light: #f8d7da;
+    --status-vin-not-found-text-light: #721c24;
+    --status-vin-not-found-bg-dark: #58151c;
+    --status-vin-not-found-text-dark: #f1aeb5;
+    --status-default-bg-light: #e9ecef;
+    --status-default-text-light: #495057;
+    --status-default-bg-dark: #343a40;
+    --status-default-text-dark: #adb5bd;
 
-             /* CSS Variables from Index.html for sidebar - some might be duplicates, ensure they are harmonized */
-            --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
-            --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
-        }
+     /* CSS Variables from Index.html for sidebar - some might be duplicates, ensure they are harmonized */
+    --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
+    --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
+}
 
-        body.dark-mode {
-            /* Original dark mode variables from yeucaughepxe.html */
-            --background-light: var(--background-dark);
-            --text-light: var(--text-dark);
-            --card-bg-light: var(--card-bg-dark);
-            --border-color-light: var(--border-color-dark);
-            --shadow-light-outer: var(--shadow-dark-outer);
-            --shadow-light-inner: var(--shadow-dark-inner);
-            --skeleton-bg-light: var(--skeleton-bg-dark);
-            --footer-bg: var(--primary-color-darker);
-            --success-bg-light: var(--success-bg-dark);
-            --success-text-light: var(--success-text-dark);
-            --success-icon-light: var(--success-icon-dark);
-            --loading-bg-light: var(--loading-bg-dark);
-            --no-data-text-color-light: var(--no-data-text-color-dark);
-            --scroll-to-top-bg: var(--primary-color-lighter);
-            --scroll-to-top-hover-bg: var(--secondary-color);
-            --warning-bg-light: var(--warning-bg-dark);
-            --warning-text-light: var(--warning-text-dark);
-            --warning-icon-light: var(--warning-icon-dark);
+body.dark-mode {
+    /* Original dark mode variables from yeucaughepxe.html */
+    --background-light: var(--background-dark);
+    --text-light: var(--text-dark);
+    --card-bg-light: var(--card-bg-dark);
+    --border-color-light: var(--border-color-dark);
+    --shadow-light-outer: var(--shadow-dark-outer);
+    --shadow-light-inner: var(--shadow-dark-inner);
+    --skeleton-bg-light: var(--skeleton-bg-dark);
+    --footer-bg: var(--primary-color-darker);
+    --success-bg-light: var(--success-bg-dark);
+    --success-text-light: var(--success-text-dark);
+    --success-icon-light: var(--success-icon-dark);
+    /* --loading-bg-light: var(--loading-bg-dark); */ /* Will be overridden by enhanced styles */
+    --no-data-text-color-light: var(--no-data-text-color-dark);
+    --scroll-to-top-bg: var(--primary-color-lighter);
+    --scroll-to-top-hover-bg: var(--secondary-color);
+    --warning-bg-light: var(--warning-bg-dark);
+    --warning-text-light: var(--warning-text-dark);
+    --warning-icon-light: var(--warning-icon-dark);
 
-            --exterior-white-text: #e8eaed;
-            --exterior-red-text: #f79393;
-            --exterior-black-text: #e8eaed;
-            --exterior-blue-text: #8ab4f8;
-            --exterior-grey-text: #bdc1c6;
-            --exterior-yellow-text: #fdd663;
-            --exterior-green-text: #81c995;
-            --exterior-pink-text: #f7a8d0;
-            --exterior-orange-text: #ffc58a;
-            --exterior-bronze-text: #e0b9a0;
+    --exterior-white-text: #e8eaed;
+    --exterior-red-text: #f79393;
+    --exterior-black-text: #e8eaed;
+    --exterior-blue-text: #8ab4f8;
+    --exterior-grey-text: #bdc1c6;
+    --exterior-yellow-text: #fdd663;
+    --exterior-green-text: #81c995;
+    --exterior-pink-text: #f7a8d0;
+    --exterior-orange-text: #ffc58a;
+    --exterior-bronze-text: #e0b9a0;
 
-            --status-pending-invoice-bg-light: var(--status-pending-invoice-bg-dark);
-            --status-pending-invoice-text-light: var(--status-pending-invoice-text-dark);
-            --status-invoice-issued-bg-light: var(--status-invoice-issued-bg-dark);
-            --status-invoice-issued-text-light: var(--status-invoice-issued-text-dark);
-            --status-vin-not-found-bg-light: var(--status-vin-not-found-bg-dark);
-            --status-vin-not-found-text-light: var(--status-vin-not-found-text-dark);
-            --status-default-bg-light: var(--status-default-bg-dark);
-            --status-default-text-light: var(--status-default-text-dark);
-        }
+    --status-pending-invoice-bg-light: var(--status-pending-invoice-bg-dark);
+    --status-pending-invoice-text-light: var(--status-pending-invoice-text-dark);
+    --status-invoice-issued-bg-light: var(--status-invoice-issued-bg-dark);
+    --status-invoice-issued-text-light: var(--status-invoice-issued-text-dark);
+    --status-vin-not-found-bg-light: var(--status-vin-not-found-bg-dark);
+    --status-vin-not-found-text-light: var(--status-vin-not-found-text-dark);
+    --status-default-bg-light: var(--status-default-bg-dark);
+    --status-default-text-light: var(--status-default-text-dark);
+}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: var(--background-light);
-            color: var(--text-light);
-            min-height: 100vh;
-            overflow-x: auto; /* MODIFIED: Allow horizontal scroll for the whole page if necessary */
-            transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
-            font-size: 14px; /* Base font size from yeucaughepxe */
-        }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--background-light);
+    color: var(--text-light);
+    min-height: 100vh;
+    overflow-x: auto; /* MODIFIED: Allow horizontal scroll for the whole page if necessary */
+    transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
+    font-size: 14px; /* Base font size from yeucaughepxe */
+}
 
-        /* Thanh cuộn tùy chỉnh (from Index.html, slightly adapted) */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track {
-            background: var(--background-light); /* Use current page's variable */
-            border-radius: 4px;
-        }
-        body.dark-mode ::-webkit-scrollbar-track {
-            background: var(--card-bg-dark); /* Use current page's variable */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-            transition: background var(--transition-speed) ease;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color-lighter);
-        }
-        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+/* Thanh cuộn tùy chỉnh (from Index.html, slightly adapted) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track {
+    background: var(--background-light); /* Use current page's variable */
+    border-radius: 4px;
+}
+body.dark-mode ::-webkit-scrollbar-track {
+    background: var(--card-bg-dark); /* Use current page's variable */
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: background var(--transition-speed) ease;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color-lighter);
+}
+body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
 
-        /* Navbar (from yeucaughepxe.html) - Styles for existing navbar */
-        .navbar {
-            position: fixed; top: 0; left: 0; width: 100%; height: 50px; /* Existing height */
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            display: flex; align-items: center; padding: 0 15px;
-            box-shadow: var(--shadow-light-outer); z-index: 999; /* Navbar should be above mobile sidebar overlay, so 999 might need to be > 1005 if sidebar is 1005 */
-                                                              /* Adjusted to 1006 to be above mobile sidebar */
-            transition: background var(--transition-speed) var(--transition-easing);
-        }
-        body.dark-mode .navbar {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        .navbar .logo { animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; }
-        .navbar .logo h1 {
-            font-size: 18px; /* Adjusted to fit better, original was 25px */
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-            animation: bounceGlow 2s infinite alternate;
-        }
+/* Navbar (from yeucaughepxe.html) - Styles for existing navbar */
+.navbar {
+    position: fixed; top: 0; left: 0; width: 100%; height: 50px; /* Existing height */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    display: flex; align-items: center; padding: 0 15px;
+    box-shadow: var(--shadow-light-outer);
+    z-index: 1006; /* Adjusted to be above mobile sidebar */
+    transition: background var(--transition-speed) var(--transition-easing);
+}
+body.dark-mode .navbar {
+    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+    box-shadow: var(--shadow-dark-outer);
+}
+.navbar .logo { animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; }
+.navbar .logo h1 {
+    font-size: 18px; /* Adjusted to fit better, original was 25px */
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    animation: bounceGlow 2s infinite alternate;
+}
 
-        @keyframes bounceGlow {
-            0%, 100% {
-                transform: translateY(0);
-                text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
-            }
-            50% {
-                transform: translateY(-2px); /* Reduced bounce */
-                text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
-            }
-        }
-        .navbar .tabs {
-            display: flex; position: absolute; left: 50%; transform: translateX(-50%);
-            gap: 10px; transition: all var(--transition-speed) var(--transition-easing);
-        }
-        .navbar .tabs a {
-            padding: 8px 12px; text-decoration: none; color: rgba(255,255,255,0.85);
-            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
-            transition: background var(--transition-speed-fast) var(--transition-easing), color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
-            position: relative;
-        }
-        .navbar .tabs a::after {
-            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
-            background-color: #fff; transform: translateX(-50%);
-            transition: width var(--transition-speed-fast) var(--transition-easing);
-        }
-        .navbar .tabs a:hover, .navbar .tabs a.active { background: rgba(255, 255, 255, 0.15); color: #ffffff; transform: translateY(-2px); }
-        .navbar .tabs a.active::after { width: 70%; }
-        .navbar .tabs a:hover::after { width: 50%; }
+@keyframes bounceGlow {
+    0%, 100% {
+        transform: translateY(0);
+        text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
+    }
+    50% {
+        transform: translateY(-2px); /* Reduced bounce */
+        text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
+    }
+}
+.navbar .tabs {
+    display: flex; position: absolute; left: 50%; transform: translateX(-50%);
+    gap: 10px; transition: all var(--transition-speed) var(--transition-easing);
+}
+.navbar .tabs a {
+    padding: 8px 12px; text-decoration: none; color: rgba(255,255,255,0.85);
+    font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
+    transition: background var(--transition-speed-fast) var(--transition-easing), color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+    position: relative;
+}
+.navbar .tabs a::after {
+    content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
+    background-color: #fff; transform: translateX(-50%);
+    transition: width var(--transition-speed-fast) var(--transition-easing);
+}
+.navbar .tabs a:hover, .navbar .tabs a.active { background: rgba(255, 255, 255, 0.15); color: #ffffff; transform: translateY(-2px); }
+.navbar .tabs a.active::after { width: 70%; }
+.navbar .tabs a:hover::after { width: 50%; }
 
-        body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active { background: rgba(0, 0, 0, 0.2); }
-        body.dark-mode .navbar .tabs a::after { background-color: var(--secondary-color); }
-
-
-        .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-        .nav-btn, .theme-toggle-btn { /* .theme-toggle-btn is from yeucaughepxe */
-            padding: 6px; border: none; border-radius: 50%;
-            background: var(--card-bg-light); color: var(--text-light);
-            font-size: 14px; cursor: pointer;
-            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed-fast) var(--transition-easing);
-        }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
-            background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
-        }
-        .nav-btn:hover, .theme-toggle-btn:hover {
-            background: #e9ecef; transform: translateY(-2px) scale(1.1);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
-            background: var(--primary-color-darker); color: #fff;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-        }
-        .hamburger { display: none; background: none; border: none; color: #ffffff; font-size: 20px; cursor: pointer; margin-right: 10px; transition: transform var(--transition-speed-fast) var(--transition-easing); }
-        .hamburger.active { transform: rotate(90deg); }
+body.dark-mode .navbar .tabs a:hover, body.dark-mode .navbar .tabs a.active { background: rgba(0, 0, 0, 0.2); }
+body.dark-mode .navbar .tabs a::after { background-color: var(--secondary-color); }
 
 
-        /* Sidebar CSS from Index.html */
-        .sidebar {
-            position: fixed;
-            top: 0; /* Will be adjusted by padding-top to sit below navbar */
-            left: 0;
-            width: 200px;
-            height: 100vh;
-            background: var(--primary-color-darker);
-            padding: 15px;
-            padding-top: 60px; /* Increased to account for 50px navbar + 10px spacing */
-            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 1000; /* Below navbar (1006), above main content. If mobile needs higher, adjust in media query. */
-            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar.collapsed {
-            width: 60px;
-        }
-        body.dark-mode .sidebar {
-            background: var(--background-dark); /* Use page's dark background */
-            border-right: 1px solid var(--border-color-dark);
-            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
-        }
-
-        .sidebar .logo { /* Sidebar's own logo section */
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-        }
-        .sidebar .logo h1 { /* Sidebar's H1 */
-            font-size: 25px; /* Slightly smaller to fit */
-            color: #fff;
-            font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative;
-            display: inline-block;
-        }
-        .sidebar:not(.collapsed) .logo h1::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -150%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            animation: shimmer 3s infinite linear;
-            animation-delay: 1s;
-        }
-        @keyframes shimmer {
-            0% { left: -150%; }
-            50% { left: 150%; }
-            100% { left: 150%; }
-        }
-        .sidebar.collapsed .logo h1 {
-            opacity: 0;
-            font-size: 0;
-        }
-        .sidebar.collapsed .logo h1::after {
-            display: none;
-        }
-
-        .sidebar .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto; /* For scrollable menu if items exceed height */
-            flex-grow: 1; /* Allows menu to take available space */
-        }
-        .sidebar .menu a {
-            padding: 10px 12px;
-            text-decoration: none;
-            color: rgba(255,255,255,0.8);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        .sidebar .menu a::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background-color: var(--secondary-color);
-            transition: left var(--transition-speed) ease-out;
-        }
-        .sidebar .menu a:hover::before {
-            left: 0;
-        }
-        body.dark-mode .sidebar .menu a {
-            color: var(--text-dark);
-        }
-        .sidebar.collapsed .menu a {
-            padding: 10px; /* Adjust padding for icons only */
-            justify-content: center;
-        }
-        .sidebar.collapsed .menu a::before {
-            display: none;
-        }
-
-        .sidebar .menu a i {
-            font-size: 16px;
-            width: 20px; /* Ensure icon has a fixed width */
-            text-align: center;
-            transition: transform var(--transition-speed) ease;
-        }
-        .sidebar .menu a span {
-            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
-            white-space: nowrap;
-            overflow: hidden;
-            max-width: 100px; /* Max width for text */
-        }
-        .sidebar.collapsed .menu a span {
-            opacity: 0;
-            max-width: 0;
-        }
-        .sidebar .menu a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding-left: 15px;
-            transform: translateX(3px);
-        }
-        .sidebar.collapsed .menu a:hover {
-            padding-left: 10px; /* Keep padding consistent for collapsed hover */
-            transform: scale(1.05);
-        }
-         .sidebar .menu a:hover i {
-            transform: scale(1.1) rotate(5deg);
-        }
-        body.dark-mode .sidebar .menu a:hover {
-            background: var(--primary-color-lighter);
-            color: #fff;
-        }
-        .sidebar .menu a.active {
-            background: var(--secondary-color);
-            color: #fff;
-            font-weight: 600;
-        }
-        .sidebar .menu a.active::before {
-            left: 0;
-            background-color: #fff;
-        }
-        .sidebar .menu a.active {
-            animation: activeLinkPulse 1.5s infinite ease-in-out;
-        }
-        @keyframes activeLinkPulse {
-            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
-            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
-            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
-        }
-        body.dark-mode .sidebar .menu a.active {
-            background: var(--primary-color);
-            animation-name: activeLinkPulseDark;
-        }
-        body.dark-mode .sidebar .menu a.active::before {
-            background-color: var(--secondary-color);
-        }
-        @keyframes activeLinkPulseDark {
-            0% { box-shadow: 0 0 5px var(--secondary-color); }
-            50% { box-shadow: 0 0 15px var(--secondary-color); }
-            100% { box-shadow: 0 0 5px var(--secondary-color); }
-        }
-
-        .toggle-btn { /* Desktop sidebar toggle */
-            position: absolute;
-            top: 12px; /* Position relative to sidebar top */
-            right: -15px; /* Position outside the sidebar */
-            width: 30px;
-            height: 30px;
-            background: var(--primary-color);
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-speed) ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1001; /* Ensure it's above sidebar but potentially below navbar controls if overlapping */
-        }
-        .toggle-btn:hover {
-            background: var(--primary-color-lighter);
-            transform: scale(1.1) rotate(180deg);
-        }
-        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
-
-        /* Mobile Menu Button (Sidebar Toggle - MOVED INTO NAVBAR) */
-        .mobile-menu-btn {
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            border: 1px solid var(--border-color-light);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: var(--shadow-light-outer);
-            display: flex; /* For icon centering */
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-            margin-right: 10px; /* Space to the right, adjust as needed */
-            display: none; /* Initially hidden on desktop, shown via media query */
-        }
-        .mobile-menu-btn:hover {
-            background: #e9ecef;
-            transform: scale(1.1);
-        }
-        .mobile-menu-btn:active {
-            transform: scale(0.95);
-        }
-        body.dark-mode .mobile-menu-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .mobile-menu-btn:hover {
-            background: var(--primary-color-darker);
-            color: #fff;
-        }
-        /* End Sidebar CSS */
+.navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.nav-btn, .theme-toggle-btn { /* .theme-toggle-btn is from yeucaughepxe */
+    padding: 6px; border: none; border-radius: 50%;
+    background: var(--card-bg-light); color: var(--text-light);
+    font-size: 14px; cursor: pointer;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-light-outer);
+    transition: all var(--transition-speed-fast) var(--transition-easing);
+}
+body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+    background: var(--card-bg-dark); color: var(--text-dark); box-shadow: var(--shadow-dark-outer);
+}
+.nav-btn:hover, .theme-toggle-btn:hover {
+    background: #e9ecef; transform: translateY(-2px) scale(1.1);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
+    background: var(--primary-color-darker); color: #fff;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+.hamburger { display: none; background: none; border: none; color: #ffffff; font-size: 20px; cursor: pointer; margin-right: 10px; transition: transform var(--transition-speed-fast) var(--transition-easing); }
+.hamburger.active { transform: rotate(90deg); }
 
 
-        /* Chú giải công cụ (Tooltip CSS from Index.html - ensure it's not conflicting) */
-        [data-tooltip] { position: relative; }
-        [data-tooltip]::after {
-            content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
-            transform: translateX(-50%) translateY(5px);
-            background-color: #333; color: #fff;
-            padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
-            opacity: 0; visibility: hidden; transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); z-index: 10000;
-        }
-        [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-        body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
+/* Sidebar CSS from Index.html */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    background: var(--primary-color-darker);
+    padding: 15px;
+    padding-top: 60px;
+    transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
+    z-index: 1007; /* << THAY ĐỔI Ở ĐÂY: Tăng z-index */
+    box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+.sidebar.collapsed {
+    width: 60px;
+}
+body.dark-mode .sidebar {
+    background: var(--background-dark); /* Use page's dark background */
+    border-right: 1px solid var(--border-color-dark);
+    box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+}
 
-        /* Khu vực nội dung chính (Adjusted for sidebar) */
-        .main-container {
-            display: flex; flex-direction: column; /* Or row depending on desired layout with form */
-            margin-top: 50px; /* Space for fixed navbar */
-            margin-left: 200px; /* Initial space for expanded sidebar */
-            padding: 10px;
-            gap: 15px;
-            min-height: calc(100vh - 50px - 40px); /* Navbar height - footer height */
-            transition: margin-left var(--transition-speed) ease, opacity var(--transition-speed) var(--transition-easing);
-        }
-        .main-container.collapsed { /* When sidebar is collapsed */
-            margin-left: 60px;
-        }
+.sidebar .logo { /* Sidebar's own logo section */
+    text-align: center;
+    margin-bottom: 25px;
+    position: relative;
+    overflow: hidden;
+}
+.sidebar .logo h1 { /* Sidebar's H1 */
+    font-size: 25px; /* Slightly smaller to fit */
+    color: #fff;
+    font-weight: 600;
+    transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    position: relative;
+    display: inline-block;
+}
+.sidebar:not(.collapsed) .logo h1::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    animation: shimmer 3s infinite linear;
+    animation-delay: 1s;
+}
+@keyframes shimmer {
+    0% { left: -150%; }
+    50% { left: 150%; }
+    100% { left: 150%; }
+}
+.sidebar.collapsed .logo h1 {
+    opacity: 0;
+    font-size: 0;
+}
+.sidebar.collapsed .logo h1::after {
+    display: none;
+}
 
-        .form-container, .grid-container, .summary-section, .chart-card {
-            background: var(--card-bg-light); border-radius: 10px; padding: 15px;
-            box-shadow: var(--shadow-light-outer); width: 100%;
-            border: 1px solid var(--border-color-light);
-            animation: fadeInUp 0.5s var(--transition-easing) backwards;
-        }
-        .form-container.hidden, .grid-container.hidden, .summary-section.hidden, .chart-card.hidden {
-            display: none !important;
-        }
+.sidebar .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto; /* For scrollable menu if items exceed height */
+    flex-grow: 1; /* Allows menu to take available space */
+}
+.sidebar .menu a {
+    padding: 10px 12px;
+    text-decoration: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    background: transparent;
+    transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+}
+.sidebar .menu a::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background-color: var(--secondary-color);
+    transition: left var(--transition-speed) ease-out;
+}
+.sidebar .menu a:hover::before {
+    left: 0;
+}
+body.dark-mode .sidebar .menu a {
+    color: var(--text-dark);
+}
+.sidebar.collapsed .menu a {
+    padding: 10px; /* Adjust padding for icons only */
+    justify-content: center;
+}
+.sidebar.collapsed .menu a::before {
+    display: none;
+}
 
-        body.dark-mode .form-container, body.dark-mode .grid-container,
-        body.dark-mode .summary-section, body.dark-mode .chart-card {
-            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
-        }
-        .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 {
-            font-size: 17px; color: var(--primary-color); margin-bottom: 12px; font-weight: 600;
-        }
-        body.dark-mode .form-container h2, body.dark-mode .grid-container h3,
-        body.dark-mode .chart-card h3, body.dark-mode .summary-section h3 {
-            color: var(--secondary-color);
-        }
+.sidebar .menu a i {
+    font-size: 16px;
+    width: 20px; /* Ensure icon has a fixed width */
+    text-align: center;
+    transition: transform var(--transition-speed) ease;
+}
+.sidebar .menu a span {
+    transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100px; /* Max width for text */
+}
+.sidebar.collapsed .menu a span {
+    opacity: 0;
+    max-width: 0;
+}
+.sidebar .menu a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding-left: 15px;
+    transform: translateX(3px);
+}
+.sidebar.collapsed .menu a:hover {
+    padding-left: 10px; /* Keep padding consistent for collapsed hover */
+    transform: scale(1.05);
+}
+ .sidebar .menu a:hover i {
+    transform: scale(1.1) rotate(5deg);
+}
+body.dark-mode .sidebar .menu a:hover {
+    background: var(--primary-color-lighter);
+    color: #fff;
+}
+.sidebar .menu a.active {
+    background: var(--secondary-color);
+    color: #fff;
+    font-weight: 600;
+}
+.sidebar .menu a.active::before {
+    left: 0;
+    background-color: #fff;
+}
+.sidebar .menu a.active {
+    animation: activeLinkPulse 1.5s infinite ease-in-out;
+}
+@keyframes activeLinkPulse {
+    0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+    50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
+    100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
+}
+body.dark-mode .sidebar .menu a.active {
+    background: var(--primary-color);
+    animation-name: activeLinkPulseDark;
+}
+body.dark-mode .sidebar .menu a.active::before {
+    background-color: var(--secondary-color);
+}
+@keyframes activeLinkPulseDark {
+    0% { box-shadow: 0 0 5px var(--secondary-color); }
+    50% { box-shadow: 0 0 15px var(--secondary-color); }
+    100% { box-shadow: 0 0 5px var(--secondary-color); }
+}
 
-        /* Các yếu tố biểu mẫu */
-        .form-container form { display: grid; gap: 10px; }
-        .form-container label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-light); margin-bottom: 4px; }
-        body.dark-mode .form-container label { color: var(--text-dark); }
-        .form-container input:not([type='file']), .form-container select { /* MODIFIED: Exclude file input for #chic-upload-wrapper */
-            padding: 8px 10px; border: 1px solid var(--border-color-light); border-radius: 6px;
-            font-size: 13.5px; background: var(--background-light); color: var(--text-light);
-            box-shadow: none;
-            transition: border-color var(--transition-speed-fast) var(--transition-easing), background var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing);
-            width: 100%;
-        }
-        body.dark-mode .form-container input:not([type='file']), body.dark-mode .form-container select {
-            background: var(--background-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark);
-        }
-        .form-container input:not([type='file']):focus, .form-container select:focus {
-            outline: none; border-color: var(--primary-color); background: var(--card-bg-light);
-            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
-        }
-        body.dark-mode .form-container input:not([type='file']):focus, body.dark-mode .form-container select:focus {
-            border-color: var(--secondary-color); background: var(--card-bg-dark);
-            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
-        }
+.toggle-btn { /* Desktop sidebar toggle */
+    position: absolute;
+    top: 12px; /* Position relative to sidebar top */
+    right: -15px; /* Position outside the sidebar */
+    width: 30px;
+    height: 30px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+}
+.toggle-btn:hover {
+    background: var(--primary-color-lighter);
+    transform: scale(1.1) rotate(180deg);
+}
+body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
-        /* Nút */
-        .form-container .form-buttons { display: flex; gap: 8px; justify-content: flex-start; margin-top: 8px; }
-        .form-container button, .modal-btn {
-            padding: 8px 15px; border: none; border-radius: 6px; color: #ffffff;
-            font-size: 13.5px; font-weight: 600; cursor: pointer;
-            transition: all var(--transition-speed-fast) var(--transition-easing);
-            box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
-        }
-        .form-container button[type="submit"], .modal-btn.primary { background: var(--primary-color); }
-        .form-container button[type="submit"]:hover, .modal-btn.primary:hover {
-            background: var(--primary-color-lighter); transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);
-        }
-        .form-container button.danger { background: #e74c3c; }
-        .form-container button.danger:hover { background: #c0392b; transform: translateY(-2px) scale(1.02); }
-        .modal-btn.secondary {
-            background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); box-shadow: none;
-        }
-        body.dark-mode .modal-btn.secondary { color: var(--primary-color-lighter); border-color: var(--primary-color-lighter); }
-        .modal-btn.secondary:hover { background: rgba(0, 48, 135, 0.05); transform: translateY(-2px); }
-        body.dark-mode .modal-btn.secondary:hover { background: rgba(0, 64, 193, 0.1); }
-
-        /* Điều khiển lưới */
-        .grid-container .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
-        .export-btn-container { display: flex; gap: 10px; align-items: center; }
-        .export-btn-container span { font-size: 13px; color: var(--text-light); }
-        body.dark-mode .export-btn-container span { color: var(--text-dark); }
-        .export-btn, .refresh-btn {
-            padding: 8px; border: none; border-radius: 50%;
-            background: var(--card-bg-light); color: var(--primary-color);
-            font-size: 14px; cursor: pointer;
-            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed-fast) var(--transition-easing);
-        }
-        body.dark-mode .export-btn, body.dark-mode .refresh-btn {
-            background: var(--card-bg-dark); color: var(--primary-color-lighter); box-shadow: var(--shadow-dark-outer);
-        }
-        .export-btn:hover, .refresh-btn:hover {
-            background: #e9ecef; transform: scale(1.15) rotate(10deg);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.12);
-        }
-        body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
-            background: var(--primary-color-darker);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.20);
-        }
-
-        /* Bảng */
-        .table-wrapper {
-            max-height: calc(100vh - 280px); overflow: auto; border-radius: 8px;
-            background: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
-            border: 1px solid var(--border-color-light); transition: all var(--transition-speed) var(--transition-easing);
-        }
-        body.dark-mode .table-wrapper {
-            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
-            border: 1px solid var(--border-color-dark);
-        }
-        table {
-            border-collapse: collapse;
-            font-size: 12px;
-            width: 100%; /* MODIFIED: Ensure table takes full width of its wrapper */
-        }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color-light); }
-        body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
-        th {
-            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10;
-            text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
-            transition: background var(--transition-speed-fast) var(--transition-easing);
-            white-space: nowrap; /* MODIFIED: Keep header text on one line */
-        }
-        th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
-        body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
-        body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
-
-        /* MODIFIED: td styles for full content display */
-        td {
-            white-space: normal; /* ALLOWS TEXT TO WRAP */
-            word-break: break-word; /* BREAKS LONG WORDS TO PREVENT OVERFLOW */
-            overflow: visible; /* ENSURES CONTENT IS NOT CLIPPED */
-            text-overflow: clip; /* REMOVES ELLIPSIS */
-        }
-        td[title]:hover { cursor: pointer; }
-        tbody tr { transition: background-color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing); }
-        tbody tr:hover {
-            background: rgba(0, 48, 135, 0.08);
-            cursor: pointer;
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-        }
-        body.dark-mode tbody tr:hover {
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-        }
-        .table-placeholder td { text-align: center; padding: 20px; color: var(--no-data-text-color-light); }
-        body.dark-mode .table-placeholder td { color: var(--no-data-text-color-dark); }
-        .table-placeholder .fas { margin-right: 8px; }
-        .table-placeholder .fas.fa-spinner { animation: subtlePulse 1.5s infinite var(--transition-easing); }
-
-        .status-badge {
-            padding: 4px 8px; border-radius: 12px; font-size: 11.5px; font-weight: 500;
-            text-align: center; display: inline-block; min-width: 120px;
-            border: 1px solid transparent;
-            transition: background-color var(--transition-speed-fast) var(--transition-easing), color var(--transition-speed-fast) var(--transition-easing);
-        }
-        .status-pending-invoice { background-color: var(--status-pending-invoice-bg-light); color: var(--status-pending-invoice-text-light); border-color: #ffecb5; }
-        body.dark-mode .status-pending-invoice { border-color: #a5850c; }
-        .status-invoice-issued { background-color: var(--status-invoice-issued-bg-light); color: var(--status-invoice-issued-text-light); border-color: #b6dcc3; }
-        body.dark-mode .status-invoice-issued { border-color: #347c50; }
-        .status-vin-not-found { background-color: var(--status-vin-not-found-bg-light); color: var(--status-vin-not-found-text-light); border-color: #f5c6cb; }
-        body.dark-mode .status-vin-not-found { border-color: #b02a37; }
-        .status-default { background-color: var(--status-default-bg-light); color: var(--status-default-text-light); border-color: #d6d8db; }
-        body.dark-mode .status-default { border-color: #545b62; }
+/* Mobile Menu Button (Sidebar Toggle - MOVED INTO NAVBAR) */
+.mobile-menu-btn {
+    background: var(--card-bg-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: var(--shadow-light-outer);
+    display: flex; /* For icon centering */
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-right: 10px; /* Space to the right, adjust as needed */
+    display: none; /* Initially hidden on desktop, shown via media query */
+}
+.mobile-menu-btn:hover {
+    background: #e9ecef;
+    transform: scale(1.1);
+}
+.mobile-menu-btn:active {
+    transform: scale(0.95);
+}
+body.dark-mode .mobile-menu-btn {
+    background: var(--card-bg-dark);
+    color: var(--text-dark);
+    border: 1px solid var(--border-color-dark);
+    box-shadow: var(--shadow-dark-outer);
+}
+body.dark-mode .mobile-menu-btn:hover {
+    background: var(--primary-color-darker);
+    color: #fff;
+}
+/* End Sidebar CSS */
 
 
-        /* --- Kiểu Modal Nâng cao (ĐÃ SỬA ĐỔI) --- */
-        .modal {
-            display: none;
-            position: fixed; /* Vẫn là fixed để JavaScript có thể định vị dựa trên viewport */
-            top: 0; left: 0; width: 100%; height: 100%; /* Mặc định toàn màn hình, JS sẽ điều chỉnh nếu cần */
-            background: rgba(0, 0, 0, 0.65);
-            z-index: 1002; /* Cần cao hơn các phần tử khác, kể cả sidebar nếu mobile sidebar có z-index cao */
-            align-items: center;
-            justify-content: center;
-            /* padding: 15px; */ /* Đã chuyển padding vào .modal-content hoặc JS sẽ quản lý không gian */
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            transition: opacity var(--transition-speed) var(--transition-easing);
-            box-sizing: border-box; /* Thêm */
-            overflow: hidden; /* Thêm */
-        }
-        .modal.active { display: flex; opacity: 1; }
+/* Chú giải công cụ (Tooltip CSS from Index.html - ensure it's not conflicting) */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+    content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background-color: #333; color: #fff;
+    padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+    opacity: 0; visibility: hidden; transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); z-index: 999;
+}
+[data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 
-        .modal-content {
-            background: var(--card-bg-light);
-            /* padding: 20px; */ /* Đảm bảo padding ở đây nếu đã bỏ ở .modal */
-            padding: 20px; /* Giữ lại padding ở đây */
-            border-radius: 10px;
-            max-width: 480px; /* Kích thước mặc định cho modal toàn màn hình */
-            width: 90%; /* Hoặc một % phù hợp cho nội dung modal */
-            box-shadow: var(--shadow-light-outer), 0 10px 40px rgba(0,0,0,0.1);
-            transform: translateY(-20px) scale(0.95); opacity: 0;
-            transition: transform var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1), opacity var(--transition-speed) var(--transition-easing);
-            position: relative; border: 1px solid var(--border-color-light);
-            max-height: 90vh; /* Giới hạn chiều cao tối đa của nội dung modal */
-            overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
-        }
-        .modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
-        body.dark-mode .modal-content {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-outer), 0 10px 40px rgba(0,0,0,0.2);
-            border: 1px solid var(--border-color-dark);
-        }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border-color-light);
-            padding-bottom: 10px; margin-bottom: 12px;
-        }
-        body.dark-mode .modal-header { border-bottom-color: var(--border-color-dark); }
-        .modal-header h2 {
-            font-size: 18px; font-weight: 600; color: var(--primary-color);
-            margin: 0; text-align: center; width: 100%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        body.dark-mode .modal-header h2 { color: var(--secondary-color); }
-        .modal-header h2 .fas { margin-right: 8px; }
-        .modal-close-btn {
-            position: absolute; top: 10px; right: 10px; font-size: 20px;
-            color: var(--text-light); background: transparent; border: none;
-            padding: 5px; line-height: 1; border-radius: 50%;
-            cursor: pointer; transition: color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing), background-color var(--transition-speed-fast) var(--transition-easing);
-        }
-        body.dark-mode .modal-close-btn { color: var(--text-dark); }
-        .modal-close-btn:hover {
-            color: var(--primary-color); transform: rotate(90deg) scale(1.2);
-            background-color: rgba(0,0,0,0.05);
-        }
-        body.dark-mode .modal-close-btn:hover {
-            color: var(--primary-color-lighter); background-color: rgba(255,255,255,0.1);
-        }
-        .modal-body { /* Nội dung chính của modal, tách biệt với .modal-content để dễ quản lý cuộn */
-            font-size: 13.5px; line-height: 1.55;
-            /* max-height và overflow-y sẽ được quản lý bởi .modal-content hoặc JS */
-            color: var(--text-light); padding-right: 5px; /* Cho scrollbar nếu có */
-            scrollbar-width: thin; scrollbar-color: var(--primary-color-lighter) var(--card-bg-light);
-        }
-        body.dark-mode .modal-body {
-            color: var(--text-dark); scrollbar-color: var(--secondary-color) var(--card-bg-dark);
-        }
-        .modal-body::-webkit-scrollbar { width: 6px; }
-        .modal-body::-webkit-scrollbar-track { background: var(--card-bg-light); border-radius: 3px;}
-        body.dark-mode .modal-body::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-        .modal-body::-webkit-scrollbar-thumb { background-color: var(--primary-color-lighter); border-radius: 3px; }
-        body.dark-mode .modal-body::-webkit-scrollbar-thumb { background-color: var(--secondary-color); }
+/* Khu vực nội dung chính (Adjusted for sidebar) */
+.main-container {
+    display: flex; flex-direction: column;
+    margin-top: 50px; /* Space for fixed navbar */
+    margin-left: 200px; /* Initial space for expanded sidebar */
+    padding: 10px;
+    gap: 15px;
+    min-height: calc(100vh - 50px - 40px); /* Navbar height - footer height */
+    transition: margin-left var(--transition-speed) ease, opacity var(--transition-speed) var(--transition-easing);
+}
+.main-container.collapsed { /* When sidebar is collapsed */
+    margin-left: 60px;
+}
 
-        .modal-body .detail-item {
-            display: grid; grid-template-columns: auto 1fr; gap: 6px 10px;
-            padding: 8px 0; border-bottom: 1px dashed var(--border-color-light);
-            align-items: baseline;
-        }
-        body.dark-mode .modal-body .detail-item { border-bottom-color: var(--border-color-dark); }
-        .modal-body .detail-item:last-child { border-bottom: none; }
-        .modal-body .detail-item strong { font-weight: 500; opacity: 0.9; color: var(--text-light); text-transform: uppercase; }
-        body.dark-mode .modal-body .detail-item strong { color: var(--text-dark); }
-        .modal-body .detail-item span { word-break: break-word; text-align: right; }
-        .modal-footer {
-            display: flex; justify-content: flex-end; gap: 8px;
-            padding-top: 12px; border-top: 1px solid var(--border-color-light);
-            margin-top: 15px;
-        }
-        body.dark-mode .modal-footer { border-top-color: var(--border-color-dark); }
+.form-container, .grid-container, .summary-section, .chart-card {
+    background: var(--card-bg-light); border-radius: 10px; padding: 15px;
+    box-shadow: var(--shadow-light-outer); width: 100%;
+    border: 1px solid var(--border-color-light);
+    animation: fadeInUp 0.5s var(--transition-easing) backwards;
+}
+.form-container.hidden, .grid-container.hidden, .summary-section.hidden, .chart-card.hidden {
+    display: none !important;
+}
 
-        /* Specific Modal Types */
-        .success-modal-content { background: var(--success-bg-light); padding-top: 25px; padding-bottom: 25px; }
-        body.dark-mode .success-modal-content { background: var(--success-bg-dark); }
-        .success-modal-content .modal-header h2 { color: var(--success-text-light); font-size: 19px; }
-        body.dark-mode .success-modal-content .modal-header h2 { color: var(--success-text-dark); }
-        .success-modal-content .modal-body p { color: var(--success-text-light); font-size: 14px; }
-        body.dark-mode .success-modal-content .modal-body p { color: var(--success-text-dark); }
-        .success-modal-content .fas.fa-check-circle {
-            color: var(--success-icon-light); font-size: 2.5rem; margin-bottom: 0.8rem;
-            animation: popIn 0.5s var(--transition-easing) 0.2s backwards;
-        }
-        body.dark-mode .success-modal-content .fas.fa-check-circle { color: var(--success-icon-dark); }
+body.dark-mode .form-container, body.dark-mode .grid-container,
+body.dark-mode .summary-section, body.dark-mode .chart-card {
+    background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+    border: 1px solid var(--border-color-dark);
+}
+.form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 {
+    font-size: 17px; color: var(--primary-color); margin-bottom: 12px; font-weight: 600;
+}
+body.dark-mode .form-container h2, body.dark-mode .grid-container h3,
+body.dark-mode .chart-card h3, body.dark-mode .summary-section h3 {
+    color: var(--secondary-color);
+}
 
-        .loading-modal-content { background: var(--loading-bg-light); text-align: center; padding-top: 25px; padding-bottom: 25px;}
-        body.dark-mode .loading-modal-content { background: var(--loading-bg-dark); }
-        .loading-modal-content .modal-header h2 { color: var(--primary-color); font-size: 19px; }
-        body.dark-mode .loading-modal-content .modal-header h2 { color: var(--secondary-color); }
-        #loading-modal .modal-body .fas.fa-spinner { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
-        body.dark-mode #loading-modal .modal-body .fas.fa-spinner { color: var(--secondary-color); }
-        #loading-modal .modal-body p { font-size: 1rem; line-height: 1.5; animation: subtlePulse 1.5s infinite var(--transition-easing); }
+/* Các yếu tố biểu mẫu */
+.form-container form { display: grid; gap: 10px; }
+.form-container label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-light); margin-bottom: 4px; }
+body.dark-mode .form-container label { color: var(--text-dark); }
+.form-container input:not([type='file']), .form-container select {
+    padding: 8px 10px; border: 1px solid var(--border-color-light); border-radius: 6px;
+    font-size: 13.5px; background: var(--background-light); color: var(--text-light);
+    box-shadow: none;
+    transition: border-color var(--transition-speed-fast) var(--transition-easing), background var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing);
+    width: 100%;
+}
+body.dark-mode .form-container input:not([type='file']), body.dark-mode .form-container select {
+    background: var(--background-dark); color: var(--text-dark); border: 1px solid var(--border-color-dark);
+}
+.form-container input:not([type='file']):focus, .form-container select:focus {
+    outline: none; border-color: var(--primary-color); background: var(--card-bg-light);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+}
+body.dark-mode .form-container input:not([type='file']):focus, body.dark-mode .form-container select:focus {
+    border-color: var(--secondary-color); background: var(--card-bg-dark);
+    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
+}
 
+/* Nút */
+.form-container .form-buttons { display: flex; gap: 8px; justify-content: flex-start; margin-top: 8px; }
+.form-container button, .modal-btn {
+    padding: 8px 15px; border: none; border-radius: 6px; color: #ffffff;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: all var(--transition-speed-fast) var(--transition-easing);
+    box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
+}
+.form-container button[type="submit"], .modal-btn.primary { background: var(--primary-color); }
+.form-container button[type="submit"]:hover, .modal-btn.primary:hover {
+    background: var(--primary-color-lighter); transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);
+}
+.form-container button.danger { background: #e74c3c; }
+.form-container button.danger:hover { background: #c0392b; transform: translateY(-2px) scale(1.02); }
+.modal-btn.secondary {
+    background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); box-shadow: none;
+}
+body.dark-mode .modal-btn.secondary { color: var(--primary-color-lighter); border-color: var(--primary-color-lighter); }
+.modal-btn.secondary:hover { background: rgba(0, 48, 135, 0.05); transform: translateY(-2px); }
+body.dark-mode .modal-btn.secondary:hover { background: rgba(0, 64, 193, 0.1); }
+
+/* Điều khiển lưới */
+.grid-container .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+.export-btn-container { display: flex; gap: 10px; align-items: center; }
+.export-btn-container span { font-size: 13px; color: var(--text-light); }
+body.dark-mode .export-btn-container span { color: var(--text-dark); }
+.export-btn, .refresh-btn {
+    padding: 8px; border: none; border-radius: 50%;
+    background: var(--card-bg-light); color: var(--primary-color);
+    font-size: 14px; cursor: pointer;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-light-outer);
+    transition: all var(--transition-speed-fast) var(--transition-easing);
+}
+body.dark-mode .export-btn, body.dark-mode .refresh-btn {
+    background: var(--card-bg-dark); color: var(--primary-color-lighter); box-shadow: var(--shadow-dark-outer);
+}
+.export-btn:hover, .refresh-btn:hover {
+    background: #e9ecef; transform: scale(1.15) rotate(10deg);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.12);
+}
+body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
+    background: var(--primary-color-darker);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.20);
+}
+
+/* Bảng */
+.table-wrapper {
+    max-height: calc(100vh - 280px); overflow: auto; border-radius: 8px;
+    background: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
+    border: 1px solid var(--border-color-light); transition: all var(--transition-speed) var(--transition-easing);
+}
+body.dark-mode .table-wrapper {
+    background: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
+    border: 1px solid var(--border-color-dark);
+}
+table {
+    border-collapse: collapse;
+    font-size: 12px;
+    width: 100%;
+}
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color-light); }
+body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
+th {
+    background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+    color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10;
+    text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
+    transition: background var(--transition-speed-fast) var(--transition-easing);
+    white-space: nowrap;
+}
+th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
+body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
+body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+
+td {
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
+}
+td[title]:hover { cursor: pointer; }
+tbody tr { transition: background-color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing); }
+tbody tr:hover {
+    background: rgba(0, 48, 135, 0.08);
+    cursor: pointer;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+body.dark-mode tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+.table-placeholder td { text-align: center; padding: 20px; color: var(--no-data-text-color-light); }
+body.dark-mode .table-placeholder td { color: var(--no-data-text-color-dark); }
+.table-placeholder .fas { margin-right: 8px; }
+.table-placeholder .fas.fa-spinner { animation: subtlePulse 1.5s infinite var(--transition-easing); }
+
+.status-badge {
+    padding: 4px 8px; border-radius: 12px; font-size: 11.5px; font-weight: 500;
+    text-align: center; display: inline-block; min-width: 120px;
+    border: 1px solid transparent;
+    transition: background-color var(--transition-speed-fast) var(--transition-easing), color var(--transition-speed-fast) var(--transition-easing);
+}
+.status-pending-invoice { background-color: var(--status-pending-invoice-bg-light); color: var(--status-pending-invoice-text-light); border-color: #ffecb5; }
+body.dark-mode .status-pending-invoice { border-color: #a5850c; }
+.status-invoice-issued { background-color: var(--status-invoice-issued-bg-light); color: var(--status-invoice-issued-text-light); border-color: #b6dcc3; }
+body.dark-mode .status-invoice-issued { border-color: #347c50; }
+.status-vin-not-found { background-color: var(--status-vin-not-found-bg-light); color: var(--status-vin-not-found-text-light); border-color: #f5c6cb; }
+body.dark-mode .status-vin-not-found { border-color: #b02a37; }
+.status-default { background-color: var(--status-default-bg-light); color: var(--status-default-text-light); border-color: #d6d8db; }
+body.dark-mode .status-default { border-color: #545b62; }
+
+
+/* --- Kiểu Modal Nâng cao (ĐÃ SỬA ĐỔI) --- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1002;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity var(--transition-speed) var(--transition-easing);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.modal.active { display: flex; opacity: 1; }
+
+.modal-content {
+    background: var(--card-bg-light);
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: var(--shadow-light-outer), 0 10px 40px rgba(0,0,0,0.1);
+    transform: translateY(-20px) scale(0.95); opacity: 0;
+    transition: transform var(--transition-speed) cubic-bezier(0.25, 0.8, 0.25, 1), opacity var(--transition-speed) var(--transition-easing);
+    position: relative; border: 1px solid var(--border-color-light);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+body.dark-mode .modal-content {
+    background: var(--card-bg-dark);
+    box-shadow: var(--shadow-dark-outer), 0 10px 40px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color-dark);
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 10px; margin-bottom: 12px;
+}
+body.dark-mode .modal-header { border-bottom-color: var(--border-color-dark); }
+.modal-header h2 {
+    font-size: 18px; font-weight: 600; color: var(--primary-color);
+    margin: 0; text-align: center; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+}
+body.dark-mode .modal-header h2 { color: var(--secondary-color); }
+.modal-header h2 .fas { margin-right: 8px; }
+.modal-close-btn {
+    position: absolute; top: 10px; right: 10px; font-size: 20px;
+    color: var(--text-light); background: transparent; border: none;
+    padding: 5px; line-height: 1; border-radius: 50%;
+    cursor: pointer; transition: color var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing), background-color var(--transition-speed-fast) var(--transition-easing);
+}
+body.dark-mode .modal-close-btn { color: var(--text-dark); }
+.modal-close-btn:hover {
+    color: var(--primary-color); transform: rotate(90deg) scale(1.2);
+    background-color: rgba(0,0,0,0.05);
+}
+body.dark-mode .modal-close-btn:hover {
+    color: var(--primary-color-lighter); background-color: rgba(255,255,255,0.1);
+}
+.modal-body {
+    font-size: 13.5px; line-height: 1.55;
+    color: var(--text-light); padding-right: 5px;
+    scrollbar-width: thin; scrollbar-color: var(--primary-color-lighter) var(--card-bg-light);
+}
+body.dark-mode .modal-body {
+    color: var(--text-dark); scrollbar-color: var(--secondary-color) var(--card-bg-dark);
+}
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-track { background: var(--card-bg-light); border-radius: 3px;}
+body.dark-mode .modal-body::-webkit-scrollbar-track { background: var(--card-bg-dark); }
+.modal-body::-webkit-scrollbar-thumb { background-color: var(--primary-color-lighter); border-radius: 3px; }
+body.dark-mode .modal-body::-webkit-scrollbar-thumb { background-color: var(--secondary-color); }
+
+.modal-body .detail-item {
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 10px;
+    padding: 8px 0; border-bottom: 1px dashed var(--border-color-light);
+    align-items: baseline;
+}
+body.dark-mode .modal-body .detail-item { border-bottom-color: var(--border-color-dark); }
+.modal-body .detail-item:last-child { border-bottom: none; }
+.modal-body .detail-item strong { font-weight: 500; opacity: 0.9; color: var(--text-light); text-transform: uppercase; }
+body.dark-mode .modal-body .detail-item strong { color: var(--text-dark); }
+.modal-body .detail-item span { word-break: break-word; text-align: right; }
+.modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding-top: 12px; border-top: 1px solid var(--border-color-light);
+    margin-top: 15px;
+}
+body.dark-mode .modal-footer { border-top-color: var(--border-color-dark); }
+
+/* Specific Modal Types */
+.success-modal-content { background: var(--success-bg-light); padding-top: 25px; padding-bottom: 25px; }
+body.dark-mode .success-modal-content { background: var(--success-bg-dark); }
+.success-modal-content .modal-header h2 { color: var(--success-text-light); font-size: 19px; }
+body.dark-mode .success-modal-content .modal-header h2 { color: var(--success-text-dark); }
+.success-modal-content .modal-body p { color: var(--success-text-light); font-size: 14px; }
+body.dark-mode .success-modal-content .modal-body p { color: var(--success-text-dark); }
+.success-modal-content .fas.fa-check-circle {
+    color: var(--success-icon-light); font-size: 2.5rem; margin-bottom: 0.8rem;
+    animation: popIn 0.5s var(--transition-easing) 0.2s backwards;
+}
+body.dark-mode .success-modal-content .fas.fa-check-circle { color: var(--success-icon-dark); }
+
+/* --- CSS cho Modal Loading Khi Gửi Dữ Liệu --- */
+/* --- (Phủ toàn trang, nền trong suốt, chặn click, nội dung nhẹ nhàng) --- */
+
+/* 1. Lớp phủ modal chính (#loading-modal) */
+.modal#loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    /* ----- QUAN TRỌNG: Lớp phủ hoàn toàn TRONG SUỐT ----- */
+    background: transparent;
+    backdrop-filter: none; /* Không làm mờ */
+
+    z-index: 2000; /* Đảm bảo modal ở trên cùng */
+    display: none; /* Ban đầu ẩn */
+    align-items: center; /* Để căn giữa .modal-content */
+    justify-content: center; /* Để căn giữa .modal-content */
+    opacity: 0;
+    transition: opacity var(--transition-speed) var(--transition-easing); /* Transition cho opacity của content */
+
+    /* ----- QUAN TRỌNG: Chặn tương tác với các phần tử bên dưới ----- */
+    pointer-events: auto;
+}
+
+.modal#loading-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* 2. Nội dung modal (.modal-content.loading-modal-content) - Giữ phong cách nhỏ gọn, nhẹ nhàng */
+.modal#loading-modal .modal-content.loading-modal-content {
+    background: var(--card-bg-light);
+    color: var(--text-light);
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); /* Bóng đổ để nổi bật trên nền trang (dù nền trang không bị mờ) */
+    padding: 20px 25px;
+    max-width: 300px; /* Giữ kích thước nhỏ gọn */
+    /* Không cần border nếu đã có box-shadow đủ để phân biệt */
+    /* border: 1px solid var(--border-color-light); */
+    text-align: center;
+
+    /* Hoạt ảnh xuất hiện cho box nội dung */
+    transform: scale(0.9); /* Bắt đầu nhỏ hơn một chút */
+    opacity: 0; /* Bắt đầu trong suốt */
+    transition: transform var(--transition-speed-slow) cubic-bezier(0.18, 0.89, 0.32, 1.28),
+                opacity var(--transition-speed-slow) var(--transition-easing);
+    transition-delay: 0s; /* Không cần delay nếu lớp phủ chính đã trong suốt */
+    /* Đảm bảo nội dung modal (nếu có nút) có thể nhận sự kiện */
+    pointer-events: auto;
+}
+
+.modal#loading-modal.active .modal-content.loading-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+body.dark-mode .modal#loading-modal .modal-content.loading-modal-content {
+    background: var(--card-bg-dark);
+    color: var(--text-dark);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+    /* border: 1px solid var(--border-color-dark); */
+}
+
+.modal#loading-modal .modal-content.loading-modal-content .modal-header {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 15px;
+}
+
+.modal#loading-modal .modal-content.loading-modal-content .modal-header h2 {
+    color: var(--primary-color);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-header h2 {
+    color: var(--secondary-color);
+}
+
+.modal#loading-modal .modal-content.loading-modal-content .modal-body {
+    padding: 0;
+}
+
+/* Spinner "Chấm Sáng Tinh Tế" */
+.soft-fade-spinner {
+    width: 22px;
+    height: 22px;
+    margin: 0 auto 12px auto;
+    position: relative;
+}
+
+.soft-fade-spinner::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    animation: softFade 1.3s infinite ease-in-out;
+}
+
+body.dark-mode .soft-fade-spinner::before {
+    background-color: var(--secondary-color);
+}
+
+@keyframes softFade { /* Giữ nguyên keyframes softFade */
+    0%, 100% {
+        transform: scale(0.5);
+        opacity: 0.4;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+}
+
+.modal#loading-modal .modal-content.loading-modal-content .modal-body p#loading-message {
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-light);
+    opacity: 0.8;
+}
+body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-body p#loading-message {
+    color: var(--text-dark);
+}
+
+/* Ẩn các spinner và footer không liên quan */
+.modal#loading-modal .modal-content.loading-modal-content .fas.fa-spinner,
+.modal#loading-modal .modal-content.loading-modal-content .elegant-spinner,
+.modal#loading-modal .modal-content.loading-modal-content .pulsating-dots-spinner,
+.modal#loading-modal .modal-content.loading-modal-content .energy-wave-spinner,
+.modal#loading-modal .modal-content.loading-modal-content .modal-footer {
+    display: none !important;
+}
         .warning-modal-content { background: var(--warning-bg-light); padding-top: 25px; padding-bottom: 25px; }
         body.dark-mode .warning-modal-content { background: var(--warning-bg-dark); }
         .warning-modal-content .modal-header h2 { color: var(--warning-text-light); font-size: 19px; }
@@ -863,46 +985,45 @@
 
 
         /* Điều chỉnh đáp ứng */
-        @media (max-width: 900px) { /* Breakpoint from Index.html for sidebar behavior */
-            .sidebar {
-                transform: translateX(-100%);
-                width: 220px; /* Sidebar width on mobile when open */
-                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
-                z-index: 1005; /* Ensure mobile sidebar is above other content, but below navbar */
-            }
+@media (max-width: 900px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 220px; /* Sidebar width on mobile when open */
+        box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+        z-index: 1007; /* << THAY ĐỔI Ở ĐÂY: Đồng bộ z-index hoặc đặt cao hơn navbar */
+    }
             .sidebar.open {
                 transform: translateX(0);
             }
-            .sidebar.collapsed { /* When in desktop collapsed state but viewed on mobile */
-                transform: translateX(-100%); /* Still hidden */
+            .sidebar.collapsed {
+                transform: translateX(-100%);
             }
              .sidebar.open .logo h1, .sidebar.open .menu a span {
                 opacity: 1;
-                max-width: 100px; /* Or original max-width */
+                max-width: 100px;
             }
              .sidebar.open .logo h1 {
-                font-size: 18px; /* Adjust if needed */
+                font-size: 18px;
             }
 
             .main-container {
-                margin-left: 0; /* Full width on mobile when sidebar is hidden */
+                margin-left: 0;
             }
-            .main-container.collapsed { /* This class might be applied from desktop state */
-                margin-left: 0; /* Override desktop collapsed margin */
+            .main-container.collapsed {
+                margin-left: 0;
             }
-            .toggle-btn { display: none; } /* Hide desktop toggle */
+            .toggle-btn { display: none; }
             .mobile-menu-btn {
-                 display: flex !important; /* Show mobile toggle, ensure it overrides initial display:none */
+                 display: flex !important;
             }
             .navbar {
-                /* z-index must be higher than mobile sidebar */
                 z-index: 1006;
             }
         }
 
         @media (max-width: 767px) {
             /* Original responsive styles from yeucaughepxe.html */
-            .navbar { height: 45px; padding: 0 10px; } /* Original padding */
+            .navbar { height: 45px; padding: 0 10px; }
             .navbar .logo h1 { font-size: 16px; }
             .navbar .tabs {
                 display: none; flex-direction: column; position: fixed; top: 45px;
@@ -911,16 +1032,15 @@
                 padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
                 opacity: 0; transform: translateY(-10px);
                 transition: opacity var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
-                z-index: 990; /* Below navbar */
+                z-index: 990;
             }
             body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
             .navbar .tabs.active { display: flex; opacity: 1; transform: translateY(0); }
             .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
-            .hamburger { display: block; } /* This is yeucaughepxe's hamburger for navbar tabs, not the new .mobile-menu-btn */
+            .hamburger { display: block; }
             .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
 
-            /* Adjust .main-container for mobile if sidebar is NOT open */
-            .main-container { margin-top: 45px; padding: 10px; gap: 15px; margin-left: 0; } /* Ensure margin-left is 0 */
+            .main-container { margin-top: 45px; padding: 10px; gap: 15px; margin-left: 0; }
 
             .form-container, .grid-container, .summary-section, .chart-card { padding: 12px; border-radius: 8px; animation-delay: 0.1s; }
             .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 { font-size: 15px; margin-bottom: 8px; }
@@ -934,7 +1054,7 @@
 
             .table-wrapper { max-height: calc(100vh - 300px); }
             table { display: block; min-width: 0; font-size: 12px; }
-            thead { display: none; } /* Keep thead hidden on mobile as per original design */
+            thead { display: none; }
             tbody, tr { display: block; }
             tr {
                 margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
@@ -970,34 +1090,34 @@
 
             /* Modal adjustments for mobile */
             .modal-content {
-                max-width: calc(100% - 20px); /* Ensure modal content is not too wide on small screens */
-                width: calc(100% - 20px); /* If JS sets modal to full width of a small table, content should still be constrained */
+                max-width: calc(100% - 20px);
+                width: calc(100% - 20px);
                 padding: 15px;
-                max-height: 85vh; /* Adjust for smaller screens */
+                max-height: 85vh;
             }
             .modal-header h2 { font-size: 17px; }
-            .modal-body { font-size: 13px; /* max-height is now controlled by .modal-content */ }
+            .modal-body { font-size: 13px; }
             .modal-btn { padding: 8px 15px; font-size: 13px; }
 
 
             #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
             .notification { bottom: 50px; right: 10px; padding: 10px 15px; font-size: 13px; width: calc(100% - 20px); }
 
-            .mobile-menu-btn { /* Sidebar toggle button, now in navbar */
+            .mobile-menu-btn {
                  width: 30px;
                  height: 30px;
                  font-size: 13px;
-                 margin-right: 8px; /* Adjust margin for smaller screens if needed */
+                 margin-right: 8px;
             }
         }
 
-        @media (min-width: 768px) and (max-width: 900px) { /* Tablet range where desktop sidebar logic might apply */
+        @media (min-width: 768px) and (max-width: 900px) {
              .main-container {
                 /* margin-left will be controlled by JS (200px or 60px) */
             }
         }
 
-        @media (min-width: 768px) { /* Original tablet+ styles from yeucaughepxe */
+        @media (min-width: 768px) {
             .main-container:not(.collapsed) {
                  margin-left: 200px;
             }
@@ -1029,7 +1149,7 @@
         #chic-upload-wrapper.file-selected {
             border-style: solid;
             border-color: var(--primary-color);
-            background-color: var(--card-bg-light); /* Nền của wrapper khi có file */
+            background-color: var(--card-bg-light);
         }
         body.dark-mode #chic-upload-wrapper.file-selected {
             border-color: var(--secondary-color);
@@ -1052,6 +1172,7 @@
         #chic_ocr_status .fa-spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         /* --- END CHIC FILE UPLOAD STYLES --- */
+    </style>
     </style>
 </head>
 <body data-theme="light">
@@ -1267,20 +1388,17 @@
         </div>
     </div>
 
-    <div class="modal" id="loading-modal">
-        <div class="modal-content loading-modal-content">
-            <div class="modal-header">
-                <h2 id="loading-title">Đang Tải Dữ Liệu...</h2>
-            </div>
-            <div class="modal-body">
-                <i class="fas fa-spinner fa-spin"></i> <p id="loading-message">Vui lòng chờ trong giây lát.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn primary" id="loading-close-btn" onclick="closeModal('loading-modal')" style="display: none;">Đóng</button>
-            </div>
+<div class="modal" id="loading-modal">
+    <div class="modal-content loading-modal-content">
+        <div class="modal-header">
+            <h2 id="loading-title">Đang Gửi Dữ Liệu</h2>
+        </div>
+        <div class="modal-body">
+            <div class="soft-fade-spinner"></div>
+            <p id="loading-message">Vui lòng chờ trong giây lát...</p>
         </div>
     </div>
-
+</div>
     <div class="modal" id="pending-invoice-warning-modal">
         <div class="modal-content warning-modal-content">
             <div class="modal-header">
@@ -1314,34 +1432,27 @@ let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN";
-const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic'; // MODIFIED: Use key from yeucaughepxe.html
+const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
 
-const labelMap = { // From a.html, more comprehensive
+const labelMap = {
     "ten_ban_hang": "Tên Tư Vấn Bán Hàng", "ten_khach_hang": "Tên Khách Hàng",
     "dong_xe": "Dòng Xe", "phien_ban": "Phiên Bản", "ngoai_that": "Ngoại Thất",
     "noi_that": "Nội Thất", "so_don_hang": "Số Đơn Hàng", "ngay_coc": "Ngày Cọc",
     "thoi_gian_nhap": "Thời Gian Nhập", "trang_thai": "Trạng Thái",
     "thoi_gian_ghep": "Thời Gian Ghép", "so_ngay_ghep": "Số Ngày Ghép",
     "ket_qua": "Kết Quả", "VIN": "VIN"
-    // Added chic_file_input for preview, if needed, though not in a.html's map
-    // "chic_file_input": "Ảnh Ủy Nhiệm Chi"
 };
 
-// --- Sidebar JavaScript from Index.html / a.html ---
+// --- Sidebar JavaScript ---
 function toggleSidebarDesktop() {
-    if (window.innerWidth > 900) { // Only for desktop
+    if (window.innerWidth > 900) {
         const sidebar = document.getElementById("sidebar");
-        const mainContainer = document.getElementById("main-container"); // Target .main-container
+        const mainContainer = document.getElementById("main-container");
         if (sidebar && mainContainer) {
             sidebar.classList.toggle("collapsed");
             mainContainer.classList.toggle("collapsed");
-            // Save state to localStorage
-            if (sidebar.classList.contains("collapsed")) {
-                localStorage.setItem('sidebarState', 'collapsed');
-            } else {
-                localStorage.setItem('sidebarState', 'expanded');
-            }
+            localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
         }
     }
 }
@@ -1350,7 +1461,6 @@ function toggleMobileSidebar() {
     const sidebar = document.getElementById("sidebar");
     if (sidebar) {
         sidebar.classList.toggle("open");
-        // If opening on mobile, ensure it's not in desktop collapsed state
         if (sidebar.classList.contains("open")) {
             sidebar.classList.remove("collapsed");
         }
@@ -1359,30 +1469,25 @@ function toggleMobileSidebar() {
 
 function setActiveSidebarLink() {
     const navLinks = document.querySelectorAll("#navMenu a");
-    // Get current page filename (e.g., "yeucaughepxe.html")
     const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
-
     navLinks.forEach(link => {
         link.classList.remove("active");
-        // Check if the link's href matches the current page
         if (link.getAttribute('href') === currentPageFile) {
             link.classList.add("active");
         }
     });
 }
-// --- End Sidebar JavaScript ---
-
 
 // --- DOMContentLoaded ---
 document.addEventListener("DOMContentLoaded", function () {
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "index.html"; // Redirect if not logged in
+        window.location.href = "index.html";
     } else {
         const consultantInput = document.getElementById("ten_ban_hang");
         if (consultantInput) {
             consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
         }
-        loadFormDraft(); // From a.html, will use the new FORM_DRAFT_KEY
+        loadFormDraft();
 
         const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
         if (cachedHistoryData) {
@@ -1401,10 +1506,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
         setupScrollSync();
-        applyInitialTheme(); // Applies theme for the whole page including sidebar
+        applyInitialTheme();
         initScrollToTopButton();
 
-        // Initialize sidebar state from localStorage for desktop
         if (window.innerWidth > 900) {
             const sidebar = document.getElementById("sidebar");
             const mainContainer = document.getElementById("main-container");
@@ -1416,12 +1520,11 @@ document.addEventListener("DOMContentLoaded", function () {
                  mainContainer?.classList.remove("collapsed");
             }
         }
-        setActiveSidebarLink(); // Set active link for the new sidebar
+        setActiveSidebarLink();
 
-        // Add click outside to close mobile sidebar
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); // The new sidebar's mobile toggle
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
             if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
                 if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
                     sidebar.classList.remove('open');
@@ -1429,7 +1532,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // === CHIC FILE UPLOAD UI INITIALIZATION (from yeucaughepxe.html) ===
         const chicWrapper = document.getElementById('chic-upload-wrapper');
         const chicInput = document.getElementById('chic_file_input');
         const chicPrompt = document.getElementById('chic-upload-prompt');
@@ -1451,43 +1553,29 @@ document.addEventListener("DOMContentLoaded", function () {
             }, false);
         }
         if (chicRemoveBtn) { chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); }); }
-        // === END CHIC FILE UPLOAD UI INITIALIZATION ===
 
-        // =======================================================================
-        // ===== BẮT ĐẦU ĐOẠN MÃ BỔ SUNG ĐỂ KHÓA TRƯỜNG "NGÀY CỌC" ============
-        // =======================================================================
         const ngayCocInput = document.getElementById('ngay_coc');
         if (ngayCocInput) {
-            ngayCocInput.setAttribute('readonly', true); // Make it visually and functionally readonly
-
-            // Prevent focus if it's strictly not needed, though readonly should handle most cases.
-            ngayCocInput.addEventListener('focus', function(event) {
-                this.blur();
-            });
-            ngayCocInput.addEventListener('click', function(event) {
-                this.blur();
-            });
+            ngayCocInput.setAttribute('readonly', true);
+            ngayCocInput.addEventListener('focus', function(event) { this.blur(); });
+            ngayCocInput.addEventListener('click', function(event) { this.blur(); });
         }
-        // =======================================================================
-        // ===== KẾT THÚC ĐOẠN MÃ BỔ SUNG ĐỂ KHÓA TRƯỜNG "NGÀY CỌC" ===========
-        // =======================================================================
     }
 });
-// --- Quản lý Giao diện (Theme toggle from a.html) ---
+
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
-    const themeIcon = document.getElementById("theme-icon"); // yeucaughepxe's theme icon
+    const themeIcon = document.getElementById("theme-icon");
     if (themeIcon) {
         themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
     }
-    // Update chart colors if charts are already initialized (relevant for sidebar integration)
     if (typeof Chart !== "undefined" && (carChart || carVersionChart || advisorChart)) {
         updateChartColors();
     }
 }
 
-function toggleTheme() { // This is yeucaughepxe's theme toggle function
+function toggleTheme() {
     document.body.classList.toggle("dark-mode");
     const isDarkMode = document.body.classList.contains("dark-mode");
     localStorage.setItem("theme", isDarkMode ? "dark" : "light");
@@ -1495,17 +1583,15 @@ function toggleTheme() { // This is yeucaughepxe's theme toggle function
     if (themeIcon) {
         themeIcon.className = isDarkMode ? "fas fa-sun" : "fas fa-moon";
     }
-    // Update chart colors if charts exist
     if (typeof Chart !== "undefined" && (carChart || carVersionChart || advisorChart)) {
         updateChartColors();
     }
 }
 
-// --- Điều hướng và Phiên (from a.html) ---
 function logout() {
     sessionStorage.clear();
     localStorage.removeItem(FORM_DRAFT_KEY);
-    localStorage.removeItem('sidebarState'); // Clear sidebar state on logout
+    localStorage.removeItem('sidebarState');
     globalHistoryData = [];
     detailedStatsData = [];
     window.location.href = "index.html";
@@ -1516,12 +1602,10 @@ function goBack() {
     window.location.href = "index.html";
 }
 
-// --- Quản lý Nháp Biểu mẫu (from a.html, FORM_DRAFT_KEY updated) ---
 function saveFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (!form) return;
     const currentFormData = {};
-    // Include ngay_coc if it's filled by OCR, exclude file input
     form.querySelectorAll("input:not([readonly]):not([type='file']), select, input[readonly][name='ngay_coc']").forEach(input => {
         if (input.name) currentFormData[input.name] = input.value;
     });
@@ -1544,8 +1628,6 @@ function loadFormDraft() {
                     }
                 }
             });
-            // OCR related fields like 'ngay_coc' will be loaded here if they were in the draft.
-            // The file itself is not stored, so user needs to re-select.
             showNotification("Đã khôi phục dữ liệu nháp (Ảnh UNC cần chọn lại nếu có).", "info", 3500);
         } catch (e) {
             console.error("Lỗi khi parse dữ liệu nháp:", e);
@@ -1557,9 +1639,8 @@ function loadFormDraft() {
 function clearFormDraft() {
     const form = document.getElementById("vinfast-form");
     if (form) {
-        // Clear all form inputs except readonly (ten_ban_hang) and file inputs
         form.querySelectorAll("input:not([readonly]):not([type='file']), select").forEach(input => {
-             if (input.name !== 'ten_ban_hang') { // Keep ten_ban_hang
+             if (input.name !== 'ten_ban_hang') {
                 if (input.tagName === 'SELECT') {
                     input.selectedIndex = 0;
                 } else {
@@ -1567,38 +1648,32 @@ function clearFormDraft() {
                 }
             }
         });
-        // Explicitly clear ngay_coc as it's readonly but we want to clear it
         const ngayCocInput = form.elements['ngay_coc'];
         if (ngayCocInput) ngayCocInput.value = "";
 
         const dongXeSelect = form.elements['dong_xe'];
         if (dongXeSelect) {
-            restrictVersion(dongXeSelect); // Reset version select based on car model
+            restrictVersion(dongXeSelect);
         }
-        resetChicUploadUI(); // Also reset the file upload UI
+        resetChicUploadUI();
     }
     localStorage.removeItem(FORM_DRAFT_KEY);
     showNotification("Đã xóa dữ liệu nháp.", "info", 2000);
 }
 
-// --- Định dạng Ngày & Giờ (from a.html) ---
 function formatDateTime(dtString) {
     if (!dtString) return "N/A";
     const d = new Date(dtString);
-    if (isNaN(d.getTime())) return dtString; // Return original if invalid
-    // Format to DD/MM/YYYY HH:MM (seconds can be added if needed)
+    if (isNaN(d.getTime())) return dtString;
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-function formatDateForFilter(dtString) { // Used for detailed stats grouping
+function formatDateForFilter(dtString) {
     if (!dtString) return "";
     const d = new Date(dtString);
-    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0]; // YYYY-MM-DD
+    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
 }
 
-// --- Quản lý Modal (SỬA ĐỔI VÀ BỔ SUNG) ---
-
-// HÀM MỚI: Hiển thị modal trên một phần tử cụ thể
 function showModalOverTarget(modalId, targetElementOrSelector, title, message) {
     const modal = document.getElementById(modalId);
     const targetElement = typeof targetElementOrSelector === 'string' ?
@@ -1607,17 +1682,16 @@ function showModalOverTarget(modalId, targetElementOrSelector, title, message) {
 
     if (!modal || !targetElement) {
         console.error("Modal hoặc phần tử mục tiêu không tìm thấy. Modal ID:", modalId, "Selector:", targetElementOrSelector);
-        // Dự phòng: Hiển thị modal toàn màn hình kiểu cũ
         if (modalId === 'loading-modal' && title && message) {
-            showOldLoadingModal(title, message); // Sử dụng hàm loading modal toàn màn hình cũ
-        } else if (modal) { // Fallback chung cho các modal khác nếu target không có
+            showOldLoadingModal(title, message);
+        } else if (modal) {
             modal.style.position = 'fixed';
             modal.style.top = '0';
             modal.style.left = '0';
             modal.style.width = '100%';
             modal.style.height = '100%';
-            modal.style.borderRadius = ''; // Reset
-            modal.style.overflow = ''; // Reset
+            modal.style.borderRadius = '';
+            modal.style.overflow = '';
             modal.classList.add('active');
             if (typeof adjustModalScroll === 'function') adjustModalScroll(modal);
         }
@@ -1626,155 +1700,123 @@ function showModalOverTarget(modalId, targetElementOrSelector, title, message) {
 
     const rect = targetElement.getBoundingClientRect();
 
-    modal.style.position = 'fixed'; // Vẫn là fixed để đảm bảo nổi trên mọi thứ
+    modal.style.position = 'fixed';
     modal.style.top = `${rect.top}px`;
     modal.style.left = `${rect.left}px`;
     modal.style.width = `${rect.width}px`;
     modal.style.height = `${rect.height}px`;
-    modal.style.borderRadius = getComputedStyle(targetElement).borderRadius; // Lấy bo góc của target
-    modal.style.overflow = 'hidden'; // Ngăn nội dung modal tràn ra ngoài kích thước mới
+    modal.style.borderRadius = getComputedStyle(targetElement).borderRadius;
+    modal.style.overflow = 'hidden';
 
-    // Cập nhật nội dung cho loading modal (nếu là loading modal)
     if (modalId === 'loading-modal') {
         const titleEl = modal.querySelector("#loading-title");
         const messageEl = modal.querySelector("#loading-message");
-        const closeBtn = modal.querySelector("#loading-close-btn");
         if (titleEl && title) titleEl.textContent = title;
         if (messageEl && message) messageEl.textContent = message;
-        if (closeBtn) closeBtn.style.display = "none";
     }
-    // Cập nhật nội dung cho success modal (nếu là success modal)
     else if (modalId === 'success-modal') {
         const headerTitleEl = modal.querySelector('.modal-header h2');
-        const bodyMessageEl = modal.querySelector('.modal-body p:first-of-type'); // Giả sử p đầu tiên là thông báo chính
-        if (headerTitleEl && title) headerTitleEl.innerHTML = title; // Cho phép HTML nếu title có icon
+        const bodyMessageEl = modal.querySelector('.modal-body p:first-of-type');
+        if (headerTitleEl && title) headerTitleEl.innerHTML = title;
         if (bodyMessageEl && message) bodyMessageEl.textContent = message;
     }
-    // (Thêm else if cho các modal khác nếu cần cập nhật nội dung tương tự)
 
     modal.classList.add("active");
 
-    // Điều chỉnh modal-content để phù hợp với kích thước modal mới
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
-        // Đặt lại max-width và width để nội dung có thể co giãn bên trong modal nhỏ hơn
-        modalContent.style.maxWidth = '95%'; // Ví dụ: 95% chiều rộng của modal (vùng phủ)
-        modalContent.style.width = 'auto';   // Để nó tự co theo nội dung, nhưng không vượt quá maxWidth
-        modalContent.style.maxHeight = `${Math.max(100, rect.height - 40)}px`; // Chiều cao tối đa cho nội dung
-        modalContent.style.overflowY = 'auto'; // Cho phép cuộn nếu cần
-        // Reset transform để tránh lỗi hiển thị khi modal được định vị lại
+        modalContent.style.maxWidth = '95%';
+        modalContent.style.width = 'auto';
+        modalContent.style.maxHeight = `${Math.max(100, rect.height - 40)}px`;
+        modalContent.style.overflowY = 'auto';
         modalContent.style.transform = 'translateY(0) scale(1)';
         modalContent.style.opacity = '1';
+        modalContent.style.transitionDelay = '0s';
     }
 }
 
-
-// Hàm loading modal toàn màn hình cũ (đổi tên từ showLoadingModal)
 function showOldLoadingModal(title = "Đang xử lý...", message = "Vui lòng chờ trong giây lát.") {
     const modal = document.getElementById("loading-modal");
     if (modal) {
-        // Reset các style có thể đã được đặt bởi showModalOverTarget
         modal.style.position = 'fixed';
         modal.style.top = '0';
         modal.style.left = '0';
         modal.style.width = '100%';
         modal.style.height = '100%';
         modal.style.borderRadius = '';
-        modal.style.overflow = ''; // Hoặc giá trị CSS mặc định của bạn
+        modal.style.overflow = '';
 
         const titleEl = modal.querySelector("#loading-title");
         const messageEl = modal.querySelector("#loading-message");
-        const closeBtn = modal.querySelector("#loading-close-btn");
-        if (titleEl) titleEl.textContent = title;
-        if (messageEl) messageEl.textContent = message;
-        if (closeBtn) closeBtn.style.display = "none";
 
-        const modalContent = modal.querySelector('.modal-content');
+        const modalContent = modal.querySelector('.modal-content.loading-modal-content');
         if (modalContent) {
-            // Reset style cho modal-content về mặc định toàn màn hình
-            modalContent.style.maxWidth = '480px'; // Hoặc giá trị CSS gốc
-            modalContent.style.width = '100%';    // Hoặc giá trị CSS gốc
-            modalContent.style.maxHeight = '';   // Xóa giới hạn chiều cao cụ thể
-            modalContent.style.overflowY = '';   // Xóa overflow cụ thể
-             // Đảm bảo transform được áp dụng lại cho hiệu ứng xuất hiện
-            modalContent.style.transform = 'translateY(-20px) scale(0.95)';
+            modalContent.style.maxWidth = '';
+            modalContent.style.width = '';
+            modalContent.style.maxHeight = '';
+            modalContent.style.overflowY = '';
+            modalContent.style.transform = 'scale(0.9)';
             modalContent.style.opacity = '0';
-             setTimeout(() => { // Thêm một chút trễ để đảm bảo reset rồi mới active
-                modalContent.style.transform = 'translateY(0) scale(1)';
+             setTimeout(() => {
+                modalContent.style.transform = 'scale(1)';
                 modalContent.style.opacity = '1';
             }, 10);
         }
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
 
         modal.classList.add("active");
-        if (typeof adjustModalScroll === 'function') adjustModalScroll(modal); // Hàm căn chỉnh cuộn cũ
     }
 }
 
-// Sửa đổi hàm closeModal để reset styles và trạng thái của modal-content
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove("active");
-
-        // Reset styles của modal về trạng thái toàn màn hình mặc định
         modal.style.top = '0';
         modal.style.left = '0';
         modal.style.width = '100%';
         modal.style.height = '100%';
         modal.style.borderRadius = '';
-        modal.style.overflow = ''; // Reset overflow
+        modal.style.overflow = '';
 
         const modalContent = modal.querySelector('.modal-content');
         if (modalContent) {
-            // Reset style cho modal-content về mặc định toàn màn hình
-            modalContent.style.maxWidth = '480px'; // Hoặc giá trị CSS gốc
-            modalContent.style.width = '100%';    // Hoặc giá trị CSS gốc, thường là 90% hoặc auto tùy theo CSS
-            modalContent.style.maxHeight = '';   // Xóa giới hạn chiều cao cụ thể
-            modalContent.style.overflowY = '';   // Xóa overflow cụ thể
-
-            // Quan trọng: Reset lại transform và opacity để hiệu ứng hoạt động đúng cho lần mở tiếp theo
+            modalContent.style.maxWidth = '';
+            modalContent.style.width = '';
+            modalContent.style.maxHeight = '';
+            modalContent.style.overflowY = 'auto';
             modalContent.style.transform = 'translateY(-20px) scale(0.95)';
             modalContent.style.opacity = '0';
-        }
-         // Nếu có nút đóng đặc biệt trong loading modal, đảm bảo nó được ẩn đi
-        if (modalId === 'loading-modal') {
-            const closeBtn = modal.querySelector("#loading-close-btn");
-            if (closeBtn) closeBtn.style.display = "none";
+            if(modalContent.classList.contains('loading-modal-content')) {
+                modalContent.style.maxWidth = '';
+                modalContent.style.width = '';
+            }
         }
     }
 }
 
-
 function adjustModalScroll(modalElementOrId) {
     const modal = typeof modalElementOrId === 'string' ? document.getElementById(modalElementOrId) : modalElementOrId;
     if (!modal || !modal.classList.contains('active')) return;
-
-    // Chỉ áp dụng logic này nếu modal đang ở chế độ toàn màn hình (không có width/height cụ thể từ getBoundingClientRect)
     if (modal.style.width === '100%' || modal.style.width === '') {
         const modalBody = modal.querySelector(".modal-body");
         if (!modalBody) return;
-
         const isShortContentModal = modal.querySelector('.loading-modal-content') ||
                                   modal.querySelector('.warning-modal-content') ||
                                   modal.querySelector('.success-modal-content');
-
         if (isShortContentModal) {
             modalBody.style.overflowY = 'hidden';
         } else {
             const modalContent = modal.querySelector(".modal-content");
             if (modalContent) {
-                // Kiểm tra cuộn dựa trên .modal-content thay vì .modal-body
                 const isScrollable = modalContent.scrollHeight > modalContent.clientHeight;
                 modalContent.style.overflowY = isScrollable ? 'auto' : 'hidden';
             }
         }
     }
-    // Nếu modal có width/height cụ thể (được đặt bởi showModalOverTarget),
-    // việc cuộn đã được xử lý trong .modal-content bởi CSS hoặc trong showModalOverTarget.
 }
 
-
-// --- Chỗ dành sẵn cho Bảng (from a.html) ---
 function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circle") {
     const tbody = document.getElementById(tableBodyId);
     if (!tbody) return;
@@ -1782,7 +1824,6 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
-// --- Lấy và Hiển thị Dữ liệu (from a.html) ---
 function fetchHistory() {
     setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
     const detailedStatsSection = document.getElementById('detailed-stats-section');
@@ -1800,21 +1841,17 @@ function fetchHistory() {
             const chuaghep = data.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
-
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-
             renderHistoryTable(dataForHistoryTable);
             renderSummary(globalHistoryData);
             prepareDetailedStats(globalHistoryData);
             checkPendingInvoicesWarning();
-
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
                 renderDetailedStatsTable(detailedStatsData);
                 renderCharts(detailedStatsData);
             }
-            closeModal("loading-modal");
         })
         .catch(error => {
             console.error("Lỗi khi tải dữ liệu lịch sử:", error);
@@ -1822,74 +1859,62 @@ function fetchHistory() {
             if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
                  setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle");
             }
-            // Cập nhật loading modal khi có lỗi
             const loadingModal = document.getElementById("loading-modal");
             if (loadingModal?.classList.contains("active")) {
                 const loadingModalTitle = loadingModal.querySelector("#loading-title");
                 const loadingModalMessage = loadingModal.querySelector("#loading-message");
-                const loadingCloseBtn = loadingModal.querySelector("#loading-close-btn");
                 if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Tải Dữ Liệu";
                 if (loadingModalMessage) loadingModalMessage.textContent = `Không thể tải: ${error.message}. Vui lòng thử lại.`;
-                if (loadingCloseBtn) loadingCloseBtn.style.display = "block"; // Cho phép đóng modal lỗi
             }
         });
 }
 
 function refreshData() {
-    // Sử dụng showModalOverTarget để hiển thị loading modal trên bảng #history-section
-    const targetTableArea = document.getElementById('history-section');
-    if (targetTableArea && targetTableArea.offsetParent !== null) { // Kiểm tra xem target có hiển thị không
-      showModalOverTarget("loading-modal", targetTableArea, "Đang Làm Mới Dữ Liệu...", "Vui lòng chờ trong giây lát.");
-    } else { // Nếu bảng không hiển thị, dùng modal toàn màn hình cũ
-      showOldLoadingModal("Đang Làm Mới Dữ Liệu...", "Vui lòng chờ trong giây lát.");
-    }
-    fetchHistory(); // fetchHistory sẽ tự đóng modal khi hoàn tất hoặc lỗi
+    fetchHistory();
     showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
 }
 
-function getExteriorColorStyle(exteriorValue) { // From a.html
-    const outlineStyle = "text-shadow: -1px -1px 0 #808080, 1px -1px 0 #808080, -1px 1px 0 #808080, 1px 1px 0 #808080, 0 0 5px #808080;";
+function getExteriorColorStyle(exteriorValue) {
     const specificFontWeight = `font-weight: 600;`;
     const defaultFontWeight = `font-weight: normal;`;
-    let colorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`; // Mặc định
+    let colorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`;
 
     if (!exteriorValue) return colorStyle;
     const lowerExteriorValue = exteriorValue.toLowerCase();
 
-    // Ánh xạ màu cụ thể
     const colorMap = {
-        "brahminy white (ce18)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`, // White with dark outline for visibility
+        "brahminy white (ce18)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
         "sunset orb (ce1a)": `color: var(--exterior-orange-text); ${specificFontWeight}`,
         "crimson red (ce1m)": `color: var(--exterior-red-text); ${specificFontWeight}`,
         "vinfast blue (ce1n)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "neptune grey (ce14)": `color: #778899; ${specificFontWeight}`, // Slate Gray
-        "jet black (ce11)": `color: var(--exterior-black-text); ${specificFontWeight}`, // Sẽ dùng biến CSS
+        "neptune grey (ce14)": `color: #778899; ${specificFontWeight}`,
+        "jet black (ce11)": `color: var(--exterior-black-text); ${specificFontWeight}`,
         "electric blue (ce1j)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "zenith grey (ce1v)": `color: #B0C4DE; ${specificFontWeight}`, // Light Steel Blue
+        "zenith grey (ce1v)": `color: #B0C4DE; ${specificFontWeight}`,
         "jet black roof- summer yellow body (111u)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
         "brahminy white roof- aquatic azure body (181y)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
         "brahminy white roof- rose pink body (1821)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
         "brahminy white roof - iris berry body (181x)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
-        "urbant mint (ce1w)": `color: #3CB371; ${specificFontWeight}`, // Medium Sea Green
+        "urbant mint (ce1w)": `color: #3CB371; ${specificFontWeight}`,
         "vinbus green (ce2b)": `color: var(--exterior-green-text); ${specificFontWeight}`,
-        "deep ocean (ce1h)": `color: #005A9C; ${specificFontWeight}`, // Darker blue, more distinct
+        "deep ocean (ce1h)": `color: #005A9C; ${specificFontWeight}`,
         "iris berry (ce1x)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
         "zenith grey-desat silver roof (171v)": `color: var(--exterior-grey-text); ${specificFontWeight}`,
         "urbant mint green - desat silv (171w)": `color: var(--exterior-green-text); ${specificFontWeight}`,
         "ivy green-desat silver roof (1722)": `color: var(--exterior-green-text); ${specificFontWeight}`,
         "atlantic blue-aquatic azure ro (1y26)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "jet black-champagne creme roof (2311)": `color: var(--exterior-yellow-text); ${specificFontWeight}`, // Champagne part
+        "jet black-champagne creme roof (2311)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
         "infinity blanc _ silky white r (2418)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
         "champagne creme - matte champa (2523)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "jet black - graphite roof (2811)": `color: var(--exterior-grey-text); ${specificFontWeight}`, // Graphite part
-        "crimson velvet - mystery bronz (2927)": `color: var(--exterior-red-text); ${specificFontWeight}`, // Crimson part
+        "jet black - graphite roof (2811)": `color: var(--exterior-grey-text); ${specificFontWeight}`,
+        "crimson velvet - mystery bronz (2927)": `color: var(--exterior-red-text); ${specificFontWeight}`,
         "ivy_green_gne (ce22)": `color: var(--exterior-green-text); ${specificFontWeight}`,
         "champagne_creme_ylg (ce23)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
         "crimson red - jet black roof (111m)": `color: var(--exterior-red-text); ${specificFontWeight}`,
         "infinity blanc_zenith grey roof (1v18)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
         "deep ocean_jet black roof (111h)": `color: #005A9C; ${specificFontWeight}`,
         "alantic blue_denim blue roof (2a26)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "jet black_mystery bronze roof (2911)": `color: var(--exterior-bronze-text); ${specificFontWeight}`, // Bronze part
+        "jet black_mystery bronze roof (2911)": `color: var(--exterior-bronze-text); ${specificFontWeight}`,
         "champagne creme_infinity blanc roof (1823)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
         "de sat silver ind12007 (ce17)": `color: var(--exterior-grey-text); ${specificFontWeight}`
     };
@@ -1897,7 +1922,6 @@ function getExteriorColorStyle(exteriorValue) { // From a.html
         return colorMap[lowerExteriorValue];
     }
 
-    // Quy tắc dựa trên từ khóa (fallback)
     if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("red")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry") || lowerExteriorValue.includes("pink")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
@@ -1910,23 +1934,21 @@ function getExteriorColorStyle(exteriorValue) { // From a.html
     if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite") || lowerExteriorValue.includes("grey") || lowerExteriorValue.includes("silver")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
     if (lowerExteriorValue.includes("mystery bronz") || lowerExteriorValue.includes("bronze")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
 
-    return colorStyle; // Trả về style mặc định nếu không có match
+    return colorStyle;
 }
 
-
-function getStatusClass(statusText) { // From a.html
+function getStatusClass(statusText) {
     if (!statusText) return 'status-default';
     const lowerStatus = statusText.toLowerCase();
     if (lowerStatus.includes('chờ xuất hóa đơn')) return 'status-pending-invoice';
     if (lowerStatus.includes('đã xuất hóa đơn')) return 'status-invoice-issued';
     if (lowerStatus.includes('chưa tìm thấy vin') || lowerStatus.includes('chưa có')) return 'status-vin-not-found';
-    // Heuristic: if not explicitly negative and somewhat long, assume it's a positive/issued status
     const knownNegativeKeywords = ['chờ', 'chưa', 'không'];
     if (!knownNegativeKeywords.some(keyword => lowerStatus.includes(keyword)) && lowerStatus.length > 5) return 'status-invoice-issued';
     return 'status-default';
 }
 
-function renderSummary(data) { // From a.html
+function renderSummary(data) {
     if (!Array.isArray(data) || data.length === 0) {
         document.getElementById("summary-total").textContent = "0";
         document.getElementById("summary-top-car").textContent = "N/A";
@@ -1943,7 +1965,7 @@ function renderSummary(data) { // From a.html
     document.getElementById("summary-top-advisor").textContent = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "N/A";
 }
 
-function renderHistoryTable(dataToRender) { // From a.html
+function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
     if (!dataToRender || dataToRender.length === 0) {
@@ -1952,9 +1974,9 @@ function renderHistoryTable(dataToRender) { // From a.html
         return;
     }
     tbody.innerHTML = dataToRender.map((row, i) => {
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; // Use a temp ID if order number is missing for some reason
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
         const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
-        const statusText = row["Kết quả"] || "Chưa có"; // Default status if missing
+        const statusText = row["Kết quả"] || "Chưa có";
         const statusClass = getStatusClass(statusText);
         return `
         <tr onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')" style="cursor: pointer;">
@@ -1972,19 +1994,17 @@ function renderHistoryTable(dataToRender) { // From a.html
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
 
-
-function filterHistory() { // From a.html (no direct filters, just renders based on user type)
+function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
     let dataToDisplay = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
     renderHistoryTable(dataToDisplay);
 }
 
-// --- Sắp xếp (from a.html) ---
 let lastSortColumn = '';
 let lastSortDirection = 'asc';
 function sortTable(columnKey) {
-    const dataKey = columnKey; // In a.html, columnKey directly maps to dataKey
+    const dataKey = columnKey;
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
     let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
@@ -1997,9 +2017,9 @@ function sortTable(columnKey) {
     lastSortColumn = dataKey;
 
     dataToSort.sort((a, b) => {
-        let valA = a[dataKey] ?? ""; // Handle potential undefined values
+        let valA = a[dataKey] ?? "";
         let valB = b[dataKey] ?? "";
-        if (dataKey === "STT") { // Special handling for STT if it's based on original index
+        if (dataKey === "STT") {
             const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
             const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
             return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
@@ -2017,7 +2037,6 @@ function sortTable(columnKey) {
     renderHistoryTable(dataToSort);
 }
 
-// --- Hàm Xuất (from a.html) ---
 function exportToExcel() {
     if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -2028,7 +2047,7 @@ function exportToExcel() {
     const dataWithFormattedHeaders = dataToExport.map((row, index) => {
         const newRow = {"STT": index + 1};
         headers.slice(1).forEach(header => {
-            const value = row[header]; // header already matches key from labelMap used in a.html
+            const value = row[header];
             newRow[header] = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(header)) ? formatDateTime(value) : (value ?? "");
         });
         return newRow;
@@ -2046,18 +2065,11 @@ function exportToPDF() {
     const table = document.getElementById('history-table');
     if (!table) return showNotification("Không tìm thấy bảng dữ liệu.", "error", 3000);
 
-    const targetTableArea = document.getElementById('history-section');
-    if (targetTableArea && targetTableArea.offsetParent !== null) {
-      showModalOverTarget("loading-modal", targetTableArea, "Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
-    } else {
-      showOldLoadingModal("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
-    }
+    showOldLoadingModal("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
 
     const exteriorCells = table.querySelectorAll('td[data-label="Ngoại Thất"] span');
     const originalExteriorStyles = [];
     exteriorCells.forEach(cell => { originalExteriorStyles.push(cell.style.cssText); cell.style.textShadow = 'none'; });
-
-    const statusCells = table.querySelectorAll('td[data-label="Trạng Thái"] span.status-badge');
 
     html2canvas(table, { scale: 2, useCORS: true, windowWidth: table.scrollWidth, windowHeight: table.scrollHeight,
         onclone: (documentClone) => {
@@ -2088,7 +2100,6 @@ function exportToPDF() {
     });
 }
 
-// --- Gửi Biểu mẫu (from a.html, uses its `orderId` for redirection) ---
 function previewForm(e) {
     e.preventDefault();
 
@@ -2152,7 +2163,6 @@ function previewForm(e) {
 
     document.getElementById("preview-content").innerHTML = html;
     const previewModal = document.getElementById("preview-modal");
-    // Hiển thị preview-modal toàn màn hình như cũ
     previewModal.style.position = 'fixed';
     previewModal.style.top = '0';
     previewModal.style.left = '0';
@@ -2163,6 +2173,7 @@ function previewForm(e) {
     adjustModalScroll(previewModal);
 }
 let redirectTimeout;
+
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
@@ -2170,13 +2181,7 @@ function confirmSubmit() {
     }
     closeModal("preview-modal");
 
-    // Hiển thị loading modal trên form-section
-    const formSection = document.getElementById('form-section');
-     if (formSection && formSection.offsetParent !== null) {
-        showModalOverTarget("loading-modal", formSection, "Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
-    } else {
-        showOldLoadingModal("Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
-    }
+    showOldLoadingModal("Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
 
     formData["thoi_gian_nhap"] = new Date().toISOString(); formData["trang_thai"] = "Chưa ghép";
     const formDataToSend = new FormData();
@@ -2192,9 +2197,14 @@ function confirmSubmit() {
         .then(() => fetch(apiURL))
         .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
         .then(updatedData => {
-            closeModal("loading-modal"); clearFormDraft(); document.getElementById("vinfast-form").reset();
+            closeModal("loading-modal");
+            clearFormDraft();
+            const formElement = document.getElementById("vinfast-form");
+            if (formElement) formElement.reset();
+
             const consultantInput = document.getElementById("ten_ban_hang");
             if (consultantInput) consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+
             const dongXeSelect = document.getElementById('dong_xe');
             if (dongXeSelect) restrictVersion(dongXeSelect);
             resetChicUploadUI();
@@ -2203,32 +2213,26 @@ function confirmSubmit() {
             globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
 
-            // Hiển thị success modal trên history-section
-            const historySection = document.getElementById('history-section');
-            const successModalTitle = `<i class="fas fa-check-circle" style="margin-right: 8px; color: var(--success-icon-light);"></i> Đã Gửi Dữ Liệu`;
-            const successModalMessage = `Yêu cầu ghép xe của bạn đã được gửi thành công! Bạn sẽ được chuyển đến trang chi tiết sau giây lát.`;
+            const successModal = document.getElementById("success-modal");
+            if (successModal) {
+                const headerTitleEl = successModal.querySelector('.modal-header h2');
+                const bodyMessageEl = successModal.querySelector('.modal-body p:first-of-type');
+                const successIconInHeader = `<i class="fas fa-check-circle" style="margin-right: 8px; color: var(--success-icon-light);"></i>`;
 
-            if (historySection && historySection.offsetParent !== null) {
-                 showModalOverTarget("success-modal", historySection, successModalTitle, successModalMessage);
-            } else { // Fallback cho success modal nếu history section không hiển thị
-                const successModal = document.getElementById("success-modal");
-                if (successModal) {
-                    const headerTitleEl = successModal.querySelector('.modal-header h2');
-                    const bodyMessageEl = successModal.querySelector('.modal-body p:first-of-type');
-                    if (headerTitleEl) headerTitleEl.innerHTML = successModalTitle;
-                    if (bodyMessageEl) bodyMessageEl.textContent = successModalMessage;
+                if (headerTitleEl) headerTitleEl.innerHTML = `${successIconInHeader} Đã Gửi Dữ Liệu`;
+                if (bodyMessageEl) bodyMessageEl.textContent = `Yêu cầu ghép xe của bạn đã được gửi thành công!`;
+                const redirectMsgEl = successModal.querySelector('.modal-body p:nth-of-type(2)');
+                if (redirectMsgEl) redirectMsgEl.textContent = 'Bạn sẽ được chuyển đến trang chi tiết sau giây lát.';
 
-                    successModal.style.position = 'fixed';
-                    successModal.style.top = '0';
-                    successModal.style.left = '0';
-                    successModal.style.width = '100%';
-                    successModal.style.height = '100%';
-                    successModal.style.borderRadius = '';
-                    successModal.classList.add("active");
-                    adjustModalScroll(successModal);
-                }
+                successModal.style.position = 'fixed';
+                successModal.style.top = '0';
+                successModal.style.left = '0';
+                successModal.style.width = '100%';
+                successModal.style.height = '100%';
+                successModal.style.borderRadius = '';
+                successModal.classList.add("active");
+                adjustModalScroll(successModal);
             }
-
 
             const currentUser = sessionStorage.getItem("currentConsultant"); const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
@@ -2242,37 +2246,29 @@ function confirmSubmit() {
             clearTimeout(redirectTimeout);
             redirectTimeout = setTimeout(() => {
                 if (document.getElementById("success-modal")?.classList.contains("active")) {
-                    // Đảm bảo đóng modal trước khi chuyển trang
                     closeModal('success-modal');
                     window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
                 }
             }, 2000);
         })
         .catch(error => {
-            // closeModal("loading-modal"); // Đảm bảo loading modal được đóng
-            // Hiển thị thông báo lỗi trên loading modal nếu nó còn mở, hoặc thông báo toast
             const loadingModal = document.getElementById("loading-modal");
             if (loadingModal?.classList.contains("active")) {
                 const loadingModalTitle = loadingModal.querySelector("#loading-title");
                 const loadingModalMessage = loadingModal.querySelector("#loading-message");
-                const loadingCloseBtn = loadingModal.querySelector("#loading-close-btn");
-
                 if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Gửi Dữ Liệu";
                 if (loadingModalMessage) loadingModalMessage.textContent = `Gửi yêu cầu thất bại: ${error.message}. Vui lòng thử lại.`;
-                if (loadingCloseBtn) loadingCloseBtn.style.display = "block";
             } else {
                 showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
             }
         });
 }
 
-
 function closeModalAndRedirect() {
     clearTimeout(redirectTimeout); closeModal('success-modal');
     window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
 }
 
-// --- Thống kê Chi tiết & Biểu đồ (from a.html) ---
 function prepareDetailedStats(data) {
     const statsMap = new Map();
     data.forEach(row => {
@@ -2352,14 +2348,14 @@ function renderCharts(dataForCharts) {
     advisorChart = createChartInstance("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
 }
 
-function updateChartColors() { // from a.html
+function updateChartColors() {
     const activeTabLink = document.querySelector('.tabs a.active');
     if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats') && detailedStatsData.length > 0) {
         renderCharts(detailedStatsData);
     }
 }
 
-function exportDetailedStatsToExcel() { // from a.html
+function exportDetailedStatsToExcel() {
     if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
     const dataToExport = detailedStatsData;
     if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", "info", 3000);
@@ -2372,7 +2368,6 @@ function exportDetailedStatsToExcel() { // from a.html
     showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
-// --- Chuyển Tab (from a.html, but layout logic for yeucaughepxe.html is to show both form and history on 'form' tab) ---
 function switchTab(tabName, element) {
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
     if (element) element.classList.add("active");
@@ -2383,7 +2378,7 @@ function switchTab(tabName, element) {
 
     if (tabName === 'form') {
         showSection(sections.form);
-        showSection(sections.history); // For yeucaughepxe.html layout, form tab shows both
+        showSection(sections.history);
         if (isDataCached) { filterHistory(); renderSummary(globalHistoryData); } else { fetchHistory(); }
     } else if (tabName === 'history') {
         showSection(sections.history);
@@ -2397,14 +2392,13 @@ function switchTab(tabName, element) {
     const hamburger = document.querySelector(".hamburger"); if (hamburger) hamburger.classList.remove("active");
 }
 
-function toggleMenu() { // This is yeucaughepxe.html's original tab toggle for mobile
+function toggleMenu() {
     const mobileMenu = document.querySelector(".navbar .tabs");
     const hamburger = document.querySelector(".hamburger");
     if (mobileMenu) mobileMenu.classList.toggle("active");
     if (hamburger) hamburger.classList.toggle("active");
 }
 
-// --- Tự động làm mới (from a.html) ---
 function toggleAutoRefresh() {
     const icon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
     if (autoRefreshInterval) {
@@ -2418,7 +2412,6 @@ function toggleAutoRefresh() {
     }
 }
 
-// --- Đồng bộ cuộn (from a.html) ---
 function setupScrollSync() {
     document.querySelectorAll(".table-wrapper").forEach(wrapper => {
         const header = wrapper.querySelector("thead");
@@ -2426,7 +2419,6 @@ function setupScrollSync() {
     });
 }
 
-// --- Thông báo (from a.html) ---
 function showNotification(message, type = "info", duration = 3000) {
     const container = document.getElementById("notification-container") || document.body;
     const notification = document.createElement("div");
@@ -2441,36 +2433,85 @@ function showNotification(message, type = "info", duration = 3000) {
     setTimeout(() => { notification.classList.remove('show'); notification.addEventListener('transitionend', () => notification.remove()); }, duration);
 }
 
-// --- Logic Biểu mẫu (from a.html) ---
 function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
     const phienBanSelect = document.querySelector('select[name="phien_ban"]');
-    if (!phienBanSelect) { showNotification("Lỗi: Không tìm thấy trường chọn Phiên Bản!", "error", 3000); return; }
+    const noiThatSelect = document.querySelector('select[name="noi_that"]');
+
+    if (!phienBanSelect) {
+        showNotification("Lỗi: Không tìm thấy trường chọn Phiên Bản!", "error", 3000);
+    }
+    if (!noiThatSelect && !phienBanSelect) {
+      showNotification("Lỗi: Không tìm thấy trường chọn Nội thất!", "error", 3000);
+      return;
+    }
+
     const selectedDongXe = dongXeSelectElement.value;
-    const versionsMap = { "VF 3": ["Base"], "VF 5": ["Plus"], "VF 6": ["Eco", "Plus"], "VF 7": ["Eco", "Plus"], "VF 8": ["Eco", "Plus"], "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"], "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"] };
-    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"]; // from a.html
+    const versionsMap = {
+        "VF 3": ["Base"],
+        "VF 5": ["Plus"],
+        "VF 6": ["Eco", "Plus"],
+        "VF 7": ["Eco", "Plus"],
+        "VF 8": ["Eco", "Plus"],
+        "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
+        "HERIO": ["HERIO"],
+        "NERIO": ["NERIO"],
+        "LIMO": ["LIMO"],
+        "MINIO": ["MINIO"]
+    };
+    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
+
     const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
-    const currentPhienBanValue = phienBanSelect.value;
-    phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>'; // Set default selected index to 0 after clearing
-    let valueToSelect = "";
-    if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) valueToSelect = savedPhienBanValue;
-    else if (availableVersions.includes(currentPhienBanValue)) valueToSelect = currentPhienBanValue;
 
-    availableVersions.forEach(version => { const option = document.createElement('option'); option.value = version; option.textContent = version; if (version === valueToSelect) option.selected = true; phienBanSelect.appendChild(option); });
-    if (!valueToSelect && phienBanSelect.options.length > 1) phienBanSelect.selectedIndex = 0; // Default to "Chọn phiên bản"
-    else if (!valueToSelect && phienBanSelect.options.length <=1) phienBanSelect.value = ""; // If no specific value and no options, clear
+    if (phienBanSelect) {
+        const previousSelectedPhienBan = phienBanSelect.value;
+        phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
+        availableVersions.forEach(version => {
+            const option = document.createElement('option');
+            option.value = version;
+            option.textContent = version;
+            phienBanSelect.appendChild(option);
+        });
+
+        if (selectedDongXe === "VF 3") {
+            phienBanSelect.value = "Base";
+        } else if (selectedDongXe === "VF 5") {
+            phienBanSelect.value = "Plus";
+        } else if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
+            phienBanSelect.value = savedPhienBanValue;
+        } else if (availableVersions.includes(previousSelectedPhienBan)) {
+            phienBanSelect.value = previousSelectedPhienBan;
+        } else {
+            if (phienBanSelect.options.length > 0) {
+                 phienBanSelect.selectedIndex = 0;
+            }
+        }
+    }
+
+    if (noiThatSelect) {
+        if (selectedDongXe === "VF 3" || selectedDongXe === "VF 5") {
+            let blackOptionExists = false;
+            for (let i = 0; i < noiThatSelect.options.length; i++) {
+                if (noiThatSelect.options[i].value === "Black") {
+                    blackOptionExists = true;
+                    break;
+                }
+            }
+            if (blackOptionExists) {
+                noiThatSelect.value = "Black";
+            } else if (noiThatSelect.options.length > 0 && noiThatSelect.options[0].value === "") {
+                 noiThatSelect.selectedIndex = 0;
+            }
+        }
+    }
 }
-
-// --- Cuộn lên đầu trang (from a.html) ---
 function initScrollToTopButton() {
     const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
     window.onscroll = () => { const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; if (show) btn.classList.add('visible'); else btn.classList.remove('visible'); };
 }
 function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
 
-// --- Utils (from a.html) ---
 function debounce(func, delay) { let timeoutId; return (...args) => { clearTimeout(timeoutId); timeoutId = setTimeout(() => func.apply(this, args), delay); }; }
 
-// --- Cảnh báo Hóa đơn Chờ (from a.html) ---
 function checkPendingInvoicesWarning() {
     const consultantName = sessionStorage.getItem("currentConsultant"); if (!consultantName || consultantName === ADMIN_USER) return;
     if (!globalHistoryData || globalHistoryData.length === 0) return;
@@ -2495,7 +2536,6 @@ function checkPendingInvoicesWarning() {
     }
 }
 
-// --- OCR & DATE PARSING FUNCTIONS (from yeucaughepxe.html) ---
 function parseAndValidateDate(dayStr,monthStr,yearStr,hourStr,minuteStr,secondStr){if(!dayStr||!monthStr||!yearStr){console.warn("parseAndValidateDate: Thiếu Ngày, Tháng, Năm:",{dayStr,monthStr,yearStr,hourStr,minuteStr,secondStr});return null;}const sNS=s=>s?String(s).replace(/\D/g,''):'';const sMSM=s=>s?String(s).toLowerCase().replace(/[,.]/g,'').trim():'';let clDS=sNS(dayStr);let oMS=String(monthStr).trim();let clMS=sNS(oMS);let clYS=sNS(yearStr);let clHS=sNS(hourStr||'00');let clMnS=sNS(minuteStr||'00');let clSS=sNS(secondStr||'00');if(clHS==='')clHS='00';if(clMnS==='')clMnS='00';if(clSS==='')clSS='00';const mM={"tháng một":1,"tháng giêng":1,"tháng 1":1,"thg 1":1,"t1":1,"thg1":1,"jan":1,"january":1,"tháng hai":2,"tháng 2":2,"thg 2":2,"t2":2,"thg2":2,"feb":2,"february":2,"tháng ba":3,"tháng 3":3,"thg 3":3,"t3":3,"thg3":3,"mar":3,"march":3,"tháng tư":4,"tháng 4":4,"thg 4":4,"t4":4,"thg4":4,"apr":4,"april":4,"tháng năm":5,"tháng 5":5,"thg 5":5,"t5":5,"thg5":5,"may":5,"tháng sáu":6,"tháng 6":6,"thg 6":6,"t6":6,"thg6":6,"jun":6,"june":6,"tháng bảy":7,"tháng 7":7,"thg 7":7,"t7":7,"thg7":7,"jul":7,"july":7,"tháng tám":8,"tháng 8":8,"thg 8":8,"t8":8,"thg8":8,"aug":8,"august":8,"tháng chín":9,"tháng 9":9,"thg 9":9,"t9":9,"thg9":9,"sep":9,"september":9,"tháng mười":10,"tháng 10":10,"thg 10":10,"t10":10,"thg10":10,"oct":10,"october":10,"tháng mười một":11,"tháng 11":11,"thg 11":11,"t11":11,"thg11":11,"nov":11,"november":11,"tháng mười hai":12,"tháng 12":12,"thg 12":12,"t12":12,"thg12":12,"dec":12,"december":12};const mLU=sMSM(oMS);if(mM[mLU])clMS=String(mM[mLU]);else if(!/^\d+$/.test(clMS)){const nP=sNS(oMS);if(nP&&/^\d+$/.test(nP)&&parseInt(nP,10)>=1&&parseInt(nP,10)<=12)clMS=nP;else{console.warn("parseAndValidateDate: Tháng không nhận diện được:",oMS,"(lookup:",mLU+")");return null;}}if(!clDS||!clMS||!clYS){console.warn("parseAndValidateDate: Ngày, Tháng, Năm không hợp lệ sau làm sạch:",{clDS,clMS,clYS});return null;}let y=parseInt(clYS,10);if(isNaN(y)){console.warn("parseAndValidateDate: Năm NaN",clYS);return null;}const cY=new Date().getFullYear();if(clYS.length===2){const cC=Math.floor(cY/100)*100;const yYI=parseInt(clYS,10);if(yYI>(cY%100+15)&&yYI<=99)y=1900+yYI;else y=cC+yYI;}else if(y<100&&clYS.length>=3&&clYS.length<=4)y=2000+parseInt(clYS.slice(-2),10);else if(y>99&&y<1000){console.warn("parseAndValidateDate: Năm 3 chữ số không hợp lệ:",y);return null;}if(y<cY-100||y>cY+20){console.warn("parseAndValidateDate: Năm ngoài phạm vi:",y,"(current:",cY,")");return null;}const mth=parseInt(clMS,10);const d=parseInt(clDS,10);const h=parseInt(clHS,10);const mn=parseInt(clMnS,10);const s=parseInt(clSS,10);if(isNaN(mth)||isNaN(d)||isNaN(h)||isNaN(mn)||isNaN(s)){console.warn("parseAndValidateDate: Một thành phần ngày giờ NaN sau parseInt.",{mth,d,h,mn,s});return null;}const dIM=[0,31,(y%4===0&&y%100!==0)||y%400===0?29:28,31,30,31,30,31,31,30,31,30,31];if(mth<1||mth>12||d<1||d>dIM[mth]||h<0||h>23||mn<0||mn>59||s<0||s>59){console.warn("parseAndValidateDate: Giá trị ngày giờ không hợp lệ:",{y,mth,d,h,mn,s});return null;}const dO=new Date(y,mth-1,d,h,mn,s);if(dO.getFullYear()===y&&(dO.getMonth()+1)===mth&&dO.getDate()===d&&dO.getHours()===h&&dO.getMinutes()===mn&&dO.getSeconds()===s){const p=n=>String(n).padStart(2,'0');let r=`${y}-${p(mth)}-${p(d)}T${p(h)}:${p(mn)}`;if(secondStr&&secondStr!=='00'||s!==0)r+=`:${p(s)}`;return r;}console.warn("parseAndValidateDate: Xác thực Date object thất bại:",{y,mth,d,h,mn,s},"Generated Date:",dO);return null;}
 
 function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
@@ -2525,8 +2565,8 @@ function resetChicUploadUI() {
         chicOcrStatus.textContent = '';
         chicOcrStatus.className = 'mt-1 text-xs italic text-gray-500 dark:text-gray-400';
     }
-    if (ngayCocInput) ngayCocInput.value = ""; // Xóa ngày cọc đã điền
-    saveFormDraft(); // Lưu lại trạng thái form (không có ảnh/ngày cọc)
+    if (ngayCocInput) ngayCocInput.value = "";
+    saveFormDraft();
 }
 
 function processChicFile(file) {
@@ -2599,7 +2639,7 @@ async function xuLyAnhUyNhiemChiChic(event) {
         let cleanedText = text.replace(/\n+/g, ' ');
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (match, h, _, m, s) => `${h}:${m}${s ? ':'+s : ''}`);
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2'); // Note: Changed this from '$1:$2' to '$1:$3' assuming $2 is 'phút' and $3 is the minute number
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2');
         cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2');
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)/gi, '$1');
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(giây|giay|s|sec)/gi, '$1');
@@ -2614,7 +2654,7 @@ async function xuLyAnhUyNhiemChiChic(event) {
         cleanedText = cleanedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
         let extractedDateTime = null; let bestMatchScore = -1; let bestMatchDetails = {};
-        const monthTextRegexPart = `(?:tháng|thg|t|Tháng|Thg\\.?|T\\.)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-zÀ-ỹ]{3,}`; // Made month keyword optional
+        const monthTextRegexPart = `(?:tháng|thg|t|Tháng|Thg\\.?|T\\.)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-zÀ-ỹ]{3,}`;
         const dateSeparatorRegexPart = `[\\s\\/\\.-]+`;
         const patternsWithParsers = [
             { regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
@@ -2644,6 +2684,7 @@ async function xuLyAnhUyNhiemChiChic(event) {
             { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{4})(\\d{2})(\\d{2})(?!\\d)`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: '00', minute: '00', second: '00' }), score: 3, name: "Date only YYYYMMDD with keyword" }
         ];
         patternsWithParsers.sort((a, b) => b.score - a.score);
+
         for (const item of patternsWithParsers) {
             let match; const gRegex = new RegExp(item.regex.source, item.regex.flags + (item.regex.flags.includes('g') ? '' : 'g'));
             while ((match = gRegex.exec(cleanedText)) !== null) {
@@ -2675,20 +2716,21 @@ async function xuLyAnhUyNhiemChiChic(event) {
             showNotification('Đã lấy ngày cọc từ ảnh!', 'success');
             saveFormDraft();
         } else {
+            ngayCocInput.value = ""; // Ensure ngayCocInput is cleared if no date is found
             statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Không tìm thấy ngày giờ.';
             statusElement.className = 'mt-1 text-xs italic text-yellow-600 dark:text-yellow-400 font-medium';
             showNotification('Không tìm thấy ngày cọc. Nhập thủ công.', 'warning');
+            saveFormDraft(); // Save the cleared date
         }
     } catch (error) {
         console.error('Lỗi OCR (Chic UI):', error);
+        ngayCocInput.value = ""; // Ensure ngayCocInput is cleared on error
         statusElement.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-1"></i>Lỗi xử lý ảnh.`;
-        statusElement.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400 font-medium';
+        statusElement.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400 font-medium'; // Full class name
         showNotification('Lỗi xử lý ảnh: ' + (error.message || error), 'error');
+        saveFormDraft(); // Save the cleared date
     }
 }
-
-// Hàm xuLyAnhUyNhiemChi gốc không còn cần thiết nếu chỉ dùng chic_file_input
-// async function xuLyAnhUyNhiemChi(event) { ... }
 </script>
 </body>
 </html>
