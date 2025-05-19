@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script> {/* Kept from original yeucaughepxe.html */}
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -47,8 +47,8 @@
     --success-bg-dark: #1e4620;
     --success-text-dark: #d4edda;
     --success-icon-dark: #a3d9a5;
-    --loading-bg-light: var(--card-bg-light); /* Retained for potential use, but enhanced modal will override */
-    --loading-bg-dark: var(--card-bg-dark);   /* Retained for potential use */
+    --loading-bg-light: var(--card-bg-light);
+    --loading-bg-dark: var(--card-bg-dark);
     --no-data-text-color-light: #6c757d;
     --no-data-text-color-dark: #adb5bd;
     --scroll-to-top-bg: var(--primary-color);
@@ -89,13 +89,11 @@
     --status-default-bg-dark: #343a40;
     --status-default-text-dark: #adb5bd;
 
-     /* CSS Variables from Index.html for sidebar - some might be duplicates, ensure they are harmonized */
-    --star-color-light: rgba(0, 48, 135, 0.6); /* Màu sao cho nền sáng */
-    --star-color-dark: rgba(0, 174, 255, 0.5); /* Màu sao cho nền tối */
+    --star-color-light: rgba(0, 48, 135, 0.6);
+    --star-color-dark: rgba(0, 174, 255, 0.5);
 }
 
 body.dark-mode {
-    /* Original dark mode variables from yeucaughepxe.html */
     --background-light: var(--background-dark);
     --text-light: var(--text-dark);
     --card-bg-light: var(--card-bg-dark);
@@ -107,7 +105,6 @@ body.dark-mode {
     --success-bg-light: var(--success-bg-dark);
     --success-text-light: var(--success-text-dark);
     --success-icon-light: var(--success-icon-dark);
-    /* --loading-bg-light: var(--loading-bg-dark); */ /* Will be overridden by enhanced styles */
     --no-data-text-color-light: var(--no-data-text-color-dark);
     --scroll-to-top-bg: var(--primary-color-lighter);
     --scroll-to-top-hover-bg: var(--secondary-color);
@@ -142,19 +139,18 @@ body {
     background: var(--background-light);
     color: var(--text-light);
     min-height: 100vh;
-    overflow-x: auto; /* MODIFIED: Allow horizontal scroll for the whole page if necessary */
+    overflow-x: auto;
     transition: background var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
-    font-size: 14px; /* Base font size from yeucaughepxe */
+    font-size: 14px;
 }
 
-/* Thanh cuộn tùy chỉnh (from Index.html, slightly adapted) */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track {
-    background: var(--background-light); /* Use current page's variable */
+    background: var(--background-light);
     border-radius: 4px;
 }
 body.dark-mode ::-webkit-scrollbar-track {
-    background: var(--card-bg-dark); /* Use current page's variable */
+    background: var(--card-bg-dark);
 }
 ::-webkit-scrollbar-thumb {
     background: var(--primary-color);
@@ -167,13 +163,12 @@ body.dark-mode ::-webkit-scrollbar-track {
 body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
 
-/* Navbar (from yeucaughepxe.html) - Styles for existing navbar */
 .navbar {
-    position: fixed; top: 0; left: 0; width: 100%; height: 50px; /* Existing height */
+    position: fixed; top: 0; left: 0; width: 100%; height: 50px;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
     display: flex; align-items: center; padding: 0 15px;
     box-shadow: var(--shadow-light-outer);
-    z-index: 1006; /* Adjusted to be above mobile sidebar */
+    z-index: 1006;
     transition: background var(--transition-speed) var(--transition-easing);
 }
 body.dark-mode .navbar {
@@ -182,7 +177,7 @@ body.dark-mode .navbar {
 }
 .navbar .logo { animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; }
 .navbar .logo h1 {
-    font-size: 18px; /* Adjusted to fit better, original was 25px */
+    font-size: 18px;
     color: #ffffff;
     font-weight: 700;
     text-transform: uppercase;
@@ -195,7 +190,7 @@ body.dark-mode .navbar {
         text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff;
     }
     50% {
-        transform: translateY(-2px); /* Reduced bounce */
+        transform: translateY(-2px);
         text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc;
     }
 }
@@ -223,7 +218,7 @@ body.dark-mode .navbar .tabs a::after { background-color: var(--secondary-color)
 
 
 .navbar-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.nav-btn, .theme-toggle-btn { /* .theme-toggle-btn is from yeucaughepxe */
+.nav-btn, .theme-toggle-btn {
     padding: 6px; border: none; border-radius: 50%;
     background: var(--card-bg-light); color: var(--text-light);
     font-size: 14px; cursor: pointer;
@@ -246,7 +241,6 @@ body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
 .hamburger.active { transform: rotate(90deg); }
 
 
-/* Sidebar CSS from Index.html */
 .sidebar {
     position: fixed;
     top: 0;
@@ -257,7 +251,7 @@ body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
     padding: 15px;
     padding-top: 60px;
     transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-    z-index: 1007; /* << THAY ĐỔI Ở ĐÂY: Tăng z-index */
+    z-index: 1007;
     box-shadow: 3px 0 10px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
@@ -266,19 +260,19 @@ body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
     width: 60px;
 }
 body.dark-mode .sidebar {
-    background: var(--background-dark); /* Use page's dark background */
+    background: var(--background-dark);
     border-right: 1px solid var(--border-color-dark);
     box-shadow: 3px 0 10px rgba(0,0,0,0.2);
 }
 
-.sidebar .logo { /* Sidebar's own logo section */
+.sidebar .logo {
     text-align: center;
     margin-bottom: 25px;
     position: relative;
     overflow: hidden;
 }
-.sidebar .logo h1 { /* Sidebar's H1 */
-    font-size: 25px; /* Slightly smaller to fit */
+.sidebar .logo h1 {
+    font-size: 25px;
     color: #fff;
     font-weight: 600;
     transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
@@ -315,8 +309,8 @@ body.dark-mode .sidebar {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    overflow-y: auto; /* For scrollable menu if items exceed height */
-    flex-grow: 1; /* Allows menu to take available space */
+    overflow-y: auto;
+    flex-grow: 1;
 }
 .sidebar .menu a {
     padding: 10px 12px;
@@ -350,7 +344,7 @@ body.dark-mode .sidebar .menu a {
     color: var(--text-dark);
 }
 .sidebar.collapsed .menu a {
-    padding: 10px; /* Adjust padding for icons only */
+    padding: 10px;
     justify-content: center;
 }
 .sidebar.collapsed .menu a::before {
@@ -359,7 +353,7 @@ body.dark-mode .sidebar .menu a {
 
 .sidebar .menu a i {
     font-size: 16px;
-    width: 20px; /* Ensure icon has a fixed width */
+    width: 20px;
     text-align: center;
     transition: transform var(--transition-speed) ease;
 }
@@ -367,7 +361,7 @@ body.dark-mode .sidebar .menu a {
     transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
     white-space: nowrap;
     overflow: hidden;
-    max-width: 100px; /* Max width for text */
+    max-width: 100px;
 }
 .sidebar.collapsed .menu a span {
     opacity: 0;
@@ -380,7 +374,7 @@ body.dark-mode .sidebar .menu a {
     transform: translateX(3px);
 }
 .sidebar.collapsed .menu a:hover {
-    padding-left: 10px; /* Keep padding consistent for collapsed hover */
+    padding-left: 10px;
     transform: scale(1.05);
 }
  .sidebar .menu a:hover i {
@@ -420,10 +414,10 @@ body.dark-mode .sidebar .menu a.active::before {
     100% { box-shadow: 0 0 5px var(--secondary-color); }
 }
 
-.toggle-btn { /* Desktop sidebar toggle */
+.toggle-btn {
     position: absolute;
-    top: 12px; /* Position relative to sidebar top */
-    right: -15px; /* Position outside the sidebar */
+    top: 12px;
+    right: -15px;
     width: 30px;
     height: 30px;
     background: var(--primary-color);
@@ -445,7 +439,6 @@ body.dark-mode .sidebar .menu a.active::before {
 }
 body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
-/* Mobile Menu Button (Sidebar Toggle - MOVED INTO NAVBAR) */
 .mobile-menu-btn {
     background: var(--card-bg-light);
     color: var(--text-light);
@@ -456,12 +449,12 @@ body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
     font-size: 16px;
     cursor: pointer;
     box-shadow: var(--shadow-light-outer);
-    display: flex; /* For icon centering */
+    display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-speed) ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    margin-right: 10px; /* Space to the right, adjust as needed */
-    display: none; /* Initially hidden on desktop, shown via media query */
+    margin-right: 10px;
+    display: none;
 }
 .mobile-menu-btn:hover {
     background: #e9ecef;
@@ -480,10 +473,7 @@ body.dark-mode .mobile-menu-btn:hover {
     background: var(--primary-color-darker);
     color: #fff;
 }
-/* End Sidebar CSS */
 
-
-/* Chú giải công cụ (Tooltip CSS from Index.html - ensure it's not conflicting) */
 [data-tooltip] { position: relative; }
 [data-tooltip]::after {
     content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
@@ -495,17 +485,16 @@ body.dark-mode .mobile-menu-btn:hover {
 [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 
-/* Khu vực nội dung chính (Adjusted for sidebar) */
 .main-container {
     display: flex; flex-direction: column;
-    margin-top: 50px; /* Space for fixed navbar */
-    margin-left: 200px; /* Initial space for expanded sidebar */
+    margin-top: 50px;
+    margin-left: 200px;
     padding: 10px;
     gap: 15px;
-    min-height: calc(100vh - 50px - 40px); /* Navbar height - footer height */
+    min-height: calc(100vh - 50px - 40px);
     transition: margin-left var(--transition-speed) ease, opacity var(--transition-speed) var(--transition-easing);
 }
-.main-container.collapsed { /* When sidebar is collapsed */
+.main-container.collapsed {
     margin-left: 60px;
 }
 
@@ -532,7 +521,6 @@ body.dark-mode .chart-card h3, body.dark-mode .summary-section h3 {
     color: var(--secondary-color);
 }
 
-/* Các yếu tố biểu mẫu */
 .form-container form { display: grid; gap: 10px; }
 .form-container label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-light); margin-bottom: 4px; }
 body.dark-mode .form-container label { color: var(--text-dark); }
@@ -555,7 +543,6 @@ body.dark-mode .form-container input:not([type='file']):focus, body.dark-mode .f
     box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
 }
 
-/* Nút */
 .form-container .form-buttons { display: flex; gap: 8px; justify-content: flex-start; margin-top: 8px; }
 .form-container button, .modal-btn {
     padding: 8px 15px; border: none; border-radius: 6px; color: #ffffff;
@@ -577,7 +564,6 @@ body.dark-mode .modal-btn.secondary { color: var(--primary-color-lighter); borde
 .modal-btn.secondary:hover { background: rgba(0, 48, 135, 0.05); transform: translateY(-2px); }
 body.dark-mode .modal-btn.secondary:hover { background: rgba(0, 64, 193, 0.1); }
 
-/* Điều khiển lưới */
 .grid-container .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
 .export-btn-container { display: flex; gap: 10px; align-items: center; }
 .export-btn-container span { font-size: 13px; color: var(--text-light); }
@@ -602,7 +588,6 @@ body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
     box-shadow: 0 5px 10px rgba(0,0,0,0.20);
 }
 
-/* Bảng */
 .table-wrapper {
     max-height: calc(100vh - 280px); overflow: auto; border-radius: 8px;
     background: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
@@ -668,8 +653,6 @@ body.dark-mode .status-vin-not-found { border-color: #b02a37; }
 .status-default { background-color: var(--status-default-bg-light); color: var(--status-default-text-light); border-color: #d6d8db; }
 body.dark-mode .status-default { border-color: #545b62; }
 
-
-/* --- Kiểu Modal Nâng cao (ĐÃ SỬA ĐỔI) --- */
 .modal {
     display: none;
     position: fixed;
@@ -763,7 +746,6 @@ body.dark-mode .modal-body .detail-item strong { color: var(--text-dark); }
 }
 body.dark-mode .modal-footer { border-top-color: var(--border-color-dark); }
 
-/* Specific Modal Types */
 .success-modal-content { background: var(--success-bg-light); padding-top: 25px; padding-bottom: 25px; }
 body.dark-mode .success-modal-content { background: var(--success-bg-dark); }
 .success-modal-content .modal-header h2 { color: var(--success-text-light); font-size: 19px; }
@@ -776,29 +758,20 @@ body.dark-mode .success-modal-content .modal-body p { color: var(--success-text-
 }
 body.dark-mode .success-modal-content .fas.fa-check-circle { color: var(--success-icon-dark); }
 
-/* --- CSS cho Modal Loading Khi Gửi Dữ Liệu --- */
-/* --- (Phủ toàn trang, nền trong suốt, chặn click, nội dung nhẹ nhàng) --- */
-
-/* 1. Lớp phủ modal chính (#loading-modal) */
 .modal#loading-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-
-    /* ----- QUAN TRỌNG: Lớp phủ hoàn toàn TRONG SUỐT ----- */
     background: transparent;
-    backdrop-filter: none; /* Không làm mờ */
-
-    z-index: 2000; /* Đảm bảo modal ở trên cùng */
-    display: none; /* Ban đầu ẩn */
-    align-items: center; /* Để căn giữa .modal-content */
-    justify-content: center; /* Để căn giữa .modal-content */
+    backdrop-filter: none;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
-    transition: opacity var(--transition-speed) var(--transition-easing); /* Transition cho opacity của content */
-
-    /* ----- QUAN TRỌNG: Chặn tương tác với các phần tử bên dưới ----- */
+    transition: opacity var(--transition-speed) var(--transition-easing);
     pointer-events: auto;
 }
 
@@ -807,25 +780,19 @@ body.dark-mode .success-modal-content .fas.fa-check-circle { color: var(--succes
     opacity: 1;
 }
 
-/* 2. Nội dung modal (.modal-content.loading-modal-content) - Giữ phong cách nhỏ gọn, nhẹ nhàng */
 .modal#loading-modal .modal-content.loading-modal-content {
     background: var(--card-bg-light);
     color: var(--text-light);
     border-radius: 8px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); /* Bóng đổ để nổi bật trên nền trang (dù nền trang không bị mờ) */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     padding: 20px 25px;
-    max-width: 300px; /* Giữ kích thước nhỏ gọn */
-    /* Không cần border nếu đã có box-shadow đủ để phân biệt */
-    /* border: 1px solid var(--border-color-light); */
+    max-width: 300px;
     text-align: center;
-
-    /* Hoạt ảnh xuất hiện cho box nội dung */
-    transform: scale(0.9); /* Bắt đầu nhỏ hơn một chút */
-    opacity: 0; /* Bắt đầu trong suốt */
+    transform: scale(0.9);
+    opacity: 0;
     transition: transform var(--transition-speed-slow) cubic-bezier(0.18, 0.89, 0.32, 1.28),
                 opacity var(--transition-speed-slow) var(--transition-easing);
-    transition-delay: 0s; /* Không cần delay nếu lớp phủ chính đã trong suốt */
-    /* Đảm bảo nội dung modal (nếu có nút) có thể nhận sự kiện */
+    transition-delay: 0s;
     pointer-events: auto;
 }
 
@@ -838,7 +805,6 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content {
     background: var(--card-bg-dark);
     color: var(--text-dark);
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
-    /* border: 1px solid var(--border-color-dark); */
 }
 
 .modal#loading-modal .modal-content.loading-modal-content .modal-header {
@@ -861,7 +827,6 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
     padding: 0;
 }
 
-/* Spinner "Chấm Sáng Tinh Tế" */
 .soft-fade-spinner {
     width: 22px;
     height: 22px;
@@ -883,7 +848,7 @@ body.dark-mode .soft-fade-spinner::before {
     background-color: var(--secondary-color);
 }
 
-@keyframes softFade { /* Giữ nguyên keyframes softFade */
+@keyframes softFade {
     0%, 100% {
         transform: scale(0.5);
         opacity: 0.4;
@@ -904,7 +869,6 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
     color: var(--text-dark);
 }
 
-/* Ẩn các spinner và footer không liên quan */
 .modal#loading-modal .modal-content.loading-modal-content .fas.fa-spinner,
 .modal#loading-modal .modal-content.loading-modal-content .elegant-spinner,
 .modal#loading-modal .modal-content.loading-modal-content .pulsating-dots-spinner,
@@ -912,267 +876,419 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
 .modal#loading-modal .modal-content.loading-modal-content .modal-footer {
     display: none !important;
 }
-        .warning-modal-content { background: var(--warning-bg-light); padding-top: 25px; padding-bottom: 25px; }
-        body.dark-mode .warning-modal-content { background: var(--warning-bg-dark); }
-        .warning-modal-content .modal-header h2 { color: var(--warning-text-light); font-size: 19px; }
-        body.dark-mode .warning-modal-content .modal-header h2 { color: var(--warning-text-dark); }
-        .warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-light); animation: subtleShake 0.5s var(--transition-easing); }
-        body.dark-mode .warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-dark); }
-        .warning-modal-content .modal-body p { color: var(--warning-text-light); font-size: 14px; }
-        body.dark-mode .warning-modal-content .modal-body p { color: var(--warning-text-dark); }
-        /* --- Kết thúc Kiểu Modal Nâng cao --- */
+.warning-modal-content { background: var(--warning-bg-light); padding-top: 25px; padding-bottom: 25px; }
+body.dark-mode .warning-modal-content { background: var(--warning-bg-dark); }
+.warning-modal-content .modal-header h2 { color: var(--warning-text-light); font-size: 19px; }
+body.dark-mode .warning-modal-content .modal-header h2 { color: var(--warning-text-dark); }
+.warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-light); animation: subtleShake 0.5s var(--transition-easing); }
+body.dark-mode .warning-modal-content .modal-header h2 .fas { color: var(--warning-icon-dark); }
+.warning-modal-content .modal-body p { color: var(--warning-text-light); font-size: 14px; }
+body.dark-mode .warning-modal-content .modal-body p { color: var(--warning-text-dark); }
+
+.summary-section p { font-size: 14px; color: var(--text-light); margin: 5px 0; }
+body.dark-mode .summary-section p { color: var(--text-dark); }
+.chart-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+.chart-no-data {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: var(--no-data-text-color-light); font-size: 14px; text-align: center;
+    animation: subtlePulse 2s infinite var(--transition-easing);
+}
+body.dark-mode .chart-no-data { color: var(--no-data-text-color-dark); }
+canvas { max-width: 100%; max-height: 250px; height: auto; animation: subtleScaleIn 0.6s var(--transition-easing) backwards; }
+
+footer {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px;
+    z-index: 998; transition: background var(--transition-speed) var(--transition-easing);
+}
+body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+
+.notification {
+    position: fixed; bottom: 20px; right: 20px;
+    background-color: var(--card-bg-dark); color: var(--text-dark);
+    padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 2000; opacity: 0; transform: translateX(100%) scale(0.95);
+    transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex; align-items: center; gap: 10px;
+}
+body.dark-mode .notification { background-color: var(--card-bg-light); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.notification.show { opacity: 1; transform: translateX(0) scale(1); }
+.notification.error { background-color: #dc3545; color: white; }
+body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
+.notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
+body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
 
 
-        /* Tóm tắt & Biểu đồ */
-        .summary-section p { font-size: 14px; color: var(--text-light); margin: 5px 0; }
-        body.dark-mode .summary-section p { color: var(--text-dark); }
-        .chart-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
-        .chart-no-data {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--no-data-text-color-light); font-size: 14px; text-align: center;
-            animation: subtlePulse 2s infinite var(--transition-easing);
-        }
-        body.dark-mode .chart-no-data { color: var(--no-data-text-color-dark); }
-        canvas { max-width: 100%; max-height: 250px; height: auto; animation: subtleScaleIn 0.6s var(--transition-easing) backwards; }
+#scrollToTopBtn {
+    display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999;
+    border: none; outline: none; background-color: var(--scroll-to-top-bg);
+    color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px;
+    box-shadow: var(--shadow-light-outer);
+    transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+    width: 40px; height: 40px; align-items: center; justify-content: center;
+    opacity: 0; transform: translateY(20px);
+}
+#scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
+body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
+#scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
+.hidden { display: none !important; }
 
-        /* Chân trang */
-        footer {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: var(--footer-text); text-align: center; padding: 10px 0; font-size: 12px;
-            z-index: 998; transition: background var(--transition-speed) var(--transition-easing);
-        }
-        body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
-
-        /* Thông báo */
-        .notification {
-            position: fixed; bottom: 20px; right: 20px;
-            background-color: var(--card-bg-dark); color: var(--text-dark);
-            padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 2000; opacity: 0; transform: translateX(100%) scale(0.95);
-            transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            display: flex; align-items: center; gap: 10px;
-        }
-        body.dark-mode .notification { background-color: var(--card-bg-light); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .notification.show { opacity: 1; transform: translateX(0) scale(1); }
-        .notification.error { background-color: #dc3545; color: white; }
-        body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
-        .notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
-        body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes subtleScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 70% { opacity: 1; transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes subtlePulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@keyframes subtleShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
 
 
-        /* Cuộn lên đầu trang */
-        #scrollToTopBtn {
-            display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999;
-            border: none; outline: none; background-color: var(--scroll-to-top-bg);
-            color: white; cursor: pointer; padding: 10px; border-radius: 50%; font-size: 18px;
-            box-shadow: var(--shadow-light-outer);
-            transition: background-color var(--transition-speed-fast) var(--transition-easing), opacity var(--transition-speed-slow) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
-            width: 40px; height: 40px; align-items: center; justify-content: center;
-            opacity: 0; transform: translateY(20px);
-        }
-        #scrollToTopBtn.visible { display: flex; opacity: 1; transform: translateY(0); }
-        body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
-        #scrollToTopBtn:hover { background-color: var(--scroll-to-top-hover-bg); transform: scale(1.15) translateY(0) !important; }
-        .hidden { display: none !important; }
-
-        /* Hoạt ảnh Keyframe */
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes subtleScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 70% { opacity: 1; transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes subtlePulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-        @keyframes subtleShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
-
-
-        /* Điều chỉnh đáp ứng */
 @media (max-width: 900px) {
     .sidebar {
         transform: translateX(-100%);
-        width: 220px; /* Sidebar width on mobile when open */
+        width: 220px;
         box-shadow: 5px 0 15px rgba(0,0,0,0.2);
-        z-index: 1007; /* << THAY ĐỔI Ở ĐÂY: Đồng bộ z-index hoặc đặt cao hơn navbar */
+        z-index: 1007;
     }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-             .sidebar.open .logo h1, .sidebar.open .menu a span {
-                opacity: 1;
-                max-width: 100px;
-            }
-             .sidebar.open .logo h1 {
-                font-size: 18px;
-            }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+    }
+    .sidebar.open .logo h1, .sidebar.open .menu a span {
+        opacity: 1;
+        max-width: 100px;
+    }
+    .sidebar.open .logo h1 {
+        font-size: 18px;
+    }
 
-            .main-container {
-                margin-left: 0;
-            }
-            .main-container.collapsed {
-                margin-left: 0;
-            }
-            .toggle-btn { display: none; }
-            .mobile-menu-btn {
-                 display: flex !important;
-            }
-            .navbar {
-                z-index: 1006;
-            }
-        }
+    .main-container {
+        margin-left: 0;
+    }
+    .main-container.collapsed {
+        margin-left: 0;
+    }
+    .toggle-btn { display: none; }
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+    .navbar {
+        z-index: 1006;
+    }
+}
 
-        @media (max-width: 767px) {
-            /* Original responsive styles from yeucaughepxe.html */
-            .navbar { height: 45px; padding: 0 10px; }
-            .navbar .logo h1 { font-size: 16px; }
-            .navbar .tabs {
-                display: none; flex-direction: column; position: fixed; top: 45px;
-                left: 0; width: 100%;
-                background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-                padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                opacity: 0; transform: translateY(-10px);
-                transition: opacity var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
-                z-index: 990;
-            }
-            body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
-            .navbar .tabs.active { display: flex; opacity: 1; transform: translateY(0); }
-            .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
-            .hamburger { display: block; }
-            .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
+@media (max-width: 767px) {
+    .navbar { height: 45px; padding: 0 10px; }
+    .navbar .logo h1 { font-size: 16px; }
+    .navbar .tabs {
+        display: none; flex-direction: column; position: fixed; top: 45px;
+        left: 0; width: 100%;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+        padding: 10px 0; transform: translateX(0); gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        opacity: 0; transform: translateY(-10px);
+        transition: opacity var(--transition-speed-fast) var(--transition-easing), transform var(--transition-speed-fast) var(--transition-easing);
+        z-index: 990;
+    }
+    body.dark-mode .navbar .tabs { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);}
+    .navbar .tabs.active { display: flex; opacity: 1; transform: translateY(0); }
+    .navbar .tabs a { padding: 10px 15px; font-size: 14px; text-align: center; width: 100%; }
+    .hamburger { display: block; }
+    .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
 
-            .main-container { margin-top: 45px; padding: 10px; gap: 15px; margin-left: 0; }
+    .main-container { margin-top: 45px; padding: 10px; gap: 15px; margin-left: 0; }
 
-            .form-container, .grid-container, .summary-section, .chart-card { padding: 12px; border-radius: 8px; animation-delay: 0.1s; }
-            .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 { font-size: 15px; margin-bottom: 8px; }
-            .form-container label { font-size: 12px; margin-bottom: 3px; }
-            .form-container input:not([type='file']), .form-container select { padding: 7px 9px; font-size: 12.5px; }
-            .form-container button, .modal-btn { padding: 7px 12px; font-size: 12.5px; }
+    .form-container, .grid-container, .summary-section, .chart-card { padding: 12px; border-radius: 8px; animation-delay: 0.1s; }
+    .form-container h2, .grid-container h3, .chart-card h3, .summary-section h3 { font-size: 15px; margin-bottom: 8px; }
+    .form-container label { font-size: 12px; margin-bottom: 3px; }
+    .form-container input:not([type='file']), .form-container select { padding: 7px 9px; font-size: 12.5px; }
+    .form-container button, .modal-btn { padding: 7px 12px; font-size: 12.5px; }
 
-            .controls { flex-direction: column; align-items: stretch; }
-            .export-btn-container { justify-content: space-between; margin-top: 10px; width: 100%;}
-            .export-btn, .refresh-btn { width: 32px; height: 32px; font-size: 13px; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .export-btn-container { justify-content: space-between; margin-top: 10px; width: 100%;}
+    .export-btn, .refresh-btn { width: 32px; height: 32px; font-size: 13px; }
 
-            .table-wrapper { max-height: calc(100vh - 300px); }
-            table { display: block; min-width: 0; font-size: 12px; }
-            thead { display: none; }
-            tbody, tr { display: block; }
-            tr {
-                margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
-                padding: 12px; box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light);
-                animation: fadeInUp 0.4s var(--transition-easing) backwards;
-            }
-            tr:nth-child(odd) { animation-delay: 0.05s; }
-            tr:nth-child(even) { animation-delay: 0.1s; }
+    .table-wrapper { max-height: calc(100vh - 300px); }
+    table { display: block; min-width: 0; font-size: 12px; }
+    thead { display: none; } /* Hide table head for mobile card view */
+    tbody, tr { display: block; }
+    tr {
+        margin-bottom: 10px; border-radius: 8px; background: var(--card-bg-light);
+        padding: 12px; box-shadow: var(--shadow-light-outer); border: 1px solid var(--border-color-light);
+        animation: fadeInUp 0.4s var(--transition-easing) backwards;
+    }
+    tr:nth-child(odd) { animation-delay: 0.05s; }
+    tr:nth-child(even) { animation-delay: 0.1s; }
 
-            body.dark-mode tr {
-                background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
-                border: 1px solid var(--border-color-dark);
-            }
-            td {
-                display: flex; justify-content: space-between; align-items: baseline;
-                padding: 6px 0; border: none; font-size: 13px;
-            }
-            td:before {
-                content: attr(data-label); font-weight: 600; color: var(--primary-color);
-                padding-right: 10px; white-space: nowrap; flex-shrink: 0;
-            }
-            body.dark-mode td:before { color: var(--secondary-color); }
-            td span { text-align: right; word-break: break-word; flex-grow: 1; min-width: 0; }
-            td:last-child { border-bottom: none; }
-            td span.status-badge { width: 100%; text-align: center; padding: 5px; }
+    body.dark-mode tr {
+        background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
+        border: 1px solid var(--border-color-dark);
+    }
+    td {
+        display: flex; justify-content: space-between; align-items: baseline;
+        padding: 6px 0; border: none; font-size: 13px;
+    }
+    td:before {
+        content: attr(data-label); font-weight: 600; color: var(--primary-color);
+        padding-right: 10px; white-space: nowrap; flex-shrink: 0;
+    }
+    body.dark-mode td:before { color: var(--secondary-color); }
+    td span { text-align: right; word-break: break-word; flex-grow: 1; min-width: 0; }
+    td:last-child { border-bottom: none; }
+    td span.status-badge { width: 100%; text-align: center; padding: 5px; }
 
-            .summary-section h3 { font-size: 15px; }
-            .summary-section p { font-size: 13px; }
-            .chart-container { flex-direction: column; }
-            .chart-card { min-width: 0; padding: 12px; }
-            .chart-card h3 { font-size: 15px; }
-            canvas { max-height: 200px; }
+    .summary-section h3 { font-size: 15px; }
+    .summary-section p { font-size: 13px; }
+    .chart-container { flex-direction: column; }
+    .chart-card { min-width: 0; padding: 12px; }
+    .chart-card h3 { font-size: 15px; }
+    canvas { max-height: 200px; }
 
-            /* Modal adjustments for mobile */
-            .modal-content {
-                max-width: calc(100% - 20px);
-                width: calc(100% - 20px);
-                padding: 15px;
-                max-height: 85vh;
-            }
-            .modal-header h2 { font-size: 17px; }
-            .modal-body { font-size: 13px; }
-            .modal-btn { padding: 8px 15px; font-size: 13px; }
+    .modal-content {
+        max-width: calc(100% - 20px);
+        width: calc(100% - 20px);
+        padding: 15px;
+        max-height: 85vh;
+    }
+    .modal-header h2 { font-size: 17px; }
+    .modal-body { font-size: 13px; }
+    .modal-btn { padding: 8px 15px; font-size: 13px; }
 
 
-            #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
-            .notification { bottom: 50px; right: 10px; padding: 10px 15px; font-size: 13px; width: calc(100% - 20px); }
+    #scrollToTopBtn { bottom: 50px; right: 15px; padding: 8px; font-size: 16px; width: 36px; height: 36px; }
+    .notification { bottom: 50px; right: 10px; padding: 10px 15px; font-size: 13px; width: calc(100% - 20px); }
 
-            .mobile-menu-btn {
-                 width: 30px;
-                 height: 30px;
-                 font-size: 13px;
-                 margin-right: 8px;
-            }
-        }
+    .mobile-menu-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+        margin-right: 8px;
+    }
+    /* Make bulk table inputs more usable on mobile */
+    #bulk-order-editable-table .form-input,
+    #bulk-order-editable-table .form-select {
+        font-size: 13px; /* Slightly larger for mobile */
+        padding: 0.5rem;
+    }
+    #bulk-order-editable-table th, #bulk-order-editable-table td {
+        padding: 0.4rem 0.5rem; /* Adjust padding for mobile */
+    }
+    #bulk-entry-table-section .form-buttons button {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
 
-        @media (min-width: 768px) and (max-width: 900px) {
-             .main-container {
-                /* margin-left will be controlled by JS (200px or 60px) */
-            }
-        }
+@media (min-width: 768px) and (max-width: 900px) {
+    /* Adjustments for tablets if needed */
+}
 
-        @media (min-width: 768px) {
-            .main-container:not(.collapsed) {
-                 margin-left: 200px;
-            }
-             .main-container.collapsed {
-                 margin-left: 60px;
-            }
-            .main-container {
-                flex-direction: row; padding: 15px; gap: 20px;
-            }
-            .form-container {
-                flex: 3;
-                padding: 15px;
-                animation-delay: 0.1s;
-            }
-            .grid-container {
-                flex: 2;
-                padding: 15px;
-                animation-delay: 0.2s;
-            }
-            #history-section {
-                flex: 7;
-            }
-            .grid-container .controls { justify-content: flex-end; }
-            .export-btn-container { width: auto; }
-        }
+@media (min-width: 768px) {
+    .main-container:not(.collapsed) {
+        margin-left: 200px;
+    }
+    .main-container.collapsed {
+        margin-left: 60px;
+    }
+    .main-container {
+        flex-direction: row; padding: 15px; gap: 20px;
+    }
+    .form-container { /* This class is used by both single and bulk entry sections */
+        flex: 3; /* Adjust flex ratios as needed if they are side-by-side */
+        padding: 15px;
+        animation-delay: 0.1s;
+    }
+    .grid-container#history-section { /* Be specific if ratios differ */
+        flex: 2;
+        padding: 15px;
+        animation-delay: 0.2s;
+    }
+    #history-section {
+        flex: 7; /* If it's the main content area */
+    }
+    .grid-container .controls { justify-content: flex-end; }
+    .export-btn-container { width: auto; }
+}
 
-        /* --- CHIC FILE UPLOAD STYLES (from original yeucaughepxe.html) --- */
-        #chic-upload-wrapper { /* Các class Tailwind đã có: relative w-full h-16 border-2 border-dashed ... */ }
-        #chic-upload-wrapper.file-selected {
-            border-style: solid;
-            border-color: var(--primary-color);
-            background-color: var(--card-bg-light);
-        }
-        body.dark-mode #chic-upload-wrapper.file-selected {
-            border-color: var(--secondary-color);
-            background-color: var(--card-bg-dark);
-        }
-        #chic-upload-wrapper.dragover {
-            border-color: var(--primary-color-lighter) !important;
-            background-color: rgba(0, 48, 135, 0.05) !important;
-        }
-        body.dark-mode #chic-upload-wrapper.dragover {
-            border-color: var(--secondary-color) !important;
-            background-color: rgba(0, 174, 255, 0.1) !important;
-        }
-        #chic_ocr_status.processing { color: var(--primary-color); font-weight: 500; }
-        body.dark-mode #chic_ocr_status.processing { color: var(--secondary-color); }
-        #chic_ocr_status.success { color: #155724; }
-        body.dark-mode #chic_ocr_status.success { color: #a3d9a5; }
-        #chic_ocr_status.error { color: #721c24; }
-        body.dark-mode #chic_ocr_status.error { color: #f1aeb5; }
-        #chic_ocr_status .fa-spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* --- END CHIC FILE UPLOAD STYLES --- */
-    </style>
+#chic-upload-wrapper { /* Styles from original */ }
+#chic-upload-wrapper.file-selected {
+    border-style: solid;
+    border-color: var(--primary-color);
+    background-color: var(--card-bg-light);
+}
+body.dark-mode #chic-upload-wrapper.file-selected {
+    border-color: var(--secondary-color);
+    background-color: var(--card-bg-dark);
+}
+#chic-upload-wrapper.dragover {
+    border-color: var(--primary-color-lighter) !important;
+    background-color: rgba(0, 48, 135, 0.05) !important;
+}
+body.dark-mode #chic-upload-wrapper.dragover {
+    border-color: var(--secondary-color) !important;
+    background-color: rgba(0, 174, 255, 0.1) !important;
+}
+#chic_ocr_status.processing { color: var(--primary-color); font-weight: 500; }
+body.dark-mode #chic_ocr_status.processing { color: var(--secondary-color); }
+#chic_ocr_status.success { color: #155724; }
+body.dark-mode #chic_ocr_status.success { color: #a3d9a5; }
+#chic_ocr_status.error { color: #721c24; }
+body.dark-mode #chic_ocr_status.error { color: #f1aeb5; }
+#chic_ocr_status .fa-spinner { animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- BULK EDITABLE TABLE STYLES --- */
+#bulk-order-editable-table .form-input,
+#bulk-order-editable-table .form-select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border-color-light);
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    background-color: var(--card-bg-light);
+    color: var(--text-light);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+body.dark-mode #bulk-order-editable-table .form-input,
+body.dark-mode #bulk-order-editable-table .form-select {
+    border-color: var(--border-color-dark);
+    background-color: var(--card-bg-dark);
+    color: var(--text-dark);
+}
+#bulk-order-editable-table .form-input:focus,
+#bulk-order-editable-table .form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+body.dark-mode #bulk-order-editable-table .form-input:focus,
+body.dark-mode #bulk-order-editable-table .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 1px var(--secondary-color);
+}
+
+.bulk-order-row.invalid-row td {
+    background-color: #fee2e2 !important; /* Tailwind red-100 */
+}
+body.dark-mode .bulk-order-row.invalid-row td {
+    background-color: #450a0a !important; /* Darker red tone for dark mode */
+}
+.bulk-order-row.valid-row td {
+    background-color: #dcfce7 !important; /* Tailwind green-100 */
+}
+body.dark-mode .bulk-order-row.valid-row td {
+    background-color: #064e3b !important; /* Darker green tone for dark mode */
+}
+.row-status { white-space: normal; }
+.row-status.error {
+    color: #ef4444; /* Tailwind red-500 */
+    font-weight: 500;
+}
+body.dark-mode .row-status.error { color: #f87171; }
+.row-status.success {
+    color: #16a34a; /* Tailwind green-600 */
+    font-weight: 500;
+}
+body.dark-mode .row-status.success { color: #4ade80; }
+
+#bulk-order-editable-table .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.3rem center;
+    background-repeat: no-repeat;
+    background-size: 1.2em 1.2em;
+    padding-right: 2rem;
+}
+body.dark-mode #bulk-order-editable-table .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+#bulk-order-editable-table th, #bulk-order-editable-table td {
+    padding: 0.5rem 0.75rem;
+}
+/* Thêm vào trong thẻ <style> của bạn */
+.chic-upload-wrapper-bulk-row {
+    position: relative;
+    width: 100%;
+    min-height: 2.5rem; /* 40px */
+    border: 1px dashed #cbd5e1; /* gray-300 */
+    border-radius: 0.375rem; /* rounded-md */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem; /* text-xs */
+    color: #6b7280; /* gray-500 */
+    cursor: pointer;
+    transition: border-color 0.2s ease-in-out;
+    background-color: #f9fafb; /* gray-50 */
+}
+body.dark-mode .chic-upload-wrapper-bulk-row {
+    border-color: #4b5563; /* dark:gray-600 */
+    color: #9ca3af; /* dark:gray-400 */
+    background-color: #374151; /* dark:gray-700/30 przykładowo */
+}
+.chic-upload-wrapper-bulk-row:hover {
+    border-color: var(--primary-color);
+}
+body.dark-mode .chic-upload-wrapper-bulk-row:hover {
+    border-color: var(--secondary-color);
+}
+.chic-upload-wrapper-bulk-row.file-selected-bulk {
+    border-style: solid;
+    border-color: var(--primary-color);
+}
+body.dark-mode .chic-upload-wrapper-bulk-row.file-selected-bulk {
+    border-color: var(--secondary-color);
+}
+
+.chic-file-input-bulk {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.chic-upload-prompt-bulk {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem; /* Tùy chỉnh khoảng cách */
+}
+.chic-upload-prompt-bulk i {
+    font-size: 0.9rem; /* Kích thước icon */
+}
+
+.chic-file-preview-details-bulk { /* Cho phép hiển thị tên file đã chọn */
+    font-size: 0.7rem;
+    padding: 0 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+.chic-ocr-status-bulk {
+    font-size: 0.7rem;
+    margin-top: 0.2rem;
+    font-style: italic;
+}
+@keyframes flashErrorAnimation {
+    0% { background-color: inherit; }
+    25% { background-color: rgba(254, 226, 226, 0.7); } /* Tailwind red-100 with opacity */
+    50% { background-color: inherit; }
+    75% { background-color: rgba(254, 226, 226, 0.7); }
+    100% { background-color: inherit; }
+}
+body.dark-mode @keyframes flashErrorAnimation {
+    0% { background-color: inherit; }
+    25% { background-color: rgba(70, 10, 10, 0.7); } /* Darker red tone for dark mode */
+    50% { background-color: inherit; }
+    75% { background-color: rgba(70, 10, 10, 0.7); }
+    100% { background-color: inherit; }
+}
+
+.flash-error {
+    animation: flashErrorAnimation 1.5s ease-in-out;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1180,9 +1296,9 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
         <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="logo"><h1></h1></div>
-        <div class="tabs">
+        <div class="logo"><h1>VINFAST MINH ĐẠO</h1></div> <div class="tabs">
             <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
+<a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
             <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
             <a href="#" onclick="switchTab('detailed-stats', this)" data-tooltip="Xem thống kê chi tiết">Thống Kê Chi Tiết</a>
         </div>
@@ -1212,38 +1328,26 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
         <div class="form-container" id="form-section">
             <h2>Thêm Yêu Cầu Ghép Xe</h2>
             <form id="vinfast-form" onsubmit="previewForm(event)">
-                <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" />
-                <input name="ten_khach_hang" id="ten_khach_hang" placeholder="Nhập tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()"/>
-                <select name="dong_xe" id="dong_xe" required onchange="restrictVersion(this); saveFormDraft()">
+                <input name="ten_ban_hang" id="ten_ban_hang" readonly required placeholder="Tên tư vấn viên" class="form-input"/>
+                <input name="ten_khach_hang" id="ten_khach_hang" placeholder="Nhập tên khách hàng" required oninput="this.value = this.value.toUpperCase(); saveFormDraft()" class="form-input"/>
+                <select name="dong_xe" id="dong_xe" required onchange="restrictVersion(this); saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn dòng xe</option>
                     <option value="VF 3">VF 3</option><option value="VF 5">VF 5</option><option value="VF 6">VF 6</option><option value="VF 7">VF 7</option><option value="VF 8">VF 8</option><option value="VF 9">VF 9</option>
                     <option value="HERIO">HERIO</option><option value="NERIO">NERIO</option><option value="LIMO">LIMO</option><option value="MINIO">MINIO</option>
                 </select>
-                <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()">
+                <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn phiên bản</option>
-<option value="Plus">Plus</option>
-<option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option>
-<option value="Plus Nâng cấp">Plus Nâng cấp</option>
-<option value="Eco">Eco</option>
-<option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option>
-<option value="Eco Nâng cấp">Eco Nâng cấp</option>
-<option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option>
-<option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option>
-<option value="Plus_CAP_Metal">Plus_CAP_Metal</option>
-<option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option>
-<option value="Eco_3ZONES">Eco_3ZONES</option>
-<option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option>
-<option value="Base">Base</option>
+                    <option value="Plus">Plus</option> <option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option> <option value="Plus Nâng cấp">Plus Nâng cấp</option> <option value="Eco">Eco</option> <option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option> <option value="Eco Nâng cấp">Eco Nâng cấp</option> <option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option> <option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option> <option value="Plus_CAP_Metal">Plus_CAP_Metal</option> <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option> <option value="Eco_3ZONES">Eco_3ZONES</option> <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option> <option value="Base">Base</option>
                 </select>
-                <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()">
+                <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn ngoại thất</option>
                     <option value="Brahminy White (CE18)">Brahminy White (CE18)</option><option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option><option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option><option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option><option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option><option value="Jet Black (CE11)">Jet Black (CE11)</option><option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option><option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option><option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option><option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option><option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option><option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option><option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option><option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option><option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option><option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option><option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option><option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option><option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option><option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option><option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option><option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option><option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option><option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option><option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option><option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option><option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option><option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option><option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option><option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option><option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option><option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option><option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option><option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option><option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
                 </select>
-                <select name="noi_that" id="noi_that" required onchange="saveFormDraft()">
+                <select name="noi_that" id="noi_that" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn nội thất</option>
                     <option value="Black">Black</option><option value="Brown">Brown</option><option value="Beige">Beige</option>
                 </select>
-                <input name="so_don_hang" id="so_don_hang" placeholder="VD: N31913-VSO-25-04-0028" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. VD: N31913-VSO-25-04-0028')" oninput="this.setCustomValidity(''); saveFormDraft()"/>
+                <input name="so_don_hang" id="so_don_hang" placeholder="VD: N31913-VSO-25-04-0028" pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" required oninvalid="this.setCustomValidity('Số đơn hàng không đúng định dạng. VD: N31913-VSO-25-04-0028')" oninput="this.setCustomValidity(''); saveFormDraft()" class="form-input"/>
 
                 <div>
                     <label for="chic_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ảnh Ủy Nhiệm Chi:</label>
@@ -1267,7 +1371,7 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
                     <p id="chic_ocr_status" class="mt-1 text-xs italic text-gray-500 dark:text-gray-400"></p>
                 </div>
                 <label for="ngay_coc">Ngày Cọc:</label>
-                <input name="ngay_coc" id="ngay_coc" type="datetime-local" required readonly />
+                <input name="ngay_coc" id="ngay_coc" type="datetime-local" required readonly class="form-input"/>
 
                 <div class="form-buttons">
                     <button type="submit">Xác Nhận</button>
@@ -1364,9 +1468,72 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
                 </table>
             </div>
         </div>
-    </div>
 
-    <footer>
+<div class="grid-container hidden" id="bulk-entry-table-section">
+    <div class="form-container w-full p-4 md:p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                NHẬP YÊU CẦU
+            </h2>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" aria-label="Thêm Dòng Mới" class="px-3 py-1 bg-green-800 text-white rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
+    <i class="fas fa-plus mr-1.5 text-sm"></i>Thêm
+</button>
+                <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" aria-label="Kiểm Tra Dữ Liệu" class="px-3 py-1 bg-indigo-800 text-white rounded-md hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
+    <i class="fas fa-check-double mr-1.5 text-sm"></i>Kiểm Tra
+</button>
+                <button type="button" title="Xóa Toàn Bộ Bảng" aria-label="Xóa Toàn Bộ Bảng" class="p-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-75 shadow-sm flex items-center justify-center transition-colors duration-150" onclick="clearBulkEditableTable()">
+                    <i class="fas fa-trash-alt text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper max-h-[60vh] overflow-auto border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+            <table id="bulk-order-editable-table" class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
+                <tr>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider" title="Số Thứ Tự">STT</th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên Khách Hàng <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Dòng Xe <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Phiên Bản <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngoại Thất <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nội Thất <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Số Đơn Hàng <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày Cọc <span class="text-red-500">*</span></th>
+                    <th class="px-3 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider" title="Xóa Dòng">
+                        <i class="fas fa-trash-alt"></i>
+                    </th>
+                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[150px]">Trạng Thái / Lỗi</th>
+                </tr>
+            </thead>
+                <tbody id="bulk-order-editable-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-5 text-sm text-gray-700 dark:text-gray-300 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <span class="flex items-center" title="Tổng số dòng">
+                <i class="fas fa-list-ol mr-1.5 text-gray-500 dark:text-gray-400 text-base"></i> Tổng:
+                <strong id="bulk-total-rows" class="ml-1.5 text-gray-800 dark:text-gray-100 font-medium">0</strong>
+            </span>
+            <span class="flex items-center" title="Số dòng hợp lệ">
+                <i class="fas fa-check-circle mr-1.5 text-green-500 text-base"></i> Hợp lệ:
+                <strong id="bulk-valid-rows" class="ml-1.5 text-green-600 dark:text-green-400 font-medium">0</strong>
+            </span>
+            <span class="flex items-center" title="Số dòng bị lỗi">
+                <i class="fas fa-exclamation-circle mr-1.5 text-red-500 text-base"></i> Lỗi:
+                <strong id="bulk-error-rows" class="ml-1.5 text-red-600 dark:text-red-400 font-medium">0</strong>
+            </span>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end items-center gap-3">
+            <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" aria-label="Gửi Các Đơn Hợp Lệ" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150" onclick="submitValidBulkTableOrders()" style="display:none;">
+                <i class="fas fa-paper-plane mr-1.5 text-sm"></i> GỬI YÊU CẦU
+            </button>
+        </div>
+    </div>
+</div>
+        </div> <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
 
@@ -1400,17 +1567,17 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
         </div>
     </div>
 
-<div class="modal" id="loading-modal">
-    <div class="modal-content loading-modal-content">
-        <div class="modal-header">
-            <h2 id="loading-title">Đang Gửi Dữ Liệu</h2>
-        </div>
-        <div class="modal-body">
-            <div class="soft-fade-spinner"></div>
-            <p id="loading-message">Vui lòng chờ trong giây lát...</p>
+    <div class="modal" id="loading-modal">
+        <div class="modal-content loading-modal-content">
+            <div class="modal-header">
+                <h2 id="loading-title">Đang Gửi Dữ Liệu</h2>
+            </div>
+            <div class="modal-body">
+                <div class="soft-fade-spinner"></div>
+                <p id="loading-message">Vui lòng chờ trong giây lát...</p>
+            </div>
         </div>
     </div>
-</div>
     <div class="modal" id="pending-invoice-warning-modal">
         <div class="modal-content warning-modal-content">
             <div class="modal-header">
@@ -1436,14 +1603,15 @@ body.dark-mode .modal#loading-modal .modal-content.loading-modal-content .modal-
     <div id="notification-container"></div>
 
 <script>
-// --- CONTENT FROM a.html <script> block, with modifications ---
+// --- CONTENT FROM ORIGINAL SCRIPT BLOCK, MODIFIED AND WITH NEW ADDITIONS ---
+
 // --- Biến toàn cục và Hằng số ---
 let globalHistoryData = [];
-let formData = {}, orderId = "", detailedStatsData = []; // orderId is used for redirection in a.html
+let formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
-const ADMIN_USER = "PHẠM THÀNH NHÂN";
+const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
 
@@ -1456,7 +1624,28 @@ const labelMap = {
     "ket_qua": "Kết Quả", "VIN": "VIN"
 };
 
-// --- Sidebar JavaScript ---
+// --- Định nghĩa versionsMap và allPossibleVersions ở phạm vi toàn cục ---
+const versionsMap = {
+    "VF 3": ["Base"], "VF 5": ["Plus"],
+    "VF 6": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus Tiêu chuẩn", "Plus Nâng cấp"],
+    "VF 7": ["Eco", "Plus_Metal Nâng cấp", "Plus_Metal Tiêu chuẩn", "Plus Tiêu chuẩn", "Plus Nâng cấp"],
+    "VF 8": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus"],
+    "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
+    "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"]
+};
+const allPossibleVersions = [
+    "Base", "Plus", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco", "Eco Tiêu chuẩn", "Eco Nâng cấp",
+    "Plus_Metal Tiêu chuẩn", "Plus_Metal Nâng cấp", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES",
+    "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"
+];
+
+
+// --- Biến toàn cục cho Bulk Table (sẽ được gán trong DOMContentLoaded) ---
+let bulkTableBody, bulkTotalRowsEl, bulkValidRowsEl, bulkErrorRowsEl, submitValidBulkTableOrdersBtn;
+let bulkOrderRowCount = 0;
+
+
+// --- Sidebar JavaScript (Giữ nguyên) ---
 function toggleSidebarDesktop() {
     if (window.innerWidth > 900) {
         const sidebar = document.getElementById("sidebar");
@@ -1468,20 +1657,18 @@ function toggleSidebarDesktop() {
         }
     }
 }
-
 function toggleMobileSidebar() {
     const sidebar = document.getElementById("sidebar");
     if (sidebar) {
         sidebar.classList.toggle("open");
         if (sidebar.classList.contains("open")) {
-            sidebar.classList.remove("collapsed");
+            sidebar.classList.remove("collapsed"); // Ensure it's expanded when opened on mobile
         }
     }
 }
-
 function setActiveSidebarLink() {
     const navLinks = document.querySelectorAll("#navMenu a");
-    const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
+    const currentPageFile = window.location.pathname.split("/").pop() || "index.html"; // Default to index.html if path is '/'
     navLinks.forEach(link => {
         link.classList.remove("active");
         if (link.getAttribute('href') === currentPageFile) {
@@ -1490,91 +1677,142 @@ function setActiveSidebarLink() {
     });
 }
 
-// --- DOMContentLoaded ---
+// --- DOMContentLoaded (Cập nhật) ---
 document.addEventListener("DOMContentLoaded", function () {
+    // Kiểm tra đăng nhập
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "index.html";
-    } else {
-        const consultantInput = document.getElementById("ten_ban_hang");
-        if (consultantInput) {
-            consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
-        }
-        loadFormDraft();
+        window.location.href = "index.html"; // Hoặc trang đăng nhập của bạn
+        return; // Ngăn không cho code phía dưới chạy nếu chưa đăng nhập
+    }
 
-        const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
-        if (cachedHistoryData) {
-            try {
-                globalHistoryData = JSON.parse(cachedHistoryData);
-                if (globalHistoryData && globalHistoryData.length > 0) {
-                    prepareDetailedStats(globalHistoryData);
-                    checkPendingInvoicesWarning();
-                }
-            } catch (e) {
-                console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
-                sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY);
-                globalHistoryData = [];
+    // Điền tên tư vấn viên
+    const consultantInput = document.getElementById("ten_ban_hang");
+    if (consultantInput) {
+        consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+    }
+
+    // Khôi phục dữ liệu nháp cho form đơn lẻ
+    loadFormDraft();
+
+    // Tải dữ liệu lịch sử từ cache nếu có
+    const cachedHistoryData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
+    if (cachedHistoryData) {
+        try {
+            globalHistoryData = JSON.parse(cachedHistoryData);
+            if (globalHistoryData && globalHistoryData.length > 0) {
+                // Chuẩn bị dữ liệu thống kê sớm nếu có cache, không cần render ngay
+                prepareDetailedStats(globalHistoryData);
+                checkPendingInvoicesWarning(); // Kiểm tra cảnh báo hóa đơn chờ
             }
-        }
-
-        switchTab('form', document.querySelector('.tabs a[onclick*="form"]'));
-        setupScrollSync();
-        applyInitialTheme();
-        initScrollToTopButton();
-
-        if (window.innerWidth > 900) {
-            const sidebar = document.getElementById("sidebar");
-            const mainContainer = document.getElementById("main-container");
-            if (localStorage.getItem('sidebarState') === 'collapsed') {
-                sidebar?.classList.add("collapsed");
-                mainContainer?.classList.add("collapsed");
-            } else {
-                 sidebar?.classList.remove("collapsed");
-                 mainContainer?.classList.remove("collapsed");
-            }
-        }
-        setActiveSidebarLink();
-
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-                if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-                    sidebar.classList.remove('open');
-                }
-            }
-        });
-
-        const chicWrapper = document.getElementById('chic-upload-wrapper');
-        const chicInput = document.getElementById('chic_file_input');
-        const chicPrompt = document.getElementById('chic-upload-prompt');
-        const chicPreviewDetails = document.getElementById('chic-file-preview-details');
-        const chicRemoveBtn = document.getElementById('chic-remove-btn');
-
-        if (chicInput && chicWrapper && chicPrompt && chicPreviewDetails) {
-            chicInput.addEventListener('change', function(event) {
-                const files = event.target.files;
-                if (files && files.length > 0) { processChicFile(files[0]); }
-                else if (!chicInput.value) { resetChicUploadUI(); }
-            });
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false));
-            ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false));
-            ['dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.remove('dragover'), false));
-            chicWrapper.addEventListener('drop', function(event) {
-                const files = event.dataTransfer?.files;
-                if (files && files.length > 0) { chicInput.files = files; processChicFile(files[0]); }
-            }, false);
-        }
-        if (chicRemoveBtn) { chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); }); }
-
-        const ngayCocInput = document.getElementById('ngay_coc');
-        if (ngayCocInput) {
-            ngayCocInput.setAttribute('readonly', true);
-            ngayCocInput.addEventListener('focus', function(event) { this.blur(); });
-            ngayCocInput.addEventListener('click', function(event) { this.blur(); });
+        } catch (e) {
+            console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
+            sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY); // Xóa cache lỗi
+            globalHistoryData = [];
         }
     }
-});
 
+    // Khởi tạo các element của bảng nhập hàng loạt
+    bulkTableBody = document.getElementById('bulk-order-editable-table-body');
+    bulkTotalRowsEl = document.getElementById('bulk-total-rows');
+    bulkValidRowsEl = document.getElementById('bulk-valid-rows');
+    bulkErrorRowsEl = document.getElementById('bulk-error-rows');
+    submitValidBulkTableOrdersBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
+
+    if (bulkTableBody) {
+        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true); // Cho phép dán
+    }
+
+    // Thiết lập tab mặc định là 'form' và hiển thị các section liên quan
+    const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
+    if (formTabLink) { // Đảm bảo link tồn tại trước khi gọi switchTab
+        switchTab('form', formTabLink);
+    } else {
+        console.error("Không tìm thấy link cho tab 'form'.");
+        // Nếu không tìm thấy, có thể mặc định hiển thị một section nào đó hoặc báo lỗi
+        const formSectionFallback = document.getElementById('form-section');
+        if (formSectionFallback) formSectionFallback.classList.remove('hidden');
+        fetchHistory(); // Vẫn tải lịch sử
+    }
+
+    // Log trạng thái ẩn/hiện sau khi switchTab được gọi để debug
+    setTimeout(() => {
+        const formSection = document.getElementById('form-section');
+        const historySection = document.getElementById('history-section');
+        if (formSection) console.log('DOMContentLoaded - Form section hidden status:', formSection.classList.contains('hidden'));
+        if (historySection) console.log('DOMContentLoaded - History section hidden status:', historySection.classList.contains('hidden'));
+    }, 100); // Đợi một chút để đảm bảo DOM đã cập nhật
+
+    // Các thiết lập khác
+    setupScrollSync(); // Nếu bạn có hàm này
+    applyInitialTheme();
+    initScrollToTopButton();
+    setActiveSidebarLink();
+
+    // Quản lý trạng thái sidebar cho desktop
+    if (window.innerWidth > 900) {
+        const sidebar = document.getElementById("sidebar");
+        const mainContainer = document.getElementById("main-container");
+        if (sidebar && mainContainer) {
+            if (localStorage.getItem('sidebarState') === 'collapsed') {
+                sidebar.classList.add("collapsed");
+                mainContainer.classList.add("collapsed");
+            } else {
+                sidebar.classList.remove("collapsed");
+                mainContainer.classList.remove("collapsed");
+            }
+        }
+    }
+
+    // Đóng sidebar mobile khi click bên ngoài
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+            if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        }
+    });
+
+    // Thiết lập cho phần upload ảnh Ủy Nhiệm Chi (UNC) ở form đơn lẻ
+    const chicWrapper = document.getElementById('chic-upload-wrapper');
+    const chicInput = document.getElementById('chic_file_input');
+    if (chicInput && chicWrapper) {
+        chicInput.addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files && files.length > 0) {
+                processChicFile(files[0]);
+            } else if (!chicInput.value) { // Nếu người dùng hủy chọn file
+                resetChicUploadUI();
+            }
+        });
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false));
+        ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false));
+        ['dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.remove('dragover'), false));
+        chicWrapper.addEventListener('drop', function(event) {
+            const files = event.dataTransfer?.files;
+            if (files && files.length > 0) {
+                chicInput.files = files; // Gán file vào input
+                processChicFile(files[0]);
+            }
+        }, false);
+    }
+    const chicRemoveBtn = document.getElementById('chic-remove-btn');
+    if (chicRemoveBtn) {
+        chicRemoveBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Ngăn sự kiện click lan ra wrapper
+            resetChicUploadUI();
+        });
+    }
+
+    // Đặt trường ngày cọc ở form đơn lẻ thành chỉ đọc và vô hiệu hóa click/focus
+    const ngayCocInput = document.getElementById('ngay_coc');
+    if (ngayCocInput) {
+        ngayCocInput.setAttribute('readonly', true);
+        ngayCocInput.addEventListener('focus', function() { this.blur(); }); // Ngăn focus
+        ngayCocInput.addEventListener('click', function() { this.blur(); }); // Ngăn click mở date picker (dù đã readonly)
+    }
+});
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
@@ -1685,7 +1923,6 @@ function formatDateForFilter(dtString) {
     const d = new Date(dtString);
     return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
 }
-
 function showModalOverTarget(modalId, targetElementOrSelector, title, message) {
     const modal = document.getElementById(modalId);
     const targetElement = typeof targetElementOrSelector === 'string' ?
@@ -1836,51 +2073,68 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
-function fetchHistory() {
-    setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
-    const detailedStatsSection = document.getElementById('detailed-stats-section');
-    if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-        setTablePlaceholder("detailed-stats-body", "Đang tải dữ liệu thống kê...", "fas fa-spinner fa-spin");
-    }
+async function fetchHistory(showLoadingPlaceholder = true) { // Thêm tham số để kiểm soát placeholder
+    return new Promise(async (resolve, reject) => { // Trả về một Promise
+        if (showLoadingPlaceholder) {
+            setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
+            const detailedStatsSection = document.getElementById('detailed-stats-section');
+            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                setTablePlaceholder("detailed-stats-body", "Đang tải dữ liệu thống kê...", "fas fa-spinner fa-spin");
+            }
+        }
 
-    fetch(apiURL)
-        .then(response => {
-            if (!response.ok) throw new Error(`Lỗi mạng: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
+        try {
+            const response = await fetch(apiURL);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi mạng khi tải lịch sử: ${response.status} ${errorText || response.statusText}`);
+            }
+            const data = await response.json();
+
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+            globalHistoryData = [...daghep, ...chuaghep].sort((a, b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+
+            // CẬP NHẬT SESSIONSTORAGE NGAY TẠI ĐÂY
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+            console.log('fetchHistory: globalHistoryData và sessionStorage đã được cập nhật.');
+
+            // Vẫn render bảng và các thành phần khác như bình thường
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
             let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            renderHistoryTable(dataForHistoryTable);
-            renderSummary(globalHistoryData);
-            prepareDetailedStats(globalHistoryData);
-            checkPendingInvoicesWarning();
-            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                renderDetailedStatsTable(detailedStatsData);
-                renderCharts(detailedStatsData);
-            }
-        })
-        .catch(error => {
-            console.error("Lỗi khi tải dữ liệu lịch sử:", error);
-            setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle");
-            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                 setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle");
-            }
-            const loadingModal = document.getElementById("loading-modal");
-            if (loadingModal?.classList.contains("active")) {
-                const loadingModalTitle = loadingModal.querySelector("#loading-title");
-                const loadingModalMessage = loadingModal.querySelector("#loading-message");
-                if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Tải Dữ Liệu";
-                if (loadingModalMessage) loadingModalMessage.textContent = `Không thể tải: ${error.message}. Vui lòng thử lại.`;
-            }
-        });
-}
 
+            if (document.getElementById('history-section') && !document.getElementById('history-section').classList.contains('hidden')) {
+                renderHistoryTable(dataForHistoryTable);
+                renderSummary(globalHistoryData); // renderSummary thường dùng globalHistoryData
+            }
+
+            // Chuẩn bị dữ liệu thống kê, nhưng chỉ render nếu tab đó đang active
+            prepareDetailedStats(globalHistoryData); // prepareDetailedStats dùng globalHistoryData
+            const detailedStatsSection = document.getElementById('detailed-stats-section');
+            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                renderDetailedStatsTable(detailedStatsData); // renderDetailedStatsTable dùng detailedStatsData
+                renderCharts(detailedStatsData); // renderCharts dùng detailedStatsData
+            }
+            
+            // Không cần thiết nếu các hàm render không phụ thuộc vào trạng thái active của tab
+            // checkPendingInvoicesWarning(); // Nếu hàm này dựa vào globalHistoryData
+
+            resolve(globalHistoryData); // Giải quyết Promise với dữ liệu đã cập nhật
+
+        } catch (error) {
+            console.error("Lỗi nghiêm trọng khi tải dữ liệu lịch sử:", error);
+            if (showLoadingPlaceholder) {
+                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle");
+                const detailedStatsSection = document.getElementById('detailed-stats-section');
+                if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
+                    setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle");
+                }
+            }
+            reject(error); // Từ chối Promise nếu có lỗi
+        }
+    });
+}
 function refreshData() {
     fetchHistory();
     showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
@@ -2111,7 +2365,6 @@ function exportToPDF() {
         exteriorCells.forEach((cell, index) => { cell.style.cssText = originalExteriorStyles[index]; });
     });
 }
-
 function previewForm(e) {
     e.preventDefault();
 
@@ -2376,30 +2629,95 @@ function exportDetailedStatsToExcel() {
     showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
+// --- Tab Switching (Cập nhật) ---
 function switchTab(tabName, element) {
+    // Đặt lại trạng thái active cho các tab trên thanh điều hướng
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
-    if (element) element.classList.add("active");
-    const sections = { 'form': document.getElementById('form-section'), 'history': document.getElementById('history-section'), 'detailed-stats': document.getElementById('detailed-stats-section') };
-    Object.values(sections).forEach(section => { if (section) section.classList.add('hidden'); });
-    const showSection = (sectionElement) => { if (sectionElement) { sectionElement.classList.remove('hidden'); sectionElement.style.animation = 'none'; sectionElement.offsetHeight; sectionElement.style.animation = ''; } };
-    const isDataCached = globalHistoryData && globalHistoryData.length > 0;
-
-    if (tabName === 'form') {
-        showSection(sections.form);
-        showSection(sections.history);
-        if (isDataCached) { filterHistory(); renderSummary(globalHistoryData); } else { fetchHistory(); }
-    } else if (tabName === 'history') {
-        showSection(sections.history);
-        if (isDataCached) { filterHistory(); renderSummary(globalHistoryData); } else { fetchHistory(); }
-    } else if (tabName === 'detailed-stats') {
-        showSection(sections['detailed-stats']);
-        if (isDataCached) { if(detailedStatsData.length === 0 && globalHistoryData.length > 0) prepareDetailedStats(globalHistoryData); renderDetailedStatsTable(detailedStatsData); renderCharts(detailedStatsData); } else { fetchHistory(); }
+    if (element) {
+        element.classList.add("active");
     }
 
-    const mobileMenu = document.querySelector(".navbar .tabs"); if (mobileMenu) mobileMenu.classList.remove("active");
-    const hamburger = document.querySelector(".hamburger"); if (hamburger) hamburger.classList.remove("active");
-}
+    // Định nghĩa các section tương ứng với các tab
+    const sections = {
+        'form': document.getElementById('form-section'),
+        'history': document.getElementById('history-section'),
+        'detailed-stats': document.getElementById('detailed-stats-section'),
+        'bulk-entry-table': document.getElementById('bulk-entry-table-section')
+    };
 
+    // Ẩn tất cả các section trước khi hiển thị section mong muốn
+    Object.values(sections).forEach(section => {
+        if (section) {
+            section.classList.add('hidden');
+        }
+    });
+
+    // Hàm phụ trợ để hiển thị một section và kích hoạt lại animation
+    const showSection = (sectionElement) => {
+        if (sectionElement) {
+            sectionElement.classList.remove('hidden');
+            // Trigger reflow để animation có thể chạy lại nếu cần
+            sectionElement.style.animation = 'none';
+            sectionElement.offsetHeight; // eslint-disable-line no-unused-expressions
+            sectionElement.style.animation = '';
+        }
+    };
+
+    // Kiểm tra xem dữ liệu lịch sử đã được cache chưa
+    const isDataCached = globalHistoryData && globalHistoryData.length > 0;
+
+    // Xử lý hiển thị dựa trên tabName
+    if (tabName === 'form') {
+        showSection(sections.form); // Hiển thị form yêu cầu
+        // **HIỂN THỊ CẢ BẢNG LỊCH SỬ KHI Ở TAB FORM**
+        if (sections.history) {
+            sections.history.classList.remove('hidden'); // Bỏ ẩn bảng lịch sử
+            console.log('Tab "form" selected: History section hidden status:', sections.history.classList.contains('hidden')); // Log kiểm tra
+        }
+
+        // Tải hoặc lọc dữ liệu cho bảng lịch sử (vì nó sẽ hiển thị)
+        if (isDataCached) {
+            filterHistory(); // Hàm này sẽ gọi renderHistoryTable
+            renderSummary(globalHistoryData);
+        } else {
+            fetchHistory(); // Hàm này sẽ tải và sau đó render
+        }
+    } else if (tabName === 'history') {
+        showSection(sections.history);
+        if (isDataCached) {
+            filterHistory();
+            renderSummary(globalHistoryData);
+        } else {
+            fetchHistory();
+        }
+    } else if (tabName === 'detailed-stats') {
+        showSection(sections['detailed-stats']);
+        if (isDataCached) {
+            if (detailedStatsData.length === 0 && globalHistoryData.length > 0) {
+                prepareDetailedStats(globalHistoryData);
+            }
+            renderDetailedStatsTable(detailedStatsData);
+            renderCharts(detailedStatsData);
+        } else {
+            fetchHistory(); // fetchHistory sẽ xử lý việc tải và render các mục thống kê
+        }
+    } else if (tabName === 'bulk-entry-table') {
+        showSection(sections['bulk-entry-table']);
+        if (bulkTableBody && bulkTableBody.children.length === 0) {
+            addBulkOrderRow(); // Thêm một dòng trống ban đầu cho bảng nhập hàng loạt
+        }
+    }
+
+    // Đóng menu mobile nếu đang mở
+    const mobileMenu = document.querySelector(".navbar .tabs");
+    if (mobileMenu) {
+        mobileMenu.classList.remove("active");
+    }
+    const hamburger = document.querySelector(".hamburger");
+    if (hamburger) {
+        hamburger.classList.remove("active");
+    }
+}
 function toggleMenu() {
     const mobileMenu = document.querySelector(".navbar .tabs");
     const hamburger = document.querySelector(".hamburger");
@@ -2737,6 +3055,888 @@ async function xuLyAnhUyNhiemChiChic(event) {
         statusElement.className = 'mt-1 text-xs italic text-red-600 dark:text-red-400 font-medium'; // Full class name
         showNotification('Lỗi xử lý ảnh: ' + (error.message || error), 'error');
         saveFormDraft(); // Save the cleared date
+    }
+}
+function getInitialSelectOptions(selectName, includeDisabledPlaceholder = true) {
+    const mainFormSelect = document.querySelector(`#vinfast-form select[name="${selectName}"]`);
+    if (!mainFormSelect) return includeDisabledPlaceholder ? '<option value="" disabled selected>Lỗi tải options</option>' : '';
+
+    let optionsHtml = '';
+    mainFormSelect.querySelectorAll('option').forEach(opt => {
+        if (!includeDisabledPlaceholder && (opt.value === "" || opt.disabled)) {
+            // Bỏ qua placeholder nếu không muốn
+        } else {
+            optionsHtml += `<option value="${opt.value}" ${opt.selected ? 'selected' : ''} ${opt.disabled ? 'disabled' : ''}>${opt.textContent}</option>`;
+        }
+    });
+    return optionsHtml;
+}
+
+// --- Hàm Thêm Dòng Mới Vào Bảng ---
+// --- Hàm Thêm Dòng Mới Vào Bảng ---
+function addBulkOrderRow(data = {}, isPastedRow = false) {
+    if (!bulkTableBody) {
+        console.error("bulkTableBody is not initialized.");
+        return;
+    }
+    bulkOrderRowCount = bulkTableBody.querySelectorAll('.bulk-order-row').length + 1;
+
+    const tr = document.createElement('tr');
+    tr.classList.add('bulk-order-row');
+    tr.setAttribute('data-row-id', bulkOrderRowCount); // Quan trọng để định danh dòng
+
+    const dongXeOptions = getInitialSelectOptions('dong_xe');
+    const phienBanOptions = '<option value="" disabled selected>Chọn dòng xe</option>'; // Sẽ được cập nhật bởi restrictVersionForRow
+    const ngoaiThatOptions = getInitialSelectOptions('ngoai_that');
+    const noiThatOptions = getInitialSelectOptions('noi_that');
+
+    // Tạo một ID duy nhất cho input file và status của dòng này
+    const uniqueRowIdSuffix = `_row_${bulkOrderRowCount}`;
+
+    tr.innerHTML = `
+        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 row-stt">${bulkOrderRowCount}</td>
+        <td class="px-3 py-2"><input type="text" name="ten_khach_hang" class="form-input w-full text-sm" value="${data.ten_khach_hang || ''}" required oninput="this.value = this.value.toUpperCase()"></td>
+        <td class="px-3 py-2">
+            <select name="dong_xe" class="form-select w-full text-sm" required onchange="restrictVersionForRow(this.closest('tr'), this)">
+                ${dongXeOptions}
+            </select>
+        </td>
+        <td class="px-3 py-2"><select name="phien_ban" class="form-select w-full text-sm" required>${phienBanOptions}</select></td>
+        <td class="px-3 py-2"><select name="ngoai_that" class="form-select w-full text-sm" required>${ngoaiThatOptions}</select></td>
+        <td class="px-3 py-2"><select name="noi_that" class="form-select w-full text-sm" required>${noiThatOptions}</select></td>
+        <td class="px-3 py-2"><input type="text" name="so_don_hang" class="form-input w-full text-sm" value="${data.so_don_hang || ''}" required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"></td>
+        
+        <td class="px-3 py-2">
+            <div id="chic-upload-wrapper-bulk${uniqueRowIdSuffix}" class="chic-upload-wrapper-bulk-row mb-1">
+                <input type="file" id="chic_file_input_bulk${uniqueRowIdSuffix}" name="chic_file_input_bulk_row" class="chic-file-input-bulk" accept="image/*">
+                <div id="chic-upload-prompt-bulk${uniqueRowIdSuffix}" class="chic-upload-prompt-bulk">
+                    <i class="fas fa-file-image"></i>
+                    <span>Chọn UNC</span>
+                </div>
+                <div id="chic-file-preview-details-bulk${uniqueRowIdSuffix}" class="chic-file-preview-details-bulk" style="display: none;">
+                    <span class="chic-filename-bulk"></span>
+                    <button type="button" class="chic-remove-btn-bulk" style="margin-left: 5px; color: red; background: none; border: none; cursor: pointer; display:none;">&times;</button>
+                </div>
+            </div>
+            <input name="ngay_coc" id="ngay_coc_bulk${uniqueRowIdSuffix}" type="datetime-local" class="form-input w-full text-sm" readonly required value="${data.ngay_coc_datetime_local || ''}">
+            <p id="chic_ocr_status_bulk${uniqueRowIdSuffix}" class="chic-ocr-status-bulk"></p>
+        </td>
+        <td class="px-3 py-2 text-center"><button type="button" class="p-1" onclick="removeBulkOrderRow(this.closest('tr'))"><i class="fas fa-trash-alt text-red-500 hover:text-red-700"></i></button></td>
+        <td class="px-3 py-2 whitespace-nowrap text-xs row-status">Chưa kiểm tra</td>
+    `;
+    bulkTableBody.appendChild(tr);
+
+    // Gán sự kiện cho input file của dòng mới
+    const fileInputBulk = tr.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
+    const removeBtnBulk = tr.querySelector(`#chic-file-preview-details-bulk${uniqueRowIdSuffix} .chic-remove-btn-bulk`);
+    const wrapperBulk = tr.querySelector(`#chic-upload-wrapper-bulk${uniqueRowIdSuffix}`);
+    const promptBulk = tr.querySelector(`#chic-upload-prompt-bulk${uniqueRowIdSuffix}`);
+    const previewDetailsBulk = tr.querySelector(`#chic-file-preview-details-bulk${uniqueRowIdSuffix}`);
+    const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
+
+    fileInputBulk.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            wrapperBulk.classList.add('file-selected-bulk');
+            promptBulk.style.display = 'none';
+            previewDetailsBulk.style.display = 'flex';
+            previewDetailsBulk.style.alignItems = 'center';
+            previewDetailsBulk.style.justifyContent = 'space-between';
+            filenameBulkEl.textContent = file.name.length > 15 ? file.name.substring(0,12) + '...' : file.name;
+            filenameBulkEl.title = file.name;
+            removeBtnBulk.style.display = 'inline';
+            xuLyAnhUNCRow(event.target, tr);
+        }
+    });
+
+    removeBtnBulk.addEventListener('click', function() {
+        fileInputBulk.value = null; // Xóa file đã chọn
+        wrapperBulk.classList.remove('file-selected-bulk');
+        promptBulk.style.display = 'flex';
+        previewDetailsBulk.style.display = 'none';
+        filenameBulkEl.textContent = '';
+        filenameBulkEl.title = '';
+        removeBtnBulk.style.display = 'none';
+        tr.querySelector('input[name="ngay_coc"]').value = ''; // Xóa ngày cọc
+        tr.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`).textContent = ''; // Xóa trạng thái OCR
+        // Trigger validation or status update if needed
+        tr.classList.remove('valid-row', 'invalid-row');
+        const statusCell = tr.querySelector('.row-status');
+        if(statusCell) {
+            statusCell.textContent = 'Chưa kiểm tra';
+            statusCell.classList.remove('error', 'success');
+        }
+        updateBulkTableSummary();
+    });
+
+
+    // Xử lý dữ liệu được truyền vào (ví dụ khi dán từ Excel)
+    if (data.dong_xe) {
+        const dongXeSelect = tr.querySelector('select[name="dong_xe"]');
+        dongXeSelect.value = data.dong_xe;
+        restrictVersionForRow(tr, dongXeSelect, data.phien_ban);
+    }
+    if (data.phien_ban && data.dong_xe) {
+         const phienBanSelectCurrent = tr.querySelector('select[name="phien_ban"]');
+         if (Array.from(phienBanSelectCurrent.options).some(opt => opt.value === data.phien_ban)) {
+            phienBanSelectCurrent.value = data.phien_ban;
+         }
+    }
+    if (data.ngoai_that) tr.querySelector('select[name="ngoai_that"]').value = data.ngoai_that;
+    if (data.noi_that) tr.querySelector('select[name="noi_that"]').value = data.noi_that;
+
+    // Nếu dữ liệu dán có 'ngay_coc' và không phải là file, ta có thể bỏ qua hoặc log cảnh báo
+    // Hiện tại, 'ngay_coc' sẽ đến từ OCR
+    if (data.ngay_coc && !isPastedRow) { // Nếu `ngay_coc` là ngày (không phải file) thì vẫn điền
+        // Tuy nhiên, nếu dán từ Excel, `data.ngay_coc` có thể là chuỗi ngày
+        // Logic này cần xem xét kỹ: nếu dán, người dùng muốn ngày đó hay muốn upload file?
+        // Tạm thời: nếu `data.ngay_coc` có giá trị (tức là không phải file đã được xử lý thành công)
+        // thì có thể bỏ qua, vì giờ đây ta ưu tiên file.
+        // Nếu có file được dán (dưới dạng base64 chẳng hạn), logic sẽ phức tạp hơn nhiều.
+        // Hiện tại, giả định là nếu `data.ngay_coc` có giá trị, đó là giá trị ngày tháng được dán từ excel.
+        // Chúng ta sẽ cho phép nó ghi đè, nhưng nếu người dùng chọn file, file sẽ được ưu tiên.
+        const ngayCocInput = tr.querySelector('input[name="ngay_coc"]');
+        if (ngayCocInput && data.ngay_coc) {
+           try {
+                // Chuyển đổi định dạng dd/mm/yyyy hoặc yyyy-mm-dd sang yyyy-mm-ddTHH:MM
+                let dateObj;
+                if (data.ngay_coc.includes('T')) { // Already datetime-local
+                    dateObj = new Date(data.ngay_coc);
+                } else if (data.ngay_coc.includes('/')) { // dd/mm/yyyy
+                    const parts = data.ngay_coc.split('/');
+                    dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+                } else if (data.ngay_coc.match(/^\d{4}-\d{2}-\d{2}$/)) { // yyyy-mm-dd
+                     dateObj = new Date(data.ngay_coc + "T00:00:00"); // Thêm giờ để tránh lệch múi giờ
+                }
+
+                if (dateObj && !isNaN(dateObj)) {
+                    // Format to yyyy-MM-ddTHH:mm
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    // Mặc định giờ cọc là 08:00 nếu không có, hoặc giữ nguyên nếu có
+                    const hours = data.ngay_coc.includes('T') ? String(dateObj.getHours()).padStart(2, '0') : '08';
+                    const minutes = data.ngay_coc.includes('T') ? String(dateObj.getMinutes()).padStart(2, '0') : '00';
+                    ngayCocInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                } else {
+                    console.warn("Ngày cọc dán vào không hợp lệ:", data.ngay_coc);
+                }
+            } catch (e) {
+                console.warn("Lỗi định dạng ngày cọc khi dán:", data.ngay_coc, e);
+            }
+        }
+    }
+
+
+    tr.querySelectorAll('input:not([type="file"]), select').forEach(el => { // Bỏ qua input file vì đã có listener riêng
+        el.addEventListener('input', () => {
+            tr.classList.remove('valid-row', 'invalid-row');
+            const statusCell = tr.querySelector('.row-status');
+            if(statusCell) {
+                statusCell.textContent = 'Chưa kiểm tra';
+                statusCell.classList.remove('error', 'success');
+            }
+            updateBulkTableSummary();
+            if(submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
+        });
+    });
+
+    if (!isPastedRow && bulkTableBody.firstChild === tr) {
+        const firstInput = tr.querySelector('input[name="ten_khach_hang"]');
+        if (firstInput) firstInput.focus();
+    }
+    updateBulkTableSummary();
+}
+async function xuLyAnhUNCRow(fileInputElement, rowElement) {
+    // Kiểm tra kỹ fileInputElement và danh sách files trước khi truy cập
+    if (!fileInputElement || !fileInputElement.files || fileInputElement.files.length === 0) {
+        console.warn(`xuLyAnhUNCRow: Không có file được chọn hoặc fileInputElement không hợp lệ cho dòng ${rowElement.getAttribute('data-row-id')}.`);
+        
+        // Lấy ID duy nhất của dòng để reset UI
+        const rowIdNum = rowElement.getAttribute('data-row-id');
+        if (rowIdNum) {
+            const uniqueRowIdSuffix = `_row_${rowIdNum}`;
+            const statusElement = rowElement.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`);
+            const ngayCocInput = rowElement.querySelector(`#ngay_coc_bulk${uniqueRowIdSuffix}`);
+            const wrapperBulk = rowElement.querySelector(`#chic-upload-wrapper-bulk${uniqueRowIdSuffix}`);
+            const promptBulk = rowElement.querySelector(`#chic-upload-prompt-bulk${uniqueRowIdSuffix}`);
+            const previewDetailsBulk = rowElement.querySelector(`#chic-file-preview-details-bulk${uniqueRowIdSuffix}`);
+            // Quan trọng: Lấy đúng input file của dòng để reset giá trị
+            const actualFileInputInRow = rowElement.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
+
+            if (actualFileInputInRow) {
+                actualFileInputInRow.value = null; // Xóa file đã chọn khỏi input element
+            }
+
+            if (wrapperBulk) wrapperBulk.classList.remove('file-selected-bulk');
+            if (promptBulk) promptBulk.style.display = 'flex';
+            if (previewDetailsBulk) {
+                previewDetailsBulk.style.display = 'none';
+                const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
+                const removeBtnBulk = previewDetailsBulk.querySelector('.chic-remove-btn-bulk');
+                if (filenameBulkEl) filenameBulkEl.textContent = '';
+                if (removeBtnBulk) removeBtnBulk.style.display = 'none';
+            }
+
+            if (statusElement) {
+                statusElement.textContent = ''; // Xóa trạng thái OCR cũ
+                statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-gray-500 dark:text-gray-400'; // Reset class
+            }
+            if (ngayCocInput) {
+                ngayCocInput.value = ''; // Xóa ngày cọc
+            }
+
+            // Reset trạng thái kiểm tra của dòng
+            rowElement.classList.remove('valid-row', 'invalid-row');
+            const statusCellForRow = rowElement.querySelector('.row-status');
+            if (statusCellForRow) {
+                statusCellForRow.textContent = 'Chưa kiểm tra';
+                statusCellForRow.classList.remove('error', 'success');
+            }
+            // Cân nhắc gọi updateBulkTableSummary() ở đây nếu cần cập nhật ngay
+            // updateBulkTableSummary();
+        }
+        return; // Thoát sớm khỏi hàm
+    }
+
+    const file = fileInputElement.files[0]; // Bây giờ việc truy cập này an toàn hơn
+
+    // Lấy ID duy nhất của dòng từ thuộc tính data-row-id
+    const rowIdNum = rowElement.getAttribute('data-row-id');
+    if (!rowIdNum) {
+        console.error("Không thể xác định ID của dòng cho việc xử lý UNC.", rowElement);
+        showNotification("Lỗi: Không thể xác định dòng để xử lý UNC.", "error");
+        return;
+    }
+    const uniqueRowIdSuffix = `_row_${rowIdNum}`;
+
+    const statusElement = rowElement.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`);
+    const ngayCocInput = rowElement.querySelector(`#ngay_coc_bulk${uniqueRowIdSuffix}`);
+    const wrapperBulk = rowElement.querySelector(`#chic-upload-wrapper-bulk${uniqueRowIdSuffix}`);
+    const promptBulk = rowElement.querySelector(`#chic-upload-prompt-bulk${uniqueRowIdSuffix}`);
+    const previewDetailsBulk = rowElement.querySelector(`#chic-file-preview-details-bulk${uniqueRowIdSuffix}`);
+
+    if (!statusElement || !ngayCocInput || !wrapperBulk || !promptBulk || !previewDetailsBulk) {
+        console.error(`Một hoặc nhiều phần tử DOM không tìm thấy cho dòng ${rowIdNum}. Kiểm tra lại ID và cấu trúc HTML.`);
+        showNotification(`Lỗi cấu trúc DOM cho dòng ${rowIdNum}.`, "error");
+        return;
+    }
+
+    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Đang chuẩn bị...';
+    statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-primary-color dark:text-secondary-color font-medium';
+
+    if (!file.type.startsWith('image/')) {
+        showNotification(`File cho dòng ${rowIdNum} không phải là ảnh.`, 'error');
+        statusElement.textContent = 'Lỗi: File không phải ảnh.';
+        statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-red-600 dark:text-red-400';
+        if (fileInputElement) fileInputElement.value = null;
+
+        promptBulk.style.display = 'flex';
+        previewDetailsBulk.style.display = 'none';
+        wrapperBulk.classList.remove('file-selected-bulk');
+        const removeBtnBulk = previewDetailsBulk.querySelector('.chic-remove-btn-bulk');
+        if(removeBtnBulk) removeBtnBulk.style.display = 'none';
+        const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
+        if(filenameBulkEl) filenameBulkEl.textContent = '';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        showNotification(`File cho dòng ${rowIdNum} quá lớn (tối đa 10MB).`, 'error');
+        statusElement.textContent = 'Lỗi: File quá lớn.';
+        statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-red-600 dark:text-red-400';
+        if (fileInputElement) fileInputElement.value = null;
+        
+        promptBulk.style.display = 'flex';
+        previewDetailsBulk.style.display = 'none';
+        wrapperBulk.classList.remove('file-selected-bulk');
+        const removeBtnBulk = previewDetailsBulk.querySelector('.chic-remove-btn-bulk');
+        if(removeBtnBulk) removeBtnBulk.style.display = 'none';
+        const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
+        if(filenameBulkEl) filenameBulkEl.textContent = '';
+        return;
+    }
+
+    wrapperBulk.classList.add('file-selected-bulk');
+    promptBulk.style.display = 'none';
+    previewDetailsBulk.style.display = 'flex';
+    const filenameBulkEl = previewDetailsBulk.querySelector('.chic-filename-bulk');
+    if (filenameBulkEl) {
+        filenameBulkEl.textContent = file.name.length > 15 ? file.name.substring(0,12) + '...' : file.name;
+        filenameBulkEl.title = file.name;
+    }
+    const removeBtnBulk = previewDetailsBulk.querySelector('.chic-remove-btn-bulk');
+    if(removeBtnBulk) removeBtnBulk.style.display = 'inline';
+
+    try {
+        if (typeof Tesseract === 'undefined') {
+            statusElement.textContent = 'Lỗi: Tesseract chưa tải.';
+            statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-red-600 dark:text-red-400';
+            showNotification('Lỗi: Thư viện Tesseract chưa tải xong. Vui lòng F5 và thử lại.', 'error', 5000);
+            return;
+        }
+        statusElement.innerHTML = `<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (0%)`;
+
+        const {
+            data: {
+                text
+            }
+        } = await Tesseract.recognize(file, 'vie+eng', {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    statusElement.innerHTML = `<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (${Math.round(m.progress * 100)}%)`;
+                }
+            }
+        });
+        statusElement.innerHTML = '<i class="fas fa-search mr-1"></i>Đang tìm ngày giờ...';
+
+        let cleanedText = text.replace(/\n+/g, ' ');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (match, h, _, m, s) => `${h}:${m}${s ? ':'+s : ''}`);
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2'); 
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)/gi, '$1'); 
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giây|giay|s|sec)/gi, '$1'); 
+        cleanedText = cleanedText.replace(/\s*:\s*/g, ':').replace(/\s*-\s*/g, '-').replace(/\s*\/\s*/g, '/').replace(/\s*\.\s*/g, '.');
+        cleanedText = cleanedText.replace(/(\d{1,2})[\.-](\d{1,2})[\.-](\d{4})/g, '$1/$2/$3');
+        cleanedText = cleanedText.replace(/(\d{4})[\.-](\d{1,2})[\.-](\d{1,2})/g, '$1/$2/$3');
+        cleanedText = cleanedText.replace(/(\d{1,2})\/(\d{1,2})\/(\d{2})(?!\d)/g, (match, day, month, yearYY) => {
+            const currentYear = new Date().getFullYear();
+            const yearPrefix = Math.floor(currentYear / 100) * 100; 
+            let fullYear = parseInt(yearYY, 10);
+            if (fullYear + yearPrefix > currentYear + 15) { // Adjusted threshold for future years
+                fullYear = parseInt(yearYY, 10) + yearPrefix - 100;
+            } else {
+                fullYear = parseInt(yearYY, 10) + yearPrefix;
+            }
+            return `${day}/${month}/${fullYear}`;
+        });
+        cleanedText = cleanedText.replace(/(\d{1,2})\.(\d{1,2})\/(\d{1,2})\/(\d{4})/g, '$2/$3/$4'); 
+        cleanedText = cleanedText.replace(/(\d{1,2})\/(\d{1,2})\.(\d{1,2})\/(\d{4})/g, '$1/$2/$4'); 
+        cleanedText = cleanedText.replace(/[\u200B-\u200D\uFEFF]/g, ''); 
+
+        let extractedDateTime = null;
+        let bestMatchScore = -1;
+        let bestMatchDetails = {};
+
+        const monthTextRegexPart = `(?:tháng|thg|t|Tháng|Thg\\.?|T\\.)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-zÀ-ỹ]{3,}`;
+        const dateSeparatorRegexPart = `[\\s\\/\\.-]+`; 
+
+        const patternsWithParsers = [
+            { regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
+            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 15.5, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)" },
+            { regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện|Transaction Date)\\s*[:\\s]*?(\\d{1,2})\\s*(?:tháng|thg|/|-|\\.)\\s*(\\d{1,2})(?:,\\s*|\\s+|/|-|\\.)(\\d{4})\\s*(?:lúc|\\@|at|\\s)\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 15, name: "Techcombank & similar" },
+            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật|Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\\s*,?\\s*(?:ngày\\s*|date\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3] || '00', day: m[4], month: m[5], year: m[6] }), score: 14.5, name: "HH:MM(:SS) [DayOfWeek] DD/MM/YYYY (VCB)" },
+            { regex: new RegExp(`Chuyển\\s*nhanh\\s*Napas\\s*247\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second:m[3], day: m[4], month: m[5], year: m[6] }), score: 14, name: "TPBank Napas" },
+            { regex: new RegExp(`(\\d{4})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})[\\sT]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 13.5, name: "YYYY-MM-DD[ T]HH:MM:SS (Sacombank, ISO)" },
+            { regex: new RegExp(`(?:Ngày\\s*thực\\s*hiện|Date\\s*of\\s*transaction)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 13, name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY" },
+            { regex: new RegExp(`(?:vào\\s*lúc|lúc|at)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*,?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 12.5, name: "(vào) lúc/at DD/MM/YYYY HH:MM:SS (BIDV)" },
+            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 12, name: "SHB Thời gian/Time" },
+            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11.5, name: "DD-MM-YYYY HH:MM:SS (Agribank & Common)" },
+            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2})(?!\\d)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11.2, name: "DD/MM/YY HH:MM:SS (2-digit year)" },
+            { regex: new RegExp(`(?:Ngày|Date)\\s*(?:giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực|ghi nhận|transaction|payment|value)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*(?:lúc|at|@|thời gian|time)|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11, name: "Ngày GD/Keyword DD/MM/YYYY lúc/time HH:MM(:SS)" },
+            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện|record)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,|on)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 10, name: "Thời gian/Time ... HH:MM:SS ngày/on DD/MM/YYYY" },
+            { regex: new RegExp(`(?<![:\\d\\w])(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }), score: 9.5, name: "DD/MM/YYYY HH:MM (Standalone, Vietinbank)" },
+            { regex: new RegExp(`(?:Ngày\\s*)?(\\d{1,2})\\s*(?:tháng|Thg\\.?|T)?\\s*(${monthTextRegexPart})\\s*(?:năm|nam)?\\s*(\\d{2,4})\\s*(?:vào\\s*lúc|lúc|Time|@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 9, name: "Ngày DD tháng MM năm YYYY lúc HHMMSS" },
+            { regex: new RegExp(`(${monthTextRegexPart})\\s+(\\d{1,2}),\\s*(\\d{4})\\s+(?:at|lúc)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM)?`, "i"), parser: (m) => { let h = parseInt(m[4], 10); if (m[7] && m[7].toUpperCase() === 'PM' && h < 12) h += 12; if (m[7] && m[7].toUpperCase() === 'AM' && h === 12) h = 0; return { month: m[1], day: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 8.8, name: "Month DD, YYYY at HH:MM(:SS) AM/PM" },
+            { regex: new RegExp(`(?:Ngày|Date\\s*Time)?:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})[\\s,T]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 8.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Generic)" },
+            { regex: new RegExp(`(?:Vào\\s*lúc|Time):?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?,\\s*(?:ngày)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 8, name: "Vào lúc HH:MM, ngày DD/MM/YYYY" },
+            { regex: new RegExp(`(?:Date:|Ngày:)?\\s*(\\d{4})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{1,2})[\\sT,]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 7.5, name: "YYYY/MM/DD[ T]HH:MM:SS (Generic)" },
+            { regex: new RegExp(`(?:^|\\s|[^\\d\\w.,])(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?(?!=\\d{3}[,\\.])\\s+(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 7, name: "HH:MM:SS DD/MM/YYYY (Improved)" },
+            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM|SA|CH)`, "i"), parser: (m) => { let h = parseInt(m[4], 10); const ampm = m[7] ? m[7].toUpperCase() : null; if (ampm) { if ((ampm === 'PM' || ampm === 'CH') && h < 12) h += 12; if ((ampm === 'AM' || ampm === 'SA') && h === 12) h = 0; } return { day: m[1], month: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 6.5, name: "DD/MM/YYYY HH:MM(:SS) AM/PM/SA/CH" },
+            { regex: new RegExp(`(?:Ngày|Date|Transaction Date|Ngay GD|Thời gian GD|Ngay thuc hien|Date of issue)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 5, name: "Date only with keyword" },
+            { regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"), parser: (m) => ({ day: m[1], month: m[3], year: m[4], hour: '00', minute: '00', second: '00' }), score: 4, name: "Date only DD/MM/YYYY (generic)" },
+            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{2})(\\d{2})(\\d{4})(?!\\d)`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 3.5, name: "Date only DDMMYYYY with keyword" },
+            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{4})(\\d{2})(\\d{2})(?!\\d)`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: '00', minute: '00', second: '00' }), score: 3, name: "Date only YYYYMMDD with keyword" }
+        ];
+        patternsWithParsers.sort((a, b) => b.score - a.score); 
+
+        for (const item of patternsWithParsers) {
+            let match;
+            const gRegex = new RegExp(item.regex.source, item.regex.flags + (item.regex.flags.includes('g') ? '' : 'g')); 
+            while ((match = gRegex.exec(cleanedText)) !== null) {
+                const components = item.parser(match);
+                if (components) {
+                    const tempDateTime = parseAndValidateDate(components.day, components.month, components.year, components.hour, components.minute, components.second);
+                    if (tempDateTime) {
+                        if (item.score > bestMatchScore) {
+                            bestMatchScore = item.score;
+                            extractedDateTime = tempDateTime;
+                            bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
+                        } else if (item.score === bestMatchScore) {
+                            const currentHasTime = bestMatchDetails.components && (bestMatchDetails.components.hour !== '00' || bestMatchDetails.components.minute !== '00' || (bestMatchDetails.components.second && bestMatchDetails.components.second !=='00'));
+                            const newHasTime = components.hour !== '00' || components.minute !== '00' || (components.second && components.second !=='00');
+                            if (newHasTime && !currentHasTime) { 
+                                extractedDateTime = tempDateTime;
+                                bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
+                            }
+                        }
+                    }
+                }
+            }
+            if (bestMatchScore >= 10 && extractedDateTime) break;
+        }
+
+        if (extractedDateTime) {
+            ngayCocInput.value = extractedDateTime; 
+            statusElement.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã điền Ngày Cọc!';
+            statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-green-600 dark:text-green-400 font-medium';
+            showNotification(`Đã lấy ngày cọc từ UNC cho dòng ${rowIdNum}`, 'success', 2000);
+        } else {
+            ngayCocInput.value = ""; 
+            statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Không tìm thấy ngày giờ.';
+            statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-yellow-600 dark:text-yellow-400 font-medium';
+            showNotification(`Không tìm thấy ngày cọc từ UNC cho dòng ${rowIdNum}.`, 'warning', 3000);
+        }
+
+    } catch (error) {
+        console.error(`Lỗi OCR cho dòng ${rowIdNum}:`, error);
+        ngayCocInput.value = ""; 
+        statusElement.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-1"></i>Lỗi xử lý ảnh.`;
+        statusElement.className = 'chic-ocr-status-bulk mt-1 text-xs italic text-red-600 dark:text-red-400 font-medium';
+        showNotification(`Lỗi xử lý ảnh UNC cho dòng ${rowIdNum}: ` + (error.message || error), 'error', 4000);
+    } finally {
+        rowElement.classList.remove('valid-row', 'invalid-row');
+        const statusCellForRow = rowElement.querySelector('.row-status');
+        if (statusCellForRow) {
+            statusCellForRow.textContent = 'Chưa kiểm tra'; 
+            statusCellForRow.classList.remove('error', 'success');
+        }
+        updateBulkTableSummary(); 
+        const submitBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
+        if (submitBtn) submitBtn.style.display = 'none'; 
+    }
+}
+// --- Hàm Cập Nhật Phiên Bản Cho Dòng Trong Bảng ---
+function restrictVersionForRow(rowElement, dongXeSelectElement, savedPhienBanValue = null) {
+    const phienBanSelect = rowElement.querySelector('select[name="phien_ban"]');
+    const noiThatSelect = rowElement.querySelector('select[name="noi_that"]');
+    if (!phienBanSelect) return;
+
+    const selectedDongXe = dongXeSelectElement.value;
+    const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
+    const previousSelectedPhienBan = phienBanSelect.value;
+
+    phienBanSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
+    availableVersions.forEach(version => {
+        const option = document.createElement('option');
+        option.value = version; option.textContent = version;
+        phienBanSelect.appendChild(option);
+    });
+
+    if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
+        phienBanSelect.value = savedPhienBanValue;
+    } else if (availableVersions.includes(previousSelectedPhienBan)) {
+        phienBanSelect.value = previousSelectedPhienBan;
+    } else if (selectedDongXe === "VF 3") {
+        phienBanSelect.value = "Base";
+    } else if (selectedDongXe === "VF 5") {
+        phienBanSelect.value = "Plus";
+    }
+
+    if (noiThatSelect && (selectedDongXe === "VF 3" || selectedDongXe === "VF 5")) {
+        noiThatSelect.value = "Black";
+    }
+}
+
+// --- Hàm Xử Lý Dán Dữ Liệu Chung ---
+function handlePasteIntoBulkTableGeneral(event) {
+    const targetElement = event.target;
+    if (targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT') {
+        const targetCell = targetElement.closest('td');
+        const targetRow = targetElement.closest('tr');
+        if (targetCell && targetRow) {
+            event.preventDefault();
+            const pasteData = (event.clipboardData || window.clipboardData).getData('text');
+            const pastedRows = pasteData.split(/\r\n|\n|\r/);
+            const columnNames = Array.from(document.getElementById('bulk-order-editable-table').querySelector('thead tr').cells).map(th => th.querySelector('span.text-red-500') ? th.childNodes[0].textContent.trim() : th.textContent.trim());
+            // Find the index of the current cell's column
+            const currentCellIndex = Array.from(targetRow.cells).indexOf(targetCell);
+
+
+            pastedRows.forEach((rowString, pRowIndex) => {
+                if (!rowString.trim()) return;
+                const pastedCells = rowString.split('\t'); // Assume tab-separated
+
+                if (pRowIndex === 0) { // First pasted row updates current or subsequent cells in the targetRow
+                    for (let i = 0; i < pastedCells.length; i++) {
+                        const cellToUpdateIndex = currentCellIndex + i;
+                        if (cellToUpdateIndex < targetRow.cells.length - 2) { // -2 to exclude delete and status
+                            const cellInputOrSelect = targetRow.cells[cellToUpdateIndex].querySelector('input, select');
+                            if (cellInputOrSelect) {
+                                cellInputOrSelect.value = pastedCells[i].trim();
+                                if (cellInputOrSelect.name === 'dong_xe') {
+                                    restrictVersionForRow(targetRow, cellInputOrSelect);
+                                }
+                                // Trigger change event for selects to update dependent fields if any
+                                if(cellInputOrSelect.tagName === 'SELECT') {
+                                    cellInputOrSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+                        }
+                    }
+                } else { // Subsequent pasted rows create new table rows
+                    const newRowData = {};
+                    // Map pasted cells to expected data fields based on a fixed order
+                    // This order must match the order of columns in your Excel/source
+                    const fieldOrder = ['ten_khach_hang', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that', 'so_don_hang', 'ngay_coc'];
+                    pastedCells.forEach((cellValue, cellIndex) => {
+                        if (cellIndex < fieldOrder.length) {
+                            newRowData[fieldOrder[cellIndex]] = cellValue.trim();
+                        }
+                    });
+                    addBulkOrderRow(newRowData, true);
+                }
+            });
+            updateBulkTableSummary();
+        }
+    }
+}
+
+
+// --- Hàm Xóa Dòng ---
+function removeBulkOrderRow(rowElement) {
+    if (rowElement) {
+        rowElement.remove();
+        // Đánh lại số STT
+        const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
+        rows.forEach((row, index) => {
+            const sttCell = row.querySelector('.row-stt');
+            if (sttCell) sttCell.textContent = index + 1;
+        });
+        bulkOrderRowCount = rows.length; // Cập nhật lại số dòng
+    }
+    updateBulkTableSummary();
+}
+
+// --- Hàm Xóa Toàn Bộ Bảng ---
+function clearBulkEditableTable() {
+    if (bulkTableBody) bulkTableBody.innerHTML = '';
+    bulkOrderRowCount = 0;
+    addBulkOrderRow(); // Thêm lại một dòng trống
+    updateBulkTableSummary();
+    if(submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
+}
+
+// --- Hàm Cập Nhật Tóm Tắt Bảng ---
+function updateBulkTableSummary() {
+    if (!bulkTableBody || !bulkTotalRowsEl || !bulkValidRowsEl || !bulkErrorRowsEl) return;
+    const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
+    let validCount = 0;
+    let errorCount = 0;
+    rows.forEach(row => {
+        if (row.classList.contains('valid-row')) validCount++;
+        else if (row.classList.contains('invalid-row')) errorCount++;
+    });
+    bulkTotalRowsEl.textContent = rows.length;
+    bulkValidRowsEl.textContent = validCount;
+    bulkErrorRowsEl.textContent = errorCount;
+
+    if (submitValidBulkTableOrdersBtn) {
+        submitValidBulkTableOrdersBtn.style.display = validCount > 0 ? 'inline-block' : 'none';
+    }
+}
+
+// --- Hàm Kiểm Tra Dữ Liệu Bảng ---
+// --- Hàm Kiểm Tra Dữ Liệu Bảng ---
+function processAndValidateBulkTable() {
+    if (!bulkTableBody) {
+        console.error("processAndValidateBulkTable: bulkTableBody is not initialized.");
+        showNotification("Lỗi: Bảng dữ liệu chưa sẵn sàng.", "error");
+        return;
+    }
+    const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
+    if (rows.length === 0) {
+        showNotification("Không có dữ liệu để kiểm tra.", "info");
+        return;
+    }
+
+    let overallValid = true;
+    const currentOrderNumbersInTable = new Set(); // Để kiểm tra số đơn hàng trùng trong bảng
+    let firstErrorRow = null; // Để focus vào dòng lỗi đầu tiên (nếu có)
+
+    // Bước 1: Thu thập tất cả số đơn hàng trong bảng hiện tại để kiểm tra trùng lặp nội bộ
+    rows.forEach(row => {
+        const soDonHangInput = row.querySelector('input[name="so_don_hang"]');
+        if (soDonHangInput) {
+            const soDonHangValue = soDonHangInput.value.trim();
+            if (soDonHangValue) {
+                // Kiểm tra trùng lặp sẽ được thực hiện trong vòng lặp chính bên dưới
+            }
+        }
+    });
+
+
+    rows.forEach((row, rowIndex) => {
+        row.classList.remove('valid-row', 'invalid-row');
+        const statusCell = row.querySelector('.row-status');
+        if (!statusCell) {
+            console.warn("Không tìm thấy ô trạng thái cho dòng:", row);
+            return; // Bỏ qua dòng này nếu không có ô trạng thái
+        }
+        statusCell.classList.remove('error', 'success');
+        statusCell.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...'; // Sử dụng innerHTML để cho phép icon
+
+        const inputs = {
+            ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
+            dong_xe: row.querySelector('select[name="dong_xe"]').value,
+            phien_ban: row.querySelector('select[name="phien_ban"]').value,
+            ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
+            noi_that: row.querySelector('select[name="noi_that"]').value,
+            so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
+            ngay_coc: row.querySelector('input[name="ngay_coc"]').value // Lấy giá trị từ trường datetime-local (readonly)
+        };
+
+        let errors = [];
+
+        // 1. Kiểm tra các trường bắt buộc
+        if (!inputs.ten_khach_hang) errors.push("Tên KH trống");
+        if (!inputs.dong_xe) errors.push("Chưa chọn Dòng xe");
+        if (!inputs.phien_ban) {
+            errors.push("Chưa chọn Phiên bản");
+        } else {
+            // Kiểm tra phiên bản có hợp lệ với dòng xe không (dùng versionsMap đã định nghĩa toàn cục)
+            if (versionsMap[inputs.dong_xe] && !versionsMap[inputs.dong_xe].includes(inputs.phien_ban)) {
+                errors.push(`Phiên bản '${inputs.phien_ban}' không phù hợp với dòng xe '${inputs.dong_xe}'`);
+            }
+        }
+        if (!inputs.ngoai_that) errors.push("Chưa chọn Ngoại thất");
+        if (!inputs.noi_that) errors.push("Chưa chọn Nội thất");
+
+        // 2. Kiểm tra Số Đơn Hàng
+        if (!inputs.so_don_hang) {
+            errors.push("Số đơn hàng trống");
+        } else if (!/^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(inputs.so_don_hang)) {
+            errors.push("Số ĐH sai định dạng (VD: N12345-VSO-25-04-0001)");
+        } else {
+            // Kiểm tra trùng với lịch sử (globalHistoryData đã được fetch)
+            if (globalHistoryData && globalHistoryData.some(histRow => histRow["Số đơn hàng"] === inputs.so_don_hang)) {
+                errors.push("Số ĐH đã tồn tại trong lịch sử");
+            }
+            // Kiểm tra trùng trong bảng hiện tại
+            if (currentOrderNumbersInTable.has(inputs.so_don_hang)) {
+                errors.push("Số ĐH trùng lặp trong bảng này");
+            } else {
+                currentOrderNumbersInTable.add(inputs.so_don_hang);
+            }
+        }
+
+        // 3. Kiểm tra Ngày Cọc (đã được điền từ OCR hoặc dán vào)
+        if (!inputs.ngay_coc) {
+            errors.push("Ngày cọc trống (UNC chưa được quét/xử lý hoặc lỗi)");
+        } else {
+            const dateValue = new Date(inputs.ngay_coc);
+            if (isNaN(dateValue.getTime())) {
+                errors.push("Ngày cọc có định dạng không hợp lệ");
+            } else {
+                const today = new Date();
+                today.setHours(0,0,0,0); // So sánh với đầu ngày hôm nay
+                const tenYearsAgo = new Date(today.getFullYear() - 10, today.getMonth(), today.getDate());
+                const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+
+                if (dateValue < tenYearsAgo) {
+                    errors.push("Ngày cọc quá xa trong quá khứ (hơn 10 năm)");
+                }
+                // Cho phép ngày cọc trong tương lai gần (ví dụ: 1 năm tới), nhưng không quá xa.
+                if (dateValue > oneYearFromNow) {
+                     errors.push("Ngày cọc quá xa trong tương lai (hơn 1 năm)");
+                }
+            }
+        }
+
+        // Cập nhật trạng thái dòng
+        if (errors.length > 0) {
+            row.classList.add('invalid-row');
+            statusCell.innerHTML = errors.map(err => `<span class="block">- ${err}</span>`).join('');
+            statusCell.classList.add('error');
+            statusCell.title = errors.join('; '); // Tooltip cho tất cả lỗi
+            overallValid = false;
+            if (!firstErrorRow) {
+                firstErrorRow = row.querySelector('input, select'); // Lấy phần tử input/select đầu tiên của dòng lỗi
+            }
+        } else {
+            row.classList.add('valid-row');
+            statusCell.textContent = 'Hợp lệ';
+            statusCell.classList.add('success');
+            statusCell.title = 'Dữ liệu dòng này hợp lệ';
+        }
+    }); // Kết thúc vòng lặp qua các dòng
+
+    updateBulkTableSummary(); // Cập nhật số lượng dòng hợp lệ/lỗi
+
+    const validRowCount = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row').length;
+    const errorRowCount = bulkTableBody.querySelectorAll('.bulk-order-row.invalid-row').length;
+
+    if (errorRowCount === 0 && rows.length > 0) {
+        showNotification("Tất cả các dòng đều hợp lệ.", "success", 2000);
+        if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'inline-block';
+    } else if (rows.length > 0) {
+        if (validRowCount > 0) {
+            showNotification(`Có ${validRowCount} dòng hợp lệ. Các dòng khác có lỗi. Vui lòng kiểm tra lại.`, "warning", 4000);
+            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'inline-block'; // Vẫn cho phép gửi các dòng hợp lệ
+        } else {
+            showNotification("Tất cả các dòng đều có lỗi hoặc chưa được kiểm tra. Vui lòng kiểm tra lại.", "error", 4000);
+            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
+        }
+        if (firstErrorRow) {
+            // firstErrorRow.focus(); // Tự động focus vào dòng lỗi đầu tiên
+            // Cuộn đến dòng lỗi đầu tiên một cách mượt mà
+            firstErrorRow.closest('tr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Có thể thêm hiệu ứng nhấp nháy nhẹ cho dòng lỗi đầu tiên
+            firstErrorRow.closest('tr').style.transition = 'background-color 0.3s ease-out';
+            setTimeout(() => {
+                firstErrorRow.closest('tr').classList.add('flash-error'); // Cần định nghĩa class 'flash-error'
+            }, 100);
+            setTimeout(() => {
+                firstErrorRow.closest('tr').classList.remove('flash-error');
+            }, 1500);
+
+        }
+    }
+    // Cần đảm bảo `versionsMap` và `globalHistoryData` đã được khởi tạo và có dữ liệu.
+    // `versionsMap` nên được định nghĩa ở phạm vi toàn cục.
+    // `globalHistoryData` nên được fetch khi tải trang hoặc khi chuyển tab.
+}
+// --- Hàm Gửi Các Đơn Hàng Hợp Lệ Từ Bảng ---
+// Trong yeucaughepxe.html
+
+async function submitValidBulkTableOrders() {
+    if (!bulkTableBody || !document.getElementById('submit-valid-bulk-table-orders-btn')) {
+        console.error("submitValidBulkTableOrders: bulkTableBody hoặc nút submit chưa được khởi tạo.");
+        showNotification("Lỗi: Thành phần bảng chưa sẵn sàng để gửi.", "error");
+        return;
+    }
+
+    const validRows = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row');
+    if (validRows.length === 0) {
+        showNotification("Không có đơn hàng hợp lệ nào để gửi.", "info");
+        return;
+    }
+
+    showOldLoadingModal("Đang Gửi Đơn Hàng Loạt...", `Chuẩn bị gửi ${validRows.length} đơn hàng.`);
+
+    let successCount = 0;
+    let errorCount = 0;
+    let successfulOrderNumbers = [];
+    const currentConsultant = sessionStorage.getItem("currentConsultant") || "N/A";
+
+    for (let i = 0; i < validRows.length; i++) {
+        const row = validRows[i];
+        const statusCell = row.querySelector('.row-status');
+        const rowIdNum = row.getAttribute('data-row-id');
+        const uniqueRowIdSuffix = `_row_${rowIdNum}`;
+
+        if (statusCell) {
+            statusCell.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang gửi (${i + 1}/${validRows.length})...`;
+            statusCell.classList.remove('error', 'success');
+        }
+
+        const formDataObj = { /* ... (như đã định nghĩa trước đó) ... */
+            ten_ban_hang: currentConsultant,
+            ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
+            dong_xe: row.querySelector('select[name="dong_xe"]').value,
+            phien_ban: row.querySelector('select[name="phien_ban"]').value,
+            ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
+            noi_that: row.querySelector('select[name="noi_that"]').value,
+            so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
+            ngay_coc: row.querySelector('input[name="ngay_coc"]').value,
+            thoi_gian_nhap: new Date().toISOString(),
+            trang_thai: "Chưa ghép"
+        };
+
+        const formDataToSend = new FormData();
+        for (const key in formDataObj) {
+            if (formDataObj.hasOwnProperty(key)) {
+                formDataToSend.append(key, formDataObj[key]);
+            }
+        }
+
+        const chicFileInputForRow = row.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
+        if (chicFileInputForRow && chicFileInputForRow.files && chicFileInputForRow.files.length > 0) {
+            formDataToSend.append('chic_file_input_bulk_row', chicFileInputForRow.files[0], chicFileInputForRow.files[0].name);
+        }
+
+        try {
+            const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi ${response.status}: ${errorText || response.statusText}`);
+            }
+            // const result = await response.json(); // Nếu API trả về JSON
+
+            if (statusCell) {
+                statusCell.innerHTML = `<i class="fas fa-check-circle text-green-500"></i> Đã gửi (${i + 1}/${validRows.length})`;
+                statusCell.classList.add('success');
+            }
+            row.classList.remove('valid-row');
+            row.classList.add('processed-successfully');
+            row.style.opacity = '0.6';
+            row.querySelectorAll('input, select, button:not([onclick*="removeBulkOrderRow"])').forEach(el => el.disabled = true);
+            const deleteButton = row.querySelector('button[onclick*="removeBulkOrderRow"]');
+            if (deleteButton) {
+                const deleteButtonCell = deleteButton.parentElement;
+                if (deleteButtonCell) {
+                    deleteButtonCell.innerHTML = '<i class="fas fa-check-circle text-green-500" title="Đã gửi thành công"></i>';
+                }
+            }
+            successfulOrderNumbers.push(formDataObj.so_don_hang);
+            successCount++;
+        } catch (error) {
+            console.error(`Lỗi khi gửi đơn hàng (Số ĐH: ${formDataObj.so_don_hang}):`, error);
+            if (statusCell) {
+                statusCell.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> Lỗi gửi`;
+                statusCell.title = error.message.substring(0, 100) + '...';
+                statusCell.classList.add('error');
+            }
+            row.classList.add('invalid-row');
+            row.classList.remove('valid-row');
+            errorCount++;
+        }
+        const loadingModalMessageEl = document.getElementById("loading-message");
+        if (loadingModalMessageEl) {
+            loadingModalMessageEl.textContent = `Đã xử lý ${i + 1}/${validRows.length}. Thành công: ${successCount}, Lỗi: ${errorCount}.`;
+        }
+    }
+
+    closeModal("loading-modal");
+
+    let notificationType = "info";
+    if (successCount > 0 && errorCount === 0) notificationType = "success";
+    else if (errorCount > 0 && successCount > 0) notificationType = "warning";
+    else if (errorCount > 0 && successCount === 0) notificationType = "error";
+    showNotification(`Hoàn tất gửi hàng loạt. Thành công: ${successCount}, Lỗi: ${errorCount}.`, notificationType, 5000);
+
+    if (successCount > 0) {
+        sessionStorage.setItem('bulkSubmissionResults_OrderNumbers', JSON.stringify(successfulOrderNumbers));
+        console.log('submitValidBulkTableOrders: successfulOrderNumbers đã được lưu vào sessionStorage.');
+
+        try {
+            showOldLoadingModal("Đang cập nhật dữ liệu...", "Vui lòng chờ trong giây lát để đồng bộ hóa.");
+            console.log("submitValidBulkTableOrders: Chuẩn bị gọi await fetchHistory()...");
+            // Quan trọng: Gọi fetchHistory và đợi nó hoàn thành.
+            // Tham số false để tránh hiển thị placeholder của table-body vì chúng ta đang ở modal.
+            await fetchHistory(false);
+            console.log("submitValidBulkTableOrders: fetchHistory() đã hoàn thành. Chuẩn bị chuyển hướng.");
+            closeModal("loading-modal"); // Đóng modal loading của fetchHistory
+            window.location.href = 'bulk-order-summary.html';
+        } catch (fetchError) {
+            closeModal("loading-modal");
+            console.error("Lỗi nghiêm trọng khi làm mới lịch sử sau khi gửi hàng loạt:", fetchError);
+            showNotification("Đã gửi các đơn hàng. Tuy nhiên, có lỗi khi làm mới dữ liệu cuối cùng. Trang tổng kết có thể chưa đầy đủ. Vui lòng kiểm tra Lịch Sử Ghép.", "error", 8000);
+            // Vẫn chuyển hướng để người dùng xem được những gì đã gửi (dù có thể chưa có chi tiết đầy đủ)
+            // Hoặc bạn có thể chọn không chuyển hướng nếu lỗi quá nghiêm trọng.
+            // Để an toàn, vẫn chuyển hướng để người dùng không mất thông tin đã gửi.
+             window.location.href = 'bulk-order-summary.html';
+        }
+    } else {
+        // Nếu không có đơn nào thành công, chỉ cập nhật bảng tóm tắt
+        updateBulkTableSummary();
+        const submitBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
+        if (submitBtn) { // Kiểm tra lại nút submit vì có thể đã bị disable/remove
+             const remainingValidRows = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row').length;
+             if (remainingValidRows === 0) {
+                submitBtn.style.display = 'none';
+             }
+        }
     }
 }
 </script>
