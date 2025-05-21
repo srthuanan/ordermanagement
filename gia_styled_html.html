@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root {
+:root {
             /* CSS Variables from yeucaughepxe.html */
             --primary-color: #003087;
             --primary-color-darker: #00205b;
@@ -20,6 +20,7 @@
             --text-dark: #c9d1d9;
             --card-bg-light: #ffffff;
             --card-bg-dark: #1e242e;
+            --card-bg-dark-rgb: 30, 36, 46; /* For rgba background */
             --border-color-light: #e1e4e8;
             --border-color-dark: #30363d;
             --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -267,7 +268,7 @@
             padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
         }
         body.dark-mode h2 { border-bottom: 1px solid var(--border-color-dark); }
-        h3 {
+        h3 { /* General h3 styling, will be refined for specific contexts */
             font-size: 1.2em; font-weight: 600; color: var(--primary-color-darker);
             margin-bottom: 10px;
         }
@@ -288,13 +289,14 @@
 
         .form-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 18px; margin-bottom: 20px;
+            gap: 18px;
         }
         .form-grid > div { display: flex; flex-direction: column; }
-        .form-grid label {
+        .form-grid label:not(.toggle-switch-label):not(.complex-checkbox-label) { /* Exclude special labels */
             margin-bottom: 6px; font-weight: 500; color: var(--text-light); font-size: 0.9em;
         }
-        body.dark-mode .form-grid label { color: var(--text-dark); }
+        body.dark-mode .form-grid label:not(.toggle-switch-label):not(.complex-checkbox-label) { color: var(--text-dark); }
+
 
         .form-grid input[type="text"], .form-grid input[type="number"], .form-grid input[type="date"], .form-grid select {
             width: 100%; padding: 10px 12px; border: 1px solid var(--border-color-light);
@@ -313,33 +315,343 @@
             border-color: var(--secondary-color); background: var(--card-bg-dark);
             box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
         }
-        .form-grid input[type="checkbox"] {
-            margin-right: 8px; width: 1.1em; height: 1.1em;
-            accent-color: var(--primary-color); vertical-align: middle;
+        .highlight-guidance {
+            box-shadow: 0 0 0 3px var(--secondary-color) !important;
+            border-color: var(--secondary-color) !important;
         }
-        .checkbox-label {
-            display: flex; align-items: center; font-size: 0.9em;
-            color: var(--text-light); cursor: pointer;
+        body.dark-mode .highlight-guidance {
+             box-shadow: 0 0 0 3px var(--primary-color-lighter) !important;
+            border-color: var(--primary-color-lighter) !important;
         }
-        body.dark-mode .checkbox-label { color: var(--text-dark); }
+
+
+        /* Styling for new form structure */
+        .common-fields-grid, .vinclub-corp-grid {
+             margin-bottom: 20px;
+        }
+         .vinclub-corp-grid {
+            align-items: start; /* Align items in the grid to the start of their cell */
+        }
+
+
+        #modelSpecificSectionContainer {
+            background-color: rgba(0, 48, 135, 0.03);
+            border: 1px solid var(--primary-color-lighter);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border-width 0.15s ease;
+            overflow: hidden;
+        }
+        body.dark-mode #modelSpecificSectionContainer {
+            background-color: rgba(0, 174, 255, 0.05);
+            border-color: var(--secondary-color);
+        }
+         #modelSpecificSectionContainer.hidden {
+            opacity: 0;
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            border-width: 0 !important;
+        }
+        #modelSpecificSectionContainer #modelSpecificHeader {
+            color: var(--primary-color-darker);
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--primary-color-lighter);
+        }
+        body.dark-mode #modelSpecificSectionContainer #modelSpecificHeader {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+        .model-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 12px; /* UPDATED */
+        }
+        .model-options-grid .model-specific-options {
+            padding: 10px; /* UPDATED */
+            border: 1px solid var(--border-color-light);
+            margin-top: 0;
+            background-color: var(--card-bg-light);
+            border-radius: 6px;
+            /* box-shadow: var(--shadow-light-inner); */ /* UPDATED: Removed shadow */
+        }
+        body.dark-mode .model-options-grid .model-specific-options {
+            border-color: var(--border-color-dark);
+            background-color: var(--card-bg-dark);
+            /* box-shadow: var(--shadow-dark-inner); */ /* UPDATED: Removed shadow */
+        }
+
+        /* Label for select/date inside model-specific-options */
+        .model-options-grid .model-specific-options label {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-size: 0.9em; /* Added for consistency */
+        }
+        body.dark-mode .model-options-grid .model-specific-options label {
+             color: var(--text-dark);
+        }
+
+        /* Checkbox label specific styling */
+        .model-options-grid .model-specific-options .checkbox-label {
+            display: flex; /* UPDATED */
+            align-items: center; /* UPDATED */
+            width: 100%;
+            margin-bottom: 0px;   /* UPDATED */
+            color: var(--text-light);
+            font-size: 0.9em; /* Added for consistency */
+            cursor: pointer; /* Added for better UX */
+        }
+        body.dark-mode .model-options-grid .model-specific-options .checkbox-label {
+             color: var(--text-dark);
+        }
+         .model-options-grid .model-specific-options .checkbox-label input[type="checkbox"] {
+            margin-bottom: 0;
+            accent-color: var(--primary-color);
+            margin-right: 8px;    /* UPDATED */
+            flex-shrink: 0;       /* UPDATED */
+            width: 1.1em; /* Can adjust if needed */
+            height: 1.1em; /* Can adjust if needed */
+        }
+        .model-options-grid .model-specific-options select,
+        .model-options-grid .model-specific-options input[type="date"] {
+            width: 100%;
+            /* Inherits styling from .form-grid inputs if not overridden */
+        }
+
+        /* Styling for "Các chương trình khuyến mãi có thể áp dụng" section */
+        #applicableGeneralPromosContainer {
+            border: 1px dotted var(--primary-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            transition: opacity 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border-width 0.15s ease;
+            overflow: hidden;
+        }
+        body.dark-mode #applicableGeneralPromosContainer {
+            border-color: var(--secondary-color);
+        }
+        #applicableGeneralPromosContainer.hidden {
+            opacity: 0;
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            border-width: 0 !important;
+        }
+
+        #applicableGeneralPromosContainer h4 {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--primary-color-darker);
+            margin-bottom: 15px;
+        }
+        body.dark-mode #applicableGeneralPromosContainer h4 {
+            color: var(--secondary-color);
+        }
+
+        .general-promo-item {
+            margin-bottom: 15px;
+        }
+        .general-promo-item:last-child {
+            margin-bottom: 0;
+        }
+        .general-promo-item .checkbox-label.complex-checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+        .general-promo-item .checkbox-label.complex-checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+            flex-shrink: 0;
+            margin-top: 3px;
+            width: 1.1em;
+            height: 1.1em;
+            accent-color: var(--primary-color);
+        }
+        .general-promo-item .checkbox-label.complex-checkbox-label .main-label {
+            font-weight: 500;
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+        body.dark-mode .general-promo-item .checkbox-label.complex-checkbox-label .main-label {
+            color: var(--text-dark);
+        }
+        .general-promo-item .sub-label {
+            font-size: 0.8em;
+            color: var(--text-light);
+            opacity: 0.7;
+            padding-left: calc(1.1em + 8px);
+            line-height: 1.4;
+            display: block;
+        }
+        body.dark-mode .general-promo-item .sub-label {
+            color: var(--text-dark);
+            opacity: 0.65;
+        }
+
+        /* Corp Discount Toggle Switch Styling */
+        .corp-discount-toggle-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 6px;
+            background-color: var(--background-light);
+            min-height: 58px;
+            justify-content: center;
+        }
+        body.dark-mode .corp-discount-toggle-container {
+            border-color: var(--border-color-dark);
+            background-color: var(--background-dark);
+        }
+
+        .toggle-switch-label {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-light);
+            width: 100%;
+        }
+        body.dark-mode .toggle-switch-label {
+            color: var(--text-dark);
+        }
+
+        .toggle-switch-checkbox {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .toggle-switch-slider {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 22px;
+            background-color: #ccc;
+            border-radius: 22px;
+            transition: background-color var(--transition-speed-fast) var(--transition-easing);
+            flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        body.dark-mode .toggle-switch-slider {
+            background-color: #4b5563;
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .toggle-switch-slider::before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform var(--transition-speed-fast) var(--transition-easing);
+        }
+
+        .toggle-switch-checkbox:checked + .toggle-switch-slider {
+            background-color: var(--primary-color);
+        }
+        body.dark-mode .toggle-switch-checkbox:checked + .toggle-switch-slider {
+            background-color: var(--secondary-color);
+        }
+
+        .toggle-switch-checkbox:checked + .toggle-switch-slider::before {
+            transform: translateX(20px);
+        }
+
+        .toggle-switch-text {
+            margin-left: 10px;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+
+        .toggle-switch-info {
+            font-size: 0.8em;
+            color: var(--text-light);
+            opacity: 0.8;
+            margin-top: 5px;
+            padding-left: calc(42px + 10px);
+        }
+        body.dark-mode .toggle-switch-info {
+            color: var(--text-dark);
+        }
+
+        /* Guidance Section Styling */
+        #guidanceSection {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px dashed var(--primary-color-lighter);
+            border-radius: 8px;
+            background-color: rgba(0, 48, 135, 0.03);
+        }
+        body.dark-mode #guidanceSection {
+            border-color: var(--secondary-color);
+            background-color: rgba(0, 174, 255, 0.05);
+        }
+        #guidanceSection h4 {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--primary-color-darker);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        body.dark-mode #guidanceSection h4 {
+            color: var(--primary-color-lighter);
+        }
+        #guidanceSection h4 i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+        }
+        body.dark-mode #guidanceSection h4 i {
+             color: var(--primary-color);
+        }
+        #guidanceText {
+            font-size: 0.9em;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+        body.dark-mode #guidanceText {
+            color: var(--text-dark);
+        }
+
 
         button#calculateButton, button#resetButton {
-            padding: 7px 12px; /* Compact padding */
+            padding: 7px 12px;
             border: none;
             border-radius: 6px;
-            font-size: 0.875em; /* Compact font size */
+            font-size: 0.875em;
             font-weight: 600; cursor: pointer; text-transform: uppercase;
-            letter-spacing: 0.25px; /* Reduced letter spacing */
+            letter-spacing: 0.25px;
             transition: all var(--transition-speed-fast) var(--transition-easing);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1); /* Softer shadow */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
         }
         button#calculateButton i, button#resetButton i {
-            margin-right: 5px; /* Space between icon and text */
+            margin-right: 5px;
         }
-
         button#calculateButton {
             color: #ffffff; background: var(--primary-color);
         }
@@ -351,7 +663,6 @@
             transform: translateY(0px); background: var(--primary-color-darker);
             box-shadow: 0 1px 2px rgba(0, 48, 135, 0.2);
         }
-
         button#resetButton {
             background-color: var(--error-text-light);
             color: white;
@@ -373,7 +684,6 @@
             background-color: var(--error-bg-dark, #843534);
         }
 
-
         .results-section {
             margin-bottom: 25px; padding: 25px; border-radius: 8px;
             background-color: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
@@ -392,18 +702,19 @@
         }
         body.dark-mode .main-price-summary { border-bottom: 1px dashed var(--border-color-dark); }
         @media (min-width: 600px) { .main-price-summary { grid-template-columns: 1fr 1fr; } }
-        .results-section .result-item {
+        .main-price-summary .result-item {
             margin-bottom: 0; padding: 15px;
             border: 1px solid var(--border-color-light); border-radius: 6px;
             background-color: var(--background-light);
         }
-        body.dark-mode .results-section .result-item {
-            border: 1px solid var(--border-color-dark); background-color: var(--background-dark);
+        body.dark-mode .main-price-summary .result-item {
+             border: 1px solid var(--border-color-dark); background-color: var(--background-dark);
         }
         .results-section .result-item h3 {
             font-size: 1.1em; margin-bottom: 10px; color: var(--primary-color);
         }
         body.dark-mode .results-section .result-item h3 { color: var(--secondary-color); }
+
         .price-highlight {
             font-size: 1.8em; font-weight: 700; color: var(--primary-color-darker);
             background-color: rgba(0, 174, 255, 0.1); padding: 10px 15px;
@@ -418,6 +729,7 @@
         .price-highlight:hover { transform: scale(1.02); box-shadow: 0 2px 10px rgba(0, 174, 255, 0.2); }
         .details-grid {
             display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px;
+             margin-top: 25px;
         }
         @media (min-width: 768px) { .details-grid { grid-template-columns: 1fr 1fr; } }
         .log-details {}
@@ -426,30 +738,26 @@
             margin-bottom: 12px;
         }
         body.dark-mode .log-details h3 { border-bottom: 1px solid var(--border-color-dark); }
-
-        /* STYLES FOR CALCULATION DETAILS AS ACTUAL TABLE */
-        .log-details pre { /* Container for the table, for overflow */
+        .log-details pre {
             background-color: transparent; padding: 0; border-radius: 0;
             white-space: normal; word-wrap: normal;
-            max-height: 480px; /* Increased max-height slightly */
+            max-height: 480px;
             overflow-y: auto; border: none; box-shadow: none;
             font-family: 'Roboto', sans-serif; color: var(--text-light);
             line-height: 1.5;
         }
         body.dark-mode .log-details pre { color: var(--text-dark); }
-
         table.calculation-details-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85em;
             border: 1px solid var(--border-color-light);
-            border-radius: 4px; /* May not work perfectly with border-collapse: collapse */
-            overflow: hidden; /* Helps with border-radius */
+            border-radius: 4px;
+            overflow: hidden;
         }
         body.dark-mode table.calculation-details-table {
             border-color: var(--border-color-dark);
         }
-
         table.calculation-details-table th,
         table.calculation-details-table td {
             padding: 6px 10px;
@@ -461,8 +769,7 @@
         body.dark-mode table.calculation-details-table td {
             border-bottom-color: var(--border-color-dark);
         }
-
-        table.calculation-details-table th { /* Header cells */
+        table.calculation-details-table th {
             font-weight: 600;
             background-color: rgba(0, 48, 135, 0.05);
             color: var(--primary-color-darker);
@@ -479,15 +786,12 @@
              font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
              white-space: nowrap;
         }
-
         table.calculation-details-table td.calculation-description {
              word-break: break-word;
         }
-
         table.calculation-details-table tr.log-entry-positive td.calculation-amount-change { color: var(--log-positive-light); }
         table.calculation-details-table tr.log-entry-negative td.calculation-amount-change { color: var(--log-negative-light); }
         table.calculation-details-table tr.log-entry-neutral td.calculation-amount-change { color: var(--log-neutral-light); }
-
         table.calculation-details-table tr.calculation-details-subtotal-row td {
             background-color: rgba(0,0,0,0.02);
             font-weight: 500;
@@ -501,8 +805,6 @@
          table.calculation-details-table tr.calculation-details-subtotal-row td.calculation-current-subtotal {
             font-weight: bold;
         }
-
-
         table.calculation-details-table tfoot tr {
             background-color: var(--primary-color);
             color: #fff;
@@ -513,7 +815,7 @@
         }
         table.calculation-details-table tfoot td {
             padding: 8px 10px;
-            border-bottom: none; /* No bottom border for footer cells */
+            border-bottom: none;
         }
         table.calculation-details-table tfoot td:first-child {
             text-transform: uppercase;
@@ -522,9 +824,19 @@
             font-size: 1.1em;
             font-weight: bold;
         }
-
-        /* Notes section styling */
-        .notes-container {}
+        .notes-container {
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 8px;
+            background-color: var(--card-bg-light);
+            box-shadow: var(--shadow-light-inner);
+        }
+        body.dark-mode .notes-container {
+            border-color: var(--border-color-dark);
+            background-color: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-inner);
+        }
         .notes-container h3 {
             padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
             margin-bottom: 12px;
@@ -542,18 +854,6 @@
             background-color: var(--warning-bg-dark); border-color: var(--warning-text-dark);
             color: var(--warning-text-dark);
         }
-
-        .model-specific-options {
-            padding: 12px; border: 1px dashed var(--primary-color-lighter); margin-top: 8px;
-            background-color: rgba(0, 48, 135, 0.02); border-radius: 6px;
-        }
-        body.dark-mode .model-specific-options {
-            border-color: var(--secondary-color); background-color: rgba(0, 174, 255, 0.05);
-        }
-        .model-specific-options label {
-            margin-bottom: 6px; font-weight: 500; color: var(--text-light); font-size: 0.9em;
-        }
-        body.dark-mode .model-specific-options label { color: var(--text-dark); }
         .hidden { display: none !important; }
         .input-disabled, .form-grid input[readonly] {
             background-color: #e9ecef !important; opacity: 0.7; cursor: not-allowed;
@@ -576,6 +876,122 @@
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
 
+        /* CSS cho khu vực hiển thị khuyến mãi (Applied Promotions Cards) */
+        .applied-promotions-section {
+             padding: 20px;
+             margin-top: 25px;
+             border: 1px solid var(--border-color-light);
+             border-radius: 8px;
+             background-color: var(--card-bg-light);
+             box-shadow: var(--shadow-light-inner);
+        }
+        body.dark-mode .applied-promotions-section {
+            border-color: var(--border-color-dark);
+            background-color: var(--card-bg-dark);
+            box-shadow: var(--shadow-dark-inner);
+        }
+        .applied-promotions-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+        body.dark-mode .applied-promotions-section h3 {
+             border-bottom-color: var(--border-color-dark);
+        }
+        #appliedPromotionsDisplay {
+            margin-top: 15px;
+        }
+        .no-promotions-message {
+            font-style: italic;
+            color: var(--text-light);
+            padding: 20px;
+            background-color: var(--background-light);
+            border: 1px dashed var(--primary-color-lighter);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.95em;
+        }
+        body.dark-mode .no-promotions-message {
+            color: var(--text-dark);
+            background-color: var(--background-dark);
+            border-color: var(--secondary-color);
+        }
+        .promotions-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+        .promotion-item {
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-color-light);
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: var(--shadow-light-outer);
+            transition: transform 0.25s var(--transition-easing), box-shadow 0.25s var(--transition-easing);
+        }
+        body.dark-mode .promotion-item {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-color-dark);
+            border-left-color: var(--primary-color-lighter);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        .promotion-item:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        body.dark-mode .promotion-item:hover {
+             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+        }
+        .promotion-icon {
+            font-size: 2em;
+            color: var(--secondary-color);
+            background-color: rgba(0, 174, 255, 0.1);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        body.dark-mode .promotion-icon {
+            color: var(--primary-color-lighter);
+            background-color: rgba(0, 174, 255, 0.15);
+        }
+        .promotion-details h4 {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--primary-color-darker);
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        body.dark-mode .promotion-details h4 {
+            color: var(--secondary-color);
+        }
+        .promotion-details p {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: 0;
+        }
+        body.dark-mode .promotion-details p {
+            color: var(--text-dark);
+        }
+        .promo-value {
+            font-weight: 700;
+            color: var(--log-negative-light);
+            font-size: 1.1em;
+        }
+        body.dark-mode .promo-value {
+            color: var(--log-negative-dark);
+        }
+
         @media (max-width: 900px) {
             .sidebar { transform: translateX(-100%); width: 220px; box-shadow: 5px 0 15px rgba(0,0,0,0.2); z-index: 1007; }
             .sidebar.open { transform: translateX(0); }
@@ -595,15 +1011,16 @@
             .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px;}
             .main-container { margin-top: 45px; padding: 10px; padding-bottom: calc(var(--footer-height) + 10px); }
             .container { padding: 15px; border-radius: 8px; }
-            .form-grid { grid-template-columns: 1fr; gap: 12px; }
+            .form-grid, .model-options-grid, .vinclub-corp-grid { grid-template-columns: 1fr; gap: 12px; }
             h2 { font-size: 1.2em; }
             .results-section .result-item h3 { font-size: 1.0em; }
             .price-highlight { font-size: 1.4em; }
             button#calculateButton, button#resetButton {
-                font-size: 0.85em; /* Adjusted for small screens */
-                padding: 6px 10px;   /* Adjusted for small screens */
+                font-size: 0.85em;
+                padding: 6px 10px;
             }
-            .form-grid input[type="text"], .form-grid input[type="number"], .form-grid input[type="date"], .form-grid select {
+            .form-grid input[type="text"], .form-grid input[type="number"], .form-grid input[type="date"], .form-grid select,
+            .model-options-grid input[type="text"], .model-options-grid input[type="number"], .model-options-grid input[type="date"], .model-options-grid select {
                 padding: 8px 10px; font-size: 0.85em;
             }
             .log-details pre { max-height: 300px; }
@@ -612,6 +1029,31 @@
             #notesResult { padding: 10px; font-size: 0.8em; max-height: 250px;}
             footer { font-size: 11px; height: calc(var(--footer-height) - 5px); }
             .main-price-summary { grid-template-columns: 1fr; }
+            .promotions-list {
+                grid-template-columns: 1fr;
+            }
+            .promotion-item {
+                padding: 15px;
+                gap: 12px;
+            }
+            .promotion-icon {
+                font-size: 1.8em;
+                width: 50px;
+                height: 50px;
+            }
+            .promotion-details h4 { font-size: 1em; }
+            .promotion-details p { font-size: 0.85em; }
+            .promo-value { font-size: 1em; }
+            .applied-promotions-section { padding: 15px; }
+            #modelSpecificSectionContainer { padding: 15px; }
+            #modelSpecificSectionContainer #modelSpecificHeader { font-size: 1em; }
+             #applicableGeneralPromosContainer { padding: 12px; }
+            #applicableGeneralPromosContainer h4 { font-size: 0.9em; }
+            .general-promo-item .sub-label { padding-left: calc(1.1em + 6px); font-size: 0.75em; }
+            .corp-discount-toggle-container { padding: 10px; }
+            #guidanceSection { padding: 12px; }
+            #guidanceSection h4 { font-size: 1em; }
+            #guidanceText { font-size: 0.85em; }
         }
     </style>
 </head>
@@ -652,7 +1094,8 @@
         <div class="container">
             <div class="form-section">
                 <h2>Thông tin Xe & Khuyến Mãi</h2>
-                <div class="form-grid">
+
+                <div class="form-grid common-fields-grid">
                     <div>
                         <label for="modelKey">Mã Model:</label>
                         <select id="modelKey"></select>
@@ -665,62 +1108,13 @@
                         <label for="vinYear">Năm VIN:</label>
                         <input type="text" id="vinYear" placeholder="VD: 2023, 2024">
                     </div>
-
-                    <div id="vf8Vf9Options" class="model-specific-options hidden">
-                        <label for="isSdiBattery_VF8_VF9" class="checkbox-label">
-                            <input type="checkbox" id="isSdiBattery_VF8_VF9"> Pin SDI (VF8/9)?
-                        </label>
-                    </div>
-                    <div id="vf9OptionsAc" class="model-specific-options hidden">
-                        <label for="is2ZoneAC_VF9" class="checkbox-label">
-                            <input type="checkbox" id="is2ZoneAC_VF9"> ĐH 2 Vùng (VF9)?
-                        </label>
-                    </div>
-                    <div id="vf9OptionsSeats" class="model-specific-options hidden">
-                        <label for="hasCaptainSeats_VF9" class="checkbox-label">
-                            <input type="checkbox" id="hasCaptainSeats_VF9"> Ghế C.Trưởng (VF9)?
-                        </label>
-                    </div>
-                    <div id="vf9OptionsRoof" class="model-specific-options hidden">
-                        <label for="hasPanoramicRoof_VF9" class="checkbox-label">
-                            <input type="checkbox" id="hasPanoramicRoof_VF9"> Trần Kính (VF9)?
-                        </label>
-                    </div>
-                    <div id="advancedColorOptionsDiv" class="model-specific-options hidden">
-                        <label for="selectedAdvancedColor">Màu Ngoại Thất Nâng Cao:</label>
-                        <select id="selectedAdvancedColor">
-                            <option value="">-- Chọn màu (nếu có) --</option>
-                        </select>
-                    </div>
-
                     <div>
                         <label for="dmsTransactionDateStr">Ngày Giao Dịch DMS:</label>
                         <input type="date" id="dmsTransactionDateStr">
                     </div>
-                    <div id="vf7PlusOptionsDate" class="model-specific-options hidden">
-                        <label for="depositDateStr_VF7Plus">Ngày Đ.Cọc VF7+:</label>
-                        <input type="date" id="depositDateStr_VF7Plus">
-                    </div>
-                    <div id="vf9Vin23OptionsDate" class="model-specific-options hidden">
-                        <label for="purchaseDateStr_VF9_VIN2023">Ngày Mua VF9 VIN23:</label>
-                        <input type="date" id="purchaseDateStr_VF9_VIN2023">
-                    </div>
-                    <div id="vf7PlusOptionsPromo" class="model-specific-options hidden">
-                         <label for="applyVf7PlusCashback" class="checkbox-label">
-                            <input type="checkbox" id="applyVf7PlusCashback"> Áp dụng KM VF7+?
-                        </label>
-                    </div>
+                </div>
 
-                    <div>
-                        <label for="applyVinfascination" class="checkbox-label">
-                            <input type="checkbox" id="applyVinfascination"> Áp dụng VINFASCINATION?
-                        </label>
-                    </div>
-                    <div>
-                        <label for="takeInsuranceCash" class="checkbox-label">
-                            <input type="checkbox" id="takeInsuranceCash"> Quy đổi Tiền Mặt BH?
-                        </label>
-                    </div>
+                <div class="form-grid vinclub-corp-grid">
                     <div>
                         <label for="vinClubTier">Hạng VinClub:</label>
                         <select id="vinClubTier">
@@ -730,24 +1124,98 @@
                             <option value="Diamond">Diamond</option>
                         </select>
                     </div>
-                    <div>
-                        <label for="applyCorpDiscount" class="checkbox-label">
-                            <input type="checkbox" id="applyCorpDiscount"> Áp dụng Corp?
+                    <div class="corp-discount-toggle-container">
+                        <label for="applyCorpDiscount" class="toggle-switch-label">
+                            <input type="checkbox" id="applyCorpDiscount" class="toggle-switch-checkbox">
+                            <span class="toggle-switch-slider"></span>
+                            <span class="toggle-switch-text">Áp dụng ưu đãi Doanh Nghiệp (Corp)</span>
                         </label>
-                    </div>
-                    <div id="tradeInOldCarTypeDiv"> <label for="tradeInOldCarType">Loại Xe Cũ Đổi:</label>
-                        <select id="tradeInOldCarType">
-                            <option value="Không đổi">Không đổi</option>
-                            <option value="VinFast Xăng Cũ">VinFast Xăng Cũ</option>
-                            <option value="Xe Hãng Khác">Xe Hãng Khác</option>
-                        </select>
+                        <span class="toggle-switch-info" id="corpDiscountInfoText">(Mức giảm hiện tại: 3%)</span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-start;">
+
+                <div id="modelSpecificSectionContainer" class="hidden">
+                    <h3 id="modelSpecificHeader">Tuỳ chọn & Chính sách riêng cho Model</h3>
+                    <div class="model-options-grid">
+                        <div id="vf8Vf9Options" class="model-specific-options hidden">
+                            <label for="isSdiBattery_VF8_VF9" class="checkbox-label">
+                                <input type="checkbox" id="isSdiBattery_VF8_VF9"> Pin SDI (VF8/9)?
+                            </label>
+                        </div>
+                        <div id="vf9OptionsAc" class="model-specific-options hidden">
+                            <label for="is2ZoneAC_VF9" class="checkbox-label">
+                                <input type="checkbox" id="is2ZoneAC_VF9"> ĐH 2 Vùng (VF9)?
+                            </label>
+                        </div>
+                        <div id="vf9OptionsSeats" class="model-specific-options hidden">
+                            <label for="hasCaptainSeats_VF9" class="checkbox-label">
+                                <input type="checkbox" id="hasCaptainSeats_VF9"> Ghế C.Trưởng (VF9)?
+                            </label>
+                        </div>
+                        <div id="vf9OptionsRoof" class="model-specific-options hidden">
+                            <label for="hasPanoramicRoof_VF9" class="checkbox-label">
+                                <input type="checkbox" id="hasPanoramicRoof_VF9"> Trần Kính (VF9)?
+                            </label>
+                        </div>
+                        <div id="advancedColorOptionsDiv" class="model-specific-options hidden">
+                            <label for="selectedAdvancedColor">Màu Ngoại Thất Nâng Cao:</label>
+                            <select id="selectedAdvancedColor">
+                                <option value="">-- Chọn màu (nếu có) --</option>
+                            </select>
+                        </div>
+                         <div id="vf7PlusOptionsDate" class="model-specific-options hidden">
+                            <label for="depositDateStr_VF7Plus">Ngày Đ.Cọc VF7+:</label>
+                            <input type="date" id="depositDateStr_VF7Plus">
+                        </div>
+                        <div id="vf9Vin23OptionsDate" class="model-specific-options hidden">
+                            <label for="purchaseDateStr_VF9_VIN2023">Ngày Mua VF9 VIN23:</label>
+                            <input type="date" id="purchaseDateStr_VF9_VIN2023">
+                        </div>
+                        <div id="vf7PlusOptionsPromo" class="model-specific-options hidden">
+                             <label for="applyVf7PlusCashback" class="checkbox-label">
+                                <input type="checkbox" id="applyVf7PlusCashback"> Áp dụng KM VF7+?
+                            </label>
+                        </div>
+                        <div id="tradeInOldCarTypeDiv" class="model-specific-options hidden">
+                             <label for="tradeInOldCarType">Loại Xe Cũ Đổi:</label>
+                            <select id="tradeInOldCarType">
+                                <option value="Không đổi">Không đổi</option>
+                                <option value="VinFast Xăng Cũ">VinFast Xăng Cũ</option>
+                                <option value="Xe Hãng Khác">Xe Hãng Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="applicableGeneralPromosContainer" class="hidden">
+                    <h4>Các chương trình khuyến mãi có thể áp dụng:</h4>
+                    <div class="general-promo-item hidden" id="vinfascinationPromoItemContainer">
+                        <label for="applyVinfascinationDynamic" class="checkbox-label complex-checkbox-label">
+                            <input type="checkbox" id="applyVinfascinationDynamic">
+                            <span class="main-label" id="vinfascinationLabelText">VINFASCINATION</span>
+                        </label>
+                        <p class="sub-label" id="vinfascinationSubText">(Quy đổi điểm Vinfascination, GD DMS 24/04/2025 - 31/05/2025, quy đổi từ 13/05/2025.)</p>
+                    </div>
+                    <div class="general-promo-item hidden" id="insuranceCashPromoItemContainer">
+                        <label for="takeInsuranceCashDynamic" class="checkbox-label complex-checkbox-label">
+                            <input type="checkbox" id="takeInsuranceCashDynamic">
+                            <span class="main-label" id="insuranceCashLabelText">Quy đổi bảo hiểm</span>
+                        </label>
+                        <p class="sub-label" id="insuranceCashSubText">(Quy đổi gói bảo hiểm, GD DMS 18/05/2025 - 31/05/2025.)</p>
+                    </div>
+                </div>
+
+                <div id="guidanceSection">
+                    <h4><i class="fas fa-info-circle"></i>Hướng Dẫn</h4>
+                    <p id="guidanceText">Chào mừng bạn đến với công cụ tính giá. Vui lòng bắt đầu bằng cách chọn một Mã Model.</p>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 20px; justify-content: flex-start;">
                     <button id="calculateButton"><i class="fas fa-calculator"></i>Tính Giá</button>
                     <button id="resetButton"><i class="fas fa-undo"></i>Xóa Dữ Liệu</button>
                 </div>
             </div>
+
 
             <div class="results-section">
                 <h2>Kết Quả Tính Giá</h2>
@@ -762,6 +1230,14 @@
                         <p id="customerPriceResult" class="price-highlight">0 VNĐ</p>
                     </div>
                 </div>
+
+                <div class="applied-promotions-section" id="appliedPromotionsDisplayContainer">
+                    <h3><i class="fas fa-gift"></i> Ưu Đãi & Khuyến Mãi Áp Dụng</h3>
+                    <div id="appliedPromotionsDisplay">
+                        <p class="no-promotions-message" style="margin-top: 15px;">Chưa có thông tin khuyến mãi cho lựa chọn hiện tại.</p>
+                    </div>
+                </div>
+
 
                 <div class="details-grid">
                     <div class="result-item log-details"> <h3>Chi Tiết Tính Giá Hợp Đồng:</h3>
@@ -950,6 +1426,9 @@
                 "VF 8": { "Xanh lá nhạt (Urban Mint)": { cost: 12000000, description: "Màu Xanh lá nhạt (Urban Mint)" }, "Bạc (Desat Silver)": { cost: 12000000, description: "Màu Bạc (Desat Silver)" }, "Xanh lá đậm (Ivy Green)": { cost: 12000000, description: "Màu Xanh lá đậm (Ivy Green)" }, "Trắng (Infinity Blanc) + Nóc xám": { cost: 12000000, description: "Màu Trắng (Infinity Blanc) + Nóc xám" }, "Đen (Jet Black) + Nóc đồng": { cost: 12000000, description: "Màu Đen (Jet Black) + Nóc đồng" }, "Đỏ (Crimson Red) + Nóc đồng": { cost: 12000000, description: "Màu Đỏ (Crimson Red) + Nóc đồng" }, "Xám (Zenith Grey) + Nóc bạc": { cost: 12000000, description: "Màu Xám (Zenith Grey) + Nóc bạc" } },
                 "VF 9": { "captain_seats_6": { cost: 32000000, description: "6 chỗ ghế cơ trưởng" }, "panoramic_roof": { cost: 29000000, description: "Trần kính toàn cảnh" }, "Hồng (Rose metallic)": { cost: 8000000, description: "Màu Hồng (Rose metallic)" }, "Xanh lá (Tropical Jade)": { cost: 8000000, description: "Màu Xanh lá (Tropical Jade)" }, "Đen (Jet Black) + Nóc vàng": { cost: 3000000, description: "Màu Đen (Jet Black) + Nóc vàng" }, "Đỏ (Crimson Red) + Nóc trắng": { cost: 3000000, description: "Màu Đỏ (Crimson Red) + Nóc trắng" }, "Bạc (Desat Silver) + Nóc đen": { cost: 3000000, description: "Màu Bạc (Desat Silver) + Nóc đen" }, "Vàng (Summer Yellow) + Nóc trắng": { cost: 3000000, description: "Màu Vàng (Summer Yellow) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc trắng": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc xanh GSM": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc xanh GSM" }, "Xanh lá (Tropical Jade) + Nóc trắng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc trắng" }, "Xanh lá (Tropical Jade) + Nóc vàng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc vàng" } }
             };
+            const VINFASCINATION_PROMO_VALUES = { "VF 3": 6000000, "VF 5": 11000000, "VF 6": 15000000, "VF 7": 18000000, "VF 8": 23000000, "VF 9": 33000000, "Herio Green": 10000000, "Nerio Green/VF e34": 14000000 };
+            const INSURANCE_CASH_EQUIVALENT = { "VF 3": 6500000, "VF 6": 20000000, "VF 7": 20000000, "VF 8": 30000000, "VF 9": 35000000 };
+
 
             function getGeneralModelType(detailedModelKey) { if (!detailedModelKey || typeof detailedModelKey !== 'string') return null; if (detailedModelKey.startsWith("VF 3")) return "VF 3"; if (detailedModelKey.startsWith("VF 5")) return "VF 5"; if (detailedModelKey.startsWith("VF 6")) return "VF 6"; if (detailedModelKey.startsWith("VF 7")) return "VF 7"; if (detailedModelKey.startsWith("VF 8")) return "VF 8"; if (detailedModelKey.startsWith("VF 9")) return "VF 9"; if (detailedModelKey.startsWith("Herio Green")) return "Herio Green"; if (detailedModelKey.startsWith("Nerio Green") || detailedModelKey.startsWith("VF e34")) return "Nerio Green/VF e34"; if (detailedModelKey.startsWith("Minio Green")) return "Minio Green"; if (detailedModelKey.startsWith("EC Van")) return "EC Van"; if (detailedModelKey.startsWith("Limo Green")) return "Limo Green"; return null; }
             function parseDateStr(dateValue) { if (!dateValue) return null; if (dateValue instanceof Date) return dateValue; const parts = dateValue.split('-'); if (parts.length === 3) { const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 0 && month <= 11 && day >= 1 && day <= 31) { const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } } } let dateString = dateValue.toString().replace(/[^0-9]/g, ""); if (dateString.length !== 8) return null; try { const year = parseInt(dateString.substring(0, 4), 10); const month = parseInt(dateString.substring(4, 6), 10) - 1; const day = parseInt(dateString.substring(6, 8), 10); if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return null; const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } return null; } catch (e) { return null; } }
@@ -959,8 +1438,6 @@
                 const SDI_BATTERY_DISCOUNTS = { "VF 8 Eco": 104000000, "VF 8 Plus": 110000000, "VF 9 Eco": 125000000, "VF 9 Plus": 135000000 };
                 const VF9_2_ZONE_AC_DISCOUNT = { "VF 9 Eco": 15000000, "VF 9 Plus": 15000000 };
                 const VF7_PLUS_CASH_PROMOTION_AMOUNT = 50000000;
-                const VINFASCINATION_PROMO_VALUES = { "VF 3": 6000000, "VF 5": 11000000, "VF 6": 15000000, "VF 7": 18000000, "VF 8": 23000000, "VF 9": 33000000, "Herio Green": 10000000, "Nerio Green/VF e34": 14000000 };
-                const INSURANCE_CASH_EQUIVALENT = { "VF 3": 6500000, "VF 6": 20000000, "VF 7": 20000000, "VF 8": 30000000, "VF 9": 35000000 };
                 let nhatKyTinhToan = []; let ghiChu = ["Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."]; let giaHienTai = 0;
                 if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { giaHienTai = baseMsrp; if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY (xe hiện tại tự động): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } else if (BASE_PRICES_DISCONTINUED_GLOBAL.hasOwnProperty(modelKey) && BASE_PRICES_DISCONTINUED_GLOBAL[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY: ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } } else { ghiChu.push("LỖI: Không có Giá NY gốc hợp lệ. Cần nhập cho xe mới/hiện tại hoặc Mã Model không đúng."); return { invoicePrice: 0, customerPrice: 0, basePriceUsed: 0, priceBaseForPercentageDiscount: 0, vinfascinationCashApplied: 0, insuranceCashApplied: 0, tradeInApplied: 0, calculationLog: nhatKyTinhToan, notes: ghiChu }; }
                 let giaSauKMCodinh = giaHienTai; const loaiXeChung = getGeneralModelType(modelKey); const chiTietModel = modelKey ? modelKey.split(" - ") : [""]; const modelChinh = chiTietModel[0]; const phienBan = chiTietModel.length > 1 ? chiTietModel[1] : "";
@@ -1003,19 +1480,14 @@
             const depositDateVF7PlusInput = document.getElementById('depositDateStr_VF7Plus');
             const purchaseDateVF9VIN23Input = document.getElementById('purchaseDateStr_VF9_VIN2023');
             const applyVf7PlusCashbackCheckbox = document.getElementById('applyVf7PlusCashback');
-            const applyVinfascinationCheckbox = document.getElementById('applyVinfascination');
-            const takeInsuranceCashCheckbox = document.getElementById('takeInsuranceCash');
+
+            const applyVinfascinationDynamicCheckbox = document.getElementById('applyVinfascinationDynamic');
+            const takeInsuranceCashDynamicCheckbox = document.getElementById('takeInsuranceCashDynamic');
+
             const vinClubTierSelect = document.getElementById('vinClubTier');
             const applyCorpDiscountCheckbox = document.getElementById('applyCorpDiscount');
             const tradeInOldCarTypeSelect = document.getElementById('tradeInOldCarType');
-            const tradeInOldCarTypeDiv = document.getElementById('tradeInOldCarTypeDiv'); // ADDED
-            const calculateButton = document.getElementById('calculateButton');
-            const resetButton = document.getElementById('resetButton');
-            const invoicePriceResultP = document.getElementById('invoicePriceResult');
-            const customerPriceResultP = document.getElementById('customerPriceResult');
-            const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
-            const calculationLogCustomerPre = document.getElementById('calculationLogCustomer');
-            const notesResultPre = document.getElementById('notesResult');
+
             const vf8Vf9OptionsDiv = document.getElementById('vf8Vf9Options');
             const vf9OptionsAcDiv = document.getElementById('vf9OptionsAc');
             const vf9OptionsSeatsDiv = document.getElementById('vf9OptionsSeats');
@@ -1024,6 +1496,107 @@
             const vf7PlusOptionsDateDiv = document.getElementById('vf7PlusOptionsDate');
             const vf9Vin23OptionsDateDiv = document.getElementById('vf9Vin23OptionsDate');
             const vf7PlusOptionsPromoDiv = document.getElementById('vf7PlusOptionsPromo');
+            const tradeInOldCarTypeDiv = document.getElementById('tradeInOldCarTypeDiv');
+
+            const modelSpecificContainer = document.getElementById('modelSpecificSectionContainer');
+            const modelSpecificHeader = document.getElementById('modelSpecificHeader');
+
+            const applicableGeneralPromosContainer = document.getElementById('applicableGeneralPromosContainer');
+            const vinfascinationPromoItemContainer = document.getElementById('vinfascinationPromoItemContainer');
+            const vinfascinationLabelText = document.getElementById('vinfascinationLabelText');
+            const insuranceCashPromoItemContainer = document.getElementById('insuranceCashPromoItemContainer');
+            const insuranceCashLabelText = document.getElementById('insuranceCashLabelText');
+
+            const corpDiscountInfoEl = document.getElementById('corpDiscountInfoText');
+             if (corpDiscountInfoEl && typeof CORP_DISCOUNT_PERCENTAGE !== 'undefined') {
+                corpDiscountInfoEl.textContent = `(Mức giảm hiện tại: ${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(0)}%)`;
+            }
+
+            const calculateButton = document.getElementById('calculateButton');
+            const resetButton = document.getElementById('resetButton');
+            const invoicePriceResultP = document.getElementById('invoicePriceResult');
+            const customerPriceResultP = document.getElementById('customerPriceResult');
+            const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
+            const calculationLogCustomerPre = document.getElementById('calculationLogCustomer');
+            const notesResultPre = document.getElementById('notesResult');
+            const guidanceTextElement = document.getElementById('guidanceText'); // New guidance element
+
+            let currentHighlightedElement = null;
+
+            function highlightNextStep(element) {
+                removeHighlight();
+                if (element && !element.classList.contains('input-disabled') && !element.readOnly) {
+                    element.classList.add('highlight-guidance');
+                    currentHighlightedElement = element;
+                    // element.focus(); // Optional: auto-focus
+                }
+            }
+
+            function removeHighlight() {
+                if (currentHighlightedElement) {
+                    currentHighlightedElement.classList.remove('highlight-guidance');
+                    currentHighlightedElement = null;
+                }
+                document.querySelectorAll('.highlight-guidance').forEach(el => el.classList.remove('highlight-guidance'));
+            }
+
+            function updateGuidance(step = null, elementToHighlight = null) {
+                if (!guidanceTextElement) return;
+
+                let message = "";
+                switch (step) {
+                    case "initial":
+                        message = "Chào mừng bạn! Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe.";
+                        highlightNextStep(modelKeySelect);
+                        break;
+                    case "model_selected":
+                        message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong> (sẽ tự động điền nếu có), sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>.";
+                        highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput);
+                        break;
+                    case "common_fields_filled":
+                        message = "Thông tin chung đã nhập. Bây giờ, hãy xem xét các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> (nếu hiển thị và có áp dụng).";
+                        if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) {
+                             const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])');
+                             highlightNextStep(firstVisibleInputInModelSpecific);
+                        } else {
+                             highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'));
+                        }
+                        break;
+                    case "model_specific_done":
+                        message = "Các tuỳ chọn Model đã được xem xét. Tiếp theo, kiểm tra <strong>'Các chương trình khuyến mãi có thể áp dụng'</strong> (nếu hiển thị).";
+                         if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) {
+                             highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'));
+                        } else {
+                             highlightNextStep(calculateButton);
+                        }
+                        break;
+                    case "promos_done":
+                        message = "Tất cả thông tin cần thiết có vẻ đã được nhập. Bạn có thể nhấn nút <strong>'Tính Giá'</strong>.";
+                        highlightNextStep(calculateButton);
+                        break;
+                    case "calculation_done":
+                        message = "Đã tính giá! Xem kết quả bên dưới. Để tính lại với thông tin khác, bạn có thể thay đổi các trường hoặc nhấn <strong>'Xóa Dữ Liệu'</strong>.";
+                        removeHighlight();
+                        break;
+                    case "form_reset":
+                        message = "Dữ liệu đã được xóa. Vui lòng bắt đầu lại bằng cách chọn <strong>'Mã Model'</strong>.";
+                        highlightNextStep(modelKeySelect);
+                        break;
+                    default:
+                        if (modelKeySelect.value === "") {
+                            message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe.";
+                            highlightNextStep(modelKeySelect);
+                        } else if (!vinYearInput.value || !dmsTransactionDateInput.value) {
+                            message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>.";
+                            highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput);
+                        } else {
+                            message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>.";
+                            highlightNextStep(calculateButton);
+                        }
+                }
+                guidanceTextElement.innerHTML = message;
+                if(elementToHighlight) highlightNextStep(elementToHighlight);
+            }
 
 
             function getAllModelKeys() { const allKeys = new Set(); Object.keys(CURRENT_MODEL_MSRPS).forEach(key => allKeys.add(key)); Object.keys(BASE_PRICES_DISCONTINUED_GLOBAL).forEach(key => allKeys.add(key)); return Array.from(allKeys).sort((a, b) => a.localeCompare(b, 'vi')); }
@@ -1034,10 +1607,8 @@
                 if (!result || !result.calculationLog || result.calculationLog.length === 0) {
                     return '<table><thead><tr><th>Không có chi tiết.</th></tr></thead></table>';
                 }
-
                 const table = document.createElement('table');
                 table.className = 'calculation-details-table';
-
                 const thead = table.createTHead();
                 const headerRow = thead.insertRow();
                 const thDesc = document.createElement('th');
@@ -1051,41 +1622,35 @@
                 thSubtotal.textContent = 'Thành Tiền';
                 thSubtotal.className = 'calculation-subtotal-header';
                 headerRow.appendChild(thSubtotal);
-
                 const tbody = table.createTBody();
-
                 let percentageDiscountWasApplied = false;
                 const bpEndLogEntry = result.calculationLog.find(log => log.step === "B_P_END");
                 const cEndLogEntry = result.calculationLog.find(log => log.step === "C_END");
                 if (bpEndLogEntry && cEndLogEntry && bpEndLogEntry.amount !== cEndLogEntry.amount) {
                     percentageDiscountWasApplied = true;
                 }
-
                 result.calculationLog.forEach(log => {
                     let showThisLine = false;
                     let isSubtotalRow = false;
                     let rowClass = '';
                     let amountChangeContent = '';
-
                     if (log.type === 'base_price') {
                         showThisLine = true;
                         amountChangeContent = '-';
                     } else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) {
-                        // Skip
                     } else if (priceType === 'invoice' && log.type === 'final_price_customer' && log.step === 'CUSTOMER_PRICE') {
                         showThisLine = true;
-                        isSubtotalRow = true; // Treat as a special informational subtotal
+                        isSubtotalRow = true;
                         rowClass = 'calculation-details-subtotal-row';
-                        amountChangeContent = '-'; // No "change" for this informational line
+                        amountChangeContent = '-';
                     } else if (log.type === 'subtotal' || log.type === 'info') {
                         isSubtotalRow = true;
                         if (log.step === "A_END" && log.amount !== result.basePriceUsed) showThisLine = true;
                         else if (log.step === "B_P_END" && percentageDiscountWasApplied) showThisLine = true;
                         else if (log.step === "C_END" && percentageDiscountWasApplied && bpEndLogEntry && log.amount !== bpEndLogEntry.amount) showThisLine = true;
-
                         if(showThisLine) {
                             rowClass = 'calculation-details-subtotal-row';
-                            amountChangeContent = '-'; // No "change" for subtotal summary lines
+                            amountChangeContent = '-';
                         }
                     } else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') {
                         if (log.amount !== 0) {
@@ -1097,49 +1662,40 @@
                              else rowClass = 'log-entry-neutral';
                         }
                     }
-
                     if (showThisLine) {
                         const row = tbody.insertRow();
                         row.className = rowClass;
-
                         const cellDesc = row.insertCell();
                         cellDesc.textContent = log.description;
                         cellDesc.className = 'calculation-description';
-
                         const cellChange = row.insertCell();
                         cellChange.textContent = amountChangeContent;
                         cellChange.className = 'calculation-amount-change';
-
                         const cellSubtotal = row.insertCell();
                         cellSubtotal.textContent = formatCurrency(log.current_subtotal);
                         cellSubtotal.className = 'calculation-current-subtotal';
-
                         if (isSubtotalRow && showThisLine) {
-                            cellDesc.colSpan = 2; // Description spans 2 columns
-                            cellChange.style.display = 'none'; // Hide the change cell for subtotal summary
-                            // cellSubtotal remains as the third actual column
+                            cellDesc.colSpan = 2;
+                            cellChange.style.display = 'none';
                         }
                     }
                 });
-
                 const tfoot = table.createTFoot();
                 const footerRow = tfoot.insertRow();
                 const finalPriceValue = priceType === 'invoice' ? result.invoicePrice : result.customerPrice;
                 const finalPriceLabel = priceType === 'invoice' ? "Tổng Giá Hợp Đồng:" : "Tổng Số Tiền Khách Hàng Phải Trả:";
-
                 const cellFooterLabel = footerRow.insertCell();
                 cellFooterLabel.textContent = finalPriceLabel;
                 cellFooterLabel.colSpan = 2;
-
                 const cellFooterValue = footerRow.insertCell();
                 cellFooterValue.textContent = formatCurrency(finalPriceValue, true);
                 cellFooterValue.className = 'calculation-current-subtotal';
-
                 return table.outerHTML;
             }
 
             function updateFormInputsVisibility(modelKey) {
                 const generalModelType = getGeneralModelType(modelKey);
+
                 const toggleVisibility = (element, isVisible) => {
                     if (!element) return;
                     const inputElements = element.querySelectorAll('input, select');
@@ -1152,57 +1708,58 @@
                     } else {
                         element.classList.add('hidden');
                         inputElements.forEach(el => {
-                            if (el.type === 'checkbox') {
-                                el.checked = false;
-                            } else if (el.tagName === 'SELECT') {
-                                el.selectedIndex = 0; // Reset to the first option
-                            } else {
-                                el.value = ''; // Clear text/number/date inputs
-                            }
+                            if (el.type === 'checkbox') el.checked = false;
+                            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                            else el.value = '';
                             el.disabled = true;
                             el.classList.add('input-disabled');
                         });
                     }
                 };
+                 const toggleItemVisibility = (itemContainer, checkboxElement, isApplicable) => {
+                    if (!itemContainer) return;
+                    if (isApplicable) {
+                        itemContainer.classList.remove('hidden');
+                        if (checkboxElement) checkboxElement.disabled = false;
+                    } else {
+                        itemContainer.classList.add('hidden');
+                        if (checkboxElement) {
+                            checkboxElement.checked = false;
+                            checkboxElement.disabled = true;
+                        }
+                    }
+                };
 
-                // List of all conditional divs
-                const conditionalDivs = [
+                const allModelSpecificDivs = [
                     vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv,
                     advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv,
-                    vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv // Added tradeInOldCarTypeDiv
+                    vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv
                 ];
+                allModelSpecificDivs.forEach(div => toggleVisibility(div, false));
 
-                // Hide all conditional sections initially
-                conditionalDivs.forEach(div => {
-                    if (div) toggleVisibility(div, false);
-                });
-
-
-                if (!generalModelType && !modelKey) { // If no model is selected (e.g., on reset or initial load)
+                if (!modelKey) {
                     baseMsrpInput.value = '';
                     baseMsrpInput.readOnly = false;
                     baseMsrpInput.classList.remove('input-disabled');
-                    // All conditional divs are already hidden by the loop above.
+                    if(modelSpecificContainer) modelSpecificContainer.classList.add('hidden');
+                    if(applicableGeneralPromosContainer) applicableGeneralPromosContainer.classList.add('hidden');
+                    toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, false);
+                    toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, false);
+                    updateGuidance("initial"); // Update guidance
                     return;
                 }
 
-                // Model is selected, proceed to show/hide based on model
-                if (vf8Vf9OptionsDiv) toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType));
-                if (vf9OptionsAcDiv) toggleVisibility(vf9OptionsAcDiv, generalModelType === "VF 9");
-                if (vf9OptionsSeatsDiv) toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9");
-                if (vf9OptionsRoofDiv) toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9");
-                if (vf9Vin23OptionsDateDiv) toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9");
-                if (vf7PlusOptionsDateDiv) toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus"));
-                if (vf7PlusOptionsPromoDiv) toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus"));
+                toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType));
+                toggleVisibility(vf9OptionsAcDiv, generalModelType === "VF 9");
+                toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9");
+                toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9");
+                toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9");
+                toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus"));
+                toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus"));
 
-                // Logic for Trade-In Options visibility
                 const tradeInEligibleModels = ["VF 6", "VF 7", "VF 8", "VF 9"];
-                if (tradeInOldCarTypeDiv) {
-                    const showTradeInOptions = tradeInEligibleModels.includes(generalModelType);
-                    toggleVisibility(tradeInOldCarTypeDiv, showTradeInOptions);
-                }
+                toggleVisibility(tradeInOldCarTypeDiv, tradeInEligibleModels.includes(generalModelType));
 
-                // Logic for Advanced Color Options
                 if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
                 let hasAdvancedColors = false;
                 if (generalModelType && OPTIONAL_EQUIPMENT[generalModelType]) {
@@ -1219,8 +1776,57 @@
                         }
                     }
                 }
-                if (advancedColorOptionsDiv) toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors);
+                toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors);
+
+                let anyModelOptionVisible = false;
+                allModelSpecificDivs.forEach(div => {
+                    if (div && !div.classList.contains('hidden')) {
+                        anyModelOptionVisible = true;
+                    }
+                });
+
+                if (anyModelOptionVisible && modelSpecificContainer && modelSpecificHeader) {
+                    modelSpecificContainer.classList.remove('hidden');
+                    const selectedModelOption = modelKeySelect.options[modelKeySelect.selectedIndex];
+                    modelSpecificHeader.textContent = `Tuỳ chọn & Chính sách riêng cho ${selectedModelOption ? selectedModelOption.text : 'Model'}`;
+                } else if (modelSpecificContainer) {
+                    modelSpecificContainer.classList.add('hidden');
+                }
+
+                let generalPromoSectionVisible = false;
+                const vinfasApplicable = generalModelType && VINFASCINATION_PROMO_VALUES[generalModelType];
+                toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, vinfasApplicable);
+                if (vinfasApplicable && vinfascinationLabelText) {
+                    vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`;
+                    generalPromoSectionVisible = true;
+                }
+
+                const insuranceApplicable = generalModelType && INSURANCE_CASH_EQUIVALENT[generalModelType];
+                toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, insuranceApplicable);
+                 if (insuranceApplicable && insuranceCashLabelText) {
+                    insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`;
+                    generalPromoSectionVisible = true;
+                }
+
+                if (applicableGeneralPromosContainer) {
+                    if (generalPromoSectionVisible) {
+                        applicableGeneralPromosContainer.classList.remove('hidden');
+                    } else {
+                        applicableGeneralPromosContainer.classList.add('hidden');
+                    }
+                }
+                // Update guidance after visibility changes
+                if (!vinYearInput.value || !dmsTransactionDateInput.value) {
+                     updateGuidance("model_selected");
+                } else if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])')) {
+                    updateGuidance("common_fields_filled");
+                } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
+                    updateGuidance("model_specific_done");
+                } else {
+                    updateGuidance("promos_done");
+                }
             }
+
 
             modelKeySelect.addEventListener('change', () => {
                 const selectedModel = modelKeySelect.value;
@@ -1228,7 +1834,7 @@
                     baseMsrpInput.value = '';
                     baseMsrpInput.readOnly = false;
                     baseMsrpInput.classList.remove('input-disabled');
-                    updateFormInputsVisibility(null);
+                    updateFormInputsVisibility(null); // This will call updateGuidance("initial")
                     return;
                 }
                 if (CURRENT_MODEL_MSRPS[selectedModel]) {
@@ -1244,34 +1850,71 @@
                     baseMsrpInput.readOnly = false;
                     baseMsrpInput.classList.remove('input-disabled');
                 }
-                updateFormInputsVisibility(selectedModel);
+                updateFormInputsVisibility(selectedModel); // This will call updateGuidance accordingly
             });
+
+             // Add event listeners to common inputs to update guidance
+            [vinYearInput, dmsTransactionDateInput, vinClubTierSelect, applyCorpDiscountCheckbox].forEach(el => {
+                el.addEventListener('change', () => {
+                    if (modelKeySelect.value) { // Only update if a model is selected
+                         if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])')) {
+                            if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("common_fields_filled");
+                         } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
+                            if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("model_specific_done");
+                         } else if (vinYearInput.value && dmsTransactionDateInput.value) {
+                            updateGuidance("promos_done");
+                         }
+                    }
+                });
+            });
+            // Event listeners for model specific and general promo inputs
+            const allModelSpecificInputs = modelSpecificContainer.querySelectorAll('input, select');
+            allModelSpecificInputs.forEach(input => {
+                input.addEventListener('change', () => {
+                     if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { // Ensure base fields are filled
+                        // Check if any *other* model specific input is still pending, if not, move to general promos
+                        let allModelSpecificFilledOrHidden = true;
+                        if (!modelSpecificContainer.classList.contains('hidden')) {
+                            modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => {
+                                if (el.value === "" && el.required) allModelSpecificFilledOrHidden = false; // Basic check, might need refinement
+                            });
+                        }
+
+                        if (allModelSpecificFilledOrHidden) {
+                             if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
+                                updateGuidance("model_specific_done");
+                            } else {
+                                updateGuidance("promos_done");
+                            }
+                        }
+                    }
+                });
+            });
+            const allGeneralPromoCheckboxes = applicableGeneralPromosContainer.querySelectorAll('input[type="checkbox"]');
+            allGeneralPromoCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                     if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) {
+                        updateGuidance("promos_done");
+                    }
+                });
+            });
+
 
             function resetFormInputs() {
                 modelKeySelect.selectedIndex = 0;
                 vinClubTierSelect.value = "Không có";
-                tradeInOldCarTypeSelect.value = "Không đổi"; // This will be set to selectedIndex = 0 by updateFormInputsVisibility if hidden
                 if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
-
                 baseMsrpInput.value = '';
                 vinYearInput.value = '';
                 dmsTransactionDateInput.value = '';
-                depositDateVF7PlusInput.value = '';
-                purchaseDateVF9VIN23Input.value = '';
 
-                isSdiBatteryCheckbox.checked = false;
-                is2ZoneACCheckbox.checked = false;
-                hasCaptainSeatsCheckbox.checked = false;
-                hasPanoramicRoofCheckbox.checked = false;
-                applyVf7PlusCashbackCheckbox.checked = false;
-                applyVinfascinationCheckbox.checked = false;
-                takeInsuranceCashCheckbox.checked = false;
-                applyCorpDiscountCheckbox.checked = false;
+                if(applyVinfascinationDynamicCheckbox) applyVinfascinationDynamicCheckbox.checked = false;
+                if(takeInsuranceCashDynamicCheckbox) takeInsuranceCashDynamicCheckbox.checked = false;
+                if(applyCorpDiscountCheckbox) applyCorpDiscountCheckbox.checked = false;
 
                 baseMsrpInput.readOnly = false;
                 baseMsrpInput.classList.remove('input-disabled');
-
-                updateFormInputsVisibility(null); // This will hide conditional fields including trade-in and reset selects
+                updateFormInputsVisibility(null); // This will call updateGuidance("initial")
 
                 invoicePriceResultP.textContent = "0 VNĐ";
                 customerPriceResultP.textContent = "0 VNĐ";
@@ -1284,11 +1927,111 @@
                      notesResultPre.style.color = 'var(--warning-text-dark)';
                      notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
                 }
+                const appliedPromosDisplayOnReset = document.getElementById('appliedPromotionsDisplay');
+                if (appliedPromosDisplayOnReset) {
+                    appliedPromosDisplayOnReset.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Chưa có thông tin khuyến mãi.</p>';
+                }
+                updateGuidance("form_reset"); // Update guidance
                 console.log("Form đã được reset!");
             }
 
             if (resetButton) {
                 resetButton.addEventListener('click', resetFormInputs);
+            }
+
+            function getPromoIconClass(description) {
+                const descLower = description.toLowerCase();
+                if (descLower.includes("năm vin") || descLower.includes("vin year")) return "fas fa-calendar-check";
+                if (descLower.includes("pin sdi")) return "fas fa-bolt";
+                if (descLower.includes("điều hòa 2 vùng") || descLower.includes("đh 2 vùng")) return "fas fa-wind";
+                if (descLower.includes("vf 7 plus") && (descLower.includes("cash") || descLower.includes("tiền mặt"))) return "fas fa-money-bill-wave";
+                if (descLower.includes("vinfascination")) return "fas fa-star";
+                if (descLower.includes("bảo hiểm") || descLower.includes("bh")) return "fas fa-shield-alt";
+                if (descLower.includes("vinclub")) return "fas fa-users-cog";
+                if (descLower.includes("corp")) return "fas fa-briefcase";
+                if (descLower.includes("thu cũ đổi mới") || descLower.includes("trade in")) return "fas fa-sync-alt";
+                if (descLower.includes("màu") && (descLower.includes("giảm giá") || descLower.includes("ưu đãi"))) return "fas fa-palette";
+                return "fas fa-tag";
+            }
+
+            function extractAppliedPromotions(calculationLog, vinfascinationCashApplied, insuranceCashApplied) {
+                const appliedPromos = [];
+                calculationLog.forEach(log => {
+                    if ((log.type === 'discount' || log.type === 'promotion' || log.type === 'trade_in_support' || log.type === 'discount_percentage') && log.amount < 0) {
+                        let title = log.description;
+                        if (log.type === 'discount_percentage' && log.base_for_percentage && log.base_for_percentage !==0) {
+                             title = log.description.replace(/ \(\d+(\.\d+)?%\).*/, ` (${(Math.abs(log.amount / log.base_for_percentage) * 100).toFixed(1)}%)`).replace(/cho.*/i, "").trim();
+                        } else {
+                             title = log.description.replace(/\(.*\)|cho.*/i, "").trim();
+                        }
+                        if (title.toLowerCase() === "giảm giá") title = log.description;
+                        appliedPromos.push({
+                            title: title,
+                            fullDescription: log.description,
+                            value: log.amount,
+                            iconClass: getPromoIconClass(log.description)
+                        });
+                    }
+                });
+                if (vinfascinationCashApplied > 0) {
+                     appliedPromos.push({
+                        title: "Ưu đãi VINFASCINATION",
+                        fullDescription: "Quy đổi tiền mặt từ chương trình VINFASCINATION.",
+                        value: -vinfascinationCashApplied,
+                        iconClass: "fas fa-star"
+                    });
+                }
+                if (insuranceCashApplied > 0) {
+                    appliedPromos.push({
+                        title: "Ưu đãi Bảo Hiểm",
+                        fullDescription: "Quy đổi tiền mặt từ ưu đãi Bảo hiểm vật chất.",
+                        value: -insuranceCashApplied,
+                        iconClass: "fas fa-shield-alt"
+                    });
+                }
+                const uniquePromos = [];
+                const seenFullDescriptions = new Set();
+                for (const promo of appliedPromos) {
+                    if (!seenFullDescriptions.has(promo.fullDescription)) {
+                        uniquePromos.push(promo);
+                        seenFullDescriptions.add(promo.fullDescription);
+                    }
+                }
+                return uniquePromos;
+            }
+
+            function displayAppliedPromotions(promotions, containerElement) {
+                containerElement.innerHTML = '';
+                if (!promotions || promotions.length === 0) {
+                    const noPromoMessage = document.createElement('p');
+                    noPromoMessage.className = 'no-promotions-message';
+                    noPromoMessage.textContent = 'Không có khuyến mãi đặc biệt nào được áp dụng cho lựa chọn này.';
+                    containerElement.appendChild(noPromoMessage);
+                    return;
+                }
+                const promotionsListDiv = document.createElement('div');
+                promotionsListDiv.className = 'promotions-list';
+                promotions.forEach(promo => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'promotion-item';
+                    const iconContainerDiv = document.createElement('div');
+                    iconContainerDiv.className = 'promotion-icon';
+                    const iconI = document.createElement('i');
+                    iconI.className = promo.iconClass;
+                    iconContainerDiv.appendChild(iconI);
+                    const detailsDiv = document.createElement('div');
+                    detailsDiv.className = 'promotion-details';
+                    const titleH4 = document.createElement('h4');
+                    titleH4.textContent = promo.title;
+                    const valueP = document.createElement('p');
+                    valueP.innerHTML = `Giá trị: <span class="promo-value">${formatCurrency(Number(promo.value), true)}</span>`;
+                    detailsDiv.appendChild(titleH4);
+                    detailsDiv.appendChild(valueP);
+                    itemDiv.appendChild(iconContainerDiv);
+                    itemDiv.appendChild(detailsDiv);
+                    promotionsListDiv.appendChild(itemDiv);
+                });
+                containerElement.appendChild(promotionsListDiv);
             }
 
             calculateButton.addEventListener('click', () => {
@@ -1307,6 +2050,10 @@
                      notesResultPre.style.color = 'var(--warning-text-dark)';
                      notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
                 }
+                const appliedPromosContainerElement = document.getElementById('appliedPromotionsDisplay');
+                if (appliedPromosContainerElement) {
+                    appliedPromosContainerElement.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Đang tính toán...</p>';
+                }
 
                 if (!modelKey) {
                     notesResultPre.textContent = "LỖI: Vui lòng chọn Mã Model.";
@@ -1316,6 +2063,8 @@
                         notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
                         notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
                     }
+                    if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement);
+                    updateGuidance("initial"); // Ensure guidance is correct on error
                     return;
                 }
                 if (isNaN(baseMsrp) || baseMsrp <= 0) {
@@ -1329,30 +2078,32 @@
                             notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
                             notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
                         }
+                        if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement);
+                        updateGuidance("model_selected"); // Or a more specific error guidance
                         return;
                     }
                 }
 
-                const options = { 
-                    isSdiBattery_VF8_VF9: vf8Vf9OptionsDiv && !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked, 
-                    is2ZoneAC_VF9: vf9OptionsAcDiv && !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked, 
-                    hasCaptainSeats_VF9: vf9OptionsSeatsDiv && !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked, 
-                    hasPanoramicRoof_VF9: vf9OptionsRoofDiv && !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked, 
-                    selectedAdvancedColor: advancedColorOptionsDiv && !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null 
+                const options = {
+                    isSdiBattery_VF8_VF9: vf8Vf9OptionsDiv && !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked,
+                    is2ZoneAC_VF9: vf9OptionsAcDiv && !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked,
+                    hasCaptainSeats_VF9: vf9OptionsSeatsDiv && !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked,
+                    hasPanoramicRoof_VF9: vf9OptionsRoofDiv && !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked,
+                    selectedAdvancedColor: advancedColorOptionsDiv && !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null
                 };
-                const eligibilityInfo = { 
-                    dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, 
-                    dmsTransactionDateStr_orig: dmsTransactionDateInput.value, 
-                    depositDateStr_VF7Plus: vf7PlusOptionsDateDiv && !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null, 
-                    depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value, 
-                    purchaseDateStr_VF9_VIN2023: vf9Vin23OptionsDateDiv && !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null, 
-                    purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value, 
-                    applyVf7PlusCashback: vf7PlusOptionsPromoDiv && !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked, 
-                    applyVinfascination: applyVinfascinationCheckbox.checked, 
-                    takeInsuranceCash: takeInsuranceCashCheckbox.checked, 
-                    vinClubTier: vinClubTierSelect.value, 
-                    applyCorpDiscount: applyCorpDiscountCheckbox.checked, 
-                    tradeInOldCarType: tradeInOldCarTypeDiv && !tradeInOldCarTypeDiv.classList.contains('hidden') && tradeInOldCarTypeSelect ? tradeInOldCarTypeSelect.value : "Không đổi", 
+                const eligibilityInfo = {
+                    dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null,
+                    dmsTransactionDateStr_orig: dmsTransactionDateInput.value,
+                    depositDateStr_VF7Plus: vf7PlusOptionsDateDiv && !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null,
+                    depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value,
+                    purchaseDateStr_VF9_VIN2023: vf9Vin23OptionsDateDiv && !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null,
+                    purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value,
+                    applyVf7PlusCashback: vf7PlusOptionsPromoDiv && !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked,
+                    applyVinfascination: applyVinfascinationDynamicCheckbox ? applyVinfascinationDynamicCheckbox.checked : false,
+                    takeInsuranceCash: takeInsuranceCashDynamicCheckbox ? takeInsuranceCashDynamicCheckbox.checked : false,
+                    vinClubTier: vinClubTierSelect.value,
+                    applyCorpDiscount: applyCorpDiscountCheckbox.checked,
+                    tradeInOldCarType: tradeInOldCarTypeDiv && !tradeInOldCarTypeDiv.classList.contains('hidden') && tradeInOldCarTypeSelect ? tradeInOldCarTypeSelect.value : "Không đổi",
                 };
                 const result = calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo);
 
@@ -1367,9 +2118,15 @@
                 if (combinedNotesString) { combinedNotesString = "- " + combinedNotesString; }
                 else { combinedNotesString = "Không có ghi chú đặc biệt."; }
                 notesResultPre.textContent = combinedNotesString;
+
+                if (appliedPromosContainerElement) {
+                    const extractedPromos = extractAppliedPromotions(result.calculationLog, result.vinfascinationCashApplied, result.insuranceCashApplied);
+                    displayAppliedPromotions(extractedPromos, appliedPromosContainerElement);
+                }
+                updateGuidance("calculation_done"); // Update guidance
             });
             populateModelDropdown();
-            resetFormInputs(); 
+            resetFormInputs(); // This will call updateFormInputsVisibility(null) which calls updateGuidance("initial")
         });
     </script>
 </body>
