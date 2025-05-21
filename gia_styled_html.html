@@ -658,7 +658,7 @@
                         <select id="modelKey"></select>
                     </div>
                     <div>
-                        <label for="baseMsrp">Giá NY gốc (VNĐ):</label>
+                        <label for="baseMsrp">Giá Niêm Yết (VNĐ):</label>
                         <input type="number" id="baseMsrp" placeholder="Tự động hoặc nhập tay">
                     </div>
                     <div>
@@ -735,8 +735,7 @@
                             <input type="checkbox" id="applyCorpDiscount"> Áp dụng Corp?
                         </label>
                     </div>
-                    <div>
-                        <label for="tradeInOldCarType">Loại Xe Cũ Đổi:</label>
+                    <div id="tradeInOldCarTypeDiv"> <label for="tradeInOldCarType">Loại Xe Cũ Đổi:</label>
                         <select id="tradeInOldCarType">
                             <option value="Không đổi">Không đổi</option>
                             <option value="VinFast Xăng Cũ">VinFast Xăng Cũ</option>
@@ -980,7 +979,7 @@
                 nhatKyTinhToan.push({ step: "B_P_END", type: "info", description: "Giá làm cơ sở tính KM Vinclub/Corp", amount: priceBaseForPercentageDiscount, current_subtotal: priceBaseForPercentageDiscount });
                 let giaSauGiamPhanTram = priceBaseForPercentageDiscount;
                 if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) { const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]; const mucGiamVinclub = Math.round(priceBaseForPercentageDiscount * phanTramGiamVinclub); giaSauGiamPhanTram -= mucGiamVinclub; nhatKyTinhToan.push({ step: "C1", type: "discount_percentage", description: `Giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier} (${(phanTramGiamVinclub * 100).toFixed(1)}%)`, amount: -mucGiamVinclub, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); ghiChu.push(`Đã áp dụng giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier}. Sẽ không áp dụng giảm giá Corp.`); } else if (eligibilityInfo.applyCorpDiscount === true) { const mucGiamCorp = Math.round(priceBaseForPercentageDiscount * CORP_DISCOUNT_PERCENTAGE); giaSauGiamPhanTram -= mucGiamCorp; nhatKyTinhToan.push({ step: "C2", type: "discount_percentage", description: `Giảm giá Corp (${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(1)}%)`, amount: -mucGiamCorp, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); }
-                nhatKyTinhToan.push({ step: "C_END", type: "subtotal", description: "Giá sau giảm Vinclub/Corp (Giá trước Thu cũ)", amount: giaSauGiamPhanTram, current_subtotal: giaSauGiamPhanTram });
+                nhatKyTinhToan.push({ step: "C_END", type: "subtotal", description: "Giá sau giảm Vinclub/Corp", amount: giaSauGiamPhanTram, current_subtotal: giaSauGiamPhanTram });
                 let giaKhachHangThanhToan = giaSauGiamPhanTram; let mucHoTroThuCuApplied = 0;
                 if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") { let applicableTradeInPolicy = null; const dmsDateForTradeIn = parseDateStr(eligibilityInfo.dmsTransactionDateStr); const tradeInPolicyStartDateNew = new Date(Date.UTC(2025, 3, 21)); if (dmsDateForTradeIn && dmsDateForTradeIn >= tradeInPolicyStartDateNew) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_CURRENT_PERIOD; } else if (dmsDateForTradeIn) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD; } else { ghiChu.push(`Không xác định được Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới.`); } if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) { let tradeInTypeKey = eligibilityInfo.tradeInOldCarType; if (tradeInTypeKey === "Xe Hãng Khác") { tradeInTypeKey = "HangKhac"; } else if (tradeInTypeKey === "VinFast Xăng Cũ") { tradeInTypeKey = "VinFastXangCu"; } const mucHoTroThuCu = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey]; if (mucHoTroThuCu) { giaKhachHangThanhToan -= mucHoTroThuCu; mucHoTroThuCuApplied = mucHoTroThuCu; nhatKyTinhToan.push({ step: "D", type: "trade_in_support", description: `Hỗ trợ Thu cũ đổi mới (${eligibilityInfo.tradeInOldCarType} cho ${loaiXeChung})`, amount: -mucHoTroThuCu, current_subtotal: giaKhachHangThanhToan }); } else { ghiChu.push(`Không tìm thấy mức hỗ trợ Thu cũ đổi mới cho loại xe cũ '${eligibilityInfo.tradeInOldCarType}' (key: ${tradeInTypeKey}) với xe mới ${loaiXeChung} trong giai đoạn áp dụng.`); } } else if (applicableTradeInPolicy && loaiXeChung) { ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn được chọn.`); } }
                 nhatKyTinhToan.push({ step: "CUSTOMER_PRICE", type: "final_price_customer", description: "GIÁ KHÁCH HÀNG THANH TOÁN DỰ KIẾN", amount: giaKhachHangThanhToan, current_subtotal: giaKhachHangThanhToan });
@@ -1009,8 +1008,9 @@
             const vinClubTierSelect = document.getElementById('vinClubTier');
             const applyCorpDiscountCheckbox = document.getElementById('applyCorpDiscount');
             const tradeInOldCarTypeSelect = document.getElementById('tradeInOldCarType');
+            const tradeInOldCarTypeDiv = document.getElementById('tradeInOldCarTypeDiv'); // ADDED
             const calculateButton = document.getElementById('calculateButton');
-            const resetButton = document.getElementById('resetButton'); // Added reset button
+            const resetButton = document.getElementById('resetButton');
             const invoicePriceResultP = document.getElementById('invoicePriceResult');
             const customerPriceResultP = document.getElementById('customerPriceResult');
             const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
@@ -1024,6 +1024,7 @@
             const vf7PlusOptionsDateDiv = document.getElementById('vf7PlusOptionsDate');
             const vf9Vin23OptionsDateDiv = document.getElementById('vf9Vin23OptionsDate');
             const vf7PlusOptionsPromoDiv = document.getElementById('vf7PlusOptionsPromo');
+
 
             function getAllModelKeys() { const allKeys = new Set(); Object.keys(CURRENT_MODEL_MSRPS).forEach(key => allKeys.add(key)); Object.keys(BASE_PRICES_DISCONTINUED_GLOBAL).forEach(key => allKeys.add(key)); return Array.from(allKeys).sort((a, b) => a.localeCompare(b, 'vi')); }
             function populateModelDropdown() { const models = getAllModelKeys(); const placeholderOption = document.createElement('option'); placeholderOption.value = ""; placeholderOption.textContent = "-- Chọn Mã Model --"; placeholderOption.disabled = true; placeholderOption.selected = true; modelKeySelect.appendChild(placeholderOption); models.forEach(model => { const option = document.createElement('option'); option.value = model; option.textContent = model; modelKeySelect.appendChild(option); }); }
@@ -1137,14 +1138,120 @@
                 return table.outerHTML;
             }
 
-            function updateFormInputsVisibility(modelKey) { const generalModelType = getGeneralModelType(modelKey); const toggleVisibility = (element, isVisible) => { const inputElements = element.querySelectorAll('input, select'); if (isVisible) { element.classList.remove('hidden'); inputElements.forEach(el => { el.disabled = false; el.classList.remove('input-disabled'); }); } else { element.classList.add('hidden'); inputElements.forEach(el => { if (el.type === 'checkbox') el.checked = false; else if (el.tagName === 'SELECT') el.value = ''; else el.value = ''; el.disabled = true; el.classList.add('input-disabled'); }); } }; [vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv].forEach(div => toggleVisibility(div, false)); if (!generalModelType && !modelKey) { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); return; } toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType)); toggleVisibility(vf9OptionsAcDiv, generalModelType === "VF 9"); toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9"); toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9"); toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9"); toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus")); toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus")); selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>'; let hasAdvancedColors = false; if (OPTIONAL_EQUIPMENT[generalModelType]) { const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof"); if (colors.length > 0) { hasAdvancedColors = true; colors.forEach(colorKey => { const option = document.createElement('option'); option.value = colorKey; option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description; selectedAdvancedColorSelect.appendChild(option); }); } } toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors); }
-            modelKeySelect.addEventListener('change', () => { const selectedModel = modelKeySelect.value; if (!selectedModel) { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); updateFormInputsVisibility(null); return; } if (CURRENT_MODEL_MSRPS[selectedModel]) { baseMsrpInput.value = CURRENT_MODEL_MSRPS[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } else if (BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]) { baseMsrpInput.value = BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } else { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); } updateFormInputsVisibility(selectedModel); });
+            function updateFormInputsVisibility(modelKey) {
+                const generalModelType = getGeneralModelType(modelKey);
+                const toggleVisibility = (element, isVisible) => {
+                    if (!element) return;
+                    const inputElements = element.querySelectorAll('input, select');
+                    if (isVisible) {
+                        element.classList.remove('hidden');
+                        inputElements.forEach(el => {
+                            el.disabled = false;
+                            el.classList.remove('input-disabled');
+                        });
+                    } else {
+                        element.classList.add('hidden');
+                        inputElements.forEach(el => {
+                            if (el.type === 'checkbox') {
+                                el.checked = false;
+                            } else if (el.tagName === 'SELECT') {
+                                el.selectedIndex = 0; // Reset to the first option
+                            } else {
+                                el.value = ''; // Clear text/number/date inputs
+                            }
+                            el.disabled = true;
+                            el.classList.add('input-disabled');
+                        });
+                    }
+                };
+
+                // List of all conditional divs
+                const conditionalDivs = [
+                    vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv,
+                    advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv,
+                    vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv // Added tradeInOldCarTypeDiv
+                ];
+
+                // Hide all conditional sections initially
+                conditionalDivs.forEach(div => {
+                    if (div) toggleVisibility(div, false);
+                });
+
+
+                if (!generalModelType && !modelKey) { // If no model is selected (e.g., on reset or initial load)
+                    baseMsrpInput.value = '';
+                    baseMsrpInput.readOnly = false;
+                    baseMsrpInput.classList.remove('input-disabled');
+                    // All conditional divs are already hidden by the loop above.
+                    return;
+                }
+
+                // Model is selected, proceed to show/hide based on model
+                if (vf8Vf9OptionsDiv) toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType));
+                if (vf9OptionsAcDiv) toggleVisibility(vf9OptionsAcDiv, generalModelType === "VF 9");
+                if (vf9OptionsSeatsDiv) toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9");
+                if (vf9OptionsRoofDiv) toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9");
+                if (vf9Vin23OptionsDateDiv) toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9");
+                if (vf7PlusOptionsDateDiv) toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus"));
+                if (vf7PlusOptionsPromoDiv) toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus"));
+
+                // Logic for Trade-In Options visibility
+                const tradeInEligibleModels = ["VF 6", "VF 7", "VF 8", "VF 9"];
+                if (tradeInOldCarTypeDiv) {
+                    const showTradeInOptions = tradeInEligibleModels.includes(generalModelType);
+                    toggleVisibility(tradeInOldCarTypeDiv, showTradeInOptions);
+                }
+
+                // Logic for Advanced Color Options
+                if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
+                let hasAdvancedColors = false;
+                if (generalModelType && OPTIONAL_EQUIPMENT[generalModelType]) {
+                    const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof");
+                    if (colors.length > 0) {
+                        hasAdvancedColors = true;
+                        if (selectedAdvancedColorSelect) {
+                            colors.forEach(colorKey => {
+                                const option = document.createElement('option');
+                                option.value = colorKey;
+                                option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description;
+                                selectedAdvancedColorSelect.appendChild(option);
+                            });
+                        }
+                    }
+                }
+                if (advancedColorOptionsDiv) toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors);
+            }
+
+            modelKeySelect.addEventListener('change', () => {
+                const selectedModel = modelKeySelect.value;
+                if (!selectedModel) {
+                    baseMsrpInput.value = '';
+                    baseMsrpInput.readOnly = false;
+                    baseMsrpInput.classList.remove('input-disabled');
+                    updateFormInputsVisibility(null);
+                    return;
+                }
+                if (CURRENT_MODEL_MSRPS[selectedModel]) {
+                    baseMsrpInput.value = CURRENT_MODEL_MSRPS[selectedModel];
+                    baseMsrpInput.readOnly = true;
+                    baseMsrpInput.classList.add('input-disabled');
+                } else if (BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]) {
+                    baseMsrpInput.value = BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel];
+                    baseMsrpInput.readOnly = true;
+                    baseMsrpInput.classList.add('input-disabled');
+                } else {
+                    baseMsrpInput.value = '';
+                    baseMsrpInput.readOnly = false;
+                    baseMsrpInput.classList.remove('input-disabled');
+                }
+                updateFormInputsVisibility(selectedModel);
+            });
 
             function resetFormInputs() {
                 modelKeySelect.selectedIndex = 0;
                 vinClubTierSelect.value = "Không có";
-                tradeInOldCarTypeSelect.value = "Không đổi";
-                selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
+                tradeInOldCarTypeSelect.value = "Không đổi"; // This will be set to selectedIndex = 0 by updateFormInputsVisibility if hidden
+                if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
 
                 baseMsrpInput.value = '';
                 vinYearInput.value = '';
@@ -1164,7 +1271,7 @@
                 baseMsrpInput.readOnly = false;
                 baseMsrpInput.classList.remove('input-disabled');
 
-                updateFormInputsVisibility(null);
+                updateFormInputsVisibility(null); // This will hide conditional fields including trade-in and reset selects
 
                 invoicePriceResultP.textContent = "0 VNĐ";
                 customerPriceResultP.textContent = "0 VNĐ";
@@ -1226,8 +1333,27 @@
                     }
                 }
 
-                const options = { isSdiBattery_VF8_VF9: !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked, is2ZoneAC_VF9: !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked, hasCaptainSeats_VF9: !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked, hasPanoramicRoof_VF9: !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked, selectedAdvancedColor: !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null };
-                const eligibilityInfo = { dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, dmsTransactionDateStr_orig: dmsTransactionDateInput.value, depositDateStr_VF7Plus: !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null, depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value, purchaseDateStr_VF9_VIN2023: !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null, purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value, applyVf7PlusCashback: !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked, applyVinfascination: applyVinfascinationCheckbox.checked, takeInsuranceCash: takeInsuranceCashCheckbox.checked, vinClubTier: vinClubTierSelect.value, applyCorpDiscount: applyCorpDiscountCheckbox.checked, tradeInOldCarType: tradeInOldCarTypeSelect.value, };
+                const options = { 
+                    isSdiBattery_VF8_VF9: vf8Vf9OptionsDiv && !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked, 
+                    is2ZoneAC_VF9: vf9OptionsAcDiv && !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked, 
+                    hasCaptainSeats_VF9: vf9OptionsSeatsDiv && !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked, 
+                    hasPanoramicRoof_VF9: vf9OptionsRoofDiv && !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked, 
+                    selectedAdvancedColor: advancedColorOptionsDiv && !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null 
+                };
+                const eligibilityInfo = { 
+                    dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, 
+                    dmsTransactionDateStr_orig: dmsTransactionDateInput.value, 
+                    depositDateStr_VF7Plus: vf7PlusOptionsDateDiv && !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null, 
+                    depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value, 
+                    purchaseDateStr_VF9_VIN2023: vf9Vin23OptionsDateDiv && !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null, 
+                    purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value, 
+                    applyVf7PlusCashback: vf7PlusOptionsPromoDiv && !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked, 
+                    applyVinfascination: applyVinfascinationCheckbox.checked, 
+                    takeInsuranceCash: takeInsuranceCashCheckbox.checked, 
+                    vinClubTier: vinClubTierSelect.value, 
+                    applyCorpDiscount: applyCorpDiscountCheckbox.checked, 
+                    tradeInOldCarType: tradeInOldCarTypeDiv && !tradeInOldCarTypeDiv.classList.contains('hidden') && tradeInOldCarTypeSelect ? tradeInOldCarTypeSelect.value : "Không đổi", 
+                };
                 const result = calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo);
 
                 invoicePriceResultP.textContent = formatCurrency(result.invoicePrice, true);
@@ -1243,7 +1369,7 @@
                 notesResultPre.textContent = combinedNotesString;
             });
             populateModelDropdown();
-            resetFormInputs(); // Call resetFormInputs to set initial clean state
+            resetFormInputs(); 
         });
     </script>
 </body>
