@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Công cụ Tính Giá Xe VinFast</title>
+    <title>Tính Giá Xe VinFast</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -43,8 +43,10 @@
             /* Dark mode warning variables (if not already fully covered) */
             --warning-text-dark: #ffeeba;
             --warning-bg-dark: #533f03;
+            --error-text-dark: #f1aeb5;  /* Added for dark mode error */
+            --error-bg-dark: #58151c; /* Added for dark mode error */
              /* Custom for calculation log */
-            --log-positive-light: #155724; 
+            --log-positive-light: #155724;
             --log-negative-light: #721c24;
             --log-neutral-light: #545b62;
             --log-positive-dark: #a3d9a5;
@@ -64,8 +66,8 @@
             /* Using specific dark vars for warning */
             --warning-text-light: var(--warning-text-dark);
             --warning-bg-light: var(--warning-bg-dark);
-            --error-text-light: #f1aeb5;
-            --error-bg-light: #58151c;
+            --error-text-light: var(--error-text-dark); /* Using new dark error var */
+            --error-bg-light: var(--error-bg-dark);   /* Using new dark error var */
             --footer-bg: var(--primary-color-darker);
             --log-positive-light: var(--log-positive-dark);
             --log-negative-light: var(--log-negative-dark);
@@ -81,10 +83,10 @@
             color: var(--text-light);
             min-height: 100vh;
             transition: background-color var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
-            font-size: 14px; 
-            overflow-x: hidden; 
-            display: flex; 
-            flex-direction: column; 
+            font-size: 14px;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -97,8 +99,8 @@
         /* Sidebar Styles */
         .sidebar {
             position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
-            background: var(--primary-color-darker); padding: 15px; 
-            padding-top: calc(var(--header-height) + 10px); 
+            background: var(--primary-color-darker); padding: 15px;
+            padding-top: calc(var(--header-height) + 10px);
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
             z-index: 1007; box-shadow: 3px 0 10px rgba(0,0,0,0.1);
             display: flex; flex-direction: column;
@@ -110,27 +112,27 @@
         }
         .sidebar .logo {
             text-align: center; margin-bottom: 25px; position: relative;
-            overflow: visible; 
-            height: auto; 
-            min-height: 50px; 
+            overflow: visible;
+            height: auto;
+            min-height: 50px;
             display: flex;
             align-items: center; justify-content: center;
         }
         .sidebar .logo a { text-decoration: none; display: inline-block; }
         .sidebar .logo h1 {
-            font-size: 25px; 
+            font-size: 25px;
             color: #fff; font-weight: 600;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative; display: inline-block; white-space: normal; 
-            line-height: 1.1; 
+            position: relative; display: inline-block; white-space: normal;
+            line-height: 1.1;
         }
-        .sidebar .logo h1 .logo-line-2 { 
+        .sidebar .logo h1 .logo-line-2 {
             color: #fff; font-weight: 600;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative; display: inline-block; white-space: normal; 
-            line-height: 1.1; 
+            position: relative; display: inline-block; white-space: normal;
+            line-height: 1.1;
         }
 
         .sidebar:not(.collapsed) .logo h1::after {
@@ -181,7 +183,7 @@
         @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
 
         .toggle-btn { /* Sidebar toggle button */
-            position: absolute; top: calc(var(--header-height) / 2 - 15px); 
+            position: absolute; top: calc(var(--header-height) / 2 - 15px);
             right: -15px; width: 30px; height: 30px;
             background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
             font-size: 14px; cursor: pointer;
@@ -192,7 +194,7 @@
         body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
 
         /* Header (Navbar) Styles */
-        .navbar { 
+        .navbar {
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             padding: 0 20px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
@@ -216,7 +218,7 @@
             0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
             50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
         }
-        .mobile-menu-btn { 
+        .mobile-menu-btn {
             background: transparent; color: #ffffff; border: none; border-radius: 50%;
             width: 36px; height: 36px; font-size: 18px; cursor: pointer;
             box-shadow: none; display: none; align-items: center; justify-content: center;
@@ -225,7 +227,7 @@
         .mobile-menu-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
         .mobile-menu-btn:active { transform: scale(0.95); }
 
-        .theme-toggle-btn { 
+        .theme-toggle-btn {
             padding: 6px; border: none; border-radius: 50%;
             background: rgba(255,255,255,0.15); color: #ffffff;
             font-size: 14px; cursor: pointer;
@@ -241,12 +243,12 @@
             width: calc(100% - 200px);
             transition: margin-left var(--transition-speed) ease, width var(--transition-speed) ease;
             display: flex; justify-content: center; align-items: flex-start;
-            flex-grow: 1; 
-            padding-bottom: calc(var(--footer-height) + 20px); 
+            flex-grow: 1;
+            padding-bottom: calc(var(--footer-height) + 20px);
         }
         .main-container.collapsed { margin-left: 60px; width: calc(100% - 60px); }
 
-        .container { 
+        .container {
             width: 100%; max-width: 1100px; background: var(--card-bg-light);
             padding: 25px; border-radius: 10px; box-shadow: var(--shadow-light-outer);
             border: 1px solid var(--border-color-light);
@@ -265,20 +267,20 @@
             padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
         }
         body.dark-mode h2 { border-bottom: 1px solid var(--border-color-dark); }
-        h3 { 
+        h3 {
             font-size: 1.2em; font-weight: 600; color: var(--primary-color-darker);
             margin-bottom: 10px;
         }
         body.dark-mode h3 { color: var(--primary-color-lighter); }
 
-        .form-section { 
+        .form-section {
             margin-bottom: 25px; padding: 20px; border-radius: 8px;
             background-color: var(--card-bg-light);
             box-shadow: var(--shadow-light-inner);
             border: 1px solid var(--border-color-light);
             animation: fadeInUp 0.5s var(--transition-easing) 0.1s backwards;
         }
-        body.dark-mode .form-section { 
+        body.dark-mode .form-section {
             background-color: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-inner);
             border: 1px solid var(--border-color-dark);
@@ -321,27 +323,62 @@
         }
         body.dark-mode .checkbox-label { color: var(--text-dark); }
 
-        button#calculateButton {
-            display: block; width: 100%; padding: 10px 18px; border: none;
-            border-radius: 6px; color: #ffffff; background: var(--primary-color);
-            font-size: 1em; font-weight: 600; cursor: pointer; text-transform: uppercase;
-            letter-spacing: 0.5px; box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
+        button#calculateButton, button#resetButton {
+            padding: 7px 12px; /* Compact padding */
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875em; /* Compact font size */
+            font-weight: 600; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 0.25px; /* Reduced letter spacing */
             transition: all var(--transition-speed-fast) var(--transition-easing);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1); /* Softer shadow */
+        }
+        button#calculateButton i, button#resetButton i {
+            margin-right: 5px; /* Space between icon and text */
+        }
+
+        button#calculateButton {
+            color: #ffffff; background: var(--primary-color);
         }
         button#calculateButton:hover {
-            background: var(--primary-color-lighter); transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 4px 8px rgba(0, 48, 135, 0.4);
+            background: var(--primary-color-lighter); transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 48, 135, 0.3);
         }
         button#calculateButton:active {
-            transform: translateY(0px) scale(0.99); background: var(--primary-color-darker);
-            box-shadow: 0 1px 3px rgba(0, 48, 135, 0.2);
+            transform: translateY(0px); background: var(--primary-color-darker);
+            box-shadow: 0 1px 2px rgba(0, 48, 135, 0.2);
         }
-        
+
+        button#resetButton {
+            background-color: var(--error-text-light);
+            color: white;
+        }
+        button#resetButton:hover {
+            background-color: var(--error-bg-light);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        button#resetButton:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        body.dark-mode button#resetButton {
+            background-color: var(--error-text-dark, #a94442);
+            color: var(--card-bg-dark);
+        }
+        body.dark-mode button#resetButton:hover {
+            background-color: var(--error-bg-dark, #843534);
+        }
+
+
         .results-section {
             margin-bottom: 25px; padding: 25px; border-radius: 8px;
             background-color: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
             border: 1px solid var(--border-color-light);
-            animation: fadeInUp 0.5s var(--transition-easing) 0.1s backwards; 
+            animation: fadeInUp 0.5s var(--transition-easing) 0.1s backwards;
         }
         body.dark-mode .results-section {
             background-color: var(--card-bg-dark); box-shadow: var(--shadow-dark-inner);
@@ -358,19 +395,19 @@
         .results-section .result-item {
             margin-bottom: 0; padding: 15px;
             border: 1px solid var(--border-color-light); border-radius: 6px;
-            background-color: var(--background-light); 
+            background-color: var(--background-light);
         }
         body.dark-mode .results-section .result-item {
             border: 1px solid var(--border-color-dark); background-color: var(--background-dark);
         }
         .results-section .result-item h3 {
-            font-size: 1.1em; margin-bottom: 10px; color: var(--primary-color); 
+            font-size: 1.1em; margin-bottom: 10px; color: var(--primary-color);
         }
         body.dark-mode .results-section .result-item h3 { color: var(--secondary-color); }
         .price-highlight {
             font-size: 1.8em; font-weight: 700; color: var(--primary-color-darker);
             background-color: rgba(0, 174, 255, 0.1); padding: 10px 15px;
-            border-radius: 6px; display: block; text-align: center; 
+            border-radius: 6px; display: block; text-align: center;
             border: 1px solid rgba(0, 174, 255, 0.3);
             transition: transform var(--transition-speed-fast) var(--transition-easing), box-shadow var(--transition-speed-fast) var(--transition-easing);
         }
@@ -379,14 +416,14 @@
             border: 1px solid rgba(0, 174, 255, 0.5);
         }
         .price-highlight:hover { transform: scale(1.02); box-shadow: 0 2px 10px rgba(0, 174, 255, 0.2); }
-        .details-grid { 
-            display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px; 
+        .details-grid {
+            display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px;
         }
         @media (min-width: 768px) { .details-grid { grid-template-columns: 1fr 1fr; } }
         .log-details {}
-        .log-details h3 { 
+        .log-details h3 {
             padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
-            margin-bottom: 12px; 
+            margin-bottom: 12px;
         }
         body.dark-mode .log-details h3 { border-bottom: 1px solid var(--border-color-dark); }
 
@@ -396,7 +433,7 @@
             white-space: normal; word-wrap: normal;
             max-height: 480px; /* Increased max-height slightly */
             overflow-y: auto; border: none; box-shadow: none;
-            font-family: 'Roboto', sans-serif; color: var(--text-light); 
+            font-family: 'Roboto', sans-serif; color: var(--text-light);
             line-height: 1.5;
         }
         body.dark-mode .log-details pre { color: var(--text-dark); }
@@ -442,7 +479,7 @@
              font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
              white-space: nowrap;
         }
-        
+
         table.calculation-details-table td.calculation-description {
              word-break: break-word;
         }
@@ -488,22 +525,22 @@
 
         /* Notes section styling */
         .notes-container {}
-        .notes-container h3 { 
+        .notes-container h3 {
             padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
             margin-bottom: 12px;
         }
         body.dark-mode .notes-container h3 { border-bottom: 1px solid var(--border-color-dark); }
-        #notesResult { 
-            background-color: var(--warning-bg-light); 
-            border: 1px solid var(--warning-text-light); color: var(--warning-text-light); 
+        #notesResult {
+            background-color: var(--warning-bg-light);
+            border: 1px solid var(--warning-text-light); color: var(--warning-text-light);
             font-size: 0.9em; line-height: 1.5; padding: 15px; border-radius: 6px;
             max-height: 300px; overflow-y: auto; white-space: pre-wrap;
             word-wrap: break-word;
             font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
         body.dark-mode #notesResult {
-            background-color: var(--warning-bg-dark); border-color: var(--warning-text-dark); 
-            color: var(--warning-text-dark); 
+            background-color: var(--warning-bg-dark); border-color: var(--warning-text-dark);
+            color: var(--warning-text-dark);
         }
 
         .model-specific-options {
@@ -546,30 +583,33 @@
             .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
             .sidebar.open .logo h1 { font-size: 16px; }
             .main-container, .navbar.with-sidebar, .navbar.with-sidebar-collapsed { margin-left: 0; width: 100%; }
-            .toggle-btn { display: none; } 
-            .mobile-menu-btn { display: flex !important; } 
-            .navbar { border-radius: 0; } 
+            .toggle-btn { display: none; }
+            .mobile-menu-btn { display: flex !important; }
+            .navbar { border-radius: 0; }
         }
         @media (max-width: 600px) {
             body { padding: 0; }
-            .navbar { padding: 0 10px; height: 45px; } 
-            .navbar .header-content h1 { font-size: 1.2em; } 
+            .navbar { padding: 0 10px; height: 45px; }
+            .navbar .header-content h1 { font-size: 1.2em; }
             .mobile-menu-btn { width: 30px; height: 30px; font-size: 16px; margin-right: 5px;}
             .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px;}
             .main-container { margin-top: 45px; padding: 10px; padding-bottom: calc(var(--footer-height) + 10px); }
             .container { padding: 15px; border-radius: 8px; }
             .form-grid { grid-template-columns: 1fr; gap: 12px; }
             h2 { font-size: 1.2em; }
-            .results-section .result-item h3 { font-size: 1.0em; } 
-            .price-highlight { font-size: 1.4em; } 
-            button#calculateButton { font-size: 0.9em; padding: 10px; }
+            .results-section .result-item h3 { font-size: 1.0em; }
+            .price-highlight { font-size: 1.4em; }
+            button#calculateButton, button#resetButton {
+                font-size: 0.85em; /* Adjusted for small screens */
+                padding: 6px 10px;   /* Adjusted for small screens */
+            }
             .form-grid input[type="text"], .form-grid input[type="number"], .form-grid input[type="date"], .form-grid select {
                 padding: 8px 10px; font-size: 0.85em;
             }
             .log-details pre { max-height: 300px; }
-            table.calculation-details-table { font-size: 0.75em; } /* Further reduce font size for small screens */
+            table.calculation-details-table { font-size: 0.75em; }
             table.calculation-details-table th, table.calculation-details-table td { padding: 4px 6px; }
-            #notesResult { padding: 10px; font-size: 0.8em; max-height: 250px;} 
+            #notesResult { padding: 10px; font-size: 0.8em; max-height: 250px;}
             footer { font-size: 11px; height: calc(var(--footer-height) - 5px); }
             .main-price-summary { grid-template-columns: 1fr; }
         }
@@ -704,7 +744,10 @@
                         </select>
                     </div>
                 </div>
-                <button id="calculateButton"><i class="fas fa-calculator mr-2"></i>Tính Giá</button>
+                <div style="display: flex; gap: 8px; margin-top: 10px; justify-content: flex-start;">
+                    <button id="calculateButton"><i class="fas fa-calculator"></i>Tính Giá</button>
+                    <button id="resetButton"><i class="fas fa-undo"></i>Xóa Dữ Liệu</button>
+                </div>
             </div>
 
             <div class="results-section">
@@ -723,11 +766,11 @@
 
                 <div class="details-grid">
                     <div class="result-item log-details"> <h3>Chi Tiết Tính Giá Hợp Đồng:</h3>
-                        <pre id="calculationLogInvoice"></pre> 
+                        <pre id="calculationLogInvoice"></pre>
                     </div>
                     <div class="result-item log-details">
                         <h3>Chi Tiết Tính Giá Khách Trả:</h3>
-                        <pre id="calculationLogCustomer"></pre> 
+                        <pre id="calculationLogCustomer"></pre>
                     </div>
                 </div>
 
@@ -747,7 +790,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.getElementById('mainContainer');
-            const pageNavbar = document.getElementById('pageNavbar'); 
+            const pageNavbar = document.getElementById('pageNavbar');
             const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const themeToggleButton = document.getElementById('themeToggle');
@@ -784,8 +827,8 @@
                 const isSidebarOpenMobile = sidebar.classList.contains('open');
 
                 if (isDesktop) {
-                    sidebar.classList.remove('open'); 
-                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed'); 
+                    sidebar.classList.remove('open');
+                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed');
                     if (isSidebarCollapsed) {
                         mainContainer.style.marginLeft = '60px';
                         mainContainer.style.width = 'calc(100% - 60px)';
@@ -799,7 +842,7 @@
                         pageNavbar.style.width = 'calc(100% - 200px)';
                         pageNavbar.classList.add('with-sidebar');
                     }
-                } else { 
+                } else {
                     mainContainer.style.marginLeft = '0';
                     mainContainer.style.width = '100%';
                     pageNavbar.style.marginLeft = '0';
@@ -826,7 +869,7 @@
 
             function toggleMobileSidebar() {
                 sidebar.classList.toggle('open');
-                updateLayoutForSidebar(); 
+                updateLayoutForSidebar();
             }
 
             if (sidebarToggleBtn) {
@@ -852,14 +895,14 @@
                 if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
                     if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
                         sidebar.classList.remove('open');
-                        updateLayoutForSidebar(); 
+                        updateLayoutForSidebar();
                     }
                 }
             });
 
             function setActiveSidebarLink() {
                 const navLinks = navMenu.querySelectorAll("a");
-                const currentPageFilename = "gia_styled_html.html"; 
+                const currentPageFilename = "gia_styled_html.html";
 
                 navLinks.forEach(link => {
                     link.classList.remove("active");
@@ -868,7 +911,7 @@
                     }
                 });
             }
-            setActiveSidebarLink(); 
+            setActiveSidebarLink();
 
             window.goBackToYeucauGhepXe = function() { window.location.href = 'yeucaughepxe.html'; }
             window.logout = function() { console.log('Chức năng đăng xuất được gọi.'); window.location.href = "index.html"; }
@@ -937,7 +980,7 @@
                 nhatKyTinhToan.push({ step: "B_P_END", type: "info", description: "Giá làm cơ sở tính KM Vinclub/Corp", amount: priceBaseForPercentageDiscount, current_subtotal: priceBaseForPercentageDiscount });
                 let giaSauGiamPhanTram = priceBaseForPercentageDiscount;
                 if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) { const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]; const mucGiamVinclub = Math.round(priceBaseForPercentageDiscount * phanTramGiamVinclub); giaSauGiamPhanTram -= mucGiamVinclub; nhatKyTinhToan.push({ step: "C1", type: "discount_percentage", description: `Giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier} (${(phanTramGiamVinclub * 100).toFixed(1)}%)`, amount: -mucGiamVinclub, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); ghiChu.push(`Đã áp dụng giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier}. Sẽ không áp dụng giảm giá Corp.`); } else if (eligibilityInfo.applyCorpDiscount === true) { const mucGiamCorp = Math.round(priceBaseForPercentageDiscount * CORP_DISCOUNT_PERCENTAGE); giaSauGiamPhanTram -= mucGiamCorp; nhatKyTinhToan.push({ step: "C2", type: "discount_percentage", description: `Giảm giá Corp (${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(1)}%)`, amount: -mucGiamCorp, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); }
-                nhatKyTinhToan.push({ step: "C_END", type: "subtotal", description: "Giá sau giảm Hạng/Corp (Giá Khách hàng trước Thu cũ)", amount: giaSauGiamPhanTram, current_subtotal: giaSauGiamPhanTram });
+                nhatKyTinhToan.push({ step: "C_END", type: "subtotal", description: "Giá sau giảm Vinclub/Corp (Giá trước Thu cũ)", amount: giaSauGiamPhanTram, current_subtotal: giaSauGiamPhanTram });
                 let giaKhachHangThanhToan = giaSauGiamPhanTram; let mucHoTroThuCuApplied = 0;
                 if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") { let applicableTradeInPolicy = null; const dmsDateForTradeIn = parseDateStr(eligibilityInfo.dmsTransactionDateStr); const tradeInPolicyStartDateNew = new Date(Date.UTC(2025, 3, 21)); if (dmsDateForTradeIn && dmsDateForTradeIn >= tradeInPolicyStartDateNew) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_CURRENT_PERIOD; } else if (dmsDateForTradeIn) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD; } else { ghiChu.push(`Không xác định được Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới.`); } if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) { let tradeInTypeKey = eligibilityInfo.tradeInOldCarType; if (tradeInTypeKey === "Xe Hãng Khác") { tradeInTypeKey = "HangKhac"; } else if (tradeInTypeKey === "VinFast Xăng Cũ") { tradeInTypeKey = "VinFastXangCu"; } const mucHoTroThuCu = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey]; if (mucHoTroThuCu) { giaKhachHangThanhToan -= mucHoTroThuCu; mucHoTroThuCuApplied = mucHoTroThuCu; nhatKyTinhToan.push({ step: "D", type: "trade_in_support", description: `Hỗ trợ Thu cũ đổi mới (${eligibilityInfo.tradeInOldCarType} cho ${loaiXeChung})`, amount: -mucHoTroThuCu, current_subtotal: giaKhachHangThanhToan }); } else { ghiChu.push(`Không tìm thấy mức hỗ trợ Thu cũ đổi mới cho loại xe cũ '${eligibilityInfo.tradeInOldCarType}' (key: ${tradeInTypeKey}) với xe mới ${loaiXeChung} trong giai đoạn áp dụng.`); } } else if (applicableTradeInPolicy && loaiXeChung) { ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn được chọn.`); } }
                 nhatKyTinhToan.push({ step: "CUSTOMER_PRICE", type: "final_price_customer", description: "GIÁ KHÁCH HÀNG THANH TOÁN DỰ KIẾN", amount: giaKhachHangThanhToan, current_subtotal: giaKhachHangThanhToan });
@@ -967,6 +1010,7 @@
             const applyCorpDiscountCheckbox = document.getElementById('applyCorpDiscount');
             const tradeInOldCarTypeSelect = document.getElementById('tradeInOldCarType');
             const calculateButton = document.getElementById('calculateButton');
+            const resetButton = document.getElementById('resetButton'); // Added reset button
             const invoicePriceResultP = document.getElementById('invoicePriceResult');
             const customerPriceResultP = document.getElementById('customerPriceResult');
             const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
@@ -984,7 +1028,7 @@
             function getAllModelKeys() { const allKeys = new Set(); Object.keys(CURRENT_MODEL_MSRPS).forEach(key => allKeys.add(key)); Object.keys(BASE_PRICES_DISCONTINUED_GLOBAL).forEach(key => allKeys.add(key)); return Array.from(allKeys).sort((a, b) => a.localeCompare(b, 'vi')); }
             function populateModelDropdown() { const models = getAllModelKeys(); const placeholderOption = document.createElement('option'); placeholderOption.value = ""; placeholderOption.textContent = "-- Chọn Mã Model --"; placeholderOption.disabled = true; placeholderOption.selected = true; modelKeySelect.appendChild(placeholderOption); models.forEach(model => { const option = document.createElement('option'); option.value = model; option.textContent = model; modelKeySelect.appendChild(option); }); }
             function formatCurrency(number, includeUnit = false) { if (typeof number !== 'number' || isNaN(number)) { return "N/A"; } const formattedNumber = number.toLocaleString('vi-VN'); return includeUnit ? `${formattedNumber} VNĐ` : formattedNumber; }
-            
+
             function formatCalculationDetailsForHTML(result, modelKey, priceType) {
                 if (!result || !result.calculationLog || result.calculationLog.length === 0) {
                     return '<table><thead><tr><th>Không có chi tiết.</th></tr></thead></table>';
@@ -1006,7 +1050,7 @@
                 thSubtotal.textContent = 'Thành Tiền';
                 thSubtotal.className = 'calculation-subtotal-header';
                 headerRow.appendChild(thSubtotal);
-                
+
                 const tbody = table.createTBody();
 
                 let percentageDiscountWasApplied = false;
@@ -1024,25 +1068,25 @@
 
                     if (log.type === 'base_price') {
                         showThisLine = true;
-                        amountChangeContent = '-'; 
+                        amountChangeContent = '-';
                     } else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) {
                         // Skip
                     } else if (priceType === 'invoice' && log.type === 'final_price_customer' && log.step === 'CUSTOMER_PRICE') {
                         showThisLine = true;
                         isSubtotalRow = true; // Treat as a special informational subtotal
-                        rowClass = 'calculation-details-subtotal-row'; 
+                        rowClass = 'calculation-details-subtotal-row';
                         amountChangeContent = '-'; // No "change" for this informational line
                     } else if (log.type === 'subtotal' || log.type === 'info') {
                         isSubtotalRow = true;
                         if (log.step === "A_END" && log.amount !== result.basePriceUsed) showThisLine = true;
                         else if (log.step === "B_P_END" && percentageDiscountWasApplied) showThisLine = true;
                         else if (log.step === "C_END" && percentageDiscountWasApplied && bpEndLogEntry && log.amount !== bpEndLogEntry.amount) showThisLine = true;
-                        
+
                         if(showThisLine) {
                             rowClass = 'calculation-details-subtotal-row';
                             amountChangeContent = '-'; // No "change" for subtotal summary lines
                         }
-                    } else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') { 
+                    } else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') {
                         if (log.amount !== 0) {
                              showThisLine = true;
                              const amountPrefix = log.amount > 0 ? "+" : "";
@@ -1068,7 +1112,7 @@
                         const cellSubtotal = row.insertCell();
                         cellSubtotal.textContent = formatCurrency(log.current_subtotal);
                         cellSubtotal.className = 'calculation-current-subtotal';
-                        
+
                         if (isSubtotalRow && showThisLine) {
                             cellDesc.colSpan = 2; // Description spans 2 columns
                             cellChange.style.display = 'none'; // Hide the change cell for subtotal summary
@@ -1076,12 +1120,12 @@
                         }
                     }
                 });
-                
+
                 const tfoot = table.createTFoot();
                 const footerRow = tfoot.insertRow();
                 const finalPriceValue = priceType === 'invoice' ? result.invoicePrice : result.customerPrice;
                 const finalPriceLabel = priceType === 'invoice' ? "Tổng Giá Hợp Đồng:" : "Tổng Số Tiền Khách Hàng Phải Trả:";
-                
+
                 const cellFooterLabel = footerRow.insertCell();
                 cellFooterLabel.textContent = finalPriceLabel;
                 cellFooterLabel.colSpan = 2;
@@ -1095,11 +1139,56 @@
 
             function updateFormInputsVisibility(modelKey) { const generalModelType = getGeneralModelType(modelKey); const toggleVisibility = (element, isVisible) => { const inputElements = element.querySelectorAll('input, select'); if (isVisible) { element.classList.remove('hidden'); inputElements.forEach(el => { el.disabled = false; el.classList.remove('input-disabled'); }); } else { element.classList.add('hidden'); inputElements.forEach(el => { if (el.type === 'checkbox') el.checked = false; else if (el.tagName === 'SELECT') el.value = ''; else el.value = ''; el.disabled = true; el.classList.add('input-disabled'); }); } }; [vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv].forEach(div => toggleVisibility(div, false)); if (!generalModelType && !modelKey) { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); return; } toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType)); toggleVisibility(vf9OptionsAcDiv, generalModelType === "VF 9"); toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9"); toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9"); toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9"); toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus")); toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus")); selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>'; let hasAdvancedColors = false; if (OPTIONAL_EQUIPMENT[generalModelType]) { const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof"); if (colors.length > 0) { hasAdvancedColors = true; colors.forEach(colorKey => { const option = document.createElement('option'); option.value = colorKey; option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description; selectedAdvancedColorSelect.appendChild(option); }); } } toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors); }
             modelKeySelect.addEventListener('change', () => { const selectedModel = modelKeySelect.value; if (!selectedModel) { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); updateFormInputsVisibility(null); return; } if (CURRENT_MODEL_MSRPS[selectedModel]) { baseMsrpInput.value = CURRENT_MODEL_MSRPS[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } else if (BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]) { baseMsrpInput.value = BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } else { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); } updateFormInputsVisibility(selectedModel); });
-            calculateButton.addEventListener('click', () => { 
-                const modelKey = modelKeySelect.value; 
-                let baseMsrp = parseFloat(baseMsrpInput.value); 
-                const vinYear = vinYearInput.value.trim() || null; 
-                
+
+            function resetFormInputs() {
+                modelKeySelect.selectedIndex = 0;
+                vinClubTierSelect.value = "Không có";
+                tradeInOldCarTypeSelect.value = "Không đổi";
+                selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
+
+                baseMsrpInput.value = '';
+                vinYearInput.value = '';
+                dmsTransactionDateInput.value = '';
+                depositDateVF7PlusInput.value = '';
+                purchaseDateVF9VIN23Input.value = '';
+
+                isSdiBatteryCheckbox.checked = false;
+                is2ZoneACCheckbox.checked = false;
+                hasCaptainSeatsCheckbox.checked = false;
+                hasPanoramicRoofCheckbox.checked = false;
+                applyVf7PlusCashbackCheckbox.checked = false;
+                applyVinfascinationCheckbox.checked = false;
+                takeInsuranceCashCheckbox.checked = false;
+                applyCorpDiscountCheckbox.checked = false;
+
+                baseMsrpInput.readOnly = false;
+                baseMsrpInput.classList.remove('input-disabled');
+
+                updateFormInputsVisibility(null);
+
+                invoicePriceResultP.textContent = "0 VNĐ";
+                customerPriceResultP.textContent = "0 VNĐ";
+                calculationLogInvoicePre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
+                calculationLogCustomerPre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
+                notesResultPre.textContent = "Không có ghi chú đặc biệt.";
+                notesResultPre.style.color = 'var(--warning-text-light)';
+                notesResultPre.style.backgroundColor = 'var(--warning-bg-light)';
+                if(document.body.classList.contains('dark-mode')) {
+                     notesResultPre.style.color = 'var(--warning-text-dark)';
+                     notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
+                }
+                console.log("Form đã được reset!");
+            }
+
+            if (resetButton) {
+                resetButton.addEventListener('click', resetFormInputs);
+            }
+
+            calculateButton.addEventListener('click', () => {
+                const modelKey = modelKeySelect.value;
+                let baseMsrp = parseFloat(baseMsrpInput.value);
+                const vinYear = vinYearInput.value.trim() || null;
+
                 invoicePriceResultP.textContent = "0 VNĐ";
                 customerPriceResultP.textContent = "0 VNĐ";
                 calculationLogInvoicePre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
@@ -1112,20 +1201,20 @@
                      notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
                 }
 
-                if (!modelKey) { 
+                if (!modelKey) {
                     notesResultPre.textContent = "LỖI: Vui lòng chọn Mã Model.";
                     notesResultPre.style.color = 'var(--error-text-light)';
                     notesResultPre.style.backgroundColor = 'var(--error-bg-light)';
                     if(document.body.classList.contains('dark-mode')) {
-                        notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)'; 
-                        notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)'; 
+                        notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
+                        notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
                     }
-                    return; 
-                } 
-                if (isNaN(baseMsrp) || baseMsrp <= 0) { 
-                    if (CURRENT_MODEL_MSRPS[modelKey]) { baseMsrp = CURRENT_MODEL_MSRPS[modelKey]; } 
-                    else if (BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]) { baseMsrp = BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]; } 
-                    else { 
+                    return;
+                }
+                if (isNaN(baseMsrp) || baseMsrp <= 0) {
+                    if (CURRENT_MODEL_MSRPS[modelKey]) { baseMsrp = CURRENT_MODEL_MSRPS[modelKey]; }
+                    else if (BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]) { baseMsrp = BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]; }
+                    else {
                         notesResultPre.textContent = "LỖI: Giá NY gốc không hợp lệ và không thể tự động điền. Vui lòng nhập Giá NY gốc.";
                         notesResultPre.style.color = 'var(--error-text-light)';
                         notesResultPre.style.backgroundColor = 'var(--error-bg-light)';
@@ -1133,27 +1222,28 @@
                             notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
                             notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
                         }
-                        return; 
-                    } 
-                } 
-                
-                const options = { isSdiBattery_VF8_VF9: !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked, is2ZoneAC_VF9: !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked, hasCaptainSeats_VF9: !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked, hasPanoramicRoof_VF9: !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked, selectedAdvancedColor: !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null }; 
-                const eligibilityInfo = { dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, dmsTransactionDateStr_orig: dmsTransactionDateInput.value, depositDateStr_VF7Plus: !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null, depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value, purchaseDateStr_VF9_VIN2023: !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null, purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value, applyVf7PlusCashback: !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked, applyVinfascination: applyVinfascinationCheckbox.checked, takeInsuranceCash: takeInsuranceCashCheckbox.checked, vinClubTier: vinClubTierSelect.value, applyCorpDiscount: applyCorpDiscountCheckbox.checked, tradeInOldCarType: tradeInOldCarTypeSelect.value, }; 
-                const result = calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo); 
-                
-                invoicePriceResultP.textContent = formatCurrency(result.invoicePrice, true); 
-                customerPriceResultP.textContent = formatCurrency(result.customerPrice, true); 
-                
-                calculationLogInvoicePre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'invoice'); 
-                calculationLogCustomerPre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'customer'); 
-                
-                let uniqueNotes = new Set(result.notes.filter(note => note !== "Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp.")); 
-                let combinedNotesString = Array.from(uniqueNotes).join("\n- "); 
-                if (combinedNotesString) { combinedNotesString = "- " + combinedNotesString; } 
-                else { combinedNotesString = "Không có ghi chú đặc biệt."; } 
-                notesResultPre.textContent = combinedNotesString; 
+                        return;
+                    }
+                }
+
+                const options = { isSdiBattery_VF8_VF9: !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked, is2ZoneAC_VF9: !vf9OptionsAcDiv.classList.contains('hidden') && is2ZoneACCheckbox.checked, hasCaptainSeats_VF9: !vf9OptionsSeatsDiv.classList.contains('hidden') && hasCaptainSeatsCheckbox.checked, hasPanoramicRoof_VF9: !vf9OptionsRoofDiv.classList.contains('hidden') && hasPanoramicRoofCheckbox.checked, selectedAdvancedColor: !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null };
+                const eligibilityInfo = { dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, dmsTransactionDateStr_orig: dmsTransactionDateInput.value, depositDateStr_VF7Plus: !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null, depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value, purchaseDateStr_VF9_VIN2023: !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null, purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value, applyVf7PlusCashback: !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked, applyVinfascination: applyVinfascinationCheckbox.checked, takeInsuranceCash: takeInsuranceCashCheckbox.checked, vinClubTier: vinClubTierSelect.value, applyCorpDiscount: applyCorpDiscountCheckbox.checked, tradeInOldCarType: tradeInOldCarTypeSelect.value, };
+                const result = calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo);
+
+                invoicePriceResultP.textContent = formatCurrency(result.invoicePrice, true);
+                customerPriceResultP.textContent = formatCurrency(result.customerPrice, true);
+
+                calculationLogInvoicePre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'invoice');
+                calculationLogCustomerPre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'customer');
+
+                let uniqueNotes = new Set(result.notes.filter(note => note !== "Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."));
+                let combinedNotesString = Array.from(uniqueNotes).join("\n- ");
+                if (combinedNotesString) { combinedNotesString = "- " + combinedNotesString; }
+                else { combinedNotesString = "Không có ghi chú đặc biệt."; }
+                notesResultPre.textContent = combinedNotesString;
             });
-            populateModelDropdown(); updateFormInputsVisibility(null); baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); baseMsrpInput.value = "";
+            populateModelDropdown();
+            resetFormInputs(); // Call resetFormInputs to set initial clean state
         });
     </script>
 </body>
