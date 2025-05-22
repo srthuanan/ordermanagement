@@ -914,6 +914,37 @@
             text-align: center;
             font-size: 0.95em;
         }
+
+        .standalone-promo-item {
+            margin-top: 20px;
+            /* margin-bottom is handled by .general-promo-item or overridden if needed */
+            padding: 15px;
+            border: 1px dashed var(--primary-color-lighter);
+            border-radius: 8px;
+            background-color: rgba(0, 48, 135, 0.03);
+        }
+        body.dark-mode .standalone-promo-item {
+            border-color: var(--secondary-color);
+            background-color: rgba(0, 174, 255, 0.05);
+        }
+        /* Ensure correct bottom margin when general-promo-item is also standalone */
+        .general-promo-item.standalone-promo-item {
+            margin-bottom: 20px; /* This will be its bottom margin */
+        }
+
+        @media (max-width: 600px) {
+            /* ... existing responsive CSS ... */
+            .standalone-promo-item {
+                padding: 12px;
+                margin-top: 15px;
+                margin-bottom: 15px; /* Adjusted for mobile */
+            }
+            .general-promo-item.standalone-promo-item {
+                 margin-bottom: 15px; /* Consistent with standalone-promo-item on mobile */
+            }
+        }
+
+
         body.dark-mode .no-promotions-message {
             color: var(--text-dark);
             background-color: var(--background-dark);
@@ -1133,7 +1164,14 @@
                         <span class="toggle-switch-info" id="corpDiscountInfoText">(Mức giảm hiện tại: 3%)</span>
                     </div>
                 </div>
-
+<div id="mlttvn3PromoItemContainer" class="corp-discount-toggle-container hidden" style="margin-top: 20px; margin-bottom: 20px;">
+                    <label for="applyManhLietTinhThanVietNamPromo" class="toggle-switch-label">
+                        <input type="checkbox" id="applyManhLietTinhThanVietNamPromo" class="toggle-switch-checkbox">
+                        <span class="toggle-switch-slider"></span>
+                        <span class="toggle-switch-text" id="mlttvn3LabelText">Mãnh liệt tinh thần VN - Vì TLX L3</span>
+                    </label>
+                    <span class="toggle-switch-info" id="mlttvn3SubText">(Giảm 4% giá NY + màu NC (nếu có). HĐ từ 22/05/2025 - 31/12/2025. Không cùng BH 2 năm.)</span>
+                </div>
                 <div id="modelSpecificSectionContainer" class="hidden">
                     <h3 id="modelSpecificHeader">Tuỳ chọn & Chính sách riêng cho Model</h3>
                     <div class="model-options-grid">
@@ -1190,13 +1228,6 @@
 
                 <div id="applicableGeneralPromosContainer" class="hidden">
                     <h4>Các chương trình khuyến mãi có thể áp dụng:</h4>
-                    <div class="general-promo-item hidden" id="mlttvn3PromoItemContainer">
-                        <label for="applyManhLietTinhThanVietNamPromo" class="checkbox-label complex-checkbox-label">
-                            <input type="checkbox" id="applyManhLietTinhThanVietNamPromo">
-                            <span class="main-label" id="mlttvn3LabelText">Mãnh liệt tinh thần VN - Vì TLX L3</span>
-                        </label>
-                        <p class="sub-label" id="mlttvn3SubText">(Giảm 4% giá NY. HĐ từ 22/05/2025 - 31/12/2025. Không cùng BH 2 năm.)</p>
-                    </div>
                     <div class="general-promo-item hidden" id="vinfascinationPromoItemContainer">
                         <label for="applyVinfascinationDynamic" class="checkbox-label complex-checkbox-label">
                             <input type="checkbox" id="applyVinfascinationDynamic">
@@ -1401,6 +1432,7 @@
 
 
             // --- SCRIPT FOR PRICE CALCULATION (UPDATED) ---
+// --- SCRIPT FOR PRICE CALCULATION (UPDATED) ---
             const BASE_PRICES_DISCONTINUED_GLOBAL = {
                 "VF 3 - Màu xanh GSM": 294000000, "VF 5S - S": 521000000, "VF 6S - S": 694000000,
                 "VF 7 - Base": 799000000, "VF 8 - Lux (discontinued)": 1019000000, "VF 8 - Plus (discontinued)": 1199000000,
@@ -1418,14 +1450,30 @@
             };
             const VINCLUB_DISCOUNT_PERCENTAGES = { "Không có": 0, "Gold": 0.005, "Platinum": 0.01, "Diamond": 0.015 };
             const CORP_DISCOUNT_PERCENTAGE = 0.03;
+
+            // Trade-in discounts for the period "Từ 21/04/2025 đến 21/05/2025"
             const TRADE_IN_DISCOUNTS_CURRENT_PERIOD = {
-                "VF 6": { "VinFastXangCu": 60000000, "HangKhac": 40000000 }, "VF 7": { "VinFastXangCu": 75000000, "HangKhac": 50000000 },
-                "VF 8": { "VinFastXangCu": 90000000, "HangKhac": 60000000 }, "VF 9": { "VinFastXangCu": 90000000, "HangKhac": 60000000 }
+                "VF 6": { "VinFastXangCu": 60000000, "HangKhac": 40000000 },
+                "VF 7": { "VinFastXangCu": 75000000, "HangKhac": 50000000 },
+                "VF 8": { "VinFastXangCu": 90000000, "HangKhac": 60000000 },
+                "VF 9": { "VinFastXangCu": 90000000, "HangKhac": 60000000 }
             };
+             // Trade-in discounts for the period "Từ 01/11/2024 đến 20/04/2025"
             const TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD = {
-                "VF 7": { "VinFastXangCu": 80000000, "HangKhac": 50000000 }, "VF 8": { "VinFastXangCu": 120000000, "HangKhac": 80000000 },
+                "VF 7": { "VinFastXangCu": 80000000, "HangKhac": 50000000 },
+                "VF 8": { "VinFastXangCu": 120000000, "HangKhac": 80000000 },
                 "VF 9": { "VinFastXangCu": 70000000, "HangKhac": 40000000 }
             };
+
+            // NEW: Trade-in discounts effective from May 22, 2025, as per PDF
+            // Corresponds to the PDF column "Từ 22/05/2025 đến khi có thông báo mới"
+            const TRADE_IN_DISCOUNTS_POST_MAY_22_2025 = {
+                "VF 6": { "VinFastXangCu": 30000000, "HangKhac": 20000000 }, //
+                "VF 7": { "VinFastXangCu": 30000000, "HangKhac": 40000000 }, //
+                "VF 8": { "VinFastXangCu": 50000000, "HangKhac": 40000000 }, //
+                "VF 9": { "VinFastXangCu": 50000000, "HangKhac": 40000000 }  //
+            };
+
             const OPTIONAL_EQUIPMENT = {
                 "VF 3": { "Vàng (Summer Yellow) + Nóc trắng": { cost: 8000000, description: "Màu Vàng (Summer Yellow) + Nóc trắng" }, "Xanh Dương (Sky Blue) + Nóc trắng": { cost: 8000000, description: "Màu Xanh Dương (Sky Blue) + Nóc trắng" }, "Hồng (Rose Pink) + Nóc trắng": { cost: 8000000, description: "Màu Hồng (Rose Pink) + Nóc trắng" } },
                 "VF 5": { "Xanh Dương (Sky Blue) + Nóc trắng": { cost: 8000000, description: "Màu Xanh Dương (Sky Blue) + Nóc trắng" }, "Vàng (Summer Yellow) + Nóc đen": { cost: 8000000, description: "Màu Vàng (Summer Yellow) + Nóc đen" } },
@@ -1459,8 +1507,6 @@
             const MANH_LIET_TINH_THAN_VN3_PERCENTAGE = 0.04; // 4%
             const MLTTVN3_INVOICE_START_DATE = new Date(Date.UTC(2025, 4, 22)); // 22/05/2025
             const MLTTVN3_INVOICE_END_DATE = new Date(Date.UTC(2025, 11, 31));  // 31/12/2025
-            // Vinfascination and MLTTVN3 can be applied together if invoice date is 22/05/2025 - 31/05/2025
-
 
             function getGeneralModelType(detailedModelKey) { if (!detailedModelKey || typeof detailedModelKey !== 'string') return null; if (detailedModelKey.startsWith("VF 3")) return "VF 3"; if (detailedModelKey.startsWith("VF 5")) return "VF 5"; if (detailedModelKey.startsWith("VF 6")) return "VF 6"; if (detailedModelKey.startsWith("VF 7")) return "VF 7"; if (detailedModelKey.startsWith("VF 8")) return "VF 8"; if (detailedModelKey.startsWith("VF 9")) return "VF 9"; if (detailedModelKey.startsWith("Herio Green")) return "Herio Green"; if (detailedModelKey.startsWith("Nerio Green") || detailedModelKey.startsWith("VF e34")) return "Nerio Green/VF e34"; if (detailedModelKey.startsWith("Minio Green")) return "Minio Green"; if (detailedModelKey.startsWith("EC Van")) return "EC Van"; if (detailedModelKey.startsWith("Limo Green")) return "Limo Green"; return null; }
             function parseDateStr(dateValue) { if (!dateValue) return null; if (dateValue instanceof Date) return dateValue; const parts = dateValue.split('-'); if (parts.length === 3) { const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 0 && month <= 11 && day >= 1 && day <= 31) { const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } } } let dateString = dateValue.toString().replace(/[^0-9]/g, ""); if (dateString.length !== 8) return null; try { const year = parseInt(dateString.substring(0, 4), 10); const month = parseInt(dateString.substring(4, 6), 10) - 1; const day = parseInt(dateString.substring(6, 8), 10); if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return null; const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } return null; } catch (e) { return null; } }
@@ -1475,11 +1521,11 @@
                 let nhatKyTinhToan = []; 
                 let ghiChu = ["Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."]; 
                 let giaHienTai = 0; 
-                let originalMsrpForMltvnl3 = 0; // Store the original MSRP for MLTTVN3 calculation
+                let originalMsrpForMltvnl3 = 0;
 
                 if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { 
                     giaHienTai = baseMsrp; 
-                    originalMsrpForMltvnl3 = baseMsrp; // Capture original MSRP here
+                    originalMsrpForMltvnl3 = baseMsrp;
                     if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY (xe hiện tại tự động): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                     else if (BASE_PRICES_DISCONTINUED_GLOBAL.hasOwnProperty(modelKey) && BASE_PRICES_DISCONTINUED_GLOBAL[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY: ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                     else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
@@ -1533,7 +1579,7 @@
                     } 
                 }
                 
-                let advancedColorCostApplied = 0; // Initialize advanced color cost
+                let advancedColorCostApplied = 0;
                 if (options && loaiXeChung) { 
                     if (loaiXeChung === "VF 9") { 
                         if (options.hasCaptainSeats_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]) { 
@@ -1550,7 +1596,7 @@
                     if (options.selectedAdvancedColor && OPTIONAL_EQUIPMENT[loaiXeChung] && OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]) { 
                         const colorOption = OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]; 
                         giaSauKMCodinh += colorOption.cost; 
-                        if (colorOption.cost > 0) { // Only add positive costs (surcharges) for MLTTVN3 base
+                        if (colorOption.cost > 0) {
                            advancedColorCostApplied = colorOption.cost;
                         }
                         nhatKyTinhToan.push({ step: "A3.3", type: colorOption.cost >= 0 ? "surcharge" : "discount", description: colorOption.description, amount: colorOption.cost, current_subtotal: giaSauKMCodinh }); 
@@ -1573,7 +1619,7 @@
 
                 if (eligibilityInfo.applyManhLietTinhThanVietNamPromo) {
                     if (dmsTransactionDate && dmsTransactionDate >= MLTTVN3_INVOICE_START_DATE && dmsTransactionDate <= MLTTVN3_INVOICE_END_DATE) {
-                        const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied; // Use original MSRP + advanced color cost
+                        const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied;
                         manhLietTinhThanVn3DiscountAmount = Math.round(baseForMltvnl3 * MANH_LIET_TINH_THAN_VN3_PERCENTAGE);
                         
                         giaSauKMCodinh -= manhLietTinhThanVn3DiscountAmount;
@@ -1631,10 +1677,80 @@
                 let giaSauGiamPhanTram = priceBaseForPercentageDiscount;
                 if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) { const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]; const mucGiamVinclub = Math.round(priceBaseForPercentageDiscount * phanTramGiamVinclub); giaSauGiamPhanTram -= mucGiamVinclub; nhatKyTinhToan.push({ step: "C1", type: "discount_percentage", description: `Giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier} (${(phanTramGiamVinclub * 100).toFixed(1)}%)`, amount: -mucGiamVinclub, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); ghiChu.push(`Đã áp dụng giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier}. Sẽ không áp dụng giảm giá Corp.`); } else if (eligibilityInfo.applyCorpDiscount === true) { const mucGiamCorp = Math.round(priceBaseForPercentageDiscount * CORP_DISCOUNT_PERCENTAGE); giaSauGiamPhanTram -= mucGiamCorp; nhatKyTinhToan.push({ step: "C2", type: "discount_percentage", description: `Giảm giá Corp (${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(1)}%)`, amount: -mucGiamCorp, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); }
                 nhatKyTinhToan.push({ step: "C_END", type: "subtotal", description: "Giá sau giảm Vinclub/Corp", amount: giaSauGiamPhanTram, current_subtotal: giaSauGiamPhanTram });
-                let giaKhachHangThanhToan = giaSauGiamPhanTram; let mucHoTroThuCuApplied = 0;
-                if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") { let applicableTradeInPolicy = null; const dmsDateForTradeIn = parseDateStr(eligibilityInfo.dmsTransactionDateStr); const tradeInPolicyStartDateNew = new Date(Date.UTC(2025, 3, 21)); if (dmsDateForTradeIn && dmsDateForTradeIn >= tradeInPolicyStartDateNew) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_CURRENT_PERIOD; } else if (dmsDateForTradeIn) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD; } else { ghiChu.push(`Không xác định được Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới.`); } if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) { let tradeInTypeKey = eligibilityInfo.tradeInOldCarType; if (tradeInTypeKey === "Xe Hãng Khác") { tradeInTypeKey = "HangKhac"; } else if (tradeInTypeKey === "VinFast Xăng Cũ") { tradeInTypeKey = "VinFastXangCu"; } const mucHoTroThuCu = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey]; if (mucHoTroThuCu) { giaKhachHangThanhToan -= mucHoTroThuCu; mucHoTroThuCuApplied = mucHoTroThuCu; nhatKyTinhToan.push({ step: "D", type: "trade_in_support", description: `Hỗ trợ Thu cũ đổi mới (${eligibilityInfo.tradeInOldCarType} cho ${loaiXeChung})`, amount: -mucHoTroThuCu, current_subtotal: giaKhachHangThanhToan }); } else { ghiChu.push(`Không tìm thấy mức hỗ trợ Thu cũ đổi mới cho loại xe cũ '${eligibilityInfo.tradeInOldCarType}' (key: ${tradeInTypeKey}) với xe mới ${loaiXeChung} trong giai đoạn áp dụng.`); } } else if (applicableTradeInPolicy && loaiXeChung) { ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn được chọn.`); } }
+                
+                let giaKhachHangThanhToan = giaSauGiamPhanTram;
+                let mucHoTroThuCuApplied = 0;
+
+                if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") {
+                    let applicableTradeInPolicy = null;
+                    const dmsDateForTradeIn = parseDateStr(eligibilityInfo.dmsTransactionDateStr);
+
+                    // Define trade-in period boundaries based on PDF
+                    const TRADE_IN_P1_START = new Date(Date.UTC(2024, 10, 1)); // Nov 1, 2024
+                    const TRADE_IN_P1_END = new Date(Date.UTC(2025, 3, 20));   // Apr 20, 2025 (corresponds to TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD)
+
+                    const TRADE_IN_P2_START = new Date(Date.UTC(2025, 3, 21)); // Apr 21, 2025
+                    const TRADE_IN_P2_END = new Date(Date.UTC(2025, 4, 21));   // May 21, 2025 (corresponds to TRADE_IN_DISCOUNTS_CURRENT_PERIOD)
+
+                    const TRADE_IN_P3_START = new Date(Date.UTC(2025, 4, 22)); // May 22, 2025 (corresponds to TRADE_IN_DISCOUNTS_POST_MAY_22_2025)
+
+                    if (dmsDateForTradeIn) {
+                        if (dmsDateForTradeIn >= TRADE_IN_P3_START) {
+                            applicableTradeInPolicy = TRADE_IN_DISCOUNTS_POST_MAY_22_2025;
+                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 22/05/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
+                        } else if (dmsDateForTradeIn >= TRADE_IN_P2_START && dmsDateForTradeIn <= TRADE_IN_P2_END) {
+                            applicableTradeInPolicy = TRADE_IN_DISCOUNTS_CURRENT_PERIOD;
+                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 21/04/2025 đến 21/05/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
+                        } else if (dmsDateForTradeIn >= TRADE_IN_P1_START && dmsDateForTradeIn <= TRADE_IN_P1_END) {
+                             applicableTradeInPolicy = TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD;
+                             ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 01/11/2024 đến 20/04/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
+                        } else {
+                             ghiChu.push(`Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) không nằm trong các giai đoạn chính sách Thu cũ đổi mới được xác định (áp dụng theo thời điểm xuất hóa đơn).`); // [cite: 16]
+                        }
+                    } else {
+                        ghiChu.push(`Không xác định được Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới (cần để xác định thời điểm xuất hóa đơn).`); // [cite: 16]
+                    }
+
+                    if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) {
+                        let tradeInTypeKey = eligibilityInfo.tradeInOldCarType;
+                        if (tradeInTypeKey === "Xe Hãng Khác") {
+                            tradeInTypeKey = "HangKhac";
+                        } else if (tradeInTypeKey === "VinFast Xăng Cũ") { // "Đối với LuxA, SA, Fadil, President"
+                            tradeInTypeKey = "VinFastXangCu";
+                        }
+                        const mucHoTroThuCu = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey];
+
+                        if (mucHoTroThuCu) {
+                            giaKhachHangThanhToan -= mucHoTroThuCu;
+                            mucHoTroThuCuApplied = mucHoTroThuCu;
+                            nhatKyTinhToan.push({
+                                step: "D",
+                                type: "trade_in_support",
+                                description: `Hỗ trợ Thu cũ đổi mới (${eligibilityInfo.tradeInOldCarType} cho ${loaiXeChung})`,
+                                amount: -mucHoTroThuCu,
+                                current_subtotal: giaKhachHangThanhToan
+                            });
+                            // Add notes based on PDF
+                            ghiChu.push(`Lưu ý (TCD): Khách hàng cần sở hữu xe xăng từ 03 tháng trở lên.`); // [cite: 6]
+                            if (tradeInTypeKey === "HangKhac") {
+                                 ghiChu.push(`Lưu ý (TCD): Đối với xe hãng khác, hỗ trợ chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.`); // [cite: 18]
+                            }
+                        } else {
+                            ghiChu.push(`Không tìm thấy mức hỗ trợ Thu cũ đổi mới cho loại xe cũ '${eligibilityInfo.tradeInOldCarType}' (key: ${tradeInTypeKey}) với xe mới ${loaiXeChung} trong giai đoạn áp dụng.`);
+                        }
+                    } else if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi" && dmsDateForTradeIn) {
+                         // This case means a policy period was matched (or not), but the specific model (loaiXeChung) isn't in that policy table (if a policy was matched).
+                         // The earlier ghiChu messages cover the non-matched period.
+                         if (applicableTradeInPolicy && !applicableTradeInPolicy[loaiXeChung] && loaiXeChung) { // Check loaiXeChung exists
+                            ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn GD DMS/HĐ đã chọn.`);
+                         }
+                    }
+                }
+
                 nhatKyTinhToan.push({ step: "CUSTOMER_PRICE", type: "final_price_customer", description: "GIÁ KHÁCH HÀNG THANH TOÁN DỰ KIẾN", amount: giaKhachHangThanhToan, current_subtotal: giaKhachHangThanhToan });
-                let giaHoaDon = giaKhachHangThanhToan; let runningTotalForInvoice = giaKhachHangThanhToan;
+                let giaHoaDon = giaKhachHangThanhToan; 
+                let runningTotalForInvoice = giaKhachHangThanhToan;
+                
                 if (vinfasUsedForPercentageBase > 0) { runningTotalForInvoice += vinfasUsedForPercentageBase; nhatKyTinhToan.push({ step: "E1_INV", type: "add_back_for_invoice", description: `Cộng lại KM VINFASCINATION vào giá HĐ`, amount: vinfasUsedForPercentageBase, current_subtotal: runningTotalForInvoice }); }
                 if (insuranceUsedForPercentageBase > 0) { runningTotalForInvoice += insuranceUsedForPercentageBase; nhatKyTinhToan.push({ step: "E2_INV", type: "add_back_for_invoice", description: `Cộng lại KM Bảo hiểm vào giá HĐ`, amount: insuranceUsedForPercentageBase, current_subtotal: runningTotalForInvoice }); }
                 giaHoaDon = runningTotalForInvoice;
