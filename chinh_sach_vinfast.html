@@ -395,7 +395,7 @@
             background-color: var(--highlight-bg-light);
             color: var(--highlight-text-light);
             font-weight: bold;
-            padding: 0.5px 1px; /* Add slight padding for better visual */
+            padding: 0.5px 1px; 
             border-radius: 2px;
         }
         body.dark-mode .search-highlight {
@@ -517,6 +517,11 @@
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy2')">CS Giá Bán Xe Điện</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy3')">CS Thúc Đẩy Bán Hàng</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy4')">CS Xe Dừng Sản Xuất</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy5')">CS Chuyển Đổi Pin</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy6')">CS Sài Gòn Xanh</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy7')">CS Đặc Quyền VF8 & VF9</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy8')">CS Vì Thủ Đô Xanh</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy9')">CS Corporate</button>
                 </div>
 
                 <div id="policy1" class="tab-content active policy-document">
@@ -968,7 +973,442 @@
                     </div>
                 </div>
 
-            </div>
+                <div id="policy5" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
+                    <h2>Chính sách Hỗ trợ Khách hàng Chuyển đổi Pin thuê sang Pin mua (18/04/2025)</h2>
+                    <div class="policy-section">
+                        <p>VinFast vẫn tiếp tục duy trì và hỗ trợ theo các chính sách hiện hành đối với khách hàng đang sử dụng dịch vụ thuê pin.</p>
+                        <p>Trong trường hợp Khách hàng đang sử dụng dịch vụ thuê pin và có nhu cầu mua lại pin đang thuê, VinFast hỗ trợ giá mua như sau:</p>
+                        <p><em>Đơn vị: VNĐ</em></p>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Dòng xe</th>
+                                        <th rowspan="2">Phiên bản</th>
+                                        <th rowspan="2">Loại pin</th>
+                                        <th colspan="3">Giá thanh lý Pin thuê (Tính theo năm mua xe)</th>
+                                    </tr>
+                                    <tr>
+                                        <th>2021</th>
+                                        <th>2022 - 2024</th>
+                                        <th>2025</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>VF 3</td>
+                                        <td></td>
+                                        <td>Pin Gotion</td>
+                                        <td></td>
+                                        <td class="text-right">65.600.000</td>
+                                        <td class="text-right">73.800.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="2">VF 5</td>
+                                        <td>S/Plus</td>
+                                        <td>Pin Gotion</td>
+                                        <td></td>
+                                        <td class="text-right">42.000.000 - 48.000.000</td>
+                                        <td class="text-right">54.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Eco</td>
+                                        <td>Pin VinES</td>
+                                        <td></td>
+                                        <td class="text-right">49.000.000 - 56.000.000</td>
+                                        <td class="text-right">63.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>VF 6</td>
+                                        <td>Plus</td>
+                                        <td>Pin VinES</td>
+                                        <td></td>
+                                        <td class="text-right">42.000.000 - 48.000.000</td>
+                                        <td class="text-right">54.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>VF e34</td>
+                                        <td></td>
+                                        <td>Pin Gotion/SDI</td>
+                                        <td class="text-right">50.000.000</td>
+                                        <td class="text-right">60.000.000 - 80.000.000</td>
+                                        <td class="text-right">90.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="2">VF 7</td>
+                                        <td>Eco</td>
+                                        <td>Pin VinES (Gotion)</td>
+                                        <td></td>
+                                        <td class="text-right">75.200.000</td>
+                                        <td class="text-right">84.600.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Plus</td>
+                                        <td>Pin CATL</td>
+                                        <td></td>
+                                        <td class="text-right">80.000.000</td>
+                                        <td class="text-right">90.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="2">VF 8</td>
+                                        <td>Eco/Plus</td>
+                                        <td>Pin SDI</td>
+                                        <td class="text-right">71.250.000</td>
+                                        <td class="text-right">85.500.000 - 99.750.000</td>
+                                        <td class="text-right">128.250.000</td>
+                                    </tr>
+                                     <tr>
+                                        <td>Eco/Plus</td>
+                                        <td>Pin CATL</td>
+                                        <td></td>
+                                        <td class="text-right">105.000.000 - 120.000.000</td>
+                                        <td class="text-right">135.000.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="2">VF 9</td>
+                                        <td>Eco/Plus</td>
+                                        <td>Pin SDI</td>
+                                        <td></td>
+                                        <td class="text-right">199.500.000 - 228.000.000</td>
+                                        <td class="text-right">256.500.000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Eco/Plus</td>
+                                        <td>Pin CATL</td>
+                                        <td></td>
+                                        <td class="text-right">210.000.000 - 240.000.000</td>
+                                        <td class="text-right">270.000.000</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="policy-section">
+                        <h3>Điều kiện bổ sung:</h3>
+                        <p>Đối với khách hàng đã ký cam kết mua lại thu cũ đổi mới và thực hiện chuyển đổi từ thuê pin sang mua pin thì cam kết mua lại thu cũ đổi mới sẽ được áp dụng cho cả pin chuyển đổi. Giá cam kết mua lại/thu cũ đổi mới của pin chuyển đổi được xác định theo công thức sau:</p>
+                        <p><strong>Giá cam kết mua lại thu cũ đổi mới của pin = Giá NET của pin x Tỷ lệ mua lại tương ứng của xe.</strong></p>
+                        <p>Trong đó: Giá NET của pin là giá khách hàng chuyển đổi sang mua pin theo giá trị trước thuế trên hóa đơn (-) đi tổng mệnh giá của các gói ưu đãi khuyến mại (bằng tiền hoặc không bằng tiền) do VinFast cung cấp tại thời điểm khách hàng thực hiện chuyển đổi.</p>
+                    </div>
+                </div>
+
+                <div id="policy6" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
+                    <h2>Chính sách Ưu đãi “Sài Gòn Xanh” (18/04/2025)</h2>
+                    <div class="policy-section">
+                        <p>Dành cho khách hàng mua xe đăng ký mới biển TP. Hồ Chí Minh.</p>
+                        <p><strong>Thời gian áp dụng:</strong> từ ngày 18/04/2025 đến hết tháng 01/2026.</p>
+                        <p><strong>Hình thức:</strong> quy đổi mức giảm giá bên dưới thành điểm VinClub (giá trị điểm VinClub bao gồm VAT) – không quy đổi sang tiền mặt.</p>
+                        <h3>Mức ưu đãi cụ thể:</h3>
+                        <p><em>Đơn vị: VNĐ (gồm VAT)</em></p>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dòng xe</th>
+                                        <th>Phiên bản</th>
+                                        <th class="text-right">Mức ưu đãi dành cho KH TP.HCM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="3" class="sub-header"><strong>Các dòng/phiên bản xe hiện tại</strong></td></tr>
+                                    <tr><td>VF 3</td><td></td><td class="text-right">6.000.000</td></tr>
+                                    <tr><td>VF 5</td><td>PLUS</td><td class="text-right">10.000.000</td></tr>
+                                    <tr><td>VF 6</td><td>ECO/PLUS</td><td class="text-right">15.000.000</td></tr>
+                                    <tr><td>VF 7</td><td>ECO/PLUS</td><td class="text-right">35.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>ECO/PLUS</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>ECO/PLUS</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>Minio Green</td><td></td><td class="text-right">2.500.000</td></tr>
+                                    <tr><td>Herio Green</td><td></td><td class="text-right">5.000.000</td></tr>
+                                    <tr><td>Nerio Green</td><td></td><td class="text-right">6.500.000</td></tr>
+                                    <tr><td>Limo Green</td><td></td><td class="text-right">7.500.000</td></tr>
+                                    <tr><td colspan="3" class="sub-header"><strong>Các dòng/phiên bản xe ngừng sản xuất</strong></td></tr>
+                                    <tr><td>VF 5</td><td>VF 5 S</td><td class="text-right">10.000.000</td></tr>
+                                    <tr><td>VF 6</td><td>VF 6 S</td><td class="text-right">15.000.000</td></tr>
+                                    <tr><td>VF 7</td><td>VF 7 Base</td><td class="text-right">35.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>VF 8 S Lux / Lux Plus</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>Pin SDI</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>Pin SDI</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>Eco/Plus bản điều hòa 2 vùng</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>VFe34 *</td><td></td><td class="text-right">15.000.000</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>(*): Dòng xe VFe34 chỉ bán qua kênh GSM.</p>
+                    </div>
+                </div>
+
+                <div id="policy7" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
+                    <h2>Chính sách Đặc quyền dành cho Khách hàng VF8 và VF9 (21/04/2025)</h2>
+                    <div class="policy-section">
+                        <h3>I. CAM KẾT MUA LẠI XE VF 8 VÀ VF 9</h3>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                               <tbody>
+                                    <tr>
+                                        <td style="width: 30%;"><strong>Nội dung</strong></td>
+                                        <td>VinFast cam kết mua lại hoặc chỉ định bên thứ 3 mua lại xe ô tô điện VinFast (tùy theo từng trường hợp cụ thể) với các mốc thời gian sử dụng xe kể từ thời điểm khách hàng mua xe, tính theo giá NET. Tỷ lệ mua lại theo các mốc thời gian sử dụng quy định tại Phụ lục 1.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Điều kiện áp dụng</strong></td>
+                                        <td>
+                                            <ul>
+                                                <li>Áp dụng cho xe VF 8, VF 9.</li>
+                                                <li>Thời gian và đối tượng áp dụng: chỉ áp dụng với khách hàng mua xe mới từ ngày 10/03/2025 tới hết 30/04/2025 và đã ký Phụ lục cam kết mua lại.</li>
+                                                <li>Tình trạng xe cũ: Xe vẫn còn trong tình trạng vận hành tốt, không tai nạn, hỏng hóc nghiêm trọng, ngập nước lâu, cháy,...</li>
+                                                <li>VinFast chỉ thực hiện đổi xe mới hoặc mua lại sau khi các bộ phận kinh doanh/kỹ thuật của VinFast hoặc bên thứ 3 do VinFast chỉ định kiểm tra, đánh giá và xác nhận các điều kiện áp dụng, tình trạng xe theo đúng các quy định nêu trên. Trường hợp các bên không thống nhất về kết quả đánh giá thì quyết định của VinFast là quyết định sau cùng.</li>
+                                                <li>Giá NET là giá khách hàng mua xe từ VinFast hoặc nhà phân phối đại lý chính hãng của VinFast theo giá trị trước thuế trên hóa đơn trừ (-) đi tổng mệnh giá của các gói ưu đãi khuyến mại (bằng tiền hoặc không bằng tiền) do VinFast cung cấp tại thời điểm khách hàng mua xe.</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="policy-section">
+                        <h3>II. CHÍNH SÁCH ĐẶC QUYỀN RIÊNG DÀNH CHO KHÁCH HÀNG VF 9</h3>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Tiêu chí</th>
+                                        <th>Dịch vụ đặc quyền cho KH VF 9</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>Có hotline chăm sóc riêng</td>
+                                        <td>Khách hàng VF 9 khi gọi đến Hotline của VinFast sẽ được chăm sóc, phục vụ 24/7 bởi nhóm nhân viên chăm sóc khách hàng chuyên trách có trình độ cao nhất, đảm bảo tiếp nhận ý kiến, phản ánh của khách hàng và xử lý nhanh chóng kịp thời.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>Tiếp cận dịch vụ sửa chữa nhanh và thuận tiện</td>
+                                        <td>
+                                            Giao nhận xe miễn phí tại địa điểm theo KH yêu cầu (trong giờ hành chính).<br>
+                                            Khoảng cách tối đa: từ 30 km trở xuống trong bán kính từ XDV gần nhất.<br>
+                                            VF sẽ hỗ trợ chi phí cho NPP xử lý sự vụ.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>Trải nghiệm vượt trội khi vào Xưởng dịch vụ</td>
+                                        <td>
+                                            Được tiếp đón và tư vấn bởi các CVDV, KTV có kinh nghiệm và tay nghề cao nhất khi mang xe tới XDV.<br>
+                                            Ưu tiên sắp xếp lịch bảo dưỡng và sửa chữa phù hợp với thời gian và nhu cầu của KH.<br>
+                                            KH được tiếp nhận/phục vụ và ưu tiên sửa chữa ngay.<br>
+                                            Xe VF 9 sẽ được sửa chữa bởi những KTV xuất sắc nhất và được kiểm tra chất lượng bởi Quản đốc trước khi giao xe cho KH.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="policy-section">
+                        <h3>Lưu ý:</h3>
+                        <ul>
+                            <li>Các mốc thời gian tính từ ngày xuất hóa đơn.</li>
+                            <li>Nếu khách hàng quan tâm, GF cho khách hàng mượn xe trải nghiệm 01 tuần.</li>
+                            <li>Nếu khách hàng gặp vấn đề dịch vụ cần phải sửa xe, GF cho khách hàng mượn 01 xe VF 8 thay thế để sử dụng.</li>
+                            <li>Khách hàng mua VF 8S Lux và VF 8 Lux Plus phải cam kết không chạy dịch vụ, nếu sau đó đăng ký chạy dịch vụ thì VinFast sẽ thu hồi các ưu đãi nếu có và truy thu các quyền lợi đã sử dụng. Thời hạn bảo hành sẽ giảm xuống 3 năm hoặc 100.000 Km (tùy điều kiện nào đến trước).</li>
+                        </ul>
+                    </div>
+                     <div class="policy-section">
+                        <h3>PHỤ LỤC 1 – TỶ LỆ GIÁ MUA LẠI CHO KHÁCH HÀNG VF 8, VF 9</h3>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mốc thời gian sử dụng xe</th>
+                                        <th class="text-right">Tỷ lệ khi MUA LẠI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Từ 6 tháng trở xuống</td><td class="text-right">90,0%</td></tr>
+                                    <tr><td>8 tháng</td><td class="text-right">88,7%</td></tr>
+                                    <tr><td>10 tháng</td><td class="text-right">87,3%</td></tr>
+                                    <tr><td>12 tháng</td><td class="text-right">86,0%</td></tr>
+                                    <tr><td>14 tháng</td><td class="text-right">84,7%</td></tr>
+                                    <tr><td>16 tháng</td><td class="text-right">83,3%</td></tr>
+                                    <tr><td>18 tháng</td><td class="text-right">82,0%</td></tr>
+                                    <tr><td>20 tháng</td><td class="text-right">80,7%</td></tr>
+                                    <tr><td>22 tháng</td><td class="text-right">79,3%</td></tr>
+                                    <tr><td>24 tháng</td><td class="text-right">78,0%</td></tr>
+                                    <tr><td>26 tháng</td><td class="text-right">76,7%</td></tr>
+                                    <tr><td>28 tháng</td><td class="text-right">75,3%</td></tr>
+                                    <tr><td>30 tháng</td><td class="text-right">74,0%</td></tr>
+                                    <tr><td>32 tháng</td><td class="text-right">72,7%</td></tr>
+                                    <tr><td>34 tháng</td><td class="text-right">71,3%</td></tr>
+                                    <tr><td>36 tháng</td><td class="text-right">70,0%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="policy8" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
+                    <h2>Chính sách Ưu đãi “Vì Thủ Đô Trong Xanh” (18/04/2025)</h2>
+                     <div class="policy-section">
+                        <p>Dành cho khách hàng mua xe đăng ký mới biển Hà Nội.</p>
+                        <p><strong>Thời gian áp dụng:</strong></p>
+                        <ul>
+                            <li>Dòng xe Green: áp dụng từ 12/03/2025 đến hết tháng 01/2026.</li>
+                            <li>Dòng xe khác: áp dụng từ ngày 10/01/2025 đến hết tháng 01/2026.</li>
+                        </ul>
+                        <p><strong>Hình thức:</strong> quy đổi mức giảm giá bên dưới thành điểm VinClub (giá trị điểm VinClub bao gồm VAT) – không quy đổi sang tiền mặt.</p>
+                        <h3>Mức ưu đãi cụ thể:</h3>
+                        <p><em>Đơn vị: VNĐ (gồm VAT)</em></p>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dòng xe</th>
+                                        <th>Phiên bản</th>
+                                        <th class="text-right">Mức ưu đãi dành cho KH Thủ Đô</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="3" class="sub-header"><strong>Các dòng/phiên bản xe hiện tại</strong></td></tr>
+                                    <tr><td>VF 3</td><td></td><td class="text-right">6.000.000</td></tr>
+                                    <tr><td>VF 5</td><td>PLUS</td><td class="text-right">10.000.000</td></tr>
+                                    <tr><td>VF 6</td><td>ECO/PLUS</td><td class="text-right">15.000.000</td></tr>
+                                    <tr><td>VF 7</td><td>ECO/PLUS</td><td class="text-right">35.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>ECO/PLUS</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>ECO/PLUS</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>Minio Green</td><td></td><td class="text-right">2.500.000</td></tr>
+                                    <tr><td>Herio Green</td><td></td><td class="text-right">5.000.000</td></tr>
+                                    <tr><td>Nerio Green</td><td></td><td class="text-right">6.500.000</td></tr>
+                                    <tr><td>Limo Green</td><td></td><td class="text-right">7.500.000</td></tr>
+                                    <tr><td colspan="3" class="sub-header"><strong>Các dòng/phiên bản xe ngừng sản xuất</strong></td></tr>
+                                    <tr><td>VF 5</td><td>VF 5 S</td><td class="text-right">10.000.000</td></tr>
+                                    <tr><td>VF 6</td><td>VF 6 S</td><td class="text-right">15.000.000</td></tr>
+                                    <tr><td>VF 7</td><td>VF 7 Base</td><td class="text-right">35.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>VF 8 S Lux/Lux Plus</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 8</td><td>Pin SDI</td><td class="text-right">50.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>Pin SDI</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>VF 9</td><td>Eco/Plus bản điều hòa 2 vùng</td><td class="text-right">70.000.000</td></tr>
+                                    <tr><td>VFe34*</td><td></td><td class="text-right">15.000.000</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>(*): Dòng xe VFe34 chỉ bán qua kênh GSM.</p>
+                    </div>
+                </div>
+
+                <div id="policy9" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
+                    <h2>Chính sách Corporate Ô tô điện VinFast (22/04/2025)</h2>
+                    <div class="policy-section">
+                        <h3>I. Dành cho Doanh nghiệp đối tác và CQNN</h3>
+                        <div class="policy-table-container">
+                            <table class="policy-table">
+                                <thead>
+                                    <tr>
+                                        <th>Đối tượng</th>
+                                        <th>Giai đoạn</th>
+                                        <th>Mức ưu đãi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td rowspan="2">1. Dành cho CBNV</td>
+                                        <td>Từ 17/02 - 31/05/2025</td>
+                                        <td>
+                                            Mức ưu đãi tính trên chính sách bán lẻ từng thời điểm (*):<br>
+                                            - Nếu mua qua kênh 020: 3%<br>
+                                            - Nếu mua qua kênh ĐLPP: 2%
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Từ 01/06/2025 trở đi</td>
+                                        <td>3%</td>
+                                    </tr>
+                                    <tr>
+                                        <td rowspan="2">2. Dành cho Doanh nghiệp Nhà nước/ CQNN và BLĐ Doanh nghiệp đối tác</td>
+                                        <td>Nếu mua &ge;100 xe ô tô:</td>
+                                        <td>
+                                            - 02 suất ưu đãi 20% trên chính sách bán lẻ tại từng thời điểm (đối với doanh nghiệp đối tác sẽ dành cho CT/TGĐ)<br>
+                                            - 05 suất ưu đãi 10% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/CQNN)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Nếu mua &lt;100 xe ô tô:</td>
+                                        <td>
+                                            - 02 suất ưu đãi 10% trên chính sách bán lẻ tại từng thời điểm (đối với doanh nghiệp đối tác sẽ dành cho CT/TGĐ)<br>
+                                            - 05 suất ưu đãi 5% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/CQNN)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">3. Dành cho xe công vụ và trường đào tạo lái xe khi mua xe sử dụng làm xe dạy lái</td>
+                                        <td>
+                                            Ưu đãi 5% trên chính sách bán lẻ tại từng thời điểm.<br>
+                                            Đối với các xe công vụ bị giới hạn bởi mức quy định của Nghị định 72/2023/NĐ-CP (Định mức đối với xe công chung: 5 chỗ là 950 triệu; xe 7 chỗ là 1,6 tỷ; Xe công theo chức danh khoảng từ 1,25 – 1,6 tỷ): Mức ưu đãi sẽ do Giám đốc Khối kinh doanh Corporate phê duyệt, tối đa 10% trên chính sách bán lẻ tại từng thời điểm.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p>(*) Đối với ưu đãi dành cho CBNV, doanh nghiệp đối tác, CQNN, sẽ được lựa chọn theo 1 trong 2 hình thức:</p>
+                        <ul>
+                            <li>Trích 1% ưu đãi chuyên vào quỹ Công đoàn/ quỹ Văn thể của Đối tác;</li>
+                            <li>Hoặc chiết khấu toàn bộ ưu đãi vào giá xe.</li>
+                        </ul>
+                    </div>
+                     <div class="policy-section">
+                        <h3>II. Dành cho các Hiệp hội doanh nhân, doanh nghiệp</h3>
+                         <div class="policy-table-container">
+                             <table class="policy-table">
+                                 <thead>
+                                     <tr>
+                                         <th>Đối tượng</th>
+                                         <th>Mức ưu đãi</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     <tr>
+                                         <td>1. Dành cho hiệp hội doanh nghiệp trẻ Việt Nam, HUBA, YPO, hiệp hội trực thuộc VCCI, President club, VASEP</td>
+                                         <td>
+                                             <ul>
+                                                 <li>Đối với dòng xe VF 3, VF 5, VF 6, VF 7: áp dụng chiết khấu 3% trên chính sách bán lẻ dành cho CBNV thuộc doanh nghiệp thành viên/ hội viên của các Hiệp hội Doanh nhân, Doanh nghiệp khi có xác nhận của Hiệp hội.</li>
+                                                 <li>Đối với dòng xe VF 8/9: áp dụng chiết khấu 10% trên chính sách bán lẻ cho lãnh đạo doanh nghiệp là thành viên của hiệp hội từ 3 tháng trở lên - tối đa 2 suất/ doanh nghiệp. Từ xe từ thứ 3, chiết khấu 3% trên chính sách bán lẻ từng thời điểm.</li>
+                                             </ul>
+                                         </td>
+                                     </tr>
+                                 </tbody>
+                             </table>
+                         </div>
+                    </div>
+                    <div class="policy-section">
+                        <h3>ĐIỀU KIỆN ÁP DỤNG CHUNG</h3>
+                        <ul>
+                            <li>Áp dụng cho khách hàng xuất hóa đơn trước 31/12/2025, cho xe ô tô điện.</li>
+                            <li>Với các xe xuất hóa đơn tới hết 31/05/2025, khách hàng có quyền lựa chọn một trong số các chính sách có hiệu lực từ thời điểm đặt cọc đến thời điểm xuất hóa đơn. Từ 01/06/2025, riêng với chính sách Corporate, khách hàng chỉ được áp dụng ưu đãi theo chính sách tại thời điểm xuất hoá đơn.</li>
+                            <li>Hướng dẫn chi tiết thêm về đối tượng áp dụng:
+                                <ul>
+                                    <li>Đối với Doanh nghiệp đối tác và CQNN: CBNV, công chức, viên chức, người lao động cần ký HĐLĐ chính thức (nếu có) và phải có xác nhận của đơn vị đối tác (theo danh sách đối tác được PCT09 trình xin TGĐ phê duyệt triển khai theo từng thời điểm). Áp dụng cả với vợ chồng, con cái, tứ thân phụ mẫu, anh chị em ruột.</li>
+                                    <li>Đối với Hội người cao tuổi Việt Nam: Chỉ áp dụng cho cán bộ chuyên trách và ủy viên Chấp hành trực thuộc TW và các chi hội địa phương của Hội người cao tuổi Việt Nam. Áp dụng cho cả vợ/chồng, con cái.</li>
+                                    <li>Đối với CBNV của trường dạy lái xe, chỉ áp dụng khi đứng tên chính chủ hoặc vợ/chồng đứng tên xe; Trường hợp là giảng viên trường dạy lái xe, ngoài xác nhận của trường cần thêm chứng nhận giáo viên thực hành dạy lái xe.</li>
+                                    <li>Đối với trường dạy lái xe: Chỉ được áp dụng ưu đãi 5% trên chính sách bán lẻ khi mua xe đứng tên trường và sử dụng với mục đích dạy lái.</li>
+                                    <li>Đối với các Hiệp hội doanh nhân, doanh nghiệp: Chỉ áp dụng cho CBNV, lãnh đạo doanh nghiệp thành viên hiệp hội mua xe đứng tên chính chủ.</li>
+                                </ul>
+                            </li>
+                            <li>Chính sách này không được áp dụng đồng thời với chính sách khuyến mãi ưu đãi khác, không áp dụng voucher Sống xanh /Vinhomes, ngoại trừ:
+                                <ul>
+                                    <li>Chính sách khuyến mại bán lẻ ngắn hạn</li>
+                                    <li>Chính sách hỗ trợ khách hàng chuyển đổi xe xăng sang xe điện tại Thị trường Việt Nam.</li>
+                                    <li>Chính sách đặc quyền dành cho KH VF 8 và VF 9.</li>
+                                    <li>Ưu đãi miễn phí sạc tới hết 30/06/2027 được VinFast công bố.</li>
+                                </ul>
+                            </li>
+                            <li>Ưu đãi áp dụng trên giá bán lẻ tham chiếu (bao gồm VAT) sau khi trừ đi khuyến mại theo chính sách bán lẻ ngắn hạn (nếu có), áp dụng trước chính sách hỗ trợ khách hàng chuyển đổi từ xe xăng sang xe điện.</li>
+                            <li>KH phải nộp bản sao công chứng cà vẹt xe cho Phòng thủ tục – Khối hỗ trợ VinFast trong vòng 30 ngày (không tính ngày lễ) kể từ ngày đăng ký xe.</li>
+                        </ul>
+                    </div>
+                </div>
+                </div>
         </div>
     </div>
     <footer>
@@ -1137,65 +1577,56 @@
 
             // --- Search and Filter Functionality ---
             
-            // Helper function to escape special characters for RegExp
             function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
             }
 
-            // Function to remove existing highlights
             function removeHighlights(container) {
                 const highlights = container.querySelectorAll('span.search-highlight');
                 highlights.forEach(span => {
-                    // Replace the span with its text content
                     const parent = span.parentNode;
-                    if (parent) { // Ensure parent exists
+                    if (parent) { 
                         while (span.firstChild) {
                             parent.insertBefore(span.firstChild, span);
                         }
                         parent.removeChild(span);
-                        parent.normalize(); // Merges adjacent text nodes
+                        parent.normalize(); 
                     }
                 });
             }
 
-            // Function to apply highlights to text nodes within an element
             function applyHighlightsToElement(element, searchTermRegex) {
                  if (!element || !element.childNodes || typeof element.childNodes.forEach !== 'function') {
-                    return; // Skip if element is null or doesn't have iterable childNodes
+                    return; 
                 }
                 element.childNodes.forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE) {
                         const text = node.textContent;
-                        if (text && searchTermRegex.test(text)) { // Check if text is not null or empty
+                        if (text && searchTermRegex.test(text)) { 
                             const fragment = document.createDocumentFragment();
                             let lastIndex = 0;
                             text.replace(searchTermRegex, (match, ...args) => {
-                                const offset = args[args.length - 2]; // Offset of the match
-                                // Add text before the match
+                                const offset = args[args.length - 2]; 
                                 if (offset > lastIndex) {
                                     fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
                                 }
-                                // Add highlighted match
                                 const highlightSpan = document.createElement('span');
                                 highlightSpan.className = 'search-highlight';
                                 highlightSpan.textContent = match;
                                 fragment.appendChild(highlightSpan);
                                 lastIndex = offset + match.length;
-                                return match; // Necessary for replace to work correctly in loop
+                                return match; 
                             });
-                            // Add text after the last match
                             if (lastIndex < text.length) {
                                 fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
                             }
-                            // Replace the original text node with the fragment
                             if (node.parentNode) {
                                 node.parentNode.replaceChild(fragment, node);
                             }
                         }
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Avoid re-highlighting or highlighting within script/style tags or already highlighted spans
                         if (!node.classList.contains('search-highlight') && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
-                            applyHighlightsToElement(node, searchTermRegex); // Recurse for child elements
+                            applyHighlightsToElement(node, searchTermRegex); 
                         }
                     }
                 });
@@ -1203,13 +1634,13 @@
 
 
             function performSearchAndFilter() {
-                const searchTerm = searchInput.value.trim(); // Trim and use directly, toLowerCase later for matching
+                const searchTerm = searchInput.value.trim(); 
                 const selectedCarModel = filterCarModelSelect.value;
                 const activeTabContent = document.querySelector('.tab-content.active');
 
                 if (!activeTabContent) return;
 
-                removeHighlights(activeTabContent); // Remove old highlights first
+                removeHighlights(activeTabContent); 
 
                 const noResultsMessage = activeTabContent.querySelector('.no-results-message');
                 if (noResultsMessage) noResultsMessage.style.display = 'none';
@@ -1220,11 +1651,11 @@
 
                 const tabTitleH2 = activeTabContent.querySelector('h2');
                 let overallTabHasVisibleContent = false; 
-                const searchTermLower = searchTerm.toLowerCase(); // Use lowercased version for comparisons
+                const searchTermLower = searchTerm.toLowerCase(); 
 
                 if (tabTitleH2) {
                      if (searchTermLower === "" || tabTitleH2.textContent.toLowerCase().includes(searchTermLower)) {
-                        // Visibility handled later based on overallTabHasVisibleContent
+                        // Visibility handled later
                      } else {
                         tabTitleH2.style.display = 'none';
                      }
@@ -1333,25 +1764,19 @@
                     noResultsMessage.style.display = 'block';
                 }
 
-                // Apply highlights if there's a search term
                 if (searchTerm !== "") {
                     const searchTermRegex = new RegExp(escapeRegExp(searchTerm), 'gi');
-                    // Iterate through elements that should be highlighted and are visible
                     activeTabContent.querySelectorAll('h2, h3, h4, p, li, td, th').forEach(el => {
-                        // Check if element itself or its parent section/table is visible
                         const parentSection = el.closest('.policy-section');
                         const parentTable = el.closest('.policy-table');
                         let isVisible = el.style.display !== 'none';
 
                         if(parentSection && parentSection.style.display === 'none') isVisible = false;
                         if(parentTable && parentTable.style.display === 'none') isVisible = false;
-                        // For table rows, check parent tbody/table visibility
                         if(el.tagName === 'TD' || el.tagName === 'TH'){
                             const parentRow = el.closest('tr');
                             if(parentRow && parentRow.style.display === 'none') isVisible = false;
                         }
-
-
                         if (isVisible) {
                             applyHighlightsToElement(el, searchTermRegex);
                         }
@@ -1368,7 +1793,7 @@
                 clearFilterBtn.addEventListener('click', () => {
                     searchInput.value = '';
                     filterCarModelSelect.value = '';
-                    performSearchAndFilter(); // This will also remove highlights
+                    performSearchAndFilter(); 
                 });
             }
 
@@ -1384,7 +1809,11 @@
             if (savedActiveTab && document.getElementById(savedActiveTab)) {
                 window.openPolicyTab(null, savedActiveTab);
             } else if (document.querySelector('.tab-button')) {
-                document.querySelector('.tab-button').click(); 
+                // Make sure to click the first button if no saved tab or if saved tab doesn't exist
+                const firstTabButton = document.querySelector('.tab-buttons .tab-button');
+                if (firstTabButton) {
+                     firstTabButton.click();
+                }
             }
         });
     </script>
