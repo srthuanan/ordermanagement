@@ -28,6 +28,10 @@
             --transition-easing: ease-in-out;
             --header-height: 50px;
             --footer-height: 40px;
+            --highlight-bg-light: #fff352; /* Yellow for light mode */
+            --highlight-text-light: #333;
+            --highlight-bg-dark: #5f8b07;  /* A contrasting color for dark mode */
+            --highlight-text-dark: #f0f0f0;
         }
 
         body.dark-mode {
@@ -258,7 +262,7 @@
         }
         .tab-buttons {
             display: flex;
-            flex-wrap: wrap; /* Allow tabs to wrap on smaller screens */
+            flex-wrap: wrap; 
             border-bottom: 2px solid var(--primary-color);
             margin-bottom: 20px;
         }
@@ -273,7 +277,7 @@
             color: var(--text-light);
             transition: background-color var(--transition-speed-fast) ease, color var(--transition-speed-fast) ease, border-bottom-color var(--transition-speed-fast) ease;
             border-bottom: 3px solid transparent;
-            margin-bottom: -2px; /* Align with container border */
+            margin-bottom: -2px; 
         }
         body.dark-mode .tab-button {
             color: var(--text-dark);
@@ -297,9 +301,10 @@
         }
         .tab-content {
             display: none;
-            padding: 15px 5px; /* Reduced horizontal padding for content */
+            padding: 15px 5px; 
             border-radius: 6px;
             animation: fadeInContent 0.4s ease;
+            position: relative; 
         }
         @keyframes fadeInContent {
             from { opacity: 0; transform: translateY(10px); }
@@ -314,8 +319,8 @@
             overflow-x: auto; 
             margin-bottom: 20px;
             border: 1px solid var(--border-color-light);
-            border-radius: 6px; /* Slightly smaller radius for compactness */
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07); /* Softer shadow */
+            border-radius: 6px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07); 
         }
         body.dark-mode .policy-table-container {
             border-color: var(--border-color-dark);
@@ -323,14 +328,14 @@
         }
         .policy-table {
             width: 100%;
-            min-width: 550px; /* Adjusted min-width */
+            min-width: 550px; 
             border-collapse: collapse;
-            font-size: 0.85em; /* Slightly smaller font size */
-            line-height: 1.5; /* Adjusted line-height for compactness */
+            font-size: 0.85em; 
+            line-height: 1.5; 
         }
         .policy-table th, .policy-table td {
             border: 1px solid var(--border-color-light);
-            padding: 8px 10px; /* Reduced padding */
+            padding: 8px 10px; 
             text-align: left;
             vertical-align: top;
         }
@@ -338,19 +343,19 @@
             border-color: var(--border-color-dark);
         }
         .policy-table th {
-            background-color: rgba(0, 48, 135, 0.04); /* Slightly lighter header */
-            font-weight: 500; /* Adjusted font-weight */
+            background-color: rgba(0, 48, 135, 0.04); 
+            font-weight: 500; 
             color: var(--primary-color-darker);
         }
         body.dark-mode .policy-table th {
-            background-color: rgba(0, 174, 255, 0.08); /* Slightly lighter header for dark mode */
+            background-color: rgba(0, 174, 255, 0.08); 
             color: var(--secondary-color);
         }
         .policy-table tr:nth-child(even) {
-            background-color: rgba(0,0,0,0.015); /* Lighter even row stripe */
+            background-color: rgba(0,0,0,0.015); 
         }
         body.dark-mode .policy-table tr:nth-child(even) {
-            background-color: rgba(255,255,255,0.015); /* Lighter even row stripe for dark */
+            background-color: rgba(255,255,255,0.015); 
         }
         .policy-table td.text-center { text-align: center; }
         .policy-table td.text-right { text-align: right; }
@@ -372,6 +377,30 @@
         body.dark-mode .policy-section {
             background-color: var(--card-bg-dark);
             border: 1px solid var(--border-color-dark);
+        }
+        
+        .no-results-message {
+            display: none; 
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: var(--text-light);
+        }
+        body.dark-mode .no-results-message {
+            color: var(--text-dark);
+        }
+
+        /* Search Highlight Style */
+        .search-highlight {
+            background-color: var(--highlight-bg-light);
+            color: var(--highlight-text-light);
+            font-weight: bold;
+            padding: 0.5px 1px; /* Add slight padding for better visual */
+            border-radius: 2px;
+        }
+        body.dark-mode .search-highlight {
+            background-color: var(--highlight-bg-dark);
+            color: var(--highlight-text-dark);
         }
 
 
@@ -410,9 +439,12 @@
             h3 { font-size: 1.1em; }
             h4 { font-size: 1em; }
             .tab-button { padding: 8px 12px; font-size: 0.9em; }
-            .policy-table { font-size: 0.8em; } /* Further reduce for very small screens */
-            .policy-table th, .policy-table td { padding: 6px 8px; } /* Further reduce padding */
+            .policy-table { font-size: 0.8em; } 
+            .policy-table th, .policy-table td { padding: 6px 8px; } 
             footer { font-size: 11px; height: calc(var(--footer-height) - 5px); }
+            .search-filter-controls { flex-direction: column; align-items: stretch; }
+            .search-filter-controls > * { margin-bottom: 8px; }
+            .search-filter-controls button { width: 100%; }
         }
     </style>
 </head>
@@ -454,9 +486,9 @@
 
     <div class="main-container" id="mainContainer">
         <div class="container">
-            <div class="search-filter-controls mb-5 flex flex-wrap items-center gap-4">
-                <input type="text" id="searchInput" placeholder="Tìm kiếm trong tab hiện tại..." class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color flex-grow min-w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                <select id="filterCarModel" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <div class="search-filter-controls mb-5 flex flex-wrap items-center gap-3">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm trong tab..." class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color flex-grow min-w-[180px] dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                <select id="filterCarModel" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[180px]">
                     <option value="">Tất cả dòng xe</option>
                     <option value="VF 3">VF 3</option>
                     <option value="VF 5">VF 5</option>
@@ -474,7 +506,10 @@
                     <option value="Herio Green">Herio Green</option>
                     <option value="Nerio Green">Nerio Green</option>
                     <option value="Limo Green">Limo Green</option>
-                    </select>
+                </select>
+                <button id="clearFilterBtn" class="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-md shadow-sm transition-colors duration-150 ease-in-out">
+                    <i class="fas fa-times mr-1"></i> Xóa bộ lọc
+                </button>
             </div>
             <div class="tab-container">
                 <div class="tab-buttons">
@@ -485,8 +520,8 @@
                 </div>
 
                 <div id="policy1" class="tab-content active policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Hỗ trợ cho Khách hàng Chuyển đổi từ Xe Xăng sang Xe Điện (09/05/2025)</h2>
-                    
                     <div class="policy-section">
                         <h3>1. Nội dung chương trình:</h3>
                         <p>Khách hàng đang sở hữu xe xăng có nhu cầu bán và chuyển đổi sang xe điện VinFast VF 6, VF7, VF 8, VF 9 sẽ được hỗ trợ:</p>
@@ -543,7 +578,6 @@
                             </table>
                         </div>
                     </div>
-
                     <div class="policy-section">
                         <h3>2. Điều kiện:</h3>
                         <ul>
@@ -559,7 +593,6 @@
                             <li>Đối với xe xăng các hãng khác (bao gồm xe máy dầu diesel): chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.</li>
                         </ul>
                     </div>
-
                     <div class="policy-section">
                         <h3>3. Quy trình triển khai:</h3>
                         <div class="policy-table-container">
@@ -641,9 +674,9 @@
                 </div>
 
                 <div id="policy2" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Giá Bán Các Dòng Xe Ô Tô Điện VinFast (16/05/2025)</h2>
                     <p><em>Đơn vị tính: VNĐ (bao gồm VAT)</em></p>
-
                     <div class="policy-section">
                         <h3>I. GIÁ BÁN XE:</h3>
                         <div class="policy-table-container">
@@ -684,7 +717,6 @@
                             <li>Đối với các đơn hàng đặt cọc trước 12 giờ ngày 12/03/2025 và đã có tên Khách hàng cuối mua xe được mua xe bản nâng cấp theo giá cũ (giá bản tiêu chuẩn).</li>
                         </ul>
                     </div>
-
                     <div class="policy-section">
                         <h3>II. GIÁ BỘ SẠC TẠI NHÀ, TRANG BỊ & MÀU TÙY CHỌN:</h3>
                         <h4>1. Giá bộ sạc tại nhà</h4>
@@ -699,7 +731,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                         <h4>2. Trang bị tùy chọn</h4>
                         <div class="policy-table-container">
                             <table class="policy-table">
@@ -715,7 +746,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                         <h4>3. Giá màu ngoại thất</h4>
                         <div class="policy-table-container">
                              <table class="policy-table">
@@ -761,7 +791,6 @@
                             </table>
                         </div>
                     </div>
-                    
                     <div class="policy-section">
                         <h3>III. TÍNH NĂNG KHÁC NHAU CƠ BẢN GIỮA PHIÊN BẢN TIÊU CHUẨN VÀ NÂNG CẤP</h3>
                         <div class="policy-table-container">
@@ -780,8 +809,8 @@
                 </div>
 
                 <div id="policy3" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Thúc đẩy Bán hàng Ô tô Điện VinFast (17/05/2025)</h2>
-
                     <div class="policy-section">
                         <h3>I. CHÍNH SÁCH HỖ TRỢ BÁN HÀNG CHO VF 7 PLUS (bao gồm VAT)</h3>
                         <p><strong>Khuyến mại tặng tiền mặt:</strong> 50.000.000 VNĐ/xe</p>
@@ -791,7 +820,6 @@
                             <li>Trường hợp khách hàng đã đặt cọc nhưng chưa nhận xe thì khách hàng có quyền lựa chọn một trong các chính sách có hiệu lực từ thời điểm đặt cọc đến thời điểm xuất hóa đơn.</li>
                         </ul>
                     </div>
-
                     <div class="policy-section">
                         <h3>II. CHÍNH SÁCH “VINFASCINATION – MÙA HÈ RỰC RỠ CÙNG VINFAST"</h3>
                         <h4>1. Nội dung chương trình:</h4>
@@ -800,7 +828,6 @@
                             <li><strong>Thời gian áp dụng:</strong> Từ 24/04/2025 đến 31/05/2025.</li>
                             <li><strong>Đối tượng áp dụng:</strong> Toàn bộ khách hàng mua xe và xuất hóa đơn trong thời gian áp dụng. Trường hợp KH doanh nghiệp (trừ GSM) mua xe sẽ được chỉ định cá nhân nhận khuyến mại. Khách hàng tại Hà Nội và TP.HCM mua xe và xuất hóa đơn trong thời gian áp dụng chương trình sẽ được đồng thời hưởng chính sách này và hai chính sách ưu đãi theo khu vực: “Vì Thủ đô trong xanh đối với Hà Nội và “Sài Gòn xanh” đối với TP.HCM.</li>
                         </ul>
-
                         <h4>2. Mức khuyến mại cho KH khi mua xe theo từng dòng xe (*):</h4>
                         <p><em>Đơn vị: VND (gồm VAT)</em></p>
                         <div class="policy-table-container">
@@ -819,7 +846,6 @@
                             </table>
                         </div>
                         <p>(*): Giá trị khuyến mại cho phép quy đổi ưu đãi tích điểm Vpoint sang tiền mặt kể từ ngày 13/05/2025 đến hết ngày 31/05/2025.</p>
-
                         <h4>3. Chương trình ưu đãi tặng bảo hiểm 2 năm khi mua xe ô tô VinFast</h4>
                         <p>Khách hàng được tặng 2 năm bảo hiểm khi mua các dòng xe VF 3, VF 6, VF 7, VF 8, VF 9. Gói bảo hiểm có thể được quy đổi ra tiền mặt và có giá trị như sau:</p>
                         <p><em>Đơn vị: VNĐ (bao gồm VAT)</em></p>
@@ -840,9 +866,9 @@
                 </div>
 
                 <div id="policy4" class="tab-content policy-document">
+                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Bán hàng cho các Dòng Xe Ô tô Điện VinFast Đã Dừng Sản Xuất (19/05/2025)</h2>
                     <p><em>Đơn vị: VNĐ (bao gồm VAT)</em></p>
-
                     <div class="policy-section">
                         <h3>1. GIÁ BÁN CÁC DÒNG XE DỪNG SẢN XUẤT</h3>
                         <div class="policy-table-container">
@@ -864,7 +890,6 @@
                             </table>
                         </div>
                     </div>
-
                     <div class="policy-section">
                         <h3>2. CHÍNH SÁCH BÁN HÀNG CHO XE VIN 2022, VIN 2023 VÀ VIN 2024</h3>
                         <div class="policy-table-container">
@@ -885,7 +910,6 @@
                         </div>
                         <p>(*) Áp dụng cho khách hàng mua xe từ 14/11/2024 đến hết 30/06/2025.</p>
                     </div>
-
                     <div class="policy-section">
                         <h3>3. CHÍNH SÁCH BÁN HÀNG CHO XE VF 8 VÀ VF 9 KÈM PIN SDI VÀ VF 9 BẢN ĐIỀU HÒA 2 VÙNG ĐÃ DỪNG SẢN XUẤT</h3>
                         <div class="policy-table-container">
@@ -918,7 +942,6 @@
                             </table>
                         </div>
                     </div>
-
                     <div class="policy-section">
                         <h3>4. GIÁ TRANG THIẾT BỊ TÙY CHỌN</h3>
                         <p><strong>Đối với VF 9:</strong></p>
@@ -954,7 +977,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Sidebar and Theme Toggle Functionality ---
+            // --- DOM Element References ---
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.getElementById('mainContainer');
             const pageNavbar = document.getElementById('pageNavbar');
@@ -963,7 +986,11 @@
             const themeToggleButton = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('theme-icon');
             const navMenu = document.getElementById('navMenu');
+            const searchInput = document.getElementById('searchInput');
+            const filterCarModelSelect = document.getElementById('filterCarModel');
+            const clearFilterBtn = document.getElementById('clearFilterBtn');
 
+            // --- Theme Management ---
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.body.classList.add('dark-mode');
@@ -984,9 +1011,10 @@
             if (themeToggleButton) {
                 themeToggleButton.addEventListener('click', toggleTheme);
             }
-            const savedTheme = localStorage.getItem('theme') || 'light'; // Default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
             applyTheme(savedTheme);
 
+            // --- Sidebar Layout Management ---
             function updateLayoutForSidebar() {
                 if (!sidebar || !mainContainer || !pageNavbar) return;
                 const isDesktop = window.innerWidth > 900;
@@ -994,8 +1022,8 @@
                 const isSidebarOpenMobile = sidebar.classList.contains('open');
 
                 if (isDesktop) {
-                    sidebar.classList.remove('open'); // Close mobile menu if open
-                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed'); // Reset classes
+                    sidebar.classList.remove('open');
+                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed');
 
                     if (isSidebarCollapsed) {
                         mainContainer.style.marginLeft = '60px';
@@ -1010,23 +1038,18 @@
                         pageNavbar.style.width = 'calc(100% - 200px)';
                         pageNavbar.classList.add('with-sidebar');
                     }
-                } else { // Mobile view
+                } else { 
                     mainContainer.style.marginLeft = '0';
                     mainContainer.style.width = '100%';
                     pageNavbar.style.marginLeft = '0';
                     pageNavbar.style.width = '100%';
                     pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed');
-
-                    if (isSidebarOpenMobile) {
-                        sidebar.style.transform = 'translateX(0)';
-                    } else {
-                        sidebar.style.transform = 'translateX(-100%)';
-                    }
+                    sidebar.style.transform = isSidebarOpenMobile ? 'translateX(0)' : 'translateX(-100%)';
                 }
             }
             
             function toggleSidebarDesktop() {
-                if (window.innerWidth <= 900) return; // Only for desktop
+                if (window.innerWidth <= 900) return;
                 sidebar.classList.toggle('collapsed');
                 localStorage.setItem('sidebarState', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
                 updateLayoutForSidebar();
@@ -1043,7 +1066,6 @@
 
             if (sidebarToggleBtn) {
                 sidebarToggleBtn.addEventListener('click', toggleSidebarDesktop);
-                // Set initial icon for desktop toggle
                 const initialToggleIcon = sidebarToggleBtn.querySelector('i');
                 if (initialToggleIcon) {
                      initialToggleIcon.className = sidebar.classList.contains('collapsed') ? 'fas fa-bars' : 'fas fa-chevron-left';
@@ -1053,16 +1075,12 @@
                 mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
             }
             
-            // Initialize sidebar state for desktop
-            if (window.innerWidth > 900) {
-                if (localStorage.getItem('sidebarState') === 'collapsed') {
-                    sidebar.classList.add('collapsed');
-                }
+            if (window.innerWidth > 900 && localStorage.getItem('sidebarState') === 'collapsed') {
+                sidebar.classList.add('collapsed');
             }
-            updateLayoutForSidebar(); // Initial layout update
+            updateLayoutForSidebar();
             window.addEventListener('resize', updateLayoutForSidebar);
 
-            // Close mobile sidebar when clicking outside
             document.addEventListener('click', function(event) {
                 if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
                     if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
@@ -1073,7 +1091,6 @@
             });
 
             // --- Tab Functionality ---
-            // Enhanced: Save active tab to localStorage
             window.openPolicyTab = function(evt, policyName) {
                 var i, tabcontent, tablinks;
                 tabcontent = document.getElementsByClassName("tab-content");
@@ -1085,11 +1102,15 @@
                 for (i = 0; i < tablinks.length; i++) {
                     tablinks[i].className = tablinks[i].className.replace(" active", "");
                 }
-                document.getElementById(policyName).style.display = "block";
-                document.getElementById(policyName).classList.add("active");
+                const currentTab = document.getElementById(policyName);
+                if (currentTab) {
+                    currentTab.style.display = "block";
+                    currentTab.classList.add("active");
+                }
+                
                 if (evt && evt.currentTarget) {
                     evt.currentTarget.className += " active";
-                } else { // Case for calling from localStorage
+                } else { 
                     const buttons = document.querySelectorAll('.tab-button');
                     buttons.forEach(button => {
                         if(button.getAttribute('onclick').includes(`'${policyName}'`)){
@@ -1097,7 +1118,7 @@
                         }
                     });
                 }
-                localStorage.setItem('activePolicyTab', policyName); // Save active tab
+                localStorage.setItem('activePolicyTab', policyName); 
             }
 
             // --- Active Sidebar Link ---
@@ -1105,7 +1126,6 @@
                 if (!navMenu) return;
                 const navLinks = navMenu.querySelectorAll("a");
                 const currentPageFilename = "chinh_sach_vinfast.html"; 
-
                 navLinks.forEach(link => {
                     link.classList.remove("active");
                     if (link.getAttribute('href') === currentPageFilename) {
@@ -1115,27 +1135,98 @@
             }
             setActiveSidebarLink();
 
-            // --- START: Added Search and Filter Functionality ---
-            const searchInput = document.getElementById('searchInput');
-            const filterCarModelSelect = document.getElementById('filterCarModel');
+            // --- Search and Filter Functionality ---
+            
+            // Helper function to escape special characters for RegExp
+            function escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+            }
+
+            // Function to remove existing highlights
+            function removeHighlights(container) {
+                const highlights = container.querySelectorAll('span.search-highlight');
+                highlights.forEach(span => {
+                    // Replace the span with its text content
+                    const parent = span.parentNode;
+                    if (parent) { // Ensure parent exists
+                        while (span.firstChild) {
+                            parent.insertBefore(span.firstChild, span);
+                        }
+                        parent.removeChild(span);
+                        parent.normalize(); // Merges adjacent text nodes
+                    }
+                });
+            }
+
+            // Function to apply highlights to text nodes within an element
+            function applyHighlightsToElement(element, searchTermRegex) {
+                 if (!element || !element.childNodes || typeof element.childNodes.forEach !== 'function') {
+                    return; // Skip if element is null or doesn't have iterable childNodes
+                }
+                element.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent;
+                        if (text && searchTermRegex.test(text)) { // Check if text is not null or empty
+                            const fragment = document.createDocumentFragment();
+                            let lastIndex = 0;
+                            text.replace(searchTermRegex, (match, ...args) => {
+                                const offset = args[args.length - 2]; // Offset of the match
+                                // Add text before the match
+                                if (offset > lastIndex) {
+                                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                                }
+                                // Add highlighted match
+                                const highlightSpan = document.createElement('span');
+                                highlightSpan.className = 'search-highlight';
+                                highlightSpan.textContent = match;
+                                fragment.appendChild(highlightSpan);
+                                lastIndex = offset + match.length;
+                                return match; // Necessary for replace to work correctly in loop
+                            });
+                            // Add text after the last match
+                            if (lastIndex < text.length) {
+                                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                            }
+                            // Replace the original text node with the fragment
+                            if (node.parentNode) {
+                                node.parentNode.replaceChild(fragment, node);
+                            }
+                        }
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Avoid re-highlighting or highlighting within script/style tags or already highlighted spans
+                        if (!node.classList.contains('search-highlight') && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+                            applyHighlightsToElement(node, searchTermRegex); // Recurse for child elements
+                        }
+                    }
+                });
+            }
+
 
             function performSearchAndFilter() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
+                const searchTerm = searchInput.value.trim(); // Trim and use directly, toLowerCase later for matching
                 const selectedCarModel = filterCarModelSelect.value;
                 const activeTabContent = document.querySelector('.tab-content.active');
 
                 if (!activeTabContent) return;
+
+                removeHighlights(activeTabContent); // Remove old highlights first
+
+                const noResultsMessage = activeTabContent.querySelector('.no-results-message');
+                if (noResultsMessage) noResultsMessage.style.display = 'none';
 
                 activeTabContent.querySelectorAll('.policy-section, .policy-section p, .policy-section li, .policy-section h3, .policy-section h4, table.policy-table tbody tr, table.policy-table, h2').forEach(el => {
                     el.style.removeProperty('display');
                 });
 
                 const tabTitleH2 = activeTabContent.querySelector('h2');
-                let overallTabHasVisibleContent = false;
+                let overallTabHasVisibleContent = false; 
+                const searchTermLower = searchTerm.toLowerCase(); // Use lowercased version for comparisons
 
                 if (tabTitleH2) {
-                     if (searchTerm === "" || tabTitleH2.textContent.toLowerCase().includes(searchTerm)) {
-                        overallTabHasVisibleContent = true;
+                     if (searchTermLower === "" || tabTitleH2.textContent.toLowerCase().includes(searchTermLower)) {
+                        // Visibility handled later based on overallTabHasVisibleContent
+                     } else {
+                        tabTitleH2.style.display = 'none';
                      }
                 }
 
@@ -1145,7 +1236,7 @@
 
                     const sectionHeader = section.querySelector('h3');
                     if (sectionHeader) {
-                        if (searchTerm === "" || sectionHeader.textContent.toLowerCase().includes(searchTerm)) {
+                        if (searchTermLower === "" || sectionHeader.textContent.toLowerCase().includes(searchTermLower)) {
                             sectionTitleMatchesSearch = true;
                             sectionHeader.style.removeProperty('display');
                         } else {
@@ -1165,7 +1256,6 @@
                                 const carModelInCellLower = carModelInCell.toLowerCase();
                                 const selectedModelLower = selectedCarModel.toLowerCase();
 
-                                // More specific car model checking logic
                                 if (selectedModelLower === "vf 3" && carModelInCellLower.includes("vf 3")) rowMatchesCar = true;
                                 else if (selectedModelLower === "vf 5" && (carModelInCellLower.includes("vf 5") || carModelInCellLower.includes("vf5"))) rowMatchesCar = true;
                                 else if (selectedModelLower === "vf 6" && (carModelInCellLower.includes("vf 6") || carModelInCellLower.includes("vf6"))) rowMatchesCar = true;
@@ -1182,58 +1272,90 @@
                                 else if (selectedModelLower === "herio green" && carModelInCellLower.includes("herio green")) rowMatchesCar = true;
                                 else if (selectedModelLower === "nerio green" && carModelInCellLower.includes("nerio green")) rowMatchesCar = true;
                                 else if (selectedModelLower === "limo green" && carModelInCellLower.includes("limo green")) rowMatchesCar = true;
-                                else if (carModelInCellLower.startsWith(selectedModelLower)) { // Fallback for general cases
+                                else if (carModelInCellLower.startsWith(selectedModelLower)) {
                                      rowMatchesCar = true;
                                 } else {
                                     rowMatchesCar = false;
                                 }
                             }
 
-                            if (searchTerm !== "") {
-                                rowMatchesSearch = row.textContent.toLowerCase().includes(searchTerm);
+                            if (searchTermLower !== "") {
+                                rowMatchesSearch = row.textContent.toLowerCase().includes(searchTermLower);
                             }
 
                             if (rowMatchesCar && rowMatchesSearch) {
                                 row.style.removeProperty('display');
                                 tableHasVisibleRows = true;
-                                sectionHasVisibleContent = true;
+                                sectionHasVisibleContent = true; 
                             } else {
                                 row.style.display = 'none';
                             }
                         });
-                        // table.style.display = tableHasVisibleRows ? '' : 'none'; // Uncomment to hide entire table if no rows match
                     });
 
                     section.querySelectorAll('p, li, h4').forEach(el => {
-                        if (el.closest('table.policy-table')) return; // Skip if inside a table (already handled)
+                        if (el.closest('table.policy-table')) return; 
 
-                        if (searchTerm !== "") {
-                            if (el.textContent.toLowerCase().includes(searchTerm)) {
+                        if (searchTermLower !== "") {
+                            if (el.textContent.toLowerCase().includes(searchTermLower)) {
                                 el.style.removeProperty('display');
-                                sectionHasVisibleContent = true;
+                                sectionHasVisibleContent = true; 
                             } else {
                                 el.style.display = 'none';
                             }
-                        } else { // No search term, element is visible
+                        } else { 
                             el.style.removeProperty('display');
+                            if (!selectedCarModel) sectionHasVisibleContent = true;
                         }
                     });
-
+                    
                     if (sectionHasVisibleContent || sectionTitleMatchesSearch) {
                         section.style.removeProperty('display');
                         if (sectionHeader && sectionTitleMatchesSearch) sectionHeader.style.removeProperty('display');
-                        overallTabHasVisibleContent = true;
+                        overallTabHasVisibleContent = true; 
                     } else {
                         section.style.display = 'none';
                     }
                 });
 
                 if (tabTitleH2) {
-                    if (overallTabHasVisibleContent) {
-                        tabTitleH2.style.removeProperty('display');
-                    } else {
-                        tabTitleH2.style.display = 'none';
+                    if (overallTabHasVisibleContent || (tabTitleH2.style.display !== 'none' && searchTermLower !== "" && tabTitleH2.textContent.toLowerCase().includes(searchTermLower))) {
+                         tabTitleH2.style.removeProperty('display');
+                    } else if (!overallTabHasVisibleContent && searchTermLower !== "" && !tabTitleH2.textContent.toLowerCase().includes(searchTermLower)) {
+                         tabTitleH2.style.display = 'none';
+                    } else if (!overallTabHasVisibleContent && searchTermLower === "") {
+                         tabTitleH2.style.display = 'none';
                     }
+                }
+                
+                const isH2Visible = tabTitleH2 && tabTitleH2.style.display !== 'none';
+                if (!overallTabHasVisibleContent && !isH2Visible && noResultsMessage) {
+                    noResultsMessage.style.display = 'block';
+                }
+
+                // Apply highlights if there's a search term
+                if (searchTerm !== "") {
+                    const searchTermRegex = new RegExp(escapeRegExp(searchTerm), 'gi');
+                    // Iterate through elements that should be highlighted and are visible
+                    activeTabContent.querySelectorAll('h2, h3, h4, p, li, td, th').forEach(el => {
+                        // Check if element itself or its parent section/table is visible
+                        const parentSection = el.closest('.policy-section');
+                        const parentTable = el.closest('.policy-table');
+                        let isVisible = el.style.display !== 'none';
+
+                        if(parentSection && parentSection.style.display === 'none') isVisible = false;
+                        if(parentTable && parentTable.style.display === 'none') isVisible = false;
+                        // For table rows, check parent tbody/table visibility
+                        if(el.tagName === 'TD' || el.tagName === 'TH'){
+                            const parentRow = el.closest('tr');
+                            if(parentRow && parentRow.style.display === 'none') isVisible = false;
+                        }
+
+
+                        if (isVisible) {
+                            applyHighlightsToElement(el, searchTermRegex);
+                        }
+                    });
                 }
             }
 
@@ -1242,25 +1364,28 @@
                 filterCarModelSelect.addEventListener('change', performSearchAndFilter);
             }
 
-            // Store original function and override
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    filterCarModelSelect.value = '';
+                    performSearchAndFilter(); // This will also remove highlights
+                });
+            }
+
             const originalOpenPolicyTabFunction = window.openPolicyTab;
             window.openPolicyTab = function(evt, policyName) {
-                originalOpenPolicyTabFunction(evt, policyName); // Call original
-                setTimeout(() => { // Apply filter after tab content is surely displayed
+                originalOpenPolicyTabFunction(evt, policyName); 
+                setTimeout(() => { 
                     performSearchAndFilter();
-                }, 50); // Small delay
+                }, 50); 
             };
 
-            // Restore active tab from localStorage and apply filter
             const savedActiveTab = localStorage.getItem('activePolicyTab');
             if (savedActiveTab && document.getElementById(savedActiveTab)) {
-                // Call openPolicyTab without event to avoid error, let it handle active class
                 window.openPolicyTab(null, savedActiveTab);
             } else if (document.querySelector('.tab-button')) {
-                // If no tab saved, activate the first one
-                document.querySelector('.tab-button').click(); // This will call the overridden openPolicyTab
+                document.querySelector('.tab-button').click(); 
             }
-             // --- END: Added Search and Filter Functionality ---
         });
     </script>
 </body>
