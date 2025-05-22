@@ -1175,6 +1175,7 @@
                              <label for="applyVf7PlusCashback" class="checkbox-label">
                                 <input type="checkbox" id="applyVf7PlusCashback"> Áp dụng KM VF7+?
                             </label>
+                             <p class="sub-label" id="vf7PlusSubText">(Áp dụng cho KH đặt cọc VF7 Plus)</p>
                         </div>
                         <div id="tradeInOldCarTypeDiv" class="model-specific-options hidden">
                              <label for="tradeInOldCarType">Loại Xe Cũ Đổi:</label>
@@ -1189,19 +1190,26 @@
 
                 <div id="applicableGeneralPromosContainer" class="hidden">
                     <h4>Các chương trình khuyến mãi có thể áp dụng:</h4>
+                    <div class="general-promo-item hidden" id="mlttvn3PromoItemContainer">
+                        <label for="applyManhLietTinhThanVietNamPromo" class="checkbox-label complex-checkbox-label">
+                            <input type="checkbox" id="applyManhLietTinhThanVietNamPromo">
+                            <span class="main-label" id="mlttvn3LabelText">Mãnh liệt tinh thần VN - Vì TLX L3</span>
+                        </label>
+                        <p class="sub-label" id="mlttvn3SubText">(Giảm 4% giá NY. HĐ từ 22/05/2025 - 31/12/2025. Không cùng BH 2 năm.)</p>
+                    </div>
                     <div class="general-promo-item hidden" id="vinfascinationPromoItemContainer">
                         <label for="applyVinfascinationDynamic" class="checkbox-label complex-checkbox-label">
                             <input type="checkbox" id="applyVinfascinationDynamic">
                             <span class="main-label" id="vinfascinationLabelText">VINFASCINATION</span>
                         </label>
-                        <p class="sub-label" id="vinfascinationSubText">(Quy đổi điểm Vinfascination, GD DMS 24/04/2025 - 31/05/2025, quy đổi từ 13/05/2025.)</p>
+                        <p class="sub-label" id="vinfascinationSubText">(Quy đổi điểm Vinfascination, GD DMS 24/04/2025 - 31/05/2025, quy đổi tiền từ 13/05/2025.)</p>
                     </div>
                     <div class="general-promo-item hidden" id="insuranceCashPromoItemContainer">
                         <label for="takeInsuranceCashDynamic" class="checkbox-label complex-checkbox-label">
                             <input type="checkbox" id="takeInsuranceCashDynamic">
                             <span class="main-label" id="insuranceCashLabelText">Quy đổi bảo hiểm</span>
                         </label>
-                        <p class="sub-label" id="insuranceCashSubText">(Quy đổi gói bảo hiểm, GD DMS 18/05/2025 - 31/05/2025.)</p>
+                        <p class="sub-label" id="insuranceCashSubText">(Quy đổi gói bảo hiểm, GD DMS 18/05/2025 - 31/05/2025. Không cùng MLTTVN L3.)</p>
                     </div>
                 </div>
 
@@ -1377,7 +1385,7 @@
 
             function setActiveSidebarLink() {
                 const navLinks = navMenu.querySelectorAll("a");
-                const currentPageFilename = "gia_styled_html.html";
+                const currentPageFilename = "gia_styled_html.html"; // Or dynamically get current page
 
                 navLinks.forEach(link => {
                     link.classList.remove("active");
@@ -1392,7 +1400,7 @@
             window.logout = function() { console.log('Chức năng đăng xuất được gọi.'); window.location.href = "index.html"; }
 
 
-            // --- ORIGINAL SCRIPT FOR PRICE CALCULATION ---
+            // --- SCRIPT FOR PRICE CALCULATION (UPDATED) ---
             const BASE_PRICES_DISCONTINUED_GLOBAL = {
                 "VF 3 - Màu xanh GSM": 294000000, "VF 5S - S": 521000000, "VF 6S - S": 694000000,
                 "VF 7 - Base": 799000000, "VF 8 - Lux (discontinued)": 1019000000, "VF 8 - Plus (discontinued)": 1199000000,
@@ -1426,33 +1434,199 @@
                 "VF 8": { "Xanh lá nhạt (Urban Mint)": { cost: 12000000, description: "Màu Xanh lá nhạt (Urban Mint)" }, "Bạc (Desat Silver)": { cost: 12000000, description: "Màu Bạc (Desat Silver)" }, "Xanh lá đậm (Ivy Green)": { cost: 12000000, description: "Màu Xanh lá đậm (Ivy Green)" }, "Trắng (Infinity Blanc) + Nóc xám": { cost: 12000000, description: "Màu Trắng (Infinity Blanc) + Nóc xám" }, "Đen (Jet Black) + Nóc đồng": { cost: 12000000, description: "Màu Đen (Jet Black) + Nóc đồng" }, "Đỏ (Crimson Red) + Nóc đồng": { cost: 12000000, description: "Màu Đỏ (Crimson Red) + Nóc đồng" }, "Xám (Zenith Grey) + Nóc bạc": { cost: 12000000, description: "Màu Xám (Zenith Grey) + Nóc bạc" } },
                 "VF 9": { "captain_seats_6": { cost: 32000000, description: "6 chỗ ghế cơ trưởng" }, "panoramic_roof": { cost: 29000000, description: "Trần kính toàn cảnh" }, "Hồng (Rose metallic)": { cost: 8000000, description: "Màu Hồng (Rose metallic)" }, "Xanh lá (Tropical Jade)": { cost: 8000000, description: "Màu Xanh lá (Tropical Jade)" }, "Đen (Jet Black) + Nóc vàng": { cost: 3000000, description: "Màu Đen (Jet Black) + Nóc vàng" }, "Đỏ (Crimson Red) + Nóc trắng": { cost: 3000000, description: "Màu Đỏ (Crimson Red) + Nóc trắng" }, "Bạc (Desat Silver) + Nóc đen": { cost: 3000000, description: "Màu Bạc (Desat Silver) + Nóc đen" }, "Vàng (Summer Yellow) + Nóc trắng": { cost: 3000000, description: "Màu Vàng (Summer Yellow) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc trắng": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc xanh GSM": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc xanh GSM" }, "Xanh lá (Tropical Jade) + Nóc trắng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc trắng" }, "Xanh lá (Tropical Jade) + Nóc vàng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc vàng" } }
             };
-            const VINFASCINATION_PROMO_VALUES = { "VF 3": 6000000, "VF 5": 11000000, "VF 6": 15000000, "VF 7": 18000000, "VF 8": 23000000, "VF 9": 33000000, "Herio Green": 10000000, "Nerio Green/VF e34": 14000000 };
-            const INSURANCE_CASH_EQUIVALENT = { "VF 3": 6500000, "VF 6": 20000000, "VF 7": 20000000, "VF 8": 30000000, "VF 9": 35000000 };
+            
+            // Chính sách mới từ PDF - Ngày 22/05/2025
+            const VF7_PLUS_CASH_PROMOTION_AMOUNT = 50000000;
+            const VF7_PLUS_DEPOSIT_START_DATE = new Date(Date.UTC(2025, 3, 21)); // 21/04/2025
+            const VF7_PLUS_DEPOSIT_END_DATE = new Date(Date.UTC(2025, 5, 30));   // 30/06/2025
+
+            const VINFASCINATION_PROMO_VALUES = { 
+                "VF 3": 6000000, "VF 5": 11000000, "VF 6": 15000000, "VF 7": 18000000, 
+                "VF 8": 23000000, "VF 9": 33000000, "Herio Green": 10000000, 
+                "Nerio Green/VF e34": 14000000 
+            };
+            const VINFAS_INVOICE_START_DATE = new Date(Date.UTC(2025, 3, 24)); // 24/04/2025
+            const VINFAS_INVOICE_END_DATE = new Date(Date.UTC(2025, 4, 31));   // 31/05/2025
+            const VINFAS_CASH_CONVERSION_START_DATE = new Date(Date.UTC(2025, 4, 13)); // 13/05/2025
+
+            const INSURANCE_CASH_EQUIVALENT = { 
+                "VF 3": 6500000, "VF 6": 20000000, "VF 7": 20000000, 
+                "VF 8": 30000000, "VF 9": 35000000 
+            };
+            const INSURANCE_INVOICE_START_DATE = new Date(Date.UTC(2025, 4, 18)); // 18/05/2025
+            const INSURANCE_INVOICE_END_DATE = new Date(Date.UTC(2025, 4, 31));   // 31/05/2025
+
+            const MANH_LIET_TINH_THAN_VN3_PERCENTAGE = 0.04; // 4%
+            const MLTTVN3_INVOICE_START_DATE = new Date(Date.UTC(2025, 4, 22)); // 22/05/2025
+            const MLTTVN3_INVOICE_END_DATE = new Date(Date.UTC(2025, 11, 31));  // 31/12/2025
+            // Vinfascination and MLTTVN3 can be applied together if invoice date is 22/05/2025 - 31/05/2025
 
 
             function getGeneralModelType(detailedModelKey) { if (!detailedModelKey || typeof detailedModelKey !== 'string') return null; if (detailedModelKey.startsWith("VF 3")) return "VF 3"; if (detailedModelKey.startsWith("VF 5")) return "VF 5"; if (detailedModelKey.startsWith("VF 6")) return "VF 6"; if (detailedModelKey.startsWith("VF 7")) return "VF 7"; if (detailedModelKey.startsWith("VF 8")) return "VF 8"; if (detailedModelKey.startsWith("VF 9")) return "VF 9"; if (detailedModelKey.startsWith("Herio Green")) return "Herio Green"; if (detailedModelKey.startsWith("Nerio Green") || detailedModelKey.startsWith("VF e34")) return "Nerio Green/VF e34"; if (detailedModelKey.startsWith("Minio Green")) return "Minio Green"; if (detailedModelKey.startsWith("EC Van")) return "EC Van"; if (detailedModelKey.startsWith("Limo Green")) return "Limo Green"; return null; }
             function parseDateStr(dateValue) { if (!dateValue) return null; if (dateValue instanceof Date) return dateValue; const parts = dateValue.split('-'); if (parts.length === 3) { const year = parseInt(parts[0], 10); const month = parseInt(parts[1], 10) - 1; const day = parseInt(parts[2], 10); if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 0 && month <= 11 && day >= 1 && day <= 31) { const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } } } let dateString = dateValue.toString().replace(/[^0-9]/g, ""); if (dateString.length !== 8) return null; try { const year = parseInt(dateString.substring(0, 4), 10); const month = parseInt(dateString.substring(4, 6), 10) - 1; const day = parseInt(dateString.substring(6, 8), 10); if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return null; const dateObj = new Date(Date.UTC(year, month, day)); if (dateObj.getUTCFullYear() === year && dateObj.getUTCMonth() === month && dateObj.getUTCDate() === day) { return dateObj; } return null; } catch (e) { return null; } }
             function formatDateToYYYYMMDD(dateObj) { if (!dateObj || !(dateObj instanceof Date)) return null; let year = dateObj.getUTCFullYear(); let month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0'); let day = dateObj.getUTCDate().toString().padStart(2, '0'); return `${year}${month}${day}`; }
+            function formatDateToDDMMYYYY(dateObj) { if (!dateObj || !(dateObj instanceof Date)) return 'N/A'; let day = dateObj.getUTCDate().toString().padStart(2, '0'); let month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0'); let year = dateObj.getUTCFullYear(); return `${day}/${month}/${year}`; }
+            
             function calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo) {
                 const VIN_YEAR_DISCOUNTS = { "2024": { "VF 3": 10000000, "VF 5": 15000000, "VF 6": 20000000, "VF 7": 20000000, "VF 8": 50000000, "VF 9": 50000000 }, "2023": { "VF 5": 25000000, "VF 6": 40000000, "VF 8": 100000000, "VF 9": 200000000 }, "2022": { "VF 8": 130000000 } };
                 const SDI_BATTERY_DISCOUNTS = { "VF 8 Eco": 104000000, "VF 8 Plus": 110000000, "VF 9 Eco": 125000000, "VF 9 Plus": 135000000 };
                 const VF9_2_ZONE_AC_DISCOUNT = { "VF 9 Eco": 15000000, "VF 9 Plus": 15000000 };
-                const VF7_PLUS_CASH_PROMOTION_AMOUNT = 50000000;
-                let nhatKyTinhToan = []; let ghiChu = ["Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."]; let giaHienTai = 0;
-                if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { giaHienTai = baseMsrp; if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY (xe hiện tại tự động): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } else if (BASE_PRICES_DISCONTINUED_GLOBAL.hasOwnProperty(modelKey) && BASE_PRICES_DISCONTINUED_GLOBAL[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY: ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } } else { ghiChu.push("LỖI: Không có Giá NY gốc hợp lệ. Cần nhập cho xe mới/hiện tại hoặc Mã Model không đúng."); return { invoicePrice: 0, customerPrice: 0, basePriceUsed: 0, priceBaseForPercentageDiscount: 0, vinfascinationCashApplied: 0, insuranceCashApplied: 0, tradeInApplied: 0, calculationLog: nhatKyTinhToan, notes: ghiChu }; }
-                let giaSauKMCodinh = giaHienTai; const loaiXeChung = getGeneralModelType(modelKey); const chiTietModel = modelKey ? modelKey.split(" - ") : [""]; const modelChinh = chiTietModel[0]; const phienBan = chiTietModel.length > 1 ? chiTietModel[1] : "";
-                if (vinYear && VIN_YEAR_DISCOUNTS[vinYear] && VIN_YEAR_DISCOUNTS[vinYear][modelChinh]) { let mucGiamGia = VIN_YEAR_DISCOUNTS[vinYear][modelChinh]; let duDieuKien = true; if (modelChinh === "VF 9" && vinYear === "2023") { const ngayMuaHang = parseDateStr(eligibilityInfo.purchaseDateStr_VF9_VIN2023); const ngayBatDauKM = new Date(Date.UTC(2024, 10, 14)); const ngayKetThucKM = new Date(Date.UTC(2025, 5, 30)); if (!ngayMuaHang || ngayMuaHang < ngayBatDauKM || ngayMuaHang > ngayKetThucKM) { duDieuKien = false; ghiChu.push(`Giảm giá VF 9 VIN 2023 không áp dụng: Ngày mua (${eligibilityInfo.purchaseDateStr_VF9_VIN2023_orig || 'N/A'}) ngoài thời gian (14/11/2024 - 30/06/2025).`); } } if (duDieuKien) { giaSauKMCodinh -= mucGiamGia; nhatKyTinhToan.push({ step: "A1", type: "discount", description: `Giảm giá năm VIN ${vinYear} cho ${modelChinh}`, amount: -mucGiamGia, current_subtotal: giaSauKMCodinh }); } }
+                
+                let nhatKyTinhToan = []; 
+                let ghiChu = ["Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."]; 
+                let giaHienTai = 0; 
+                let originalMsrpForMltvnl3 = 0; // Store the original MSRP for MLTTVN3 calculation
+
+                if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { 
+                    giaHienTai = baseMsrp; 
+                    originalMsrpForMltvnl3 = baseMsrp; // Capture original MSRP here
+                    if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY (xe hiện tại tự động): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
+                    else if (BASE_PRICES_DISCONTINUED_GLOBAL.hasOwnProperty(modelKey) && BASE_PRICES_DISCONTINUED_GLOBAL[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY: ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
+                    else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
+                } else { 
+                    ghiChu.push("LỖI: Không có Giá NY gốc hợp lệ. Cần nhập cho xe mới/hiện tại hoặc Mã Model không đúng."); 
+                    return { invoicePrice: 0, customerPrice: 0, basePriceUsed: 0, priceBaseForPercentageDiscount: 0, vinfascinationCashApplied: 0, insuranceCashApplied: 0, manhLietTinhThanVn3AppliedAmount: 0, tradeInApplied: 0, calculationLog: nhatKyTinhToan, notes: ghiChu }; 
+                }
+                
+                let giaSauKMCodinh = giaHienTai; 
+                const loaiXeChung = getGeneralModelType(modelKey); 
+                const chiTietModel = modelKey ? modelKey.split(" - ") : [""]; 
+                const modelChinh = chiTietModel[0]; 
+                const phienBan = chiTietModel.length > 1 ? chiTietModel[1] : "";
+                
+                if (vinYear && VIN_YEAR_DISCOUNTS[vinYear] && VIN_YEAR_DISCOUNTS[vinYear][modelChinh]) { 
+                    let mucGiamGia = VIN_YEAR_DISCOUNTS[vinYear][modelChinh]; 
+                    let duDieuKien = true; 
+                    if (modelChinh === "VF 9" && vinYear === "2023") { 
+                        const ngayMuaHang = parseDateStr(eligibilityInfo.purchaseDateStr_VF9_VIN2023); 
+                        const ngayBatDauKM = new Date(Date.UTC(2024, 10, 14)); 
+                        const ngayKetThucKM = new Date(Date.UTC(2025, 5, 30)); 
+                        if (!ngayMuaHang || ngayMuaHang < ngayBatDauKM || ngayMuaHang > ngayKetThucKM) { 
+                            duDieuKien = false; 
+                            ghiChu.push(`Giảm giá VF 9 VIN 2023 không áp dụng: Ngày mua (${eligibilityInfo.purchaseDateStr_VF9_VIN2023_orig || 'N/A'}) ngoài thời gian (14/11/2024 - 30/06/2025).`); 
+                        } 
+                    } 
+                    if (duDieuKien) { 
+                        giaSauKMCodinh -= mucGiamGia; 
+                        nhatKyTinhToan.push({ step: "A1", type: "discount", description: `Giảm giá năm VIN ${vinYear} cho ${modelChinh}`, amount: -mucGiamGia, current_subtotal: giaSauKMCodinh }); 
+                    } 
+                }
                 const keyTraCuuCauHinh = loaiXeChung && phienBan ? (loaiXeChung + " " + phienBan.replace(" (discontinued)", "").replace(/\(.*\)/, "").trim()) : null;
-                if (options && keyTraCuuCauHinh) { if (options.isSdiBattery_VF8_VF9 && (loaiXeChung === "VF 8" || loaiXeChung === "VF 9")) { if (SDI_BATTERY_DISCOUNTS[keyTraCuuCauHinh]) { const mucGiamPinSDI = SDI_BATTERY_DISCOUNTS[keyTraCuuCauHinh]; giaSauKMCodinh -= mucGiamPinSDI; nhatKyTinhToan.push({ step: "A2.1", type: "discount", description: `Giảm giá pin SDI cho ${keyTraCuuCauHinh}`, amount: -mucGiamPinSDI, current_subtotal: giaSauKMCodinh }); } else { ghiChu.push(`Không có thông tin giảm giá pin SDI cho ${keyTraCuuCauHinh}.`); } } if (options.is2ZoneAC_VF9 && loaiXeChung === "VF 9") { if (VF9_2_ZONE_AC_DISCOUNT[keyTraCuuCauHinh]) { const mucGiamDH2Vung = VF9_2_ZONE_AC_DISCOUNT[keyTraCuuCauHinh]; giaSauKMCodinh -= mucGiamDH2Vung; nhatKyTinhToan.push({ step: "A2.2", type: "discount", description: `Giảm giá điều hòa 2 vùng cho ${keyTraCuuCauHinh}`, amount: -mucGiamDH2Vung, current_subtotal: giaSauKMCodinh }); } else { ghiChu.push(`Không có thông tin giảm giá ĐH 2 vùng cho ${keyTraCuuCauHinh}.`); } } }
-                if (options && loaiXeChung) { if (loaiXeChung === "VF 9") { if (options.hasCaptainSeats_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]) { const item = OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]; giaSauKMCodinh += item.cost; nhatKyTinhToan.push({ step: "A3.1", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh }); } if (options.hasPanoramicRoof_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"]) { const item = OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"]; giaSauKMCodinh += item.cost; nhatKyTinhToan.push({ step: "A3.2", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh }); } } if (options.selectedAdvancedColor && OPTIONAL_EQUIPMENT[loaiXeChung] && OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]) { const colorOption = OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]; giaSauKMCodinh += colorOption.cost; nhatKyTinhToan.push({ step: "A3.3", type: colorOption.cost >= 0 ? "surcharge" : "discount", description: colorOption.description, amount: colorOption.cost, current_subtotal: giaSauKMCodinh }); } }
-                if (modelKey && modelKey.includes("VF 7 - Plus") && eligibilityInfo.applyVf7PlusCashback) { const ngayDatCoc = parseDateStr(eligibilityInfo.depositDateStr_VF7Plus); const ngayBatDauKM_VF7 = new Date(Date.UTC(2025, 3, 21)); const ngayKetThucKM_VF7 = new Date(Date.UTC(2025, 5, 30)); if (ngayDatCoc && ngayDatCoc >= ngayBatDauKM_VF7 && ngayDatCoc <= ngayKetThucKM_VF7) { giaSauKMCodinh -= VF7_PLUS_CASH_PROMOTION_AMOUNT; nhatKyTinhToan.push({ step: "A4", type: "promotion", description: "Khuyến mãi tiền mặt VF 7 Plus", amount: -VF7_PLUS_CASH_PROMOTION_AMOUNT, current_subtotal: giaSauKMCodinh }); } else { ghiChu.push(`KM VF 7 Plus không áp dụng: Ngày đặt cọc (${eligibilityInfo.depositDateStr_VF7Plus_orig || 'N/A'}) ngoài thời gian (21/04/2025 - 30/06/2025).`); } }
-                nhatKyTinhToan.push({ step: "A_END", type: "subtotal", description: "Giá sau các KM/phí cố định", amount: giaSauKMCodinh, current_subtotal: giaSauKMCodinh });
-                const dmsTransactionDate = parseDateStr(eligibilityInfo.dmsTransactionDateStr); let vinfascinationPotential = 0; let insurancePotential = 0;
-                if (eligibilityInfo.applyVinfascination && loaiXeChung && VINFASCINATION_PROMO_VALUES[loaiXeChung]) { const ngayBatDauKM_VF = new Date(Date.UTC(2025, 3, 24)); const ngayKetThucKM_VF = new Date(Date.UTC(2025, 4, 31)); const ngayQuyDoiTienMat_VF = new Date(Date.UTC(2025, 4, 13)); if (dmsTransactionDate && dmsTransactionDate >= ngayBatDauKM_VF && dmsTransactionDate <= ngayKetThucKM_VF) { if (dmsTransactionDate >= ngayQuyDoiTienMat_VF) { vinfascinationPotential = VINFASCINATION_PROMO_VALUES[loaiXeChung]; } else { ghiChu.push(`VINFASCINATION (${loaiXeChung}) áp dụng (điểm), chưa đến hạn quy đổi tiền mặt (13/05/2025) dựa trên Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}).`); } } else { ghiChu.push(`VINFASCINATION (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (24/04/2025 - 31/05/2025).`); } }
-                if (eligibilityInfo.takeInsuranceCash && loaiXeChung && INSURANCE_CASH_EQUIVALENT[loaiXeChung]) { const ngayBatDauKM_BH = new Date(Date.UTC(2025, 4, 18)); const ngayKetThucKM_BH = new Date(Date.UTC(2025, 4, 31)); if (dmsTransactionDate && dmsTransactionDate >= ngayBatDauKM_BH && dmsTransactionDate <= ngayKetThucKM_BH) { insurancePotential = INSURANCE_CASH_EQUIVALENT[loaiXeChung]; } else { ghiChu.push(`Ưu đãi bảo hiểm (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (18/05/2025 - 31/05/2025).`); } } else if (eligibilityInfo.takeInsuranceCash && loaiXeChung && !INSURANCE_CASH_EQUIVALENT[loaiXeChung]) { ghiChu.push(`Không có thông tin quy đổi tiền mặt BH cho ${loaiXeChung}.`); }
+                if (options && keyTraCuuCauHinh) { 
+                    if (options.isSdiBattery_VF8_VF9 && (loaiXeChung === "VF 8" || loaiXeChung === "VF 9")) { 
+                        if (SDI_BATTERY_DISCOUNTS[keyTraCuuCauHinh]) { 
+                            const mucGiamPinSDI = SDI_BATTERY_DISCOUNTS[keyTraCuuCauHinh]; 
+                            giaSauKMCodinh -= mucGiamPinSDI; 
+                            nhatKyTinhToan.push({ step: "A2.1", type: "discount", description: `Giảm giá pin SDI cho ${keyTraCuuCauHinh}`, amount: -mucGiamPinSDI, current_subtotal: giaSauKMCodinh }); 
+                        } else { 
+                            ghiChu.push(`Không có thông tin giảm giá pin SDI cho ${keyTraCuuCauHinh}.`); 
+                        } 
+                    } 
+                    if (options.is2ZoneAC_VF9 && loaiXeChung === "VF 9") { 
+                        if (VF9_2_ZONE_AC_DISCOUNT[keyTraCuuCauHinh]) { 
+                            const mucGiamDH2Vung = VF9_2_ZONE_AC_DISCOUNT[keyTraCuuCauHinh]; 
+                            giaSauKMCodinh -= mucGiamDH2Vung; 
+                            nhatKyTinhToan.push({ step: "A2.2", type: "discount", description: `Giảm giá điều hòa 2 vùng cho ${keyTraCuuCauHinh}`, amount: -mucGiamDH2Vung, current_subtotal: giaSauKMCodinh }); 
+                        } else { 
+                            ghiChu.push(`Không có thông tin giảm giá ĐH 2 vùng cho ${keyTraCuuCauHinh}.`); 
+                        } 
+                    } 
+                }
+                
+                let advancedColorCostApplied = 0; // Initialize advanced color cost
+                if (options && loaiXeChung) { 
+                    if (loaiXeChung === "VF 9") { 
+                        if (options.hasCaptainSeats_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]) { 
+                            const item = OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]; 
+                            giaSauKMCodinh += item.cost; 
+                            nhatKyTinhToan.push({ step: "A3.1", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh }); 
+                        } 
+                        if (options.hasPanoramicRoof_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"]) { 
+                            const item = OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"]; 
+                            giaSauKMCodinh += item.cost; 
+                            nhatKyTinhToan.push({ step: "A3.2", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh }); 
+                        } 
+                    } 
+                    if (options.selectedAdvancedColor && OPTIONAL_EQUIPMENT[loaiXeChung] && OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]) { 
+                        const colorOption = OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor]; 
+                        giaSauKMCodinh += colorOption.cost; 
+                        if (colorOption.cost > 0) { // Only add positive costs (surcharges) for MLTTVN3 base
+                           advancedColorCostApplied = colorOption.cost;
+                        }
+                        nhatKyTinhToan.push({ step: "A3.3", type: colorOption.cost >= 0 ? "surcharge" : "discount", description: colorOption.description, amount: colorOption.cost, current_subtotal: giaSauKMCodinh }); 
+                    } 
+                }
+                
+                if (modelKey && modelKey.includes("VF 7 - Plus") && eligibilityInfo.applyVf7PlusCashback) { 
+                    const ngayDatCoc = parseDateStr(eligibilityInfo.depositDateStr_VF7Plus);
+                    if (ngayDatCoc && ngayDatCoc >= VF7_PLUS_DEPOSIT_START_DATE && ngayDatCoc <= VF7_PLUS_DEPOSIT_END_DATE) { 
+                        giaSauKMCodinh -= VF7_PLUS_CASH_PROMOTION_AMOUNT; 
+                        nhatKyTinhToan.push({ step: "A4", type: "promotion", description: `KM tiền mặt VF 7 Plus (đặt cọc ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`, amount: -VF7_PLUS_CASH_PROMOTION_AMOUNT, current_subtotal: giaSauKMCodinh }); 
+                    } else { 
+                        ghiChu.push(`KM VF 7 Plus không áp dụng: Ngày đặt cọc (${eligibilityInfo.depositDateStr_VF7Plus_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)}).`); 
+                    } 
+                }
+
+                const dmsTransactionDate = parseDateStr(eligibilityInfo.dmsTransactionDateStr);
+                let manhLietTinhThanVn3DiscountAmount = 0;
+                let mlttvn3AppliedThisTime = false; 
+
+                if (eligibilityInfo.applyManhLietTinhThanVietNamPromo) {
+                    if (dmsTransactionDate && dmsTransactionDate >= MLTTVN3_INVOICE_START_DATE && dmsTransactionDate <= MLTTVN3_INVOICE_END_DATE) {
+                        const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied; // Use original MSRP + advanced color cost
+                        manhLietTinhThanVn3DiscountAmount = Math.round(baseForMltvnl3 * MANH_LIET_TINH_THAN_VN3_PERCENTAGE);
+                        
+                        giaSauKMCodinh -= manhLietTinhThanVn3DiscountAmount;
+                        mlttvn3AppliedThisTime = true;
+                        nhatKyTinhToan.push({
+                            step: "A5", type: "promotion", 
+                            description: `KM Mãnh liệt tinh thần VN L3 (${(MANH_LIET_TINH_THAN_VN3_PERCENTAGE * 100).toFixed(0)}% trên [NY${advancedColorCostApplied > 0 ? ' + Màu NC' : ''}]: ${formatCurrency(baseForMltvnl3)}). HĐ ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}`,
+                            amount: -manhLietTinhThanVn3DiscountAmount, current_subtotal: giaSauKMCodinh
+                        });
+                        if (eligibilityInfo.takeInsuranceCash) { 
+                            ghiChu.push("LƯU Ý: KM 'Mãnh liệt tinh thần VN L3' và 'Ưu đãi bảo hiểm 2 năm' không áp dụng đồng thời. Ưu đãi bảo hiểm đã bị bỏ qua.");
+                            eligibilityInfo.takeInsuranceCash = false; 
+                        }
+                    } else {
+                        ghiChu.push(`KM Mãnh liệt tinh thần VN L3 không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}).`);
+                    }
+                }
+                
+                nhatKyTinhToan.push({ step: "A_END", type: "subtotal", description: "Giá sau các KM/phí cố định & MLTTVN3", amount: giaSauKMCodinh, current_subtotal: giaSauKMCodinh });
+                
+                let vinfascinationPotential = 0; let insurancePotential = 0;
+                
+                if (eligibilityInfo.applyVinfascination && loaiXeChung && VINFASCINATION_PROMO_VALUES[loaiXeChung]) { 
+                    if (dmsTransactionDate && dmsTransactionDate >= VINFAS_INVOICE_START_DATE && dmsTransactionDate <= VINFAS_INVOICE_END_DATE) { 
+                        if (dmsTransactionDate >= VINFAS_CASH_CONVERSION_START_DATE) { 
+                            vinfascinationPotential = VINFASCINATION_PROMO_VALUES[loaiXeChung]; 
+                        } else { 
+                            ghiChu.push(`VINFASCINATION (${loaiXeChung}) áp dụng (điểm), chưa đến hạn quy đổi tiền mặt (${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}) dựa trên Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}).`); 
+                        } 
+                    } else { 
+                        ghiChu.push(`VINFASCINATION (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}).`); 
+                    } 
+                }
+                
+                if (eligibilityInfo.takeInsuranceCash && !mlttvn3AppliedThisTime) { 
+                    if (loaiXeChung && INSURANCE_CASH_EQUIVALENT[loaiXeChung]) { 
+                        if (dmsTransactionDate && dmsTransactionDate >= INSURANCE_INVOICE_START_DATE && dmsTransactionDate <= INSURANCE_INVOICE_END_DATE) { 
+                            insurancePotential = INSURANCE_CASH_EQUIVALENT[loaiXeChung]; 
+                        } else { 
+                            ghiChu.push(`Ưu đãi bảo hiểm (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}).`); 
+                        } 
+                    } else if (loaiXeChung) { 
+                        ghiChu.push(`Không có thông tin quy đổi tiền mặt BH cho ${loaiXeChung}.`); 
+                    }
+                } else if (eligibilityInfo.takeInsuranceCash && mlttvn3AppliedThisTime) {
+                     ghiChu.push("KM Bảo hiểm không được áp dụng do đã chọn KM 'Mãnh liệt tinh thần VN L3'.");
+                     insurancePotential = 0; 
+                }
+
                 let priceBaseForPercentageDiscount = giaSauKMCodinh; let vinfasUsedForPercentageBase = 0; let insuranceUsedForPercentageBase = 0;
-                if (eligibilityInfo.applyVinfascination && vinfascinationPotential > 0) { priceBaseForPercentageDiscount -= vinfascinationPotential; vinfasUsedForPercentageBase = vinfascinationPotential; nhatKyTinhToan.push({ step: "B_P1", type: "interim_discount_for_percentage_base", description: `Trừ KM VINFASCINATION`, amount: -vinfascinationPotential, current_subtotal: priceBaseForPercentageDiscount }); }
-                if (eligibilityInfo.takeInsuranceCash && insurancePotential > 0) { priceBaseForPercentageDiscount -= insurancePotential; insuranceUsedForPercentageBase = insurancePotential; nhatKyTinhToan.push({ step: "B_P2", type: "interim_discount_for_percentage_base", description: `Trừ KM Bảo hiểm`, amount: -insurancePotential, current_subtotal: priceBaseForPercentageDiscount }); }
+                if (eligibilityInfo.applyVinfascination && vinfascinationPotential > 0) { priceBaseForPercentageDiscount -= vinfascinationPotential; vinfasUsedForPercentageBase = vinfascinationPotential; nhatKyTinhToan.push({ step: "B_P1", type: "interim_discount_for_percentage_base", description: `Trừ KM VINFASCINATION (HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)})`, amount: -vinfascinationPotential, current_subtotal: priceBaseForPercentageDiscount }); }
+                if (eligibilityInfo.takeInsuranceCash && insurancePotential > 0 && !mlttvn3AppliedThisTime) { priceBaseForPercentageDiscount -= insurancePotential; insuranceUsedForPercentageBase = insurancePotential; nhatKyTinhToan.push({ step: "B_P2", type: "interim_discount_for_percentage_base", description: `Trừ KM Bảo hiểm (HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)})`, amount: -insurancePotential, current_subtotal: priceBaseForPercentageDiscount }); }
+                
                 nhatKyTinhToan.push({ step: "B_P_END", type: "info", description: "Giá làm cơ sở tính KM Vinclub/Corp", amount: priceBaseForPercentageDiscount, current_subtotal: priceBaseForPercentageDiscount });
                 let giaSauGiamPhanTram = priceBaseForPercentageDiscount;
                 if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) { const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]; const mucGiamVinclub = Math.round(priceBaseForPercentageDiscount * phanTramGiamVinclub); giaSauGiamPhanTram -= mucGiamVinclub; nhatKyTinhToan.push({ step: "C1", type: "discount_percentage", description: `Giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier} (${(phanTramGiamVinclub * 100).toFixed(1)}%)`, amount: -mucGiamVinclub, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); ghiChu.push(`Đã áp dụng giảm giá VinClub Hạng ${eligibilityInfo.vinClubTier}. Sẽ không áp dụng giảm giá Corp.`); } else if (eligibilityInfo.applyCorpDiscount === true) { const mucGiamCorp = Math.round(priceBaseForPercentageDiscount * CORP_DISCOUNT_PERCENTAGE); giaSauGiamPhanTram -= mucGiamCorp; nhatKyTinhToan.push({ step: "C2", type: "discount_percentage", description: `Giảm giá Corp (${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(1)}%)`, amount: -mucGiamCorp, base_for_percentage: priceBaseForPercentageDiscount, current_subtotal: giaSauGiamPhanTram }); }
@@ -1465,7 +1639,8 @@
                 if (insuranceUsedForPercentageBase > 0) { runningTotalForInvoice += insuranceUsedForPercentageBase; nhatKyTinhToan.push({ step: "E2_INV", type: "add_back_for_invoice", description: `Cộng lại KM Bảo hiểm vào giá HĐ`, amount: insuranceUsedForPercentageBase, current_subtotal: runningTotalForInvoice }); }
                 giaHoaDon = runningTotalForInvoice;
                 nhatKyTinhToan.push({ step: "INVOICE_PRICE", type: "final_price_invoice", description: "GIÁ TRÊN HỢP ĐỒNG/HÓA ĐƠN DỰ KIẾN", amount: giaHoaDon, current_subtotal: giaHoaDon });
-                return { invoicePrice: giaHoaDon, customerPrice: giaKhachHangThanhToan, basePriceUsed: giaHienTai, priceBaseForPercentageDiscount: priceBaseForPercentageDiscount, vinfascinationCashApplied: vinfasUsedForPercentageBase, insuranceCashApplied: insuranceUsedForPercentageBase, tradeInApplied: mucHoTroThuCuApplied, calculationLog: nhatKyTinhToan, notes: ghiChu };
+                
+                return { invoicePrice: giaHoaDon, customerPrice: giaKhachHangThanhToan, basePriceUsed: giaHienTai, priceBaseForPercentageDiscount: priceBaseForPercentageDiscount, vinfascinationCashApplied: vinfasUsedForPercentageBase, insuranceCashApplied: insuranceUsedForPercentageBase, manhLietTinhThanVn3AppliedAmount: mlttvn3AppliedThisTime ? manhLietTinhThanVn3DiscountAmount : 0, tradeInApplied: mucHoTroThuCuApplied, calculationLog: nhatKyTinhToan, notes: ghiChu };
             }
 
             const modelKeySelect = document.getElementById('modelKey');
@@ -1480,9 +1655,16 @@
             const depositDateVF7PlusInput = document.getElementById('depositDateStr_VF7Plus');
             const purchaseDateVF9VIN23Input = document.getElementById('purchaseDateStr_VF9_VIN2023');
             const applyVf7PlusCashbackCheckbox = document.getElementById('applyVf7PlusCashback');
+            const vf7PlusSubTextEl = document.getElementById('vf7PlusSubText');
 
+            const applyManhLietTinhThanVietNamPromoCheckbox = document.getElementById('applyManhLietTinhThanVietNamPromo');
+            const mlttvn3PromoItemContainer = document.getElementById('mlttvn3PromoItemContainer');
+            const mlttvn3SubTextEl = document.getElementById('mlttvn3SubText');
             const applyVinfascinationDynamicCheckbox = document.getElementById('applyVinfascinationDynamic');
+            const vinfascinationSubTextEl = document.getElementById('vinfascinationSubText');
             const takeInsuranceCashDynamicCheckbox = document.getElementById('takeInsuranceCashDynamic');
+            const insuranceCashSubTextEl = document.getElementById('insuranceCashSubText');
+
 
             const vinClubTierSelect = document.getElementById('vinClubTier');
             const applyCorpDiscountCheckbox = document.getElementById('applyCorpDiscount');
@@ -1519,7 +1701,7 @@
             const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
             const calculationLogCustomerPre = document.getElementById('calculationLogCustomer');
             const notesResultPre = document.getElementById('notesResult');
-            const guidanceTextElement = document.getElementById('guidanceText'); // New guidance element
+            const guidanceTextElement = document.getElementById('guidanceText'); 
 
             let currentHighlightedElement = null;
 
@@ -1528,7 +1710,6 @@
                 if (element && !element.classList.contains('input-disabled') && !element.readOnly) {
                     element.classList.add('highlight-guidance');
                     currentHighlightedElement = element;
-                    // element.focus(); // Optional: auto-focus
                 }
             }
 
@@ -1542,57 +1723,16 @@
 
             function updateGuidance(step = null, elementToHighlight = null) {
                 if (!guidanceTextElement) return;
-
                 let message = "";
                 switch (step) {
-                    case "initial":
-                        message = "Chào mừng bạn! Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe.";
-                        highlightNextStep(modelKeySelect);
-                        break;
-                    case "model_selected":
-                        message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong> (sẽ tự động điền nếu có), sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>.";
-                        highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput);
-                        break;
-                    case "common_fields_filled":
-                        message = "Thông tin chung đã nhập. Bây giờ, hãy xem xét các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> (nếu hiển thị và có áp dụng).";
-                        if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) {
-                             const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])');
-                             highlightNextStep(firstVisibleInputInModelSpecific);
-                        } else {
-                             highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'));
-                        }
-                        break;
-                    case "model_specific_done":
-                        message = "Các tuỳ chọn Model đã được xem xét. Tiếp theo, kiểm tra <strong>'Các chương trình khuyến mãi có thể áp dụng'</strong> (nếu hiển thị).";
-                         if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) {
-                             highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'));
-                        } else {
-                             highlightNextStep(calculateButton);
-                        }
-                        break;
-                    case "promos_done":
-                        message = "Tất cả thông tin cần thiết có vẻ đã được nhập. Bạn có thể nhấn nút <strong>'Tính Giá'</strong>.";
-                        highlightNextStep(calculateButton);
-                        break;
-                    case "calculation_done":
-                        message = "Đã tính giá! Xem kết quả bên dưới. Để tính lại với thông tin khác, bạn có thể thay đổi các trường hoặc nhấn <strong>'Xóa Dữ Liệu'</strong>.";
-                        removeHighlight();
-                        break;
-                    case "form_reset":
-                        message = "Dữ liệu đã được xóa. Vui lòng bắt đầu lại bằng cách chọn <strong>'Mã Model'</strong>.";
-                        highlightNextStep(modelKeySelect);
-                        break;
-                    default:
-                        if (modelKeySelect.value === "") {
-                            message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe.";
-                            highlightNextStep(modelKeySelect);
-                        } else if (!vinYearInput.value || !dmsTransactionDateInput.value) {
-                            message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>.";
-                            highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput);
-                        } else {
-                            message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>.";
-                            highlightNextStep(calculateButton);
-                        }
+                    case "initial": message = "Chào mừng bạn! Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); break;
+                    case "model_selected": message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong>, sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>."; highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput); break;
+                    case "common_fields_filled": message = "Thông tin chung đã nhập. Bây giờ, hãy xem xét các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> (nếu hiển thị và có áp dụng)."; if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) { const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])'); highlightNextStep(firstVisibleInputInModelSpecific || modelSpecificContainer.querySelector('input[type=checkbox]:not([disabled])')); } else { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } break;
+                    case "model_specific_done": message = "Các tuỳ chọn Model đã được xem xét. Tiếp theo, kiểm tra <strong>'Các chương trình khuyến mãi có thể áp dụng'</strong> (nếu hiển thị)."; if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } else { highlightNextStep(calculateButton); } break;
+                    case "promos_done": message = "Tất cả thông tin cần thiết có vẻ đã được nhập. Bạn có thể nhấn nút <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); break;
+                    case "calculation_done": message = "Đã tính giá! Xem kết quả bên dưới. Để tính lại, thay đổi thông tin hoặc nhấn <strong>'Xóa Dữ Liệu'</strong>."; removeHighlight(); break;
+                    case "form_reset": message = "Dữ liệu đã được xóa. Vui lòng bắt đầu lại bằng cách chọn <strong>'Mã Model'</strong>."; highlightNextStep(modelKeySelect); break;
+                    default: if (modelKeySelect.value === "") { message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); } else if (!vinYearInput.value || !dmsTransactionDateInput.value) { message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>."; highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput); } else { message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); }
                 }
                 guidanceTextElement.innerHTML = message;
                 if(elementToHighlight) highlightNextStep(elementToHighlight);
@@ -1604,149 +1744,35 @@
             function formatCurrency(number, includeUnit = false) { if (typeof number !== 'number' || isNaN(number)) { return "N/A"; } const formattedNumber = number.toLocaleString('vi-VN'); return includeUnit ? `${formattedNumber} VNĐ` : formattedNumber; }
 
             function formatCalculationDetailsForHTML(result, modelKey, priceType) {
-                if (!result || !result.calculationLog || result.calculationLog.length === 0) {
-                    return '<table><thead><tr><th>Không có chi tiết.</th></tr></thead></table>';
-                }
-                const table = document.createElement('table');
-                table.className = 'calculation-details-table';
-                const thead = table.createTHead();
-                const headerRow = thead.insertRow();
-                const thDesc = document.createElement('th');
-                thDesc.textContent = 'Nội dung/Chính sách';
-                headerRow.appendChild(thDesc);
-                const thChange = document.createElement('th');
-                thChange.textContent = 'MứcTăng/Giảm';
-                thChange.className = 'calculation-amount-header';
-                headerRow.appendChild(thChange);
-                const thSubtotal = document.createElement('th');
-                thSubtotal.textContent = 'Thành Tiền';
-                thSubtotal.className = 'calculation-subtotal-header';
-                headerRow.appendChild(thSubtotal);
-                const tbody = table.createTBody();
-                let percentageDiscountWasApplied = false;
-                const bpEndLogEntry = result.calculationLog.find(log => log.step === "B_P_END");
-                const cEndLogEntry = result.calculationLog.find(log => log.step === "C_END");
-                if (bpEndLogEntry && cEndLogEntry && bpEndLogEntry.amount !== cEndLogEntry.amount) {
-                    percentageDiscountWasApplied = true;
-                }
+                if (!result || !result.calculationLog || result.calculationLog.length === 0) { return '<table><thead><tr><th>Không có chi tiết.</th></tr></thead></table>'; }
+                const table = document.createElement('table'); table.className = 'calculation-details-table'; const thead = table.createTHead(); const headerRow = thead.insertRow(); const thDesc = document.createElement('th'); thDesc.textContent = 'Nội dung/Chính sách'; headerRow.appendChild(thDesc); const thChange = document.createElement('th'); thChange.textContent = 'MứcTăng/Giảm'; thChange.className = 'calculation-amount-header'; headerRow.appendChild(thChange); const thSubtotal = document.createElement('th'); thSubtotal.textContent = 'Thành Tiền'; thSubtotal.className = 'calculation-subtotal-header'; headerRow.appendChild(thSubtotal); const tbody = table.createTBody(); let percentageDiscountWasApplied = false; const bpEndLogEntry = result.calculationLog.find(log => log.step === "B_P_END"); const cEndLogEntry = result.calculationLog.find(log => log.step === "C_END"); if (bpEndLogEntry && cEndLogEntry && bpEndLogEntry.amount !== cEndLogEntry.amount) { percentageDiscountWasApplied = true; }
                 result.calculationLog.forEach(log => {
-                    let showThisLine = false;
-                    let isSubtotalRow = false;
-                    let rowClass = '';
-                    let amountChangeContent = '';
-                    if (log.type === 'base_price') {
-                        showThisLine = true;
-                        amountChangeContent = '-';
-                    } else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) {
-                    } else if (priceType === 'invoice' && log.type === 'final_price_customer' && log.step === 'CUSTOMER_PRICE') {
-                        showThisLine = true;
-                        isSubtotalRow = true;
-                        rowClass = 'calculation-details-subtotal-row';
-                        amountChangeContent = '-';
-                    } else if (log.type === 'subtotal' || log.type === 'info') {
-                        isSubtotalRow = true;
-                        if (log.step === "A_END" && log.amount !== result.basePriceUsed) showThisLine = true;
-                        else if (log.step === "B_P_END" && percentageDiscountWasApplied) showThisLine = true;
-                        else if (log.step === "C_END" && percentageDiscountWasApplied && bpEndLogEntry && log.amount !== bpEndLogEntry.amount) showThisLine = true;
-                        if(showThisLine) {
-                            rowClass = 'calculation-details-subtotal-row';
-                            amountChangeContent = '-';
-                        }
-                    } else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') {
-                        if (log.amount !== 0) {
-                             showThisLine = true;
-                             const amountPrefix = log.amount > 0 ? "+" : "";
-                             amountChangeContent = amountPrefix + formatCurrency(log.amount);
-                             if (log.amount > 0) rowClass = 'log-entry-positive';
-                             else if (log.amount < 0) rowClass = 'log-entry-negative';
-                             else rowClass = 'log-entry-neutral';
-                        }
-                    }
-                    if (showThisLine) {
-                        const row = tbody.insertRow();
-                        row.className = rowClass;
-                        const cellDesc = row.insertCell();
-                        cellDesc.textContent = log.description;
-                        cellDesc.className = 'calculation-description';
-                        const cellChange = row.insertCell();
-                        cellChange.textContent = amountChangeContent;
-                        cellChange.className = 'calculation-amount-change';
-                        const cellSubtotal = row.insertCell();
-                        cellSubtotal.textContent = formatCurrency(log.current_subtotal);
-                        cellSubtotal.className = 'calculation-current-subtotal';
-                        if (isSubtotalRow && showThisLine) {
-                            cellDesc.colSpan = 2;
-                            cellChange.style.display = 'none';
-                        }
-                    }
+                    let showThisLine = false; let isSubtotalRow = false; let rowClass = ''; let amountChangeContent = '';
+                    if (log.type === 'base_price') { showThisLine = true; amountChangeContent = '-'; } 
+                    else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) { /* Skip for customer log */ } 
+                    else if (priceType === 'invoice' && log.type === 'final_price_customer' && log.step === 'CUSTOMER_PRICE') { showThisLine = true; isSubtotalRow = true; rowClass = 'calculation-details-subtotal-row'; amountChangeContent = '-'; } 
+                    else if (log.type === 'subtotal' || log.type === 'info') { isSubtotalRow = true; if (log.step === "A_END" && log.amount !== result.basePriceUsed) showThisLine = true; else if (log.step === "B_P_END" && percentageDiscountWasApplied) showThisLine = true; else if (log.step === "C_END" && percentageDiscountWasApplied && bpEndLogEntry && log.amount !== bpEndLogEntry.amount) showThisLine = true; if(showThisLine) { rowClass = 'calculation-details-subtotal-row'; amountChangeContent = '-'; } } 
+                    else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') { if (log.amount !== 0) { showThisLine = true; const amountPrefix = log.amount > 0 ? "+" : ""; amountChangeContent = amountPrefix + formatCurrency(log.amount); if (log.amount > 0) rowClass = 'log-entry-positive'; else if (log.amount < 0) rowClass = 'log-entry-negative'; else rowClass = 'log-entry-neutral'; } }
+                    if (showThisLine) { const row = tbody.insertRow(); row.className = rowClass; const cellDesc = row.insertCell(); cellDesc.textContent = log.description; cellDesc.className = 'calculation-description'; const cellChange = row.insertCell(); cellChange.textContent = amountChangeContent; cellChange.className = 'calculation-amount-change'; const cellSubtotal = row.insertCell(); cellSubtotal.textContent = formatCurrency(log.current_subtotal); cellSubtotal.className = 'calculation-current-subtotal'; if (isSubtotalRow && showThisLine) { cellDesc.colSpan = 2; cellChange.style.display = 'none'; } }
                 });
-                const tfoot = table.createTFoot();
-                const footerRow = tfoot.insertRow();
-                const finalPriceValue = priceType === 'invoice' ? result.invoicePrice : result.customerPrice;
-                const finalPriceLabel = priceType === 'invoice' ? "Tổng Giá Hợp Đồng:" : "Tổng Số Tiền Khách Hàng Phải Trả:";
-                const cellFooterLabel = footerRow.insertCell();
-                cellFooterLabel.textContent = finalPriceLabel;
-                cellFooterLabel.colSpan = 2;
-                const cellFooterValue = footerRow.insertCell();
-                cellFooterValue.textContent = formatCurrency(finalPriceValue, true);
-                cellFooterValue.className = 'calculation-current-subtotal';
-                return table.outerHTML;
+                const tfoot = table.createTFoot(); const footerRow = tfoot.insertRow(); const finalPriceValue = priceType === 'invoice' ? result.invoicePrice : result.customerPrice; const finalPriceLabel = priceType === 'invoice' ? "Tổng Giá Hợp Đồng:" : "Tổng Số Tiền Khách Hàng Phải Trả:"; const cellFooterLabel = footerRow.insertCell(); cellFooterLabel.textContent = finalPriceLabel; cellFooterLabel.colSpan = 2; const cellFooterValue = footerRow.insertCell(); cellFooterValue.textContent = formatCurrency(finalPriceValue, true); cellFooterValue.className = 'calculation-current-subtotal'; return table.outerHTML;
             }
 
             function updateFormInputsVisibility(modelKey) {
                 const generalModelType = getGeneralModelType(modelKey);
-
-                const toggleVisibility = (element, isVisible) => {
-                    if (!element) return;
-                    const inputElements = element.querySelectorAll('input, select');
-                    if (isVisible) {
-                        element.classList.remove('hidden');
-                        inputElements.forEach(el => {
-                            el.disabled = false;
-                            el.classList.remove('input-disabled');
-                        });
-                    } else {
-                        element.classList.add('hidden');
-                        inputElements.forEach(el => {
-                            if (el.type === 'checkbox') el.checked = false;
-                            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                            else el.value = '';
-                            el.disabled = true;
-                            el.classList.add('input-disabled');
-                        });
-                    }
-                };
-                 const toggleItemVisibility = (itemContainer, checkboxElement, isApplicable) => {
-                    if (!itemContainer) return;
-                    if (isApplicable) {
-                        itemContainer.classList.remove('hidden');
-                        if (checkboxElement) checkboxElement.disabled = false;
-                    } else {
-                        itemContainer.classList.add('hidden');
-                        if (checkboxElement) {
-                            checkboxElement.checked = false;
-                            checkboxElement.disabled = true;
-                        }
-                    }
-                };
-
-                const allModelSpecificDivs = [
-                    vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv,
-                    advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv,
-                    vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv
-                ];
+                const toggleVisibility = (element, isVisible) => { if (!element) return; const inputElements = element.querySelectorAll('input, select'); if (isVisible) { element.classList.remove('hidden'); inputElements.forEach(el => { el.disabled = false; el.classList.remove('input-disabled'); }); } else { element.classList.add('hidden'); inputElements.forEach(el => { if (el.type === 'checkbox') el.checked = false; else if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; el.disabled = true; el.classList.add('input-disabled'); }); } };
+                const toggleItemVisibility = (itemContainer, checkboxElement, isApplicable) => { if (!itemContainer) return; if (isApplicable) { itemContainer.classList.remove('hidden'); if (checkboxElement) checkboxElement.disabled = false; } else { itemContainer.classList.add('hidden'); if (checkboxElement) { checkboxElement.checked = false; checkboxElement.disabled = true; } } };
+                const allModelSpecificDivs = [ vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv ];
                 allModelSpecificDivs.forEach(div => toggleVisibility(div, false));
 
                 if (!modelKey) {
-                    baseMsrpInput.value = '';
-                    baseMsrpInput.readOnly = false;
-                    baseMsrpInput.classList.remove('input-disabled');
+                    baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled');
                     if(modelSpecificContainer) modelSpecificContainer.classList.add('hidden');
                     if(applicableGeneralPromosContainer) applicableGeneralPromosContainer.classList.add('hidden');
+                    toggleItemVisibility(mlttvn3PromoItemContainer, applyManhLietTinhThanVietNamPromoCheckbox, false);
                     toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, false);
                     toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, false);
-                    updateGuidance("initial"); // Update guidance
-                    return;
+                    updateGuidance("initial"); return;
                 }
 
                 toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType));
@@ -1754,190 +1780,124 @@
                 toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9");
                 toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9");
                 toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9");
-                toggleVisibility(vf7PlusOptionsDateDiv, modelKey && modelKey.includes("VF 7 - Plus"));
-                toggleVisibility(vf7PlusOptionsPromoDiv, modelKey && modelKey.includes("VF 7 - Plus"));
+                const isVf7Plus = modelKey && modelKey.includes("VF 7 - Plus");
+                toggleVisibility(vf7PlusOptionsDateDiv, isVf7Plus);
+                toggleVisibility(vf7PlusOptionsPromoDiv, isVf7Plus);
+                if (vf7PlusSubTextEl && isVf7Plus) { vf7PlusSubTextEl.textContent = `(Áp dụng cho KH đặt cọc VF7 Plus từ ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} đến ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`; }
+
 
                 const tradeInEligibleModels = ["VF 6", "VF 7", "VF 8", "VF 9"];
                 toggleVisibility(tradeInOldCarTypeDiv, tradeInEligibleModels.includes(generalModelType));
 
                 if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
                 let hasAdvancedColors = false;
-                if (generalModelType && OPTIONAL_EQUIPMENT[generalModelType]) {
-                    const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof");
-                    if (colors.length > 0) {
-                        hasAdvancedColors = true;
-                        if (selectedAdvancedColorSelect) {
-                            colors.forEach(colorKey => {
-                                const option = document.createElement('option');
-                                option.value = colorKey;
-                                option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description;
-                                selectedAdvancedColorSelect.appendChild(option);
-                            });
-                        }
-                    }
-                }
+                if (generalModelType && OPTIONAL_EQUIPMENT[generalModelType]) { const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof"); if (colors.length > 0) { hasAdvancedColors = true; if (selectedAdvancedColorSelect) { colors.forEach(colorKey => { const option = document.createElement('option'); option.value = colorKey; option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description; selectedAdvancedColorSelect.appendChild(option); }); } } }
                 toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors);
 
-                let anyModelOptionVisible = false;
-                allModelSpecificDivs.forEach(div => {
-                    if (div && !div.classList.contains('hidden')) {
-                        anyModelOptionVisible = true;
-                    }
-                });
-
-                if (anyModelOptionVisible && modelSpecificContainer && modelSpecificHeader) {
-                    modelSpecificContainer.classList.remove('hidden');
-                    const selectedModelOption = modelKeySelect.options[modelKeySelect.selectedIndex];
-                    modelSpecificHeader.textContent = `Tuỳ chọn & Chính sách riêng cho ${selectedModelOption ? selectedModelOption.text : 'Model'}`;
-                } else if (modelSpecificContainer) {
-                    modelSpecificContainer.classList.add('hidden');
-                }
+                let anyModelOptionVisible = false; allModelSpecificDivs.forEach(div => { if (div && !div.classList.contains('hidden')) { anyModelOptionVisible = true; } });
+                if (anyModelOptionVisible && modelSpecificContainer && modelSpecificHeader) { modelSpecificContainer.classList.remove('hidden'); const selectedModelOption = modelKeySelect.options[modelKeySelect.selectedIndex]; modelSpecificHeader.textContent = `Tuỳ chọn & Chính sách riêng cho ${selectedModelOption ? selectedModelOption.text : 'Model'}`; } else if (modelSpecificContainer) { modelSpecificContainer.classList.add('hidden'); }
 
                 let generalPromoSectionVisible = false;
+                const mlttvn3Applicable = !!modelKey; // Show if a model is selected
+                toggleItemVisibility(mlttvn3PromoItemContainer, applyManhLietTinhThanVietNamPromoCheckbox, mlttvn3Applicable);
+                if (mlttvn3Applicable && mlttvn3SubTextEl) { mlttvn3SubTextEl.textContent = `(Giảm 4% giá NY + màu NC (nếu có). HĐ từ ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}. Không cùng BH 2 năm.)`; generalPromoSectionVisible = true;}
+
                 const vinfasApplicable = generalModelType && VINFASCINATION_PROMO_VALUES[generalModelType];
                 toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, vinfasApplicable);
-                if (vinfasApplicable && vinfascinationLabelText) {
-                    vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`;
-                    generalPromoSectionVisible = true;
-                }
+                if (vinfasApplicable && vinfascinationLabelText) { vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
+                if (vinfasApplicable && vinfascinationSubTextEl) { vinfascinationSubTextEl.textContent = `(Quy đổi điểm, GD DMS ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}, quy đổi tiền từ ${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}.)`;}
+
 
                 const insuranceApplicable = generalModelType && INSURANCE_CASH_EQUIVALENT[generalModelType];
                 toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, insuranceApplicable);
-                 if (insuranceApplicable && insuranceCashLabelText) {
-                    insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`;
-                    generalPromoSectionVisible = true;
-                }
+                 if (insuranceApplicable && insuranceCashLabelText) { insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
+                 if (insuranceApplicable && insuranceCashSubTextEl) { insuranceCashSubTextEl.textContent = `(Quy đổi gói BH, GD DMS ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}. Không cùng MLTTVN L3.)`;}
 
-                if (applicableGeneralPromosContainer) {
-                    if (generalPromoSectionVisible) {
-                        applicableGeneralPromosContainer.classList.remove('hidden');
-                    } else {
-                        applicableGeneralPromosContainer.classList.add('hidden');
-                    }
-                }
-                // Update guidance after visibility changes
-                if (!vinYearInput.value || !dmsTransactionDateInput.value) {
-                     updateGuidance("model_selected");
-                } else if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])')) {
-                    updateGuidance("common_fields_filled");
-                } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
-                    updateGuidance("model_specific_done");
-                } else {
-                    updateGuidance("promos_done");
-                }
+
+                if (applicableGeneralPromosContainer) { if (generalPromoSectionVisible) { applicableGeneralPromosContainer.classList.remove('hidden'); } else { applicableGeneralPromosContainer.classList.add('hidden'); } }
+                
+                if (!vinYearInput.value || !dmsTransactionDateInput.value) { updateGuidance("model_selected"); } 
+                else if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { updateGuidance("common_fields_filled"); } 
+                else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } 
+                else { updateGuidance("promos_done"); }
             }
 
 
             modelKeySelect.addEventListener('change', () => {
                 const selectedModel = modelKeySelect.value;
-                if (!selectedModel) {
-                    baseMsrpInput.value = '';
-                    baseMsrpInput.readOnly = false;
-                    baseMsrpInput.classList.remove('input-disabled');
-                    updateFormInputsVisibility(null); // This will call updateGuidance("initial")
-                    return;
-                }
-                if (CURRENT_MODEL_MSRPS[selectedModel]) {
-                    baseMsrpInput.value = CURRENT_MODEL_MSRPS[selectedModel];
-                    baseMsrpInput.readOnly = true;
-                    baseMsrpInput.classList.add('input-disabled');
-                } else if (BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]) {
-                    baseMsrpInput.value = BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel];
-                    baseMsrpInput.readOnly = true;
-                    baseMsrpInput.classList.add('input-disabled');
-                } else {
-                    baseMsrpInput.value = '';
-                    baseMsrpInput.readOnly = false;
-                    baseMsrpInput.classList.remove('input-disabled');
-                }
-                updateFormInputsVisibility(selectedModel); // This will call updateGuidance accordingly
+                if (!selectedModel) { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); updateFormInputsVisibility(null); return; }
+                if (CURRENT_MODEL_MSRPS[selectedModel]) { baseMsrpInput.value = CURRENT_MODEL_MSRPS[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } 
+                else if (BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]) { baseMsrpInput.value = BASE_PRICES_DISCONTINUED_GLOBAL[selectedModel]; baseMsrpInput.readOnly = true; baseMsrpInput.classList.add('input-disabled'); } 
+                else { baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled'); }
+                updateFormInputsVisibility(selectedModel); 
             });
 
-             // Add event listeners to common inputs to update guidance
             [vinYearInput, dmsTransactionDateInput, vinClubTierSelect, applyCorpDiscountCheckbox].forEach(el => {
-                el.addEventListener('change', () => {
-                    if (modelKeySelect.value) { // Only update if a model is selected
-                         if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]), select:not([disabled])')) {
-                            if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("common_fields_filled");
-                         } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
-                            if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("model_specific_done");
-                         } else if (vinYearInput.value && dmsTransactionDateInput.value) {
-                            updateGuidance("promos_done");
-                         }
-                    }
-                });
+                el.addEventListener('change', () => { if (modelKeySelect.value) { if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("common_fields_filled"); } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("model_specific_done"); } else if (vinYearInput.value && dmsTransactionDateInput.value) { updateGuidance("promos_done"); } } });
             });
-            // Event listeners for model specific and general promo inputs
+            
             const allModelSpecificInputs = modelSpecificContainer.querySelectorAll('input, select');
             allModelSpecificInputs.forEach(input => {
-                input.addEventListener('change', () => {
-                     if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { // Ensure base fields are filled
-                        // Check if any *other* model specific input is still pending, if not, move to general promos
-                        let allModelSpecificFilledOrHidden = true;
-                        if (!modelSpecificContainer.classList.contains('hidden')) {
-                            modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => {
-                                if (el.value === "" && el.required) allModelSpecificFilledOrHidden = false; // Basic check, might need refinement
-                            });
-                        }
-
-                        if (allModelSpecificFilledOrHidden) {
-                             if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) {
-                                updateGuidance("model_specific_done");
-                            } else {
-                                updateGuidance("promos_done");
-                            }
-                        }
-                    }
-                });
+                input.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { let allModelSpecificFilledOrHidden = true; if (!modelSpecificContainer.classList.contains('hidden')) { modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => { if (el.value === "" && el.hasAttribute('required')) allModelSpecificFilledOrHidden = false; });} if (allModelSpecificFilledOrHidden) { if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } else { updateGuidance("promos_done"); } } } });
             });
             const allGeneralPromoCheckboxes = applicableGeneralPromosContainer.querySelectorAll('input[type="checkbox"]');
             allGeneralPromoCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', () => {
-                     if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) {
-                        updateGuidance("promos_done");
+                checkbox.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { updateGuidance("promos_done"); } });
+            });
+
+            // Conflict handling for MLTTVN3 and Insurance
+            if (applyManhLietTinhThanVietNamPromoCheckbox && takeInsuranceCashDynamicCheckbox) {
+                applyManhLietTinhThanVietNamPromoCheckbox.addEventListener('change', function() {
+                    if (this.checked && takeInsuranceCashDynamicCheckbox.checked) {
+                        takeInsuranceCashDynamicCheckbox.checked = false;
+                        console.log("MLTTVN3 selected, Insurance auto-deselected.");
+                        takeInsuranceCashDynamicCheckbox.dispatchEvent(new Event('change')); 
                     }
                 });
-            });
+                takeInsuranceCashDynamicCheckbox.addEventListener('change', function() {
+                    if (this.checked && applyManhLietTinhThanVietNamPromoCheckbox.checked) {
+                        applyManhLietTinhThanVietNamPromoCheckbox.checked = false;
+                        console.log("Insurance selected, MLTTVN3 auto-deselected.");
+                        applyManhLietTinhThanVietNamPromoCheckbox.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
 
 
             function resetFormInputs() {
-                modelKeySelect.selectedIndex = 0;
-                vinClubTierSelect.value = "Không có";
+                modelKeySelect.selectedIndex = 0; vinClubTierSelect.value = "Không có";
                 if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
-                baseMsrpInput.value = '';
-                vinYearInput.value = '';
-                dmsTransactionDateInput.value = '';
-
+                baseMsrpInput.value = ''; vinYearInput.value = ''; dmsTransactionDateInput.value = '';
+                if(applyManhLietTinhThanVietNamPromoCheckbox) applyManhLietTinhThanVietNamPromoCheckbox.checked = false;
                 if(applyVinfascinationDynamicCheckbox) applyVinfascinationDynamicCheckbox.checked = false;
                 if(takeInsuranceCashDynamicCheckbox) takeInsuranceCashDynamicCheckbox.checked = false;
                 if(applyCorpDiscountCheckbox) applyCorpDiscountCheckbox.checked = false;
+                if(applyVf7PlusCashbackCheckbox) applyVf7PlusCashbackCheckbox.checked = false;
+                if(isSdiBatteryCheckbox) isSdiBatteryCheckbox.checked = false;
+                if(is2ZoneACCheckbox) is2ZoneACCheckbox.checked = false;
+                if(hasCaptainSeatsCheckbox) hasCaptainSeatsCheckbox.checked = false;
+                if(hasPanoramicRoofCheckbox) hasPanoramicRoofCheckbox.checked = false;
+                if(depositDateVF7PlusInput) depositDateVF7PlusInput.value = '';
+                if(purchaseDateVF9VIN23Input) purchaseDateVF9VIN23Input.value = '';
+                if(tradeInOldCarTypeSelect) tradeInOldCarTypeSelect.value = "Không đổi";
 
-                baseMsrpInput.readOnly = false;
-                baseMsrpInput.classList.remove('input-disabled');
-                updateFormInputsVisibility(null); // This will call updateGuidance("initial")
 
-                invoicePriceResultP.textContent = "0 VNĐ";
-                customerPriceResultP.textContent = "0 VNĐ";
+                baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled');
+                updateFormInputsVisibility(null); 
+
+                invoicePriceResultP.textContent = "0 VNĐ"; customerPriceResultP.textContent = "0 VNĐ";
                 calculationLogInvoicePre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
                 calculationLogCustomerPre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
                 notesResultPre.textContent = "Không có ghi chú đặc biệt.";
-                notesResultPre.style.color = 'var(--warning-text-light)';
-                notesResultPre.style.backgroundColor = 'var(--warning-bg-light)';
-                if(document.body.classList.contains('dark-mode')) {
-                     notesResultPre.style.color = 'var(--warning-text-dark)';
-                     notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
-                }
+                notesResultPre.style.color = 'var(--warning-text-light)'; notesResultPre.style.backgroundColor = 'var(--warning-bg-light)';
+                if(document.body.classList.contains('dark-mode')) { notesResultPre.style.color = 'var(--warning-text-dark)'; notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)'; }
                 const appliedPromosDisplayOnReset = document.getElementById('appliedPromotionsDisplay');
-                if (appliedPromosDisplayOnReset) {
-                    appliedPromosDisplayOnReset.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Chưa có thông tin khuyến mãi.</p>';
-                }
-                updateGuidance("form_reset"); // Update guidance
+                if (appliedPromosDisplayOnReset) { appliedPromosDisplayOnReset.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Chưa có thông tin khuyến mãi.</p>'; }
+                updateGuidance("form_reset"); 
                 console.log("Form đã được reset!");
             }
 
-            if (resetButton) {
-                resetButton.addEventListener('click', resetFormInputs);
-            }
+            if (resetButton) { resetButton.addEventListener('click', resetFormInputs); }
 
             function getPromoIconClass(description) {
                 const descLower = description.toLowerCase();
@@ -1950,6 +1910,7 @@
                 if (descLower.includes("vinclub")) return "fas fa-users-cog";
                 if (descLower.includes("corp")) return "fas fa-briefcase";
                 if (descLower.includes("thu cũ đổi mới") || descLower.includes("trade in")) return "fas fa-sync-alt";
+                if (descLower.includes("mãnh liệt tinh thần")) return "fas fa-fire";
                 if (descLower.includes("màu") && (descLower.includes("giảm giá") || descLower.includes("ưu đãi"))) return "fas fa-palette";
                 return "fas fa-tag";
             }
@@ -1959,130 +1920,46 @@
                 calculationLog.forEach(log => {
                     if ((log.type === 'discount' || log.type === 'promotion' || log.type === 'trade_in_support' || log.type === 'discount_percentage') && log.amount < 0) {
                         let title = log.description;
-                        if (log.type === 'discount_percentage' && log.base_for_percentage && log.base_for_percentage !==0) {
-                             title = log.description.replace(/ \(\d+(\.\d+)?%\).*/, ` (${(Math.abs(log.amount / log.base_for_percentage) * 100).toFixed(1)}%)`).replace(/cho.*/i, "").trim();
-                        } else {
-                             title = log.description.replace(/\(.*\)|cho.*/i, "").trim();
+                        if (log.type === 'discount_percentage' && log.base_for_percentage && log.base_for_percentage !==0) { 
+                            title = log.description.replace(/ \(\d+(\.\d+)?%\).*/, ` (${(Math.abs(log.amount / log.base_for_percentage) * 100).toFixed(1)}%)`).replace(/cho.*/i, "").trim(); 
+                        } else if (log.description.includes("Mãnh liệt tinh thần VN L3")) {
+                             title = `KM Mãnh liệt tinh thần VN L3 (${(MANH_LIET_TINH_THAN_VN3_PERCENTAGE * 100).toFixed(0)}%)`; 
                         }
-                        if (title.toLowerCase() === "giảm giá") title = log.description;
-                        appliedPromos.push({
-                            title: title,
-                            fullDescription: log.description,
-                            value: log.amount,
-                            iconClass: getPromoIconClass(log.description)
-                        });
+                        else { 
+                            title = log.description.replace(/\(.*\)|cho.*/i, "").trim(); 
+                        }
+                        if (title.toLowerCase() === "giảm giá") title = log.description; 
+                        appliedPromos.push({ title: title, fullDescription: log.description, value: log.amount, iconClass: getPromoIconClass(log.description) });
                     }
                 });
-                if (vinfascinationCashApplied > 0) {
-                     appliedPromos.push({
-                        title: "Ưu đãi VINFASCINATION",
-                        fullDescription: "Quy đổi tiền mặt từ chương trình VINFASCINATION.",
-                        value: -vinfascinationCashApplied,
-                        iconClass: "fas fa-star"
-                    });
-                }
-                if (insuranceCashApplied > 0) {
-                    appliedPromos.push({
-                        title: "Ưu đãi Bảo Hiểm",
-                        fullDescription: "Quy đổi tiền mặt từ ưu đãi Bảo hiểm vật chất.",
-                        value: -insuranceCashApplied,
-                        iconClass: "fas fa-shield-alt"
-                    });
-                }
-                const uniquePromos = [];
-                const seenFullDescriptions = new Set();
-                for (const promo of appliedPromos) {
-                    if (!seenFullDescriptions.has(promo.fullDescription)) {
-                        uniquePromos.push(promo);
-                        seenFullDescriptions.add(promo.fullDescription);
-                    }
-                }
+
+                if (vinfascinationCashApplied > 0) { appliedPromos.push({ title: "Ưu đãi VINFASCINATION", fullDescription: "Quy đổi tiền mặt từ chương trình VINFASCINATION.", value: -vinfascinationCashApplied, iconClass: "fas fa-star" }); }
+                if (insuranceCashApplied > 0) { appliedPromos.push({ title: "Ưu đãi Bảo Hiểm", fullDescription: "Quy đổi tiền mặt từ ưu đãi Bảo hiểm vật chất.", value: -insuranceCashApplied, iconClass: "fas fa-shield-alt" }); }
+                
+                const uniquePromos = []; const seenFullDescriptions = new Set();
+                for (const promo of appliedPromos) { if (!seenFullDescriptions.has(promo.fullDescription)) { uniquePromos.push(promo); seenFullDescriptions.add(promo.fullDescription); } }
                 return uniquePromos;
             }
 
             function displayAppliedPromotions(promotions, containerElement) {
                 containerElement.innerHTML = '';
-                if (!promotions || promotions.length === 0) {
-                    const noPromoMessage = document.createElement('p');
-                    noPromoMessage.className = 'no-promotions-message';
-                    noPromoMessage.textContent = 'Không có khuyến mãi đặc biệt nào được áp dụng cho lựa chọn này.';
-                    containerElement.appendChild(noPromoMessage);
-                    return;
-                }
-                const promotionsListDiv = document.createElement('div');
-                promotionsListDiv.className = 'promotions-list';
-                promotions.forEach(promo => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'promotion-item';
-                    const iconContainerDiv = document.createElement('div');
-                    iconContainerDiv.className = 'promotion-icon';
-                    const iconI = document.createElement('i');
-                    iconI.className = promo.iconClass;
-                    iconContainerDiv.appendChild(iconI);
-                    const detailsDiv = document.createElement('div');
-                    detailsDiv.className = 'promotion-details';
-                    const titleH4 = document.createElement('h4');
-                    titleH4.textContent = promo.title;
-                    const valueP = document.createElement('p');
-                    valueP.innerHTML = `Giá trị: <span class="promo-value">${formatCurrency(Number(promo.value), true)}</span>`;
-                    detailsDiv.appendChild(titleH4);
-                    detailsDiv.appendChild(valueP);
-                    itemDiv.appendChild(iconContainerDiv);
-                    itemDiv.appendChild(detailsDiv);
-                    promotionsListDiv.appendChild(itemDiv);
-                });
+                if (!promotions || promotions.length === 0) { const noPromoMessage = document.createElement('p'); noPromoMessage.className = 'no-promotions-message'; noPromoMessage.textContent = 'Không có khuyến mãi đặc biệt nào được áp dụng cho lựa chọn này.'; containerElement.appendChild(noPromoMessage); return; }
+                const promotionsListDiv = document.createElement('div'); promotionsListDiv.className = 'promotions-list';
+                promotions.forEach(promo => { const itemDiv = document.createElement('div'); itemDiv.className = 'promotion-item'; const iconContainerDiv = document.createElement('div'); iconContainerDiv.className = 'promotion-icon'; const iconI = document.createElement('i'); iconI.className = promo.iconClass; iconContainerDiv.appendChild(iconI); const detailsDiv = document.createElement('div'); detailsDiv.className = 'promotion-details'; const titleH4 = document.createElement('h4'); titleH4.textContent = promo.title; const valueP = document.createElement('p'); valueP.innerHTML = `Giá trị: <span class="promo-value">${formatCurrency(Number(promo.value), true)}</span>`; detailsDiv.appendChild(titleH4); detailsDiv.appendChild(valueP); itemDiv.appendChild(iconContainerDiv); itemDiv.appendChild(detailsDiv); promotionsListDiv.appendChild(itemDiv); });
                 containerElement.appendChild(promotionsListDiv);
             }
 
             calculateButton.addEventListener('click', () => {
-                const modelKey = modelKeySelect.value;
-                let baseMsrp = parseFloat(baseMsrpInput.value);
-                const vinYear = vinYearInput.value.trim() || null;
-
-                invoicePriceResultP.textContent = "0 VNĐ";
-                customerPriceResultP.textContent = "0 VNĐ";
-                calculationLogInvoicePre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
-                calculationLogCustomerPre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
-                notesResultPre.textContent = "Không có ghi chú đặc biệt.";
-                notesResultPre.style.color = 'var(--warning-text-light)';
-                notesResultPre.style.backgroundColor = 'var(--warning-bg-light)';
-                if(document.body.classList.contains('dark-mode')) {
-                     notesResultPre.style.color = 'var(--warning-text-dark)';
-                     notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)';
-                }
+                const modelKey = modelKeySelect.value; let baseMsrp = parseFloat(baseMsrpInput.value); const vinYear = vinYearInput.value.trim() || null;
+                invoicePriceResultP.textContent = "0 VNĐ"; customerPriceResultP.textContent = "0 VNĐ";
+                calculationLogInvoicePre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>'; calculationLogCustomerPre.innerHTML = '<table><thead><tr><th>Chưa có dữ liệu.</th></tr></thead></table>';
+                notesResultPre.textContent = "Không có ghi chú đặc biệt."; notesResultPre.style.color = 'var(--warning-text-light)'; notesResultPre.style.backgroundColor = 'var(--warning-bg-light)';
+                if(document.body.classList.contains('dark-mode')) { notesResultPre.style.color = 'var(--warning-text-dark)'; notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)'; }
                 const appliedPromosContainerElement = document.getElementById('appliedPromotionsDisplay');
-                if (appliedPromosContainerElement) {
-                    appliedPromosContainerElement.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Đang tính toán...</p>';
-                }
+                if (appliedPromosContainerElement) { appliedPromosContainerElement.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Đang tính toán...</p>'; }
 
-                if (!modelKey) {
-                    notesResultPre.textContent = "LỖI: Vui lòng chọn Mã Model.";
-                    notesResultPre.style.color = 'var(--error-text-light)';
-                    notesResultPre.style.backgroundColor = 'var(--error-bg-light)';
-                    if(document.body.classList.contains('dark-mode')) {
-                        notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
-                        notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
-                    }
-                    if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement);
-                    updateGuidance("initial"); // Ensure guidance is correct on error
-                    return;
-                }
-                if (isNaN(baseMsrp) || baseMsrp <= 0) {
-                    if (CURRENT_MODEL_MSRPS[modelKey]) { baseMsrp = CURRENT_MODEL_MSRPS[modelKey]; }
-                    else if (BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]) { baseMsrp = BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]; }
-                    else {
-                        notesResultPre.textContent = "LỖI: Giá NY gốc không hợp lệ và không thể tự động điền. Vui lòng nhập Giá NY gốc.";
-                        notesResultPre.style.color = 'var(--error-text-light)';
-                        notesResultPre.style.backgroundColor = 'var(--error-bg-light)';
-                         if(document.body.classList.contains('dark-mode')) {
-                            notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)';
-                            notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)';
-                        }
-                        if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement);
-                        updateGuidance("model_selected"); // Or a more specific error guidance
-                        return;
-                    }
-                }
+                if (!modelKey) { notesResultPre.textContent = "LỖI: Vui lòng chọn Mã Model."; notesResultPre.style.color = 'var(--error-text-light)'; notesResultPre.style.backgroundColor = 'var(--error-bg-light)'; if(document.body.classList.contains('dark-mode')) { notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)'; notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)'; } if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement); updateGuidance("initial"); return; }
+                if (isNaN(baseMsrp) || baseMsrp <= 0) { if (CURRENT_MODEL_MSRPS[modelKey]) { baseMsrp = CURRENT_MODEL_MSRPS[modelKey]; } else if (BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]) { baseMsrp = BASE_PRICES_DISCONTINUED_GLOBAL[modelKey]; } else { notesResultPre.textContent = "LỖI: Giá NY gốc không hợp lệ và không thể tự động điền. Vui lòng nhập Giá NY gốc."; notesResultPre.style.color = 'var(--error-text-light)'; notesResultPre.style.backgroundColor = 'var(--error-bg-light)'; if(document.body.classList.contains('dark-mode')) { notesResultPre.style.color = 'var(--error-text-dark, #f1aeb5)'; notesResultPre.style.backgroundColor = 'var(--error-bg-dark, #58151c)'; } if (appliedPromosContainerElement) displayAppliedPromotions([], appliedPromosContainerElement); updateGuidance("model_selected"); return; } }
 
                 const options = {
                     isSdiBattery_VF8_VF9: vf8Vf9OptionsDiv && !vf8Vf9OptionsDiv.classList.contains('hidden') && isSdiBatteryCheckbox.checked,
@@ -2099,6 +1976,7 @@
                     purchaseDateStr_VF9_VIN2023: vf9Vin23OptionsDateDiv && !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null,
                     purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value,
                     applyVf7PlusCashback: vf7PlusOptionsPromoDiv && !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked,
+                    applyManhLietTinhThanVietNamPromo: applyManhLietTinhThanVietNamPromoCheckbox ? applyManhLietTinhThanVietNamPromoCheckbox.checked : false,
                     applyVinfascination: applyVinfascinationDynamicCheckbox ? applyVinfascinationDynamicCheckbox.checked : false,
                     takeInsuranceCash: takeInsuranceCashDynamicCheckbox ? takeInsuranceCashDynamicCheckbox.checked : false,
                     vinClubTier: vinClubTierSelect.value,
@@ -2109,24 +1987,21 @@
 
                 invoicePriceResultP.textContent = formatCurrency(result.invoicePrice, true);
                 customerPriceResultP.textContent = formatCurrency(result.customerPrice, true);
-
                 calculationLogInvoicePre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'invoice');
                 calculationLogCustomerPre.innerHTML = formatCalculationDetailsForHTML(result, modelKey, 'customer');
-
                 let uniqueNotes = new Set(result.notes.filter(note => note !== "Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."));
                 let combinedNotesString = Array.from(uniqueNotes).join("\n- ");
-                if (combinedNotesString) { combinedNotesString = "- " + combinedNotesString; }
-                else { combinedNotesString = "Không có ghi chú đặc biệt."; }
+                if (combinedNotesString) { combinedNotesString = "- " + combinedNotesString; } else { combinedNotesString = "Không có ghi chú đặc biệt."; }
                 notesResultPre.textContent = combinedNotesString;
 
-                if (appliedPromosContainerElement) {
-                    const extractedPromos = extractAppliedPromotions(result.calculationLog, result.vinfascinationCashApplied, result.insuranceCashApplied);
-                    displayAppliedPromotions(extractedPromos, appliedPromosContainerElement);
+                if (appliedPromosContainerElement) { 
+                    const extractedPromos = extractAppliedPromotions(result.calculationLog, result.vinfascinationCashApplied, result.insuranceCashApplied); 
+                    displayAppliedPromotions(extractedPromos, appliedPromosContainerElement); 
                 }
-                updateGuidance("calculation_done"); // Update guidance
+                updateGuidance("calculation_done"); 
             });
             populateModelDropdown();
-            resetFormInputs(); // This will call updateFormInputsVisibility(null) which calls updateGuidance("initial")
+            resetFormInputs(); 
         });
     </script>
 </body>
