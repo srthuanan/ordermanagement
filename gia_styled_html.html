@@ -1140,7 +1140,11 @@
                         <input type="text" id="vinYear" placeholder="VD: 2023, 2024">
                     </div>
                     <div>
-                        <label for="dmsTransactionDateStr">Ngày Giao Dịch DMS:</label>
+                        <label for="expectedInvoiceDateStr">Ngày Dự Kiến Xuất Hóa Đơn (XHĐ):</label>
+                        <input type="date" id="expectedInvoiceDateStr">
+                    </div>
+                    <div>
+                        <label for="dmsTransactionDateStr">Ngày Giao Dịch DMS (Nếu có):</label>
                         <input type="date" id="dmsTransactionDateStr">
                     </div>
                 </div>
@@ -1164,7 +1168,7 @@
                         <span class="toggle-switch-info" id="corpDiscountInfoText">(Mức giảm hiện tại: 3%)</span>
                     </div>
                 </div>
-<div id="mlttvn3PromoItemContainer" class="corp-discount-toggle-container hidden" style="margin-top: 20px; margin-bottom: 20px;">
+                <div id="mlttvn3PromoItemContainer" class="corp-discount-toggle-container hidden" style="margin-top: 20px; margin-bottom: 20px;">
                     <label for="applyManhLietTinhThanVietNamPromo" class="toggle-switch-label">
                         <input type="checkbox" id="applyManhLietTinhThanVietNamPromo" class="toggle-switch-checkbox">
                         <span class="toggle-switch-slider"></span>
@@ -1201,8 +1205,7 @@
                                 <option value="">-- Chọn màu (nếu có) --</option>
                             </select>
                         </div>
-                         <div id="vf7PlusOptionsDate" class="model-specific-options hidden">
-                            <label for="depositDateStr_VF7Plus">Ngày Đ.Cọc VF7+:</label>
+                         <div id="vf7PlusOptionsDate" class="model-specific-options hidden"> <label for="depositDateStr_VF7Plus">Ngày Đ.Cọc VF7+:</label>
                             <input type="date" id="depositDateStr_VF7Plus">
                         </div>
                         <div id="vf9Vin23OptionsDate" class="model-specific-options hidden">
@@ -1417,7 +1420,6 @@
             function setActiveSidebarLink() {
                 const navLinks = navMenu.querySelectorAll("a");
                 const currentPageFilename = "gia_styled_html.html"; // Or dynamically get current page
-
                 navLinks.forEach(link => {
                     link.classList.remove("active");
                     if (link.getAttribute('href') === currentPageFilename) {
@@ -1432,7 +1434,6 @@
 
 
             // --- SCRIPT FOR PRICE CALCULATION (UPDATED) ---
-// --- SCRIPT FOR PRICE CALCULATION (UPDATED) ---
             const BASE_PRICES_DISCONTINUED_GLOBAL = {
                 "VF 3 - Màu xanh GSM": 294000000, "VF 5S - S": 521000000, "VF 6S - S": 694000000,
                 "VF 7 - Base": 799000000, "VF 8 - Lux (discontinued)": 1019000000, "VF 8 - Plus (discontinued)": 1199000000,
@@ -1451,27 +1452,22 @@
             const VINCLUB_DISCOUNT_PERCENTAGES = { "Không có": 0, "Gold": 0.005, "Platinum": 0.01, "Diamond": 0.015 };
             const CORP_DISCOUNT_PERCENTAGE = 0.03;
 
-            // Trade-in discounts for the period "Từ 21/04/2025 đến 21/05/2025"
-            const TRADE_IN_DISCOUNTS_CURRENT_PERIOD = {
+            const TRADE_IN_DISCOUNTS_CURRENT_PERIOD = { // From 21/04/2025 to 21/05/2025
                 "VF 6": { "VinFastXangCu": 60000000, "HangKhac": 40000000 },
                 "VF 7": { "VinFastXangCu": 75000000, "HangKhac": 50000000 },
                 "VF 8": { "VinFastXangCu": 90000000, "HangKhac": 60000000 },
                 "VF 9": { "VinFastXangCu": 90000000, "HangKhac": 60000000 }
             };
-             // Trade-in discounts for the period "Từ 01/11/2024 đến 20/04/2025"
-            const TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD = {
+            const TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD = { // From 01/11/2024 to 20/04/2025
                 "VF 7": { "VinFastXangCu": 80000000, "HangKhac": 50000000 },
                 "VF 8": { "VinFastXangCu": 120000000, "HangKhac": 80000000 },
                 "VF 9": { "VinFastXangCu": 70000000, "HangKhac": 40000000 }
             };
-
-            // NEW: Trade-in discounts effective from May 22, 2025, as per PDF
-            // Corresponds to the PDF column "Từ 22/05/2025 đến khi có thông báo mới"
-            const TRADE_IN_DISCOUNTS_POST_MAY_22_2025 = {
-                "VF 6": { "VinFastXangCu": 30000000, "HangKhac": 20000000 }, //
-                "VF 7": { "VinFastXangCu": 30000000, "HangKhac": 40000000 }, //
-                "VF 8": { "VinFastXangCu": 50000000, "HangKhac": 40000000 }, //
-                "VF 9": { "VinFastXangCu": 50000000, "HangKhac": 40000000 }  //
+            const TRADE_IN_DISCOUNTS_POST_MAY_22_2025 = { // From 22/05/2025 onwards
+                "VF 6": { "VinFastXangCu": 30000000, "HangKhac": 20000000 },
+                "VF 7": { "VinFastXangCu": 30000000, "HangKhac": 40000000 },
+                "VF 8": { "VinFastXangCu": 50000000, "HangKhac": 40000000 },
+                "VF 9": { "VinFastXangCu": 50000000, "HangKhac": 40000000 }
             };
 
             const OPTIONAL_EQUIPMENT = {
@@ -1483,7 +1479,6 @@
                 "VF 9": { "captain_seats_6": { cost: 32000000, description: "6 chỗ ghế cơ trưởng" }, "panoramic_roof": { cost: 29000000, description: "Trần kính toàn cảnh" }, "Hồng (Rose metallic)": { cost: 8000000, description: "Màu Hồng (Rose metallic)" }, "Xanh lá (Tropical Jade)": { cost: 8000000, description: "Màu Xanh lá (Tropical Jade)" }, "Đen (Jet Black) + Nóc vàng": { cost: 3000000, description: "Màu Đen (Jet Black) + Nóc vàng" }, "Đỏ (Crimson Red) + Nóc trắng": { cost: 3000000, description: "Màu Đỏ (Crimson Red) + Nóc trắng" }, "Bạc (Desat Silver) + Nóc đen": { cost: 3000000, description: "Màu Bạc (Desat Silver) + Nóc đen" }, "Vàng (Summer Yellow) + Nóc trắng": { cost: 3000000, description: "Màu Vàng (Summer Yellow) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc trắng": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc trắng" }, "Hồng (Rose metallic) + Nóc xanh GSM": { cost: 11000000, description: "Màu Hồng (Rose metallic) + Nóc xanh GSM" }, "Xanh lá (Tropical Jade) + Nóc trắng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc trắng" }, "Xanh lá (Tropical Jade) + Nóc vàng": { cost: 11000000, description: "Màu Xanh lá (Tropical Jade) + Nóc vàng" } }
             };
             
-            // Chính sách mới từ PDF - Ngày 22/05/2025
             const VF7_PLUS_CASH_PROMOTION_AMOUNT = 50000000;
             const VF7_PLUS_DEPOSIT_START_DATE = new Date(Date.UTC(2025, 3, 21)); // 21/04/2025
             const VF7_PLUS_DEPOSIT_END_DATE = new Date(Date.UTC(2025, 5, 30));   // 30/06/2025
@@ -1522,6 +1517,7 @@
                 let ghiChu = ["Tính toán dựa trên dữ liệu và thứ tự ưu tiên được cung cấp."]; 
                 let giaHienTai = 0; 
                 let originalMsrpForMltvnl3 = 0;
+                let vf7PlusCashbackAppliedThisStep = 0; 
 
                 if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { 
                     giaHienTai = baseMsrp; 
@@ -1531,7 +1527,7 @@
                     else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                 } else { 
                     ghiChu.push("LỖI: Không có Giá NY gốc hợp lệ. Cần nhập cho xe mới/hiện tại hoặc Mã Model không đúng."); 
-                    return { invoicePrice: 0, customerPrice: 0, basePriceUsed: 0, priceBaseForPercentageDiscount: 0, vinfascinationCashApplied: 0, insuranceCashApplied: 0, manhLietTinhThanVn3AppliedAmount: 0, tradeInApplied: 0, calculationLog: nhatKyTinhToan, notes: ghiChu }; 
+                    return { invoicePrice: 0, customerPrice: 0, basePriceUsed: 0, priceBaseForPercentageDiscount: 0, vinfascinationCashApplied: 0, insuranceCashApplied: 0, manhLietTinhThanVn3AppliedAmount: 0, vf7PlusCashbackApplied: 0, tradeInApplied: 0, calculationLog: nhatKyTinhToan, notes: ghiChu }; 
                 }
                 
                 let giaSauKMCodinh = giaHienTai; 
@@ -1604,21 +1600,24 @@
                 }
                 
                 if (modelKey && modelKey.includes("VF 7 - Plus") && eligibilityInfo.applyVf7PlusCashback) { 
-                    const ngayDatCoc = parseDateStr(eligibilityInfo.depositDateStr_VF7Plus);
-                    if (ngayDatCoc && ngayDatCoc >= VF7_PLUS_DEPOSIT_START_DATE && ngayDatCoc <= VF7_PLUS_DEPOSIT_END_DATE) { 
+                    const ngayDatCocDMS = parseDateStr(eligibilityInfo.dmsTransactionDateStr);
+                    if (ngayDatCocDMS && ngayDatCocDMS >= VF7_PLUS_DEPOSIT_START_DATE && ngayDatCocDMS <= VF7_PLUS_DEPOSIT_END_DATE) { 
+                        // This amount reduces customer payment but is added back to invoice price later
+                        vf7PlusCashbackAppliedThisStep = VF7_PLUS_CASH_PROMOTION_AMOUNT; 
+                        // For customer price calculation, it's a discount
                         giaSauKMCodinh -= VF7_PLUS_CASH_PROMOTION_AMOUNT; 
-                        nhatKyTinhToan.push({ step: "A4", type: "promotion", description: `KM tiền mặt VF 7 Plus (đặt cọc ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`, amount: -VF7_PLUS_CASH_PROMOTION_AMOUNT, current_subtotal: giaSauKMCodinh }); 
+                        nhatKyTinhToan.push({ step: "A4", type: "promotion", description: `KM tiền mặt VF 7 Plus (Ngày GD DMS ${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'} từ ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`, amount: -VF7_PLUS_CASH_PROMOTION_AMOUNT, current_subtotal: giaSauKMCodinh }); 
                     } else { 
-                        ghiChu.push(`KM VF 7 Plus không áp dụng: Ngày đặt cọc (${eligibilityInfo.depositDateStr_VF7Plus_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)}).`); 
+                        ghiChu.push(`KM VF 7 Plus không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) dùng làm ngày đặt cọc ngoài thời gian (${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)}).`); 
                     } 
                 }
 
-                const dmsTransactionDate = parseDateStr(eligibilityInfo.dmsTransactionDateStr);
+                const invoiceDate = parseDateStr(eligibilityInfo.expectedInvoiceDateStr); 
                 let manhLietTinhThanVn3DiscountAmount = 0;
                 let mlttvn3AppliedThisTime = false; 
 
                 if (eligibilityInfo.applyManhLietTinhThanVietNamPromo) {
-                    if (dmsTransactionDate && dmsTransactionDate >= MLTTVN3_INVOICE_START_DATE && dmsTransactionDate <= MLTTVN3_INVOICE_END_DATE) {
+                    if (invoiceDate && invoiceDate >= MLTTVN3_INVOICE_START_DATE && invoiceDate <= MLTTVN3_INVOICE_END_DATE) {
                         const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied;
                         manhLietTinhThanVn3DiscountAmount = Math.round(baseForMltvnl3 * MANH_LIET_TINH_THAN_VN3_PERCENTAGE);
                         
@@ -1634,32 +1633,32 @@
                             eligibilityInfo.takeInsuranceCash = false; 
                         }
                     } else {
-                        ghiChu.push(`KM Mãnh liệt tinh thần VN L3 không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}).`);
+                        ghiChu.push(`KM Mãnh liệt tinh thần VN L3 không áp dụng: Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}).`);
                     }
                 }
                 
-                nhatKyTinhToan.push({ step: "A_END", type: "subtotal", description: "Giá sau các KM/phí cố định & MLTTVN3", amount: giaSauKMCodinh, current_subtotal: giaSauKMCodinh });
+                nhatKyTinhToan.push({ step: "A_END", type: "subtotal", description: "Giá sau các KM/phí cố định, VF7+ & MLTTVN3", amount: giaSauKMCodinh, current_subtotal: giaSauKMCodinh });
                 
                 let vinfascinationPotential = 0; let insurancePotential = 0;
                 
                 if (eligibilityInfo.applyVinfascination && loaiXeChung && VINFASCINATION_PROMO_VALUES[loaiXeChung]) { 
-                    if (dmsTransactionDate && dmsTransactionDate >= VINFAS_INVOICE_START_DATE && dmsTransactionDate <= VINFAS_INVOICE_END_DATE) { 
-                        if (dmsTransactionDate >= VINFAS_CASH_CONVERSION_START_DATE) { 
+                    if (invoiceDate && invoiceDate >= VINFAS_INVOICE_START_DATE && invoiceDate <= VINFAS_INVOICE_END_DATE) { 
+                        if (invoiceDate >= VINFAS_CASH_CONVERSION_START_DATE) { 
                             vinfascinationPotential = VINFASCINATION_PROMO_VALUES[loaiXeChung]; 
                         } else { 
-                            ghiChu.push(`VINFASCINATION (${loaiXeChung}) áp dụng (điểm), chưa đến hạn quy đổi tiền mặt (${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}) dựa trên Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}).`); 
+                            ghiChu.push(`VINFASCINATION (${loaiXeChung}) áp dụng (điểm), chưa đến hạn quy đổi tiền mặt (${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}) dựa trên Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}).`); 
                         } 
                     } else { 
-                        ghiChu.push(`VINFASCINATION (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}).`); 
+                        ghiChu.push(`VINFASCINATION (${loaiXeChung}) không áp dụng: Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}).`); 
                     } 
                 }
                 
                 if (eligibilityInfo.takeInsuranceCash && !mlttvn3AppliedThisTime) { 
                     if (loaiXeChung && INSURANCE_CASH_EQUIVALENT[loaiXeChung]) { 
-                        if (dmsTransactionDate && dmsTransactionDate >= INSURANCE_INVOICE_START_DATE && dmsTransactionDate <= INSURANCE_INVOICE_END_DATE) { 
+                        if (invoiceDate && invoiceDate >= INSURANCE_INVOICE_START_DATE && invoiceDate <= INSURANCE_INVOICE_END_DATE) { 
                             insurancePotential = INSURANCE_CASH_EQUIVALENT[loaiXeChung]; 
                         } else { 
-                            ghiChu.push(`Ưu đãi bảo hiểm (${loaiXeChung}) không áp dụng: Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}).`); 
+                            ghiChu.push(`Ưu đãi bảo hiểm (${loaiXeChung}) không áp dụng: Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}) ngoài thời gian (${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}).`); 
                         } 
                     } else if (loaiXeChung) { 
                         ghiChu.push(`Không có thông tin quy đổi tiền mặt BH cho ${loaiXeChung}.`); 
@@ -1669,9 +1668,22 @@
                      insurancePotential = 0; 
                 }
 
-                let priceBaseForPercentageDiscount = giaSauKMCodinh; let vinfasUsedForPercentageBase = 0; let insuranceUsedForPercentageBase = 0;
-                if (eligibilityInfo.applyVinfascination && vinfascinationPotential > 0) { priceBaseForPercentageDiscount -= vinfascinationPotential; vinfasUsedForPercentageBase = vinfascinationPotential; nhatKyTinhToan.push({ step: "B_P1", type: "interim_discount_for_percentage_base", description: `Trừ KM VINFASCINATION (HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)})`, amount: -vinfascinationPotential, current_subtotal: priceBaseForPercentageDiscount }); }
-                if (eligibilityInfo.takeInsuranceCash && insurancePotential > 0 && !mlttvn3AppliedThisTime) { priceBaseForPercentageDiscount -= insurancePotential; insuranceUsedForPercentageBase = insurancePotential; nhatKyTinhToan.push({ step: "B_P2", type: "interim_discount_for_percentage_base", description: `Trừ KM Bảo hiểm (HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)})`, amount: -insurancePotential, current_subtotal: priceBaseForPercentageDiscount }); }
+                let priceBaseForPercentageDiscount = giaSauKMCodinh; 
+                let vinfasUsedForPercentageBase = 0; 
+                let insuranceUsedForPercentageBase = 0;
+                // vf7PlusCashbackAppliedThisStep is already subtracted from giaSauKMCodinh.
+                // It will be added back to invoice price later.
+
+                if (eligibilityInfo.applyVinfascination && vinfascinationPotential > 0) { 
+                    priceBaseForPercentageDiscount -= vinfascinationPotential; 
+                    vinfasUsedForPercentageBase = vinfascinationPotential; 
+                    nhatKyTinhToan.push({ step: "B_P1", type: "interim_discount_for_percentage_base", description: `Trừ KM VINFASCINATION (HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)})`, amount: -vinfascinationPotential, current_subtotal: priceBaseForPercentageDiscount }); 
+                }
+                if (eligibilityInfo.takeInsuranceCash && insurancePotential > 0 && !mlttvn3AppliedThisTime) { 
+                    priceBaseForPercentageDiscount -= insurancePotential; 
+                    insuranceUsedForPercentageBase = insurancePotential; 
+                    nhatKyTinhToan.push({ step: "B_P2", type: "interim_discount_for_percentage_base", description: `Trừ KM Bảo hiểm (HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)}-${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)})`, amount: -insurancePotential, current_subtotal: priceBaseForPercentageDiscount }); 
+                }
                 
                 nhatKyTinhToan.push({ step: "B_P_END", type: "info", description: "Giá làm cơ sở tính KM Vinclub/Corp", amount: priceBaseForPercentageDiscount, current_subtotal: priceBaseForPercentageDiscount });
                 let giaSauGiamPhanTram = priceBaseForPercentageDiscount;
@@ -1683,92 +1695,126 @@
 
                 if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") {
                     let applicableTradeInPolicy = null;
-                    const dmsDateForTradeIn = parseDateStr(eligibilityInfo.dmsTransactionDateStr);
+                    const invoiceDateForTradeIn = parseDateStr(eligibilityInfo.expectedInvoiceDateStr); 
 
-                    // Define trade-in period boundaries based on PDF
-                    const TRADE_IN_P1_START = new Date(Date.UTC(2024, 10, 1)); // Nov 1, 2024
-                    const TRADE_IN_P1_END = new Date(Date.UTC(2025, 3, 20));   // Apr 20, 2025 (corresponds to TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD)
+                    const TRADE_IN_P1_START = new Date(Date.UTC(2024, 10, 1)); 
+                    const TRADE_IN_P1_END = new Date(Date.UTC(2025, 3, 20));   
+                    const TRADE_IN_P2_START = new Date(Date.UTC(2025, 3, 21)); 
+                    const TRADE_IN_P2_END = new Date(Date.UTC(2025, 4, 21));   
+                    const TRADE_IN_P3_START = new Date(Date.UTC(2025, 4, 22)); 
 
-                    const TRADE_IN_P2_START = new Date(Date.UTC(2025, 3, 21)); // Apr 21, 2025
-                    const TRADE_IN_P2_END = new Date(Date.UTC(2025, 4, 21));   // May 21, 2025 (corresponds to TRADE_IN_DISCOUNTS_CURRENT_PERIOD)
-
-                    const TRADE_IN_P3_START = new Date(Date.UTC(2025, 4, 22)); // May 22, 2025 (corresponds to TRADE_IN_DISCOUNTS_POST_MAY_22_2025)
-
-                    if (dmsDateForTradeIn) {
-                        if (dmsDateForTradeIn >= TRADE_IN_P3_START) {
+                    if (invoiceDateForTradeIn) {
+                        if (invoiceDateForTradeIn >= TRADE_IN_P3_START) {
                             applicableTradeInPolicy = TRADE_IN_DISCOUNTS_POST_MAY_22_2025;
-                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 22/05/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
-                        } else if (dmsDateForTradeIn >= TRADE_IN_P2_START && dmsDateForTradeIn <= TRADE_IN_P2_END) {
+                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 22/05/2025 (theo ngày dự kiến XHĐ).`);
+                        } else if (invoiceDateForTradeIn >= TRADE_IN_P2_START && invoiceDateForTradeIn <= TRADE_IN_P2_END) {
                             applicableTradeInPolicy = TRADE_IN_DISCOUNTS_CURRENT_PERIOD;
-                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 21/04/2025 đến 21/05/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
-                        } else if (dmsDateForTradeIn >= TRADE_IN_P1_START && dmsDateForTradeIn <= TRADE_IN_P1_END) {
+                            ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 21/04/2025 đến 21/05/2025 (theo ngày dự kiến XHĐ).`);
+                        } else if (invoiceDateForTradeIn >= TRADE_IN_P1_START && invoiceDateForTradeIn <= TRADE_IN_P1_END) {
                              applicableTradeInPolicy = TRADE_IN_DISCOUNTS_PREVIOUS_PERIOD;
-                             ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 01/11/2024 đến 20/04/2025 (theo ngày GD DMS/HĐ).`); // [cite: 4]
+                             ghiChu.push(`Áp dụng chính sách Thu cũ đổi mới từ 01/11/2024 đến 20/04/2025 (theo ngày dự kiến XHĐ).`);
                         } else {
-                             ghiChu.push(`Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) không nằm trong các giai đoạn chính sách Thu cũ đổi mới được xác định (áp dụng theo thời điểm xuất hóa đơn).`); // [cite: 16]
+                             ghiChu.push(`Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}) không nằm trong các giai đoạn chính sách Thu cũ đổi mới được xác định.`);
                         }
                     } else {
-                        ghiChu.push(`Không xác định được Ngày GD DMS (${eligibilityInfo.dmsTransactionDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới (cần để xác định thời điểm xuất hóa đơn).`); // [cite: 16]
+                        ghiChu.push(`Không xác định được Ngày dự kiến XHĐ (${eligibilityInfo.expectedInvoiceDateStr_orig || 'N/A'}) để áp dụng chính sách Thu cũ đổi mới.`);
                     }
 
                     if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) {
                         let tradeInTypeKey = eligibilityInfo.tradeInOldCarType;
-                        if (tradeInTypeKey === "Xe Hãng Khác") {
-                            tradeInTypeKey = "HangKhac";
-                        } else if (tradeInTypeKey === "VinFast Xăng Cũ") { // "Đối với LuxA, SA, Fadil, President"
-                            tradeInTypeKey = "VinFastXangCu";
-                        }
+                        if (tradeInTypeKey === "Xe Hãng Khác") tradeInTypeKey = "HangKhac";
+                        else if (tradeInTypeKey === "VinFast Xăng Cũ") tradeInTypeKey = "VinFastXangCu";
+                        
                         const mucHoTroThuCu = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey];
 
                         if (mucHoTroThuCu) {
                             giaKhachHangThanhToan -= mucHoTroThuCu;
                             mucHoTroThuCuApplied = mucHoTroThuCu;
                             nhatKyTinhToan.push({
-                                step: "D",
-                                type: "trade_in_support",
+                                step: "D", type: "trade_in_support",
                                 description: `Hỗ trợ Thu cũ đổi mới (${eligibilityInfo.tradeInOldCarType} cho ${loaiXeChung})`,
-                                amount: -mucHoTroThuCu,
-                                current_subtotal: giaKhachHangThanhToan
+                                amount: -mucHoTroThuCu, current_subtotal: giaKhachHangThanhToan
                             });
-                            // Add notes based on PDF
-                            ghiChu.push(`Lưu ý (TCD): Khách hàng cần sở hữu xe xăng từ 03 tháng trở lên.`); // [cite: 6]
+                            ghiChu.push(`Lưu ý (TCD): Khách hàng cần sở hữu xe xăng từ 03 tháng trở lên.`);
                             if (tradeInTypeKey === "HangKhac") {
-                                 ghiChu.push(`Lưu ý (TCD): Đối với xe hãng khác, hỗ trợ chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.`); // [cite: 18]
+                                 ghiChu.push(`Lưu ý (TCD): Đối với xe hãng khác, hỗ trợ chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.`);
                             }
                         } else {
                             ghiChu.push(`Không tìm thấy mức hỗ trợ Thu cũ đổi mới cho loại xe cũ '${eligibilityInfo.tradeInOldCarType}' (key: ${tradeInTypeKey}) với xe mới ${loaiXeChung} trong giai đoạn áp dụng.`);
                         }
-                    } else if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi" && dmsDateForTradeIn) {
-                         // This case means a policy period was matched (or not), but the specific model (loaiXeChung) isn't in that policy table (if a policy was matched).
-                         // The earlier ghiChu messages cover the non-matched period.
-                         if (applicableTradeInPolicy && !applicableTradeInPolicy[loaiXeChung] && loaiXeChung) { // Check loaiXeChung exists
-                            ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn GD DMS/HĐ đã chọn.`);
+                    } else if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi" && invoiceDateForTradeIn) {
+                         if (applicableTradeInPolicy && !applicableTradeInPolicy[loaiXeChung] && loaiXeChung) {
+                            ghiChu.push(`Dòng xe mới ${loaiXeChung} không có trong chính sách hỗ trợ Thu cũ đổi mới cho giai đoạn Ngày dự kiến XHĐ đã chọn.`);
                          }
                     }
                 }
 
                 nhatKyTinhToan.push({ step: "CUSTOMER_PRICE", type: "final_price_customer", description: "GIÁ KHÁCH HÀNG THANH TOÁN DỰ KIẾN", amount: giaKhachHangThanhToan, current_subtotal: giaKhachHangThanhToan });
-                let giaHoaDon = giaKhachHangThanhToan; 
-                let runningTotalForInvoice = giaKhachHangThanhToan;
                 
-                if (vinfasUsedForPercentageBase > 0) { runningTotalForInvoice += vinfasUsedForPercentageBase; nhatKyTinhToan.push({ step: "E1_INV", type: "add_back_for_invoice", description: `Cộng lại KM VINFASCINATION vào giá HĐ`, amount: vinfasUsedForPercentageBase, current_subtotal: runningTotalForInvoice }); }
-                if (insuranceUsedForPercentageBase > 0) { runningTotalForInvoice += insuranceUsedForPercentageBase; nhatKyTinhToan.push({ step: "E2_INV", type: "add_back_for_invoice", description: `Cộng lại KM Bảo hiểm vào giá HĐ`, amount: insuranceUsedForPercentageBase, current_subtotal: runningTotalForInvoice }); }
-                giaHoaDon = runningTotalForInvoice;
-                nhatKyTinhToan.push({ step: "INVOICE_PRICE", type: "final_price_invoice", description: "GIÁ TRÊN HỢP ĐỒNG/HÓA ĐƠN DỰ KIẾN", amount: giaHoaDon, current_subtotal: giaHoaDon });
+                let giaHoaDonChay = giaKhachHangThanhToan;
+
+                if (vf7PlusCashbackAppliedThisStep > 0) {
+                    giaHoaDonChay += vf7PlusCashbackAppliedThisStep;
+                    nhatKyTinhToan.push({ 
+                        step: "E0_INV", 
+                        type: "add_back_for_invoice", 
+                        description: `Cộng lại KM tiền mặt VF7 Plus vào giá HĐ`, 
+                        amount: vf7PlusCashbackAppliedThisStep, 
+                        current_subtotal: giaHoaDonChay 
+                    });
+                }
+                if (vinfasUsedForPercentageBase > 0) { 
+                    giaHoaDonChay += vinfasUsedForPercentageBase; 
+                    nhatKyTinhToan.push({ 
+                        step: "E1_INV", 
+                        type: "add_back_for_invoice", 
+                        description: `Cộng lại KM VINFASCINATION vào giá HĐ`, 
+                        amount: vinfasUsedForPercentageBase, 
+                        current_subtotal: giaHoaDonChay 
+                    }); 
+                }
+                if (insuranceUsedForPercentageBase > 0) { 
+                    giaHoaDonChay += insuranceUsedForPercentageBase; 
+                    nhatKyTinhToan.push({ 
+                        step: "E2_INV", 
+                        type: "add_back_for_invoice", 
+                        description: `Cộng lại KM Bảo hiểm vào giá HĐ`, 
+                        amount: insuranceUsedForPercentageBase, 
+                        current_subtotal: giaHoaDonChay 
+                    }); 
+                }
                 
-                return { invoicePrice: giaHoaDon, customerPrice: giaKhachHangThanhToan, basePriceUsed: giaHienTai, priceBaseForPercentageDiscount: priceBaseForPercentageDiscount, vinfascinationCashApplied: vinfasUsedForPercentageBase, insuranceCashApplied: insuranceUsedForPercentageBase, manhLietTinhThanVn3AppliedAmount: mlttvn3AppliedThisTime ? manhLietTinhThanVn3DiscountAmount : 0, tradeInApplied: mucHoTroThuCuApplied, calculationLog: nhatKyTinhToan, notes: ghiChu };
+                const giaHoaDonCuoiCung = giaHoaDonChay;
+                nhatKyTinhToan.push({ step: "INVOICE_PRICE", type: "final_price_invoice", description: "GIÁ TRÊN HỢP ĐỒNG/HÓA ĐƠN DỰ KIẾN", amount: giaHoaDonCuoiCung, current_subtotal: giaHoaDonCuoiCung });
+                
+                return { 
+                    invoicePrice: giaHoaDonCuoiCung, 
+                    customerPrice: giaKhachHangThanhToan, 
+                    basePriceUsed: giaHienTai, 
+                    priceBaseForPercentageDiscount: priceBaseForPercentageDiscount, 
+                    vinfascinationCashApplied: vinfasUsedForPercentageBase, 
+                    insuranceCashApplied: insuranceUsedForPercentageBase, 
+                    manhLietTinhThanVn3AppliedAmount: mlttvn3AppliedThisTime ? manhLietTinhThanVn3DiscountAmount : 0, 
+                    vf7PlusCashbackApplied: vf7PlusCashbackAppliedThisStep, 
+                    tradeInApplied: mucHoTroThuCuApplied, 
+                    calculationLog: nhatKyTinhToan, 
+                    notes: ghiChu 
+                };
             }
 
             const modelKeySelect = document.getElementById('modelKey');
             const baseMsrpInput = document.getElementById('baseMsrp');
             const vinYearInput = document.getElementById('vinYear');
+            const expectedInvoiceDateInput = document.getElementById('expectedInvoiceDateStr'); 
+            const dmsTransactionDateInput = document.getElementById('dmsTransactionDateStr'); 
+
             const isSdiBatteryCheckbox = document.getElementById('isSdiBattery_VF8_VF9');
             const is2ZoneACCheckbox = document.getElementById('is2ZoneAC_VF9');
             const hasCaptainSeatsCheckbox = document.getElementById('hasCaptainSeats_VF9');
             const hasPanoramicRoofCheckbox = document.getElementById('hasPanoramicRoof_VF9');
             const selectedAdvancedColorSelect = document.getElementById('selectedAdvancedColor');
-            const dmsTransactionDateInput = document.getElementById('dmsTransactionDateStr');
-            const depositDateVF7PlusInput = document.getElementById('depositDateStr_VF7Plus');
+            
+            const depositDateVF7PlusInput = document.getElementById('depositDateStr_VF7Plus'); 
             const purchaseDateVF9VIN23Input = document.getElementById('purchaseDateStr_VF9_VIN2023');
             const applyVf7PlusCashbackCheckbox = document.getElementById('applyVf7PlusCashback');
             const vf7PlusSubTextEl = document.getElementById('vf7PlusSubText');
@@ -1791,7 +1837,7 @@
             const vf9OptionsSeatsDiv = document.getElementById('vf9OptionsSeats');
             const vf9OptionsRoofDiv = document.getElementById('vf9OptionsRoof');
             const advancedColorOptionsDiv = document.getElementById('advancedColorOptionsDiv');
-            const vf7PlusOptionsDateDiv = document.getElementById('vf7PlusOptionsDate');
+            const vf7PlusOptionsDateDiv = document.getElementById('vf7PlusOptionsDate'); 
             const vf9Vin23OptionsDateDiv = document.getElementById('vf9Vin23OptionsDate');
             const vf7PlusOptionsPromoDiv = document.getElementById('vf7PlusOptionsPromo');
             const tradeInOldCarTypeDiv = document.getElementById('tradeInOldCarTypeDiv');
@@ -1842,13 +1888,13 @@
                 let message = "";
                 switch (step) {
                     case "initial": message = "Chào mừng bạn! Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); break;
-                    case "model_selected": message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong>, sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>."; highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput); break;
+                    case "model_selected": message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong>, sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; highlightNextStep(vinYearInput.value ? expectedInvoiceDateInput : vinYearInput); break;
                     case "common_fields_filled": message = "Thông tin chung đã nhập. Bây giờ, hãy xem xét các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> (nếu hiển thị và có áp dụng)."; if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) { const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])'); highlightNextStep(firstVisibleInputInModelSpecific || modelSpecificContainer.querySelector('input[type=checkbox]:not([disabled])')); } else { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } break;
                     case "model_specific_done": message = "Các tuỳ chọn Model đã được xem xét. Tiếp theo, kiểm tra <strong>'Các chương trình khuyến mãi có thể áp dụng'</strong> (nếu hiển thị)."; if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } else { highlightNextStep(calculateButton); } break;
                     case "promos_done": message = "Tất cả thông tin cần thiết có vẻ đã được nhập. Bạn có thể nhấn nút <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); break;
                     case "calculation_done": message = "Đã tính giá! Xem kết quả bên dưới. Để tính lại, thay đổi thông tin hoặc nhấn <strong>'Xóa Dữ Liệu'</strong>."; removeHighlight(); break;
                     case "form_reset": message = "Dữ liệu đã được xóa. Vui lòng bắt đầu lại bằng cách chọn <strong>'Mã Model'</strong>."; highlightNextStep(modelKeySelect); break;
-                    default: if (modelKeySelect.value === "") { message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); } else if (!vinYearInput.value || !dmsTransactionDateInput.value) { message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Giao Dịch DMS'</strong>."; highlightNextStep(vinYearInput.value ? dmsTransactionDateInput : vinYearInput); } else { message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); }
+                    default: if (modelKeySelect.value === "") { message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); } else if (!vinYearInput.value || !expectedInvoiceDateInput.value) { message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; highlightNextStep(vinYearInput.value ? expectedInvoiceDateInput : vinYearInput); } else { message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); }
                 }
                 guidanceTextElement.innerHTML = message;
                 if(elementToHighlight) highlightNextStep(elementToHighlight);
@@ -1865,7 +1911,7 @@
                 result.calculationLog.forEach(log => {
                     let showThisLine = false; let isSubtotalRow = false; let rowClass = ''; let amountChangeContent = '';
                     if (log.type === 'base_price') { showThisLine = true; amountChangeContent = '-'; } 
-                    else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) { /* Skip for customer log */ } 
+                    else if (priceType === 'customer' && (log.type === 'add_back_for_invoice' || log.step === 'E0_INV' || log.step === 'E1_INV' || log.step === 'E2_INV' || log.step === 'INVOICE_PRICE')) { /* Skip for customer log */ } 
                     else if (priceType === 'invoice' && log.type === 'final_price_customer' && log.step === 'CUSTOMER_PRICE') { showThisLine = true; isSubtotalRow = true; rowClass = 'calculation-details-subtotal-row'; amountChangeContent = '-'; } 
                     else if (log.type === 'subtotal' || log.type === 'info') { isSubtotalRow = true; if (log.step === "A_END" && log.amount !== result.basePriceUsed) showThisLine = true; else if (log.step === "B_P_END" && percentageDiscountWasApplied) showThisLine = true; else if (log.step === "C_END" && percentageDiscountWasApplied && bpEndLogEntry && log.amount !== bpEndLogEntry.amount) showThisLine = true; if(showThisLine) { rowClass = 'calculation-details-subtotal-row'; amountChangeContent = '-'; } } 
                     else if (log.type !== 'final_price_customer' && log.type !== 'final_price_invoice') { if (log.amount !== 0) { showThisLine = true; const amountPrefix = log.amount > 0 ? "+" : ""; amountChangeContent = amountPrefix + formatCurrency(log.amount); if (log.amount > 0) rowClass = 'log-entry-positive'; else if (log.amount < 0) rowClass = 'log-entry-negative'; else rowClass = 'log-entry-neutral'; } }
@@ -1878,6 +1924,7 @@
                 const generalModelType = getGeneralModelType(modelKey);
                 const toggleVisibility = (element, isVisible) => { if (!element) return; const inputElements = element.querySelectorAll('input, select'); if (isVisible) { element.classList.remove('hidden'); inputElements.forEach(el => { el.disabled = false; el.classList.remove('input-disabled'); }); } else { element.classList.add('hidden'); inputElements.forEach(el => { if (el.type === 'checkbox') el.checked = false; else if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; el.disabled = true; el.classList.add('input-disabled'); }); } };
                 const toggleItemVisibility = (itemContainer, checkboxElement, isApplicable) => { if (!itemContainer) return; if (isApplicable) { itemContainer.classList.remove('hidden'); if (checkboxElement) checkboxElement.disabled = false; } else { itemContainer.classList.add('hidden'); if (checkboxElement) { checkboxElement.checked = false; checkboxElement.disabled = true; } } };
+                
                 const allModelSpecificDivs = [ vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv ];
                 allModelSpecificDivs.forEach(div => toggleVisibility(div, false));
 
@@ -1896,10 +1943,13 @@
                 toggleVisibility(vf9OptionsSeatsDiv, generalModelType === "VF 9");
                 toggleVisibility(vf9OptionsRoofDiv, generalModelType === "VF 9");
                 toggleVisibility(vf9Vin23OptionsDateDiv, generalModelType === "VF 9");
+                
                 const isVf7Plus = modelKey && modelKey.includes("VF 7 - Plus");
-                toggleVisibility(vf7PlusOptionsDateDiv, isVf7Plus);
+                toggleVisibility(vf7PlusOptionsDateDiv, false); 
                 toggleVisibility(vf7PlusOptionsPromoDiv, isVf7Plus);
-                if (vf7PlusSubTextEl && isVf7Plus) { vf7PlusSubTextEl.textContent = `(Áp dụng cho KH đặt cọc VF7 Plus từ ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} đến ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`; }
+                if (vf7PlusSubTextEl && isVf7Plus) { 
+                    vf7PlusSubTextEl.textContent = `(Sử dụng Ngày GD DMS làm ngày đặt cọc. Áp dụng từ ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} đến ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`;
+                }
 
 
                 const tradeInEligibleModels = ["VF 6", "VF 7", "VF 8", "VF 9"];
@@ -1910,29 +1960,35 @@
                 if (generalModelType && OPTIONAL_EQUIPMENT[generalModelType]) { const colors = Object.keys(OPTIONAL_EQUIPMENT[generalModelType]).filter(key => key !== "captain_seats_6" && key !== "panoramic_roof"); if (colors.length > 0) { hasAdvancedColors = true; if (selectedAdvancedColorSelect) { colors.forEach(colorKey => { const option = document.createElement('option'); option.value = colorKey; option.textContent = OPTIONAL_EQUIPMENT[generalModelType][colorKey].description; selectedAdvancedColorSelect.appendChild(option); }); } } }
                 toggleVisibility(advancedColorOptionsDiv, hasAdvancedColors);
 
-                let anyModelOptionVisible = false; allModelSpecificDivs.forEach(div => { if (div && !div.classList.contains('hidden')) { anyModelOptionVisible = true; } });
+                let anyModelOptionVisible = false; 
+                [vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv].forEach(div => { 
+                    if (div && !div.classList.contains('hidden')) { 
+                        anyModelOptionVisible = true; 
+                    } 
+                });
+
                 if (anyModelOptionVisible && modelSpecificContainer && modelSpecificHeader) { modelSpecificContainer.classList.remove('hidden'); const selectedModelOption = modelKeySelect.options[modelKeySelect.selectedIndex]; modelSpecificHeader.textContent = `Tuỳ chọn & Chính sách riêng cho ${selectedModelOption ? selectedModelOption.text : 'Model'}`; } else if (modelSpecificContainer) { modelSpecificContainer.classList.add('hidden'); }
 
                 let generalPromoSectionVisible = false;
-                const mlttvn3Applicable = !!modelKey; // Show if a model is selected
+                const mlttvn3Applicable = !!modelKey; 
                 toggleItemVisibility(mlttvn3PromoItemContainer, applyManhLietTinhThanVietNamPromoCheckbox, mlttvn3Applicable);
                 if (mlttvn3Applicable && mlttvn3SubTextEl) { mlttvn3SubTextEl.textContent = `(Giảm 4% giá NY + màu NC (nếu có). HĐ từ ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}. Không cùng BH 2 năm.)`; generalPromoSectionVisible = true;}
 
                 const vinfasApplicable = generalModelType && VINFASCINATION_PROMO_VALUES[generalModelType];
                 toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, vinfasApplicable);
                 if (vinfasApplicable && vinfascinationLabelText) { vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
-                if (vinfasApplicable && vinfascinationSubTextEl) { vinfascinationSubTextEl.textContent = `(Quy đổi điểm, GD DMS ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}, quy đổi tiền từ ${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}.)`;}
+                if (vinfasApplicable && vinfascinationSubTextEl) { vinfascinationSubTextEl.textContent = `(Quy đổi điểm, HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}, quy đổi tiền từ ${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}.)`;}
 
 
                 const insuranceApplicable = generalModelType && INSURANCE_CASH_EQUIVALENT[generalModelType];
                 toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, insuranceApplicable);
                  if (insuranceApplicable && insuranceCashLabelText) { insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
-                 if (insuranceApplicable && insuranceCashSubTextEl) { insuranceCashSubTextEl.textContent = `(Quy đổi gói BH, GD DMS ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}. Không cùng MLTTVN L3.)`;}
+                 if (insuranceApplicable && insuranceCashSubTextEl) { insuranceCashSubTextEl.textContent = `(Quy đổi gói BH, HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}. Không cùng MLTTVN L3.)`;}
 
 
                 if (applicableGeneralPromosContainer) { if (generalPromoSectionVisible) { applicableGeneralPromosContainer.classList.remove('hidden'); } else { applicableGeneralPromosContainer.classList.add('hidden'); } }
                 
-                if (!vinYearInput.value || !dmsTransactionDateInput.value) { updateGuidance("model_selected"); } 
+                if (!vinYearInput.value || !expectedInvoiceDateInput.value) { updateGuidance("model_selected"); } 
                 else if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { updateGuidance("common_fields_filled"); } 
                 else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } 
                 else { updateGuidance("promos_done"); }
@@ -1948,20 +2004,19 @@
                 updateFormInputsVisibility(selectedModel); 
             });
 
-            [vinYearInput, dmsTransactionDateInput, vinClubTierSelect, applyCorpDiscountCheckbox].forEach(el => {
-                el.addEventListener('change', () => { if (modelKeySelect.value) { if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("common_fields_filled"); } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { if (vinYearInput.value && dmsTransactionDateInput.value) updateGuidance("model_specific_done"); } else if (vinYearInput.value && dmsTransactionDateInput.value) { updateGuidance("promos_done"); } } });
+            [vinYearInput, expectedInvoiceDateInput, dmsTransactionDateInput, vinClubTierSelect, applyCorpDiscountCheckbox].forEach(el => {
+                el.addEventListener('change', () => { if (modelKeySelect.value) { if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("common_fields_filled"); } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("model_specific_done"); } else if (vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); } } });
             });
             
             const allModelSpecificInputs = modelSpecificContainer.querySelectorAll('input, select');
             allModelSpecificInputs.forEach(input => {
-                input.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { let allModelSpecificFilledOrHidden = true; if (!modelSpecificContainer.classList.contains('hidden')) { modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => { if (el.value === "" && el.hasAttribute('required')) allModelSpecificFilledOrHidden = false; });} if (allModelSpecificFilledOrHidden) { if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } else { updateGuidance("promos_done"); } } } });
+                input.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { let allModelSpecificFilledOrHidden = true; if (!modelSpecificContainer.classList.contains('hidden')) { modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => { if (el.value === "" && el.hasAttribute('required')) allModelSpecificFilledOrHidden = false; });} if (allModelSpecificFilledOrHidden) { if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } else { updateGuidance("promos_done"); } } } });
             });
             const allGeneralPromoCheckboxes = applicableGeneralPromosContainer.querySelectorAll('input[type="checkbox"]');
             allGeneralPromoCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && dmsTransactionDateInput.value) { updateGuidance("promos_done"); } });
+                checkbox.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); } });
             });
 
-            // Conflict handling for MLTTVN3 and Insurance
             if (applyManhLietTinhThanVietNamPromoCheckbox && takeInsuranceCashDynamicCheckbox) {
                 applyManhLietTinhThanVietNamPromoCheckbox.addEventListener('change', function() {
                     if (this.checked && takeInsuranceCashDynamicCheckbox.checked) {
@@ -1983,7 +2038,10 @@
             function resetFormInputs() {
                 modelKeySelect.selectedIndex = 0; vinClubTierSelect.value = "Không có";
                 if (selectedAdvancedColorSelect) selectedAdvancedColorSelect.innerHTML = '<option value="">-- Chọn màu (nếu có) --</option>';
-                baseMsrpInput.value = ''; vinYearInput.value = ''; dmsTransactionDateInput.value = '';
+                baseMsrpInput.value = ''; vinYearInput.value = ''; 
+                expectedInvoiceDateInput.value = ''; 
+                dmsTransactionDateInput.value = ''; 
+
                 if(applyManhLietTinhThanVietNamPromoCheckbox) applyManhLietTinhThanVietNamPromoCheckbox.checked = false;
                 if(applyVinfascinationDynamicCheckbox) applyVinfascinationDynamicCheckbox.checked = false;
                 if(takeInsuranceCashDynamicCheckbox) takeInsuranceCashDynamicCheckbox.checked = false;
@@ -1993,7 +2051,7 @@
                 if(is2ZoneACCheckbox) is2ZoneACCheckbox.checked = false;
                 if(hasCaptainSeatsCheckbox) hasCaptainSeatsCheckbox.checked = false;
                 if(hasPanoramicRoofCheckbox) hasPanoramicRoofCheckbox.checked = false;
-                if(depositDateVF7PlusInput) depositDateVF7PlusInput.value = '';
+                if(depositDateVF7PlusInput) depositDateVF7PlusInput.value = ''; 
                 if(purchaseDateVF9VIN23Input) purchaseDateVF9VIN23Input.value = '';
                 if(tradeInOldCarTypeSelect) tradeInOldCarTypeSelect.value = "Không đổi";
 
@@ -2031,10 +2089,15 @@
                 return "fas fa-tag";
             }
 
-            function extractAppliedPromotions(calculationLog, vinfascinationCashApplied, insuranceCashApplied) {
+            function extractAppliedPromotions(calculationLog, vinfascinationCashApplied, insuranceCashApplied, vf7PlusCashbackApplied) {
                 const appliedPromos = [];
                 calculationLog.forEach(log => {
                     if ((log.type === 'discount' || log.type === 'promotion' || log.type === 'trade_in_support' || log.type === 'discount_percentage') && log.amount < 0) {
+                        if (log.description.includes("KM tiền mặt VF 7 Plus") && vf7PlusCashbackApplied > 0) {
+                            // This specific promo will be handled by the dedicated vf7PlusCashbackApplied parameter later
+                            return; 
+                        }
+
                         let title = log.description;
                         if (log.type === 'discount_percentage' && log.base_for_percentage && log.base_for_percentage !==0) { 
                             title = log.description.replace(/ \(\d+(\.\d+)?%\).*/, ` (${(Math.abs(log.amount / log.base_for_percentage) * 100).toFixed(1)}%)`).replace(/cho.*/i, "").trim(); 
@@ -2051,6 +2114,7 @@
 
                 if (vinfascinationCashApplied > 0) { appliedPromos.push({ title: "Ưu đãi VINFASCINATION", fullDescription: "Quy đổi tiền mặt từ chương trình VINFASCINATION.", value: -vinfascinationCashApplied, iconClass: "fas fa-star" }); }
                 if (insuranceCashApplied > 0) { appliedPromos.push({ title: "Ưu đãi Bảo Hiểm", fullDescription: "Quy đổi tiền mặt từ ưu đãi Bảo hiểm vật chất.", value: -insuranceCashApplied, iconClass: "fas fa-shield-alt" }); }
+                if (vf7PlusCashbackApplied > 0) { appliedPromos.push({ title: "KM Tiền Mặt VF7 Plus", fullDescription: `KM tiền mặt VF 7 Plus (Ngày GD DMS ${dmsTransactionDateInput.value || 'N/A'} từ ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_START_DATE)} - ${formatDateToDDMMYYYY(VF7_PLUS_DEPOSIT_END_DATE)})`, value: -vf7PlusCashbackApplied, iconClass: "fas fa-money-bill-wave" });}
                 
                 const uniquePromos = []; const seenFullDescriptions = new Set();
                 for (const promo of appliedPromos) { if (!seenFullDescriptions.has(promo.fullDescription)) { uniquePromos.push(promo); seenFullDescriptions.add(promo.fullDescription); } }
@@ -2085,10 +2149,10 @@
                     selectedAdvancedColor: advancedColorOptionsDiv && !advancedColorOptionsDiv.classList.contains('hidden') && selectedAdvancedColorSelect && selectedAdvancedColorSelect.value ? selectedAdvancedColorSelect.value : null
                 };
                 const eligibilityInfo = {
-                    dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null,
+                    expectedInvoiceDateStr: expectedInvoiceDateInput.value ? formatDateToYYYYMMDD(parseDateStr(expectedInvoiceDateInput.value)) : null,
+                    expectedInvoiceDateStr_orig: expectedInvoiceDateInput.value,
+                    dmsTransactionDateStr: dmsTransactionDateInput.value ? formatDateToYYYYMMDD(parseDateStr(dmsTransactionDateInput.value)) : null, 
                     dmsTransactionDateStr_orig: dmsTransactionDateInput.value,
-                    depositDateStr_VF7Plus: vf7PlusOptionsDateDiv && !vf7PlusOptionsDateDiv.classList.contains('hidden') && depositDateVF7PlusInput.value ? formatDateToYYYYMMDD(parseDateStr(depositDateVF7PlusInput.value)) : null,
-                    depositDateStr_VF7Plus_orig: depositDateVF7PlusInput.value,
                     purchaseDateStr_VF9_VIN2023: vf9Vin23OptionsDateDiv && !vf9Vin23OptionsDateDiv.classList.contains('hidden') && purchaseDateVF9VIN23Input.value ? formatDateToYYYYMMDD(parseDateStr(purchaseDateVF9VIN23Input.value)) : null,
                     purchaseDateStr_VF9_VIN2023_orig: purchaseDateVF9VIN23Input.value,
                     applyVf7PlusCashback: vf7PlusOptionsPromoDiv && !vf7PlusOptionsPromoDiv.classList.contains('hidden') && applyVf7PlusCashbackCheckbox.checked,
@@ -2111,7 +2175,7 @@
                 notesResultPre.textContent = combinedNotesString;
 
                 if (appliedPromosContainerElement) { 
-                    const extractedPromos = extractAppliedPromotions(result.calculationLog, result.vinfascinationCashApplied, result.insuranceCashApplied); 
+                    const extractedPromos = extractAppliedPromotions(result.calculationLog, result.vinfascinationCashApplied, result.insuranceCashApplied, result.vf7PlusCashbackApplied); 
                     displayAppliedPromotions(extractedPromos, appliedPromosContainerElement); 
                 }
                 updateGuidance("calculation_done"); 
