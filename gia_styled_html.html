@@ -1526,7 +1526,7 @@
                 if (baseMsrp && typeof baseMsrp === 'number' && baseMsrp > 0) { 
                     giaHienTai = baseMsrp; 
                     originalMsrpForMltvnl3 = baseMsrp;
-                    if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY (xe hiện tại tự động): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
+                    if (CURRENT_MODEL_MSRPS.hasOwnProperty(modelKey) && CURRENT_MODEL_MSRPS[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                     else if (BASE_PRICES_DISCONTINUED_GLOBAL.hasOwnProperty(modelKey) && BASE_PRICES_DISCONTINUED_GLOBAL[modelKey] === baseMsrp) { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY: ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                     else { nhatKyTinhToan.push({ step: "0", type: "base_price", description: `Giá NY gốc được cung cấp (thủ công): ${modelKey}`, amount: giaHienTai, current_subtotal: giaHienTai }); } 
                 } else { 
