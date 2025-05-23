@@ -292,6 +292,12 @@
             gap: 18px;
         }
         .form-grid > div { display: flex; flex-direction: column; }
+        /* Ensure .corp-discount-toggle-container when direct child of .form-grid also behaves like a grid item */
+        .form-grid > .corp-discount-toggle-container {
+             display: flex; flex-direction: column;
+             /* It will use the grid's gap for spacing */
+        }
+
         .form-grid label:not(.toggle-switch-label):not(.complex-checkbox-label) { /* Exclude special labels */
             margin-bottom: 6px; font-weight: 500; color: var(--text-light); font-size: 0.9em;
         }
@@ -325,12 +331,15 @@
         }
 
 
-        /* Styling for new form structure */
-        .common-fields-grid, .vinclub-corp-grid {
+        .common-fields-grid {
              margin-bottom: 20px;
         }
-         .vinclub-corp-grid {
-            align-items: start; /* Align items in the grid to the start of their cell */
+        /* Removed .vinclub-corp-grid as it's no longer needed as a separate grid container */
+
+        /* Ensure the MLTTVN promo and Corp Discount, when in common-fields-grid, behave like other grid items */
+        .common-fields-grid > .corp-discount-toggle-container {
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
 
@@ -372,43 +381,39 @@
         .model-options-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 12px; /* UPDATED */
+            gap: 12px;
         }
         .model-options-grid .model-specific-options {
-            padding: 10px; /* UPDATED */
+            padding: 10px;
             border: 1px solid var(--border-color-light);
             margin-top: 0;
             background-color: var(--card-bg-light);
             border-radius: 6px;
-            /* box-shadow: var(--shadow-light-inner); */ /* UPDATED: Removed shadow */
         }
         body.dark-mode .model-options-grid .model-specific-options {
             border-color: var(--border-color-dark);
             background-color: var(--card-bg-dark);
-            /* box-shadow: var(--shadow-dark-inner); */ /* UPDATED: Removed shadow */
         }
 
-        /* Label for select/date inside model-specific-options */
         .model-options-grid .model-specific-options label {
             display: block;
             width: 100%;
             margin-bottom: 8px;
             color: var(--text-light);
-            font-size: 0.9em; /* Added for consistency */
+            font-size: 0.9em;
         }
         body.dark-mode .model-options-grid .model-specific-options label {
              color: var(--text-dark);
         }
 
-        /* Checkbox label specific styling */
         .model-options-grid .model-specific-options .checkbox-label {
-            display: flex; /* UPDATED */
-            align-items: center; /* UPDATED */
+            display: flex; 
+            align-items: center; 
             width: 100%;
-            margin-bottom: 0px;   /* UPDATED */
+            margin-bottom: 0px;   
             color: var(--text-light);
-            font-size: 0.9em; /* Added for consistency */
-            cursor: pointer; /* Added for better UX */
+            font-size: 0.9em; 
+            cursor: pointer; 
         }
         body.dark-mode .model-options-grid .model-specific-options .checkbox-label {
              color: var(--text-dark);
@@ -416,18 +421,16 @@
          .model-options-grid .model-specific-options .checkbox-label input[type="checkbox"] {
             margin-bottom: 0;
             accent-color: var(--primary-color);
-            margin-right: 8px;    /* UPDATED */
-            flex-shrink: 0;       /* UPDATED */
-            width: 1.1em; /* Can adjust if needed */
-            height: 1.1em; /* Can adjust if needed */
+            margin-right: 8px;    
+            flex-shrink: 0;       
+            width: 1.1em; 
+            height: 1.1em; 
         }
         .model-options-grid .model-specific-options select,
         .model-options-grid .model-specific-options input[type="date"] {
             width: 100%;
-            /* Inherits styling from .form-grid inputs if not overridden */
         }
 
-        /* Styling for "Các chương trình khuyến mãi có thể áp dụng" section */
         #applicableGeneralPromosContainer {
             border: 1px dotted var(--primary-color);
             border-radius: 6px;
@@ -501,7 +504,6 @@
             opacity: 0.65;
         }
 
-        /* Corp Discount Toggle Switch Styling */
         .corp-discount-toggle-container {
             display: flex;
             flex-direction: column;
@@ -595,43 +597,82 @@
             color: var(--text-dark);
         }
 
-        /* Guidance Section Styling */
-        #guidanceSection {
-            margin-top: 20px;
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px dashed var(--primary-color-lighter);
-            border-radius: 8px;
-            background-color: rgba(0, 48, 135, 0.03);
+        .guidance-modal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px; 
+            max-width: 90vw; 
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-color-light);
+            border-radius: 10px;
+            box-shadow: var(--shadow-light-outer);
+            padding: 20px;
+            padding-top: 45px; 
+            z-index: 1010;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            transition: opacity 0.3s var(--transition-easing), transform 0.3s var(--transition-easing);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
         }
-        body.dark-mode #guidanceSection {
-            border-color: var(--secondary-color);
-            background-color: rgba(0, 174, 255, 0.05);
+
+        .guidance-modal.visible {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
-        #guidanceSection h4 {
-            font-size: 1.05em;
+
+        .guidance-close-btn {
+            position: absolute;
+            top: 12px; 
+            right: 15px;
+            background: transparent;
+            border: none;
+            font-size: 1.8em;
+            line-height: 1;
+            color: var(--text-light); 
+            cursor: pointer;
+            padding: 5px;
+            transition: color var(--transition-speed-fast) var(--transition-easing);
+        }
+        .guidance-close-btn:hover {
+            color: var(--primary-color); 
+        }
+        body.dark-mode .guidance-close-btn {
+            color: var(--text-dark); 
+        }
+        body.dark-mode .guidance-close-btn:hover {
+            color: var(--secondary-color); 
+        }
+
+        #guidanceModalHeader { 
+            font-size: 1.1em;
             font-weight: 600;
             color: var(--primary-color-darker);
-            margin-bottom: 8px;
+            margin-bottom: 0; 
             display: flex;
             align-items: center;
         }
-        body.dark-mode #guidanceSection h4 {
-            color: var(--primary-color-lighter);
-        }
-        #guidanceSection h4 i {
-            margin-right: 8px;
+        body.dark-mode #guidanceModalHeader {
             color: var(--secondary-color);
         }
-        body.dark-mode #guidanceSection h4 i {
-             color: var(--primary-color);
+        #guidanceModalHeader i {
+            margin-right: 10px;
+            color: var(--secondary-color);
+            font-size: 1.25em;
         }
-        #guidanceText {
-            font-size: 0.9em;
+        body.dark-mode #guidanceModalHeader i {
+            color: var(--primary-color-lighter);
+        }
+        #guidanceTextModal { 
+            font-size: 0.95em;
             color: var(--text-light);
-            line-height: 1.5;
+            line-height: 1.6;
+            margin: 0;
         }
-        body.dark-mode #guidanceText {
+        body.dark-mode #guidanceTextModal {
             color: var(--text-dark);
         }
 
@@ -1082,9 +1123,29 @@
             #applicableGeneralPromosContainer h4 { font-size: 0.9em; }
             .general-promo-item .sub-label { padding-left: calc(1.1em + 6px); font-size: 0.75em; }
             .corp-discount-toggle-container { padding: 10px; }
-            #guidanceSection { padding: 12px; }
-            #guidanceSection h4 { font-size: 1em; }
-            #guidanceText { font-size: 0.85em; }
+            /* Guidance Modal Responsive Adjustments */
+            .guidance-modal {
+                width: auto; /* Allow it to shrink */
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                padding: 15px;
+                padding-top: 40px; /* Adjust for close button */
+            }
+            #guidanceModalHeader {
+                font-size: 1em;
+            }
+            #guidanceModalHeader i {
+                font-size: 1.1em;
+            }
+            #guidanceTextModal {
+                font-size: 0.9em;
+            }
+            .guidance-close-btn {
+                font-size: 1.6em;
+                top: 10px; /* Adjusted for mobile */
+                right: 12px; /* Adjusted for mobile */
+            }
         }
     </style>
 </head>
@@ -1147,10 +1208,7 @@
                         <label for="dmsTransactionDateStr">Ngày Giao Dịch DMS (Nếu có):</label>
                         <input type="date" id="dmsTransactionDateStr">
                     </div>
-                </div>
-
-                <div class="form-grid vinclub-corp-grid">
-                    <div>
+                    <div> 
                         <label for="vinClubTier">Hạng VinClub:</label>
                         <select id="vinClubTier">
                             <option value="Không có">Không có</option>
@@ -1159,7 +1217,15 @@
                             <option value="Diamond">Diamond</option>
                         </select>
                     </div>
-                    <div class="corp-discount-toggle-container">
+                    <div id="mlttvn3PromoItemContainer" class="corp-discount-toggle-container">
+                        <label for="applyManhLietTinhThanVietNamPromo" class="toggle-switch-label">
+                            <input type="checkbox" id="applyManhLietTinhThanVietNamPromo" class="toggle-switch-checkbox">
+                            <span class="toggle-switch-slider"></span>
+                            <span class="toggle-switch-text" id="mlttvn3LabelText">Mãnh liệt tinh thần VN - Vì TLX L3</span>
+                        </label>
+                        <span class="toggle-switch-info" id="mlttvn3SubText">(Giảm 4% giá NY + màu NC (nếu có). HĐ từ 22/05/2025 - 31/12/2025. Không cùng BH 2 năm.)</span>
+                    </div>
+                    <div class="corp-discount-toggle-container hidden" id="corpPolicySelectionContainer">
                         <label for="applyCorpDiscount" class="toggle-switch-label">
                             <input type="checkbox" id="applyCorpDiscount" class="toggle-switch-checkbox">
                             <span class="toggle-switch-slider"></span>
@@ -1168,14 +1234,7 @@
                         <span class="toggle-switch-info" id="corpDiscountInfoText">(Mức giảm hiện tại: 3%)</span>
                     </div>
                 </div>
-                <div id="mlttvn3PromoItemContainer" class="corp-discount-toggle-container hidden" style="margin-top: 20px; margin-bottom: 20px;">
-                    <label for="applyManhLietTinhThanVietNamPromo" class="toggle-switch-label">
-                        <input type="checkbox" id="applyManhLietTinhThanVietNamPromo" class="toggle-switch-checkbox">
-                        <span class="toggle-switch-slider"></span>
-                        <span class="toggle-switch-text" id="mlttvn3LabelText">Mãnh liệt tinh thần VN - Vì TLX L3</span>
-                    </label>
-                    <span class="toggle-switch-info" id="mlttvn3SubText">(Giảm 4% giá NY + màu NC (nếu có). HĐ từ 22/05/2025 - 31/12/2025. Không cùng BH 2 năm.)</span>
-                </div>
+
                 <div id="modelSpecificSectionContainer" class="hidden">
                     <h3 id="modelSpecificHeader">Tuỳ chọn & Chính sách riêng cho Model</h3>
                     <div class="model-options-grid">
@@ -1230,8 +1289,7 @@
                 </div>
 
                 <div id="applicableGeneralPromosContainer" class="hidden">
-                    <h4>Các chương trình khuyến mãi có thể áp dụng:</h4>
-                    <div class="general-promo-item hidden" id="vinfascinationPromoItemContainer">
+                    <h4>Các chương trình khuyến mãi chung khác (nếu có):</h4> <div class="general-promo-item hidden" id="vinfascinationPromoItemContainer">
                         <label for="applyVinfascinationDynamic" class="checkbox-label complex-checkbox-label">
                             <input type="checkbox" id="applyVinfascinationDynamic">
                             <span class="main-label" id="vinfascinationLabelText">VINFASCINATION</span>
@@ -1247,10 +1305,6 @@
                     </div>
                 </div>
 
-                <div id="guidanceSection">
-                    <h4><i class="fas fa-info-circle"></i>Hướng Dẫn</h4>
-                    <p id="guidanceText">Chào mừng bạn đến với công cụ tính giá. Vui lòng bắt đầu bằng cách chọn một Mã Model.</p>
-                </div>
 
                 <div style="display: flex; gap: 8px; margin-top: 20px; justify-content: flex-start;">
                     <button id="calculateButton"><i class="fas fa-calculator"></i>Tính Giá</button>
@@ -1303,6 +1357,12 @@
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
 
+    <div id="guidanceModal" class="guidance-modal">
+        <button id="guidanceCloseBtn" class="guidance-close-btn" aria-label="Đóng hướng dẫn">&times;</button>
+        <h4 id="guidanceModalHeader"><i class="fas fa-info-circle"></i>Hướng Dẫn</h4>
+        <p id="guidanceTextModal">Chào mừng bạn đến với công cụ tính giá. Vui lòng bắt đầu bằng cách chọn một Mã Model.</p>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar');
@@ -1313,6 +1373,12 @@
             const themeToggleButton = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('theme-icon');
             const navMenu = document.getElementById('navMenu');
+
+            // --- NEW: Guidance Modal Elements ---
+            const guidanceModalElement = document.getElementById('guidanceModal');
+            const guidanceCloseBtnElement = document.getElementById('guidanceCloseBtn');
+            const guidanceTextModalElement = document.getElementById('guidanceTextModal');
+
 
             function applyTheme(theme) {
                 if (theme === 'dark') {
@@ -1949,9 +2015,14 @@
             const calculationLogInvoicePre = document.getElementById('calculationLogInvoice');
             const calculationLogCustomerPre = document.getElementById('calculationLogCustomer');
             const notesResultPre = document.getElementById('notesResult');
-            const guidanceTextElement = document.getElementById('guidanceText'); 
-
+            
             let currentHighlightedElement = null;
+
+            if (guidanceCloseBtnElement && guidanceModalElement) {
+                guidanceCloseBtnElement.addEventListener('click', () => {
+                    guidanceModalElement.classList.remove('visible');
+                });
+            }
 
             function highlightNextStep(element) {
                 removeHighlight();
@@ -1970,20 +2041,81 @@
             }
 
             function updateGuidance(step = null, elementToHighlight = null) {
-                if (!guidanceTextElement) return;
+                if (!guidanceTextModalElement || !guidanceModalElement) return; 
                 let message = "";
                 switch (step) {
-                    case "initial": message = "Chào mừng bạn! Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); break;
-                    case "model_selected": message = "Đã chọn Model. Tiếp theo, hãy kiểm tra <strong>'Giá Niêm Yết'</strong>, sau đó nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; highlightNextStep(vinYearInput.value ? expectedInvoiceDateInput : vinYearInput); break;
-                    case "common_fields_filled": message = "Thông tin chung đã nhập. Bây giờ, hãy xem xét các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> (nếu hiển thị và có áp dụng)."; if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) { const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])'); highlightNextStep(firstVisibleInputInModelSpecific || modelSpecificContainer.querySelector('input[type=checkbox]:not([disabled])')); } else { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } break;
-                    case "model_specific_done": message = "Các tuỳ chọn Model đã được xem xét. Tiếp theo, kiểm tra <strong>'Các chương trình khuyến mãi có thể áp dụng'</strong> (nếu hiển thị)."; if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) { highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); } else { highlightNextStep(calculateButton); } break;
-                    case "promos_done": message = "Tất cả thông tin cần thiết có vẻ đã được nhập. Bạn có thể nhấn nút <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); break;
-                    case "calculation_done": message = "Đã tính giá! Xem kết quả bên dưới. Để tính lại, thay đổi thông tin hoặc nhấn <strong>'Xóa Dữ Liệu'</strong>."; removeHighlight(); break;
-                    case "form_reset": message = "Dữ liệu đã được xóa. Vui lòng bắt đầu lại bằng cách chọn <strong>'Mã Model'</strong>."; highlightNextStep(modelKeySelect); break;
-                    default: if (modelKeySelect.value === "") { message = "Vui lòng bắt đầu bằng cách chọn <strong>'Mã Model'</strong> xe."; highlightNextStep(modelKeySelect); } else if (!vinYearInput.value || !expectedInvoiceDateInput.value) { message = "Tiếp tục nhập <strong>'Năm VIN'</strong> và <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; highlightNextStep(vinYearInput.value ? expectedInvoiceDateInput : vinYearInput); } else { message = "Hoàn tất các trường thông tin cần thiết và nhấn <strong>'Tính Giá'</strong>."; highlightNextStep(calculateButton); }
+                    case "initial": 
+                        message = "Chào mừng bạn đến với công cụ tính giá xe VinFast! Để bắt đầu, vui lòng chọn <strong>'Mã Model'</strong> của chiếc xe bạn quan tâm."; 
+                        highlightNextStep(modelKeySelect); 
+                        break;
+                    case "model_selected": 
+                        message = "Tuyệt vời! Bạn đã chọn Model. Giờ hãy kiểm tra <strong>'Giá Niêm Yết'</strong> (sẽ tự điền nếu có), sau đó cung cấp <strong>'Năm VIN'</strong> và <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; 
+                        highlightNextStep(vinYearInput.value ? expectedInvoiceDateInput : vinYearInput); 
+                        break;
+                    case "common_fields_filled": 
+                        message = "Thông tin cơ bản đã sẵn sàng. Tiếp theo, hãy xem qua các <strong>'Tuỳ chọn & Chính sách riêng cho Model'</strong> này (nếu có) để tùy chỉnh thêm."; 
+                        if (modelSpecificContainer && !modelSpecificContainer.classList.contains('hidden')) { 
+                            const firstVisibleInputInModelSpecific = modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])'); 
+                            highlightNextStep(firstVisibleInputInModelSpecific || modelSpecificContainer.querySelector('input[type=checkbox]:not([disabled])')); 
+                        } else { 
+                             // If no model specific, directly check MLTTVN3 or other general promos
+                            if (mlttvn3PromoItemContainer && !mlttvn3PromoItemContainer.classList.contains('hidden') && applyManhLietTinhThanVietNamPromoCheckbox && !applyManhLietTinhThanVietNamPromoCheckbox.disabled) {
+                                highlightNextStep(applyManhLietTinhThanVietNamPromoCheckbox);
+                            } else if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) {
+                                highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'));
+                            } else {
+                                highlightNextStep(calculateButton);
+                            }
+                        } 
+                        break;
+                    case "model_specific_done":                         
+                        message = "Các tuỳ chọn riêng đã được thiết lập. Giờ hãy kiểm tra xem có <strong>'Chương trình khuyến mãi chung nào có thể áp dụng'</strong> không nhé (bao gồm cả Mãnh Liệt Tinh Thần VN nếu chưa chọn)."; 
+                        // Prioritize MLTTVN3 if available and not yet interacted with, then other general promos
+                        if (mlttvn3PromoItemContainer && !mlttvn3PromoItemContainer.classList.contains('hidden') && applyManhLietTinhThanVietNamPromoCheckbox && !applyManhLietTinhThanVietNamPromoCheckbox.disabled && !applyManhLietTinhThanVietNamPromoCheckbox.checked) { // Check if MLTTVN3 is not already handled
+                             highlightNextStep(applyManhLietTinhThanVietNamPromoCheckbox);
+                        } else if (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden')) { 
+                            highlightNextStep(applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')); 
+                        } else { 
+                            highlightNextStep(calculateButton); 
+                        } 
+                        break;
+                    case "promos_done": 
+                        message = "Tất cả thông tin cần thiết đã được nhập. Sẵn sàng để xem kết quả? Nhấn nút <strong>'Tính Giá'</strong> ngay!"; 
+                        highlightNextStep(calculateButton); 
+                        break;
+                    case "calculation_done": 
+                        message = "Đây là kết quả tính giá của bạn! Bạn có thể thay đổi thông tin để tính lại, hoặc nhấn <strong>'Xóa Dữ Liệu'</strong> để bắt đầu mới."; 
+                        removeHighlight(); 
+                        break;
+                    case "form_reset": 
+                        message = "Dữ liệu đã được làm mới. Hãy bắt đầu lại bằng việc chọn <strong>'Mã Model'</strong> xe."; 
+                        highlightNextStep(modelKeySelect); 
+                        break;
+                    default: 
+                        if (modelKeySelect.value === "") { 
+                            message = "Vui lòng chọn <strong>'Mã Model'</strong> để chúng tôi có thể hỗ trợ bạn tốt nhất."; 
+                            highlightNextStep(modelKeySelect); 
+                        } else if (!vinYearInput.value) { 
+                            message = "Bạn gần xong rồi! Xin vui lòng nhập <strong>'Năm VIN'</strong> của xe."; 
+                            highlightNextStep(vinYearInput);
+                        } else if (!expectedInvoiceDateInput.value) { 
+                            message = "Chỉ một chút nữa! Hãy cung cấp <strong>'Ngày Dự Kiến Xuất Hóa Đơn'</strong>."; 
+                            highlightNextStep(expectedInvoiceDateInput);
+                        } else { 
+                            message = "Hãy kiểm tra lại các trường thông tin và đảm bảo đã điền đủ các mục cần thiết trước khi nhấn <strong>'Tính Giá'</strong>."; 
+                            highlightNextStep(calculateButton); 
+                        }
                 }
-                guidanceTextElement.innerHTML = message;
-                if(elementToHighlight) highlightNextStep(elementToHighlight);
+                guidanceTextModalElement.innerHTML = message; 
+                guidanceModalElement.classList.add('visible'); 
+
+                if(elementToHighlight && step !== "calculation_done" && step !== "form_reset") { 
+                     highlightNextStep(elementToHighlight);
+                } else if (!currentHighlightedElement && step !== "calculation_done") { 
+                    if (modelKeySelect.value === "") highlightNextStep(modelKeySelect);
+                    else if (!vinYearInput.value) highlightNextStep(vinYearInput);
+                    else if (!expectedInvoiceDateInput.value) highlightNextStep(expectedInvoiceDateInput);
+                }
             }
 
 
@@ -2014,14 +2146,32 @@
                 const allModelSpecificDivs = [ vf8Vf9OptionsDiv, vf9OptionsAcDiv, vf9OptionsSeatsDiv, vf9OptionsRoofDiv, advancedColorOptionsDiv, vf7PlusOptionsDateDiv, vf9Vin23OptionsDateDiv, vf7PlusOptionsPromoDiv, tradeInOldCarTypeDiv ];
                 allModelSpecificDivs.forEach(div => toggleVisibility(div, false));
 
-                if (!modelKey) {
+                // --- UPDATED: MLTTVN3 promo item state based on modelKey ---
+                if (mlttvn3PromoItemContainer) {
+                    // No longer adding/removing 'hidden' class here as it's part of the common-fields-grid
+                    if (applyManhLietTinhThanVietNamPromoCheckbox) {
+                        applyManhLietTinhThanVietNamPromoCheckbox.disabled = !modelKey; 
+                    }
+                    if (mlttvn3SubTextEl) {
+                        if (modelKey) { 
+                             mlttvn3SubTextEl.textContent = `(Giảm 4% giá NY + màu NC (nếu có). HĐ từ ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}. Không cùng BH 2 năm.)`;
+                        } else {
+                            mlttvn3SubTextEl.textContent = "(Chọn Mã Model để xem chi tiết và điều kiện áp dụng)"; 
+                            if(applyManhLietTinhThanVietNamPromoCheckbox) applyManhLietTinhThanVietNamPromoCheckbox.checked = false; 
+                        }
+                    }
+                }
+                // --- END UPDATE ---
+
+
+                if (!modelKey) { 
                     baseMsrpInput.value = ''; baseMsrpInput.readOnly = false; baseMsrpInput.classList.remove('input-disabled');
                     if(modelSpecificContainer) modelSpecificContainer.classList.add('hidden');
-                    if(applicableGeneralPromosContainer) applicableGeneralPromosContainer.classList.add('hidden');
-                    toggleItemVisibility(mlttvn3PromoItemContainer, applyManhLietTinhThanVietNamPromoCheckbox, false);
+                    if(applicableGeneralPromosContainer) applicableGeneralPromosContainer.classList.add('hidden'); 
                     toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, false);
                     toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, false);
-                    updateGuidance("initial"); return;
+                    updateGuidance("initial"); 
+                    return; 
                 }
 
                 toggleVisibility(vf8Vf9OptionsDiv, ["VF 8", "VF 9"].includes(generalModelType));
@@ -2055,28 +2205,43 @@
 
                 if (anyModelOptionVisible && modelSpecificContainer && modelSpecificHeader) { modelSpecificContainer.classList.remove('hidden'); const selectedModelOption = modelKeySelect.options[modelKeySelect.selectedIndex]; modelSpecificHeader.textContent = `Tuỳ chọn & Chính sách riêng cho ${selectedModelOption ? selectedModelOption.text : 'Model'}`; } else if (modelSpecificContainer) { modelSpecificContainer.classList.add('hidden'); }
 
-                let generalPromoSectionVisible = false;
-                const mlttvn3Applicable = !!modelKey; 
-                toggleItemVisibility(mlttvn3PromoItemContainer, applyManhLietTinhThanVietNamPromoCheckbox, mlttvn3Applicable);
-                if (mlttvn3Applicable && mlttvn3SubTextEl) { mlttvn3SubTextEl.textContent = `(Giảm 4% giá NY + màu NC (nếu có). HĐ từ ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(MLTTVN3_INVOICE_END_DATE)}. Không cùng BH 2 năm.)`; generalPromoSectionVisible = true;}
+                let otherGeneralPromosVisible = false; 
 
                 const vinfasApplicable = generalModelType && VINFASCINATION_PROMO_VALUES[generalModelType];
                 toggleItemVisibility(vinfascinationPromoItemContainer, applyVinfascinationDynamicCheckbox, vinfasApplicable);
-                if (vinfasApplicable && vinfascinationLabelText) { vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
-                if (vinfasApplicable && vinfascinationSubTextEl) { vinfascinationSubTextEl.textContent = `(Quy đổi điểm, HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}, quy đổi tiền từ ${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}.)`;}
+                if (vinfasApplicable && vinfascinationLabelText) { 
+                    vinfascinationLabelText.textContent = `VINFASCINATION (${generalModelType.replace("/VF e34", "")})`; 
+                    otherGeneralPromosVisible = true; 
+                }
+                if (vinfasApplicable && vinfascinationSubTextEl) { 
+                    vinfascinationSubTextEl.textContent = `(Quy đổi điểm, HĐ ${formatDateToDDMMYYYY(VINFAS_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(VINFAS_INVOICE_END_DATE)}, quy đổi tiền từ ${formatDateToDDMMYYYY(VINFAS_CASH_CONVERSION_START_DATE)}.)`;
+                }
 
 
                 const insuranceApplicable = generalModelType && INSURANCE_CASH_EQUIVALENT[generalModelType];
                 toggleItemVisibility(insuranceCashPromoItemContainer, takeInsuranceCashDynamicCheckbox, insuranceApplicable);
-                 if (insuranceApplicable && insuranceCashLabelText) { insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`; generalPromoSectionVisible = true; }
-                 if (insuranceApplicable && insuranceCashSubTextEl) { insuranceCashSubTextEl.textContent = `(Quy đổi gói BH, HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}. Không cùng MLTTVN L3.)`;}
+                 if (insuranceApplicable && insuranceCashLabelText) { 
+                    insuranceCashLabelText.textContent = `Quy đổi bảo hiểm (${generalModelType.replace("/VF e34", "")})`; 
+                    otherGeneralPromosVisible = true; 
+                }
+                 if (insuranceApplicable && insuranceCashSubTextEl) { 
+                    insuranceCashSubTextEl.textContent = `(Quy đổi gói BH, HĐ ${formatDateToDDMMYYYY(INSURANCE_INVOICE_START_DATE)} - ${formatDateToDDMMYYYY(INSURANCE_INVOICE_END_DATE)}. Không cùng MLTTVN L3.)`;
+                }
 
-
-                if (applicableGeneralPromosContainer) { if (generalPromoSectionVisible) { applicableGeneralPromosContainer.classList.remove('hidden'); } else { applicableGeneralPromosContainer.classList.add('hidden'); } }
+                if (applicableGeneralPromosContainer) { 
+                    if (otherGeneralPromosVisible) { 
+                        applicableGeneralPromosContainer.classList.remove('hidden'); 
+                    } else { 
+                        applicableGeneralPromosContainer.classList.add('hidden'); 
+                    } 
+                }
                 
                 if (!vinYearInput.value || !expectedInvoiceDateInput.value) { updateGuidance("model_selected"); } 
                 else if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("common_fields_filled"); } 
-                else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("model_specific_done"); } 
+                else if ((mlttvn3PromoItemContainer && !mlttvn3PromoItemContainer.classList.contains('hidden') && applyManhLietTinhThanVietNamPromoCheckbox && !applyManhLietTinhThanVietNamPromoCheckbox.disabled && !applyManhLietTinhThanVietNamPromoCheckbox.checked) || // Check if MLTTVN3 is not already handled
+                         (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'))) {
+                     if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("model_specific_done");
+                }
                 else if (vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); }
             }
 
@@ -2091,17 +2256,42 @@
             });
 
             [vinYearInput, expectedInvoiceDateInput, dmsTransactionDateInput, vinClubTierSelect, applyCorpDiscountCheckbox].forEach(el => {
-                el.addEventListener('change', () => { if (modelKeySelect.value) { if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("common_fields_filled"); } else if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("model_specific_done"); } else if (vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); } } });
+                el.addEventListener('change', () => { if (modelKeySelect.value) { if (!modelSpecificContainer.classList.contains('hidden') && modelSpecificContainer.querySelector('input:not([disabled]):not([type=checkbox]), select:not([disabled])')) { if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("common_fields_filled"); } 
+                else if ((mlttvn3PromoItemContainer && !mlttvn3PromoItemContainer.classList.contains('hidden') && applyManhLietTinhThanVietNamPromoCheckbox && !applyManhLietTinhThanVietNamPromoCheckbox.disabled && !applyManhLietTinhThanVietNamPromoCheckbox.checked) || // Check if MLTTVN3 is not already handled
+                         (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'))) { 
+                    if (vinYearInput.value && expectedInvoiceDateInput.value) updateGuidance("model_specific_done"); 
+                }
+                else if (vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); } } });
             });
             
             const allModelSpecificInputs = modelSpecificContainer.querySelectorAll('input, select');
             allModelSpecificInputs.forEach(input => {
-                input.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { let allModelSpecificFilledOrHidden = true; if (!modelSpecificContainer.classList.contains('hidden')) { modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => { if (el.value === "" && el.hasAttribute('required')) allModelSpecificFilledOrHidden = false; });} if (allModelSpecificFilledOrHidden) { if (!applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])')) { updateGuidance("model_specific_done"); } else { updateGuidance("promos_done"); } } } });
+                input.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { let allModelSpecificFilledOrHidden = true; if (!modelSpecificContainer.classList.contains('hidden')) { modelSpecificContainer.querySelectorAll('input:not([type="checkbox"]):not(:disabled), select:not(:disabled)').forEach(el => { if (el.value === "" && el.hasAttribute('required')) allModelSpecificFilledOrHidden = false; });} if (allModelSpecificFilledOrHidden) { 
+                    if ((mlttvn3PromoItemContainer && !mlttvn3PromoItemContainer.classList.contains('hidden') && applyManhLietTinhThanVietNamPromoCheckbox && !applyManhLietTinhThanVietNamPromoCheckbox.disabled && !applyManhLietTinhThanVietNamPromoCheckbox.checked) || // Check if MLTTVN3 is not already handled
+                        (applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled])'))) { 
+                        updateGuidance("model_specific_done"); 
+                    } else { 
+                        updateGuidance("promos_done"); 
+                    } 
+                } } });
             });
-            const allGeneralPromoCheckboxes = applicableGeneralPromosContainer.querySelectorAll('input[type="checkbox"]');
+            const allGeneralPromoCheckboxes = applicableGeneralPromosContainer.querySelectorAll('input[type="checkbox"]'); 
             allGeneralPromoCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', () => { if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { updateGuidance("promos_done"); } });
             });
+            
+            if(applyManhLietTinhThanVietNamPromoCheckbox) {
+                applyManhLietTinhThanVietNamPromoCheckbox.addEventListener('change', () => { 
+                    if (modelKeySelect.value && vinYearInput.value && expectedInvoiceDateInput.value) { 
+                        if (!(applicableGeneralPromosContainer && !applicableGeneralPromosContainer.classList.contains('hidden') && applicableGeneralPromosContainer.querySelector('input[type="checkbox"]:not([disabled]):not(:checked)'))) { // If no other general promos are left unchecked
+                            updateGuidance("promos_done");
+                        } else {
+                             updateGuidance("model_specific_done"); // Or back to model_specific_done if other general promos exist
+                        }
+                    } 
+                });
+            }
+
 
             if (applyManhLietTinhThanVietNamPromoCheckbox && takeInsuranceCashDynamicCheckbox) {
                 applyManhLietTinhThanVietNamPromoCheckbox.addEventListener('change', function() {
@@ -2153,6 +2343,8 @@
                 if(document.body.classList.contains('dark-mode')) { notesResultPre.style.color = 'var(--warning-text-dark)'; notesResultPre.style.backgroundColor = 'var(--warning-bg-dark)'; }
                 const appliedPromosDisplayOnReset = document.getElementById('appliedPromotionsDisplay');
                 if (appliedPromosDisplayOnReset) { appliedPromosDisplayOnReset.innerHTML = '<p class="no-promotions-message" style="margin-top: 15px;">Chưa có thông tin khuyến mãi.</p>'; }
+                
+                if (guidanceModalElement) guidanceModalElement.classList.remove('visible'); 
                 updateGuidance("form_reset"); 
                 console.log("Form đã được reset!");
             }
@@ -2180,8 +2372,6 @@
                 calculationLog.forEach(log => {
                     if ((log.type === 'discount' || log.type === 'promotion' || log.type === 'trade_in_support' || log.type === 'discount_percentage') && log.amount < 0) {
                         if (log.description.includes("KM tiền mặt VF 7 Plus") && vf7PlusCashbackApplied > 0 && log.amount === -vf7PlusCashbackApplied) {
-                            // This specific promo will be handled by the dedicated vf7PlusCashbackApplied parameter later
-                            // Only skip if the amount matches, to avoid skipping other VF7 promos if any
                             return; 
                         }
                          if (log.description.includes("VINFASCINATION") && vinfascinationCashApplied > 0 && log.amount === -vinfascinationCashApplied) {
@@ -2218,7 +2408,7 @@
                 return uniquePromos;
             }
 
-            function displayAppliedPromotions(promotions, containerElement, eligibilityInfo) { // Added eligibilityInfo
+            function displayAppliedPromotions(promotions, containerElement, eligibilityInfo) { 
                 containerElement.innerHTML = '';
                 if (!promotions || promotions.length === 0) { const noPromoMessage = document.createElement('p'); noPromoMessage.className = 'no-promotions-message'; noPromoMessage.textContent = 'Không có khuyến mãi đặc biệt nào được áp dụng cho lựa chọn này.'; containerElement.appendChild(noPromoMessage); return; }
                 const promotionsListDiv = document.createElement('div'); promotionsListDiv.className = 'promotions-list';
@@ -2277,8 +2467,47 @@
                 }
                 updateGuidance("calculation_done"); 
             });
+
+            const corpPolicySelectionContainer = document.getElementById('corpPolicySelectionContainer');
+            const targetDateForCorpPolicy = new Date(Date.UTC(2025, 4, 21)); 
+
+            function updateCorpPolicyVisibility() {
+                if (!corpPolicySelectionContainer || !expectedInvoiceDateInput || !dmsTransactionDateInput) {
+                    console.error("DEBUG: Required elements for Corp Policy visibility not found.");
+                    return;
+                }
+                let showCorpPolicy = false;
+                const invoiceDateValue = expectedInvoiceDateInput.value; 
+                const dmsDateValue = dmsTransactionDateInput.value;     
+
+                if (invoiceDateValue) {
+                    const invoiceDate = new Date(invoiceDateValue); 
+                    if (!isNaN(invoiceDate.getTime()) && invoiceDate.getTime() <= targetDateForCorpPolicy.getTime()) {
+                        showCorpPolicy = true;
+                    }
+                }
+                if (!showCorpPolicy && dmsDateValue) { 
+                    const dmsDate = new Date(dmsDateValue); 
+                    if (!isNaN(dmsDate.getTime()) && dmsDate.getTime() <= targetDateForCorpPolicy.getTime()) {
+                        showCorpPolicy = true;
+                    }
+                }
+                
+                if (showCorpPolicy) {
+                    corpPolicySelectionContainer.classList.remove('hidden');
+                } else {
+                    corpPolicySelectionContainer.classList.add('hidden');
+                     if(applyCorpDiscountCheckbox) applyCorpDiscountCheckbox.checked = false; // Also uncheck if hidden
+                }
+            }
+
+            expectedInvoiceDateInput.addEventListener('change', updateCorpPolicyVisibility);
+            dmsTransactionDateInput.addEventListener('change', updateCorpPolicyVisibility);
+            
             populateModelDropdown();
             resetFormInputs(); 
+            updateCorpPolicyVisibility(); // Initial check for Corp Policy
+
         });
     </script>
 </body>
