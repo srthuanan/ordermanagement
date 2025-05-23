@@ -257,9 +257,18 @@
         body.dark-mode .policy-document strong {
              color: var(--primary-color-lighter);
         }
+        
         /* Class for updated policy titles */
         .policy-updated-title {
-            color: var(--updated-policy-color) !important; /* Important to override other h2 styles if necessary */
+            color: var(--updated-policy-color) !important; 
+        }
+        /* Class for updated policy content */
+        .text-updated-highlight {
+            color: var(--updated-policy-color) !important;
+            font-weight: 500; /* Optional: make it slightly bolder */
+        }
+        .policy-table .text-updated-highlight { /* Ensure table cell text is also green */
+             color: var(--updated-policy-color) !important;
         }
 
 
@@ -533,7 +542,7 @@
 
                 <div id="policy1" class="tab-content active policy-document">
                     <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
-                    <h2 class="policy-updated-title">Chính sách Hỗ trợ cho Khách hàng Chuyển đổi từ Xe Xăng sang Xe Điện (22/05/2025)</h2>
+                    <h2 class="policy-updated-title">Chính sách Hỗ trợ cho Khách hàng Chuyển đổi từ Xe Xăng sang Xe Điện (<span class="text-updated-highlight">22/05/2025</span>)</h2>
                     <div class="policy-section">
                         <h3>1. Nội dung chương trình:</h3>
                         <p>Khách hàng đang sở hữu xe xăng có nhu cầu bán và chuyển đổi sang xe điện VinFast VF 6, VF7, VF 8, VF 9 sẽ được hỗ trợ:</p>
@@ -549,15 +558,15 @@
                                         <th rowspan="2">Dòng xe</th>
                                         <th colspan="2">Từ 01/11/2024 đến 20/04/2025</th>
                                         <th colspan="2">Từ 21/04/2025 đến 21/05/2025</th>
-                                        <th colspan="2">Từ 22/05/2025 đến khi có thông báo mới</th>
+                                        <th colspan="2" class="text-updated-highlight">Từ 22/05/2025 đến khi có thông báo mới</th>
                                     </tr>
                                     <tr>
                                         <th>Đối với LuxA, SA, Fadil, President</th>
                                         <th>Đối với xe xăng các hãng khác</th>
                                         <th>Đối với LuxA, SA, Fadil, President</th>
                                         <th>Đối với xe xăng các hãng khác</th>
-                                        <th>Đối với LuxA, SA, Fadil, President</th>
-                                        <th>Đối với xe xăng các hãng khác</th>
+                                        <th class="text-updated-highlight">Đối với LuxA, SA, Fadil, President</th>
+                                        <th class="text-updated-highlight">Đối với xe xăng các hãng khác</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -567,8 +576,8 @@
                                         <td></td>
                                         <td class="text-right">60.000.000</td>
                                         <td class="text-right">40.000.000</td>
-                                        <td class="text-right">30.000.000</td>
-                                        <td class="text-right">20.000.000</td>
+                                        <td class="text-right text-updated-highlight">30.000.000</td>
+                                        <td class="text-right text-updated-highlight">20.000.000</td>
                                     </tr>
                                     <tr>
                                         <td>VF 7</td>
@@ -576,8 +585,8 @@
                                         <td class="text-right">50.000.000</td>
                                         <td class="text-right">75.000.000</td>
                                         <td class="text-right">50.000.000</td>
-                                        <td class="text-right">30.000.000</td>
-                                        <td class="text-right">40.000.000</td>
+                                        <td class="text-right text-updated-highlight">30.000.000</td>
+                                        <td class="text-right text-updated-highlight">40.000.000</td>
                                     </tr>
                                     <tr>
                                         <td>VF 8</td>
@@ -585,8 +594,8 @@
                                         <td class="text-right">80.000.000</td>
                                         <td class="text-right">90.000.000</td>
                                         <td class="text-right">60.000.000</td>
-                                        <td class="text-right">50.000.000</td>
-                                        <td class="text-right">40.000.000</td>
+                                        <td class="text-right text-updated-highlight">50.000.000</td>
+                                        <td class="text-right text-updated-highlight">40.000.000</td>
                                     </tr>
                                     <tr>
                                         <td>VF 9</td>
@@ -594,8 +603,8 @@
                                         <td class="text-right">40.000.000</td>
                                         <td class="text-right">90.000.000</td>
                                         <td class="text-right">60.000.000</td>
-                                        <td class="text-right">50.000.000</td>
-                                        <td class="text-right">40.000.000</td>
+                                        <td class="text-right text-updated-highlight">50.000.000</td>
+                                        <td class="text-right text-updated-highlight">40.000.000</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -607,12 +616,12 @@
                             <li>Chính sách này áp dụng từ ngày 01/11/2024.</li>
                             <li>Áp dụng cho Khách hàng hoặc vợ chồng/con cái/tứ thân phụ mẫu/công ty do họ sở hữu số cổ phần/phần góp lớn nhất sở hữu xe xăng từ 03 tháng trở lên có nhu cầu đổi từ xe xăng sang xe điện VF 6, VF 7, VF 8, VF 9.</li>
                             <li>Xe mới có thể được đứng tên bởi chính chủ sở hữu xe xăng hoặc vợ chồng, con cái, tứ thân phụ mẫu; hoặc công ty do họ sở hữu số cổ phần/ phần vốn góp lớn nhất. Trường hợp chủ sở hữu xe xăng cũ là pháp nhân, xe mới có thể được đứng tên pháp nhân đó hoặc cá nhân sở hữu cổ phần/ phần vốn góp lớn nhất.</li>
-                            <li>Chính sách này được áp dụng đồng thời cùng Chính sách khuyến mãi bán lẻ hiện hành; Chương trình Mãnh liệt tinh thần Việt Nam, Chính sách VinClub, chính sách bán buôn (thứ tự áp dụng theo thời gian ban hành của chính sách).</li>
+                            <li><span class="text-updated-highlight">Chính sách này được áp dụng đồng thời cùng Chính sách khuyến mãi bán lẻ hiện hành; Chương trình Mãnh liệt tinh thần Việt Nam, Chính sách VinClub, chính sách bán buôn (thứ tự áp dụng theo thời gian ban hành của chính sách).</span></li>
                             <li>Khách hàng có quyền tự bán xe cũ hoặc bán qua hệ thống Salon đối tác của GF, miễn chứng minh được giao dịch bán thì đều được hưởng hỗ trợ.</li>
                             <li>ĐLPP có trách nhiệm kiểm tra đảm bảo việc hỗ trợ đúng đối tượng khách hàng đổi từ xe xăng cũ sang xe điện VinFast. Nếu vi phạm, ĐLPP sẽ chịu mức phạt bằng 10 lần số tiền VinFast hỗ trợ.</li>
                             <li>ĐLPP cần có bàn phục vụ riêng, ưu tiên và chỉ dẫn rõ ràng, nổi bật cho khách hàng bán xe xăng cũ để mua xe điện VinFast.</li>
                             <li>Mức hỗ trợ theo từng mốc thời gian áp dụng theo thời điểm xuất hóa đơn.</li>
-                            <li>Khách hàng cọc trước 22/05/2025 (theo dữ liệu ngày giao dịch DMS) và xuất hóa đơn trước 30/06/2025 được chọn chính sách tại thời điểm cọc hoặc thời điểm xuất hóa đơn.</li>
+                            <li><span class="text-updated-highlight">Khách hàng cọc trước 22/05/2025 (theo dữ liệu ngày giao dịch DMS) và xuất hóa đơn trước 30/06/2025 được chọn chính sách tại thời điểm cọc hoặc thời điểm xuất hóa đơn.</span></li>
                             <li>Đối với xe xăng các hãng khác (bao gồm xe máy dầu diesel): chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.</li>
                         </ul>
                     </div>
@@ -833,7 +842,7 @@
 
                 <div id="policy3" class="tab-content policy-document">
                     <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
-                    <h2 class="policy-updated-title">Chính sách Thúc đẩy Bán hàng Ô tô Điện VinFast (22/05/2025)</h2>
+                    <h2 class="policy-updated-title">Chính sách Thúc đẩy Bán hàng Ô tô Điện VinFast (<span class="text-updated-highlight">22/05/2025</span>)</h2>
                     <div class="policy-section">
                         <h3>I. CHÍNH SÁCH HỖ TRỢ BÁN HÀNG CHO VF 7 PLUS (bao gồm VAT)</h3>
                         <p><strong>Khuyến mại tặng tiền mặt:</strong> 50.000.000 VNĐ/xe</p>
@@ -885,14 +894,14 @@
                             </table>
                         </div>
                         <p><strong>Thời gian áp dụng:</strong> Từ 18/05/2025 đến 31/05/2025 (áp dụng theo ngày xuất hóa đơn).</p>
-                        <p><strong>Lưu ý:</strong> Chương trình này không áp dụng đồng thời với chương trình “Mãnh liệt tinh thần Việt Nam Vì tương lai xanh lần 3”.</p>
+                        <p><strong class="text-updated-highlight">Lưu ý:</strong> <span class="text-updated-highlight">Chương trình này không áp dụng đồng thời với chương trình “Mãnh liệt tinh thần Việt Nam Vì tương lai xanh lần 3”.</span></p>
                     </div>
-                    <div class="policy-section">
-                        <h3>III. CHƯƠNG TRÌNH ƯU ĐÃI “MÃNH LIỆT TINH THẦN VIỆT NAM – VÌ TƯƠNG LAI XANH LẦN 3”</h3>
-                        <p><strong>Mức ưu đãi:</strong> 4% trên giá MSRP.</p>
-                        <p><strong>Hình thức ưu đãi:</strong> Giảm giá bằng tiền mặt.</p>
-                        <p><strong>Thời gian áp dụng:</strong> Từ 22/05/2025 đến 31/12/2025.</p>
-                        <p><strong>Đối tượng áp dụng:</strong> Toàn bộ khách hàng xuất hóa đơn trong thời gian áp dụng. Các khách hàng xuất hóa đơn từ ngày 22/05/2025 đến 31/05/2025 được áp dụng đồng thời chương trình “Mãnh liệt tinh thần Việt Nam – Vì tương lai xanh lần 3 với Chương trình "VINFASCIANATION - MÙA HÈ RỰC RỠ CÙNG VINFAST".</p>
+                    <div class="policy-section text-updated-highlight">
+                        <h3 class="text-updated-highlight">III. CHƯƠNG TRÌNH ƯU ĐÃI “MÃNH LIỆT TINH THẦN VIỆT NAM – VÌ TƯƠNG LAI XANH LẦN 3”</h3>
+                        <p><strong class="text-updated-highlight">Mức ưu đãi:</strong> <span class="text-updated-highlight">4% trên giá MSRP.</span></p>
+                        <p><strong class="text-updated-highlight">Hình thức ưu đãi:</strong> <span class="text-updated-highlight">Giảm giá bằng tiền mặt.</span></p>
+                        <p><strong class="text-updated-highlight">Thời gian áp dụng:</strong> <span class="text-updated-highlight">Từ 22/05/2025 đến 31/12/2025.</span></p>
+                        <p><strong class="text-updated-highlight">Đối tượng áp dụng:</strong> <span class="text-updated-highlight">Toàn bộ khách hàng xuất hóa đơn trong thời gian áp dụng. Các khách hàng xuất hóa đơn từ ngày 22/05/2025 đến 31/05/2025 được áp dụng đồng thời chương trình “Mãnh liệt tinh thần Việt Nam – Vì tương lai xanh lần 3 với Chương trình "VINFASCIANATION - MÙA HÈ RỰC RỠ CÙNG VINFAST".</span></p>
                     </div>
                 </div>
 
