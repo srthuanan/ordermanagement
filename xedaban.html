@@ -1097,18 +1097,49 @@
     let topSalespersonNameForNavigation = null;
     const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 
+    // --- Hàm đồng bộ tên TVBH ---
+    function synchronizeTvbhName(name) {
+        if (name === null || name === undefined || typeof name !== 'string') {
+            return 'N/A';
+        }
+        // Chuẩn hóa Unicode về dạng NFC (Normalization Form C) trước khi xử lý
+        let standardizedName = String(name).normalize("NFC").trim();
+        if (standardizedName === "") {
+            return 'N/A';
+        }
+
+        // Chuyển đổi sang Title Case (viết hoa chữ cái đầu mỗi từ)
+        // và xử lý các khoảng trắng thừa giữa các từ.
+        standardizedName = standardizedName
+            .toLowerCase() // Chuyển tất cả về chữ thường trước
+            .split(/\s+/) // Tách các từ bằng một hoặc nhiều khoảng trắng (bao gồm cả các loại space khác nhau sau normalize)
+            .filter(word => word.length > 0) // Loại bỏ các chuỗi rỗng có thể xuất hiện nếu có nhiều khoảng trắng liên tiếp
+            .map(word => {
+                // Viết hoa chữ cái đầu của mỗi từ
+                // Đặc biệt xử lý chữ 'đ' thành 'Đ'
+                if (word.charAt(0) === 'đ') {
+                    return 'Đ' + word.slice(1);
+                }
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            })
+            .join(" "); // Nối các từ lại bằng một khoảng trắng duy nhất
+
+        // Bạn có thể thêm các ánh xạ cụ thể hơn ở đây nếu cần, sau khi đã chuẩn hóa cơ bản
+        // Ví dụ: 
+        // const nameMappings = { 
+        //     "Le Van A": "Lê Văn A", // Nếu cần thêm dấu tiếng Việt chuẩn
+        //     "Dinh Trong Nhan": "Đinh Trọng Nhân" 
+        // };
+        // if (nameMappings[standardizedName]) {
+        //     standardizedName = nameMappings[standardizedName];
+        // }
+        return standardizedName;
+    }
+
+
 document.addEventListener("DOMContentLoaded", () => {
     // --- Biến toàn cục và cấu hình ---
-    let currentPage = 1;
-    const ROWS_PER_PAGE = 20;
-    let fullData = [], totalCarData = [], totalTvbhData = [], filteredCarData = [], filteredTvbhData = [], filteredMonthData = [];
-    let currentSheet = "Total"; // Default sheet
-    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    let carChart, monthlyChart, trendChart;
-    let cachedData = {};
-    let allMonthlyDataForNavigation = [];
-    let topSalespersonNameForNavigation = null;
-    const API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+    // Các biến đã được khai báo ở phạm vi toàn cục (global scope) ở trên
 
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
         window.location.href = "index.html"; // Redirect if not logged in
@@ -1173,27 +1204,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentSheet === "Total") {
             defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
         } else {
-            defaultNavbarTabElement = Array.from(document.querySelectorAll('.navbar .tabs a')).find(a =>
-                a.getAttribute('onclick')?.includes(`WorkspaceSheetData('${currentSheet}'`)
-            );
+            // Chú ý: Tên sheet trong onclick có thể cần khớp chính xác
+            defaultNavbarTabElement = Array.from(document.querySelectorAll('.navbar .tabs a')).find(a => {
+                const onclickAttr = a.getAttribute('onclick');
+                // Kiểm tra cẩn thận cú pháp trong onclick, ví dụ: fetchSheetData('January', this)
+                return onclickAttr && onclickAttr.includes(`fetchSheetData('${currentSheet}'`);
+            });
         }
-        // Fallback if no specific sheet is found or if the element is not found (e.g. after a code change)
+        
         if (!defaultNavbarTabElement) {
             defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
-            currentSheet = "Total"; // Ensure currentSheet reflects this fallback
+            currentSheet = "Total"; 
         }
 
-        // Load data based on currentSheet and activate the navbar tab
         if (defaultNavbarTabElement) {
             if (currentSheet === "Total") {
-                fetchTotalData(defaultNavbarTabElement, true); // This calls setActiveNavigationLink for the navbar tab
+                fetchTotalData(defaultNavbarTabElement, true); 
             } else {
-                // Ensure the sheet actually exists in MONTHS array before fetching
                 if (MONTHS.includes(currentSheet)) {
-                    fetchSheetData(currentSheet, defaultNavbarTabElement, true); // This also calls setActiveNavigationLink for the navbar tab
+                    fetchSheetData(currentSheet, defaultNavbarTabElement, true); 
                 } else {
-                    // If currentSheet from storage is invalid (e.g. "Total" but was expected to be a month, or an old month name)
-                    // Fallback to "Total"
                     console.warn(`Invalid sheet name '${currentSheet}' from storage. Falling back to Total.`);
                     currentSheet = "Total";
                     defaultNavbarTabElement = document.querySelector('.navbar .tabs a.total-tab');
@@ -1201,46 +1231,37 @@ document.addEventListener("DOMContentLoaded", () => {
                          fetchTotalData(defaultNavbarTabElement, true);
                     } else {
                         console.error("Fallback Total navbar tab could not be determined.");
+                         fetchTotalData(null, true); // Tải Total nếu không tìm thấy tab
                     }
                 }
             }
         } else {
-             console.error("Default navbar tab could not be determined initially. This might indicate an issue with navbar tab selectors or stored sheet state.");
-             // Attempt a final fallback to load Total data if possible, without a specific element to activate
-             fetchTotalData(null, true);
+             console.error("Default navbar tab could not be determined initially. Loading Total data as fallback.");
+             fetchTotalData(null, true); // Tải Total nếu không có tab mặc định
         }
 
-        // ---- MODIFIED/NEW PART for sidebar activation ----
-        // After initial data load, explicitly set the "Xe Đã Bán" sidebar link as active
-        // if the current page is xedaban.html.
         const currentPageFilename = window.location.pathname.split('/').pop();
         if (currentPageFilename === "xedaban.html") {
             const xedabanSidebarLink = document.querySelector(".sidebar .menu a[href='xedaban.html']");
             if (xedabanSidebarLink) {
-                // First, ensure no other *sidebar* link is active.
                 document.querySelectorAll('.sidebar .menu a.active').forEach(el => el.classList.remove('active'));
                 xedabanSidebarLink.classList.add('active');
             }
         }
-        // ---- END OF MODIFIED/NEW PART ----
 
     } catch (error) {
         console.error("Lỗi khi khôi phục trạng thái hoặc tải dữ liệu ban đầu:", error);
-        sessionStorage.removeItem('appCachedData'); // Clear potentially corrupted cache
+        sessionStorage.removeItem('appCachedData'); 
         sessionStorage.removeItem('appCurrentSheet');
         sessionStorage.removeItem('appCurrentPage');
 
-        // Fallback to loading total data if there was an error
         const totalTabFallbackOnError = document.querySelector('.navbar .tabs a.total-tab');
         if (totalTabFallbackOnError) {
             fetchTotalData(totalTabFallbackOnError, true);
         } else {
-            // If even the total tab isn't found, something is seriously wrong with the HTML structure.
-            // Attempt to load total data without an element.
             fetchTotalData(null, true);
         }
 
-        // Also attempt to set the sidebar link active on error if on xedaban.html
         const currentPageFilenameOnError = window.location.pathname.split('/').pop();
         if (currentPageFilenameOnError === "xedaban.html") {
             const xedabanSidebarLinkOnError = document.querySelector(".sidebar .menu a[href='xedaban.html']");
@@ -1253,10 +1274,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết.");
 
-    // Click outside to close mobile sidebar
     document.addEventListener('click', function(event) {
         const sidebar = document.getElementById('sidebar');
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); // For sidebar
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); 
         const isClickInsideSidebar = sidebar && sidebar.contains(event.target);
         const isClickOnMenuBtn = mobileMenuBtn && mobileMenuBtn.contains(event.target);
 
@@ -1265,7 +1285,6 @@ document.addEventListener("DOMContentLoaded", () => {
             updateSidebarToggleIcon();
         }
 
-        // Click outside to close navbar tabs dropdown (if open)
         const navbarTabsMenu = document.getElementById('navbar-custom-tabs-container');
         const navbarTabsBtn = document.getElementById('navbar-tabs-hamburger');
         const isClickInsideNavbarTabs = navbarTabsMenu && navbarTabsMenu.contains(event.target);
@@ -1620,10 +1639,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             totalCarData = aggregateData(validData, 3); 
-            totalTvbhData = aggregateData(validData, 7); 
+            totalTvbhData = aggregateData(validData, 7); // TVBH names will be synchronized by aggregateData
 
             if (totalTvbhData && totalTvbhData.length > 0) {
-                topSalespersonNameForNavigation = totalTvbhData[0].key;
+                topSalespersonNameForNavigation = totalTvbhData[0].key; // This is now the synchronized name
             } else {
                 topSalespersonNameForNavigation = null;
             }
@@ -1661,11 +1680,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (topTvbhCard) {
                 topTvbhCard.style.cursor = 'pointer';
                 topTvbhCard.onclick = () => {
-                    if (topSalespersonNameForNavigation && allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
-                        const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && row[7] === topSalespersonNameForNavigation);
+                    if (topSalespersonNameForNavigation && topSalespersonNameForNavigation !== 'N/A' && allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
+                        // Filter original data by comparing synchronized TVBH name from API with the synchronized topSalespersonNameForNavigation
+                        const bestSalespersonData = allMonthlyDataForNavigation.filter(row => row && synchronizeTvbhName(row[7]) === topSalespersonNameForNavigation);
                         if (bestSalespersonData.length > 0) {
                             sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(bestSalespersonData));
-                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation);
+                            sessionStorage.setItem('bestSalespersonName', topSalespersonNameForNavigation); // Store synchronized name
                             window.location.href = 'bestsale.html';
                         } else {
                             showToast(`Không tìm thấy dữ liệu cho TVBH: ${topSalespersonNameForNavigation}`, 'warning');
@@ -1700,12 +1720,25 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!Array.isArray(data)) return [];
         data.forEach(row => {
             if (row && row[columnIndex] !== undefined && row[columnIndex] !== null) {
-                const key = String(row[columnIndex]).trim();
-                if (key) stats[key] = (stats[key] || 0) + 1;
+                let key = String(row[columnIndex]); // Lấy key gốc
+                if (columnIndex === 7) { // Nếu là cột TVBH (index 7)
+                    key = synchronizeTvbhName(key); // Đồng bộ hóa tên TVBH
+                } else {
+                    key = key.trim(); // Cắt khoảng trắng cho các cột khác
+                }
+                // Chỉ thêm vào stats nếu key có giá trị (không phải chuỗi rỗng sau khi trim/synchronize)
+                // và không phải là 'N/A' trừ khi bạn muốn 'N/A' được tính là một TVBH riêng
+                if (key && key !== 'N/A') { // Điều chỉnh điều kiện này nếu muốn tính 'N/A'
+                    stats[key] = (stats[key] || 0) + 1;
+                } else if (key === 'N/A' && columnIndex === 7) {
+                    // Nếu muốn tính 'N/A' cho TVBH, hãy thêm vào đây
+                    // stats[key] = (stats[key] || 0) + 1; 
+                }
             }
         });
         return Object.entries(stats).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
     }
+
     function calculateTrendData(monthlyResults, topCarData) {
         const topCars = topCarData.slice(0, 5).map(item => item.key);
         const trendData = {};
@@ -1722,40 +1755,49 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateFilters(data) {
         const carFilter = document.getElementById("car-filter");
         const tvbhFilter = document.getElementById("tvbh-filter");
+        // Lấy danh sách TVBH duy nhất đã được đồng bộ hóa
+        const uniqueTvbh = data && Array.isArray(data) 
+            ? [...new Set(data.map(row => row && synchronizeTvbhName(row[7])).filter(name => name && name !== 'N/A'))].sort() 
+            : [];
         const uniqueCars = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[3]).filter(Boolean))].sort() : [];
-        const uniqueTvbh = data && Array.isArray(data) ? [...new Set(data.map(row => row && row[7]).filter(Boolean))].sort() : [];
+        
         const currentCarFilterValue = carFilter.value;
         const currentTvbhFilterValue = tvbhFilter.value;
+        
         carFilter.innerHTML = '<option value="">Tất cả Dòng Xe</option>' + uniqueCars.map(m => `<option value="${m}" ${m === currentCarFilterValue ? 'selected' : ''}>${m}</option>`).join('');
         tvbhFilter.innerHTML = '<option value="">Tất cả Tư Vấn BH</option>' + uniqueTvbh.map(t => `<option value="${t}" ${t === currentTvbhFilterValue ? 'selected' : ''}>${t}</option>`).join('');
     }
+
     function updateOverview(carData, tvbhData, totalSales) {
         document.getElementById("total-cars").textContent = totalSales || 0;
         const topCar = carData && carData.length > 0 ? carData[0] : { key: "-", count: 0 };
         document.getElementById("top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
-        const topTvbh = tvbhData && tvbhData.length > 0 ? tvbhData[0] : { key: "-", count: 0 };
+        const topTvbh = tvbhData && tvbhData.length > 0 ? tvbhData[0] : { key: "-", count: 0 }; // Tên TVBH ở đây đã được đồng bộ
         document.getElementById("top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
     }
+
     function updateMonthOverview(data) {
         const totalSales = data ? data.length : 0;
         const carDataAgg = aggregateData(data, 3);
-        const tvbhDataAgg = aggregateData(data, 7);
+        const tvbhDataAgg = aggregateData(data, 7); // Tên TVBH ở đây đã được đồng bộ
         document.getElementById("month-total-cars").textContent = totalSales;
         const topCar = carDataAgg.length > 0 ? carDataAgg[0] : { key: "-", count: 0 };
         document.getElementById("month-top-car").textContent = `${topCar.key} (${topCar.count} xe)`;
-        const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 };
+        const topTvbh = tvbhDataAgg.length > 0 ? tvbhDataAgg[0] : { key: "-", count: 0 }; // Tên TVBH ở đây đã được đồng bộ
         document.getElementById("month-top-tvbh").textContent = `${topTvbh.key} (${topTvbh.count} xe)`;
+        
         const monthTvbhSummaryCard = document.getElementById("month-tvbh-summary-card");
         if (monthTvbhSummaryCard) {
-            if (topTvbh.key !== "-" && topTvbh.count > 0) {
+            if (topTvbh.key !== "-" && topTvbh.key !== 'N/A' && topTvbh.count > 0) {
                 monthTvbhSummaryCard.style.cursor = 'pointer';
                 monthTvbhSummaryCard.setAttribute('data-tooltip', `Xem chi tiết doanh số của ${topTvbh.key} trong tháng ${currentSheet}`);
                 monthTvbhSummaryCard.onclick = () => {
-                    const salespersonName = topTvbh.key;
-                    const salespersonSpecificData = data.filter(row => row && row[7] === salespersonName);
+                    const salespersonName = topTvbh.key; // Tên đã đồng bộ
+                    // Lọc dữ liệu gốc bằng cách so sánh tên TVBH đã đồng bộ từ API với tên đã đồng bộ của người bán hàng đầu
+                    const salespersonSpecificData = data.filter(row => row && synchronizeTvbhName(row[7]) === salespersonName);
                     if (salespersonSpecificData.length > 0) {
                         sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(salespersonSpecificData));
-                        sessionStorage.setItem('bestSalespersonName', salespersonName);
+                        sessionStorage.setItem('bestSalespersonName', salespersonName); // Lưu tên đã đồng bộ
                         sessionStorage.setItem('currentMonthForBestSale', currentSheet);
                         window.location.href = 'bestsale.html';
                     } else {
@@ -1769,11 +1811,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
+
     function renderTable(dataToRender) {
         const tableHeader = document.getElementById("table-header");
         const tableBody = document.getElementById("table-body");
-        const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"];
-        const dataKeys = [null, 0, 2, 3, 4, 5];
+        const headers = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất"]; // TVBH không hiển thị trực tiếp ở đây
+        const dataKeys = [null, 0, 2, 3, 4, 5]; // Indices for data, STT is special
         if (!tableHeader.innerHTML.trim()) tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         const start = (currentPage - 1) * ROWS_PER_PAGE;
         const paginatedData = dataToRender && Array.isArray(dataToRender) ? dataToRender.slice(start, start + ROWS_PER_PAGE) : [];
@@ -1790,31 +1833,48 @@ document.addEventListener("DOMContentLoaded", () => {
                     let cellValue = headerText === "STT" ? start + idx + 1 : (row[dataKeys[cellIdx]] || 'N/A');
                     cellsHTML += `<td data-label="${headerText}"><span class="value-mobile">${cellValue}</span></td>`;
                 });
-                const detailArgs = [start + idx + 1, row[0] || '', row[2] || '', row[3] || '', row[4] || '', row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || ''].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
+                // Chuẩn bị dữ liệu cho showDetail, đồng bộ tên TVBH tại đây
+                const tvbhValueForDetail = synchronizeTvbhName(row[7] || '');
+                const detailArgs = [
+                    start + idx + 1, 
+                    row[0] || '', row[2] || '', row[3] || '', 
+                    row[4] || '', row[5] || '', row[6] || '', 
+                    tvbhValueForDetail, // Tên TVBH đã đồng bộ
+                    row[8] || '', row[9] || ''
+                ].map(arg => typeof arg === 'string' ? `'${String(arg).replace(/'/g, "\\'")}'` : String(arg)).join(',');
                 return `<tr${isHighlight} onclick="showDetail([${detailArgs}])" style="cursor:pointer;">${cellsHTML}</tr>`;
             }).join('');
         }
         updatePagination(dataToRender ? dataToRender.length : 0);
         if (paginatedData.length > 0) {
-            const firstRowDetailData = [start + 1, paginatedData[0][0] || '', paginatedData[0][2] || '', paginatedData[0][3] || '', paginatedData[0][4] || '', paginatedData[0][5] || '', paginatedData[0][6] || '', paginatedData[0][7] || '', paginatedData[0][8] || '', paginatedData[0][9] || ''];
+            const firstRowData = paginatedData[0];
+            const firstRowDetailData = [
+                start + 1,
+                firstRowData[0] || '', firstRowData[2] || '', firstRowData[3] || '',
+                firstRowData[4] || '', firstRowData[5] || '', firstRowData[6] || '',
+                synchronizeTvbhName(firstRowData[7] || ''), // Đồng bộ tên TVBH cho chi tiết hàng đầu tiên
+                firstRowData[8] || '', firstRowData[9] || ''
+            ];
             showDetail(firstRowDetailData);
         } else {
             updateDetailPanelWithMessage("Không có dữ liệu để hiển thị chi tiết.");
         }
     }
+
     function renderTotalTables(carData, tvbhData, monthlySalesData, trendChartData) {
         const totalCarBody = document.getElementById("total-car-body");
         const totalTvbhBody = document.getElementById("total-tvbh-body");
         const totalCarHeader = document.getElementById("total-car-header");
         const totalTvbhHeader = document.getElementById("total-tvbh-header");
         const carTableHeaders = ["STT", "Dòng Xe", "Tổng Số Lượng"];
-        const tvbhTableHeaders = ["STT", "Tư Vấn Bán Hàng", "Tổng Số Lượng Xe"];
+        const tvbhTableHeaders = ["STT", "Tư Vấn Bán Hàng", "Tổng Số Lượng Xe"]; // Tên TVBH ở đây đã được đồng bộ
         if (totalCarHeader && !totalCarHeader.innerHTML.trim()) totalCarHeader.innerHTML = `<tr>${carTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
         if (totalTvbhHeader && !totalTvbhHeader.innerHTML.trim()) totalTvbhHeader.innerHTML = `<tr>${tvbhTableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
         totalCarBody.innerHTML = carData && carData.length > 0 ? carData.map((row, idx) => `<tr onclick="navigateToCarDetail('${row.key}')" style="cursor:pointer;"><td data-label="${carTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td><td data-label="${carTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td><td data-label="${carTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td></tr>`).join('') + `<tr class="summary-row"><td data-label="${carTableHeaders[0]}"><span class="value-mobile"></span></td><td data-label="${carTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td><td data-label="${carTableHeaders[2]}"><span class="value-mobile"><strong>${carData.reduce((s, r) => s + r.count, 0)}</strong></span></td></tr>` : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu dòng xe.</td></tr>`;
         totalTvbhBody.innerHTML = tvbhData && tvbhData.length > 0 ? tvbhData.map((row, idx) => `<tr onclick="navigateToTvbhDetail('${row.key}')" style="cursor:pointer;"><td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile">${idx + 1}</span></td><td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile">${row.key}</span></td><td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile">${row.count}</span></td></tr>`).join('') + `<tr class="summary-row"><td data-label="${tvbhTableHeaders[0]}"><span class="value-mobile"></span></td><td data-label="${tvbhTableHeaders[1]}"><span class="value-mobile"><strong>Tổng cộng</strong></span></td><td data-label="${tvbhTableHeaders[2]}"><span class="value-mobile"><strong>${tvbhData.reduce((s, r) => s + r.count, 0)}</strong></span></td></tr>` : `<tr class="table-placeholder"><td colspan="3" class="empty-state">Không có dữ liệu TVBH.</td></tr>`;
         renderAllCharts(carData || [], monthlySalesData || [], trendChartData || {});
     }
+
     function navigateToCarDetail(carModel) {
         if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
             const carSpecificData = allMonthlyDataForNavigation.filter(row => row && row[3] === carModel);
@@ -1825,27 +1885,32 @@ document.addEventListener("DOMContentLoaded", () => {
             } else showToast(`Không có dữ liệu chi tiết cho dòng xe: ${carModel}`, 'warning');
         } else showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
     }
-    function navigateToTvbhDetail(tvbhName) {
+
+    function navigateToTvbhDetail(tvbhName) { // tvbhName ở đây là tên đã được đồng bộ
         if (allMonthlyDataForNavigation && allMonthlyDataForNavigation.length > 0) {
-            const tvbhSpecificData = allMonthlyDataForNavigation.filter(row => row && row[7] === tvbhName);
+            // Lọc dữ liệu gốc bằng cách so sánh tên TVBH đã đồng bộ từ API với tên đã đồng bộ được truyền vào
+            const tvbhSpecificData = allMonthlyDataForNavigation.filter(row => row && synchronizeTvbhName(row[7]) === tvbhName);
             if (tvbhSpecificData.length > 0) {
                 sessionStorage.setItem('bestSalespersonDataForBestSale', JSON.stringify(tvbhSpecificData));
-                sessionStorage.setItem('bestSalespersonName', tvbhName);
+                sessionStorage.setItem('bestSalespersonName', tvbhName); // Lưu tên đã đồng bộ
                 window.location.href = 'bestsale.html';
             } else showToast(`Không có dữ liệu chi tiết cho TVBH: ${tvbhName}`, 'warning');
         } else showToast('Không có dữ liệu tổng hợp để hiển thị chi tiết.', 'warning');
     }
+
     function updateDetailPanelWithMessage(message) {
         const detailBodyContent = document.getElementById("detail-body-content");
         if (detailBodyContent) detailBodyContent.innerHTML = `<p class="no-detail-message">${message}</p>`;
     }
-    function showDetail(detailDataArray) {
+
+    function showDetail(detailDataArray) { // detailDataArray[7] bây giờ là tên TVBH đã được đồng bộ
         if (currentSheet === "Total") return;
         const labels = ["STT", "Tên Khách Hàng", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách"];
         const detailBodyContent = document.getElementById("detail-body-content");
         if (!detailDataArray || detailDataArray.length === 0) { updateDetailPanelWithMessage("Không có dữ liệu chi tiết để hiển thị."); return; }
         let tableHTML = '<table class="detail-table"><tbody>';
         labels.forEach((label, i) => {
+            // Giá trị TVBH (detailDataArray[7]) đã được đồng bộ trước khi gọi hàm này
             const value = (detailDataArray[i] !== undefined && detailDataArray[i] !== null) ? String(detailDataArray[i]) : 'N/A';
             tableHTML += `<tr><th>${label}</th><td${label === "VIN" ? ' class="vin-highlight"' : ''}>${value}</td></tr>`;
         });
@@ -1911,14 +1976,19 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyFilters() {
         if (currentSheet === "Total") return;
         const carFilterValue = document.getElementById("car-filter").value;
-        const tvbhFilterValue = document.getElementById("tvbh-filter").value;
+        const tvbhFilterValue = document.getElementById("tvbh-filter").value; // Đây là tên TVBH đã đồng bộ từ dropdown
         const searchInputValue = document.getElementById("search-input").value.toLowerCase().trim();
         if (!Array.isArray(fullData)) filteredMonthData = [];
         else filteredMonthData = fullData.filter(row => {
             if (!row || typeof row !== 'object') return false;
-            const tenKH = String(row[0] || '').toLowerCase(); const sdt = String(row[1] || '').toLowerCase(); const vin = String(row[8] || '').toLowerCase(); const dongXe = String(row[3] || ''); const tvbh = String(row[7] || '');
+            const tenKH = String(row[0] || '').toLowerCase(); 
+            const sdt = String(row[1] || '').toLowerCase(); 
+            const vin = String(row[8] || '').toLowerCase(); 
+            const dongXe = String(row[3] || ''); 
+            const tvbhFromApi = synchronizeTvbhName(String(row[7] || '')); // Đồng bộ tên TVBH từ API để so sánh
+
             const matchesCar = !carFilterValue || dongXe === carFilterValue;
-            const matchesTvbh = !tvbhFilterValue || tvbh === tvbhFilterValue;
+            const matchesTvbh = !tvbhFilterValue || tvbhFromApi === tvbhFilterValue;
             const matchesSearch = !searchInputValue || tenKH.includes(searchInputValue) || sdt.includes(searchInputValue) || vin.includes(searchInputValue);
             return matchesCar && matchesTvbh && matchesSearch;
         });
@@ -1926,6 +1996,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateDetailPanelWithMessage("Chọn một mục từ bảng để xem chi tiết sau khi lọc.");
         sessionStorage.setItem('appCurrentPage', currentPage.toString());
     }
+
     function changePage(delta) {
         const totalItems = filteredMonthData ? filteredMonthData.length : 0;
         const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE) || 1;
@@ -1956,7 +2027,17 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const ws_name = currentSheet.substring(0, 30); const wb = XLSX.utils.book_new();
             const excelHeaders = ["STT", "Tên Khách Hàng", "SĐT", "Số Đơn Hàng", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "TVBH", "VIN", "Chính Sách", "Ghi Chú TVBH", "Ghi Chú Admin"];
-            const dataToExport = [excelHeaders, ...filteredMonthData.map((row, index) => { if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); return [index + 1, row[0] || '', row[1] || '', row[2] || '', row[3] || '', row[4] || '', row[5] || '', row[6] || '', row[7] || '', row[8] || '', row[9] || '', row[10] || '', row[11] || '']; })];
+            const dataToExport = [excelHeaders, ...filteredMonthData.map((row, index) => { 
+                if (!row || typeof row !== 'object') return excelHeaders.map(() => ''); 
+                // Đồng bộ tên TVBH trước khi xuất
+                const synchronizedTvbh = synchronizeTvbhName(row[7] || '');
+                return [
+                    index + 1, row[0] || '', row[1] || '', row[2] || '', 
+                    row[3] || '', row[4] || '', row[5] || '', row[6] || '', 
+                    synchronizedTvbh, // Tên TVBH đã đồng bộ
+                    row[8] || '', row[9] || '', row[10] || '', row[11] || ''
+                ]; 
+            })];
             const ws = XLSX.utils.aoa_to_sheet(dataToExport);
             ws['!cols'] = excelHeaders.map((_, i) => ({ wch: Math.max(...dataToExport.map(row => String(row[i] || '').length), excelHeaders[i].length) + 2 }));
             XLSX.utils.book_append_sheet(wb, ws, ws_name);
@@ -1982,7 +2063,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!monthData || monthData.length === 0) { allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()}</h3><p>Không có dữ liệu cho tháng này.</p>`; continue; }
                 totalRecordsPrinted += monthData.length;
                 const theadToPrintHTML = `<tr>${printHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
-                let tbodyToPrintHTML = ""; monthData.forEach((row, idx) => { if (!row || typeof row !== 'object') return; tbodyToPrintHTML += `<tr><td>${idx + 1}</td><td>${row[0] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td>${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> <td>${row[7] || ''}</td> <td>${row[8] || ''}</td> <td>${row[9] || ''}</td> </tr>`; });
+                let tbodyToPrintHTML = ""; monthData.forEach((row, idx) => { 
+                    if (!row || typeof row !== 'object') return; 
+                    const synchronizedTvbhForPrint = synchronizeTvbhName(row[7] || ''); // Đồng bộ tên TVBH
+                    tbodyToPrintHTML += `<tr><td>${idx + 1}</td><td>${row[0] || ''}</td> <td>${row[2] || ''}</td> <td>${row[3] || ''}</td> <td>${row[4] || ''}</td> <td>${row[5] || ''}</td> <td>${row[6] || ''}</td> <td>${synchronizedTvbhForPrint}</td> <td>${row[8] || ''}</td> <td>${row[9] || ''}</td> </tr>`; 
+                });
                 allMonthsPrintContent += `<h3 class="month-header">Tháng ${month.toUpperCase()} (${monthData.length} đơn hàng)</h3><table><thead>${theadToPrintHTML}</thead><tbody>${tbodyToPrintHTML}</tbody></table>`;
             }
             showLoading("Đang hoàn tất bản in...");
