@@ -49,6 +49,10 @@
             
             --header-height: 50px;
             --footer-height: 40px;
+
+            /* Màu cho zebra striping */
+            --background-light-subtle: #f8f9fa; 
+            --background-dark-subtle: #252a33;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { height: 100%; overflow: hidden; }
@@ -91,26 +95,19 @@
             box-shadow: var(--shadow-dark-outer);
         }
         .navbar .logo {
-            /* margin-right: auto; */ /* Đã loại bỏ */
-            position: absolute; /* Thêm để căn giữa chính xác */
-            left: 50%; /* Thêm để căn giữa chính xác */
-            transform: translateX(-50%); /* Thêm để căn giữa chính xác */
+            position: absolute; 
+            left: 50%; 
+            transform: translateX(-50%); 
         }
         .navbar .logo h1 {
             font-size: 18px; color: #ffffff; font-weight: 700; font-family: 'Montserrat', sans-serif;
             text-transform: uppercase;
-            /* animation: bounceGlow 2s infinite alternate; */ /* Đã loại bỏ hiệu ứng */
-        }
-        /* Keyframes bounceGlow vẫn có thể giữ lại, chỉ là không áp dụng cho logo h1 nữa */
-        @keyframes bounceGlow { 
-            0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
-            50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
         }
         .navbar-controls {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-left: auto; /* Thêm để đẩy các nút điều khiển sang phải */
+            margin-left: auto; 
         } 
         .nav-btn, .theme-toggle-btn { 
             padding: 6px; border: none; border-radius: 50%;
@@ -288,9 +285,10 @@
             align-items: center;
             flex-grow: 1;
             min-width: 250px;
+            position: relative; /* Thêm để định vị icon tìm kiếm */
         }
         #search-input {
-            padding: 8px 12px;
+            padding: 8px 12px 8px 35px; /* Tăng padding trái cho icon */
             border: 1px solid var(--border-color-light);
             border-radius: 6px;
             font-size: 13px;
@@ -299,11 +297,22 @@
             color: var(--text-light);
             box-shadow: var(--shadow-light-inner);
         }
+        .search-icon { /* Icon tìm kiếm */
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            opacity: 0.7;
+        }
         body.dark-mode #search-input {
             border-color: var(--border-color-dark);
             background-color: var(--card-bg-dark);
             color: var(--text-dark);
             box-shadow: var(--shadow-dark-inner);
+        }
+        body.dark-mode .search-icon {
+            color: var(--text-dark);
         }
         #search-input:focus {
             outline: none;
@@ -348,14 +357,34 @@
             overflow: auto; flex-grow: 1; min-height: 0; 
             max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 40px - 45px - 50px - 20px); 
             border-radius: 6px; border: 1px solid var(--border-color-light); 
+            position: relative; /* Cho sticky header/column */
         }
         body.dark-mode #table-wrapper { border-color: var(--border-color-dark); }
 
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th, td {
-            padding: 8px 10px; text-align: left;
+            padding: 10px 12px; /* Tăng nhẹ padding */
+            text-align: left;
             border-bottom: 1px solid var(--border-color-light);
+            background-color: var(--card-bg-light); /* Nền mặc định cho sticky column */
         }
+        body.dark-mode th, body.dark-mode td {
+             border-bottom: 1px solid var(--border-color-dark);
+             background-color: var(--card-bg-dark); /* Nền mặc định cho sticky column dark mode */
+        }
+
+        /* Sticky Cột STT */
+        th.col-stt, td.col-stt {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            left: 0;
+            z-index: 2; /* Cao hơn header một chút để không bị che */
+            /* background-color kế thừa từ th, td ở trên */
+        }
+        th.col-stt {
+            z-index: 3; /* Header của cột sticky phải cao hơn body của cột sticky */
+        }
+
 
         th:nth-child(1), td:nth-child(1) { white-space: nowrap; } 
         th.col-tenkh, td.col-tenkh, 
@@ -371,7 +400,6 @@
         th.col-tvbh, td.col-tvbh { white-space: nowrap; }
 
 
-        body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
         th { 
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 1; 
@@ -383,14 +411,47 @@
         body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
         body.dark-mode th.sortable:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
         
-        tbody tr:hover { 
-            background: rgba(0, 48, 135, 0.08);
-            transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+        /* Zebra Striping */
+        tbody tr:nth-child(even) td { /* Áp dụng cho td để không ghi đè sticky column bg */
+            background-color: var(--background-light-subtle);
         }
-        body.dark-mode tbody tr:hover {
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        body.dark-mode tbody tr:nth-child(even) td {
+            background-color: var(--background-dark-subtle);
         }
+        /* Đảm bảo sticky column có màu nền đúng khi zebra striping */
+        tbody tr:nth-child(even) td.col-stt {
+            background-color: var(--background-light-subtle);
+        }
+        body.dark-mode tbody tr:nth-child(even) td.col-stt {
+            background-color: var(--background-dark-subtle);
+        }
+        /* Giữ màu nền mặc định cho hàng lẻ */
+        tbody tr:nth-child(odd) td {
+            background-color: var(--card-bg-light);
+        }
+        body.dark-mode tbody tr:nth-child(odd) td {
+            background-color: var(--card-bg-dark);
+        }
+
+
+        tbody tr:hover td { /* Áp dụng cho td để không ghi đè sticky column bg */
+            background: rgba(0, 48, 135, 0.08) !important; /* !important để ghi đè zebra */
+            /* transform: translateY(-1px); /* Bỏ transform để tránh lỗi hiển thị với sticky column */
+            /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07); */
+        }
+        body.dark-mode tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.08) !important; /* !important để ghi đè zebra */
+            /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); */
+        }
+         /* Đảm bảo màu hover cho sticky column */
+        tbody tr:hover td.col-stt {
+            background: rgba(0, 48, 135, 0.08) !important;
+        }
+        body.dark-mode tbody tr:hover td.col-stt {
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+
         .highlight {
             background-color: var(--highlight-bg-light);
             color: var(--highlight-text-light);
@@ -407,13 +468,24 @@
             text-align: center; padding: 30px 15px; font-size: 1.05em; 
             color: #777;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 150px;
+            min-height: 200px; /* Tăng chiều cao tối thiểu */
+            width: 100%;
+            height: 100%; /* Chiếm toàn bộ table-wrapper nếu có thể */
+            position: absolute; /* Để căn giữa trong table-wrapper */
+            top: 0; left: 0;
+            background-color: var(--card-bg-light); /* Để che bảng phía sau */
+            border-radius: 6px; /* Giống table-wrapper */
         }
+        body.dark-mode .empty-state, body.dark-mode .loading-state { 
+            color: #aaa;
+            background-color: var(--card-bg-dark);
+        }
+
         .empty-state i, .loading-state i {
-            font-size: 2.5em; margin-bottom: 15px;
+            font-size: 3em; /* Tăng kích thước icon */
+            margin-bottom: 20px; /* Tăng khoảng cách */
             color: var(--primary-color-lighter);
         }
-        body.dark-mode .empty-state, body.dark-mode .loading-state { color: #aaa; }
         body.dark-mode .empty-state i, body.dark-mode .loading-state i { color: var(--secondary-color); }
         .loading-state .fas.fa-spinner { animation: spin 1.5s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -556,10 +628,9 @@
             .main-content-wrapper.collapsed { margin-left: 0; } 
             .toggle-btn-sidebar { display: none; } 
             .mobile-menu-btn { display: flex !important; } 
-            .navbar { padding-left: 50px; } /* Đảm bảo có không gian cho nút menu mobile */
+            .navbar { padding-left: 50px; } 
             .navbar .logo {
-                 margin-left: 0; /* Quy tắc này có thể không còn cần thiết hoặc cần điều chỉnh nếu logo tuyệt đối */
-                 /* Logo đã được căn giữa tuyệt đối, padding-left trên .navbar sẽ tạo không gian */
+                 /* Đã căn giữa tuyệt đối */
             }
             .table-top-controls { flex-direction: column; align-items: stretch; }
             .search-reset-container { width: 100%; margin-bottom: 10px; }
@@ -571,12 +642,12 @@
             .navbar { height: var(--header-height); padding-left: 45px; }
             .navbar .logo h1 { font-size: 16px; }
             .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
-            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; /*top: 8px; left: 8px; */ } /* Bỏ top, left vì nó là flex item */
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; } 
 
             .main-content-wrapper { padding-top: var(--header-height); }
             .main-content { padding: 10px; }
             .table-card { padding: 10px; }
-            th, td { font-size: 11px; padding: 6px 8px; }
+            th, td { font-size: 11px; padding: 8px 10px; } /* Giảm padding lại cho mobile */
             
             .action-btn, .control-btn { font-size: 11px; padding: 6px 10px; }
             .pagination button, .pagination span { font-size: 11px; padding: 6px 10px; }
@@ -587,14 +658,14 @@
                 max-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px - 20px - 40px - 45px - 50px); 
             }
             #scrollToTopBtn { bottom: calc(var(--footer-height) + 10px); }
-             #search-input { font-size: 12px; padding: 7px 10px;}
+             #search-input { font-size: 12px; padding: 7px 10px 7px 30px; } /* Điều chỉnh padding cho icon */
+             .search-icon { left: 8px; font-size: 13px; }
         }
          @media (max-width: 480px) {
             :root { --header-height: 45px; --footer-height: 28px; }
             .navbar { height: var(--header-height); }
             .navbar-controls { gap: 5px;}
             .nav-btn, .theme-toggle-btn, .mobile-menu-btn { width: 28px; height: 28px; font-size: 12px; }
-            /* .mobile-menu-btn { top: 9px; left: 8px; } */ /* Bỏ top, left vì nó là flex item */
             .main-content-wrapper { padding-top: var(--header-height); }
             .main-content { padding: 5px; }
             .table-card { padding: 5px; }
@@ -603,7 +674,7 @@
             .main-table-actions { flex-direction: column; align-items: stretch; }
             .action-btn, .control-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
             .action-btn:last-child, .control-btn:last-child { margin-bottom: 0; }
-            th, td { font-size: 9.5px; padding: 4px 5px; } 
+            th, td { font-size: 9.5px; padding: 6px 8px; } 
             .toast-container {
                 bottom: calc(var(--footer-height) + 5px);
                 left: 5px; right: 5px; align-items: center;
@@ -613,7 +684,8 @@
                 max-height: calc(100vh - var(--header-height) - var(--footer-height) - 10px - 10px - 65px - 45px - 60px); 
             }
             #scrollToTopBtn { bottom: calc(var(--footer-height) + 5px); }
-            #search-input { font-size: 11px; padding: 6px 8px;}
+            #search-input { font-size: 11px; padding: 6px 8px 6px 28px; } /* Điều chỉnh padding cho icon */
+            .search-icon { left: 7px; font-size: 12px; }
             .pagination-controls-container { flex-direction: column; gap: 10px; }
          }
 
@@ -655,6 +727,7 @@
             <div class="table-card">
                 <div class="table-top-controls">
                     <div class="search-reset-container">
+                        <i class="fas fa-search search-icon"></i>
                         <input type="search" id="search-input" placeholder="Tìm kiếm trong bảng..." aria-label="Tìm kiếm trong bảng">
                         <button class="control-btn" id="reset-view-btn" onclick="resetView()" data-tooltip="Thiết lập lại bảng (xóa lọc, sắp xếp, về trang đầu)">
                             <i class="fas fa-undo"></i> Xóa
@@ -667,13 +740,13 @@
                 </div>
 
                 <div id="table-wrapper">
-                    <p class="loading-state" id="loading-message" aria-live="polite"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
                     <table id="sales-table" style="display:none;">
                         <thead>
                             <tr id="table-header-row"></tr>
                         </thead>
                         <tbody id="table-body"></tbody>
                     </table>
+                     <p class="loading-state" id="loading-message" aria-live="polite" style="display:flex;"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
                 </div>
                 <div class="pagination-controls-container" id="pagination-container" style="display:none;">
                     <div class="rows-per-page-selector">
@@ -705,15 +778,12 @@
     // --- Authentication Check ---
     const isLoggedIn = sessionStorage.getItem('isLoggedIn');
     if (!isLoggedIn || isLoggedIn !== 'true') {
-        // Try to construct a URL relative to the current location's origin
-        // This is generally more robust than a simple relative path in some environments
         try {
             const currentPath = window.location.pathname;
             const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
             window.location.href = basePath + 'index.html';
         } catch (e) {
             console.error("Error constructing redirect URL:", e);
-            // Fallback if the above fails, though less likely to work if 'index.html' alone failed
             window.location.href = './index.html'; 
         }
     }
@@ -743,7 +813,7 @@
     let currentFilterQuery = '';
 
     const LOCAL_STORAGE_KEYS = {
-        TABLE_STATE: 'tongXeTableState_v2' // Updated version key
+        TABLE_STATE: 'tongXeTableState_v2' 
     };
 
     // --- Theme Management ---
@@ -909,7 +979,7 @@
             try {
                 allSalesData = JSON.parse(rawData);
                 if (Array.isArray(allSalesData) && allSalesData.length > 0) {
-                    document.getElementById("loading-message").style.display = "none";
+                    document.getElementById("loading-message").style.display = "none"; // Ẩn loading ban đầu
                     document.getElementById("sales-table").style.display = ""; 
                     document.getElementById("pagination-container").style.display = "flex";
                     refreshTableDisplay();
@@ -1081,20 +1151,14 @@
 
         if (displayedData.length === 0) {
             if (currentFilterQuery && allSalesData.length > 0) {
-                const tr = document.createElement("tr");
-                const td = document.createElement("td");
-                td.colSpan = visibleColumnCount;
-                td.innerHTML = `<i class="fas fa-search" style="margin-right: 8px;"></i> Không tìm thấy kết quả nào cho "<strong>${currentFilterQuery}</strong>".`;
-                td.style.textAlign = "center";
-                td.style.padding = "20px";
-                tr.appendChild(td);
-                tableBody.appendChild(tr);
-                 salesTable.style.display = ""; 
+                showEmptyState(`<i class="fas fa-search" style="margin-right: 8px;"></i> Không tìm thấy kết quả nào cho "<strong>${currentFilterQuery}</strong>".`, "info", false);
+                salesTable.style.display = ""; // Hiển thị bảng để thấy thông báo "Không tìm thấy"
             } else if (allSalesData.length === 0 && !currentFilterQuery) {
-                // Initial load, no data - handled by showEmptyState
-            } else {
-                showEmptyState("Không có dữ liệu để hiển thị.", "info");
+                // showEmptyState đã được gọi từ DOMContentLoaded nếu không có rawData
+            } else if (!currentFilterQuery && allSalesData.length > 0) { // Có dữ liệu nhưng displayedData = 0 (ví dụ: lỗi logic nào đó)
+                 showEmptyState("Không có dữ liệu để hiển thị.", "info");
             }
+            // Không ẩn salesTable nếu là trường hợp tìm kiếm không có kết quả
             if (!(currentFilterQuery && allSalesData.length > 0 && displayedData.length === 0)) {
                  salesTable.style.display = "none";
             }
@@ -1103,7 +1167,7 @@
         }
         
         salesTable.style.display = ""; 
-        loadingMessage.style.display = "none";
+        loadingMessage.style.display = "none"; // Ẩn loading khi có dữ liệu
         paginationContainer.style.display = "flex";
 
         const actualRowsPerPage = ROWS_PER_PAGE === 0 ? displayedData.length : ROWS_PER_PAGE;
@@ -1140,18 +1204,30 @@
         saveTableState();
     }
 
-    function showEmptyState(message, iconType = "info") {
+    function showEmptyState(message, iconType = "info", hideTable = true) {
         const loadingMessage = document.getElementById("loading-message");
+        const salesTable = document.getElementById("sales-table");
+        const paginationContainer = document.getElementById("pagination-container");
+
         let iconClass = "fas fa-folder-open"; 
         if (iconType === "info") iconClass = "fas fa-info-circle";
         else if (iconType === "warning") iconClass = "fas fa-exclamation-triangle";
         else if (iconType === "error") iconClass = "fas fa-times-circle";
-
-        loadingMessage.innerHTML = `<i class="${iconClass}"></i> <p>${message}</p>`;
+        
+        // Nếu message đã chứa HTML (ví dụ từ renderTable), không bọc lại trong <p>
+        if (message.startsWith("<i")) {
+             loadingMessage.innerHTML = message;
+        } else {
+            loadingMessage.innerHTML = `<i class="${iconClass}"></i> <p>${message}</p>`;
+        }
         loadingMessage.style.display = "flex";
-        document.getElementById("sales-table").style.display = "none";
-        document.getElementById("pagination-container").style.display = "none";
+
+        if (hideTable) {
+            salesTable.style.display = "none";
+        }
+        paginationContainer.style.display = "none";
     }
+
 
     function updatePaginationControls() {
         const pageInfo = document.getElementById("page-info");
@@ -1188,7 +1264,7 @@
     }
     
     // --- Navigation & Actions ---
-    function goBack() { window.location.href = "./xedaban.html"; } // Ensure relative path for navigation
+    function goBack() { window.location.href = "./xedaban.html"; } 
 
     function exportToExcel() {
         if (displayedData.length === 0) {
@@ -1241,7 +1317,7 @@
             fullTableHtml += '<tr>';
             columnConfig.forEach(col => {
                 let cellData = '';
-                if (col.isIndex) cellData = (ROWS_PER_PAGE === 0 ? index : start) + index + 1;
+                if (col.isIndex) cellData = (ROWS_PER_PAGE === 0 ? index : start) + index + 1; // Sửa lỗi STT khi in "Tất cả"
                 else cellData = (row && row[col.dataKey] !== undefined && row[col.dataKey] !== null) ? row[col.dataKey] : '';
                 fullTableHtml += `<td>${cellData}</td>`;
             });
@@ -1280,9 +1356,6 @@
                 <script> 
                     setTimeout(() => { 
                         window.print(); 
-                        // if (!(navigator.userAgent.indexOf("Edge") > -1 || navigator.userAgent.indexOf("Trident/") > -1)) {
-                        //     window.close(); 
-                        // }
                     }, 500); 
                 <\/script>
             </body></html>`);
