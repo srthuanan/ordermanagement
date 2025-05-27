@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            /* Variables from yeucaughepxe.html */
             --primary-color: #003087;
             --primary-color-darker: #00205b;
             --primary-color-lighter: #0040c1;
@@ -30,53 +29,45 @@
             --transition-speed-fast: 0.2s;
             --transition-speed-slow: 0.5s;
             --transition-easing: ease-in-out;
+            --highlight-bg-light: #fff3cd;
+            --highlight-text-light: #856404;
+            --highlight-bg-dark: #664d03;
+            --highlight-text-dark: #ffecb5;
             
             --footer-bg: var(--primary-color);
             --footer-text: #ffffff;
             --success-bg-light: #d4edda;
             --success-text-light: #155724;
-            --success-icon-light: #155724;
             --success-bg-dark: #1e4620;
             --success-text-dark: #d4edda;
-            --success-icon-dark: #a3d9a5;
             --scroll-to-top-bg: var(--primary-color);
             --scroll-to-top-hover-bg: var(--primary-color-lighter);
             --warning-bg-light: #fff3cd;
             --warning-text-light: #856404;
-            --warning-icon-light: #ffc107;
             --warning-bg-dark: #533f03;
             --warning-text-dark: #ffeeba;
-            --warning-icon-dark: #ffca2c;
-            --color-danger: #dc3545; 
-            --color-info: #17a2b8; 
             
-            --header-height: 50px; /* Harmonized with yeucaughepxe */
-            --footer-height: 40px; /* Harmonized with yeucaughepxe */
+            --header-height: 50px;
+            --footer-height: 40px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html {
-            height: 100%;
-            overflow: hidden; 
-        }
+        html { height: 100%; overflow: hidden; }
         body {
-            font-family: Roboto;
-            background: var(--background-light);
-            color: var(--text-light);
-            height: 100%;
-            overflow: hidden; 
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-light); color: var(--text-light);
+            height: 100%; overflow: hidden; 
             transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
         body.dark-mode {
-            background: var(--background-dark);
-            color: var(--text-dark);
+            background: var(--background-dark); color: var(--text-dark);
             --footer-bg: var(--primary-color-darker);
             --scroll-to-top-bg: var(--primary-color-lighter);
             --scroll-to-top-hover-bg: var(--secondary-color);
             --warning-bg-light: var(--warning-bg-dark);
             --warning-text-light: var(--warning-text-dark);
-            --warning-icon-light: var(--warning-icon-dark);
+            --highlight-bg-light: var(--highlight-bg-dark);
+            --highlight-text-light: var(--highlight-text-dark);
         }
         
         /* Custom scrollbar */
@@ -87,7 +78,7 @@
         #table-wrapper::-webkit-scrollbar-thumb:hover, .sidebar .menu::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
         body.dark-mode #table-wrapper::-webkit-scrollbar-thumb, body.dark-mode .sidebar .menu::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
 
-        /* Navbar (Adapted from yeucaughepxe.html) */
+        /* Navbar */
         .navbar { 
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
@@ -99,22 +90,28 @@
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
             box-shadow: var(--shadow-dark-outer);
         }
-        .navbar .logo { 
-            animation: subtleScaleIn 0.8s var(--transition-easing) 0.2s backwards; 
-            margin-right: auto; 
+        .navbar .logo {
+            /* margin-right: auto; */ /* Đã loại bỏ */
+            position: absolute; /* Thêm để căn giữa chính xác */
+            left: 50%; /* Thêm để căn giữa chính xác */
+            transform: translateX(-50%); /* Thêm để căn giữa chính xác */
         }
         .navbar .logo h1 {
-            font-size: 18px; 
-            color: #ffffff;
-            font-weight: 700;
+            font-size: 18px; color: #ffffff; font-weight: 700; font-family: 'Montserrat', sans-serif;
             text-transform: uppercase;
-            animation: bounceGlow 2s infinite alternate;
+            /* animation: bounceGlow 2s infinite alternate; */ /* Đã loại bỏ hiệu ứng */
         }
+        /* Keyframes bounceGlow vẫn có thể giữ lại, chỉ là không áp dụng cho logo h1 nữa */
         @keyframes bounceGlow { 
             0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
             50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
         }
-        .navbar-controls { display: flex; align-items: center; gap: 8px; } 
+        .navbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto; /* Thêm để đẩy các nút điều khiển sang phải */
+        } 
         .nav-btn, .theme-toggle-btn { 
             padding: 6px; border: none; border-radius: 50%;
             background: var(--card-bg-light); color: var(--text-light);
@@ -135,12 +132,12 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
         }
 
-        /* Sidebar (Adapted from yeucaughepxe.html) */
+        /* Sidebar */
         .sidebar {
             position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
-            background: var(--primary-color-darker); padding: 15px; padding-top: calc(var(--header-height) + 10px); /* Adjust for navbar */
+            background: var(--primary-color-darker); padding: 15px; padding-top: calc(var(--header-height) + 10px);
             transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 999; 
+            z-index: 1000; 
             box-shadow: 3px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
         }
         .sidebar.collapsed { width: 60px; }
@@ -151,7 +148,7 @@
         }
         .sidebar .logo { text-align: center; margin-bottom: 25px; position: relative; overflow: hidden; }
         .sidebar .logo h1 {
-            font-size: 25px; color: #fff; font-weight: 600;
+            font-size: 25px; color: #fff; font-weight: 600; font-family: 'Montserrat', sans-serif;
             transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); display: inline-block;
         }
@@ -205,7 +202,7 @@
         body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
         
         .toggle-btn-sidebar { 
-            position: absolute; top: calc(var(--header-height) / 2 - 15px); /* Vertically center with navbar */ right: -15px; width: 30px; height: 30px;
+            position: absolute; top: calc(var(--header-height) / 2 - 15px); right: -15px; width: 30px; height: 30px;
             background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
             font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -230,7 +227,7 @@
         }
         body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
 
-        /* Tooltip (from yeucaughepxe.html) */
+        /* Tooltip */
         [data-tooltip] { position: relative; }
         [data-tooltip]::after {
             content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
@@ -239,6 +236,7 @@
             padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
             opacity: 0; visibility: hidden; 
             transition: opacity 0.2s var(--transition-easing), visibility 0.2s var(--transition-easing), transform 0.2s var(--transition-easing); 
+            z-index: 999;
         }
         [data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
         body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
@@ -247,34 +245,24 @@
             margin-left: 200px; 
             padding-top: var(--header-height); 
             flex-grow: 1;
-            display: flex; 
-            flex-direction: column;
+            display: flex; flex-direction: column;
             transition: margin-left var(--transition-speed) ease;
             min-height: 0; 
         }
-        .main-content-wrapper.collapsed {
-            margin-left: 60px; 
-        }
+        .main-content-wrapper.collapsed { margin-left: 60px; }
         .main-content {
-            padding: 15px; 
-            margin: 0 auto;
-            width: 100%;
-            max-width: 1500px; 
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1; 
-            min-height: 0; 
+            padding: 15px; margin: 0 auto;
+            width: 100%; max-width: 1500px; 
+            display: flex; flex-direction: column;
+            flex-grow: 1; min-height: 0; 
         }
         .table-card {
             background: var(--card-bg-light);
-            border-radius: 10px; /* Harmonized */
-            padding: 20px; /* Harmonized */
+            border-radius: 10px; padding: 20px;
             box-shadow: var(--shadow-light-outer);
             border: 1px solid var(--border-color-light);
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            min-height: 0; 
+            display: flex; flex-direction: column;
+            flex-grow: 1; min-height: 0; 
             overflow: hidden; 
             animation: fadeInUp 0.5s var(--transition-easing) backwards;
         }
@@ -285,123 +273,188 @@
         }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .table-actions {
+        .table-top-controls {
             display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-bottom: 10px;
+            justify-content: space-between;
+            align-items: center; 
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
             flex-shrink: 0;
         }
-        .action-btn { /* Styled like yeucaughepxe's form buttons */
-            padding: 8px 15px;
-            border: none;
+        .search-reset-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-grow: 1;
+            min-width: 250px;
+        }
+        #search-input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color-light);
             border-radius: 6px;
-            background: var(--primary-color);
-            color: #fff;
             font-size: 13px;
-            font-weight: 600; 
-            cursor: pointer;
+            flex-grow: 1;
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+            box-shadow: var(--shadow-light-inner);
+        }
+        body.dark-mode #search-input {
+            border-color: var(--border-color-dark);
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            box-shadow: var(--shadow-dark-inner);
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.2);
+        }
+        .main-table-actions { 
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .action-btn, .control-btn { 
+            padding: 8px 15px; border: none; border-radius: 6px;
+            background: var(--primary-color); color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
             transition: all var(--transition-speed-fast) ease, transform 0.15s ease-out;
             box-shadow: 0 2px 5px rgba(0, 48, 135, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            display: flex; align-items: center; gap: 5px;
         }
-        .action-btn:hover {
+        .action-btn:hover, .control-btn:hover {
             background: var(--primary-color-lighter);
             transform: translateY(-2px) scale(1.02);
-             box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
+            box-shadow: 0 4px 10px rgba(0, 48, 135, 0.45);
         }
-        .action-btn:active {
+        .action-btn:active, .control-btn:active {
             transform: translateY(0px) scale(0.98);
             background: var(--primary-color-darker);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
-        body.dark-mode .action-btn {
+        body.dark-mode .action-btn, body.dark-mode .control-btn {
             background: var(--primary-color-lighter);
             box-shadow: 0 2px 5px rgba(0,0,0, 0.3);
         }
-        body.dark-mode .action-btn:hover {
+        body.dark-mode .action-btn:hover, body.dark-mode .control-btn:hover {
             background: var(--secondary-color);
             box-shadow: 0 4px 8px rgba(0,0,0, 0.4);
         }
-         .action-btn i { margin-right: 5px; }
+        .action-btn i, .control-btn i { margin-right: 5px; }
         
         #table-wrapper { 
-            overflow: auto; 
-            flex-grow: 1; 
-            min-height: 0; 
-            max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 40px - 45px - 50px); 
-            border-radius: 6px; 
-            border: 1px solid var(--border-color-light); 
+            overflow: auto; flex-grow: 1; min-height: 0; 
+            max-height: calc(100vh - var(--header-height) - var(--footer-height) - 30px - 40px - 45px - 50px - 20px); 
+            border-radius: 6px; border: 1px solid var(--border-color-light); 
         }
-        body.dark-mode #table-wrapper {
-            border-color: var(--border-color-dark);
-        }
+        body.dark-mode #table-wrapper { border-color: var(--border-color-dark); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px; 
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th, td {
-            padding: 8px 10px; 
-            text-align: left;
+            padding: 8px 10px; text-align: left;
             border-bottom: 1px solid var(--border-color-light);
         }
+
         th:nth-child(1), td:nth-child(1) { white-space: nowrap; } 
-        th:nth-child(2), td:nth-child(2), 
-        th:nth-child(3), td:nth-child(3), 
-        th:nth-child(9), td:nth-child(9), 
-        th:nth-child(10), td:nth-child(10), 
-        th:nth-child(11), td:nth-child(11) { 
+        th.col-tenkh, td.col-tenkh, 
+        th.col-sodh, td.col-sodh, 
+        th.col-vin, td.col-vin, 
+        th.col-chinhsach, td.col-chinhsach { 
              white-space: normal; word-break: break-word; min-width: 120px; 
         }
-        th:nth-child(4), td:nth-child(4), 
-        th:nth-child(5), td:nth-child(5), 
-        th:nth-child(6), td:nth-child(6), 
-        th:nth-child(7), td:nth-child(7), 
-        th:nth-child(8), td:nth-child(8)  
-        { white-space: nowrap; }
+        th.col-dongxe, td.col-dongxe,
+        th.col-phienban, td.col-phienban,
+        th.col-ngoaithat, td.col-ngoaithat,
+        th.col-noithat, td.col-noithat,
+        th.col-tvbh, td.col-tvbh { white-space: nowrap; }
 
-        body.dark-mode th, body.dark-mode td {
-            border-bottom: 1px solid var(--border-color-dark);
-        }
-        th { /* From yeucaughepxe */
+
+        body.dark-mode th, body.dark-mode td { border-bottom: 1px solid var(--border-color-dark); }
+        th { 
             background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
             color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 1; 
             text-transform: uppercase; letter-spacing: 0.5px;
+            cursor: pointer; user-select: none;
         }
-        th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
-        body.dark-mode th {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
-        }
-        body.dark-mode th:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
+        th .sort-icon { margin-left: 5px; opacity: 0.7; }
+        th.sortable:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
+        body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
+        body.dark-mode th.sortable:hover { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
         
-        tbody tr:hover { /* From yeucaughepxe */
+        tbody tr:hover { 
             background: rgba(0, 48, 135, 0.08);
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
         }
         body.dark-mode tbody tr:hover {
             background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         }
-        .empty-state, .loading-state { /* From yeucaughepxe */
-            text-align: center; padding: 25px; font-size: 1em; 
-            color: var(--no-data-text-color-light);
+        .highlight {
+            background-color: var(--highlight-bg-light);
+            color: var(--highlight-text-light);
+            font-weight: bold;
+            padding: 1px 2px;
+            border-radius: 3px;
         }
-        body.dark-mode .empty-state, body.dark-mode .loading-state {
-             color: var(--no-data-text-color-dark);
+        body.dark-mode .highlight {
+            background-color: var(--highlight-bg-dark);
+            color: var(--highlight-text-dark);
         }
-        .loading-state .fas { animation: spin 1.5s linear infinite; margin-right: 8px;}
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        .empty-state, .loading-state { 
+            text-align: center; padding: 30px 15px; font-size: 1.05em; 
+            color: #777;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 150px;
+        }
+        .empty-state i, .loading-state i {
+            font-size: 2.5em; margin-bottom: 15px;
+            color: var(--primary-color-lighter);
+        }
+        body.dark-mode .empty-state, body.dark-mode .loading-state { color: #aaa; }
+        body.dark-mode .empty-state i, body.dark-mode .loading-state i { color: var(--secondary-color); }
+        .loading-state .fas.fa-spinner { animation: spin 1.5s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .pagination-controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .rows-per-page-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rows-per-page-selector label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+        body.dark-mode .rows-per-page-selector label { color: var(--text-dark); }
+        #rows-per-page {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 6px;
+            font-size: 12px;
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+        }
+        body.dark-mode #rows-per-page {
+            border-color: var(--border-color-dark);
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+        }
         .pagination {
             display: flex; justify-content: center; align-items: center;
-            gap: 8px; margin-top: 15px; flex-shrink: 0; 
+            gap: 8px; 
         }
-        .pagination button { /* Styled like yeucaughepxe */
+        .pagination button { 
             padding: 8px 15px; border: none; border-radius: 6px;
             background: var(--primary-color); color: #fff;
             font-size: 13px; font-weight: 600; cursor: pointer;
@@ -436,7 +489,7 @@
         .pagination span { font-size: 11.5px; color: var(--text-light); }
         body.dark-mode .pagination span { color: var(--text-dark); }
 
-        footer { /* From yeucaughepxe */
+        footer { 
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
             color: #fff; text-align: center; padding: 0;
             height: var(--footer-height); display: flex; align-items: center; justify-content: center;
@@ -447,32 +500,23 @@
         body.dark-mode footer {
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
-        .toast-container { /* From yeucaughepxe's .notification */
+        .toast-container { 
             position: fixed;
             bottom: calc(var(--footer-height) + 10px); 
             right: 10px;
             z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .toast { /* From yeucaughepxe's .notification */
-            padding: 10px 15px; 
-            font-size: 13px; 
-            border-radius: 6px;
-            background-color: var(--card-bg-dark);
-            color: var(--text-dark);
+        .toast { 
+            padding: 10px 15px; font-size: 13px; border-radius: 6px;
+            background-color: var(--card-bg-dark); color: var(--text-dark);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            opacity: 0;
-            transform: translateX(100%);
+            display: flex; align-items: center; gap: 10px;
+            opacity: 0; transform: translateX(100%);
             transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         body:not(.dark-mode) .toast {
-             background-color: var(--card-bg-light);
-             color: var(--text-light);
+             background-color: var(--card-bg-light); color: var(--text-light);
              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .toast.show { opacity: 1; transform: translateX(0); }
@@ -487,9 +531,8 @@
         body.dark-mode .toast.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
         .toast-message { font-size: 13px; }
 
-        /* Scroll to Top Button (from yeucaughepxe.html) */
         #scrollToTopBtn {
-            display: none; position: fixed; bottom: calc(var(--footer-height) + 15px); /* Adjusted for footer */ right: 15px; z-index: 999;
+            display: none; position: fixed; bottom: calc(var(--footer-height) + 15px); right: 15px; z-index: 999;
             border: none; outline: none; background-color: var(--scroll-to-top-bg);
             color: white; cursor: pointer; padding: 8px; border-radius: 50%; font-size: 16px;
             box-shadow: var(--shadow-light-outer);
@@ -503,7 +546,7 @@
         .hidden { display: none !important; }
 
 
-        @media (max-width: 900px) { /* Responsive for sidebar */
+        @media (max-width: 900px) { 
             .sidebar { transform: translateX(-100%); width: 220px; z-index: 1005; }
             .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
             .sidebar.collapsed { transform: translateX(-100%); } 
@@ -513,8 +556,14 @@
             .main-content-wrapper.collapsed { margin-left: 0; } 
             .toggle-btn-sidebar { display: none; } 
             .mobile-menu-btn { display: flex !important; } 
-            .navbar { padding-left: 50px; }
-            .navbar .logo { margin-left: 0; }
+            .navbar { padding-left: 50px; } /* Đảm bảo có không gian cho nút menu mobile */
+            .navbar .logo {
+                 margin-left: 0; /* Quy tắc này có thể không còn cần thiết hoặc cần điều chỉnh nếu logo tuyệt đối */
+                 /* Logo đã được căn giữa tuyệt đối, padding-left trên .navbar sẽ tạo không gian */
+            }
+            .table-top-controls { flex-direction: column; align-items: stretch; }
+            .search-reset-container { width: 100%; margin-bottom: 10px; }
+            .main-table-actions { justify-content: center; width: 100%;}
         }
 
         @media (max-width: 768px) {
@@ -522,55 +571,52 @@
             .navbar { height: var(--header-height); padding-left: 45px; }
             .navbar .logo h1 { font-size: 16px; }
             .nav-btn, .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px; }
-            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; top: 8px; left: 8px; }
+            .mobile-menu-btn { width: 30px; height: 30px; font-size: 13px; /*top: 8px; left: 8px; */ } /* Bỏ top, left vì nó là flex item */
 
             .main-content-wrapper { padding-top: var(--header-height); }
             .main-content { padding: 10px; }
             .table-card { padding: 10px; }
             th, td { font-size: 11px; padding: 6px 8px; }
-            th:nth-child(2), td:nth-child(2), 
-            th:nth-child(3), td:nth-child(3), 
-            th:nth-child(9), td:nth-child(9), 
-            th:nth-child(10), td:nth-child(10), 
-            th:nth-child(11), td:nth-child(11) {min-width: 100px;}
-
-            .action-btn { font-size: 11px; padding: 6px 10px; }
+            
+            .action-btn, .control-btn { font-size: 11px; padding: 6px 10px; }
             .pagination button, .pagination span { font-size: 11px; padding: 6px 10px; }
+            #rows-per-page, .rows-per-page-selector label { font-size: 11px; }
             footer { height: var(--footer-height); font-size: 10px; padding:0; display:flex; align-items:center; justify-content:center;}
             .toast-container { bottom: calc(var(--footer-height) + 8px); right: 8px; }
             #table-wrapper {
-                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px - 20px - 40px - 45px); 
+                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 20px - 20px - 40px - 45px - 50px); 
             }
             #scrollToTopBtn { bottom: calc(var(--footer-height) + 10px); }
+             #search-input { font-size: 12px; padding: 7px 10px;}
         }
          @media (max-width: 480px) {
             :root { --header-height: 45px; --footer-height: 28px; }
             .navbar { height: var(--header-height); }
             .navbar-controls { gap: 5px;}
             .nav-btn, .theme-toggle-btn, .mobile-menu-btn { width: 28px; height: 28px; font-size: 12px; }
-            .mobile-menu-btn { top: 9px; left: 8px; }
+            /* .mobile-menu-btn { top: 9px; left: 8px; } */ /* Bỏ top, left vì nó là flex item */
             .main-content-wrapper { padding-top: var(--header-height); }
-            .main-content { padding: 5px; } /* Reduced padding */
+            .main-content { padding: 5px; }
             .table-card { padding: 5px; }
-            .table-actions { flex-direction: column; align-items: stretch; }
-            .action-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
-            .action-btn:last-child { margin-bottom: 0; }
-            th, td { font-size: 9.5px; padding: 4px 5px; } /* Further reduced */
-             th:nth-child(2), td:nth-child(2), 
-            th:nth-child(3), td:nth-child(3), 
-            th:nth-child(9), td:nth-child(9), 
-            th:nth-child(10), td:nth-child(10), 
-            th:nth-child(11), td:nth-child(11) {min-width: 80px;}
+            .table-top-controls { margin-bottom: 10px; }
+            .search-reset-container { margin-bottom: 8px; }
+            .main-table-actions { flex-direction: column; align-items: stretch; }
+            .action-btn, .control-btn { width: 100%; justify-content: center; margin-bottom: 5px;}
+            .action-btn:last-child, .control-btn:last-child { margin-bottom: 0; }
+            th, td { font-size: 9.5px; padding: 4px 5px; } 
             .toast-container {
                 bottom: calc(var(--footer-height) + 5px);
                 left: 5px; right: 5px; align-items: center;
             }
             .toast { width: auto; max-width: calc(100% - 10px); }
              #table-wrapper {
-                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 10px - 10px - 65px - 45px); 
+                max-height: calc(100vh - var(--header-height) - var(--footer-height) - 10px - 10px - 65px - 45px - 60px); 
             }
             #scrollToTopBtn { bottom: calc(var(--footer-height) + 5px); }
+            #search-input { font-size: 11px; padding: 6px 8px;}
+            .pagination-controls-container { flex-direction: column; gap: 10px; }
          }
+
     </style>
 </head>
 <body>
@@ -579,7 +625,7 @@
             <i class="fas fa-bars"></i>
         </button>
         <div class="logo">
-            <h1></h1>
+            <h1 id="navbar-title">Tổng Hợp Đơn Hàng</h1>
         </div>
         <div class="navbar-controls">
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Chuyển đổi giao diện" data-tooltip="Sáng/Tối">
@@ -594,12 +640,12 @@
     <aside class="sidebar" id="sidebar">
         <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
         <nav class="menu" id="navMenu">
-            <a href="index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="Index.html" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
             <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
             <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
-           <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-tooltip="Xem Chính Sách và Tài Liệu"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
         </nav>
         <button class="toggle-btn-sidebar" onclick="toggleDesktopSidebar()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
     </aside>
@@ -607,25 +653,43 @@
     <div class="main-content-wrapper" id="main-content-wrapper">
         <div class="main-content">
             <div class="table-card">
-                <div class="table-actions">
-                    <button class="action-btn" onclick="exportToExcel()" aria-label="Xuất Excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
-                    <button class="action-btn" onclick="printPage()" aria-label="In Bảng"><i class="fas fa-print"></i> In Bảng</button>
+                <div class="table-top-controls">
+                    <div class="search-reset-container">
+                        <input type="search" id="search-input" placeholder="Tìm kiếm trong bảng..." aria-label="Tìm kiếm trong bảng">
+                        <button class="control-btn" id="reset-view-btn" onclick="resetView()" data-tooltip="Thiết lập lại bảng (xóa lọc, sắp xếp, về trang đầu)">
+                            <i class="fas fa-undo"></i> Xóa
+                        </button>
+                    </div>
+                    <div class="main-table-actions">
+                        <button class="action-btn" onclick="exportToExcel()" aria-label="Xuất Excel" data-tooltip="Xuất dữ liệu hiện tại ra Excel"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+                        <button class="action-btn" onclick="printPage()" aria-label="In Bảng" data-tooltip="In dữ liệu hiện tại"><i class="fas fa-print"></i> In Bảng</button>
+                    </div>
                 </div>
+
                 <div id="table-wrapper">
-                    <p class="loading-state" id="loading-message"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
+                    <p class="loading-state" id="loading-message" aria-live="polite"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</p>
                     <table id="sales-table" style="display:none;">
                         <thead>
-                            <tr id="table-header-row">
-                                </tr>
+                            <tr id="table-header-row"></tr>
                         </thead>
-                        <tbody id="table-body">
-                            </tbody>
+                        <tbody id="table-body"></tbody>
                     </table>
                 </div>
-                <div class="pagination" id="pagination-controls" style="display:none;">
-                    <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
-                    <span id="page-info">Trang 1 / 1</span>
-                    <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
+                <div class="pagination-controls-container" id="pagination-container" style="display:none;">
+                    <div class="rows-per-page-selector">
+                        <label for="rows-per-page">Số dòng/trang:</label>
+                        <select id="rows-per-page" aria-label="Chọn số dòng mỗi trang">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="0">Tất cả</option> </select>
+                    </div>
+                    <div class="pagination" id="pagination-controls">
+                        <button onclick="changePage(-1)" id="prev-btn" aria-label="Trang trước">Trước</button>
+                        <span id="page-info">Trang 1 / 1</span>
+                        <button onclick="changePage(1)" id="next-btn" aria-label="Trang sau">Sau</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -633,383 +697,632 @@
 
     <footer>© 2025 VinFast Minh Đạo Thuận An</footer>
     <div class="toast-container" id="toast-container"></div>
-    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden">
+    <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang" class="hidden" aria-label="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
 
     <script>
-            const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-
+    // --- Authentication Check ---
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
     if (!isLoggedIn || isLoggedIn !== 'true') {
-        // Nếu chưa đăng nhập hoặc giá trị không đúng, chuyển về trang đăng nhập
-        window.location.href = 'index.html';
+        // Try to construct a URL relative to the current location's origin
+        // This is generally more robust than a simple relative path in some environments
+        try {
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+            window.location.href = basePath + 'index.html';
+        } catch (e) {
+            console.error("Error constructing redirect URL:", e);
+            // Fallback if the above fails, though less likely to work if 'index.html' alone failed
+            window.location.href = './index.html'; 
+        }
     }
-        let allSalesData = [];
-        let currentPage = 1;
-        const ROWS_PER_PAGE = 25; 
-        const columnConfig = [
-            { key: null, header: "STT", isIndex: true },
-            { key: 0, header: "Tên Khách Hàng" },
-            { key: 2, header: "Số Đơn Hàng" },
-            { key: 3, header: "Dòng Xe" },
-            { key: 4, header: "Phiên Bản" },
-            { key: 5, header: "Ngoại Thất" },
-            { key: 6, header: "Nội Thất" },
-            { key: 7, header: "TVBH" },
-            { key: 8, header: "VIN" },
-            { key: 9, header: "Chính Sách" },
-        ];
 
-        // --- Theme Management (from yeucaughepxe.html) ---
-        function applyInitialTheme() {
-            const savedTheme = localStorage.getItem("theme") || "light";
-            document.body.classList.toggle("dark-mode", savedTheme === "dark");
-            updateThemeButton(savedTheme === "dark");
-        }
+    // --- Global Variables & Configuration ---
+    let allSalesData = [];
+    let displayedData = []; 
+    let currentPage = 1;
+    let ROWS_PER_PAGE = 25; 
+    const DEFAULT_ROWS_PER_PAGE = 25;
 
-        function toggleTheme() {
-            const isDarkMode = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            updateThemeButton(isDarkMode);
-            adjustToastPositionForStickyFooter(); 
-        }
+    const columnConfig = [
+        { dataKey: "stt", header: "STT", isIndex: true, sortable: false, cssClass: "col-stt" },
+        { dataKey: "0", header: "Tên Khách Hàng", sortable: true, cssClass: "col-tenkh" },
+        { dataKey: "2", header: "Số Đơn Hàng", sortable: true, cssClass: "col-sodh" },
+        { dataKey: "3", header: "Dòng Xe", sortable: true, cssClass: "col-dongxe" },
+        { dataKey: "4", header: "Phiên Bản", sortable: true, cssClass: "col-phienban" },
+        { dataKey: "5", header: "Ngoại Thất", sortable: true, cssClass: "col-ngoaithat" },
+        { dataKey: "6", header: "Nội Thất", sortable: true, cssClass: "col-noithat" },
+        { dataKey: "7", header: "TVBH", sortable: true, cssClass: "col-tvbh" },
+        { dataKey: "8", header: "VIN", sortable: true, cssClass: "col-vin" },
+        { dataKey: "9", header: "Chính Sách", sortable: true, cssClass: "col-chinhsach" },
+    ];
 
-        function updateThemeButton(isDarkMode) { 
-            const themeToggleBtn = document.querySelector('.theme-toggle-btn'); 
-            if (!themeToggleBtn) return;
-            const themeIcon = themeToggleBtn.querySelector('i');
-            const themeText = themeToggleBtn.querySelector('span.theme-text'); 
-            if (isDarkMode) {
-                themeIcon.className = 'fas fa-sun';
-                if(themeText) themeText.textContent = " Sáng";
-            } else {
-                themeIcon.className = 'fas fa-moon';
-                if(themeText) themeText.textContent = " Tối";
-            }
-        }
-        
-        // --- Sidebar Management (from yeucaughepxe.html) ---
-        function toggleDesktopSidebar() { 
-            if (window.innerWidth > 900) {
-                const sidebar = document.getElementById("sidebar");
-                const mainWrapper = document.getElementById("main-content-wrapper");
-                if (sidebar && mainWrapper) {
-                    sidebar.classList.toggle("collapsed");
-                    mainWrapper.classList.toggle("collapsed");
-                    localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
-                }
-                updateSidebarToggleIcon(); 
-            }
-        }
+    let currentSortKey = null;
+    let currentSortDirection = 'asc';
+    let currentFilterQuery = '';
 
-        function toggleMobileSidebar() { 
+    const LOCAL_STORAGE_KEYS = {
+        TABLE_STATE: 'tongXeTableState_v2' // Updated version key
+    };
+
+    // --- Theme Management ---
+    function applyInitialTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        document.body.classList.toggle("dark-mode", savedTheme === "dark");
+        updateThemeButton(savedTheme === "dark");
+    }
+    function toggleTheme() {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        updateThemeButton(isDarkMode);
+        adjustToastPositionForStickyFooter(); 
+    }
+    function updateThemeButton(isDarkMode) { 
+        const themeToggleBtn = document.querySelector('.theme-toggle-btn'); 
+        if (!themeToggleBtn) return;
+        const themeIcon = themeToggleBtn.querySelector('i');
+        if (isDarkMode) themeIcon.className = 'fas fa-sun';
+        else themeIcon.className = 'fas fa-moon';
+    }
+    
+    // --- Sidebar Management ---
+    function toggleDesktopSidebar() { 
+        if (window.innerWidth > 900) {
             const sidebar = document.getElementById("sidebar");
-            if (sidebar) {
-                sidebar.classList.toggle("open");
-                if (sidebar.classList.contains("open")) {
-                    sidebar.classList.remove("collapsed");
-                }
+            const mainWrapper = document.getElementById("main-content-wrapper");
+            if (sidebar && mainWrapper) {
+                sidebar.classList.toggle("collapsed");
+                mainWrapper.classList.toggle("collapsed");
+                localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
             }
             updateSidebarToggleIcon(); 
         }
-        
-        function applyInitialSidebarState() { 
-            const mainWrapper = document.getElementById("main-content-wrapper");
-            if (!mainWrapper) return; 
-
-            if (window.innerWidth > 900) { 
-                const sidebar = document.getElementById("sidebar");
-                if (localStorage.getItem('sidebarState') === 'collapsed') {
-                    sidebar?.classList.add("collapsed");
-                    mainWrapper.classList.add("collapsed"); 
-                } else {
-                    sidebar?.classList.remove("collapsed");
-                    mainWrapper.classList.remove("collapsed"); 
-                }
-            } else { 
-                const sidebar = document.getElementById("sidebar");
-                sidebar?.classList.remove("collapsed"); 
-                mainWrapper.classList.remove("collapsed");
-                sidebar?.classList.remove("open"); 
-            }
-            updateSidebarToggleIcon();
+    }
+    function toggleMobileSidebar() { 
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar) {
+            sidebar.classList.toggle("open");
+            if (sidebar.classList.contains("open")) sidebar.classList.remove("collapsed");
         }
-        
-        function updateSidebarToggleIcon() { 
-            const sidebar = document.getElementById("sidebar");
-            const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i"); 
-            const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); 
-            const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
-
-            if (!sidebar) return;
-
-            if (window.innerWidth <= 900) { 
-                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
-                if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
-                if (mobileMenuIcon) {
-                    mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
-                }
-            } else { 
-                if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
-                if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
-                if (toggleIconDesktop) {
-                    toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times"; 
-                }
-            }
-        }
-
-        function setActiveSidebarLink() { 
-            const navLinks = document.querySelectorAll("#navMenu a");
-            const targetPage = "xedaban.html"; // This page is related to "Xe Đã Bán"
-
-            navLinks.forEach(link => {
-                link.classList.remove("active");
-                if (link.getAttribute('href') === targetPage) {
-                    link.classList.add("active");
-                }
-            });
-        }
-        
-        // --- Scroll to Top (from yeucaughepxe.html) ---
-        function initScrollToTopButton() {
-            const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
-            window.onscroll = () => { 
-                const show = document.body.scrollTop > 200 || document.documentElement.scrollTop > 200; 
-                if (show) {
-                    btn.classList.add('visible');
-                    btn.classList.remove('hidden'); 
-                } else {
-                    btn.classList.remove('visible');
-                }
-            };
-        }
-        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            applyInitialTheme();
-            applyInitialSidebarState();
-            setActiveSidebarLink();
-            initScrollToTopButton();
-
-            const rawData = sessionStorage.getItem('allSalesDataForTongXe');
-            if (rawData) {
-                try {
-                    allSalesData = JSON.parse(rawData);
-                    if (Array.isArray(allSalesData) && allSalesData.length > 0) {
-                        document.getElementById("loading-message").style.display = "none";
-                        document.getElementById("sales-table").style.display = ""; 
-                        document.getElementById("pagination-controls").style.display = "flex";
-                        renderTableHeader();
-                        renderTable();
-                    } else {
-                        showEmptyState("Không có dữ liệu tổng hợp nào được tìm thấy.");
-                    }
-                } catch (e) {
-                    console.error("Lỗi xử lý dữ liệu từ sessionStorage:", e);
-                    showEmptyState("Lỗi khi tải dữ liệu. Vui lòng thử lại.");
-                }
+        updateSidebarToggleIcon(); 
+    }
+    function applyInitialSidebarState() { 
+        const mainWrapper = document.getElementById("main-content-wrapper");
+        if (!mainWrapper) return; 
+        const sidebar = document.getElementById("sidebar");
+        if (window.innerWidth > 900) { 
+            if (localStorage.getItem('sidebarState') === 'collapsed') {
+                sidebar?.classList.add("collapsed");
+                mainWrapper.classList.add("collapsed"); 
             } else {
-                showEmptyState("Không tìm thấy dữ liệu tổng hợp. Vui lòng quay lại trang trước và thử lại.");
+                sidebar?.classList.remove("collapsed");
+                mainWrapper.classList.remove("collapsed"); 
             }
-            
-            adjustToastPositionForStickyFooter();
-            window.addEventListener('resize', () => {
-                applyInitialSidebarState();
-                adjustToastPositionForStickyFooter();
-            });
-             // Click outside to close mobile sidebar
-            document.addEventListener('click', function(event) {
-                const sidebar = document.getElementById('sidebar');
-                const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); 
-                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-                    if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-                        toggleMobileSidebar();
-                    }
+        } else { 
+            sidebar?.classList.remove("collapsed", "open"); 
+            mainWrapper.classList.remove("collapsed");
+        }
+        updateSidebarToggleIcon();
+    }
+    function updateSidebarToggleIcon() { 
+        const sidebar = document.getElementById("sidebar");
+        const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i"); 
+        const mobileMenuBtn = document.querySelector(".mobile-menu-btn"); 
+        const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
+        if (!sidebar) return;
+        if (window.innerWidth <= 900) { 
+            if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'none';
+            if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
+            if (mobileMenuIcon) mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
+        } else { 
+            if(document.querySelector('.toggle-btn-sidebar')) document.querySelector('.toggle-btn-sidebar').style.display = 'flex';
+            if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+            if (toggleIconDesktop) toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-chevron-right" : "fas fa-chevron-left";
+        }
+    }
+    function setActiveSidebarLink() { 
+        const navLinks = document.querySelectorAll("#navMenu a");
+        const targetPage = "xedaban.html"; 
+        navLinks.forEach(link => {
+            link.classList.remove("active");
+            if (link.getAttribute('href') === targetPage) link.classList.add("active");
+        });
+    }
+    
+    // --- Scroll to Top ---
+    function initScrollToTopButton() {
+        const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
+        const tableWrapper = document.getElementById("table-wrapper");
+        function handleScroll() {
+            const show = (tableWrapper && tableWrapper.scrollTop > 100) || document.body.scrollTop > 200 || document.documentElement.scrollTop > 200;
+            if (show) {
+                btn.classList.add('visible'); btn.classList.remove('hidden'); 
+            } else {
+                btn.classList.remove('visible');
+                setTimeout(() => { if(!btn.classList.contains('visible')) btn.classList.add('hidden'); }, 300);
+            }
+        }
+        window.addEventListener('scroll', handleScroll, true);
+        if (tableWrapper) tableWrapper.addEventListener('scroll', handleScroll);
+    }
+    function scrollToTop() { 
+        document.getElementById("table-wrapper")?.scrollTo({top: 0, behavior: 'smooth'});
+        window.scrollTo({top: 0, behavior: 'smooth'}); 
+    }
+
+    // --- State Management (localStorage) ---
+    function saveTableState() {
+        const state = {
+            filterQuery: currentFilterQuery,
+            sortKey: currentSortKey,
+            sortDirection: currentSortDirection,
+            currentPage: currentPage,
+            rowsPerPage: ROWS_PER_PAGE
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEYS.TABLE_STATE, JSON.stringify(state));
+    }
+    function loadTableState() {
+        const savedState = localStorage.getItem(LOCAL_STORAGE_KEYS.TABLE_STATE);
+        if (savedState) {
+            try {
+                const state = JSON.parse(savedState);
+                currentFilterQuery = state.filterQuery || '';
+                currentSortKey = state.sortKey || null;
+                currentSortDirection = state.sortDirection || 'asc';
+                currentPage = parseInt(state.currentPage) || 1;
+                ROWS_PER_PAGE = parseInt(state.rowsPerPage) || DEFAULT_ROWS_PER_PAGE;
+
+                document.getElementById('search-input').value = currentFilterQuery;
+                document.getElementById('rows-per-page').value = ROWS_PER_PAGE === 0 ? "0" : String(ROWS_PER_PAGE);
+            } catch (e) {
+                console.error("Lỗi đọc trạng thái bảng từ localStorage:", e);
+                resetTableStateToDefaults();
+            }
+        } else {
+            resetTableStateToDefaults();
+        }
+    }
+    function resetTableStateToDefaults() {
+        currentFilterQuery = '';
+        currentSortKey = null;
+        currentSortDirection = 'asc';
+        currentPage = 1;
+        ROWS_PER_PAGE = DEFAULT_ROWS_PER_PAGE;
+        document.getElementById('search-input').value = '';
+        document.getElementById('rows-per-page').value = String(DEFAULT_ROWS_PER_PAGE);
+    }
+
+    // --- DOMContentLoaded ---
+    document.addEventListener("DOMContentLoaded", () => {
+        applyInitialTheme();
+        applyInitialSidebarState();
+        setActiveSidebarLink();
+        initScrollToTopButton();
+        
+        document.getElementById('navbar-title').textContent = document.title.split(' - ')[0];
+
+        loadTableState(); 
+
+        const rawData = sessionStorage.getItem('allSalesDataForTongXe');
+        if (rawData) {
+            try {
+                allSalesData = JSON.parse(rawData);
+                if (Array.isArray(allSalesData) && allSalesData.length > 0) {
+                    document.getElementById("loading-message").style.display = "none";
+                    document.getElementById("sales-table").style.display = ""; 
+                    document.getElementById("pagination-container").style.display = "flex";
+                    refreshTableDisplay();
+                } else {
+                    showEmptyState("Không có dữ liệu tổng hợp nào được tìm thấy.", "info");
                 }
-            });
+            } catch (e) {
+                console.error("Lỗi xử lý dữ liệu từ sessionStorage:", e);
+                showEmptyState("Lỗi khi tải dữ liệu. Vui lòng thử lại.", "error");
+            }
+        } else {
+            showEmptyState("Không tìm thấy dữ liệu tổng hợp. Vui lòng quay lại trang trước và thử lại.", "warning");
+        }
+        
+        adjustToastPositionForStickyFooter();
+        window.addEventListener('resize', () => {
+            applyInitialSidebarState();
+            adjustToastPositionForStickyFooter();
         });
 
-        function renderTableHeader() {
-            const headerRow = document.getElementById("table-header-row");
-            headerRow.innerHTML = columnConfig.map(col => `<th>${col.header}</th>`).join('');
-        }
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            currentFilterQuery = e.target.value;
+            currentPage = 1; 
+            refreshTableDisplay();
+            saveTableState();
+        });
 
-        function renderTable() {
-            const tableBody = document.getElementById("table-body");
-            const salesTable = document.getElementById("sales-table");
-            const loadingMessage = document.getElementById("loading-message");
-            const paginationControls = document.getElementById("pagination-controls");
+        const rowsPerPageSelect = document.getElementById('rows-per-page');
+        rowsPerPageSelect.addEventListener('change', (e) => {
+            ROWS_PER_PAGE = parseInt(e.target.value); 
+            currentPage = 1;
+            refreshTableDisplay();
+            saveTableState();
+        });
 
-            tableBody.innerHTML = ""; 
-
-            if (allSalesData.length === 0) {
-                showEmptyState("Không có dữ liệu để hiển thị.");
-                return;
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); 
+            if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+                    toggleMobileSidebar();
+                }
             }
-            
-            salesTable.style.display = ""; 
-            loadingMessage.style.display = "none";
-            paginationControls.style.display = "flex";
+        });
+    });
 
-            const start = (currentPage - 1) * ROWS_PER_PAGE;
-            const end = start + ROWS_PER_PAGE;
-            const paginatedData = allSalesData.slice(start, end);
-
-            paginatedData.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                columnConfig.forEach(col => {
-                    const td = document.createElement("td");
-                    if (col.isIndex) {
-                        td.textContent = start + index + 1;
-                    } else {
-                        td.textContent = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
-                    }
-                    tr.appendChild(td);
+    // --- Table Rendering, Filtering, Sorting ---
+    function refreshTableDisplay() {
+        applyFiltersAndSorting();
+        renderTableHeader(); 
+        renderTable();
+        updatePaginationControls();
+    }
+    
+    function applyFiltersAndSorting() {
+        let data = [...allSalesData];
+        if (currentFilterQuery) {
+            const query = currentFilterQuery.toLowerCase().trim();
+            data = data.filter(row => {
+                return columnConfig.some(col => {
+                    if (col.isIndex || col.dataKey === null || !row.hasOwnProperty(col.dataKey)) return false;
+                    const cellValue = String(row[col.dataKey] || '').toLowerCase();
+                    return cellValue.includes(query);
                 });
-                tableBody.appendChild(tr);
             });
-            updatePaginationControls();
         }
 
-        function showEmptyState(message) {
-            const loadingMessage = document.getElementById("loading-message");
-            loadingMessage.innerHTML = `<i class="fas fa-folder-open"></i> ${message}`;
-            loadingMessage.style.display = "block";
-            document.getElementById("sales-table").style.display = "none";
-            document.getElementById("pagination-controls").style.display = "none";
+        if (currentSortKey !== null) {
+            const sortColConfig = columnConfig.find(c => c.dataKey === currentSortKey);
+            if (sortColConfig && sortColConfig.sortable) {
+                data.sort((a, b) => {
+                    let valA = a[currentSortKey];
+                    let valB = b[currentSortKey];
+                    let numA = parseFloat(valA);
+                    let numB = parseFloat(valB);
+
+                    if (!isNaN(numA) && !isNaN(numB) && String(valA).length === String(numA).length && String(valB).length === String(numB).length) {
+                        valA = numA; valB = numB;
+                    } else {
+                        valA = String(valA || '').toLowerCase();
+                        valB = String(valB || '').toLowerCase();
+                    }
+                    if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
         }
+        displayedData = data;
+    }
 
-        function updatePaginationControls() {
-            const pageInfo = document.getElementById("page-info");
-            const prevBtn = document.getElementById("prev-btn");
-            const nextBtn = document.getElementById("next-btn");
-            const totalPages = Math.ceil(allSalesData.length / ROWS_PER_PAGE) || 1;
+    function renderTableHeader() {
+        const headerRow = document.getElementById("table-header-row");
+        headerRow.innerHTML = ""; 
+        columnConfig.forEach(col => {
+            const th = document.createElement("th");
+            th.textContent = col.header;
+            th.classList.add(col.cssClass); 
 
-            pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
+            if (col.sortable) {
+                th.classList.add("sortable");
+                th.setAttribute("aria-sort", "none");
+                const sortIcon = document.createElement("span");
+                sortIcon.classList.add("sort-icon");
+                if (col.dataKey === currentSortKey) {
+                    sortIcon.innerHTML = currentSortDirection === 'asc' ? '<i class="fas fa-arrow-up"></i>' : '<i class="fas fa-arrow-down"></i>';
+                    th.setAttribute("aria-sort", currentSortDirection === 'asc' ? "ascending" : "descending");
+                } else {
+                     sortIcon.innerHTML = '<i class="fas fa-sort" style="opacity:0.3;"></i>';
+                }
+                th.appendChild(sortIcon);
+                th.addEventListener('click', () => handleSort(col.dataKey));
+            }
+            headerRow.appendChild(th);
+        });
+    }
+    
+    function handleSort(key) {
+        if (currentSortKey === key) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortKey = key;
+            currentSortDirection = 'asc';
         }
+        currentPage = 1; 
+        refreshTableDisplay();
+        saveTableState();
+    }
 
-        function changePage(delta) {
-            const totalPages = Math.ceil(allSalesData.length / ROWS_PER_PAGE) || 1;
-            currentPage += delta;
-            if (currentPage < 1) currentPage = 1;
-            if (currentPage > totalPages) currentPage = totalPages;
-            renderTable();
-            document.getElementById('table-wrapper').scrollTop = 0;
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function highlightText(text, query) {
+        if (!query || typeof text !== 'string') {
+            return document.createTextNode(text);
+        }
+        const fragment = document.createDocumentFragment();
+        const escapedQuery = escapeRegExp(query);
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+            const span = document.createElement('span');
+            span.className = 'highlight';
+            span.textContent = match[0];
+            fragment.appendChild(span);
+            lastIndex = regex.lastIndex;
+        }
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+        return fragment;
+    }
+
+    function renderTable() {
+        const tableBody = document.getElementById("table-body");
+        const salesTable = document.getElementById("sales-table");
+        const loadingMessage = document.getElementById("loading-message");
+        const paginationContainer = document.getElementById("pagination-container");
+        tableBody.innerHTML = ""; 
+
+        const visibleColumnCount = columnConfig.length; 
+
+        if (displayedData.length === 0) {
+            if (currentFilterQuery && allSalesData.length > 0) {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.colSpan = visibleColumnCount;
+                td.innerHTML = `<i class="fas fa-search" style="margin-right: 8px;"></i> Không tìm thấy kết quả nào cho "<strong>${currentFilterQuery}</strong>".`;
+                td.style.textAlign = "center";
+                td.style.padding = "20px";
+                tr.appendChild(td);
+                tableBody.appendChild(tr);
+                 salesTable.style.display = ""; 
+            } else if (allSalesData.length === 0 && !currentFilterQuery) {
+                // Initial load, no data - handled by showEmptyState
+            } else {
+                showEmptyState("Không có dữ liệu để hiển thị.", "info");
+            }
+            if (!(currentFilterQuery && allSalesData.length > 0 && displayedData.length === 0)) {
+                 salesTable.style.display = "none";
+            }
+            paginationContainer.style.display = "none";
+            return;
         }
         
-        function goBack() {
-            window.location.href = "xedaban.html"; 
-        }
+        salesTable.style.display = ""; 
+        loadingMessage.style.display = "none";
+        paginationContainer.style.display = "flex";
 
-        function exportToExcel() {
-            if (allSalesData.length === 0) {
-                showToast("Không có dữ liệu để xuất.", 'warning');
-                return;
-            }
-            const dataToExport = allSalesData.map((row, index) => {
-                return columnConfig.map(col => {
-                    if (col.isIndex) return index + 1; 
-                    return (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
-                });
-            });
-            const excelData = [ columnConfig.map(col => col.header), ...dataToExport ];
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            const colWidths = columnConfig.map((colConf) => ({
-                wch: Math.max(
-                    colConf.header.length, 
-                    ...allSalesData.map(row => { 
-                        let val = '';
-                        if (colConf.isIndex) val = String(allSalesData.indexOf(row) + 1);
-                        else val = (row && row[colConf.key] !== undefined && row[colConf.key] !== null) ? String(row[colConf.key]) : '';
-                        return val.length;
-                    })
-                ) + 3 
-            }));
-            ws['!cols'] = colWidths;
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "TongHopDonHang");
-            XLSX.writeFile(wb, `TongHopDonHang_12Thang_${new Date().toISOString().slice(0,10)}.xlsx`);
-            showToast("Đã xuất file Excel!", 'success');
-        }
+        const actualRowsPerPage = ROWS_PER_PAGE === 0 ? displayedData.length : ROWS_PER_PAGE;
+        const start = (currentPage - 1) * actualRowsPerPage;
+        const end = start + actualRowsPerPage;
+        const paginatedData = displayedData.slice(start, end);
 
-        function printPage() {
-            if (allSalesData.length === 0) {
-                showToast("Không có dữ liệu để in.", 'warning');
-                return;
-            }
-            let fullTableHtml = '<table><thead><tr>';
-            columnConfig.forEach(col => { fullTableHtml += `<th>${col.header}</th>`; });
-            fullTableHtml += '</tr></thead><tbody>';
-            allSalesData.forEach((row, index) => {
-                fullTableHtml += '<tr>';
-                columnConfig.forEach(col => {
-                    let cellData = '';
-                    if (col.isIndex) cellData = index + 1;
-                    else cellData = (row && row[col.key] !== undefined && row[col.key] !== null) ? row[col.key] : '';
-                    fullTableHtml += `<td>${cellData}</td>`;
-                });
-                fullTableHtml += '</tr>';
-            });
-            fullTableHtml += '</tbody></table>';
-            const printWindow = window.open('', '_blank');
-            const now = new Date().toLocaleString('vi-VN');
-            printWindow.document.write(`
-                <html><head><title>In Tổng Hợp Đơn Hàng - VinFast Thuận An</title>
-                <style>
-                    body { font-family: 'Roboto', sans-serif; margin: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                    h1 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.5em; margin-bottom: 10px;}
-                    p { text-align: center; font-size: 0.85em; margin-bottom: 10px;}
-                    table { border-collapse: collapse; width: 100%; font-size: 8.5pt; } 
-                    th, td { border: 1px solid #ccc !important; padding: 4px 6px; text-align: left; word-wrap: break-word; } 
-                    th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; position: sticky; top: 0; z-index: 1;}
-                    @page { margin: 0.5in; size: a4 landscape; } 
-                    @media print {
-                        html, body { width: 100%; height: auto; overflow: visible !important; }
-                        header, footer, .header-controls, .table-actions, .pagination, .toast-container, .sidebar, #scrollToTopBtn, .mobile-menu-btn, .toggle-btn-sidebar { display: none !important; }
-                        .main-content-wrapper, .main-content, .table-card { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; overflow: visible !important;}
-                        #table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
+        paginatedData.forEach((row, index) => {
+            const tr = document.createElement("tr");
+            columnConfig.forEach(col => {
+                const td = document.createElement("td");
+                td.classList.add(col.cssClass);
+
+                if (col.isIndex) {
+                    td.textContent = start + index + 1;
+                } else {
+                    const cellData = (row && row[col.dataKey] !== undefined && row[col.dataKey] !== null) ? String(row[col.dataKey]) : '';
+                    if (currentFilterQuery && !col.isIndex) {
+                        td.appendChild(highlightText(cellData, currentFilterQuery));
+                    } else {
+                        td.textContent = cellData;
                     }
-                </style></head><body>
-                    <h1>BÁO CÁO TỔNG HỢP ĐƠN HÀNG 12 THÁNG</h1>
-                    <p>VinFast Thuận An | In lúc: ${now}</p>
-                    ${fullTableHtml} 
-                    <script> setTimeout(() => { window.print(); window.close(); }, 300); <\/script>
-                </body></html>`);
-            printWindow.document.close();
-        }
+                }
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+    }
 
-        function showToast(message, type = 'info', duration = 3000) { // Adapted from yeucaughepxe
-            const toastContainer = document.getElementById("toast-container");
-            if (!toastContainer) return;
-            const toast = document.createElement('div');
-            toast.classList.add('toast', type);
-            let iconClass = 'fas fa-info-circle';
-            if (type === 'success') iconClass = 'fas fa-check-circle';
-            else if (type === 'error') iconClass = 'fas fa-times-circle';
-            else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
-            toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
-            toastContainer.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => { if (toast.parentNode === toastContainer) toastContainer.removeChild(toast); }, 500);
-            }, duration);
-        }
+    function resetView() {
+        resetTableStateToDefaults();
+        refreshTableDisplay();
+        showToast("Đã thiết lập lại bảng về mặc định.", "info");
+        saveTableState();
+    }
 
-        function adjustToastPositionForStickyFooter() {
-            const footer = document.querySelector('footer');
-            const toastContainer = document.getElementById('toast-container');
-            if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
-                const footerHeight = footer.offsetHeight;
-                let bottomOffset = footerHeight + 10; 
-                if (window.innerWidth <= 480) bottomOffset = footerHeight + 5; 
-                toastContainer.style.bottom = `${bottomOffset}px`;
-            } else if (toastContainer) { 
-                toastContainer.style.bottom = (window.innerWidth <= 480) ? '5px' : '10px';
-            }
+    function showEmptyState(message, iconType = "info") {
+        const loadingMessage = document.getElementById("loading-message");
+        let iconClass = "fas fa-folder-open"; 
+        if (iconType === "info") iconClass = "fas fa-info-circle";
+        else if (iconType === "warning") iconClass = "fas fa-exclamation-triangle";
+        else if (iconType === "error") iconClass = "fas fa-times-circle";
+
+        loadingMessage.innerHTML = `<i class="${iconClass}"></i> <p>${message}</p>`;
+        loadingMessage.style.display = "flex";
+        document.getElementById("sales-table").style.display = "none";
+        document.getElementById("pagination-container").style.display = "none";
+    }
+
+    function updatePaginationControls() {
+        const pageInfo = document.getElementById("page-info");
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const paginationControls = document.getElementById("pagination-controls");
+
+        if (ROWS_PER_PAGE === 0) { 
+            paginationControls.style.display = "none";
+            return;
         }
+        paginationControls.style.display = "flex";
+
+        const totalPages = Math.ceil(displayedData.length / ROWS_PER_PAGE) || 1;
+        pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+    }
+
+    function changePage(delta) {
+        const actualRowsPerPage = ROWS_PER_PAGE === 0 ? displayedData.length : ROWS_PER_PAGE;
+        if (actualRowsPerPage === 0 && displayedData.length > 0) return;
+
+        const totalPages = ROWS_PER_PAGE === 0 ? 1 : (Math.ceil(displayedData.length / ROWS_PER_PAGE) || 1);
+        const newPage = currentPage + delta;
+
+        if (newPage >= 1 && newPage <= totalPages) {
+            currentPage = newPage;
+            renderTable(); 
+            updatePaginationControls();
+            document.getElementById('table-wrapper').scrollTop = 0;
+            saveTableState();
+        }
+    }
+    
+    // --- Navigation & Actions ---
+    function goBack() { window.location.href = "./xedaban.html"; } // Ensure relative path for navigation
+
+    function exportToExcel() {
+        if (displayedData.length === 0) {
+            showToast("Không có dữ liệu để xuất.", 'warning');
+            return;
+        }
+        const dataToExport = displayedData.map((row, index) => {
+            return columnConfig.map(col => { 
+                if (col.isIndex) return index + 1; 
+                return (row && row[col.dataKey] !== undefined && row[col.dataKey] !== null) ? row[col.dataKey] : '';
+            });
+        });
+        const excelHeaders = columnConfig.map(col => col.header);
+        const excelData = [ excelHeaders, ...dataToExport ];
+        
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        const colWidths = columnConfig.map((colConf) => ({
+            wch: Math.max(
+                colConf.header.length, 
+                ...displayedData.map(row => { 
+                    let val = '';
+                    if (colConf.isIndex) val = String(displayedData.indexOf(row) + 1);
+                    else val = (row && row[colConf.dataKey] !== undefined && row[colConf.dataKey] !== null) ? String(row[colConf.dataKey]) : '';
+                    return val.length;
+                })
+            ) + (colConf.header === "STT" ? 1 : 5) 
+        }));
+        ws['!cols'] = colWidths;
+        
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "TongHopDonHang");
+        XLSX.writeFile(wb, `TongHopDonHang_12Thang_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast("Đã xuất file Excel!", 'success');
+    }
+
+    function printPage() {
+        if (displayedData.length === 0) {
+            showToast("Không có dữ liệu để in.", 'warning');
+            return;
+        }
+        let fullTableHtml = '<table><thead><tr>';
+        columnConfig.forEach(col => { fullTableHtml += `<th>${col.header}</th>`; }); 
+        fullTableHtml += '</tr></thead><tbody>';
+        
+        const actualRowsPerPage = ROWS_PER_PAGE === 0 ? displayedData.length : ROWS_PER_PAGE;
+        const start = (currentPage - 1) * actualRowsPerPage;
+        const dataToPrint = ROWS_PER_PAGE === 0 ? displayedData : displayedData.slice(start, start + actualRowsPerPage);
+
+        dataToPrint.forEach((row, index) => {
+            fullTableHtml += '<tr>';
+            columnConfig.forEach(col => {
+                let cellData = '';
+                if (col.isIndex) cellData = (ROWS_PER_PAGE === 0 ? index : start) + index + 1;
+                else cellData = (row && row[col.dataKey] !== undefined && row[col.dataKey] !== null) ? row[col.dataKey] : '';
+                fullTableHtml += `<td>${cellData}</td>`;
+            });
+            fullTableHtml += '</tr>';
+        });
+        fullTableHtml += '</tbody></table>';
+        
+        const printWindow = window.open('', '_blank', 'height=800,width=1200');
+        const now = new Date().toLocaleString('vi-VN');
+        printWindow.document.write(`
+            <html><head><title>In Tổng Hợp Đơn Hàng - VinFast Thuận An</title>
+            <style>
+                body { font-family: 'Roboto', sans-serif; margin: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                h1 { text-align: center; color: #003087; font-family: 'Montserrat', sans-serif; font-size: 1.5em; margin-bottom: 10px;}
+                p { text-align: center; font-size: 0.85em; margin-bottom: 15px;}
+                table { border-collapse: collapse; width: 100%; font-size: 8pt; } 
+                th, td { border: 1px solid #ccc !important; padding: 4px 6px; text-align: left; word-wrap: break-word; } 
+                th { background-color: #003087 !important; color: #FFFFFF !important; font-weight: bold; }
+                @page { margin: 0.5in; size: A4 landscape; } 
+                @media print {
+                    html, body { width: 100%; height: auto; overflow: visible !important; }
+                    .navbar, .sidebar, .table-top-controls, .pagination-controls-container, .toast-container, #scrollToTopBtn, footer, .toggle-btn-sidebar, .mobile-menu-btn { display: none !important; }
+                    .main-content-wrapper, .main-content, .table-card { 
+                        margin: 0 !important; padding: 0 !important; border: none !important; 
+                        box-shadow: none !important; overflow: visible !important; width: 100% !important; max-width: 100% !important;
+                    }
+                    #table-wrapper { max-height: none !important; overflow: visible !important; border: none !important; }
+                    table { width: 100% !important; }
+                }
+            </style></head><body>
+                <h1>BÁO CÁO TỔNG HỢP ĐƠN HÀNG 12 THÁNG</h1>
+                <p>VinFast Thuận An | In lúc: ${now}</p>
+                ${currentFilterQuery ? `<p><em>Đang áp dụng bộ lọc: "${currentFilterQuery}"</em></p>` : ''}
+                ${currentSortKey ? `<p><em>Sắp xếp theo: ${columnConfig.find(c => c.dataKey === currentSortKey).header} (${currentSortDirection === 'asc' ? 'Tăng dần' : 'Giảm dần'})</em></p>` : ''}
+                ${fullTableHtml} 
+                <script> 
+                    setTimeout(() => { 
+                        window.print(); 
+                        // if (!(navigator.userAgent.indexOf("Edge") > -1 || navigator.userAgent.indexOf("Trident/") > -1)) {
+                        //     window.close(); 
+                        // }
+                    }, 500); 
+                <\/script>
+            </body></html>`);
+        printWindow.document.close();
+    }
+
+    // --- Toast Notifications ---
+    function showToast(message, type = 'info', duration = 3000) {
+        const toastContainer = document.getElementById("toast-container");
+        if (!toastContainer) return;
+        const toast = document.createElement('div');
+        toast.classList.add('toast', type);
+        let iconClass = 'fas fa-info-circle';
+        if (type === 'success') iconClass = 'fas fa-check-circle';
+        else if (type === 'error') iconClass = 'fas fa-times-circle';
+        else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
+        toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
+        toastContainer.appendChild(toast);
+        void toast.offsetWidth; 
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => {
+                if (toast.parentNode === toastContainer) toastContainer.removeChild(toast);
+            }, { once: true });
+        }, duration);
+    }
+    function adjustToastPositionForStickyFooter() {
+        const footer = document.querySelector('footer');
+        const toastContainer = document.getElementById('toast-container');
+        if (footer && toastContainer && getComputedStyle(footer).position === 'sticky') {
+            const footerHeight = footer.offsetHeight;
+            let bottomOffset = footerHeight + 10; 
+            if (window.innerWidth <= 480) bottomOffset = footerHeight + 5; 
+            toastContainer.style.bottom = `${bottomOffset}px`;
+        } else if (toastContainer) { 
+            toastContainer.style.bottom = (window.innerWidth <= 480) ? '5px' : '10px';
+        }
+    }
     </script>
 </body>
 </html>
