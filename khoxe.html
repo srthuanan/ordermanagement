@@ -223,11 +223,11 @@
 
         /* Sidebar (Sao chép từ index.html và điều chỉnh) */
         .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 200px; /* Hoặc chiều rộng thực tế */
-    height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px; /* Hoặc chiều rộng thực tế */
+            height: 100vh;
             background: var(--primary-color-darker);
             padding: 15px;
             padding-top: 60px; /* Khoảng cách với header */
@@ -1849,12 +1849,42 @@
                     row["Trạng thái"] || "",
                     row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN') : ""
                 ]);
+
+                // Sắp xếp tableData theo "Ngày nhập" giảm dần (mới nhất lên đầu)
+                tableData.sort((a, b) => {
+                    const dateStrA = a[6]; // "Ngày nhập" for row a
+                    const dateStrB = b[6]; // "Ngày nhập" for row b
+
+                    // Helper to parse 'dd/mm/yyyy' to Date object
+                    const parseDate = (str) => {
+                        if (!str) return null; // Handle empty or null dates
+                        const parts = str.split('/');
+                        if (parts.length === 3) {
+                            // new Date(year, monthIndex, day)
+                            return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                        }
+                        return null; // Invalid format
+                    };
+
+                    const dateA = parseDate(dateStrA);
+                    const dateB = parseDate(dateStrB);
+
+                    // Handle cases where dates might be null or invalid
+                    if (dateA === null && dateB === null) return 0;
+                    if (dateA === null) return 1; // Put nulls/invalids at the end if sorting ascending (older first for nulls)
+                                                // For descending (newest first), nulls should also be at the end.
+                    if (dateB === null) return -1;
+
+                    return dateB - dateA; // For descending order (newest first)
+                });
+
                 sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                filteredData = [...tableData];
+                filteredData = [...tableData]; // Initialize filteredData after sorting
+                
                 renderTable();
                 populateFilters();
-                showNewUnpairedCarSuggestions();
-                showNotification("Dữ liệu đã được tải!", "success", 2000);
+                showNewUnpairedCarSuggestions(); // This function has its own sorting, which is fine.
+                showNotification("Dữ liệu đã được tải và sắp xếp!", "success", 2000);
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);
                 const tableBody = document.getElementById("table-body");
@@ -1906,9 +1936,6 @@
                              cellContent = `<span class="value-mobile">${cellContent}</span>`;
                         }
                         
-                        // Điều chỉnh để không ẩn cột "Ngày nhập" trên mobile nữa nếu cần
-                        // Hiện tại, logic ẩn cột "Ngày nhập" trên mobile vẫn được giữ lại
-                        // Nếu muốn hiển thị, bỏ điều kiện isMobile
                         if (!(isMobile && label === "Ngày nhập" && document.getElementById('th-ngay-nhap')?.style.display === 'none')) {
                              cellHtml += `<td data-label="${label}">${cellContent}</td>`;
                         }
@@ -1965,7 +1992,6 @@
             const headers = ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số VIN", "Trạng thái", "Ngày nhập"];
             let html = "";
             headers.forEach((header, i) => {
-                 // Điều chỉnh để không ẩn cột "Ngày nhập" trên mobile nữa nếu cần
                 if (window.innerWidth <= 768 && header === "Ngày nhập" && document.getElementById('th-ngay-nhap')?.style.display === 'none') return;
 
                 let value = row[i] || "N/A";
@@ -2049,8 +2075,6 @@
             if (confirm("Bạn có muốn xuất danh sách này sang Excel không?")) {
                 const headers = ["SỐ TT", "DÒNG XE", "PHIÊN BẢN", "NGOẠI THẤT", "NỘI THẤT", "SỐ VIN", "TRẠNG THÁI", "NGÀY NHẬP"];
                 const isMobile = window.innerWidth <= 768;
-                // Luôn bao gồm tất cả các cột khi xuất Excel, không phụ thuộc vào mobile view nữa
-                // const actualHeaders = isMobile ? headers.slice(0, -1) : headers;
                 const actualHeaders = headers;
 
 
@@ -2062,7 +2086,7 @@
                     rowData["NỘI THẤT"] = row[3] || "";
                     rowData["SỐ VIN"] = row[4] || "";
                     rowData["TRẠNG THÁI"] = row[5] || "";
-                    rowData["NGÀY NHẬP"] = row[6] || ""; // Luôn bao gồm ngày nhập
+                    rowData["NGÀY NHẬP"] = row[6] || ""; 
                     return rowData;
                 });
 
@@ -2082,13 +2106,13 @@
                         <col style="width: 40px;"> <col style="width: 100px;"> <col style="width: 100px;">
                         <col style="width: 180px;"> <col style="width: 80px;"> <col style="width: 120px;">
                         <col style="width: 80px;">
-                        <col style="width: 80px;"> {/* Luôn có cột Ngày Nhập */}
+                        <col style="width: 80px;"> 
                     </colgroup>
                     <thead>
                         <tr>
                             <th>SỐ TT</th> <th>DÒNG XE</th> <th>PHIÊN BẢN</th> <th>NGOẠI THẤT</th>
                             <th>NỘI THẤT</th> <th>SỐ VIN</th> <th>TRẠNG THÁI</th>
-                            <th>NGÀY NHẬP</th> {/* Luôn có cột Ngày Nhập */}
+                            <th>NGÀY NHẬP</th> 
                         </tr>
                     </thead>
                     <tbody>`;
@@ -2102,7 +2126,7 @@
                         <td style="${exteriorColorStyle}">${exteriorColorValue}</td>
                         <td>${row[3]}</td> <td class="highlight">${row[4]}</td>
                         <td>${statusText}</td>
-                        <td>${row[6]}</td> {/* Luôn có cột Ngày Nhập */}
+                        <td>${row[6]}</td> 
                     </tr>`;
             });
             tableContent += `</tbody></table>`;
@@ -2190,7 +2214,6 @@
 
             function checkAndAdjustLayout() {
                 const isMobile = window.innerWidth <= 768;
-                // Luôn hiển thị cột Ngày nhập, không ẩn trên mobile nữa
                 if (colNgayNhap) colNgayNhap.style.display = '';
                 if (thNgayNhap) thNgayNhap.style.display = '';
                 renderTable();
@@ -2213,7 +2236,7 @@
                 const dateAdded = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
                 dateAdded.setHours(0,0,0,0);
                 return dateAdded >= sevenDaysAgo && (status.includes("sẵn sàng") || status.includes("chưa ghép"));
-            }).sort((a, b) => {
+            }).sort((a, b) => { // This sort is specifically for suggestions, independent of main table sort
                 const partsA = a[6].split('/'); const dateA = new Date(partsA[2], partsA[1]-1, partsA[0]);
                 const partsB = b[6].split('/'); const dateB = new Date(partsB[2], partsB[1]-1, partsB[0]);
                 return dateB - dateA;
