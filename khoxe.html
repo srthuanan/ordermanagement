@@ -1988,7 +1988,8 @@
             const detailPanelH3 = document.querySelector("#detail-panel h3");
             const requestBtn = document.getElementById('requestPairingBtn');
 
-            if (detailPanelH3) detailPanelH3.textContent = `Chi Tiết Xe - #${index}`;
+            // Thay đổi ở đây: Bỏ phần số thứ tự khỏi tiêu đề
+            if (detailPanelH3) detailPanelH3.textContent = 'Chi Tiết Xe'; 
             if (!detailBody) return;
 
             const headers = ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số VIN", "Trạng thái", "Ngày nhập"];
