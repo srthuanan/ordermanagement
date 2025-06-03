@@ -628,6 +628,13 @@ tbody tr:hover {
     cursor: pointer;
     transform: translateY(-2px);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    position: relative; /* Thêm dòng này */
+    z-index: 1;         /* Thêm dòng này */
+}
+/* Thêm quy tắc CSS mới này để sửa lỗi hiển thị */
+thead {
+  position: relative;
+  z-index: 12;
 }
 body.dark-mode tbody tr:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -1291,51 +1298,45 @@ body.dark-mode @keyframes flashErrorAnimation {
 }
 /* Thêm vào khối <style> của bạn */
 .cancel-btn {
-    background-color: white;
-    color: #ef4444; /* Tailwind red-500 */
-    border: 1px solid #ef4444;
-    padding: 6px 10px;
-    border-radius: 5px;
+    background-color: transparent; /* Nền trong suốt */
+    color: #ef4444; /* Giữ màu đỏ cho icon */
+    border: none; /* Bỏ viền */
     cursor: pointer;
-    font-size: 12px;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, color 0.2s ease; /* Hiệu ứng mới */
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    width: 32px;   /* Giữ kích thước để dễ nhấn */
     height: 32px;
     padding: 0;
-    border-radius: 50%;
+    border-radius: 0; /* Bỏ bo tròn */
 }
 .cancel-btn:hover {
-    background-color: #ef4444;
-    color: white;
-    border-color: #ef4444;
+    color: #c0392b; /* Chuyển màu đỏ đậm hơn khi di chuột */
+    transform: scale(1.2); /* Phóng to nhẹ icon */
 }
 .cancel-btn:disabled {
-    background-color: #cccccc;
+    background-color: transparent; /* Nền trong suốt */
     cursor: not-allowed;
-    color: #888888;
-    border-color: #cccccc;
+    color: #cccccc; /* Màu xám khi bị vô hiệu hóa */
+    border: none;
 }
 
 /* Chế độ tối cho nút hủy */
 body.dark-mode .cancel-btn {
-    background-color: var(--card-bg-dark); /* Sử dụng biến theme */
-    color: #f87171; /* Màu đỏ nhạt hơn cho chế độ tối */
-    border-color: #f87171;
+    background-color: transparent;
+    color: #f87171; /* Màu đỏ nhạt cho chế độ tối */
+    border: none;
 }
 body.dark-mode .cancel-btn:hover {
-    background-color: #f87171;
-    color: var(--text-dark); /* Sử dụng biến theme cho văn bản */
-    border-color: #f87171;
+    color: #ef4444; /* Chuyển màu đỏ đậm hơn khi di chuột */
+    transform: scale(1.2);
 }
 body.dark-mode .cancel-btn:disabled {
-    background-color: var(--border-color-dark); /* Sử dụng biến theme */
-    color: var(--text-light); /* Màu bị tắt cho chế độ tối */
-    border-color: var(--border-color-dark);
+    background-color: transparent;
+    color: var(--border-color-dark);
+    border: none;
 }
-
 .cancel-btn i.fas.fa-trash-alt {
     font-size: 14px;
 }
@@ -1481,6 +1482,7 @@ body.dark-mode .cancel-btn:disabled {
                             <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
                             <th onclick="sortTable('Nội thất')">Nội Thất</th>
                             <th onclick="sortTable('Kết quả')">Trạng Thái</th>
+<th onclick="sortTable('Hủy')">Hủy</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
@@ -2326,7 +2328,6 @@ function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
 
-    // Thêm tiêu đề cột "Hủy" nếu chưa có
     const tableHeader = document.getElementById('table-header').querySelector('tr');
     let cancelHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim() === 'Hủy');
     if (!cancelHeaderExists) {
@@ -2343,25 +2344,43 @@ function renderHistoryTable(dataToRender) {
     }
 
     tbody.innerHTML = dataToRender.map((row, i) => {
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; // [cite: 2]
-        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]); // [cite: 2]
-        const statusTextOriginal = row["Kết quả"] || "Chưa ghép"; // [cite: 2]
-        const statusClass = getStatusClass(statusTextOriginal); // [cite: 2]
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
+        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
+        const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
+        const statusClass = getStatusClass(statusTextOriginal);
 
-        // Logic xác định xem có thể hủy đơn hàng hay không
-        const currentUser = sessionStorage.getItem("currentConsultant"); // [cite: 2]
-        const isAdmin = currentUser === ADMIN_USER; // [cite: 2]
-        const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim(); // [cite: 2]
+        const currentUser = sessionStorage.getItem("currentConsultant");
+        const isAdmin = currentUser === ADMIN_USER;
+        // ----- DÒNG QUAN TRỌNG CẦN SỬA ĐÂY -----
+        const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
+        // ----- KẾT THÚC DÒNG QUAN TRỌNG -----
+        
+        const literalStringToCompare = "đã ghép"; // Chuỗi này đã ở dạng NFC
+
+        // Các console.log cơ bản để kiểm tra
+        // console.log(`--- Dòng ${i + 1} (Số ĐH: ${orderNumber}) ---`);
+        // console.log("Original Status:", `"${statusTextOriginal}"`);
+        // console.log("Normalized Status (NFC):", `"${normalizedStatusText}"`);
+        // console.log("So sánh trực tiếp với literal 'đã ghép' (NFC):", normalizedStatusText === literalStringToCompare);
+
+        const checkChuaGhep = normalizedStatusText.includes("chưa ghép");
+        const checkChuaTimThayVIN = normalizedStatusText.includes("chưa tìm thấy vin");
+        const checkChuaCo = normalizedStatusText.includes("chưa có");
+        const checkDaGhep = normalizedStatusText.includes(literalStringToCompare); // Bây giờ nên hoạt động đúng
+        const checkChoXuatHoaDon = normalizedStatusText.includes("chờ xuất hóa đơn");
+
+        // console.log("Điều kiện 'đã ghép':", checkDaGhep); // Có thể giữ lại để kiểm tra
 
         const canCancel = !isAdmin &&
                          row["Tên tư vấn bán hàng"] === currentUser &&
                          (
-                           normalizedStatusText.includes("chưa ghép") ||
-                           normalizedStatusText.includes("chưa tìm thấy vin") ||
-                           normalizedStatusText.includes("chưa có") ||
-                           normalizedStatusText.includes("đã ghép") || // Cho phép hủy nếu "đã ghép"
-                           normalizedStatusText.includes("chờ xuất hóa đơn") // Cho phép hủy nếu "chờ xuất hóa đơn"
+                           checkChuaGhep ||
+                           checkChuaTimThayVIN ||
+                           checkChuaCo ||
+                           checkDaGhep ||
+                           checkChoXuatHoaDon
                          );
+        
 
        const cancelButtonHtml = `
            <td data-label="Hủy">
@@ -2392,6 +2411,7 @@ function renderHistoryTable(dataToRender) {
    }).join("");
    document.getElementById("total-don-count").textContent = dataToRender.length;
 }
+
 function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
