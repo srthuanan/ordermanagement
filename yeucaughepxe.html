@@ -1289,6 +1289,77 @@ body.dark-mode @keyframes flashErrorAnimation {
 .flash-error {
     animation: flashErrorAnimation 1.5s ease-in-out;
 }
+/* Thêm vào khối <style> của bạn */
+.cancel-btn {
+    background-color: white;
+    color: #ef4444; /* Tailwind red-500 */
+    border: 1px solid #ef4444;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+}
+.cancel-btn:hover {
+    background-color: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+.cancel-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    color: #888888;
+    border-color: #cccccc;
+}
+
+/* Chế độ tối cho nút hủy */
+body.dark-mode .cancel-btn {
+    background-color: var(--card-bg-dark); /* Sử dụng biến theme */
+    color: #f87171; /* Màu đỏ nhạt hơn cho chế độ tối */
+    border-color: #f87171;
+}
+body.dark-mode .cancel-btn:hover {
+    background-color: #f87171;
+    color: var(--text-dark); /* Sử dụng biến theme cho văn bản */
+    border-color: #f87171;
+}
+body.dark-mode .cancel-btn:disabled {
+    background-color: var(--border-color-dark); /* Sử dụng biến theme */
+    color: var(--text-light); /* Màu bị tắt cho chế độ tối */
+    border-color: var(--border-color-dark);
+}
+
+.cancel-btn i.fas.fa-trash-alt {
+    font-size: 14px;
+}
+
+/* Kiểu riêng cho ô và nút hủy trên di động */
+@media (max-width: 767px) {
+    td[data-label="Hủy"] {
+        /* Mặc định cho di động trong YEUCAU.txt đã là display: flex; justify-content: space-between; align-items: baseline; */
+        /* Chúng ta muốn căn giữa nút nếu nó là nội dung duy nhất */
+    }
+     /* Để căn giữa nút trên di động, chúng ta đã thêm một div bên trong td với flex */
+    td[data-label="Hủy"] > div {
+        width: 100%; /* Cho div bên trong chiếm toàn bộ chiều rộng của phần nội dung */
+        justify-content: flex-end; /* Căn nút sang phải theo mặc định cho các ô dữ liệu trên di động */
+    }
+     /* Ghi đè để căn giữa nút hủy cụ thể */
+    td[data-label="Hủy"] > div.flex.items-center.justify-center {
+        justify-content: center !important; /* Căn giữa nút hủy */
+    }
+
+    .cancel-btn {
+        /* Đảm bảo kích thước nhất quán nếu cần, nhưng nó đã là 32x32 */
+    }
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1597,7 +1668,24 @@ body.dark-mode @keyframes flashErrorAnimation {
             </div>
         </div>
     </div>
-
+<div class="modal" id="cancel-confirm-modal">
+        <div class="modal-content warning-modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
+                <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
+                <p style="font-size: 15px; line-height: 1.6; margin-top: 10px;">
+                    Hành động này không thể hoàn tác.
+                </p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
+                <button class="modal-btn primary danger" id="confirm-cancel-button">Có, Hủy</button>
+            </div>
+        </div>
+    </div>
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
@@ -1612,7 +1700,8 @@ let globalHistoryData = [];
 let formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
-const apiURL = "https://script.google.com/macros/s/AKfycbw3dheYpWTz8YBS47bvmjlUTBQZCvBTnVzRh5hTFBkmBi6xYZVOTJ-dpGsyhu3PLBlOSw/exec";
+let currentOrderNumberToCancel = null;
+const apiURL = "https://script.google.com/macros/s/AKfycbx6OrbjtR9gAWdHwqnZwmk0uR_E87uXZkAHb_XVmW4qlL8WUJT8l5_g1jplgnaNXQ3NLQ/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -2236,32 +2325,73 @@ function renderSummary(data) {
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     if (!tbody) return;
+
+    // Thêm tiêu đề cột "Hủy" nếu chưa có
+    const tableHeader = document.getElementById('table-header').querySelector('tr');
+    let cancelHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim() === 'Hủy');
+    if (!cancelHeaderExists) {
+        const cancelTh = document.createElement('th');
+        cancelTh.textContent = 'Hủy';
+        cancelTh.setAttribute('title', 'Hủy yêu cầu');
+        tableHeader.appendChild(cancelTh);
+    }
+
     if (!dataToRender || dataToRender.length === 0) {
         setTablePlaceholder("table-body", "Không có dữ liệu phù hợp.", "fas fa-folder-open");
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
-    tbody.innerHTML = dataToRender.map((row, i) => {
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
-        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
-        const statusText = row["Kết quả"] || "Chưa có";
-        const statusClass = getStatusClass(statusText);
-        return `
-        <tr onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')" style="cursor: pointer;">
-            <td data-label="STT"><span>${i + 1}</span></td>
-            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
-            <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
-            <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
-            <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
-            <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
-            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
-            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
-            <td data-label="Trạng Thái" title="${statusText}"><span class="status-badge ${statusClass}">${statusText}</span></td>
-        </tr>`;
-    }).join("");
-    document.getElementById("total-don-count").textContent = dataToRender.length;
-}
 
+    tbody.innerHTML = dataToRender.map((row, i) => {
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`; // [cite: 2]
+        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]); // [cite: 2]
+        const statusTextOriginal = row["Kết quả"] || "Chưa ghép"; // [cite: 2]
+        const statusClass = getStatusClass(statusTextOriginal); // [cite: 2]
+
+        // Logic xác định xem có thể hủy đơn hàng hay không
+        const currentUser = sessionStorage.getItem("currentConsultant"); // [cite: 2]
+        const isAdmin = currentUser === ADMIN_USER; // [cite: 2]
+        const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim(); // [cite: 2]
+
+        const canCancel = !isAdmin &&
+                         row["Tên tư vấn bán hàng"] === currentUser &&
+                         (
+                           normalizedStatusText.includes("chưa ghép") ||
+                           normalizedStatusText.includes("chưa tìm thấy vin") ||
+                           normalizedStatusText.includes("chưa có") ||
+                           normalizedStatusText.includes("đã ghép") || // Cho phép hủy nếu "đã ghép"
+                           normalizedStatusText.includes("chờ xuất hóa đơn") // Cho phép hủy nếu "chờ xuất hóa đơn"
+                         );
+
+       const cancelButtonHtml = `
+           <td data-label="Hủy">
+               <div class="flex items-center justify-center">
+                   ${canCancel ?
+                       `<button class="cancel-btn" onclick="confirmCancelRequest(event, '${orderNumber}')" data-tooltip="Hủy yêu cầu">
+                           <i class="fas fa-trash-alt"></i>
+                       </button>`
+                       : ''
+                   }
+               </div>
+           </td>
+       `;
+
+       return `
+       <tr style="cursor: pointer;">
+           <td data-label="STT" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${i + 1}</span></td>
+           <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
+           <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
+           <td data-label="Số Đơn Hàng" title="${orderNumber}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${orderNumber}</span></td>
+           <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Dòng xe"] || "N/A"}</span></td>
+           <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Phiên bản"] || "N/A"}</span></td>
+           <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
+           <td data-label="Nội Thất" title="${row["Nội thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Nội thất"] || "N/A"}</span></td>
+           <td data-label="Trạng Thái" title="${statusTextOriginal}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
+           ${cancelButtonHtml}
+       </tr>`;
+   }).join("");
+   document.getElementById("total-don-count").textContent = dataToRender.length;
+}
 function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
@@ -3859,6 +3989,74 @@ function processAndValidateBulkTable() {
                 if (firstErrorRow.closest('tr')) firstErrorRow.closest('tr').classList.remove('flash-error');
             }, 1500);
         }
+    }
+}
+function confirmCancelRequest(event, orderNumber) {
+    event.stopPropagation(); // Quan trọng: Ngăn chặn sự kiện click chính của dòng
+    currentOrderNumberToCancel = orderNumber;
+    const cancelModal = document.getElementById('cancel-confirm-modal');
+    const orderNumberDisplay = document.getElementById('cancel-order-number-display');
+    const confirmButton = document.getElementById('confirm-cancel-button');
+
+    if (orderNumberDisplay) {
+        orderNumberDisplay.textContent = orderNumber;
+    }
+
+    if (confirmButton) {
+        // Sao chép và thay thế nút để loại bỏ các trình lắng nghe sự kiện cũ
+        const newConfirmButton = confirmButton.cloneNode(true);
+        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+        newConfirmButton.addEventListener('click', handleConfirmCancelClick);
+    }
+
+    if (cancelModal) {
+        cancelModal.style.position = 'fixed';
+        cancelModal.style.top = '0';
+        cancelModal.style.left = '0';
+        cancelModal.style.width = '100%';
+        cancelModal.style.height = '100%';
+        cancelModal.style.borderRadius = '';
+        cancelModal.classList.add("active");
+        if (typeof adjustModalScroll === 'function') adjustModalScroll(cancelModal);
+    }
+}
+
+async function handleConfirmCancelClick() {
+    if (!currentOrderNumberToCancel) return;
+
+    closeModal('cancel-confirm-modal');
+    showOldLoadingModal("Đang Hủy Yêu Cầu...", "Vui lòng chờ trong giây lát.");
+
+    const payload = new FormData();
+    payload.append('action', 'cancelRequest'); // Hành động này cần được xử lý bởi backend của YEUCAU.txt
+    payload.append('orderNumber', currentOrderNumberToCancel);
+    payload.append('cancelledBy', sessionStorage.getItem("currentConsultant") || "Unknown");
+
+    try {
+        const response = await fetch(apiURL, { // apiURL là của YEUCAU.txt
+            method: 'POST',
+            body: payload
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Lỗi khi hủy yêu cầu: ${response.status} ${errorText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+            showNotification(`Đã hủy yêu cầu ${currentOrderNumberToCancel} thành công.`, 'success', 3000);
+            await fetchHistory(); // Làm mới bảng lịch sử trong YEUCAU.txt
+        } else {
+            showNotification(`Hủy yêu cầu ${currentOrderNumberToCancel} thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
+        }
+    } catch (error) {
+        console.error('Lỗi khi gửi yêu cầu hủy:', error);
+        showNotification(`Lỗi hệ thống khi hủy yêu cầu: ${error.message}`, 'error', 5000);
+    } finally {
+        closeModal('loading-modal');
+        currentOrderNumberToCancel = null;
     }
 }
 async function submitValidBulkTableOrders() {
