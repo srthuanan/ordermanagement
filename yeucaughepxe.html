@@ -589,7 +589,10 @@ body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
 }
 
 .table-wrapper {
-    max-height: calc(100vh - 280px); overflow: auto; border-radius: 8px;
+    max-height: calc(100vh - 280px); 
+    overflow-x: hidden; /* << ĐÃ THAY ĐỔI: Ẩn thanh cuộn ngang */
+    overflow-y: auto; /* << ĐÃ THAY ĐỔI: Giữ thanh cuộn dọc khi cần */
+    border-radius: 8px;
     background: var(--card-bg-light); box-shadow: var(--shadow-light-inner);
     border: 1px solid var(--border-color-light); transition: all var(--transition-speed) var(--transition-easing);
 }
@@ -609,7 +612,7 @@ th {
     color: #fff; font-weight: 600; position: sticky; top: 0; z-index: 10;
     text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;
     transition: background var(--transition-speed-fast) var(--transition-easing);
-    white-space: nowrap;
+    white-space: normal; /* << ĐÃ THAY ĐỔI */
 }
 th:hover { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
 body.dark-mode th { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); }
@@ -1340,7 +1343,87 @@ body.dark-mode .cancel-btn:disabled {
 .cancel-btn i.fas.fa-trash-alt {
     font-size: 14px;
 }
+.request-invoice-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 12px; /* Tăng kích thước font một chút */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    /* Hiệu ứng Gradient sang trọng */
+    background: linear-gradient(135deg, #1e90ff 0%, #0052d4 100%);
+    box-shadow: 0 3px 8px rgba(30, 144, 255, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Khoảng cách giữa icon và chữ */
+}
 
+.request-invoice-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(30, 144, 255, 0.5);
+    background: linear-gradient(135deg, #0052d4 0%, #1e90ff 100%);
+}
+
+.request-invoice-btn:disabled {
+    background: #a0a0a0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+/* --- CSS MỚI ĐỂ THU GỌN BẢNG LỊCH SỬ --- */
+.table-wrapper {
+    /* Thêm hiệu ứng chuyển động cho max-height */
+    transition: all var(--transition-speed) var(--transition-easing), max-height 0.4s ease-in-out;
+}
+/* --- CSS CHO LAYOUT ĐỘNG (ĐÃ SỬA LỖI) --- */
+@media (min-width: 901px) { /* Áp dụng cho màn hình desktop trở lên */
+
+    /* Thêm hiệu ứng chuyển động mượt mà cho cả 2 khối */
+    #form-section, #history-section, #bulk-entry-table-section, #detailed-stats-section {
+        transition: flex 0.4s ease-in-out, padding 0.4s ease-in-out, opacity 0.3s ease-in-out;
+    }
+
+    /* --- Bố cục khi tab "Yêu Cầu Ghép Xe" được chọn --- */
+    .main-container.form-active #form-section { /* SỬA LỖI: Chỉ định rõ #form-section */
+        flex: 4;
+        opacity: 1;
+        padding: 15px;
+        border: 1px solid var(--border-color-light);
+    }
+    .main-container.form-active #history-section {
+        flex: 6;
+        opacity: 1;
+    }
+
+    /* --- Bố cục khi các tab khác được chọn --- */
+    .main-container:not(.form-active) #form-section { /* SỬA LỖI: Chỉ định rõ #form-section để ẩn đi */
+        flex: 0;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        opacity: 0;
+        border: none;
+        width: 0;
+        height: 0;
+    }
+    
+    /* Rule này đảm bảo các section khác (Lịch sử, Hàng loạt, Thống kê) sẽ chiếm toàn bộ không gian khi được chọn */
+    .main-container:not(.form-active) > .grid-container {
+        flex: 1;
+    }
+
+    /* Ẩn bớt cột của bảng lịch sử khi form đang mở */
+    .main-container.form-active #history-table th:nth-child(1), /* Ẩn cột STT */
+    .main-container.form-active #history-table td:nth-child(1),
+    .main-container.form-active #history-table th:nth-child(8), /* Ẩn cột Nội thất */
+    .main-container.form-active #history-table td:nth-child(8),
+    .main-container.form-active #history-table th:nth-child(10), /* Ẩn cột Hành động */
+    .main-container.form-active #history-table td:nth-child(10) {
+        display: none;
+    }
+}
 /* Kiểu riêng cho ô và nút hủy trên di động */
 @media (max-width: 767px) {
     td[data-label="Hủy"] {
@@ -1688,6 +1771,26 @@ body.dark-mode .cancel-btn:disabled {
             </div>
         </div>
     </div>
+<div class="modal" id="invoice-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu</h2>
+                <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 15px; line-height: 1.6;">
+                    Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
+                </p>
+                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
+                    Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
+                </p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+                <button class="modal-btn primary" id="confirm-invoice-button">Có, Gửi Yêu Cầu</button>
+            </div>
+        </div>
+    </div>
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
@@ -1703,7 +1806,7 @@ let formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 let currentOrderNumberToCancel = null;
-const apiURL = "https://script.google.com/macros/s/AKfycbzOANj4ikmssN8wydAJTKFwdTKtp9XG5y8J7YmSOkxS7neNHkYes9jB7rWEyoa9bI1-sw/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbyxdys2RvBOY9A_fwwc00eAlNrMVXbyUe1jxIhH6z1DlAMmmpRzqcbx96EkBA0ouXto7g/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -1769,13 +1872,11 @@ function setActiveSidebarLink() {
         }
     });
 }
-
-// --- DOMContentLoaded (Cập nhật) ---
 document.addEventListener("DOMContentLoaded", function () {
     // Kiểm tra đăng nhập
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "index.html"; // Hoặc trang đăng nhập của bạn
-        return; // Ngăn không cho code phía dưới chạy nếu chưa đăng nhập
+        window.location.href = "index.html";
+        return;
     }
 
     // Điền tên tư vấn viên
@@ -1793,13 +1894,12 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             globalHistoryData = JSON.parse(cachedHistoryData);
             if (globalHistoryData && globalHistoryData.length > 0) {
-                // Chuẩn bị dữ liệu thống kê sớm nếu có cache, không cần render ngay
                 prepareDetailedStats(globalHistoryData);
-                checkPendingInvoicesWarning(); // Kiểm tra cảnh báo hóa đơn chờ
+                checkPendingInvoicesWarning();
             }
         } catch (e) {
             console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
-            sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY); // Xóa cache lỗi
+            sessionStorage.removeItem(GLOBAL_HISTORY_DATA_KEY);
             globalHistoryData = [];
         }
     }
@@ -1812,31 +1912,24 @@ document.addEventListener("DOMContentLoaded", function () {
     submitValidBulkTableOrdersBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
 
     if (bulkTableBody) {
-        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true); // Cho phép dán
+        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true);
     }
 
-    // Thiết lập tab mặc định là 'form' và hiển thị các section liên quan
-    const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
-    if (formTabLink) { // Đảm bảo link tồn tại trước khi gọi switchTab
-        switchTab('form', formTabLink);
+    // --- THAY ĐỔI CHÍNH: ĐẶT TAB "LỊCH SỬ GHÉP" LÀM MẶC ĐỊNH ---
+    const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
+    if (historyTabLink) {
+        switchTab('history', historyTabLink);
     } else {
-        console.error("Không tìm thấy link cho tab 'form'.");
-        // Nếu không tìm thấy, có thể mặc định hiển thị một section nào đó hoặc báo lỗi
-        const formSectionFallback = document.getElementById('form-section');
-        if (formSectionFallback) formSectionFallback.classList.remove('hidden');
-        fetchHistory(); // Vẫn tải lịch sử
+        // Fallback về tab form nếu không tìm thấy tab lịch sử
+        const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
+        if (formTabLink) {
+            switchTab('form', formTabLink);
+        }
     }
-
-    // Log trạng thái ẩn/hiện sau khi switchTab được gọi để debug
-    setTimeout(() => {
-        const formSection = document.getElementById('form-section');
-        const historySection = document.getElementById('history-section');
-        if (formSection) console.log('DOMContentLoaded - Form section hidden status:', formSection.classList.contains('hidden'));
-        if (historySection) console.log('DOMContentLoaded - History section hidden status:', historySection.classList.contains('hidden'));
-    }, 100); // Đợi một chút để đảm bảo DOM đã cập nhật
+    // --- KẾT THÚC THAY ĐỔI ---
 
     // Các thiết lập khác
-    setupScrollSync(); // Nếu bạn có hàm này
+    setupScrollSync();
     applyInitialTheme();
     initScrollToTopButton();
     setActiveSidebarLink();
@@ -1866,18 +1959,15 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-
-    // Thiết lập cho phần upload ảnh Ủy Nhiệm Chi (UNC) ở form đơn lẻ
+    
+    // Thiết lập cho phần upload ảnh UNC
     const chicWrapper = document.getElementById('chic-upload-wrapper');
     const chicInput = document.getElementById('chic_file_input');
     if (chicInput && chicWrapper) {
         chicInput.addEventListener('change', function(event) {
             const files = event.target.files;
-            if (files && files.length > 0) {
-                processChicFile(files[0]);
-            } else if (!chicInput.value) { // Nếu người dùng hủy chọn file
-                resetChicUploadUI();
-            }
+            if (files && files.length > 0) { processChicFile(files[0]); }
+            else if (!chicInput.value) { resetChicUploadUI(); }
         });
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false));
         ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false));
@@ -1885,27 +1975,23 @@ document.addEventListener("DOMContentLoaded", function () {
         chicWrapper.addEventListener('drop', function(event) {
             const files = event.dataTransfer?.files;
             if (files && files.length > 0) {
-                chicInput.files = files; // Gán file vào input
+                chicInput.files = files;
                 processChicFile(files[0]);
             }
         }, false);
     }
     const chicRemoveBtn = document.getElementById('chic-remove-btn');
     if (chicRemoveBtn) {
-        chicRemoveBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Ngăn sự kiện click lan ra wrapper
-            resetChicUploadUI();
-        });
+        chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); });
     }
-
-    // Đặt trường ngày cọc ở form đơn lẻ thành chỉ đọc và vô hiệu hóa click/focus
     const ngayCocInput = document.getElementById('ngay_coc');
     if (ngayCocInput) {
         ngayCocInput.setAttribute('readonly', true);
-        ngayCocInput.addEventListener('focus', function() { this.blur(); }); // Ngăn focus
-        ngayCocInput.addEventListener('click', function() { this.blur(); }); // Ngăn click mở date picker (dù đã readonly)
+        ngayCocInput.addEventListener('focus', function() { this.blur(); });
+        ngayCocInput.addEventListener('click', function() { this.blur(); });
     }
 });
+
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
@@ -2329,12 +2415,15 @@ function renderHistoryTable(dataToRender) {
     if (!tbody) return;
 
     const tableHeader = document.getElementById('table-header').querySelector('tr');
-    let cancelHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim() === 'Hủy');
-    if (!cancelHeaderExists) {
-        const cancelTh = document.createElement('th');
-        cancelTh.textContent = 'Hủy';
-        cancelTh.setAttribute('title', 'Hủy yêu cầu');
-        tableHeader.appendChild(cancelTh);
+    let actionHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim() === 'Hành động');
+    if (!actionHeaderExists) {
+        const cancelHeader = Array.from(tableHeader.cells).find(th => th.textContent.trim() === 'Hủy');
+        if (cancelHeader) cancelHeader.remove();
+
+        const actionTh = document.createElement('th');
+        actionTh.textContent = 'Hành động';
+        actionTh.setAttribute('title', 'Thao tác với đơn hàng');
+        tableHeader.appendChild(actionTh);
     }
 
     if (!dataToRender || dataToRender.length === 0) {
@@ -2348,54 +2437,39 @@ function renderHistoryTable(dataToRender) {
         const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
         const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
         const statusClass = getStatusClass(statusTextOriginal);
-
+        const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
-        // ----- DÒNG QUAN TRỌNG CẦN SỬA ĐÂY -----
-        const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
-        // ----- KẾT THÚC DÒNG QUAN TRỌNG -----
-        
-        const literalStringToCompare = "đã ghép"; // Chuỗi này đã ở dạng NFC
 
-        // Các console.log cơ bản để kiểm tra
-        // console.log(`--- Dòng ${i + 1} (Số ĐH: ${orderNumber}) ---`);
-        // console.log("Original Status:", `"${statusTextOriginal}"`);
-        // console.log("Normalized Status (NFC):", `"${normalizedStatusText}"`);
-        // console.log("So sánh trực tiếp với literal 'đã ghép' (NFC):", normalizedStatusText === literalStringToCompare);
+        let actionButtonsHtml = '';
 
-        const checkChuaGhep = normalizedStatusText.includes("chưa ghép");
-        const checkChuaTimThayVIN = normalizedStatusText.includes("chưa tìm thấy vin");
-        const checkChuaCo = normalizedStatusText.includes("chưa có");
-        const checkDaGhep = normalizedStatusText.includes(literalStringToCompare); // Bây giờ nên hoạt động đúng
-        const checkChoXuatHoaDon = normalizedStatusText.includes("chờ xuất hóa đơn");
+        // THAY ĐỔI 1: Chỉ hiển thị nút khi trạng thái là "Đã ghép"
+        const canRequestInvoice = !isAdmin && (normalizedStatusText === 'đã ghép') && row["VIN"];
+        // THAY ĐỔI 2: Không cho phép hủy khi đã vào luồng chờ xuất hóa đơn
+        const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép'].includes(normalizedStatusText);
 
-        // console.log("Điều kiện 'đã ghép':", checkDaGhep); // Có thể giữ lại để kiểm tra
+        if (canRequestInvoice) {
+            // --- THAY ĐỔI CHÍNH: SỬ DỤNG CLASS MỚI VÀ THAY ĐỔI TEXT ---
+            actionButtonsHtml += `
+                <button 
+                    class="request-invoice-btn" 
+                    onclick="requestInvoice(event, '${orderNumber}')" 
+                    data-tooltip="Gửi yêu cầu xuất hóa đơn cho đơn hàng này">
+                    <i class="fas fa-paper-plane"></i> Yêu Cầu Xuất Hóa Đơn
+                </button>`;
+        }
 
-        const canCancel = !isAdmin &&
-                         row["Tên tư vấn bán hàng"] === currentUser &&
-                         (
-                           checkChuaGhep ||
-                           checkChuaTimThayVIN ||
-                           checkChuaCo ||
-                           checkDaGhep ||
-                           checkChoXuatHoaDon
-                         );
-        
+        if (canCancel) {
+            actionButtonsHtml += `
+                <button 
+                    class="cancel-btn" 
+                    onclick="confirmCancelRequest(event, '${orderNumber}')" 
+                    data-tooltip="Hủy yêu cầu ghép xe">
+                    <i class="fas fa-trash-alt"></i>
+                </button>`;
+        }
 
-       const cancelButtonHtml = `
-           <td data-label="Hủy">
-               <div class="flex items-center justify-center">
-                   ${canCancel ?
-                       `<button class="cancel-btn" onclick="confirmCancelRequest(event, '${orderNumber}')" data-tooltip="Hủy yêu cầu">
-                           <i class="fas fa-trash-alt"></i>
-                       </button>`
-                       : ''
-                   }
-               </div>
-           </td>
-       `;
-
-       return `
+        return `
        <tr style="cursor: pointer;">
            <td data-label="STT" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${i + 1}</span></td>
            <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
@@ -2406,11 +2480,14 @@ function renderHistoryTable(dataToRender) {
            <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
            <td data-label="Nội Thất" title="${row["Nội thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Nội thất"] || "N/A"}</span></td>
            <td data-label="Trạng Thái" title="${statusTextOriginal}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
-           ${cancelButtonHtml}
+           <td data-label="Hành động">
+                <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
+           </td>
        </tr>`;
-   }).join("");
-   document.getElementById("total-don-count").textContent = dataToRender.length;
+    }).join("");
+    document.getElementById("total-don-count").textContent = dataToRender.length;
 }
+
 
 function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -2793,15 +2870,13 @@ function exportDetailedStatsToExcel() {
     showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
 }
 
-// --- Tab Switching (Cập nhật) ---
+// --- Tab Switching (Sửa lỗi layout + Logic mới) ---
 function switchTab(tabName, element) {
-    // Đặt lại trạng thái active cho các tab trên thanh điều hướng
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
     if (element) {
         element.classList.add("active");
     }
 
-    // Định nghĩa các section tương ứng với các tab
     const sections = {
         'form': document.getElementById('form-section'),
         'history': document.getElementById('history-section'),
@@ -2809,78 +2884,76 @@ function switchTab(tabName, element) {
         'bulk-entry-table': document.getElementById('bulk-entry-table-section')
     };
 
-    // Ẩn tất cả các section trước khi hiển thị section mong muốn
+    // Lấy container chính để điều khiển layout
+    const mainContainer = document.getElementById('main-container');
+
+    // Ẩn tất cả các section trước
     Object.values(sections).forEach(section => {
-        if (section) {
-            section.classList.add('hidden');
-        }
+        if (section) section.classList.add('hidden');
     });
 
-    // Hàm phụ trợ để hiển thị một section và kích hoạt lại animation
-    const showSection = (sectionElement) => {
-        if (sectionElement) {
-            sectionElement.classList.remove('hidden');
-            // Trigger reflow để animation có thể chạy lại nếu cần
-            sectionElement.style.animation = 'none';
-            sectionElement.offsetHeight; // eslint-disable-line no-unused-expressions
-            sectionElement.style.animation = '';
+    // Hàm phụ trợ để hiển thị section và kích hoạt lại animation
+    const showSection = (sectionEl) => {
+        if (sectionEl) {
+            sectionEl.classList.remove('hidden');
+            sectionEl.style.animation = 'none';
+            sectionEl.offsetHeight; // Trigger reflow
+            sectionEl.style.animation = '';
         }
     };
 
-    // Kiểm tra xem dữ liệu lịch sử đã được cache chưa
     const isDataCached = globalHistoryData && globalHistoryData.length > 0;
-
-    // Xử lý hiển thị dựa trên tabName
+    
+    // --- LOGIC MỚI: THAY ĐỔI LAYOUT DỰA TRÊN TAB ---
     if (tabName === 'form') {
-        showSection(sections.form); // Hiển thị form yêu cầu
-        // **HIỂN THỊ CẢ BẢNG LỊCH SỬ KHI Ở TAB FORM**
-        if (sections.history) {
-            sections.history.classList.remove('hidden'); // Bỏ ẩn bảng lịch sử
-            console.log('Tab "form" selected: History section hidden status:', sections.history.classList.contains('hidden')); // Log kiểm tra
-        }
-
-        // Tải hoặc lọc dữ liệu cho bảng lịch sử (vì nó sẽ hiển thị)
-        if (isDataCached) {
-            filterHistory(); // Hàm này sẽ gọi renderHistoryTable
-            renderSummary(globalHistoryData);
-        } else {
-            fetchHistory(); // Hàm này sẽ tải và sau đó render
-        }
-    } else if (tabName === 'history') {
+        if (mainContainer) mainContainer.classList.add('form-active'); // Thêm class để thay đổi flex
+        showSection(sections.form);
         showSection(sections.history);
+        
         if (isDataCached) {
             filterHistory();
             renderSummary(globalHistoryData);
         } else {
             fetchHistory();
         }
-    } else if (tabName === 'detailed-stats') {
-        showSection(sections['detailed-stats']);
-        if (isDataCached) {
-            if (detailedStatsData.length === 0 && globalHistoryData.length > 0) {
-                prepareDetailedStats(globalHistoryData);
+
+    } else {
+        // Đối với các tab khác (history, detailed-stats, etc.)
+        if (mainContainer) mainContainer.classList.remove('form-active'); // Xóa class để layout trở về bình thường
+
+        if (tabName === 'history') {
+            showSection(sections.history);
+            if (isDataCached) {
+                filterHistory();
+                renderSummary(globalHistoryData);
+            } else {
+                fetchHistory();
             }
-            renderDetailedStatsTable(detailedStatsData);
-            renderCharts(detailedStatsData);
-        } else {
-            fetchHistory(); // fetchHistory sẽ xử lý việc tải và render các mục thống kê
-        }
-    } else if (tabName === 'bulk-entry-table') {
-        showSection(sections['bulk-entry-table']);
-        if (bulkTableBody && bulkTableBody.children.length === 0) {
-            addBulkOrderRow(); // Thêm một dòng trống ban đầu cho bảng nhập hàng loạt
+        } else if (tabName === 'detailed-stats') {
+            showSection(sections['detailed-stats']);
+            if (isDataCached) {
+                if (detailedStatsData.length === 0 && globalHistoryData.length > 0) {
+                    prepareDetailedStats(globalHistoryData);
+                }
+                renderDetailedStatsTable(detailedStatsData);
+                renderCharts(detailedStatsData);
+            } else {
+                fetchHistory();
+            }
+        } else if (tabName === 'bulk-entry-table') {
+            showSection(sections['bulk-entry-table']);
+            if (bulkTableBody && bulkTableBody.children.length === 0) {
+                addBulkOrderRow();
+            }
         }
     }
+    // --- KẾT THÚC LOGIC MỚI ---
 
     // Đóng menu mobile nếu đang mở
     const mobileMenu = document.querySelector(".navbar .tabs");
-    if (mobileMenu) {
-        mobileMenu.classList.remove("active");
-    }
+    if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger");
-    if (hamburger) {
-        hamburger.classList.remove("active");
-    }
+    if (hamburger) hamburger.classList.remove("active");
 }
 function toggleMenu() {
     const mobileMenu = document.querySelector(".navbar .tabs");
@@ -4219,6 +4292,73 @@ async function submitValidBulkTableOrders() {
         }
     }
 }
+function requestInvoice(event, orderNumber) {
+    event.stopPropagation(); // Ngăn sự kiện click của dòng
+
+    const confirmModal = document.getElementById('invoice-confirm-modal');
+    const orderNumberDisplay = document.getElementById('invoice-order-number-display');
+    const confirmButton = document.getElementById('confirm-invoice-button');
+
+    if (!confirmModal || !orderNumberDisplay || !confirmButton) {
+        console.error("Không tìm thấy các thành phần của modal xác nhận hóa đơn.");
+        // Fallback về confirm cũ nếu modal bị lỗi
+        if (!confirm(`Dù modal lỗi, bạn vẫn muốn gửi yêu cầu cho đơn hàng ${orderNumber} không?`)) {
+            return;
+        }
+        // Nếu người dùng vẫn đồng ý, gọi thẳng logic xử lý
+        processInvoiceRequest(orderNumber);
+        return;
+    }
+    
+    // Cập nhật số đơn hàng lên modal
+    orderNumberDisplay.textContent = orderNumber;
+
+    // Quan trọng: Gán sự kiện click cho nút xác nhận MỖI KHI MỞ MODAL
+    // Sử dụng .onclick để ghi đè sự kiện cũ, đảm bảo không bị gọi nhiều lần
+    confirmButton.onclick = function() {
+        processInvoiceRequest(orderNumber);
+    };
+
+    // Hiển thị modal
+    confirmModal.classList.add("active");
+    adjustModalScroll(confirmModal);
+}
+
+/**
+ * [HÀM PHỤ MỚI] Chứa logic gửi yêu cầu sau khi người dùng đã xác nhận.
+ * @param {string} orderNumber - Số đơn hàng cần xử lý.
+ */
+function processInvoiceRequest(orderNumber) {
+    // Đóng modal xác nhận và hiển thị modal loading
+    closeModal('invoice-confirm-modal');
+    showOldLoadingModal("Đang Gửi Yêu Cầu...", "Vui lòng chờ trong giây lát.");
+
+    const payload = new FormData();
+    payload.append('action', 'requestInvoice');
+    payload.append('orderNumber', orderNumber);
+    payload.append('requestedBy', sessionStorage.getItem("currentConsultant") || "Unknown User");
+
+    fetch(apiURL, {
+        method: 'POST',
+        body: payload
+    })
+    .then(response => response.json())
+    .then(result => {
+        closeModal('loading-modal');
+        if (result.status === 'SUCCESS') {
+            showNotification(result.message, 'success', 3000);
+            refreshData(); // Làm mới bảng để cập nhật trạng thái
+        } else {
+            showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
+        }
+    })
+    .catch(error => {
+        closeModal('loading-modal');
+        console.error('Lỗi khi gửi yêu cầu xuất hóa đơn:', error);
+        showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+    });
+}
+
 </script>
 </body>
 </html>
