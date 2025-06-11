@@ -1489,6 +1489,34 @@ body.dark-mode .main-container.form-active #history-table th,
 body.dark-mode .main-container.form-active #history-table td {
     border: 1px solid var(--border-color-dark);
 }
+.supplementary-file-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%); /* Màu xanh lá */
+    box-shadow: 0 3px 8px rgba(40, 167, 69, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.supplementary-file-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.5);
+    background: linear-gradient(135deg, #218838 0%, #28a745 100%);
+}
+
+.supplementary-file-btn:disabled {
+    background: #a0a0a0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1799,47 +1827,117 @@ body.dark-mode .main-container.form-active #history-table td {
         </div>
     </div>
 <div class="modal" id="cancel-confirm-modal">
-        <div class="modal-content warning-modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
-                <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+    <div class="modal-content warning-modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
+            <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
+            
+            <div class="mt-4 text-left">
+                <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do hủy <span class="text-red-500">*</span></label>
+                <textarea id="cancel-reason" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:ring-primary-color focus:border-primary-color dark:focus:ring-secondary-color dark:focus:border-secondary-color" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin xe..."></textarea>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
-                <p style="font-size: 15px; line-height: 1.6; margin-top: 10px;">
-                    Hành động này không thể hoàn tác.
-                </p>
-            </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
-                <button class="modal-btn primary danger" id="confirm-cancel-button">Có, Hủy</button>
-            </div>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
+                Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
+            </p>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
+            <button class="modal-btn primary danger" id="confirm-cancel-button">Có, Hủy</button>
         </div>
     </div>
+</div>
 <div class="modal" id="invoice-confirm-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu</h2>
-                <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
+            <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
+                Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
+                <div>
+                    <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
+                    <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
+                            <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
+                    <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
+                            <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                <p style="font-size: 15px; line-height: 1.6;">
-                    Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
-                </p>
-                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
-                    Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
-                </p>
-            </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
-                <button class="modal-btn primary" id="confirm-invoice-button">Có, Gửi Yêu Cầu</button>
-            </div>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
+                Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
+            </p>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+            <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
         </div>
     </div>
+</div>
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
+<div class="modal" id="supplementary-file-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-file-upload"></i> Bổ Sung/Thay Thế File</h2>
+            <button class="modal-close-btn" onclick="closeModal('supplementary-file-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="supp-modal-order-info" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
+                </div>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 text-center">
+                Chỉ cần chọn file bạn muốn thay thế. Các file không được chọn sẽ được giữ nguyên.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="supp_hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán (Mới)</label>
+                    <div id="supp-hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="supp_hop_dong_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-contract text-2xl text-blue-600 dark:text-blue-400"></i>
+                            <span class="text-xs" id="supp-hopdong-prompt-text">Chọn file HĐMB mới</span>
+                        </div>
+                    </div>
+                </div>
 
+                <div>
+                    <label for="supp_denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị XHĐ (Mới)</label>
+                    <div id="supp-denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-green-500 dark:hover:border-green-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="supp_denghi_xhd_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-invoice-dollar text-2xl text-green-600 dark:text-green-400"></i>
+                            <span class="text-xs" id="supp-denghi-prompt-text">Chọn file ĐN/XHĐ mới</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn secondary" onclick="closeModal('supplementary-file-modal')">Hủy Bỏ</button>
+            <button class="modal-btn primary" id="confirm-supp-file-button">Gửi File Bổ Sung</button>
+        </div>
+    </div>
+</div>
     <div id="notification-container"></div>
 
 <script>
@@ -1851,7 +1949,7 @@ let formData = {}, orderId = "", detailedStatsData = [];
 let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 let currentOrderNumberToCancel = null;
-const apiURL = "https://script.google.com/macros/s/AKfycby-Y5Vpns2n4nQYy385kV8KoIcm33rt_cx0MO-7xMJ8sIT-5a4ilqAP-nm1EAQb-zBg_A/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxpR4Hm1-AmU29czLm7tsS_q9X8FxeoNPGHdi2n0Rm-yjZOoh_5X-nssWBMMrg8LJRkVw/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -1917,7 +2015,7 @@ function setActiveSidebarLink() {
         }
     });
 }
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
     // Kiểm tra đăng nhập
     if (sessionStorage.getItem("isLoggedIn") !== "true") {
         window.location.href = "index.html";
@@ -1960,20 +2058,18 @@ document.addEventListener("DOMContentLoaded", function () {
         bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true);
     }
 
-    // --- THAY ĐỔI CHÍNH: ĐẶT TAB "LỊCH SỬ GHÉP" LÀM MẶC ĐỊNH ---
+    // Đặt tab mặc định là "Lịch sử ghép"
     const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
     if (historyTabLink) {
         switchTab('history', historyTabLink);
     } else {
-        // Fallback về tab form nếu không tìm thấy tab lịch sử
         const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
         if (formTabLink) {
             switchTab('form', formTabLink);
         }
     }
-    // --- KẾT THÚC THAY ĐỔI ---
 
-    // Các thiết lập khác
+    // Các thiết lập giao diện khác
     setupScrollSync();
     applyInitialTheme();
     initScrollToTopButton();
@@ -2005,7 +2101,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // Thiết lập cho phần upload ảnh UNC
+    // Thiết lập cho phần upload ảnh UNC chính
     const chicWrapper = document.getElementById('chic-upload-wrapper');
     const chicInput = document.getElementById('chic_file_input');
     if (chicInput && chicWrapper) {
@@ -2035,6 +2131,12 @@ document.addEventListener("DOMContentLoaded", function () {
         ngayCocInput.addEventListener('focus', function() { this.blur(); });
         ngayCocInput.addEventListener('click', function() { this.blur(); });
     }
+
+    // --- BẮT ĐẦU PHẦN THÊM MỚI ---
+    // Thiết lập cho 2 vùng upload file trong modal xuất hóa đơn
+    setupSimpleFileUpload('hop_dong_file_input', 'hopdong-upload-wrapper', 'hopdong-prompt-text');
+    setupSimpleFileUpload('denghi_xhd_file_input', 'denghi-upload-wrapper', 'denghi-prompt-text');
+    // --- KẾT THÚC PHẦN THÊM MỚI ---
 });
 
 function applyInitialTheme() {
@@ -2488,13 +2590,13 @@ function renderHistoryTable(dataToRender) {
 
         let actionButtonsHtml = '';
 
-        // THAY ĐỔI 1: Chỉ hiển thị nút khi trạng thái là "Đã ghép"
+        // Điều kiện hiển thị các nút
         const canRequestInvoice = !isAdmin && (normalizedStatusText === 'đã ghép') && row["VIN"];
-        // THAY ĐỔI 2: Không cho phép hủy khi đã vào luồng chờ xuất hóa đơn
         const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép'].includes(normalizedStatusText);
+        const canUpdateFiles = !isAdmin && ['chờ xuất hóa đơn', 'đã xuất hóa đơn'].includes(normalizedStatusText);
 
+        // Nút Yêu cầu Xuất Hóa Đơn
         if (canRequestInvoice) {
-            // --- THAY ĐỔI CHÍNH: SỬ DỤNG CLASS MỚI VÀ THAY ĐỔI TEXT ---
             actionButtonsHtml += `
                 <button 
                     class="request-invoice-btn" 
@@ -2504,6 +2606,20 @@ function renderHistoryTable(dataToRender) {
                 </button>`;
         }
 
+        // --- BẮT ĐẦU CODE MỚI ---
+        // Nút Bổ Sung File
+        if (canUpdateFiles) {
+             actionButtonsHtml += `
+                <button 
+                    class="supplementary-file-btn" 
+                    onclick="openSupplementaryFileModal(event, '${orderNumber}')" 
+                    data-tooltip="Bổ sung hoặc thay thế file">
+                    <i class="fas fa-file-upload"></i> Sửa File
+                </button>`;
+        }
+        // --- KẾT THÚC CODE MỚI ---
+
+        // Nút Hủy
         if (canCancel) {
             actionButtonsHtml += `
                 <button 
@@ -2532,7 +2648,6 @@ function renderHistoryTable(dataToRender) {
     }).join("");
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
-
 
 function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -2725,30 +2840,49 @@ function previewForm(e) {
     previewModal.classList.add("active");
     adjustModalScroll(previewModal); // Gọi hàm điều chỉnh scroll nếu có
 }
+// [ĐÃ SỬA] - Hàm confirmSubmit mới
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
-        closeModal("preview-modal"); return;
+        closeModal("preview-modal");
+        return;
     }
     closeModal("preview-modal");
 
     showOldLoadingModal("Đang Gửi Dữ Liệu...", "Vui lòng không đóng cửa sổ này.");
 
-    formData["thoi_gian_nhap"] = new Date().toISOString(); formData["trang_thai"] = "Chưa ghép";
+    formData["thoi_gian_nhap"] = new Date().toISOString();
+    formData["trang_thai"] = "Chưa ghép";
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
 
     const chicFileInput = document.getElementById('chic_file_input');
     if (chicFileInput && chicFileInput.files.length > 0) {
+        // Thay vì gửi cả file, chỉ gửi base64 nếu logic backend của bạn hỗ trợ
+        // Nếu backend yêu cầu multipart/form-data, giữ nguyên dòng này
         formDataToSend.append('chic_file_input', chicFileInput.files[0], chicFileInput.files[0].name);
     }
 
-    fetch(apiURL, { method: "POST", body: formDataToSend })
-        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi gửi: ${response.status} ${text}`) }))
-        .then(() => fetch(apiURL)) // Tải lại dữ liệu sau khi gửi
-        .then(response => response.ok ? response.json() : response.text().then(text => { throw new Error(`Lỗi khi tải lại dữ liệu: ${response.status} ${text}`) }))
-        .then(updatedData => {
+    fetch(apiURL, {
+            method: "POST",
+            body: formDataToSend
+        })
+        .then(response => response.ok ? response.json() : response.text().then(text => {
+            throw new Error(`Lỗi khi gửi: ${response.status} ${text}`)
+        }))
+        .then(async (result) => { // Thêm async ở đây
             closeModal("loading-modal");
+            
+            if (result.status !== "SUCCESS") {
+                // Xử lý lỗi từ server nếu có
+                showNotification(result.message || 'Gửi yêu cầu thất bại.', 'error', 5000);
+                return;
+            }
+
+            // Gửi thành công
+            showNotification("Yêu cầu của bạn đã được gửi thành công!", "success", 3000);
+            
+            // Xóa form và dữ liệu nháp
             clearFormDraft();
             const formElement = document.getElementById("vinfast-form");
             if (formElement) formElement.reset();
@@ -2758,59 +2892,18 @@ function confirmSubmit() {
 
             const dongXeSelect = document.getElementById('dong_xe');
             if (dongXeSelect) restrictVersion(dongXeSelect);
-            resetChicUploadUI(); // Reset cả phần upload ảnh UNC
+            resetChicUploadUI();
 
-            const daghep = updatedData.daghep || [];
-            const chuaghep = updatedData.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].sort((a,b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
-            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
-
-            // Lưu số đơn hàng để chuyển hướng
-            orderId = formData["so_don_hang"];
-
-            // Cập nhật giao diện (nếu cần thiết và người dùng có thể thấy trước khi chuyển trang nhanh)
-            const currentUser = sessionStorage.getItem("currentConsultant");
-            const isAdmin = currentUser === ADMIN_USER;
-            let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
-            renderHistoryTable(dataForHistoryTable);
-            renderSummary(globalHistoryData);
-            prepareDetailedStats(globalHistoryData);
-
-            const detailedStatsSection = document.getElementById('detailed-stats-section');
-            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                renderDetailedStatsTable(detailedStatsData);
-                renderCharts(detailedStatsData);
-            }
-
-            // ---- THAY ĐỔI CHÍNH: CHUYỂN HƯỚNG NGAY LẬP TỨC ----
-            // Đảm bảo orderId đã được gán giá trị từ formData
-            if (orderId) {
-                window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
-            } else {
-                // Nếu không có orderId, có thể chuyển về trang chính hoặc hiển thị lỗi
-                console.error("Không có orderId để chuyển hướng.");
-                showNotification("Đã gửi thành công! Không thể chuyển hướng tự động do thiếu mã đơn hàng.", "warning", 4000);
-                // Hoặc chuyển về một trang mặc định
-                // window.location.href = 'index.html';
-            }
-            // ---- KẾT THÚC THAY ĐỔI ----
-
+            // Làm mới dữ liệu lịch sử ngay tại chỗ
+            await refreshData();
         })
         .catch(error => {
-            const loadingModal = document.getElementById("loading-modal");
-            if (loadingModal?.classList.contains("active")) {
-                const loadingModalTitle = loadingModal.querySelector("#loading-title");
-                const loadingModalMessage = loadingModal.querySelector("#loading-message");
-                if (loadingModalTitle) loadingModalTitle.textContent = "Lỗi Gửi Dữ Liệu";
-                if (loadingModalMessage) loadingModalMessage.textContent = `Gửi yêu cầu thất bại: ${error.message}. Vui lòng thử lại.`;
-                // Không tự động đóng modal lỗi ở đây, để người dùng đọc
-            } else {
-                showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
-            }
-            // Cân nhắc có nên fetch lại history ở đây không nếu gửi thất bại
-            // fetchHistory(); // Có thể gọi để đảm bảo dữ liệu trên bảng là mới nhất dù gửi lỗi
+            closeModal("loading-modal");
+            console.error('Lỗi khi gửi yêu cầu:', error);
+            showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
         });
 }
+
 function closeModalAndRedirect() {
     clearTimeout(redirectTimeout); closeModal('success-modal');
     window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
@@ -4159,52 +4252,73 @@ function confirmCancelRequest(event, orderNumber) {
     }
 }
 
-async function handleConfirmCancelClick() {
-    if (!currentOrderNumberToCancel) return;
+// Thay thế hàm cũ bằng hàm này
+ async function handleConfirmCancelClick() {
+        if (!currentOrderNumberToCancel) return;
 
-    closeModal('cancel-confirm-modal');
-    showOldLoadingModal("Đang Hủy Yêu Cầu...", "Vui lòng chờ trong giây lát.");
+        const reasonInput = document.getElementById('cancel-reason');
+        const reason = reasonInput.value.trim();
 
-    const payload = new FormData();
-    payload.append('action', 'cancelRequest'); // Hành động này cần được xử lý bởi backend của YEUCAU.txt
-    payload.append('orderNumber', currentOrderNumberToCancel);
-    payload.append('cancelledBy', sessionStorage.getItem("currentConsultant") || "Unknown");
-
-    try {
-        const response = await fetch(apiURL, { // apiURL là của YEUCAU.txt
-            method: 'POST',
-            body: payload
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Lỗi khi hủy yêu cầu: ${response.status} ${errorText}`);
+        if (!reason) {
+            showNotification("Vui lòng nhập lý do hủy yêu cầu.", "error", 3000);
+            reasonInput.focus();
+            reasonInput.style.borderColor = 'red';
+            return;
         }
 
-        const result = await response.json();
+        closeModal('cancel-confirm-modal');
+        showOldLoadingModal("Đang Hủy Yêu Cầu...", "Vui lòng chờ trong giây lát.");
 
-        if (result.status === 'SUCCESS') {
-            showNotification(`Đã hủy yêu cầu ${currentOrderNumberToCancel} thành công.`, 'success', 3000);
-            await fetchHistory(); // Làm mới bảng lịch sử trong YEUCAU.txt
-        } else {
-            showNotification(`Hủy yêu cầu ${currentOrderNumberToCancel} thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
+        const payload = new FormData();
+        payload.append('action', 'cancelRequest');
+        payload.append('orderNumber', currentOrderNumberToCancel);
+        payload.append('cancelledBy', sessionStorage.getItem("currentConsultant") || "Unknown");
+        
+        // ===================================================
+        // ===== SỬA LỖI QUAN TRỌNG NẰM Ở ĐÂY =====
+        // --- Gửi đúng cờ hiệu để backend xử lý đúng logic ---
+        payload.append('fromUI', 'true'); 
+        // ===================================================
+        
+        payload.append('reason', reason); // Gửi lý do đi
+
+        try {
+            const response = await fetch(apiURL, {
+                method: 'POST',
+                body: payload
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Lỗi khi hủy: ${response.status} ${errorText}`);
+            }
+
+            const result = await response.json();
+
+            if (result.status === 'SUCCESS') {
+                showNotification(result.message, 'success', 3000);
+                await refreshData(); // Đảm bảo gọi refreshData để cập nhật lại bảng
+            } else {
+                showNotification(`Hủy thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
+            }
+        } catch (error) {
+            console.error('Lỗi khi gửi yêu cầu hủy:', error);
+            showNotification(`Lỗi hệ thống khi hủy: ${error.message}`, 'error', 5000);
+        } finally {
+            closeModal('loading-modal');
+            currentOrderNumberToCancel = null;
+            if (reasonInput) reasonInput.value = ''; // Xóa nội dung trong ô lý do
         }
-    } catch (error) {
-        console.error('Lỗi khi gửi yêu cầu hủy:', error);
-        showNotification(`Lỗi hệ thống khi hủy yêu cầu: ${error.message}`, 'error', 5000);
-    } finally {
-        closeModal('loading-modal');
-        currentOrderNumberToCancel = null;
     }
-}
+
+// [ĐÃ SỬA] - Hàm submitValidBulkTableOrders mới
 async function submitValidBulkTableOrders() {
     if (!bulkTableBody || !document.getElementById('submit-valid-bulk-table-orders-btn')) {
-        console.error("submitValidBulkTableOrders: bulkTableBody hoặc nút submit chưa được khởi tạo.");
-        showNotification("Lỗi: Thành phần bảng chưa sẵn sàng để gửi.", "error");
+        showNotification("Lỗi: Bảng dữ liệu chưa sẵn sàng để gửi.", "error");
         return;
     }
 
-    const validRows = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row');
+    const validRows = Array.from(bulkTableBody.querySelectorAll('.bulk-order-row.valid-row'));
     if (validRows.length === 0) {
         showNotification("Không có đơn hàng hợp lệ nào để gửi.", "info");
         return;
@@ -4212,137 +4326,80 @@ async function submitValidBulkTableOrders() {
 
     showOldLoadingModal("Đang Gửi Đơn Hàng Loạt...", `Chuẩn bị gửi ${validRows.length} đơn hàng.`);
 
-    let successCount = 0;
-    let errorCount = 0;
-    let successfulOrderNumbers = [];
+    const requests = [];
     const currentConsultant = sessionStorage.getItem("currentConsultant") || "N/A";
 
-    for (let i = 0; i < validRows.length; i++) {
-        const row = validRows[i];
-        const statusCell = row.querySelector('.row-status');
-        const rowIdNum = row.getAttribute('data-row-id');
-        const uniqueRowIdSuffix = `_row_${rowIdNum}`;
-
-        if (statusCell) {
-            statusCell.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang gửi (${i + 1}/${validRows.length})...`;
-            statusCell.classList.remove('error', 'success');
-        }
-
-        const formDataObj = { /* ... (như đã định nghĩa trước đó) ... */
-            ten_ban_hang: currentConsultant,
+    validRows.forEach(row => {
+        const requestData = {
             ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
             dong_xe: row.querySelector('select[name="dong_xe"]').value,
             phien_ban: row.querySelector('select[name="phien_ban"]').value,
             ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
             noi_that: row.querySelector('select[name="noi_that"]').value,
             so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
-            ngay_coc: row.querySelector('input[name="ngay_coc"]').value,
-            thoi_gian_nhap: new Date().toISOString(),
-            trang_thai: "Chưa ghép"
+            ngay_coc: row.querySelector('input[name="ngay_coc"]').value
         };
+        requests.push(requestData);
+    });
 
-        const formDataToSend = new FormData();
-        for (const key in formDataObj) {
-            if (formDataObj.hasOwnProperty(key)) {
-                formDataToSend.append(key, formDataObj[key]);
-            }
+    const payload = new FormData();
+    payload.append('action', 'addBulkRequests');
+    payload.append('consultantName', currentConsultant);
+    payload.append('requests', JSON.stringify(requests));
+    
+    try {
+        const response = await fetch(apiURL, {
+            method: "POST",
+            body: payload
+        });
+        const result = await response.json();
+
+        if (result.status !== "SUCCESS") {
+            throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
         }
 
-        const chicFileInputForRow = row.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
-        if (chicFileInputForRow && chicFileInputForRow.files && chicFileInputForRow.files.length > 0) {
-            formDataToSend.append('chic_file_input_bulk_row', chicFileInputForRow.files[0], chicFileInputForRow.files[0].name);
-        }
-
-        try {
-            const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Lỗi ${response.status}: ${errorText || response.statusText}`);
-            }
-            // const result = await response.json(); // Nếu API trả về JSON
-
-            if (statusCell) {
-                statusCell.innerHTML = `<i class="fas fa-check-circle text-green-500"></i> Đã gửi (${i + 1}/${validRows.length})`;
-                statusCell.classList.add('success');
-            }
-            row.classList.remove('valid-row');
-            row.classList.add('processed-successfully');
-            row.style.opacity = '0.6';
-            row.querySelectorAll('input, select, button:not([onclick*="removeBulkOrderRow"])').forEach(el => el.disabled = true);
-            const deleteButton = row.querySelector('button[onclick*="removeBulkOrderRow"]');
-            if (deleteButton) {
-                const deleteButtonCell = deleteButton.parentElement;
-                if (deleteButtonCell) {
-                    deleteButtonCell.innerHTML = '<i class="fas fa-check-circle text-green-500" title="Đã gửi thành công"></i>';
-                }
-            }
-            successfulOrderNumbers.push(formDataObj.so_don_hang);
-            successCount++;
-        } catch (error) {
-            console.error(`Lỗi khi gửi đơn hàng (Số ĐH: ${formDataObj.so_don_hang}):`, error);
-            if (statusCell) {
-                statusCell.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> Lỗi gửi`;
-                statusCell.title = error.message.substring(0, 100) + '...';
-                statusCell.classList.add('error');
-            }
-            row.classList.add('invalid-row');
-            row.classList.remove('valid-row');
-            errorCount++;
-        }
-        const loadingModalMessageEl = document.getElementById("loading-message");
-        if (loadingModalMessageEl) {
-            loadingModalMessageEl.textContent = `Đã xử lý ${i + 1}/${validRows.length}. Thành công: ${successCount}, Lỗi: ${errorCount}.`;
-        }
-    }
-
-    closeModal("loading-modal");
-
-    let notificationType = "info";
-    if (successCount > 0 && errorCount === 0) notificationType = "success";
-    else if (errorCount > 0 && successCount > 0) notificationType = "warning";
-    else if (errorCount > 0 && successCount === 0) notificationType = "error";
-    showNotification(`Hoàn tất gửi hàng loạt. Thành công: ${successCount}, Lỗi: ${errorCount}.`, notificationType, 5000);
-
-    if (successCount > 0) {
-        sessionStorage.setItem('bulkSubmissionResults_OrderNumbers', JSON.stringify(successfulOrderNumbers));
-        console.log('submitValidBulkTableOrders: successfulOrderNumbers đã được lưu vào sessionStorage.');
-
-        try {
-            showOldLoadingModal("Đang cập nhật dữ liệu...", "Vui lòng chờ trong giây lát để đồng bộ hóa.");
-            console.log("submitValidBulkTableOrders: Chuẩn bị gọi await fetchHistory()...");
-            // Quan trọng: Gọi fetchHistory và đợi nó hoàn thành.
-            // Tham số false để tránh hiển thị placeholder của table-body vì chúng ta đang ở modal.
-            await fetchHistory(false);
-            console.log("submitValidBulkTableOrders: fetchHistory() đã hoàn thành. Chuẩn bị chuyển hướng.");
-            closeModal("loading-modal"); // Đóng modal loading của fetchHistory
-            window.location.href = 'bulk-order-summary.html';
-        } catch (fetchError) {
-            closeModal("loading-modal");
-            console.error("Lỗi nghiêm trọng khi làm mới lịch sử sau khi gửi hàng loạt:", fetchError);
-            showNotification("Đã gửi các đơn hàng. Tuy nhiên, có lỗi khi làm mới dữ liệu cuối cùng. Trang tổng kết có thể chưa đầy đủ. Vui lòng kiểm tra Lịch Sử Ghép.", "error", 8000);
-            // Vẫn chuyển hướng để người dùng xem được những gì đã gửi (dù có thể chưa có chi tiết đầy đủ)
-            // Hoặc bạn có thể chọn không chuyển hướng nếu lỗi quá nghiêm trọng.
-            // Để an toàn, vẫn chuyển hướng để người dùng không mất thông tin đã gửi.
-             window.location.href = 'bulk-order-summary.html';
-        }
-    } else {
-        // Nếu không có đơn nào thành công, chỉ cập nhật bảng tóm tắt
+        closeModal("loading-modal");
+        showNotification(result.message, "success", 5000);
+        
+        // Xóa các dòng đã gửi thành công khỏi bảng
+        validRows.forEach(row => row.remove());
+        
+        // Đánh lại số thứ tự và cập nhật tóm tắt
+        const remainingRows = bulkTableBody.querySelectorAll('.bulk-order-row');
+        remainingRows.forEach((row, index) => {
+            const sttCell = row.querySelector('.row-stt');
+            if (sttCell) sttCell.textContent = index + 1;
+        });
+        bulkOrderRowCount = remainingRows.length;
         updateBulkTableSummary();
-        const submitBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
-        if (submitBtn) { // Kiểm tra lại nút submit vì có thể đã bị disable/remove
-             const remainingValidRows = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row').length;
-             if (remainingValidRows === 0) {
-                submitBtn.style.display = 'none';
-             }
+
+        // Nếu bảng trống, thêm một dòng mới
+        if (remainingRows.length === 0) {
+            addBulkOrderRow();
         }
+
+        // Làm mới dữ liệu chung của trang
+        await refreshData();
+
+    } catch (error) {
+        closeModal("loading-modal");
+        console.error('Lỗi khi gửi hàng loạt:', error);
+        showNotification(`Lỗi hệ thống khi gửi hàng loạt: ${error.message}`, 'error', 5000);
     }
 }
+
 function requestInvoice(event, orderNumber) {
-    event.stopPropagation(); // Ngăn sự kiện click của dòng
+    event.stopPropagation(); // Quan trọng: Ngăn chặn sự kiện click chính của dòng
 
     const confirmModal = document.getElementById('invoice-confirm-modal');
     const orderNumberDisplay = document.getElementById('invoice-order-number-display');
     const confirmButton = document.getElementById('confirm-invoice-button');
+
+    // Reset các input file mỗi khi mở modal để đảm bảo người dùng chọn lại file mới
+    const hopDongInput = document.getElementById('hop_dong_file_input');
+    const deNghiInput = document.getElementById('denghi_xhd_file_input');
+    if(hopDongInput && typeof hopDongInput.reset === 'function') hopDongInput.reset();
+    if(deNghiInput && typeof deNghiInput.reset === 'function') deNghiInput.reset();
 
     if (!confirmModal || !orderNumberDisplay || !confirmButton) {
         console.error("Không tìm thấy các thành phần của modal xác nhận hóa đơn.");
@@ -4350,7 +4407,6 @@ function requestInvoice(event, orderNumber) {
         if (!confirm(`Dù modal lỗi, bạn vẫn muốn gửi yêu cầu cho đơn hàng ${orderNumber} không?`)) {
             return;
         }
-        // Nếu người dùng vẫn đồng ý, gọi thẳng logic xử lý
         processInvoiceRequest(orderNumber);
         return;
     }
@@ -4358,8 +4414,7 @@ function requestInvoice(event, orderNumber) {
     // Cập nhật số đơn hàng lên modal
     orderNumberDisplay.textContent = orderNumber;
 
-    // Quan trọng: Gán sự kiện click cho nút xác nhận MỖI KHI MỞ MODAL
-    // Sử dụng .onclick để ghi đè sự kiện cũ, đảm bảo không bị gọi nhiều lần
+    // Gán sự kiện click cho nút xác nhận MỖI KHI MỞ MODAL
     confirmButton.onclick = function() {
         processInvoiceRequest(orderNumber);
     };
@@ -4368,42 +4423,258 @@ function requestInvoice(event, orderNumber) {
     confirmModal.classList.add("active");
     adjustModalScroll(confirmModal);
 }
-
 /**
- * [HÀM PHỤ MỚI] Chứa logic gửi yêu cầu sau khi người dùng đã xác nhận.
- * @param {string} orderNumber - Số đơn hàng cần xử lý.
+ * Chuyển đổi một đối tượng File thành chuỗi Base64.
+ * @param {File} file - Tệp cần chuyển đổi.
+ * @returns {Promise<string>} - Một Promise sẽ resolve với chuỗi Base64.
  */
-function processInvoiceRequest(orderNumber) {
-    // Đóng modal xác nhận và hiển thị modal loading
-    closeModal('invoice-confirm-modal');
-    showOldLoadingModal("Đang Gửi Yêu Cầu...", "Vui lòng chờ trong giây lát.");
-
-    const payload = new FormData();
-    payload.append('action', 'requestInvoice');
-    payload.append('orderNumber', orderNumber);
-    payload.append('requestedBy', sessionStorage.getItem("currentConsultant") || "Unknown User");
-
-    fetch(apiURL, {
-        method: 'POST',
-        body: payload
-    })
-    .then(response => response.json())
-    .then(result => {
-        closeModal('loading-modal');
-        if (result.status === 'SUCCESS') {
-            showNotification(result.message, 'success', 3000);
-            refreshData(); // Làm mới bảng để cập nhật trạng thái
-        } else {
-            showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
-        }
-    })
-    .catch(error => {
-        closeModal('loading-modal');
-        console.error('Lỗi khi gửi yêu cầu xuất hóa đơn:', error);
-        showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
     });
 }
+async function processInvoiceRequest(orderNumber) {
+    // Lấy element của 2 input file từ HTML
+    const hopDongInput = document.getElementById('hop_dong_file_input');
+    const deNghiInput = document.getElementById('denghi_xhd_file_input');
 
+    // Kiểm tra xem người dùng đã chọn đủ 2 file chưa
+    if (!hopDongInput || hopDongInput.files.length === 0) {
+        showNotification("Vui lòng tải lên file Hợp đồng mua bán.", "error", 4000);
+        return;
+    }
+    if (!deNghiInput || deNghiInput.files.length === 0) {
+        showNotification("Vui lòng tải lên file Đề nghị xuất hóa đơn.", "error", 4000);
+        return;
+    }
+
+    closeModal('invoice-confirm-modal');
+    showOldLoadingModal("Đang mã hóa và gửi tệp...", "Quá trình này có thể mất một lúc...");
+
+    try {
+        // Chuyển đổi file thành chuỗi Base64
+        const hopDongBase64 = await fileToBase64(hopDongInput.files[0]);
+        const deNghiBase64 = await fileToBase64(deNghiInput.files[0]);
+
+        // Tạo đối tượng FormData để gửi đi
+        const payload = new FormData();
+        payload.append('action', 'requestInvoice');
+        payload.append('orderNumber', orderNumber);
+        payload.append('requestedBy', sessionStorage.getItem("currentConsultant") || "Unknown User");
+
+        // Gửi dữ liệu Base64 và tên file đi
+        payload.append('hop_dong_file_base64', hopDongBase64);
+        payload.append('hop_dong_file_name', hopDongInput.files[0].name);
+
+        payload.append('denghi_xhd_file_base64', deNghiBase64);
+        payload.append('denghi_xhd_file_name', deNghiInput.files[0].name);
+
+        // Gửi yêu cầu lên Google Apps Script
+        fetch(apiURL, {
+            method: 'POST',
+            body: payload
+        })
+        .then(response => response.json())
+        .then(result => {
+            closeModal('loading-modal');
+            if (result.status === 'SUCCESS') {
+                showNotification(result.message, 'success', 3000);
+                refreshData();
+            } else {
+                showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
+            }
+        })
+        .catch(error => {
+            closeModal('loading-modal');
+            console.error('Lỗi khi gửi yêu cầu xuất hóa đơn:', error);
+            showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+        });
+
+    } catch (error) {
+        closeModal('loading-modal');
+        console.error('Lỗi khi chuyển đổi file sang Base64:', error);
+        showNotification('Lỗi xử lý tệp phía trình duyệt. Vui lòng thử lại.', 'error', 5000);
+    }
+}
+function setupSimpleFileUpload(inputId, wrapperId, promptTextId) {
+    const fileInput = document.getElementById(inputId);
+    const wrapper = document.getElementById(wrapperId);
+    const promptText = document.getElementById(promptTextId);
+    
+    if (!fileInput || !wrapper || !promptText) {
+        console.warn(`Lỗi setupSimpleFileUpload: Không tìm thấy phần tử với ID ${inputId}, ${wrapperId}, hoặc ${promptTextId}`);
+        return;
+    }
+    
+    const originalPrompt = promptText.textContent;
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            promptText.textContent = this.files[0].name;
+            promptText.style.fontSize = '10px';
+            wrapper.classList.add('file-selected');
+            wrapper.style.borderColor = 'var(--primary-color)';
+        } else {
+            promptText.textContent = originalPrompt;
+            promptText.style.fontSize = '12px';
+            wrapper.classList.remove('file-selected');
+            wrapper.style.borderColor = '';
+        }
+    });
+
+    // Tạo một phương thức reset tùy chỉnh để có thể gọi từ bên ngoài
+    fileInput.reset = function() {
+        fileInput.value = ''; // Quan trọng: Xóa file đã chọn
+        promptText.textContent = originalPrompt;
+        promptText.style.fontSize = '12px';
+        wrapper.classList.remove('file-selected');
+        wrapper.style.borderColor = '';
+    }
+}
+/**
+ * [HÀM MỚI] Mở modal để tải lên file bổ sung/thay thế.
+ */
+function openSupplementaryFileModal(event, orderNumber) {
+    event.stopPropagation();
+
+    const modal = document.getElementById('supplementary-file-modal');
+    const infoDiv = document.getElementById('supp-modal-order-info');
+    const confirmButton = document.getElementById('confirm-supp-file-button');
+
+    // Tìm thông tin đơn hàng từ dữ liệu đã tải
+    const orderData = globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber);
+
+    if (!modal || !infoDiv || !confirmButton || !orderData) {
+        showNotification("Lỗi: Không thể mở cửa sổ bổ sung file.", "error");
+        return;
+    }
+
+    // Hiển thị thông tin cơ bản để xác nhận
+    infoDiv.innerHTML = `
+        <p><strong>Số Đơn Hàng:</strong> ${orderData["Số đơn hàng"]}</p>
+        <p><strong>Khách Hàng:</strong> ${orderData["Tên khách hàng"]}</p>
+        <p><strong>Số VIN:</strong> ${orderData["VIN"]}</p>
+    `;
+
+    // Reset các input file cũ
+    setupSimpleFileUpload('supp_hop_dong_file_input', 'supp-hopdong-upload-wrapper', 'supp-hopdong-prompt-text', true);
+    setupSimpleFileUpload('supp_denghi_xhd_file_input', 'supp-denghi-upload-wrapper', 'supp-denghi-prompt-text', true);
+
+
+    // Gán sự kiện cho nút "Gửi"
+    confirmButton.onclick = function() {
+        processSupplementaryFiles(orderNumber);
+    };
+
+    // Hiển thị modal
+    modal.classList.add("active");
+    adjustModalScroll(modal);
+}
+
+/**
+ * [HÀM MỚI] Xử lý việc gửi các file bổ sung lên server.
+ */
+async function processSupplementaryFiles(orderNumber) {
+    const hopDongInput = document.getElementById('supp_hop_dong_file_input');
+    const deNghiInput = document.getElementById('supp_denghi_xhd_file_input');
+
+    if ((!hopDongInput || hopDongInput.files.length === 0) && (!deNghiInput || deNghiInput.files.length === 0)) {
+        showNotification("Vui lòng chọn ít nhất một file để bổ sung hoặc thay thế.", "warning");
+        return;
+    }
+
+    closeModal('supplementary-file-modal');
+    showOldLoadingModal("Đang Gửi File...", "Quá trình này có thể mất một lúc.");
+
+    try {
+        const payload = new FormData();
+        payload.append('action', 'updateInvoiceFiles');
+        payload.append('orderNumber', orderNumber);
+        payload.append('updatedBy', sessionStorage.getItem("currentConsultant") || "Unknown User");
+
+        // Xử lý file Hợp đồng nếu có
+        if (hopDongInput && hopDongInput.files.length > 0) {
+            const hopDongBase64 = await fileToBase64(hopDongInput.files[0]);
+            payload.append('hop_dong_file_base64', hopDongBase64);
+            payload.append('hop_dong_file_name', hopDongInput.files[0].name);
+        }
+
+        // Xử lý file Đề nghị XHĐ nếu có
+        if (deNghiInput && deNghiInput.files.length > 0) {
+            const deNghiBase64 = await fileToBase64(deNghiInput.files[0]);
+            payload.append('denghi_xhd_file_base64', deNghiBase64);
+            payload.append('denghi_xhd_file_name', deNghiInput.files[0].name);
+        }
+
+        // Gửi yêu cầu
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            body: payload
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+            showNotification(result.message, 'success', 3000);
+            refreshData(); // Làm mới dữ liệu để cập nhật link (nếu cần)
+        } else {
+            throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
+        }
+
+    } catch (error) {
+        console.error('Lỗi khi gửi file bổ sung:', error);
+        showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+    } finally {
+        closeModal('loading-modal');
+    }
+}
+
+// Sửa lại hàm setupSimpleFileUpload để có thể reset
+function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = false) {
+    const fileInput = document.getElementById(inputId);
+    const wrapper = document.getElementById(wrapperId);
+    const promptText = document.getElementById(promptTextId);
+    
+    if (!fileInput || !wrapper || !promptText) {
+        console.warn(`Lỗi setupSimpleFileUpload: Không tìm thấy phần tử với ID ${inputId}, ${wrapperId}, hoặc ${promptTextId}`);
+        return;
+    }
+    
+    const originalPrompt = promptText.getAttribute('data-original-text') || promptText.textContent;
+    if (!isResetting) {
+        promptText.setAttribute('data-original-text', originalPrompt);
+    }
+    
+    // Hàm reset
+    const resetUI = () => {
+        fileInput.value = ''; // Quan trọng: Xóa file đã chọn
+        promptText.textContent = originalPrompt;
+        promptText.style.fontSize = ''; // Reset style
+        wrapper.classList.remove('file-selected');
+        wrapper.style.borderColor = '';
+    };
+
+    // Nếu đang gọi để reset, chỉ reset và thoát
+    if (isResetting) {
+        resetUI();
+        return;
+    }
+
+    // Gắn sự kiện change
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            promptText.textContent = this.files[0].name;
+            promptText.style.fontSize = '10px';
+            wrapper.classList.add('file-selected');
+            wrapper.style.borderColor = 'var(--primary-color)';
+        } else {
+            resetUI();
+        }
+    });
+}
 </script>
 </body>
 </html>
