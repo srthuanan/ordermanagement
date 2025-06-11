@@ -1444,6 +1444,51 @@ body.dark-mode .cancel-btn:disabled {
         /* Đảm bảo kích thước nhất quán nếu cần, nhưng nó đã là 32x32 */
     }
 }
+/* ================================================================== */
+/* ===== BẮT ĐẦU CSS MỚI: TÙY CHỈNH BẢNG KHI XEM ĐẦY ĐỦ ===== */
+/* ================================================================== */
+
+/* Áp dụng khi ở các tab khác ngoài tab "Yêu Cầu Ghép Xe" */
+.main-container:not(.form-active) #history-table th,
+.main-container:not(.form-active) #history-table td {
+    /* Yêu cầu 1: Kẻ bảng hợp lý (thêm viền cho tất cả các cạnh) */
+    border: 1px solid var(--border-color-light);
+
+    /* Yêu cầu 2: Căn giữa nội dung trong ô */
+    text-align: center;
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
+}
+
+/* Căn giữa cho cả các nút bên trong cột "Hành động" */
+.main-container:not(.form-active) #history-table td[data-label="Hành động"] > div {
+    justify-content: center;
+}
+
+/* Điều chỉnh lại viền cho Giao diện Tối (Dark Mode) */
+body.dark-mode .main-container:not(.form-active) #history-table th,
+body.dark-mode .main-container:not(.form-active) #history-table td {
+    border: 1px solid var(--border-color-dark);
+}
+/* ================================================================== */
+/* === BẮT ĐẦU CSS MỚI: TÙY CHỈNH BẢNG KHI XEM Ở TAB YÊU CẦU GHÉP === */
+/* ================================================================== */
+
+/* Áp dụng khi ở tab "Yêu Cầu Ghép Xe" (.form-active) */
+.main-container.form-active #history-table th,
+.main-container.form-active #history-table td {
+    /* Yêu cầu 1: Kẻ bảng hợp lý (thêm viền cho tất cả các cạnh) */
+    border: 1px solid var(--border-color-light);
+
+    /* Yêu cầu 2: Căn giữa nội dung trong ô */
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Điều chỉnh lại viền cho Giao diện Tối (Dark Mode) */
+body.dark-mode .main-container.form-active #history-table th,
+body.dark-mode .main-container.form-active #history-table td {
+    border: 1px solid var(--border-color-dark);
+}
     </style>
 </head>
 <body data-theme="light">
