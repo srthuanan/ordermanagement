@@ -1792,22 +1792,20 @@ body.dark-mode .main-container.form-active #history-table td {
         </div>
     </div>
 
-    <div class="modal" id="success-modal">
-        <div class="modal-content success-modal-content">
-            <div class="modal-header">
-                <h2>Đã Gửi Dữ Liệu</h2>
+<div class="modal" id="success-modal">
+    <div class="modal-content success-modal-content">
+        <div class="modal-header">
+            <h2>Đã Gửi Dữ Liệu Thành Công</h2>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <i class="fas fa-check-circle"></i>
+            <p>Yêu cầu ghép xe của bạn đã được ghi nhận.</p>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                <i class="fas fa-check-circle"></i>
-                <p>Yêu cầu ghép xe của bạn đã được gửi thành công!</p>
-                 <p style="font-size: 0.9em;">Bạn sẽ được chuyển đến trang chi tiết sau giây lát.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn primary" onclick="closeModalAndRedirect()">Đóng và Xem Chi Tiết</button>
-            </div>
+        <div class="modal-footer">
+            <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
         </div>
     </div>
-
+</div>
     <div class="modal" id="loading-modal">
         <div class="modal-content loading-modal-content">
             <div class="modal-header">
@@ -1955,11 +1953,10 @@ body.dark-mode .main-container.form-active #history-table td {
 
 // --- Biến toàn cục và Hằng số ---
 let globalHistoryData = [];
-let formData = {}, orderId = "", detailedStatsData = [];
-let carChart, carVersionChart, advisorChart;
+let formData = {}, orderId = "", detailedStatsData = [], redirectTimeout;let carChart, carVersionChart, advisorChart;
 let autoRefreshInterval;
 let currentOrderNumberToCancel = null;
-const apiURL = "https://script.google.com/macros/s/AKfycbxpR4Hm1-AmU29czLm7tsS_q9X8FxeoNPGHdi2n0Rm-yjZOoh_5X-nssWBMMrg8LJRkVw/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzNzcJhPAvuHjaKpABkxUF7zjVoXML0CN9UQU3h1g7HDFPvVy4ethvzvLV_EdVwtRSAXQ/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -2622,7 +2619,6 @@ function renderHistoryTable(dataToRender) {
                 </button>`;
         }
 
-        // --- BẮT ĐẦU CODE MỚI ---
         // Nút Bổ Sung File
         if (canUpdateFiles) {
              actionButtonsHtml += `
@@ -2633,7 +2629,6 @@ function renderHistoryTable(dataToRender) {
                     <i class="fas fa-file-upload"></i> Sửa File
                 </button>`;
         }
-        // --- KẾT THÚC CODE MỚI ---
 
         // Nút Hủy
         if (canCancel) {
@@ -2645,22 +2640,20 @@ function renderHistoryTable(dataToRender) {
                     <i class="fas fa-trash-alt"></i>
                 </button>`;
         }
-
-        return `
-       <tr style="cursor: pointer;">
-           <td data-label="STT" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${i + 1}</span></td>
-           <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
-           <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
-           <td data-label="Số Đơn Hàng" title="${orderNumber}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${orderNumber}</span></td>
-           <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Dòng xe"] || "N/A"}</span></td>
-           <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Phiên bản"] || "N/A"}</span></td>
-           <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
-           <td data-label="Nội Thất" title="${row["Nội thất"] || ""}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span>${row["Nội thất"] || "N/A"}</span></td>
-           <td data-label="Trạng Thái" title="${statusTextOriginal}" onclick="window.location.href = 'xem-chi-tiet-lich-su.html?orderNumber=' + encodeURIComponent('${orderNumber}')"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
-           <td data-label="Hành động">
-                <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
-           </td>
-       </tr>`;
+return `
+<tr> <td data-label="STT"><span>${i + 1}</span></td>
+   <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
+   <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
+   <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
+   <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
+   <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
+   <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
+   <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
+   <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
+   <td data-label="Hành động">
+        <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
+   </td>
+</tr>`;
     }).join("");
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
@@ -2856,7 +2849,8 @@ function previewForm(e) {
     previewModal.classList.add("active");
     adjustModalScroll(previewModal); // Gọi hàm điều chỉnh scroll nếu có
 }
-// [ĐÃ SỬA] - Hàm confirmSubmit mới
+// [ĐÃ SỬA] - Hàm confirmSubmit mới để chuyển hướng sau khi gửi
+// [ĐÃ SỬA] - Hàm confirmSubmit mới để chuyển hướng sau khi gửi
 function confirmSubmit() {
     if (globalHistoryData.some(row => row["Số đơn hàng"] === formData["so_don_hang"])) {
         showNotification("Số đơn hàng này đã tồn tại trong hệ thống!", "error", 4000);
@@ -2874,8 +2868,6 @@ function confirmSubmit() {
 
     const chicFileInput = document.getElementById('chic_file_input');
     if (chicFileInput && chicFileInput.files.length > 0) {
-        // Thay vì gửi cả file, chỉ gửi base64 nếu logic backend của bạn hỗ trợ
-        // Nếu backend yêu cầu multipart/form-data, giữ nguyên dòng này
         formDataToSend.append('chic_file_input', chicFileInput.files[0], chicFileInput.files[0].name);
     }
 
@@ -2886,45 +2878,89 @@ function confirmSubmit() {
         .then(response => response.ok ? response.json() : response.text().then(text => {
             throw new Error(`Lỗi khi gửi: ${response.status} ${text}`)
         }))
-        .then(async (result) => { // Thêm async ở đây
+        .then(async (result) => {
             closeModal("loading-modal");
             
             if (result.status !== "SUCCESS") {
-                // Xử lý lỗi từ server nếu có
                 showNotification(result.message || 'Gửi yêu cầu thất bại.', 'error', 5000);
                 return;
             }
 
-            // Gửi thành công
-            showNotification("Yêu cầu của bạn đã được gửi thành công!", "success", 3000);
+            // GỬI THÀNH CÔNG -> LOGIC CHUYỂN HƯỚNG BẮT ĐẦU TẠI ĐÂY
+            const submittedOrderNumber = formData["so_don_hang"];
             
-            // Xóa form và dữ liệu nháp
+            // 1. Cập nhật cache ngay lập tức để trang chi tiết có thể đọc được
+            const newRowData = {
+                "Tên tư vấn bán hàng": formData.ten_ban_hang,
+                "Tên khách hàng": formData.ten_khach_hang,
+                "Số đơn hàng": formData.so_don_hang,
+                "Dòng xe": formData.dong_xe,
+                "Phiên bản": formData.phien_ban,
+                "Ngoại thất": formData.ngoai_that,
+                "Nội thất": formData.noi_that,
+                "Ngày cọc": formData.ngay_coc,
+                "Thời gian nhập": formData.thoi_gian_nhap,
+                "Kết quả": "Chưa ghép", // Trạng thái mặc định
+                "VIN": "",
+                "Thời gian ghép": "",
+                "Số ngày ghép": ""
+            };
+
+            if(globalHistoryData) {
+                globalHistoryData.unshift(newRowData);
+                sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+            }
+
+            // 2. Set orderId để chuyển hướng
+            orderId = submittedOrderNumber;
+
+            // 3. Xóa dữ liệu form và các dữ liệu nháp
             clearFormDraft();
             const formElement = document.getElementById("vinfast-form");
-            if (formElement) formElement.reset();
+            if (formElement) {
+                formElement.reset();
+                const consultantInput = document.getElementById("ten_ban_hang");
+                if (consultantInput) consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+                const dongXeSelect = document.getElementById('dong_xe');
+                if (dongXeSelect) restrictVersion(dongXeSelect);
+                resetChicUploadUI();
+            }
+            
+            // 4. Hiển thị modal thành công và chuẩn bị chuyển hướng
+            const successModal = document.getElementById("success-modal");
+            if (successModal) {
+                const redirectButton = successModal.querySelector('button');
+                if (redirectButton) {
+                    redirectButton.onclick = () => closeModalAndRedirect();
+                }
+                successModal.classList.add("active");
+                if (typeof adjustModalScroll === 'function') adjustModalScroll(successModal);
+            } else {
+                // Fallback nếu không có modal
+                showNotification("Gửi thành công! Đang chuyển hướng...", "success", 2000);
+                setTimeout(() => {
+                    window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(submittedOrderNumber)}`;
+                }, 2000);
+            }
 
-            const consultantInput = document.getElementById("ten_ban_hang");
-            if (consultantInput) consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+            // 5. Làm mới toàn bộ dữ liệu từ máy chủ ở chế độ nền (không chặn người dùng)
+            await fetchHistory(false);
 
-            const dongXeSelect = document.getElementById('dong_xe');
-            if (dongXeSelect) restrictVersion(dongXeSelect);
-            resetChicUploadUI();
-
-            // Làm mới dữ liệu lịch sử ngay tại chỗ
-            await refreshData();
         })
         .catch(error => {
             closeModal("loading-modal");
             console.error('Lỗi khi gửi yêu cầu:', error);
-            showNotification(`Gửi yêu cầu thất bại: ${error.message}`, "error", 5000);
+            showNotification(`Gửi yêu cầu thất bại: ${error.message}`, 'error', 5000);
         });
 }
 
+// [HÀM MỚI] - Xử lý đóng modal và chuyển hướng
 function closeModalAndRedirect() {
-    clearTimeout(redirectTimeout); closeModal('success-modal');
-    window.location.href = `order-details.html?orderNumber=${encodeURIComponent(orderId)}`;
+    clearTimeout(redirectTimeout); // Xóa hẹn giờ nếu người dùng nhấn nút sớm
+    closeModal('success-modal');
+    // Chuyển hướng đến trang chi tiết với số đơn hàng đã lưu
+    window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderId)}`;
 }
-
 function prepareDetailedStats(data) {
     const statsMap = new Map();
     data.forEach(row => {
