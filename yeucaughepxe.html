@@ -1377,14 +1377,9 @@ body.dark-mode .cancel-btn:disabled {
     /* Thêm hiệu ứng chuyển động cho max-height */
     transition: all var(--transition-speed) var(--transition-easing), max-height 0.4s ease-in-out;
 }
-/* --- CSS CHO LAYOUT ĐỘNG (ĐÃ SỬA LỖI) --- */
-@media (min-width: 901px) { /* Áp dụng cho màn hình desktop trở lên */
-
-    /* Thêm hiệu ứng chuyển động mượt mà cho cả 2 khối */
-    #form-section, #history-section, #bulk-entry-table-section, #detailed-stats-section {
+#form-section, #history-section, #bulk-entry-table-section {
         transition: flex 0.4s ease-in-out, padding 0.4s ease-in-out, opacity 0.3s ease-in-out;
     }
-
     /* --- Bố cục khi tab "Yêu Cầu Ghép Xe" được chọn --- */
     .main-container.form-active #form-section { /* SỬA LỖI: Chỉ định rõ #form-section */
         flex: 4;
@@ -1444,11 +1439,7 @@ body.dark-mode .cancel-btn:disabled {
         /* Đảm bảo kích thước nhất quán nếu cần, nhưng nó đã là 32x32 */
     }
 }
-/* ================================================================== */
-/* ===== BẮT ĐẦU CSS MỚI: TÙY CHỈNH BẢNG KHI XEM ĐẦY ĐỦ ===== */
-/* ================================================================== */
 
-/* Áp dụng khi ở các tab khác ngoài tab "Yêu Cầu Ghép Xe" */
 .main-container:not(.form-active) #history-table th,
 .main-container:not(.form-active) #history-table td {
     /* Yêu cầu 1: Kẻ bảng hợp lý (thêm viền cho tất cả các cạnh) */
@@ -1527,6 +1518,54 @@ body.dark-mode .main-container.form-active #history-table td {
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 4px 8px rgba(192, 57, 43, 0.4);
 }
+.upload-invoice-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Gradient tím-xanh */
+    box-shadow: 0 3px 8px rgba(106, 17, 203, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.upload-invoice-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(37, 117, 252, 0.5);
+}
+
+.download-invoice-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    background: linear-gradient(135deg, #5D9CEC 0%, #4A90E2 100%); /* Gradient xanh dương nhẹ */
+    box-shadow: 0 3px 8px rgba(74, 144, 226, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.download-invoice-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.5);
+}
+
+.upload-invoice-btn:disabled, .download-invoice-btn:disabled {
+    background: #a0a0a0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1534,11 +1573,11 @@ body.dark-mode .main-container.form-active #history-table td {
         <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="logo"><h1>VINFAST MINH ĐẠO</h1></div> <div class="tabs">
+        <div class="logo"><h1>VINFAST MINH ĐẠO</h1></div>
+        <div class="tabs">
             <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
-<a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
+            <a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
             <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
-            <a href="#" onclick="switchTab('detailed-stats', this)" data-tooltip="Xem thống kê chi tiết">Thống Kê Chi Tiết</a>
         </div>
         <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i></button>
         <div class="navbar-controls">
@@ -1552,7 +1591,8 @@ body.dark-mode .main-container.form-active #history-table td {
     </div>
 
     <div class="sidebar" id="sidebar">
-        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div> <div class="menu" id="navMenu"> <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+        <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
+        <div class="menu" id="navMenu">
             <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
             <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
             <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
@@ -1577,7 +1617,7 @@ body.dark-mode .main-container.form-active #history-table td {
                 </select>
                 <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn phiên bản</option>
-                    <option value="Plus">Plus</option> <option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option> <option value="Plus Nâng cấp">Plus Nâng cấp</option> <option value="Eco">Eco</option> <option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option> <option value="Eco Nâng cấp">Eco Nâng cấp</option> <option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option> <option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option> <option value="Plus_CAP_Metal">Plus_CAP_Metal</option> <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option> <option value="Eco_3ZONES">Eco_3ZONES</option> <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option> <option value="Base">Base</option>
+                    <option value="Plus">Plus</option> <option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option> <option value="Plus Nâng cấp">Plus Nâng cấp</option> <option value="Eco">Eco</option> <option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option> <option value="Eco Nâng cấp">Eco Nâng cấp</option> <option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option> <option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option> <option value="Plus_CAP_Metal">Plus_CAP_Metal</option> <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option> <option value="Eco_3ZONES">Eco_3ZONES</option> <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option> <option value="Base">Base</option>
                 </select>
                 <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn ngoại thất</option>
@@ -1648,7 +1688,7 @@ body.dark-mode .main-container.form-active #history-table td {
                             <th onclick="sortTable('Ngoại thất')">Ngoại Thất</th>
                             <th onclick="sortTable('Nội thất')">Nội Thất</th>
                             <th onclick="sortTable('Kết quả')">Trạng Thái</th>
-<th onclick="sortTable('Hủy')">Hủy</th>
+                            <th onclick="sortTable('Hủy')">Hủy</th>
                         </tr>
                     </thead>
                     <tbody id="table-body">
@@ -1658,132 +1698,81 @@ body.dark-mode .main-container.form-active #history-table td {
             </div>
         </div>
 
-        <div class="grid-container hidden" id="detailed-stats-section">
-            <div class="summary-section">
-                <h3>Tổng Quan Chi Tiết Thống Kê</h3>
-                <p>Tổng số yêu cầu: <span id="detailed-total">0</span></p>
-                <p>Tổng số dòng xe: <span id="detailed-car-types">0</span></p>
-                <p>Tổng số tư vấn viên: <span id="detailed-advisors">0</span></p>
-            </div>
-            <div class="chart-container">
-                <div class="chart-card">
-                    <h3>Số Lượng Yêu Cầu Theo Dòng Xe</h3>
-                    <canvas id="car-chart"></canvas>
-                    <div class="chart-no-data" id="car-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
+        <div class="grid-container hidden" id="bulk-entry-table-section">
+            <div class="form-container w-full p-4 md:p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                        NHẬP YÊU CẦU
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" aria-label="Thêm Dòng Mới" class="px-3 py-1 bg-green-800 text-white rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
+                            <i class="fas fa-plus mr-1.5 text-sm"></i>Thêm
+                        </button>
+                        <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" aria-label="Kiểm Tra Dữ Liệu" class="px-3 py-1 bg-indigo-800 text-white rounded-md hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
+                            <i class="fas fa-check-double mr-1.5 text-sm"></i>Kiểm Tra
+                        </button>
+                        <button type="button" title="Xóa Toàn Bộ Bảng" aria-label="Xóa Toàn Bộ Bảng" class="p-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-75 shadow-sm flex items-center justify-center transition-colors duration-150" onclick="clearBulkEditableTable()">
+                            <i class="fas fa-trash-alt text-base"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="chart-card">
-                    <h3>Số Lượng Yêu Cầu Theo Dòng Xe Kèm Phiên Bản</h3>
-                    <canvas id="car-version-chart"></canvas>
-                     <div class="chart-no-data" id="car-version-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
-                </div>
-                <div class="chart-card">
-                    <h3>Phân Bố Yêu Cầu Theo Tư Vấn Viên</h3>
-                    <canvas id="advisor-chart"></canvas>
-                     <div class="chart-no-data" id="advisor-chart-no-data" style="display: none;">Không có dữ liệu để vẽ biểu đồ</div>
-                </div>
-            </div>
-            <div class="controls">
-                 <div class="export-btn-container">
-                    <span>Tổng số dòng: <span id="detailed-row-count">0</span></span>
-                    <button class="refresh-btn" onclick="refreshData()" data-tooltip="Làm mới dữ liệu"><i class="fas fa-sync-alt"></i></button>
-                    <button class="export-btn" onclick="exportDetailedStatsToExcel()" data-tooltip="Xuất ra Excel"><i class="fas fa-file-excel"></i></button>
-                </div>
-            </div>
-            <div class="table-wrapper">
-                <table id="detailed-stats-table">
-                    <thead>
+
+                <div class="table-wrapper max-h-[60vh] overflow-auto border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                    <table id="bulk-order-editable-table" class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                        <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
                         <tr>
-                            <th>STT</th>
-                            <th>Dòng Xe</th>
-                            <th>Phiên Bản</th>
-                            <th>Ngoại Thất</th>
-                            <th>Nội Thất</th>
-                            <th>Tư Vấn Viên</th>
-                            <th>Ngày Cọc</th>
-                            <th>Số Lượng Yêu Cầu</th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider" title="Số Thứ Tự">STT</th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên Khách Hàng <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Dòng Xe <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Phiên Bản <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngoại Thất <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nội Thất <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Số Đơn Hàng <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày Cọc <span class="text-red-500">*</span></th>
+                            <th class="px-3 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider" title="Xóa Dòng">
+                                <i class="fas fa-trash-alt"></i>
+                            </th>
+                            <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[150px]">Trạng Thái / Lỗi</th>
                         </tr>
                     </thead>
-                    <tbody id="detailed-stats-body">
-                         <tr class="table-placeholder"><td colspan="8"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
-                    </tbody>
-                </table>
+                        <tbody id="bulk-order-editable-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-5 text-sm text-gray-700 dark:text-gray-300 flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <span class="flex items-center" title="Tổng số dòng">
+                        <i class="fas fa-list-ol mr-1.5 text-gray-500 dark:text-gray-400 text-base"></i> Tổng:
+                        <strong id="bulk-total-rows" class="ml-1.5 text-gray-800 dark:text-gray-100 font-medium">0</strong>
+                    </span>
+                    <span class="flex items-center" title="Số dòng hợp lệ">
+                        <i class="fas fa-check-circle mr-1.5 text-green-500 text-base"></i> Hợp lệ:
+                        <strong id="bulk-valid-rows" class="ml-1.5 text-green-600 dark:text-green-400 font-medium">0</strong>
+                    </span>
+                    <span class="flex items-center" title="Số dòng bị lỗi">
+                        <i class="fas fa-exclamation-circle mr-1.5 text-red-500 text-base"></i> Lỗi:
+                        <strong id="bulk-error-rows" class="ml-1.5 text-red-600 dark:text-red-400 font-medium">0</strong>
+                    </span>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end items-center gap-3">
+                    <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" aria-label="Gửi Các Đơn Hợp Lệ" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150" onclick="submitValidBulkTableOrders()" style="display:none;">
+                        <i class="fas fa-paper-plane mr-1.5 text-sm"></i> GỬI YÊU CẦU
+                    </button>
+                </div>
             </div>
-        </div>
-
-<div class="grid-container hidden" id="bulk-entry-table-section">
-    <div class="form-container w-full p-4 md:p-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
-        <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                NHẬP YÊU CẦU
-            </h2>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" aria-label="Thêm Dòng Mới" class="px-3 py-1 bg-green-800 text-white rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
-    <i class="fas fa-plus mr-1.5 text-sm"></i>Thêm
-</button>
-                <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" aria-label="Kiểm Tra Dữ Liệu" class="px-3 py-1 bg-indigo-800 text-white rounded-md hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
-    <i class="fas fa-check-double mr-1.5 text-sm"></i>Kiểm Tra
-</button>
-                <button type="button" title="Xóa Toàn Bộ Bảng" aria-label="Xóa Toàn Bộ Bảng" class="p-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-75 shadow-sm flex items-center justify-center transition-colors duration-150" onclick="clearBulkEditableTable()">
-                    <i class="fas fa-trash-alt text-base"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="table-wrapper max-h-[60vh] overflow-auto border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
-            <table id="bulk-order-editable-table" class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
-                <tr>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider" title="Số Thứ Tự">STT</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên Khách Hàng <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Dòng Xe <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Phiên Bản <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngoại Thất <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nội Thất <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Số Đơn Hàng <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày Cọc <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider" title="Xóa Dòng">
-                        <i class="fas fa-trash-alt"></i>
-                    </th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[150px]">Trạng Thái / Lỗi</th>
-                </tr>
-            </thead>
-                <tbody id="bulk-order-editable-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                </tbody>
-            </table>
-        </div>
-
-        <div class="mt-5 text-sm text-gray-700 dark:text-gray-300 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <span class="flex items-center" title="Tổng số dòng">
-                <i class="fas fa-list-ol mr-1.5 text-gray-500 dark:text-gray-400 text-base"></i> Tổng:
-                <strong id="bulk-total-rows" class="ml-1.5 text-gray-800 dark:text-gray-100 font-medium">0</strong>
-            </span>
-            <span class="flex items-center" title="Số dòng hợp lệ">
-                <i class="fas fa-check-circle mr-1.5 text-green-500 text-base"></i> Hợp lệ:
-                <strong id="bulk-valid-rows" class="ml-1.5 text-green-600 dark:text-green-400 font-medium">0</strong>
-            </span>
-            <span class="flex items-center" title="Số dòng bị lỗi">
-                <i class="fas fa-exclamation-circle mr-1.5 text-red-500 text-base"></i> Lỗi:
-                <strong id="bulk-error-rows" class="ml-1.5 text-red-600 dark:text-red-400 font-medium">0</strong>
-            </span>
-        </div>
-
-        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end items-center gap-3">
-            <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" aria-label="Gửi Các Đơn Hợp Lệ" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150" onclick="submitValidBulkTableOrders()" style="display:none;">
-                <i class="fas fa-paper-plane mr-1.5 text-sm"></i> GỬI YÊU CẦU
-            </button>
         </div>
     </div>
-</div>
-        </div> <footer>
+    <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
 
-<div class="modal" id="preview-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-question-circle"></i> Xác Nhận Thông Tin</h2>
-            <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
-        </div>
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-question-circle"></i> Xác Nhận Thông Tin</h2>
+                <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
+            </div>
             <div id="preview-content" class="modal-body"></div>
             <div class="modal-footer">
                 <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Hủy</button>
@@ -1792,20 +1781,21 @@ body.dark-mode .main-container.form-active #history-table td {
         </div>
     </div>
 
-<div class="modal" id="success-modal">
-    <div class="modal-content success-modal-content">
-        <div class="modal-header">
-            <h2>Đã Gửi Dữ Liệu Thành Công</h2>
-        </div>
-        <div class="modal-body" style="text-align: center;">
-            <i class="fas fa-check-circle"></i>
-            <p>Yêu cầu ghép xe của bạn đã được ghi nhận.</p>
+    <div class="modal" id="success-modal">
+        <div class="modal-content success-modal-content">
+            <div class="modal-header">
+                <h2>Đã Gửi Dữ Liệu Thành Công</h2>
             </div>
-        <div class="modal-footer">
-            <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
+            <div class="modal-body" style="text-align: center;">
+                <i class="fas fa-check-circle"></i>
+                <p>Yêu cầu ghép xe của bạn đã được ghi nhận.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="closeModal('success-modal')">Đóng</button>
+            </div>
         </div>
     </div>
-</div>
+
     <div class="modal" id="loading-modal">
         <div class="modal-content loading-modal-content">
             <div class="modal-header">
@@ -1817,6 +1807,7 @@ body.dark-mode .main-container.form-active #history-table td {
             </div>
         </div>
     </div>
+
     <div class="modal" id="pending-invoice-warning-modal">
         <div class="modal-content warning-modal-content">
             <div class="modal-header">
@@ -1828,135 +1819,158 @@ body.dark-mode .main-container.form-active #history-table td {
                 <p style="font-size: 15px; line-height: 1.6; margin-top: 10px;">
                     <strong>Đề nghị kiểm tra và xuất hóa đơn cho các xe này trước khi tạo yêu cầu ghép xe mới.</strong>
                 </p>
-                </div>
+            </div>
             <div class="modal-footer" style="justify-content: center;">
                 <button class="modal-btn primary" onclick="closeModal('pending-invoice-warning-modal')">Đã hiểu</button>
             </div>
         </div>
     </div>
-<div class="modal" id="cancel-confirm-modal">
-    <div class="modal-content warning-modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
-            <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body" style="text-align: center;">
-            <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
-            
-            <div class="mt-4 text-left">
-                <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do hủy <span class="text-red-500">*</span></label>
-                <textarea id="cancel-reason" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:ring-primary-color focus:border-primary-color dark:focus:ring-secondary-color dark:focus:border-secondary-color" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin xe..."></textarea>
-            </div>
-            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
-                Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
-            </p>
-        </div>
-<div class="modal-footer" style="justify-content: center;">
-    <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
-    <button class="modal-btn danger" id="confirm-cancel-button">Có, Hủy</button>
-</div>
-    </div>
-</div>
-<div class="modal" id="invoice-confirm-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
-            <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
-                Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
-            </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
-                <div>
-                    <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
-                    <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
-                            <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
+    <div class="modal" id="cancel-confirm-modal">
+        <div class="modal-content warning-modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
+                <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
+                
+                <div class="mt-4 text-left">
+                    <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do hủy <span class="text-red-500">*</span></label>
+                    <textarea id="cancel-reason" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:ring-primary-color focus:border-primary-color dark:focus:ring-secondary-color dark:focus:border-secondary-color" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin xe..."></textarea>
+                </div>
+                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
+                    Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
+                </p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
+                <button class="modal-btn danger" id="confirm-cancel-button">Có, Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="invoice-confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
+                <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
+                    Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
+                    <div>
+                        <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
+                        <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                            <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                            <div class="flex flex-col items-center justify-center text-center p-2">
+                                <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
+                                <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
+                        <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                            <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                            <div class="flex flex-col items-center justify-center text-center p-2">
+                                <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
+                                <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div>
-                    <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
-                    <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
-                            <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
-                        </div>
-                    </div>
-                </div>
+                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
+                    Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
+                </p>
             </div>
-            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
-                Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
-            </p>
-        </div>
-        <div class="modal-footer" style="justify-content: center;">
-            <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
-            <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+                <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
+            </div>
         </div>
     </div>
-</div>
+
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang">
         <i class="fas fa-arrow-up"></i>
     </button>
-<div class="modal" id="supplementary-file-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-file-upload"></i> Bổ Sung/Thay Thế File</h2>
-            <button class="modal-close-btn" onclick="closeModal('supplementary-file-modal')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <div id="supp-modal-order-info" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
+    
+    <div class="modal" id="supplementary-file-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-upload"></i> Bổ Sung/Thay Thế File</h2>
+                <button class="modal-close-btn" onclick="closeModal('supplementary-file-modal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="supp-modal-order-info" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
                 </div>
-            <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 text-center">
-                Chỉ cần chọn file bạn muốn thay thế. Các file không được chọn sẽ được giữ nguyên.
-            </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="supp_hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán (Mới)</label>
-                    <div id="supp-hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="supp_hop_dong_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-contract text-2xl text-blue-600 dark:text-blue-400"></i>
-                            <span class="text-xs" id="supp-hopdong-prompt-text">Chọn file HĐMB mới</span>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 text-center">
+                    Chỉ cần chọn file bạn muốn thay thế. Các file không được chọn sẽ được giữ nguyên.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="supp_hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán (Mới)</label>
+                        <div id="supp-hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                            <input type="file" id="supp_hop_dong_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                            <div class="flex flex-col items-center justify-center text-center p-2">
+                                <i class="fas fa-file-contract text-2xl text-blue-600 dark:text-blue-400"></i>
+                                <span class="text-xs" id="supp-hopdong-prompt-text">Chọn file HĐMB mới</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="supp_denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị XHĐ (Mới)</label>
+                        <div id="supp-denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-green-500 dark:hover:border-green-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                            <input type="file" id="supp_denghi_xhd_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                            <div class="flex flex-col items-center justify-center text-center p-2">
+                                <i class="fas fa-file-invoice-dollar text-2xl text-green-600 dark:text-green-400"></i>
+                                <span class="text-xs" id="supp-denghi-prompt-text">Chọn file ĐN/XHĐ mới</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div>
-                    <label for="supp_denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị XHĐ (Mới)</label>
-                    <div id="supp-denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-green-500 dark:hover:border-green-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="supp_denghi_xhd_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-invoice-dollar text-2xl text-green-600 dark:text-green-400"></i>
-                            <span class="text-xs" id="supp-denghi-prompt-text">Chọn file ĐN/XHĐ mới</span>
-                        </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="modal-btn secondary" onclick="closeModal('supplementary-file-modal')">Hủy Bỏ</button>
+                <button class="modal-btn primary" id="confirm-supp-file-button">Gửi File Bổ Sung</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="admin-invoice-upload-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-file-invoice-dollar"></i> Tải Lên Hóa Đơn Đã Xuất</h2>
+            <button class="modal-close-btn" onclick="closeModal('admin-invoice-upload-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p class="mb-4 text-center">Tải lên file hóa đơn (PDF, ảnh,...) cho đơn hàng: <strong id="admin-upload-order-number-display" class="text-primary-color dark:text-secondary-color"></strong></p>
+            
+            <div>
+                <label for="admin_invoice_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chọn tệp hóa đơn <span class="text-red-500">*</span></label>
+                <div id="admin-invoice-upload-wrapper" class="relative w-full h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                    <input type="file" id="admin_invoice_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf,.xlsx,.xls">
+                    <div class="flex flex-col items-center justify-center text-center p-2">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-primary-color dark:text-secondary-color"></i>
+                        <span class="text-sm mt-2" id="admin-invoice-prompt-text">Kéo thả hoặc nhấn để chọn file</span>
                     </div>
                 </div>
             </div>
         </div>
         <div class="modal-footer" style="justify-content: center;">
-            <button class="modal-btn secondary" onclick="closeModal('supplementary-file-modal')">Hủy Bỏ</button>
-            <button class="modal-btn primary" id="confirm-supp-file-button">Gửi File Bổ Sung</button>
+            <button class="modal-btn secondary" onclick="closeModal('admin-invoice-upload-modal')">Hủy</button>
+            <button class="modal-btn primary" id="confirm-admin-invoice-upload-button">Tải Lên</button>
         </div>
     </div>
 </div>
     <div id="notification-container"></div>
-
+</body>
 <script>
-// --- CONTENT FROM ORIGINAL SCRIPT BLOCK, MODIFIED AND WITH NEW ADDITIONS ---
-
-// --- Biến toàn cục và Hằng số ---
-let globalHistoryData = [];
-let formData = {}, orderId = "", detailedStatsData = [], redirectTimeout;let carChart, carVersionChart, advisorChart;
+let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let currentOrderNumberToCancel = null;
-const apiURL = "https://script.google.com/macros/s/AKfycbzNzcJhPAvuHjaKpABkxUF7zjVoXML0CN9UQU3h1g7HDFPvVy4ethvzvLV_EdVwtRSAXQ/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxSqi8uxBXz2EUJMeJGc4VVOgG9Dpq_FVZB7jpU1UOS_uwE7Sx9lcc6lyF7ByN2aThFDQ/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -2044,12 +2058,6 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             globalHistoryData = JSON.parse(cachedHistoryData);
             if (globalHistoryData && globalHistoryData.length > 0) {
-                prepareDetailedStats(globalHistoryData);
-                
-                // --- SỬA ĐỔI TẠI ĐÂY ---
-                // Dòng dưới đây đã được vô hiệu hóa để không hiển thị cảnh báo khi vừa truy cập.
-                // checkPendingInvoicesWarning();
-                // --- KẾT THÚC SỬA ĐỔI ---
 
             }
         } catch (e) {
@@ -2159,9 +2167,7 @@ function applyInitialTheme() {
     if (themeIcon) {
         themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
     }
-    if (typeof Chart !== "undefined" && (carChart || carVersionChart || advisorChart)) {
-        updateChartColors();
-    }
+
 }
 
 function toggleTheme() {
@@ -2182,7 +2188,6 @@ function logout() {
     localStorage.removeItem(FORM_DRAFT_KEY);
     localStorage.removeItem('sidebarState');
     globalHistoryData = [];
-    detailedStatsData = [];
     window.location.href = "index.html";
     showNotification("Đã đăng xuất!", "info", 2000);
 }
@@ -2412,14 +2417,10 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
-async function fetchHistory(showLoadingPlaceholder = true) { // Thêm tham số để kiểm soát placeholder
-    return new Promise(async (resolve, reject) => { // Trả về một Promise
+async function fetchHistory(showLoadingPlaceholder = true) {
+    return new Promise(async (resolve, reject) => {
         if (showLoadingPlaceholder) {
             setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
-            const detailedStatsSection = document.getElementById('detailed-stats-section');
-            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                setTablePlaceholder("detailed-stats-body", "Đang tải dữ liệu thống kê...", "fas fa-spinner fa-spin");
-            }
         }
 
         try {
@@ -2433,52 +2434,58 @@ async function fetchHistory(showLoadingPlaceholder = true) { // Thêm tham số 
             const daghep = data.daghep || [];
             const chuaghep = data.chuaghep || [];
             globalHistoryData = [...daghep, ...chuaghep].sort((a, b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
-
-            // CẬP NHẬT SESSIONSTORAGE NGAY TẠI ĐÂY
+            
             sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
-            console.log('fetchHistory: globalHistoryData và sessionStorage đã được cập nhật.');
 
-            // Vẫn render bảng và các thành phần khác như bình thường
             const currentUser = sessionStorage.getItem("currentConsultant");
             const isAdmin = currentUser === ADMIN_USER;
-            let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser);
+
+            // =================================================================
+            // ===== SỬA LỖI LỌC DỮ LIỆU CUỐI CÙNG (chuẩn hóa cả dấu) =====
+            let dataForHistoryTable = isAdmin 
+                ? globalHistoryData 
+                : globalHistoryData.filter(row => 
+                    normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser)
+                );
+            // =================================================================
 
             if (document.getElementById('history-section') && !document.getElementById('history-section').classList.contains('hidden')) {
                 renderHistoryTable(dataForHistoryTable);
-                renderSummary(globalHistoryData); // renderSummary thường dùng globalHistoryData
+                renderSummary(globalHistoryData);
             }
 
-            // Chuẩn bị dữ liệu thống kê, nhưng chỉ render nếu tab đó đang active
-            prepareDetailedStats(globalHistoryData); // prepareDetailedStats dùng globalHistoryData
-            const detailedStatsSection = document.getElementById('detailed-stats-section');
-            if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                renderDetailedStatsTable(detailedStatsData); // renderDetailedStatsTable dùng detailedStatsData
-                renderCharts(detailedStatsData); // renderCharts dùng detailedStatsData
-            }
-            
-            // Không cần thiết nếu các hàm render không phụ thuộc vào trạng thái active của tab
-            // checkPendingInvoicesWarning(); // Nếu hàm này dựa vào globalHistoryData
-
-            resolve(globalHistoryData); // Giải quyết Promise với dữ liệu đã cập nhật
+            resolve(globalHistoryData);
 
         } catch (error) {
             console.error("Lỗi nghiêm trọng khi tải dữ liệu lịch sử:", error);
             if (showLoadingPlaceholder) {
                 setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle");
-                const detailedStatsSection = document.getElementById('detailed-stats-section');
-                if (detailedStatsSection && !detailedStatsSection.classList.contains('hidden')) {
-                    setTablePlaceholder("detailed-stats-body", `Lỗi tải dữ liệu thống kê.`, "fas fa-exclamation-triangle");
-                }
             }
-            reject(error); // Từ chối Promise nếu có lỗi
+            reject(error);
         }
     });
 }
+
 function refreshData() {
     fetchHistory();
     showNotification("Dữ liệu đã được làm mới từ máy chủ!", "success", 2500);
 }
-
+/**
+ * [HÀM MỚI] Chuẩn hóa chuỗi tên để so sánh:
+ * 1. Loại bỏ dấu tiếng Việt.
+ * 2. Chuyển thành chữ hoa.
+ * 3. Loại bỏ khoảng trắng thừa ở đầu và cuối.
+ */
+function normalizeName(str) {
+    if (!str || typeof str !== 'string') return "";
+    return str
+        .normalize("NFD") // Tách ký tự và dấu
+        .replace(/[\u0300-\u036f]/g, "") // Loại bỏ các ký tự dấu
+        .replace(/đ/g, "d") // Chuyển 'đ' thành 'd'
+        .replace(/Đ/g, "D") // Chuyển 'Đ' thành 'D'
+        .toUpperCase()      // Chuyển thành chữ hoa
+        .trim();            // Loại bỏ khoảng trắng thừa
+}
 function getExteriorColorStyle(exteriorValue) {
     const specificFontWeight = `font-weight: 600;`;
     const defaultFontWeight = `font-weight: normal;`;
@@ -2603,12 +2610,38 @@ function renderHistoryTable(dataToRender) {
 
         let actionButtonsHtml = '';
 
-        // Điều kiện hiển thị các nút
+        // ===== BẮT ĐẦU SỬA ĐỔI LOGIC NÚT (THEO YÊU CẦU MỚI) =====
+        
         const canRequestInvoice = !isAdmin && (normalizedStatusText === 'đã ghép') && row["VIN"];
         const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép'].includes(normalizedStatusText);
         const canUpdateFiles = !isAdmin && normalizedStatusText === 'chờ xuất hóa đơn';
 
-        // Nút Yêu cầu Xuất Hóa Đơn
+        // --- NÚT "Up Invoice" CHO ADMIN ---
+        // Hiển thị CHỈ KHI trạng thái là "Chờ xuất hóa đơn" và chưa có link hóa đơn.
+        const canUploadInvoice = isAdmin && normalizedStatusText === 'chờ xuất hóa đơn' && !row.LinkHoaDonDaXuat;
+        if (canUploadInvoice) {
+            actionButtonsHtml += `
+                <button 
+                    class="upload-invoice-btn" 
+                    onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')" 
+                    data-tooltip="Tải lên tệp hóa đơn đã xuất">
+                    <i class="fas fa-file-upload"></i> Up Invoice
+                </button>`;
+        }
+        
+        // --- NÚT "Tải Hóa Đơn" ---
+        // Hiển thị CHỈ KHI trạng thái là "Đã xuất hóa đơn" và có link.
+        if (normalizedStatusText === 'đã xuất hóa đơn' && row.LinkHoaDonDaXuat) {
+             actionButtonsHtml += `
+                <button 
+                    class="download-invoice-btn" 
+                    onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" 
+                    data-tooltip="Tải về hóa đơn đã xuất">
+                    <i class="fas fa-file-download"></i> Tải Hóa Đơn
+                </button>`;
+        }
+
+        // --- CÁC NÚT CŨ (GIỮ NGUYÊN) ---
         if (canRequestInvoice) {
             actionButtonsHtml += `
                 <button 
@@ -2618,8 +2651,6 @@ function renderHistoryTable(dataToRender) {
                     <i class="fas fa-paper-plane"></i> Yêu Cầu Xuất Hóa Đơn
                 </button>`;
         }
-
-        // Nút Bổ Sung File
         if (canUpdateFiles) {
              actionButtonsHtml += `
                 <button 
@@ -2629,8 +2660,6 @@ function renderHistoryTable(dataToRender) {
                     <i class="fas fa-file-upload"></i> Sửa File
                 </button>`;
         }
-
-        // Nút Hủy
         if (canCancel) {
             actionButtonsHtml += `
                 <button 
@@ -2640,20 +2669,24 @@ function renderHistoryTable(dataToRender) {
                     <i class="fas fa-trash-alt"></i>
                 </button>`;
         }
-return `
-<tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}"> <td data-label="STT"><span>${i + 1}</span></td>
-   <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
-   <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
-   <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
-   <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
-   <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
-   <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
-   <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
-   <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
-   <td data-label="Hành động">
-        <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
-   </td>
-</tr>`;
+        
+        // ===== KẾT THÚC SỬA ĐỔI LOGIC NÚT =====
+
+        return `
+            <tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
+               <td data-label="STT"><span>${i + 1}</span></td>
+               <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
+               <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
+               <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
+               <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
+               <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
+               <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
+               <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
+               <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
+               <td data-label="Hành động">
+                    <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
+               </td>
+            </tr>`;
     }).join("");
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
@@ -2961,104 +2994,6 @@ function closeModalAndRedirect() {
     // Chuyển hướng đến trang chi tiết với số đơn hàng đã lưu
     window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderId)}`;
 }
-function prepareDetailedStats(data) {
-    const statsMap = new Map();
-    data.forEach(row => {
-        const key = `${row["Dòng xe"] || "N/A"}|${row["Phiên bản"] || "N/A"}|${row["Ngoại thất"] || "N/A"}|${row["Nội thất"] || "N/A"}|${row["Tên tư vấn bán hàng"] || "N/A"}|${row["Ngày cọc"] ? formatDateForFilter(row["Ngày cọc"]) : "N/A"}`;
-        const entry = statsMap.get(key);
-        if (entry) { entry.count++; }
-        else {
-            statsMap.set(key, {
-                dong_xe: row["Dòng xe"] || "N/A", phien_ban: row["Phiên bản"] || "N/A",
-                ngoai_that: row["Ngoại thất"] || "N/A", noi_that: row["Nội thất"] || "N/A",
-                tu_van_vien: row["Tên tư vấn bán hàng"] || "N/A", ngay_coc: row["Ngày cọc"], count: 1
-            });
-        }
-    });
-    detailedStatsData = Array.from(statsMap.values());
-}
-
-function renderDetailedStatsTable(dataToRender) {
-    const tbody = document.getElementById("detailed-stats-body");
-    if (!tbody) return;
-    if (!dataToRender || dataToRender.length === 0) {
-        setTablePlaceholder("detailed-stats-body", "Không có dữ liệu thống kê chi tiết.", "fas fa-chart-pie");
-        document.getElementById("detailed-row-count").textContent = 0;
-        document.getElementById("detailed-total").textContent = "0";
-        document.getElementById("detailed-car-types").textContent = "0";
-        document.getElementById("detailed-advisors").textContent = "0";
-        return;
-    }
-    tbody.innerHTML = dataToRender.map((row, i) => `
-        <tr>
-            <td data-label="STT"><span>${i + 1}</span></td>
-            <td data-label="Dòng Xe"><span>${row.dong_xe}</span></td>
-            <td data-label="Phiên Bản"><span>${row.phien_ban}</span></td>
-            <td data-label="Ngoại Thất"><span>${row.ngoai_that}</span></td>
-            <td data-label="Nội Thất"><span>${row.noi_that}</span></td>
-            <td data-label="Tư Vấn Viên"><span>${row.tu_van_vien}</span></td>
-            <td data-label="Ngày Cọc"><span>${row.ngay_coc ? formatDateTime(row.ngay_coc) : "N/A"}</span></td>
-            <td data-label="Số Lượng"><span>${row.count}</span></td>
-        </tr>`).join("");
-    document.getElementById("detailed-row-count").textContent = dataToRender.length;
-    document.getElementById("detailed-total").textContent = globalHistoryData.length;
-    document.getElementById("detailed-car-types").textContent = new Set(globalHistoryData.map(r => r["Dòng xe"]).filter(Boolean)).size;
-    document.getElementById("detailed-advisors").textContent = new Set(globalHistoryData.map(r => r["Tên tư vấn bán hàng"]).filter(Boolean)).size;
-}
-
-function renderCharts(dataForCharts) {
-    if (typeof Chart === "undefined") return showNotification("Thư viện Chart.js chưa được tải!", "error", 3000);
-    const carData = {}, carVersionData = {}, advisorData = {};
-    dataForCharts.forEach(row => {
-        if (row.dong_xe && row.dong_xe !== "N/A") carData[row.dong_xe] = (carData[row.dong_xe] || 0) + row.count;
-        const carVersionKey = (row.dong_xe && row.dong_xe !== "N/A" && row.phien_ban && row.phien_ban !== "N/A") ? `${row.dong_xe} - ${row.phien_ban}` : null;
-        if (carVersionKey) carVersionData[carVersionKey] = (carVersionData[carVersionKey] || 0) + row.count;
-        if (row.tu_van_vien && row.tu_van_vien !== "N/A") advisorData[row.tu_van_vien] = (advisorData[row.tu_van_vien] || 0) + row.count;
-    });
-    const isDarkMode = document.body.classList.contains("dark-mode");
-    const chartColors = {
-        grid: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', ticks: isDarkMode ? '#c9d1d9' : '#2c3e50',
-        legend: isDarkMode ? '#c9d1d9' : '#2c3e50', bgBar: isDarkMode ? "rgba(0, 174, 255, 0.7)" : "rgba(0, 48, 135, 0.7)",
-        borderBar: isDarkMode ? "#00aeff" : "#003087",
-        pieColors: isDarkMode ? ["#00aeff", "#00c6ff", "#66d9ff", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"] : ["#003087", "#0040c1", "#005eb8", "#28a745", "#ff6384", "#ff9f40", "#ffcd56", "#4bc0c0", "#9966ff", "#c9cbcf"]
-    };
-    const baseOptions = { responsive: true, maintainAspectRatio: false, animation: { duration: 800, easing: 'easeInOutQuart' }, plugins: { legend: { labels: { font: { size: 10 }, color: chartColors.legend }, position: 'bottom', maxHeight: 50 } } };
-    const barOptions = { ...baseOptions, scales: { y: { beginAtZero: true, ticks: { font: { size: 9 }, color: chartColors.ticks, stepSize: 1 }, grid: { color: chartColors.grid, drawBorder: false } }, x: { ticks: { font: { size: 9 }, color: chartColors.ticks, maxRotation: 45, minRotation: 45 }, grid: { display: false } } }, layout: { padding: 5 } };
-    const pieOptions = { ...baseOptions, plugins: { ...baseOptions.plugins, tooltip: { callbacks: { label: function(context) { let label = context.label || ''; if (label) { label += ': '; } if (context.parsed !== null) { label += context.parsed + ' (' + ((context.parsed / context.chart.getDatasetMeta(0).total) * 100).toFixed(1) + '%)'; } return label; }}}} };
-    [carChart, carVersionChart, advisorChart].forEach(chart => chart?.destroy());
-    const createChartInstance = (ctxId, noDataId, type, data, labels, options, customColors = null) => {
-        const ctx = document.getElementById(ctxId), noDataEl = document.getElementById(noDataId);
-        if (!ctx || !noDataEl) return null;
-        if (labels.length > 0) {
-            noDataEl.style.display = "none"; ctx.style.display = "block";
-            return new Chart(ctx, { type, data: { labels, datasets: [{ label: "Số lượng", data, backgroundColor: customColors || (type === 'pie' ? chartColors.pieColors : chartColors.bgBar), borderColor: type === 'pie' ? (isDarkMode ? '#1e242e' : '#ffffff') : chartColors.borderBar, borderWidth: type === 'pie' ? 2 : 1, borderRadius: type === 'bar' ? 4 : 0, barPercentage: 0.8, categoryPercentage: 0.7 }] }, options });
-        } else { noDataEl.style.display = "block"; ctx.style.display = "none"; const context = ctx.getContext('2d'); if (context) context.clearRect(0, 0, ctx.width, ctx.height); }
-        return null;
-    };
-    carChart = createChartInstance("car-chart", "car-chart-no-data", "bar", Object.values(carData), Object.keys(carData), barOptions);
-    carVersionChart = createChartInstance("car-version-chart", "car-version-chart-no-data", "bar", Object.values(carVersionData), Object.keys(carVersionData), barOptions);
-    advisorChart = createChartInstance("advisor-chart", "advisor-chart-no-data", "pie", Object.values(advisorData), Object.keys(advisorData), pieOptions);
-}
-
-function updateChartColors() {
-    const activeTabLink = document.querySelector('.tabs a.active');
-    if (activeTabLink?.getAttribute('onclick')?.includes('detailed-stats') && detailedStatsData.length > 0) {
-        renderCharts(detailedStatsData);
-    }
-}
-
-function exportDetailedStatsToExcel() {
-    if (typeof XLSX === "undefined") return showNotification("Thư viện XLSX chưa được tải!", "error", 3000);
-    const dataToExport = detailedStatsData;
-    if (!dataToExport || dataToExport.length === 0) return showNotification("Không có dữ liệu thống kê để xuất.", "info", 3000);
-    const formattedForExcel = dataToExport.map((row, index) => ({ "STT": index + 1, "Dòng Xe": row.dong_xe, "Phiên Bản": row.phien_ban, "Ngoại Thất": row.ngoai_that, "Nội Thất": row.noi_that, "Tư Vấn Viên": row.tu_van_vien, "Ngày Cọc": row.ngay_coc ? formatDateTime(row.ngay_coc) : "", "Số Lượng Yêu Cầu": row.count }));
-    const headers = ["STT", "Dòng Xe", "Phiên Bản", "Ngoại Thất", "Nội Thất", "Tư Vấn Viên", "Ngày Cọc", "Số Lượng Yêu Cầu"];
-    const ws = XLSX.utils.json_to_sheet(formattedForExcel, {header: headers});
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ThongKeChiTietGhepXe");
-    XLSX.writeFile(wb, "ThongKeChiTietGhepXe_ThuanAn.xlsx");
-    showNotification("Đã xuất Thống kê chi tiết thành công!", "success", 2000);
-}
 
 // --- Tab Switching (Sửa lỗi layout + Logic mới) ---
 function switchTab(tabName, element) {
@@ -3070,7 +3005,6 @@ function switchTab(tabName, element) {
     const sections = {
         'form': document.getElementById('form-section'),
         'history': document.getElementById('history-section'),
-        'detailed-stats': document.getElementById('detailed-stats-section'),
         'bulk-entry-table': document.getElementById('bulk-entry-table-section')
     };
 
@@ -3116,17 +3050,6 @@ function switchTab(tabName, element) {
             if (isDataCached) {
                 filterHistory();
                 renderSummary(globalHistoryData);
-            } else {
-                fetchHistory();
-            }
-        } else if (tabName === 'detailed-stats') {
-            showSection(sections['detailed-stats']);
-            if (isDataCached) {
-                if (detailedStatsData.length === 0 && globalHistoryData.length > 0) {
-                    prepareDetailedStats(globalHistoryData);
-                }
-                renderDetailedStatsTable(detailedStatsData);
-                renderCharts(detailedStatsData);
             } else {
                 fetchHistory();
             }
@@ -4795,7 +4718,113 @@ function showBulkSuccessModal(count, redirectOrderNumber) {
         adjustModalScroll(modal);
     }
 }
+/* ================================================================== */
+/* ===== BẮT ĐẦU CÁC HÀM MỚI CHO CHỨC NĂNG HÓA ĐƠN ===== */
+/* ================================================================== */
 
+/**
+ * Mở modal cho Admin để tải lên tệp hóa đơn.
+ * @param {Event} event - Đối tượng sự kiện để ngăn chặn sự lan truyền.
+ * @param {string} orderNumber - Số đơn hàng cần tải hóa đơn lên.
+ */
+function openAdminInvoiceUploadModal(event, orderNumber) {
+    event.stopPropagation(); // Ngăn sự kiện click của dòng `<tr>`
+
+    const modal = document.getElementById('admin-invoice-upload-modal');
+    const orderDisplay = document.getElementById('admin-upload-order-number-display');
+    const confirmButton = document.getElementById('confirm-admin-invoice-upload-button');
+    const fileInput = document.getElementById('admin_invoice_file_input');
+    const promptText = document.getElementById('admin-invoice-prompt-text');
+
+    // Reset giao diện modal mỗi khi mở
+    if (fileInput) fileInput.value = '';
+    if (promptText) promptText.textContent = 'Kéo thả hoặc nhấn để chọn file';
+
+    if (!modal || !orderDisplay || !confirmButton) {
+        showNotification("Lỗi: Không thể mở giao diện tải lên.", "error");
+        return;
+    }
+
+    orderDisplay.textContent = orderNumber;
+    
+    // Gán sự kiện click cho nút "Tải Lên"
+    confirmButton.onclick = function() {
+        processAdminInvoiceUpload(orderNumber);
+    };
+    
+    // Gán sự kiện change cho input file để cập nhật tên file
+    fileInput.onchange = function() {
+        if(this.files.length > 0) {
+            promptText.textContent = this.files[0].name;
+        } else {
+            promptText.textContent = 'Kéo thả hoặc nhấn để chọn file';
+        }
+    };
+
+    modal.classList.add("active");
+    adjustModalScroll(modal);
+}
+
+/**
+ * Xử lý quá trình tải tệp hóa đơn lên server.
+ * @param {string} orderNumber - Số đơn hàng.
+ */
+async function processAdminInvoiceUpload(orderNumber) {
+    const fileInput = document.getElementById('admin_invoice_file_input');
+    if (!fileInput || fileInput.files.length === 0) {
+        showNotification("Vui lòng chọn một tệp hóa đơn để tải lên.", "warning");
+        return;
+    }
+
+    closeModal('admin-invoice-upload-modal');
+    showOldLoadingModal("Đang Gửi Tệp Hóa Đơn...", "Vui lòng chờ trong giây lát.");
+
+    try {
+        const file = fileInput.files[0];
+        const fileBase64 = await fileToBase64(file);
+
+        const payload = new FormData();
+        payload.append('action', 'uploadIssuedInvoice');
+        payload.append('orderNumber', orderNumber);
+        payload.append('uploadedBy', sessionStorage.getItem("currentConsultant") || "Admin");
+        payload.append('invoiceFileName', file.name);
+        payload.append('invoiceFileBase64', fileBase64);
+
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            body: payload
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'SUCCESS') {
+            showNotification(result.message, 'success', 3000);
+            await refreshData(); // Tải lại dữ liệu để cập nhật bảng với nút tải xuống
+        } else {
+            throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
+        }
+
+    } catch (error) {
+        console.error('Lỗi khi tải lên hóa đơn:', error);
+        showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+    } finally {
+        closeModal('loading-modal');
+    }
+}
+
+/**
+ * Mở file hóa đơn trong một tab mới để tải về.
+ * @param {Event} event - Đối tượng sự kiện để ngăn chặn sự lan truyền.
+ * @param {string} fileUrl - URL của tệp hóa đơn.
+ */
+function downloadInvoice(event, fileUrl) {
+    event.stopPropagation(); // Ngăn sự kiện click của dòng `<tr>`
+    if (fileUrl) {
+        window.open(fileUrl, '_blank');
+    } else {
+        showNotification("Không tìm thấy link hóa đơn.", "error");
+    }
+}
 
 </script>
 </body>
