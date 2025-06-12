@@ -2641,7 +2641,7 @@ function renderHistoryTable(dataToRender) {
                 </button>`;
         }
 return `
-<tr> <td data-label="STT"><span>${i + 1}</span></td>
+<tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}"> <td data-label="STT"><span>${i + 1}</span></td>
    <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
    <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
    <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
@@ -4363,7 +4363,7 @@ function confirmCancelRequest(event, orderNumber) {
         }
     }
 
-// [ĐÃ SỬA] - Hàm submitValidBulkTableOrders mới
+// Thay thế toàn bộ hàm cũ bằng hàm đã được sửa đổi này
 async function submitValidBulkTableOrders() {
     if (!bulkTableBody || !document.getElementById('submit-valid-bulk-table-orders-btn')) {
         showNotification("Lỗi: Bảng dữ liệu chưa sẵn sàng để gửi.", "error");
@@ -4411,7 +4411,13 @@ async function submitValidBulkTableOrders() {
         }
 
         closeModal("loading-modal");
-        showNotification(result.message, "success", 5000);
+        
+        // --- THAY ĐỔI TẠI ĐÂY ---
+        const submittedCount = validRows.length;
+        // Lấy số đơn hàng của dòng hợp lệ đầu tiên để chuyển hướng
+        const firstOrderNumber = validRows[0]?.querySelector('input[name="so_don_hang"]')?.value.trim();
+        showBulkSuccessModal(submittedCount, firstOrderNumber); // Gọi modal thành công với tham số chuyển hướng
+        // --- KẾT THÚC THAY ĐỔI ---
         
         // Xóa các dòng đã gửi thành công khỏi bảng
         validRows.forEach(row => row.remove());
@@ -4437,6 +4443,14 @@ async function submitValidBulkTableOrders() {
         closeModal("loading-modal");
         console.error('Lỗi khi gửi hàng loạt:', error);
         showNotification(`Lỗi hệ thống khi gửi hàng loạt: ${error.message}`, 'error', 5000);
+    }
+}
+
+
+function closeModalAndRedirectAfterBulk(orderNumber) {
+    closeModal('success-modal');
+    if (orderNumber) {
+        window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
     }
 }
 
@@ -4727,6 +4741,62 @@ function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = f
         }
     });
 }
+/**
+ * [HÀM MỚI] Chuyển hướng đến trang chi tiết đơn hàng khi nhấp vào một hàng.
+ * @param {string} orderNumber - Số đơn hàng cần xem chi tiết.
+ */
+function viewOrderDetail(orderNumber) {
+    // Ngăn chặn chuyển hướng nếu không có số đơn hàng
+    if (!orderNumber || orderNumber.startsWith('temp-id-')) {
+        console.error("Không thể xem chi tiết: Số đơn hàng không hợp lệ.", orderNumber);
+        showNotification("Đơn hàng này không có số đơn hàng hợp lệ để xem chi tiết.", "warning");
+        return;
+    }
+    // Chuyển hướng đến trang chi tiết
+    window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
+}
+/**
+ * [HÀM ĐÃ SỬA] Hiển thị modal thành công cho việc gửi hàng loạt.
+ * @param {number} count - Số lượng đơn hàng đã gửi thành công.
+ * @param {string} redirectOrderNumber - Số đơn hàng của yêu cầu đầu tiên để chuyển hướng khi đóng.
+ */
+function showBulkSuccessModal(count, redirectOrderNumber) {
+    const modal = document.getElementById('success-modal');
+    if (!modal) {
+        // Fallback trong trường hợp không tìm thấy modal
+        showNotification(`Đã gửi thành công ${count} yêu cầu.`, 'success', 4000);
+        return;
+    }
+
+    const titleEl = modal.querySelector('.modal-header h2');
+    const bodyEl = modal.querySelector('.modal-body p');
+    const closeButton = modal.querySelector('.modal-btn.primary');
+
+    if (titleEl) {
+        titleEl.textContent = "Gửi Hàng Loạt Thành Công";
+    }
+    if (bodyEl) {
+        // Cập nhật nội dung để thông báo về việc chuyển trang
+        bodyEl.textContent = `Đã gửi và ghi nhận thành công ${count} yêu cầu. Nhấn "Đóng" để xem chi tiết đơn hàng đầu tiên.`;
+    }
+    
+    // Đảm bảo nút "Đóng" thực hiện chuyển trang
+    if (closeButton) {
+        if (redirectOrderNumber) {
+            closeButton.onclick = () => closeModalAndRedirectAfterBulk(redirectOrderNumber);
+        } else {
+            // Hành vi mặc định nếu không có số đơn hàng để chuyển hướng
+            closeButton.onclick = () => closeModal('success-modal');
+        }
+    }
+
+    modal.classList.add("active");
+    if (typeof adjustModalScroll === 'function') {
+        adjustModalScroll(modal);
+    }
+}
+
+
 </script>
 </body>
 </html>
