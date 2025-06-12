@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Chi Tiết Đơn Hàng - VinFast Thuận An</title>
+    <title>Chi Tiết Đơn Hàng Lịch Sử - VinFast Thuận An</title>
     <script src="https://cdn.tailwindcss.com"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -595,13 +595,12 @@
     <div class="sidebar" id="sidebar">
         <div class="logo"> <h1>VINFAST THUẬN AN</h1> </div>
         <div class="menu" id="navMenu">
-            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
-            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
-            <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
-            <a href="chinh_sach_vinfast.html" class="active" data-tooltip="Tổng hợp chính sách VinFast"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
-            <a href="gia_styled_html.html" class="active" data-tooltip="Công cụ tính giá xe VinFast"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
+            <a href="Index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" data-tooltip="Kho Xe Hiện Tại"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html" data-tooltip="Danh Sách Xe Đã Bán"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html" data-tooltip="Tạo Yêu Cầu Ghép Xe Mới"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="danhsach.html" data-tooltip="Danh Sách Các Xe Đã Ghép"><i class="fas fa-clipboard-check fa-fw"></i><span>DS Ghép Xe</span></a>
+            <a href="https://script.google.com/macros/s/AKfycbwI2DUYp88MEZ5_hNOXYMCawywvByeD_ITEG2e3d825vjQxRYvsaqqvuuZz9kVsr-r2Yw/exec" target="_blank" data-tooltip="Xem Chính Sách và Tài Liệu"><i class="fas fa-file-contract fa-fw"></i><span>Chính Sách</span></a>
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
     </div>
@@ -647,7 +646,7 @@
             "Kết quả": "Kết Quả Ghép",    
             "VIN": "Số VIN",             
             "Thời gian ghép": "Ngày Ghép",
-            "Số ngày ghép": "Số Ngày Ghép"
+            "Số ngày ghép": "Số Ngày Chờ Ghép"
         };
 
         // --- Sidebar JS ---
@@ -1030,6 +1029,8 @@
             });
         });
     </script>
+
+
 </body>
 </html>
 
