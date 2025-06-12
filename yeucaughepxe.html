@@ -1517,6 +1517,16 @@ body.dark-mode .main-container.form-active #history-table td {
     transform: none;
     box-shadow: none;
 }
+/* Thêm vào sau khối .modal-btn.secondary:hover */
+.modal-btn.danger {
+    background: #e74c3c;
+    box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+}
+.modal-btn.danger:hover {
+    background: #c0392b;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 4px 8px rgba(192, 57, 43, 0.4);
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1768,12 +1778,12 @@ body.dark-mode .main-container.form-active #history-table td {
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
 
-    <div class="modal" id="preview-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Xác Nhận Thông Tin</h2>
-                <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
-            </div>
+<div class="modal" id="preview-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-question-circle"></i> Xác Nhận Thông Tin</h2>
+            <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
+        </div>
             <div id="preview-content" class="modal-body"></div>
             <div class="modal-footer">
                 <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Hủy</button>
@@ -1843,10 +1853,10 @@ body.dark-mode .main-container.form-active #history-table td {
                 Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
             </p>
         </div>
-        <div class="modal-footer" style="justify-content: center;">
-            <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
-            <button class="modal-btn primary danger" id="confirm-cancel-button">Có, Hủy</button>
-        </div>
+<div class="modal-footer" style="justify-content: center;">
+    <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
+    <button class="modal-btn danger" id="confirm-cancel-button">Có, Hủy</button>
+</div>
     </div>
 </div>
 <div class="modal" id="invoice-confirm-modal">
@@ -2038,7 +2048,12 @@ document.addEventListener("DOMContentLoaded", function() {
             globalHistoryData = JSON.parse(cachedHistoryData);
             if (globalHistoryData && globalHistoryData.length > 0) {
                 prepareDetailedStats(globalHistoryData);
-                checkPendingInvoicesWarning();
+                
+                // --- SỬA ĐỔI TẠI ĐÂY ---
+                // Dòng dưới đây đã được vô hiệu hóa để không hiển thị cảnh báo khi vừa truy cập.
+                // checkPendingInvoicesWarning();
+                // --- KẾT THÚC SỬA ĐỔI ---
+
             }
         } catch (e) {
             console.error("Lỗi khi parse dữ liệu lịch sử từ sessionStorage:", e);
@@ -2138,6 +2153,7 @@ document.addEventListener("DOMContentLoaded", function() {
     setupSimpleFileUpload('denghi_xhd_file_input', 'denghi-upload-wrapper', 'denghi-prompt-text');
     // --- KẾT THÚC PHẦN THÊM MỚI ---
 });
+
 
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
@@ -2593,7 +2609,7 @@ function renderHistoryTable(dataToRender) {
         // Điều kiện hiển thị các nút
         const canRequestInvoice = !isAdmin && (normalizedStatusText === 'đã ghép') && row["VIN"];
         const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép'].includes(normalizedStatusText);
-        const canUpdateFiles = !isAdmin && ['chờ xuất hóa đơn', 'đã xuất hóa đơn'].includes(normalizedStatusText);
+        const canUpdateFiles = !isAdmin && normalizedStatusText === 'chờ xuất hóa đơn';
 
         // Nút Yêu cầu Xuất Hóa Đơn
         if (canRequestInvoice) {
