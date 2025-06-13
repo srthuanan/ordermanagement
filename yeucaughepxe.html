@@ -88,7 +88,16 @@
     --status-default-text-light: #495057;
     --status-default-bg-dark: #343a40;
     --status-default-text-dark: #adb5bd;
+    --status-vin-matched-bg-light: #bfdbfe;  /* Nền xanh dương rõ hơn */
+    --status-vin-matched-text-light: #1d4ed8; /* Chữ xanh dương đậm hơn */
+    --status-vin-matched-bg-dark: #1e40af;
+    --status-vin-matched-text-dark: #dbeafe;
 
+    /* Biến cho trạng thái "Đã Hủy" */
+    --status-cancelled-bg-light: #e5e7eb;
+    --status-cancelled-text-light: #4b5563;
+    --status-cancelled-bg-dark: #374151;
+    --status-cancelled-text-dark: #d1d5db;
     --star-color-light: rgba(0, 48, 135, 0.6);
     --star-color-dark: rgba(0, 174, 255, 0.5);
 }
@@ -131,6 +140,10 @@ body.dark-mode {
     --status-vin-not-found-text-light: var(--status-vin-not-found-text-dark);
     --status-default-bg-light: var(--status-default-bg-dark);
     --status-default-text-light: var(--status-default-text-dark);
+    --status-vin-matched-bg-light: var(--status-vin-matched-bg-dark);
+    --status-vin-matched-text-light: var(--status-vin-matched-text-dark);
+    --status-cancelled-bg-light: var(--status-cancelled-bg-dark);
+    --status-cancelled-text-light: var(--status-cancelled-text-dark);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -170,6 +183,24 @@ body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-light
     box-shadow: var(--shadow-light-outer);
     z-index: 1006;
     transition: background var(--transition-speed) var(--transition-easing);
+}
+.status-vin-matched {
+    background-color: var(--status-vin-matched-bg-light);
+    color: var(--status-vin-matched-text-light);
+    border-color: #93c5fd; 
+}
+body.dark-mode .status-vin-matched {
+    border-color: #2563eb;
+
+}
+
+.status-cancelled {
+    background-color: var(--status-cancelled-bg-light);
+    color: var(--status-cancelled-text-light);
+    border-color: #9ca3af; 
+}
+body.dark-mode .status-cancelled {
+    border-color: #6b7280;
 }
 body.dark-mode .navbar {
     background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
@@ -1565,15 +1596,18 @@ body.dark-mode .cancel-btn:disabled {
         flex: 1;
     }
 
-    /* Ẩn bớt cột của bảng lịch sử khi form đang mở */
-    .main-container.form-active #history-table th:nth-child(1), /* Ẩn cột STT */
-    .main-container.form-active #history-table td:nth-child(1),
-    .main-container.form-active #history-table th:nth-child(8), /* Ẩn cột Nội thất */
-    .main-container.form-active #history-table td:nth-child(8),
-    .main-container.form-active #history-table th:nth-child(10), /* Ẩn cột Hành động */
-    .main-container.form-active #history-table td:nth-child(10) {
-        display: none;
-    }
+.main-container.form-active #history-table th:nth-child(1), /* Ẩn cột STT */
+.main-container.form-active #history-table td:nth-child(1),
+.main-container.form-active #history-table th:nth-child(2), /* Ẩn cột Tư vấn bán hàng */
+.main-container.form-active #history-table td:nth-child(2),
+.main-container.form-active #history-table th:nth-child(4), /* Ẩn cột Số đơn hàng */
+.main-container.form-active #history-table td:nth-child(4),
+.main-container.form-active #history-table th:nth-child(8), /* Ẩn cột Nội thất */
+.main-container.form-active #history-table td:nth-child(8),
+.main-container.form-active #history-table th:nth-child(10), /* Ẩn cột Hành động */
+.main-container.form-active #history-table td:nth-child(10) {
+    display: none;
+}
 }
 /* Kiểu riêng cho ô và nút hủy trên di động */
 @media (max-width: 767px) {
@@ -2721,15 +2755,31 @@ function getExteriorColorStyle(exteriorValue) {
 }
 
 function getStatusClass(statusText) {
-    if (!statusText) return 'status-default';
-    const lowerStatus = statusText.toLowerCase();
-    if (lowerStatus.includes('chờ xuất hóa đơn')) return 'status-pending-invoice';
+    if (!statusText) return 'status-vin-not-found'; // Coi trạng thái trống là "Chưa tìm thấy"
+    const lowerStatus = statusText.toLowerCase().trim();
+
+    if (lowerStatus.includes('đã hủy')) return 'status-cancelled';
     if (lowerStatus.includes('đã xuất hóa đơn')) return 'status-invoice-issued';
-    if (lowerStatus.includes('chưa tìm thấy vin') || lowerStatus.includes('chưa có')) return 'status-vin-not-found';
-    const knownNegativeKeywords = ['chờ', 'chưa', 'không'];
-    if (!knownNegativeKeywords.some(keyword => lowerStatus.includes(keyword)) && lowerStatus.length > 5) return 'status-invoice-issued';
-    return 'status-default';
+    if (lowerStatus.includes('chờ xuất hóa đơn')) return 'status-pending-invoice';
+    
+    // Ưu tiên trạng thái "Đã ghép" hơn là chỉ một số VIN
+    if (lowerStatus.includes('đã ghép')) return 'status-vin-matched';
+    
+    // Các trạng thái tiêu cực
+    if (lowerStatus.includes('chưa ghép') || lowerStatus.includes('chưa tìm thấy vin') || lowerStatus.includes('chưa có')) {
+        return 'status-vin-not-found';
+    }
+    
+    // Trường hợp "Kết quả" chỉ chứa số VIN (không có chữ "Đã ghép")
+    // Regex đơn giản để kiểm tra chuỗi có thể là số VIN
+    if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
+        return 'status-vin-matched';
+    }
+
+    // Trạng thái mặc định cho các trường hợp khác
+    return 'status-default'; 
 }
+
 
 function renderSummary(data) {
     if (!Array.isArray(data) || data.length === 0) {
