@@ -1100,22 +1100,79 @@ footer {
     z-index: 998; transition: background var(--transition-speed) var(--transition-easing);
 }
 body.dark-mode footer { background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%); }
-
-.notification {
-    position: fixed; bottom: 20px; right: 20px;
-    background-color: var(--card-bg-dark); color: var(--text-dark);
-    padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 2000; opacity: 0; transform: translateX(100%) scale(0.95);
-    transition: opacity 0.4s var(--transition-easing), transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    display: flex; align-items: center; gap: 10px;
+#notification-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column-reverse; /* Giúp thông báo mới nhất luôn ở dưới cùng */
+    align-items: flex-end; /* Căn các thông báo về phía bên phải */
+    gap: 12px; /* Tạo khoảng cách giữa các thông báo */
 }
-body.dark-mode .notification { background-color: var(--card-bg-light); color: var(--text-light); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.notification.show { opacity: 1; transform: translateX(0) scale(1); }
-.notification.error { background-color: #dc3545; color: white; }
-body.dark-mode .notification.error { background-color: #f8d7da; color: #721c24;}
-.notification.warning { background-color: var(--warning-bg-light); color: var(--warning-text-light); }
-body.dark-mode .notification.warning { background-color: var(--warning-bg-dark); color: var(--warning-text-dark); }
+.notification {
+    /* position, bottom, right đã được GỠ BỎ */
+    background-color: var(--card-bg-dark); 
+    color: var(--text-dark);
+    padding: 12px 18px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(30px); /* Hiệu ứng trượt vào từ bên phải một chút */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    max-width: 350px; /* Giới hạn chiều rộng để không quá dài */
+    width: auto;
+}
+body.dark-mode .notification { 
+    background-color: var(--card-bg-light); 
+    color: var(--text-light); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+}
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+.notification.error { 
+    background-color: #dc3545; 
+    color: white; 
+}
+body.dark-mode .notification.error { 
+    background-color: #f8d7da; 
+    color: #721c24;
+}
+.notification.warning { 
+    background-color: var(--warning-bg-light); 
+    color: var(--warning-text-light); 
+}
+body.dark-mode .notification.warning { 
+    background-color: var(--warning-bg-dark); 
+    color: var(--warning-text-dark); 
+}
+@media (max-width: 767px) {
+    #notification-container {
+        right: 10px;
+        left: 10px;
+        bottom: 50px;
+        align-items: stretch; /* Cho thông báo chiếm toàn bộ chiều rộng */
+    }
 
+    .notification {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Đoạn mã này đã có sẵn trong file của bạn, chỉ cần đảm bảo nó tồn tại */
+    .notification { 
+        bottom: 50px; 
+        right: 10px; 
+        padding: 10px 15px; 
+        font-size: 13px; 
+        width: calc(100% - 20px); 
+    }
+}
 
 #scrollToTopBtn {
     display: none; position: fixed; bottom: 50px; right: 20px; z-index: 999;
@@ -1756,6 +1813,117 @@ body.dark-mode .main-container.form-active #history-table td {
     transform: none;
     box-shadow: none;
 }
+/* === CSS CHO MENU HÀNH ĐỘNG DROPDOWN ("KEBAB MENU") === */
+.actions-cell {
+    position: relative; /* Quan trọng để định vị menu con */
+    text-align: right;  /* Căn nút ... về bên phải */
+    padding-right: 15px !important; /* Thêm khoảng trống để menu không bị sát lề */
+}
+
+/* Nút ... để mở menu */
+.action-menu-toggle {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-light);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 50%;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+.action-menu-toggle:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-color: var(--border-color-light);
+}
+body.dark-mode .action-menu-toggle {
+    color: var(--text-dark);
+}
+body.dark-mode .action-menu-toggle:hover {
+    background-color: rgba(255,255,255,0.1);
+    border-color: var(--border-color-dark);
+}
+
+/* Khung chứa menu dropdown */
+.action-menu-dropdown {
+    position: absolute;
+    right: 5px; /* Căn menu theo mép phải của ô */
+    top: calc(100% + 2px); /* Hiển thị ngay dưới nút ... */
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-light-outer);
+    z-index: 20;
+    min-width: 200px;
+    padding: 6px;
+    display: none; /* Ẩn mặc định */
+    animation: fadeIn 0.15s ease-out;
+}
+body.dark-mode .action-menu-dropdown {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+    box-shadow: var(--shadow-dark-outer);
+}
+
+/* Lớp để hiện menu bằng JavaScript */
+.action-menu-dropdown.show {
+    display: block;
+}
+
+/* Các mục trong menu */
+.action-menu-dropdown .action-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text-light);
+    border-radius: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.2s ease;
+}
+.action-menu-dropdown .action-item:hover {
+    background-color: rgba(0, 48, 135, 0.08);
+}
+body.dark-mode .action-menu-dropdown .action-item {
+    color: var(--text-dark);
+}
+body.dark-mode .action-menu-dropdown .action-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.action-menu-dropdown .action-item i.fa-fw {
+    width: 20px;
+    color: #888;
+}
+body.dark-mode .action-menu-dropdown .action-item i.fa-fw {
+    color: #aaa;
+}
+.action-menu-dropdown .action-item.danger {
+    color: #e74c3c;
+}
+.action-menu-dropdown .action-item.danger i.fa-fw {
+    color: #e74c3c;
+}
+
+/* Đường kẻ phân cách trong menu */
+.action-menu-dropdown .divider {
+    height: 1px;
+    background-color: var(--border-color-light);
+    margin: 6px 0;
+}
+body.dark-mode .action-menu-dropdown .divider {
+    background-color: var(--border-color-dark);
+}
+/* CSS để menu bung lên trên khi cần */
+.action-menu-dropdown.show-upwards {
+    top: auto; /* Tắt định vị top */
+    bottom: calc(100% + 2px); /* Định vị ngay trên nút ... */
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2028,33 +2196,32 @@ body.dark-mode .main-container.form-active #history-table td {
         </div>
     </div>
 
-    <div class="modal" id="cancel-confirm-modal">
-        <div class="modal-content warning-modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
-                <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+<div class="modal" id="cancel-confirm-modal">
+    <div class="modal-content warning-modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Xác Nhận Hủy Yêu Cầu</h2>
+            <button class="modal-close-btn" onclick="closeModal('cancel-confirm-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
+            
+            <div class="mt-4 text-left">
+                <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do hủy <span class="text-red-500">*</span></label>
+                <textarea id="cancel-reason" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:ring-primary-color focus:border-primary-color dark:focus:ring-secondary-color dark:focus:border-secondary-color" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin xe..."></textarea>
             </div>
-            <div class="modal-body" style="text-align: center;">
-                <p style="font-size: 15px; line-height: 1.6;">Bạn có chắc chắn muốn hủy yêu cầu ghép xe có số đơn hàng <strong id="cancel-order-number-display"></strong> này không?</p>
-                
-                <div class="mt-4 text-left">
-                    <label for="cancel-reason" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lý do hủy <span class="text-red-500">*</span></label>
-                    <textarea id="cancel-reason" rows="3" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:ring-primary-color focus:border-primary-color dark:focus:ring-secondary-color dark:focus:border-secondary-color" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin xe..."></textarea>
-                </div>
-                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
-                    Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
-                </p>
-            </div>
-<div class="modal-footer" style="justify-content: center;">
-    <button class="btn btn-secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
-    <button class="btn btn-primary" id="confirm-invoice-button">
-        <i class="fas fa-paper-plane"></i>
-        <span>Gửi Yêu Cầu</span>
-    </button>
-</div>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d;" class="dark:text-gray-400">
+                Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
+            </p>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Xem Lại</button>
+            <button class="modal-btn danger" id="confirm-cancel-button">
+                <i class="fas fa-trash-alt"></i>
+                <span>Xác Nhận Hủy</span>
+            </button>
         </div>
     </div>
-
+</div>
     <div class="modal" id="invoice-confirm-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2174,7 +2341,7 @@ body.dark-mode .main-container.form-active #history-table td {
 <script>
 let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
-let currentOrderNumberToCancel = null;
+let activeDropdown = { element: null, originalParent: null };
 const apiURL = "https://script.google.com/macros/s/AKfycbxSqi8uxBXz2EUJMeJGc4VVOgG9Dpq_FVZB7jpU1UOS_uwE7Sx9lcc6lyF7ByN2aThFDQ/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -2804,9 +2971,11 @@ function renderHistoryTable(dataToRender) {
 
     const tableHeader = document.getElementById('table-header').querySelector('tr');
     let actionHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim() === 'Hành động');
+
+    // Thêm cột "Hành động" nếu chưa có, phòng trường hợp cần thiết
     if (!actionHeaderExists) {
         const cancelHeader = Array.from(tableHeader.cells).find(th => th.textContent.trim() === 'Hủy');
-        if (cancelHeader) cancelHeader.remove();
+        if (cancelHeader) cancelHeader.remove(); // Xóa cột "Hủy" cũ nếu có
 
         const actionTh = document.createElement('th');
         actionTh.textContent = 'Hành động';
@@ -2829,88 +2998,77 @@ function renderHistoryTable(dataToRender) {
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
 
-        let actionButtonsHtml = '';
+        let dropdownItemsHtml = '';
+        let hasActions = false;
 
-        // ===== BẮT ĐẦU SỬA ĐỔI LOGIC NÚT (THEO YÊU CẦU MỚI) =====
-        
+        // --- Logic xác định các hành động có thể thực hiện ---
         const canRequestInvoice = !isAdmin && (normalizedStatusText === 'đã ghép') && row["VIN"];
-        const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép'].includes(normalizedStatusText);
+        const canCancel = !isAdmin && row["Tên tư vấn bán hàng"] === currentUser && ['chưa ghép', 'chưa tìm thấy vin', 'chưa có', 'đã ghép', 'chờ xuất hóa đơn'].includes(normalizedStatusText);
         const canUpdateFiles = !isAdmin && normalizedStatusText === 'chờ xuất hóa đơn';
-
-        // --- NÚT "Up Invoice" CHO ADMIN ---
-        // Hiển thị CHỈ KHI trạng thái là "Chờ xuất hóa đơn" và chưa có link hóa đơn.
         const canUploadInvoice = isAdmin && normalizedStatusText === 'chờ xuất hóa đơn' && !row.LinkHoaDonDaXuat;
-        if (canUploadInvoice) {
-actionButtonsHtml += `
-    <button 
-        class="btn btn-primary btn-sm" 
-        onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')" 
-        data-tooltip="Tải lên tệp hóa đơn">
-        <i class="fas fa-file-upload"></i><span>Up Invoice</span>
-    </button>`;
-        }
-        
-        // --- NÚT "Tải Hóa Đơn" ---
-        // Hiển thị CHỈ KHI trạng thái là "Đã xuất hóa đơn" và có link.
-        if (normalizedStatusText === 'đã xuất hóa đơn' && row.LinkHoaDonDaXuat) {
-actionButtonsHtml += `
-    <button 
-        class="btn btn-secondary btn-sm" 
-        onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" 
-        data-tooltip="Tải hóa đơn">
-        <i class="fas fa-file-download"></i><span>Tải Hóa Đơn</span>
-    </button>`;
-        }
+        const canDownloadInvoice = normalizedStatusText === 'đã xuất hóa đơn' && row.LinkHoaDonDaXuat;
 
-        // --- CÁC NÚT CŨ (GIỮ NGUYÊN) ---
+        // --- Xây dựng các mục trong menu dropdown ---
+        if (canUploadInvoice) {
+            dropdownItemsHtml += `<button class="action-item" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-file-upload fa-fw"></i><span>Tải lên Hóa đơn</span></button>`;
+            hasActions = true;
+        }
+        if (canDownloadInvoice) {
+            dropdownItemsHtml += `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-file-download fa-fw"></i><span>Tải Hóa đơn</span></button>`;
+            hasActions = true;
+        }
         if (canRequestInvoice) {
-actionButtonsHtml += `
-    <button 
-        class="btn btn-submit btn-sm" 
-        onclick="requestInvoice(event, '${orderNumber}')" 
-        data-tooltip="Gửi yêu cầu xuất hóa đơn">
-        <i class="fas fa-paper-plane"></i><span>Xuất Hóa Đơn</span>
-    </button>`;
+            dropdownItemsHtml += `<button class="action-item" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-paper-plane fa-fw"></i><span>Y/C Xuất Hóa đơn</span></button>`;
+            hasActions = true;
         }
         if (canUpdateFiles) {
-actionButtonsHtml += `
-    <button 
-        class="btn btn-success btn-sm" 
-        onclick="openSupplementaryFileModal(event, '${orderNumber}')" 
-        data-tooltip="Bổ sung hoặc thay thế file">
-        <i class="fas fa-edit"></i><span>Sửa File</span>
-    </button>`;
+            dropdownItemsHtml += `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung File</span></button>`;
+            hasActions = true;
         }
-        if (canCancel) {
-actionButtonsHtml += `
-    <button 
-        class="btn btn-danger btn-icon btn-sm" 
-        onclick="confirmCancelRequest(event, '${orderNumber}')" 
-        data-tooltip="Hủy yêu cầu ghép xe">
-        <i class="fas fa-trash-alt"></i>
-    </button>`;
+
+        // Thêm đường kẻ phân cách nếu có hành động hủy
+        if (canCancel && hasActions) {
+            dropdownItemsHtml += `<div class="divider"></div>`;
         }
         
-        // ===== KẾT THÚC SỬA ĐỔI LOGIC NÚT =====
+        if (canCancel) {
+            dropdownItemsHtml += `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>`;
+            hasActions = true;
+        }
 
+        // --- Tạo HTML cuối cùng cho ô Hành động ---
+        let finalActionCellHtml = '';
+        if (hasActions) {
+            finalActionCellHtml = `
+                <button class="action-menu-toggle" onclick="toggleActionMenu(event, this)">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="action-menu-dropdown">
+                    ${dropdownItemsHtml}
+                </div>
+            `;
+        }
+        
         return `
             <tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
                <td data-label="STT"><span>${i + 1}</span></td>
-               <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}"><span>${row["Tên tư vấn bán hàng"] || "N/A"}</span></td>
-               <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}"><span>${row["Tên khách hàng"] || "N/A"}</span></td>
-               <td data-label="Số Đơn Hàng" title="${orderNumber}"><span>${orderNumber}</span></td>
-               <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}"><span>${row["Dòng xe"] || "N/A"}</span></td>
-               <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}"><span>${row["Phiên bản"] || "N/A"}</span></td>
+               <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || "N/A"}</td>
+               <td data-label="Tên KH" title="${row["Tên khách hàng"] || ""}">${row["Tên khách hàng"] || "N/A"}</td>
+               <td data-label="Số Đơn Hàng" title="${orderNumber}">${orderNumber}</td>
+               <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || "N/A"}</td>
+               <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || "N/A"}</td>
                <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
-               <td data-label="Nội Thất" title="${row["Nội thất"] || ""}"><span>${row["Nội thất"] || "N/A"}</span></td>
+               <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || "N/A"}</td>
                <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
-               <td data-label="Hành động">
-                    <div class="flex items-center justify-center gap-2">${actionButtonsHtml}</div>
+               <td class="actions-cell" onclick="event.stopPropagation();">
+                    ${finalActionCellHtml}
                </td>
             </tr>`;
     }).join("");
+    
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
+
 
 function filterHistory() {
     const currentUser = sessionStorage.getItem("currentConsultant");
@@ -4418,94 +4576,83 @@ function processAndValidateBulkTable() {
         }
     }
 }
+
 function confirmCancelRequest(event, orderNumber) {
-    event.stopPropagation(); // Quan trọng: Ngăn chặn sự kiện click chính của dòng
+    event.stopPropagation(); // Ngăn sự kiện click chính của dòng
     currentOrderNumberToCancel = orderNumber;
+
     const cancelModal = document.getElementById('cancel-confirm-modal');
     const orderNumberDisplay = document.getElementById('cancel-order-number-display');
     const confirmButton = document.getElementById('confirm-cancel-button');
+    const reasonInput = document.getElementById('cancel-reason');
 
-    if (orderNumberDisplay) {
-        orderNumberDisplay.textContent = orderNumber;
+    if (!cancelModal || !orderNumberDisplay || !confirmButton || !reasonInput) {
+        console.error("Lỗi: Không tìm thấy đầy đủ các thành phần của modal hủy yêu cầu.");
+        return;
     }
+    
+    orderNumberDisplay.textContent = orderNumber;
+    reasonInput.value = ''; 
+    reasonInput.style.borderColor = ''; 
+    
+    const newConfirmButton = confirmButton.cloneNode(true);
+    confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+    newConfirmButton.addEventListener('click', handleConfirmCancelClick, { once: true });
 
-    if (confirmButton) {
-        // Sao chép và thay thế nút để loại bỏ các trình lắng nghe sự kiện cũ
-        const newConfirmButton = confirmButton.cloneNode(true);
-        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
-        newConfirmButton.addEventListener('click', handleConfirmCancelClick);
-    }
-
-    if (cancelModal) {
-        cancelModal.style.position = 'fixed';
-        cancelModal.style.top = '0';
-        cancelModal.style.left = '0';
-        cancelModal.style.width = '100%';
-        cancelModal.style.height = '100%';
-        cancelModal.style.borderRadius = '';
-        cancelModal.classList.add("active");
-        if (typeof adjustModalScroll === 'function') adjustModalScroll(cancelModal);
-    }
+    cancelModal.classList.add("active");
+    if (typeof adjustModalScroll === 'function') adjustModalScroll(cancelModal);
 }
 
-// Thay thế hàm cũ bằng hàm này
- async function handleConfirmCancelClick() {
-        if (!currentOrderNumberToCancel) return;
+async function handleConfirmCancelClick() {
+    if (!currentOrderNumberToCancel) return;
 
-        const reasonInput = document.getElementById('cancel-reason');
-        const reason = reasonInput.value.trim();
+    const reasonInput = document.getElementById('cancel-reason');
+    const reason = reasonInput.value.trim();
 
-        if (!reason) {
-            showNotification("Vui lòng nhập lý do hủy yêu cầu.", "error", 3000);
-            reasonInput.focus();
-            reasonInput.style.borderColor = 'red';
-            return;
-        }
-
-        closeModal('cancel-confirm-modal');
-        showOldLoadingModal("Đang Hủy Yêu Cầu...", "Vui lòng chờ trong giây lát.");
-
-        const payload = new FormData();
-        payload.append('action', 'cancelRequest');
-        payload.append('orderNumber', currentOrderNumberToCancel);
-        payload.append('cancelledBy', sessionStorage.getItem("currentConsultant") || "Unknown");
-        
-        // ===================================================
-        // ===== SỬA LỖI QUAN TRỌNG NẰM Ở ĐÂY =====
-        // --- Gửi đúng cờ hiệu để backend xử lý đúng logic ---
-        payload.append('fromUI', 'true'); 
-        // ===================================================
-        
-        payload.append('reason', reason); // Gửi lý do đi
-
-        try {
-            const response = await fetch(apiURL, {
-                method: 'POST',
-                body: payload
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Lỗi khi hủy: ${response.status} ${errorText}`);
-            }
-
-            const result = await response.json();
-
-            if (result.status === 'SUCCESS') {
-                showNotification(result.message, 'success', 3000);
-                await refreshData(); // Đảm bảo gọi refreshData để cập nhật lại bảng
-            } else {
-                showNotification(`Hủy thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
-            }
-        } catch (error) {
-            console.error('Lỗi khi gửi yêu cầu hủy:', error);
-            showNotification(`Lỗi hệ thống khi hủy: ${error.message}`, 'error', 5000);
-        } finally {
-            closeModal('loading-modal');
-            currentOrderNumberToCancel = null;
-            if (reasonInput) reasonInput.value = ''; // Xóa nội dung trong ô lý do
-        }
+    if (!reason) {
+        showNotification("Vui lòng nhập lý do hủy yêu cầu.", "error", 3000);
+        reasonInput.focus();
+        reasonInput.style.borderColor = 'red';
+        return;
     }
+
+    closeModal('cancel-confirm-modal');
+    showOldLoadingModal("Đang Hủy Yêu Cầu...", "Vui lòng chờ trong giây lát.");
+
+    const payload = new FormData();
+    payload.append('action', 'cancelRequest');
+    payload.append('orderNumber', currentOrderNumberToCancel);
+    payload.append('cancelledBy', sessionStorage.getItem("currentConsultant") || "Unknown");
+    payload.append('fromUI', 'true'); 
+    payload.append('reason', reason);
+
+    try {
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            body: payload
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Lỗi khi hủy: ${response.status} ${errorText || '(Không có thông điệp lỗi)'}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+            showNotification(result.message, 'success', 3000);
+            await refreshData();
+        } else {
+            showNotification(`Hủy thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
+        }
+    } catch (error) {
+        console.error('Lỗi khi gửi yêu cầu hủy:', error);
+        showNotification(`Lỗi hệ thống khi hủy: ${error.message}`, 'error', 5000);
+    } finally {
+        closeModal('loading-modal');
+        currentOrderNumberToCancel = null;
+    }
+}
 
 // Thay thế toàn bộ hàm cũ bằng hàm đã được sửa đổi này
 async function submitValidBulkTableOrders() {
@@ -5047,6 +5194,87 @@ function downloadInvoice(event, fileUrl) {
     }
 }
 
+function toggleActionMenu(event, buttonElement) {
+    event.stopPropagation();
+
+    const dropdownElement = buttonElement.nextElementSibling;
+    const isCurrentlyActive = dropdownElement === activeDropdown.element;
+
+    // Luôn đóng menu đang mở (nếu có) trước
+    closeActiveDropdown();
+
+    // Nếu menu vừa click chính là menu đang mở, thì công việc chỉ là đóng nó lại và kết thúc.
+    if (isCurrentlyActive) {
+        return;
+    }
+
+    // Nếu click vào một menu mới, tiến hành mở nó ra
+    const originalParent = buttonElement.parentElement;
+    activeDropdown = { element: dropdownElement, originalParent: originalParent };
+
+    // Lấy vị trí của nút ... để định vị menu
+    const buttonRect = buttonElement.getBoundingClientRect();
+    
+    // "Nhấc" menu ra và gắn vào body
+    document.body.appendChild(dropdownElement);
+
+    // Set style để định vị menu một cách chính xác trên màn hình
+    dropdownElement.style.top = `${buttonRect.bottom + window.scrollY + 2}px`;
+    dropdownElement.style.left = `${buttonRect.left + window.scrollX}px`;
+
+    // Hiển thị menu
+    dropdownElement.classList.add('show');
+    
+    // Sau khi hiển thị, kiểm tra lại vị trí để đảm bảo không bị tràn màn hình
+    requestAnimationFrame(() => {
+        if (!dropdownElement.classList.contains('show')) return;
+
+        const menuRect = dropdownElement.getBoundingClientRect();
+
+        // Nếu menu tràn sang phải
+        if (menuRect.right > window.innerWidth - 10) {
+            dropdownElement.style.left = ''; // Hủy left
+            dropdownElement.style.right = '10px'; // Căn phải
+        }
+
+        // Nếu menu tràn xuống dưới (logic bung lên trên)
+        if (menuRect.bottom > window.innerHeight - 10) {
+            dropdownElement.style.top = ''; // Hủy top
+            dropdownElement.style.bottom = `${window.innerHeight - buttonRect.top - window.scrollY + 2}px`;
+        }
+    });
+}
+window.addEventListener('click', function(event) {
+    // Nếu click vào một phần tử không nằm trong menu đang mở, hãy đóng nó
+    if (activeDropdown.element && !activeDropdown.element.contains(event.target)) {
+        closeActiveDropdown();
+    }
+
+    // Logic đóng sidebar mobile (giữ nguyên từ file gốc)
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
+            sidebar.classList.remove('open');
+        }
+    }
+});
+
+function closeActiveDropdown() {
+    if (activeDropdown.element && activeDropdown.originalParent) {
+        // Ẩn và reset style trước khi trả về
+        activeDropdown.element.classList.remove('show', 'show-upwards');
+        activeDropdown.element.style.top = '';
+        activeDropdown.element.style.right = '';
+        activeDropdown.element.style.left = '';
+        activeDropdown.element.style.bottom = '';
+
+        // Trả dropdown về lại vị trí ban đầu trong DOM
+        activeDropdown.originalParent.appendChild(activeDropdown.element);
+    }
+    // Reset biến trạng thái
+    activeDropdown = { element: null, originalParent: null };
+}
 </script>
 </body>
 </html>
