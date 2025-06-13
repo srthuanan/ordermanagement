@@ -576,6 +576,7 @@ body.dark-mode .export-btn-container span { color: var(--text-dark); }
     box-shadow: var(--shadow-light-outer);
     transition: all var(--transition-speed-fast) var(--transition-easing);
 }
+
 body.dark-mode .export-btn, body.dark-mode .refresh-btn {
     background: var(--card-bg-dark); color: var(--primary-color-lighter); box-shadow: var(--shadow-dark-outer);
 }
@@ -587,7 +588,162 @@ body.dark-mode .export-btn:hover, body.dark-mode .refresh-btn:hover {
     background: var(--primary-color-darker);
     box-shadow: 0 5px 10px rgba(0,0,0,0.20);
 }
+/* ================================================================== */
+/* === BẮT ĐẦU HỆ THỐNG NÚT NÂNG CẤP VÀ ĐỒNG BỘ === */
+/* ================================================================== */
 
+/* --- Lớp .btn cơ sở --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Khoảng cách giữa icon và chữ */
+    padding: 8px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    text-decoration: none !important; /* Ghi đè các style của thẻ <a> */
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.btn i.fas {
+    font-size: 14px; /* Kích thước icon nhất quán */
+}
+
+/* --- Trạng thái Hover & Active chung --- */
+.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-light-outer);
+}
+.btn:not(:disabled):active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: var(--shadow-light-inner);
+}
+
+/* --- Trạng thái Disabled chung --- */
+.btn:disabled, .btn.disabled {
+    background-color: #adb5bd;
+    border-color: #adb5bd;
+    color: #ffffff;
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+body.dark-mode .btn:disabled, body.dark-mode .btn.disabled {
+    background-color: var(--status-default-bg-dark);
+    border-color: var(--status-default-bg-dark);
+    color: var(--status-default-text-dark);
+}
+
+/* --- Nút chính (Primary) - Cho hành động quan trọng nhất --- */
+.btn.btn-primary {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    box-shadow: 0 4px 8px rgba(0, 48, 135, 0.3);
+}
+.btn.btn-primary:not(:disabled):hover {
+    background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+    box-shadow: 0 6px 15px rgba(0, 48, 135, 0.4);
+}
+
+/* --- Nút phụ (Secondary) - Cho hành động ít quan trọng hơn --- */
+.btn.btn-secondary {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-color: var(--primary-color);
+}
+.btn.btn-secondary:not(:disabled):hover {
+    background-color: rgba(0, 48, 135, 0.08);
+    color: var(--primary-color-darker);
+    border-color: var(--primary-color-darker);
+}
+body.dark-mode .btn.btn-secondary {
+    color: var(--primary-color-lighter);
+    border-color: var(--primary-color-lighter);
+}
+body.dark-mode .btn.btn-secondary:not(:disabled):hover {
+    background-color: rgba(0, 174, 255, 0.1);
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* --- Nút nguy hiểm (Danger) - Cho hành động xóa, hủy --- */
+.btn.btn-danger {
+    color: #ffffff;
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+}
+.btn.btn-danger:not(:disabled):hover {
+    background-color: #c0392b;
+    border-color: #c0392b;
+    box-shadow: 0 6px 15px rgba(192, 57, 43, 0.4);
+}
+
+/* --- Nút thành công (Success) - Cho hành động tích cực, thêm mới --- */
+.btn.btn-success {
+    color: #ffffff;
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    border-color: #218838;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+.btn.btn-success:not(:disabled):hover {
+    background: linear-gradient(135deg, #218838 0%, #28a745 100%);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
+
+/* --- Nút kiểm tra/gửi (Submit/Validate) - Màu Indigo/Blue --- */
+.btn.btn-submit {
+    color: #ffffff;
+    background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); /* Indigo */
+    border-color: #3730a3;
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+.btn.btn-submit:not(:disabled):hover {
+     background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%);
+     box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+}
+
+/* --- Nút chỉ có icon (Icon-only) --- */
+.btn.btn-icon {
+    padding: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: var(--primary-color);
+    background: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    box-shadow: var(--shadow-light-outer);
+}
+.btn.btn-icon:not(:disabled):hover {
+    background: #e9ecef;
+    transform: scale(1.1);
+}
+body.dark-mode .btn.btn-icon {
+    color: var(--secondary-color);
+    background: var(--card-bg-dark);
+    border: 1px solid var(--border-color-dark);
+    box-shadow: var(--shadow-dark-outer);
+}
+body.dark-mode .btn.btn-icon:not(:disabled):hover {
+    background: var(--primary-color-darker);
+}
+
+/* --- Kích thước nhỏ hơn cho nút trong bảng --- */
+.btn.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+.btn.btn-sm i.fas {
+    font-size: 12px;
+}
 .table-wrapper {
     max-height: calc(100vh - 280px); 
     overflow-x: hidden; /* << ĐÃ THAY ĐỔI: Ẩn thanh cuộn ngang */
@@ -1653,10 +1809,16 @@ body.dark-mode .main-container.form-active #history-table td {
                 <label for="ngay_coc">Ngày Cọc:</label>
                 <input name="ngay_coc" id="ngay_coc" type="datetime-local" required readonly class="form-input"/>
 
-                <div class="form-buttons">
-                    <button type="submit">Xác Nhận</button>
-                    <button type="button" class="danger" onclick="clearFormDraft()">Xóa Nháp</button>
-                </div>
+<div class="form-buttons">
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-check"></i>
+        <span>Xác Nhận</span>
+    </button>
+    <button type="button" class="btn btn-danger" onclick="clearFormDraft()">
+        <i class="fas fa-eraser"></i>
+        <span>Xóa Nháp</span>
+    </button>
+</div>
             </form>
         </div>
 
@@ -1704,17 +1866,19 @@ body.dark-mode .main-container.form-active #history-table td {
                     <h2 class="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100">
                         NHẬP YÊU CẦU
                     </h2>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" aria-label="Thêm Dòng Mới" class="px-3 py-1 bg-green-800 text-white rounded-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
-                            <i class="fas fa-plus mr-1.5 text-sm"></i>Thêm
-                        </button>
-                        <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" aria-label="Kiểm Tra Dữ Liệu" class="px-3 py-1 bg-indigo-800 text-white rounded-md hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-800 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150">
-                            <i class="fas fa-check-double mr-1.5 text-sm"></i>Kiểm Tra
-                        </button>
-                        <button type="button" title="Xóa Toàn Bộ Bảng" aria-label="Xóa Toàn Bộ Bảng" class="p-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-75 shadow-sm flex items-center justify-center transition-colors duration-150" onclick="clearBulkEditableTable()">
-                            <i class="fas fa-trash-alt text-base"></i>
-                        </button>
-                    </div>
+<div class="flex items-center gap-2">
+    <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" aria-label="Thêm Dòng Mới" class="btn btn-success btn-sm">
+        <i class="fas fa-plus"></i>
+        <span>Thêm Dòng</span>
+    </button>
+    <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" aria-label="Kiểm Tra Dữ Liệu" class="btn btn-submit btn-sm">
+        <i class="fas fa-check-double"></i>
+        <span>Kiểm Tra</span>
+    </button>
+    <button type="button" title="Xóa Toàn Bộ Bảng" aria-label="Xóa Toàn Bộ Bảng" class="btn btn-danger btn-icon" onclick="clearBulkEditableTable()">
+        <i class="fas fa-trash-alt"></i>
+    </button>
+</div>
                 </div>
 
                 <div class="table-wrapper max-h-[60vh] overflow-auto border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
@@ -1756,9 +1920,10 @@ body.dark-mode .main-container.form-active #history-table td {
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end items-center gap-3">
-                    <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" aria-label="Gửi Các Đơn Hợp Lệ" class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-75 shadow-sm flex items-center text-sm font-medium transition-colors duration-150" onclick="submitValidBulkTableOrders()" style="display:none;">
-                        <i class="fas fa-paper-plane mr-1.5 text-sm"></i> GỬI YÊU CẦU
-                    </button>
+                   <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" aria-label="Gửi Các Đơn Hợp Lệ" class="btn btn-primary" onclick="submitValidBulkTableOrders()" style="display:none;">
+    <i class="fas fa-paper-plane"></i>
+    <span>GỬI CÁC ĐƠN HỢP LỆ</span>
+</button>
                 </div>
             </div>
         </div>
@@ -1774,10 +1939,13 @@ body.dark-mode .main-container.form-active #history-table td {
                 <button class="modal-close-btn" onclick="closeModal('preview-modal')"><i class="fas fa-times"></i></button>
             </div>
             <div id="preview-content" class="modal-body"></div>
-            <div class="modal-footer">
-                <button class="modal-btn secondary" onclick="closeModal('preview-modal')">Hủy</button>
-                <button class="modal-btn primary" onclick="confirmSubmit()">Gửi</button>
-            </div>
+<div class="modal-footer">
+    <button class="btn btn-secondary" onclick="closeModal('preview-modal')">Hủy</button>
+    <button class="btn btn-primary" onclick="confirmSubmit()">
+        <i class="fas fa-paper-plane"></i>
+        <span>Gửi</span>
+    </button>
+</div>
         </div>
     </div>
 
@@ -1843,10 +2011,13 @@ body.dark-mode .main-container.form-active #history-table td {
                     Hành động này sẽ hoàn trả trạng thái xe (nếu có) và không thể hoàn tác.
                 </p>
             </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="modal-btn secondary" onclick="closeModal('cancel-confirm-modal')">Không, Quay lại</button>
-                <button class="modal-btn danger" id="confirm-cancel-button">Có, Hủy</button>
-            </div>
+<div class="modal-footer" style="justify-content: center;">
+    <button class="btn btn-secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+    <button class="btn btn-primary" id="confirm-invoice-button">
+        <i class="fas fa-paper-plane"></i>
+        <span>Gửi Yêu Cầu</span>
+    </button>
+</div>
         </div>
     </div>
 
@@ -2620,54 +2791,54 @@ function renderHistoryTable(dataToRender) {
         // Hiển thị CHỈ KHI trạng thái là "Chờ xuất hóa đơn" và chưa có link hóa đơn.
         const canUploadInvoice = isAdmin && normalizedStatusText === 'chờ xuất hóa đơn' && !row.LinkHoaDonDaXuat;
         if (canUploadInvoice) {
-            actionButtonsHtml += `
-                <button 
-                    class="upload-invoice-btn" 
-                    onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')" 
-                    data-tooltip="Tải lên tệp hóa đơn đã xuất">
-                    <i class="fas fa-file-upload"></i> Up Invoice
-                </button>`;
+actionButtonsHtml += `
+    <button 
+        class="btn btn-primary btn-sm" 
+        onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')" 
+        data-tooltip="Tải lên tệp hóa đơn">
+        <i class="fas fa-file-upload"></i><span>Up Invoice</span>
+    </button>`;
         }
         
         // --- NÚT "Tải Hóa Đơn" ---
         // Hiển thị CHỈ KHI trạng thái là "Đã xuất hóa đơn" và có link.
         if (normalizedStatusText === 'đã xuất hóa đơn' && row.LinkHoaDonDaXuat) {
-             actionButtonsHtml += `
-                <button 
-                    class="download-invoice-btn" 
-                    onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" 
-                    data-tooltip="Tải về hóa đơn đã xuất">
-                    <i class="fas fa-file-download"></i> Tải Hóa Đơn
-                </button>`;
+actionButtonsHtml += `
+    <button 
+        class="btn btn-secondary btn-sm" 
+        onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" 
+        data-tooltip="Tải hóa đơn">
+        <i class="fas fa-file-download"></i><span>Tải Hóa Đơn</span>
+    </button>`;
         }
 
         // --- CÁC NÚT CŨ (GIỮ NGUYÊN) ---
         if (canRequestInvoice) {
-            actionButtonsHtml += `
-                <button 
-                    class="request-invoice-btn" 
-                    onclick="requestInvoice(event, '${orderNumber}')" 
-                    data-tooltip="Gửi yêu cầu xuất hóa đơn cho đơn hàng này">
-                    <i class="fas fa-paper-plane"></i> Yêu Cầu Xuất Hóa Đơn
-                </button>`;
+actionButtonsHtml += `
+    <button 
+        class="btn btn-submit btn-sm" 
+        onclick="requestInvoice(event, '${orderNumber}')" 
+        data-tooltip="Gửi yêu cầu xuất hóa đơn">
+        <i class="fas fa-paper-plane"></i><span>Xuất Hóa Đơn</span>
+    </button>`;
         }
         if (canUpdateFiles) {
-             actionButtonsHtml += `
-                <button 
-                    class="supplementary-file-btn" 
-                    onclick="openSupplementaryFileModal(event, '${orderNumber}')" 
-                    data-tooltip="Bổ sung hoặc thay thế file">
-                    <i class="fas fa-file-upload"></i> Sửa File
-                </button>`;
+actionButtonsHtml += `
+    <button 
+        class="btn btn-success btn-sm" 
+        onclick="openSupplementaryFileModal(event, '${orderNumber}')" 
+        data-tooltip="Bổ sung hoặc thay thế file">
+        <i class="fas fa-edit"></i><span>Sửa File</span>
+    </button>`;
         }
         if (canCancel) {
-            actionButtonsHtml += `
-                <button 
-                    class="cancel-btn" 
-                    onclick="confirmCancelRequest(event, '${orderNumber}')" 
-                    data-tooltip="Hủy yêu cầu ghép xe">
-                    <i class="fas fa-trash-alt"></i>
-                </button>`;
+actionButtonsHtml += `
+    <button 
+        class="btn btn-danger btn-icon btn-sm" 
+        onclick="confirmCancelRequest(event, '${orderNumber}')" 
+        data-tooltip="Hủy yêu cầu ghép xe">
+        <i class="fas fa-trash-alt"></i>
+    </button>`;
         }
         
         // ===== KẾT THÚC SỬA ĐỔI LOGIC NÚT =====
