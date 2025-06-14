@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Yêu Cầu Ghép Xe</title>
+<link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2596,135 +2597,148 @@ function setActiveSidebarLink() {
 
 document.addEventListener("DOMContentLoaded", function() {
     // 1. Kiểm tra trạng thái đăng nhập
-    if (sessionStorage.getItem("isLoggedIn") !== "true") {
-        window.location.href = "index.html";
-        return;
+    if (sessionStorage.getItem("isLoggedIn") !== "true") { [cite: 1]
+        window.location.href = "index.html"; [cite: 1]
+        return; [cite: 1]
     }
 
     // 2. Thiết lập giao diện người dùng cơ bản
-    const consultantInput = document.getElementById("ten_ban_hang");
-    if (consultantInput) {
-        consultantInput.value = sessionStorage.getItem("currentConsultant") || "";
+    const consultantInput = document.getElementById("ten_ban_hang"); [cite: 1]
+    if (consultantInput) { [cite: 1]
+        consultantInput.value = sessionStorage.getItem("currentConsultant") || ""; [cite: 1]
     }
-    loadFormDraft();
+    loadFormDraft(); [cite: 1]
 
     // 3. Khởi tạo các thành phần giao diện
-    bulkTableBody = document.getElementById('bulk-order-editable-table-body');
-    bulkTotalRowsEl = document.getElementById('bulk-total-rows');
-    bulkValidRowsEl = document.getElementById('bulk-valid-rows');
-    bulkErrorRowsEl = document.getElementById('bulk-error-rows');
-    submitValidBulkTableOrdersBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
-    if (bulkTableBody) {
-        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true);
+    bulkTableBody = document.getElementById('bulk-order-editable-table-body'); [cite: 1]
+    bulkTotalRowsEl = document.getElementById('bulk-total-rows'); [cite: 1]
+    bulkValidRowsEl = document.getElementById('bulk-valid-rows'); [cite: 1]
+    bulkErrorRowsEl = document.getElementById('bulk-error-rows'); [cite: 1]
+    submitValidBulkTableOrdersBtn = document.getElementById('submit-valid-bulk-table-orders-btn'); [cite: 1]
+    if (bulkTableBody) { [cite: 1]
+        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true); [cite: 1]
     }
-    setupScrollSync();
-    applyInitialTheme();
-    initScrollToTopButton();
-    setActiveSidebarLink();
+    setupScrollSync(); [cite: 1]
+    applyInitialTheme(); [cite: 1]
+    initScrollToTopButton(); [cite: 1]
+    setActiveSidebarLink(); [cite: 1]
 
     // 4. Quản lý trạng thái Sidebar và các sự kiện Click
-    if (window.innerWidth > 900) {
-        const sidebar = document.getElementById("sidebar");
-        const mainContainer = document.getElementById("main-container");
-        if (sidebar && mainContainer) {
-            if (localStorage.getItem('sidebarState') === 'collapsed') {
-                sidebar.classList.add("collapsed");
-                mainContainer.classList.add("collapsed");
+    if (window.innerWidth > 900) { [cite: 1]
+        const sidebar = document.getElementById("sidebar"); [cite: 1]
+        const mainContainer = document.getElementById("main-container"); [cite: 1]
+        if (sidebar && mainContainer) { [cite: 1]
+            if (localStorage.getItem('sidebarState') === 'collapsed') { [cite: 1]
+                sidebar.classList.add("collapsed"); [cite: 1]
+                mainContainer.classList.add("collapsed"); [cite: 1]
             } else {
-                sidebar.classList.remove("collapsed");
-                mainContainer.classList.remove("collapsed");
+                sidebar.classList.remove("collapsed"); [cite: 1]
+                mainContainer.classList.remove("collapsed"); [cite: 1]
             }
         }
     }
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-            if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-                sidebar.classList.remove('open');
+    document.addEventListener('click', function(event) { [cite: 1]
+        const sidebar = document.getElementById('sidebar'); [cite: 1]
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); [cite: 1]
+        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) { [cite: 1]
+            if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) { [cite: 1]
+                sidebar.classList.remove('open'); [cite: 1]
             }
         }
     });
     
     // 5. Thiết lập các vùng tải tệp (Upload)
-    const chicWrapper = document.getElementById('chic-upload-wrapper');
-    const chicInput = document.getElementById('chic_file_input');
-    if (chicInput && chicWrapper) {
-        chicInput.addEventListener('change', function(event) {
-            const files = event.target.files;
-            if (files && files.length > 0) { processChicFile(files[0]); }
-            else if (!chicInput.value) { resetChicUploadUI(); }
+    const chicWrapper = document.getElementById('chic-upload-wrapper'); [cite: 1]
+    const chicInput = document.getElementById('chic_file_input'); [cite: 1]
+    if (chicInput && chicWrapper) { [cite: 1]
+        chicInput.addEventListener('change', function(event) { [cite: 1]
+            const files = event.target.files; [cite: 1]
+            if (files && files.length > 0) { processChicFile(files[0]); } [cite: 1]
+            else if (!chicInput.value) { resetChicUploadUI(); } [cite: 1]
         });
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false));
-        ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false));
-        ['dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.remove('dragover'), false));
-        chicWrapper.addEventListener('drop', function(event) {
-            const files = event.dataTransfer?.files;
-            if (files && files.length > 0) {
-                chicInput.files = files;
-                processChicFile(files[0]);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, preventDefaults, false)); [cite: 1]
+        ['dragenter', 'dragover'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.add('dragover'), false)); [cite: 1]
+        ['dragleave', 'drop'].forEach(evName => chicWrapper.addEventListener(evName, () => chicWrapper.classList.remove('dragover'), false)); [cite: 1]
+        chicWrapper.addEventListener('drop', function(event) { [cite: 1]
+            const files = event.dataTransfer?.files; [cite: 1]
+            if (files && files.length > 0) { [cite: 1]
+                chicInput.files = files; [cite: 1]
+                processChicFile(files[0]); [cite: 1]
             }
         }, false);
     }
-    const chicRemoveBtn = document.getElementById('chic-remove-btn');
-    if (chicRemoveBtn) {
-        chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); });
+    const chicRemoveBtn = document.getElementById('chic-remove-btn'); [cite: 1]
+    if (chicRemoveBtn) { [cite: 1]
+        chicRemoveBtn.addEventListener('click', function(e) { e.stopPropagation(); resetChicUploadUI(); }); [cite: 1]
     }
-    const ngayCocInput = document.getElementById('ngay_coc');
-    if (ngayCocInput) {
-        ngayCocInput.setAttribute('readonly', true);
-        ngayCocInput.addEventListener('focus', function() { this.blur(); });
-        ngayCocInput.addEventListener('click', function() { this.blur(); });
+    const ngayCocInput = document.getElementById('ngay_coc'); [cite: 1]
+    if (ngayCocInput) { [cite: 1]
+        ngayCocInput.setAttribute('readonly', true); [cite: 1]
+        ngayCocInput.addEventListener('focus', function() { this.blur(); }); [cite: 1]
+        ngayCocInput.addEventListener('click', function() { this.blur(); }); [cite: 1]
     }
-    setupSimpleFileUpload('hop_dong_file_input', 'hopdong-upload-wrapper', 'hopdong-prompt-text');
-    setupSimpleFileUpload('denghi_xhd_file_input', 'denghi-upload-wrapper', 'denghi-prompt-text');
+    setupSimpleFileUpload('hop_dong_file_input', 'hopdong-upload-wrapper', 'hopdong-prompt-text'); [cite: 1]
+    setupSimpleFileUpload('denghi_xhd_file_input', 'denghi-upload-wrapper', 'denghi-prompt-text'); [cite: 1]
     
     // 6. Gắn sự kiện cho các ô lọc để tự động lọc
-    const debouncedApplyFilters = debounce(applyFilters, 350);
-    const searchInput = document.getElementById('search-input');
-    const carModelSelect = document.getElementById('filter-car-model');
-    const statusSelect = document.getElementById('filter-status');
+    const debouncedApplyFilters = debounce(applyFilters, 350); [cite: 1]
+    const searchInput = document.getElementById('search-input'); [cite: 1]
+    const carModelSelect = document.getElementById('filter-car-model'); [cite: 1]
+    const statusSelect = document.getElementById('filter-status'); [cite: 1]
 
-    if(searchInput) searchInput.addEventListener('input', debouncedApplyFilters);
-    if(carModelSelect) carModelSelect.addEventListener('change', applyFilters);
-    if(statusSelect) statusSelect.addEventListener('change', applyFilters);
+    if(searchInput) searchInput.addEventListener('input', debouncedApplyFilters); [cite: 1]
+    if(carModelSelect) carModelSelect.addEventListener('change', applyFilters); [cite: 1]
+    if(statusSelect) statusSelect.addEventListener('change', applyFilters); [cite: 1]
 
-    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
     // Gắn sự kiện để kiểm tra và hiển thị cảnh báo xe hot/tồn kho
-    const phienBanSelect = document.getElementById('phien_ban');
-    const ngoaiThatSelect = document.getElementById('ngoai_that');
-    if (phienBanSelect) phienBanSelect.addEventListener('change', checkAndDisplayVehicleWarning);
-    if (ngoaiThatSelect) ngoaiThatSelect.addEventListener('change', checkAndDisplayVehicleWarning);
-    // --- KẾT THÚC PHẦN BỔ SUNG ---
+    const phienBanSelect = document.getElementById('phien_ban'); [cite: 1]
+    const ngoaiThatSelect = document.getElementById('ngoai_that'); [cite: 1]
+    if (phienBanSelect) phienBanSelect.addEventListener('change', checkAndDisplayVehicleWarning); [cite: 1]
+    if (ngoaiThatSelect) ngoaiThatSelect.addEventListener('change', checkAndDisplayVehicleWarning); [cite: 1]
 
     // 7. Xử lý tab khi tải trang
-    const requestedTab = getQueryParam('tab');
-    if (requestedTab === 'form') {
-        const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
-        if (formTabLink) {
-            switchTab('form', formTabLink);
+    const requestedTab = getQueryParam('tab'); [cite: 1]
+    if (requestedTab === 'form') { [cite: 1]
+        const formTabLink = document.querySelector('.tabs a[onclick*="form"]'); [cite: 1]
+        if (formTabLink) { [cite: 1]
+            switchTab('form', formTabLink); [cite: 1]
         }
     } else {
         // Hành vi mặc định: mở tab Lịch sử
-        const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
-        if (historyTabLink) {
-            switchTab('history', historyTabLink);
+        const historyTabLink = document.querySelector('.tabs a[onclick*="history"]'); [cite: 1]
+        if (historyTabLink) { [cite: 1]
+            switchTab('history', historyTabLink); [cite: 1]
         }
     }
     
     // 8. Tải dữ liệu lần đầu và khởi động cơ chế Polling
-    fetchHistory().then(() => {
-        startPolling(); // Bắt đầu hỏi server để cập nhật
-    }).catch(error => {
-        console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
-        showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
+    fetchHistory().then(() => { [cite: 1]
+        startPolling(); // Bắt đầu hỏi server để cập nhật 
+    }).catch(error => { [cite: 1]
+        console.error("Lỗi khởi tạo dữ liệu ban đầu:", error); [cite: 1]
+        showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error"); [cite: 1]
     });
 
-    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
     // Tải dữ liệu phân tích xe để phục vụ cảnh báo
-    fetchVehicleAnalytics();
+    fetchVehicleAnalytics(); [cite: 1]
+    
+    // --- BẮT ĐẦU PHẦN BỔ SUNG: Đăng ký Service Worker cho PWA ---
+    // Chúng ta dùng `window.addEventListener('load', ...)` để đảm bảo việc đăng ký
+    // không làm chậm quá trình hiển thị ban đầu của trang.
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('Service Worker đã được đăng ký thành công:', registration);
+                })
+                .catch(error => {
+                    console.log('Lỗi đăng ký Service Worker:', error);
+                });
+        });
+    }
     // --- KẾT THÚC PHẦN BỔ SUNG ---
 });
+
 
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
