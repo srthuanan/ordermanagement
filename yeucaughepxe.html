@@ -1986,6 +1986,39 @@ body.dark-mode .action-menu-dropdown .divider {
     top: auto; /* Tắt định vị top */
     bottom: calc(100% + 2px); /* Định vị ngay trên nút ... */
 }
+/* Thêm vào trong thẻ <style> */
+
+#vehicle-analytics-warning.visible {
+    opacity: 1;
+    height: auto;
+    min-height: 1.5rem; /* Đảm bảo có chiều cao tối thiểu khi hiển thị */
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#vehicle-analytics-warning.hot-selling {
+    background-color: #fffbeb; /* amber-50 */
+    color: #b45309; /* amber-700 */
+    border: 1px solid #fde68a; /* amber-200 */
+}
+
+#vehicle-analytics-warning.slow-moving {
+    background-color: #f0fdfa; /* teal-50 */
+    color: #0f766e; /* teal-700 */
+    border: 1px solid #99f6e4; /* teal-200 */
+}
+
+body.dark-mode #vehicle-analytics-warning.hot-selling {
+    background-color: #451a03; /* dark:amber-950 */
+    color: #fcd34d; /* dark:amber-400 */
+    border-color: #78350f; /* dark:amber-800 */
+}
+
+body.dark-mode #vehicle-analytics-warning.slow-moving {
+    background-color: #042f2e; /* dark:teal-950 */
+    color: #5eead4; /* dark:teal-400 */
+    border-color: #115e59; /* dark:teal-800 */
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2035,10 +2068,25 @@ body.dark-mode .action-menu-dropdown .divider {
                     <option value="VF 3">VF 3</option><option value="VF 5">VF 5</option><option value="VF 6">VF 6</option><option value="VF 7">VF 7</option><option value="VF 8">VF 8</option><option value="VF 9">VF 9</option>
                     <option value="HERIO">HERIO</option><option value="NERIO">NERIO</option><option value="LIMO">LIMO</option><option value="MINIO">MINIO</option>
                 </select>
-                <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()" class="form-select">
-                    <option value="" disabled selected>Chọn phiên bản</option>
-                    <option value="Plus">Plus</option> <option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option> <option value="Plus Nâng cấp">Plus Nâng cấp</option> <option value="Eco">Eco</option> <option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option> <option value="Eco Nâng cấp">Eco Nâng cấp</option> <option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option> <option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option> <option value="Plus_CAP_Metal">Plus_CAP_Metal</option> <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option> <option value="Eco_3ZONES">Eco_3ZONES</option> <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option> <option value="Base">Base</option>
-                </select>
+               <select name="phien_ban" id="phien_ban" required onchange="saveFormDraft()" class="form-select">
+    <option value="" disabled selected>Chọn phiên bản</option>
+    <option value="Plus">Plus</option> 
+    <option value="Plus Tiêu chuẩn">Plus Tiêu chuẩn</option> 
+    <option value="Plus Nâng cấp">Plus Nâng cấp</option> 
+    <option value="Eco">Eco</option> 
+    <option value="Eco Tiêu chuẩn">Eco Tiêu chuẩn</option> 
+    <option value="Eco Nâng cấp">Eco Nâng cấp</option> 
+    <option value="Plus_Metal Tiêu chuẩn">Plus_Metal Tiêu chuẩn</option> 
+    <option value="Plus_Metal Nâng cấp">Plus_Metal Nâng cấp</option> 
+    <option value="Plus_CAP_Metal">Plus_CAP_Metal</option> 
+    <option value="Plus_Metal_3ZONES">Plus_Metal_3ZONES</option> 
+    <option value="Eco_3ZONES">Eco_3ZONES</option> 
+    <option value="Plus_CAP_Metal_3ZONES">Plus_CAP_Metal_3ZONES</option> 
+    <option value="Base">Base</option>
+</select>
+
+<div id="vehicle-analytics-warning" class="text-xs rounded-md transition-opacity duration-300 opacity-0 h-0" style="min-height: 0;"></div>
+
                 <select name="ngoai_that" id="ngoai_that" required onchange="saveFormDraft()" class="form-select">
                     <option value="" disabled selected>Chọn ngoại thất</option>
                     <option value="Brahminy White (CE18)">Brahminy White (CE18)</option><option value="Sunset ORB (CE1A)">Sunset ORB (CE1A)</option><option value="Crimson Red (CE1M)">Crimson Red (CE1M)</option><option value="Vinfast Blue (CE1N)">Vinfast Blue (CE1N)</option><option value="Neptune Grey (CE14)">Neptune Grey (CE14)</option><option value="Jet Black (CE11)">Jet Black (CE11)</option><option value="Electric Blue (CE1J)">Electric Blue (CE1J)</option><option value="Zenith Grey (CE1V)">Zenith Grey (CE1V)</option><option value="Jet Black Roof- Summer Yellow Body (111U)">Jet Black Roof- Summer Yellow Body (111U)</option><option value="Brahminy White Roof- Aquatic Azure Body (181Y)">Brahminy White Roof- Aquatic Azure Body (181Y)</option><option value="Brahminy White Roof- Rose Pink Body (1821)">Brahminy White Roof- Rose Pink Body (1821)</option><option value="Brahminy White Roof - Iris Berry Body (181X)">Brahminy White Roof - Iris Berry Body (181X)</option><option value="Urbant Mint (CE1W)">Urbant Mint (CE1W)</option><option value="Vinbus Green (CE2B)">Vinbus Green (CE2B)</option><option value="Deep Ocean (CE1H)">Deep Ocean (CE1H)</option><option value="Brahminy White Roof- Summer Yellow Body (181U)">Brahminy White Roof- Summer Yellow Body (181U)</option><option value="Iris Berry (CE1X)">Iris Berry (CE1X)</option><option value="Zenith Grey-Desat Silver Roof (171V)">Zenith Grey-Desat Silver Roof (171V)</option><option value="Urbant Mint Green - Desat Silv (171W)">Urbant Mint Green - Desat Silv (171W)</option><option value="Ivy Green-Desat Silver Roof (1722)">Ivy Green-Desat Silver Roof (1722)</option><option value="Atlantic Blue-Aquatic Azure Ro (1Y26)">Atlantic Blue-Aquatic Azure Ro (1Y26)</option><option value="Jet Black-Champagne Creme Roof (2311)">Jet Black-Champagne Creme Roof (2311)</option><option value="Infinity Blanc _ Silky White R (2418)">Infinity Blanc _ Silky White R (2418)</option><option value="Champagne Creme - Matte Champa (2523)">Champagne Creme - Matte Champa (2523)</option><option value="Jet Black - Graphite Roof (2811)">Jet Black - Graphite Roof (2811)</option><option value="Crimson Velvet - Mystery Bronz (2927)">Crimson Velvet - Mystery Bronz (2927)</option><option value="Ivy_Green_GNE (CE22)">Ivy_Green_GNE (CE22)</option><option value="Champagne_Creme_YLG (CE23)">Champagne_Creme_YLG (CE23)</option><option value="Crimson Red - Jet Black Roof (111M)">Crimson Red - Jet Black Roof (111M)</option><option value="Infinity Blanc_Zenith Grey Roof (1V18)">Infinity Blanc_Zenith Grey Roof (1V18)</option><option value="Deep Ocean_Jet Black Roof (111H)">Deep Ocean_Jet Black Roof (111H)</option><option value="Alantic Blue_Denim Blue Roof (2A26)">Alantic Blue_Denim Blue Roof (2A26)</option><option value="Jet Black_Mystery Bronze Roof (2911)">Jet Black_Mystery Bronze Roof (2911)</option><option value="Champagne Creme_Infinity Blanc Roof (1823)">Champagne Creme_Infinity Blanc Roof (1823)</option><option value="De Sat Silver IND12007 (CE17)">De Sat Silver IND12007 (CE17)</option>
@@ -2464,6 +2512,7 @@ body.dark-mode .action-menu-dropdown .divider {
 </body>
 
 <script>
+let vehicleAnalyticsData = null;
 let filtersPopulated = false; 
 let currentDataVersion = '0';
 let pollingInterval;
@@ -2471,7 +2520,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbykYVQzHzd2wgUMCp_fMFG_gzXTixi2MTBSNILtsLZnVr3fIf3n8SAoVMsQAayvquOmqQ/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxM3LH9ZnWlabdHQWSNwL_9XyolhgMdRKRWEw-CQ6W2ee5HIlh8y99suwdBb9VCVjzZwA/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -2640,7 +2689,15 @@ document.addEventListener("DOMContentLoaded", function() {
     if(carModelSelect) carModelSelect.addEventListener('change', applyFilters);
     if(statusSelect) statusSelect.addEventListener('change', applyFilters);
 
-    // --- BẮT ĐẦU LOGIC MỚI: XỬ LÝ TAB KHI TẢI TRANG ---
+    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
+    // Gắn sự kiện để kiểm tra và hiển thị cảnh báo xe hot/tồn kho
+    const phienBanSelect = document.getElementById('phien_ban');
+    const ngoaiThatSelect = document.getElementById('ngoai_that');
+    if (phienBanSelect) phienBanSelect.addEventListener('change', checkAndDisplayVehicleWarning);
+    if (ngoaiThatSelect) ngoaiThatSelect.addEventListener('change', checkAndDisplayVehicleWarning);
+    // --- KẾT THÚC PHẦN BỔ SUNG ---
+
+    // 7. Xử lý tab khi tải trang
     const requestedTab = getQueryParam('tab');
     if (requestedTab === 'form') {
         const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
@@ -2654,18 +2711,20 @@ document.addEventListener("DOMContentLoaded", function() {
             switchTab('history', historyTabLink);
         }
     }
-    // --- KẾT THÚC LOGIC MỚI ---
     
-    // 7. Tải dữ liệu lần đầu và khởi động cơ chế Polling
+    // 8. Tải dữ liệu lần đầu và khởi động cơ chế Polling
     fetchHistory().then(() => {
         startPolling(); // Bắt đầu hỏi server để cập nhật
     }).catch(error => {
         console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
         showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
     });
+
+    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
+    // Tải dữ liệu phân tích xe để phục vụ cảnh báo
+    fetchVehicleAnalytics();
+    // --- KẾT THÚC PHẦN BỔ SUNG ---
 });
-
-
 
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem("theme") || "light";
@@ -3701,6 +3760,8 @@ function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
             }
         }
     }
+    checkAndDisplayVehicleWarning();
+    // --- KẾT THÚC PHẦN BỔ SUNG ---
 }
 function initScrollToTopButton() {
     const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
@@ -4835,7 +4896,8 @@ async function submitValidBulkTableOrders() {
         }
 
         const submittedCount = validRows.length;
-        const firstOrderNumber = validRows[0]?.querySelector('input[name="so_don_hang"]')?.value.trim();
+        const firstOrderNumber = validRows[0]?.querySelector('input[name="so_don_hang"]')?.value.trim(
+);
         showBulkSuccessModal(submittedCount, firstOrderNumber);
         
         validRows.forEach(row => row.remove());
@@ -5531,6 +5593,73 @@ function renderHistoryTable(dataToRender) {
 function handleRetry() {
     // Tải lại trang và thêm tham số `tab=form` vào URL
     window.location.href = `yeucaughepxe.html?tab=form`;
+}
+async function fetchVehicleAnalytics() {
+    try {
+        const response = await fetch(apiURL + "?action=getAnalytics");
+        if (!response.ok) {
+            throw new Error(`Lỗi mạng khi tải dữ liệu phân tích: ${response.status}`);
+        }
+        const result = await response.json();
+        if (result.status === "SUCCESS") {
+            vehicleAnalyticsData = result.analytics;
+            console.log("Đã tải thành công dữ liệu phân tích xe.");
+        } else {
+            console.warn("Không thể tải dữ liệu phân tích từ máy chủ:", result.message);
+        }
+    } catch (error) {
+        console.error("Lỗi khi gọi fetchVehicleAnalytics:", error);
+    }
+}
+
+/**
+ * [HÀM ĐÃ NÂNG CẤP] Hiển thị cảnh báo dựa trên lựa chọn của người dùng.
+ * Ưu tiên hiển thị số lượng đang chờ ghép.
+ */
+function checkAndDisplayVehicleWarning() {
+    if (!vehicleAnalyticsData) return;
+
+    const dongXe = document.getElementById('dong_xe').value;
+    const phienBan = document.getElementById('phien_ban').value;
+    const ngoaiThat = document.getElementById('ngoai_that').value;
+    const warningDiv = document.getElementById('vehicle-analytics-warning');
+
+    // Nếu thiếu thông tin hoặc không tìm thấy div cảnh báo, ẩn nó đi và thoát
+    if (!dongXe || !phienBan || !ngoaiThat || !warningDiv) {
+        if(warningDiv) warningDiv.classList.remove('visible', 'hot-selling', 'slow-moving');
+        return;
+    }
+
+    const vehicleKey = `${dongXe}|${phienBan}|${ngoaiThat}`.trim().toLowerCase();
+    
+    // Lấy dữ liệu phân tích
+    const pendingCount = vehicleAnalyticsData.pendingRequestCount ? (vehicleAnalyticsData.pendingRequestCount[vehicleKey] || 0) : 0;
+    const stockInfo = vehicleAnalyticsData.stockStatus ? (vehicleAnalyticsData.stockStatus[vehicleKey] || { count: 0, isSlowMoving: false }) : { count: 0, isSlowMoving: false };
+
+    // Mặc định ẩn cảnh báo
+    warningDiv.classList.remove('visible', 'hot-selling', 'slow-moving');
+    warningDiv.innerHTML = '';
+
+    // --- BẮT ĐẦU LOGIC CẢNH BÁO MỚI ---
+
+    // Ưu tiên 1: Hiển thị cảnh báo về số lượng yêu cầu đang chờ (nếu có)
+    if (pendingCount > 0) {
+        warningDiv.innerHTML = `<i class="fas fa-users mr-2"></i><b>Lưu ý:</b> Đang có <strong>${pendingCount}</strong> yêu cầu khác đang chờ ghép cho Màu xe này.`;
+        // Sử dụng style 'hot-selling' (màu cam) cho cảnh báo này
+        warningDiv.classList.add('visible', 'hot-selling');
+        return; // Dừng lại, không hiển thị các cảnh báo khác
+    }
+
+    // Ưu tiên 2: Hiển thị gợi ý nếu xe có sẵn trong kho và là hàng tồn kho lâu
+    if (stockInfo.isSlowMoving && stockInfo.count > 0) {
+        warningDiv.innerHTML = `<i class="fas fa-truck-loading mr-2"></i><b>Gợi ý:</b> Xe này đang có sẵn trong kho, có thể giao ngay.`;
+        // Sử dụng style 'slow-moving' (màu xanh) cho gợi ý
+        warningDiv.classList.add('visible', 'slow-moving');
+        return;
+    }
+
+    // Nếu không có điều kiện nào ở trên được thỏa mãn, div cảnh báo sẽ vẫn bị ẩn.
+    // --- KẾT THÚC LOGIC CẢNH BÁO MỚI ---
 }
 
 </script>
