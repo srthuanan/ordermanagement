@@ -2344,7 +2344,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbz1FpGwPzMdFgB_6v0acLOoFLtTJye_YWHsTQ3REvOPTAUIDIfjM0p70ccHDF0BnGtNyA/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwCoPpCBLf-rz49Hvq2z7-4vScJtVXmfWhMvx0MSkDDvIakgeCqosbRO3IemXom1x0/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -5270,10 +5270,6 @@ function closeActiveDropdown() {
     // Reset biến trạng thái
     activeDropdown = { element: null, originalParent: null };
 }
-/**
- * [HÀM MỚI] Định kỳ kiểm tra phiên bản dữ liệu trên server.
- * Đây là "trái tim" của chức năng tự động cập nhật.
- */
 function pollForUpdates() {
     // Chỉ thực hiện nếu trang không ở trong trạng thái loading
     const loadingModal = document.getElementById('loading-modal');
@@ -5288,7 +5284,9 @@ function pollForUpdates() {
             // Nếu server trả về phiên bản mới và khác với phiên bản hiện tại của trình duyệt
             if (data.status === "SUCCESS" && data.version && data.version !== currentDataVersion) {
                 console.log(`Phát hiện phiên bản mới. Server: ${data.version}, Client: ${currentDataVersion}. Đang tải lại dữ liệu...`);
-                showNotification("Phát hiện dữ liệu mới, đang tự động cập nhật...", "info", 2000);
+                
+                // --- ĐÃ VÔ HIỆU HÓA DÒNG NÀY ---
+                // showNotification("Phát hiện dữ liệu mới, đang tự động cập nhật...", "info", 2000);
                 
                 // Gọi hàm fetchHistory để tải lại toàn bộ dữ liệu mới
                 fetchHistory(false); // Tham số 'false' để không hiện popup "Đang tải..."
@@ -5298,10 +5296,6 @@ function pollForUpdates() {
             console.warn("Lỗi khi kiểm tra phiên bản:", error);
         });
 }
-
-/**
- * [HÀM MỚI] Bắt đầu cơ chế polling.
- */
 function startPolling() {
     // Dừng interval cũ nếu có để tránh chạy nhiều lần
     if (pollingInterval) {
