@@ -633,7 +633,7 @@
         const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1'; 
 
         const labelMap = {
-            "Tên tư vấn bán hàng": "Tên TVBH",
+            "Tên tư vấn bán hàng": "Tư Vấn Bán Hàng",
             "Tên khách hàng": "Tên Khách Hàng",
             "Số đơn hàng": "Số Đơn Hàng",
             "Dòng xe": "Dòng Xe",
@@ -641,12 +641,12 @@
             "Ngoại thất": "Ngoại Thất",
             "Nội thất": "Nội Thất",
             "Ngày cọc": "Ngày Cọc",
-            "Thời gian nhập": "TG Yêu Cầu",
+            "Thời gian nhập": "Ngày Yêu Cầu",
             "Trạng thái": "Trạng Thái Đơn", 
-            "Kết quả": "Kết Quả Ghép",    
+            "Kết quả": "Kết Quả",    
             "VIN": "Số VIN",             
             "Thời gian ghép": "Ngày Ghép",
-            "Số ngày ghép": "Số Ngày Chờ Ghép"
+            "Số ngày ghép": "Số Ngày Ghép"
         };
 
         // --- Sidebar JS ---
@@ -776,17 +776,51 @@
             return lowerCaseString.charAt(0).toUpperCase() + lowerCaseString.slice(1);
         }
 
-        function formatDateTime(dtString) {
-            if (!dtString) return "Chưa có dữ liệu"; 
-            const d = new Date(dtString);
-            if (isNaN(d.getTime())) return "Dữ liệu không hợp lệ";
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            return `${day}/${month}/${year} ${hours}:${minutes}`;
+       function formatDateTime(dtString) {
+    if (!dtString) return "Chưa có dữ liệu";
+
+    let d;
+    // Kiểm tra nếu dtString là chuỗi và có chứa ký tự '/'
+    if (typeof dtString === 'string' && dtString.includes('/')) {
+        // Tách ngày và giờ (nếu có)
+        const parts = dtString.split(' ');
+        const dateParts = parts[0].split('/'); // Tách dd, MM, yyyy
+
+        // Tách giờ, phút (nếu có)
+        let timeParts = [0, 0]; // Mặc định là 0 giờ, 0 phút
+        if (parts.length > 1 && parts[1].includes(':')) {
+            timeParts = parts[1].split(':').map(Number);
         }
+
+        // Tạo đối tượng Date theo đúng thứ tự: new Date(năm, tháng - 1, ngày, giờ, phút)
+        // Chú ý: Tháng trong JavaScript bắt đầu từ 0 (0 = tháng 1)
+        if (dateParts.length === 3) {
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1;
+            const year = parseInt(dateParts[2], 10);
+            d = new Date(year, month, day, timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+        } else {
+            d = new Date(dtString); // Fallback nếu định dạng không như mong đợi
+        }
+    } else {
+        // Thử phân tích cú pháp trực tiếp cho các định dạng khác (ví dụ: ISO)
+        d = new Date(dtString);
+    }
+
+    // Kiểm tra xem đối tượng Date có hợp lệ không
+    if (isNaN(d.getTime())) {
+        return "Dữ liệu không hợp lệ";
+    }
+
+    // Nếu hợp lệ, tiến hành định dạng đầu ra
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -901,136 +935,143 @@
             }, 100); 
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            applyCurrentTheme(); 
-            applyInitialSidebarState(); 
-            setActiveSidebarLink();
-            initScrollToTopButton();
+document.addEventListener("DOMContentLoaded", function() {
+    applyCurrentTheme(); 
+    applyInitialSidebarState(); 
+    setActiveSidebarLink();
+    initScrollToTopButton();
 
-            const orderNumberParam = getQueryParam("orderNumber");
-            const cardTitleElement = document.getElementById("card-title");
-            const contentElement = document.getElementById("order-details-content");
+    const orderNumberParam = getQueryParam("orderNumber");
+    const cardTitleElement = document.getElementById("card-title");
+    const contentElement = document.getElementById("order-details-content");
 
-            if (!cardTitleElement || !contentElement) {
-                console.error("Critical page elements not found for displaying order details.");
-                return;
-            }
+    if (!cardTitleElement || !contentElement) {
+        console.error("Lỗi: Không tìm thấy các thành phần HTML quan trọng.");
+        return;
+    }
 
-            if (!orderNumberParam) {
-                cardTitleElement.textContent = "Lỗi";
-                contentElement.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-triangle"></i>Không có số đơn hàng.</p>';
-                updateOrderStatusBadge("Lỗi");
-                return;
-            }
+    if (!orderNumberParam) {
+        cardTitleElement.textContent = "Lỗi";
+        contentElement.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-triangle"></i>Không có số đơn hàng được cung cấp.</p>';
+        updateOrderStatusBadge("Lỗi");
+        return;
+    }
 
-            cardTitleElement.textContent = `Đơn Hàng: ${orderNumberParam.toUpperCase()}`;
-            const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
+    cardTitleElement.textContent = `Đơn Hàng: ${orderNumberParam.toUpperCase()}`;
+    const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
 
-            if (storedData) {
-                try {
-                    const globalHistoryData = JSON.parse(storedData);
-                    const rowData = globalHistoryData.find(r => r && r["Số đơn hàng"] === orderNumberParam);
+    if (storedData) {
+        try {
+            const globalHistoryData = JSON.parse(storedData);
+            const rowData = globalHistoryData.find(r => r && r["Số đơn hàng"] === orderNumberParam);
 
-                    if (rowData) {
-                        const generalInfo = {};
-                        const carInfo = {};
-                        const statusInfo = {};
+            if (rowData) {
+                const generalInfo = {};
+                const carInfo = {};
+                const statusInfo = {};
 
-                        const orderOfDisplay = [ 
-                            "Số đơn hàng", "Tên khách hàng", "Tên tư vấn bán hàng", "Ngày cọc", "Thời gian nhập",
-                            "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất",
-                            "Trạng thái", "Kết quả", "VIN", "Thời gian ghép", "Số ngày ghép"
-                        ];
-                        
-                        for(const key of orderOfDisplay){
-                            if(rowData.hasOwnProperty(key)){ 
-                                const value = rowData[key];
-                                const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(key))
-                                                ? formatDateTime(value)
-                                                : (value !== null && typeof value !== 'undefined' && String(value).trim() !== "" ? String(value) : "N/A");
-
-                                if (formattedValue !== "N/A") { 
-                                    if (["Số đơn hàng", "Tên khách hàng", "Tên tư vấn bán hàng", "Ngày cọc", "Thời gian nhập"].includes(key)) {
-                                        generalInfo[key] = formattedValue;
-                                    } else if (["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất"].includes(key)) {
-                                        carInfo[key] = formattedValue;
-                                    } else { 
-                                        statusInfo[key] = formattedValue;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        let html = "";
-                        let hasAnyData = false;
-
-                        // RENAMED function and MODIFIED to generate divs for horizontal layout
-                        const createDetailItemsHTML = (groupData, groupTitle, groupIcon) => {
-                            if (Object.keys(groupData).length === 0) return "";
-                            hasAnyData = true;
-                            let itemsHtml = `<div class="detail-group"><h3><i class="${groupIcon}"></i>${groupTitle}</h3><div class="details-horizontal-container">`;
-                            for (const key of orderOfDisplay) {
-                                if (groupData.hasOwnProperty(key)) {
-                                    const displayLabel = labelMap[key] || capitalizeFirstLetter(key.replace(/_/g, ' '));
-                                    const value = groupData[key];
-                                    
-                                    let valueSpecificClass = '';
-                                    let itemHighlightClass = '';
-                                    if (key === "VIN" || key === "Kết quả") { 
-                                        itemHighlightClass = 'highlight-detail-item';
-                                        if (key === "VIN") valueSpecificClass = 'vin-highlight-text';
-                                    }
-
-                                    itemsHtml += `
-                                        <div class="detail-item-horizontal ${itemHighlightClass}">
-                                            <strong class="detail-label">${displayLabel}:</strong>
-                                            <span class="detail-value ${valueSpecificClass}">${value}</span>
-                                        </div>
-                                    `;
-                                }
-                            }
-                            itemsHtml += '</div></div>';
-                            return itemsHtml;
-                        };
-
-                        html += createDetailItemsHTML(generalInfo, "Thông tin chung", "fas fa-info-circle");
-                        html += createDetailItemsHTML(carInfo, "Thông tin xe", "fas fa-car");
-                        html += createDetailItemsHTML(statusInfo, "Thông tin trạng thái & ghép xe", "fas fa-clipboard-check");
-                        
-                        if (!hasAnyData) { 
-                             contentElement.innerHTML = '<p class="error-message"><i class="fas fa-folder-open"></i>Không có thông tin chi tiết nào để hiển thị cho đơn hàng này.</p>';
+                // --- BẮT ĐẦU LOGIC TÍNH TOÁN DYNAMIC ---
+                if (rowData["Thời gian ghép"]) {
+                    try {
+                        const pairingDate = new Date(rowData["Thời gian ghép"]);
+                        if (!isNaN(pairingDate.getTime())) {
+                            const today = new Date();
+                            // Đặt giờ, phút, giây, ms về 0 để so sánh ngày
+                            pairingDate.setHours(0, 0, 0, 0);
+                            today.setHours(0, 0, 0, 0);
+                            
+                            const diffTime = Math.abs(today - pairingDate);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            rowData["Số ngày ghép"] = diffDays; // Ghi đè giá trị cũ bằng giá trị đã tính toán
                         } else {
-                            contentElement.innerHTML = html;
+                           rowData["Số ngày ghép"] = "N/A";
                         }
-                        updateOrderStatusBadge(rowData["Kết quả"] || rowData["Trạng thái"] || "Chưa rõ");
+                    } catch(e) {
+                         rowData["Số ngày ghép"] = "Lỗi tính toán";
+                    }
+                } else {
+                     rowData["Số ngày ghép"] = "N/A";
+                }
+                // --- KẾT THÚC LOGIC TÍNH TOÁN DYNAMIC ---
 
-                    } else {
-                        contentElement.innerHTML = `<p class="error-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng "${orderNumberParam}".</p>`;
-                        updateOrderStatusBadge("Không tìm thấy");
+                const orderOfDisplay = [ 
+                    "Số đơn hàng", "Tên khách hàng", "Tên tư vấn bán hàng", "Ngày cọc", "Thời gian nhập",
+                    "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất",
+                    "Kết quả", "VIN", "Thời gian ghép", "Số ngày ghép"
+                ];
+                
+                for(const key of orderOfDisplay){
+                    if(rowData.hasOwnProperty(key)){ 
+                        const value = rowData[key];
+                        const formattedValue = (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(key))
+                                        ? formatDateTime(value)
+                                        : (value !== null && typeof value !== 'undefined' && String(value).trim() !== "" ? String(value) : "N/A");
+
+                        if (formattedValue !== "N/A") { 
+                            if (["Số đơn hàng", "Tên khách hàng", "Tên tư vấn bán hàng", "Ngày cọc", "Thời gian nhập"].includes(key)) {
+                                generalInfo[key] = formattedValue;
+                            } else if (["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất"].includes(key)) {
+                                carInfo[key] = formattedValue;
+                            } else { 
+                                statusInfo[key] = formattedValue;
+                            }
+                        }
                     }
-                } catch (e) {
-                    console.error("Lỗi khi xử lý dữ liệu: ", e);
-                    contentElement.innerHTML = '<p class="error-message"><i class="fas fa-database"></i>Lỗi khi truy xuất dữ liệu.</p>';
-                    updateOrderStatusBadge("Lỗi dữ liệu");
                 }
+                
+                let html = "";
+                const createDetailItemsHTML = (groupData, groupTitle, groupIcon) => {
+                    if (Object.keys(groupData).length === 0) return "";
+                    let itemsHtml = `<div class="detail-group"><h3><i class="${groupIcon}"></i>${groupTitle}</h3><div class="details-horizontal-container">`;
+                    for (const key of orderOfDisplay) {
+                        if (groupData.hasOwnProperty(key)) {
+                            const displayLabel = labelMap[key] || key;
+                            const value = groupData[key];
+                            
+                            let valueSpecificClass = '';
+                            let itemHighlightClass = '';
+                            if (key === "VIN" || key === "Kết quả") { 
+                                itemHighlightClass = 'highlight-detail-item';
+                                if (key === "VIN") valueSpecificClass = 'vin-highlight-text';
+                            }
+
+                            itemsHtml += `
+                                <div class="detail-item-horizontal ${itemHighlightClass}">
+                                    <strong class="detail-label">${displayLabel}:</strong>
+                                    <span class="detail-value ${valueSpecificClass}">${value}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                    itemsHtml += '</div></div>';
+                    return itemsHtml;
+                };
+
+                html += createDetailItemsHTML(generalInfo, "Thông tin chung", "fas fa-info-circle");
+                html += createDetailItemsHTML(carInfo, "Thông tin xe", "fas fa-car");
+                html += createDetailItemsHTML(statusInfo, "Thông tin trạng thái & ghép xe", "fas fa-clipboard-check");
+                
+                contentElement.innerHTML = html;
+                updateOrderStatusBadge(rowData["Kết quả"] || "Chưa rõ");
+
             } else {
-                contentElement.innerHTML = '<p class="error-message"><i class="fas fa-history"></i>Không tìm thấy dữ liệu lịch sử trong cache. Vui lòng quay lại trang chính và thử lại.</p>';
-                updateOrderStatusBadge("Không có dữ liệu");
+                contentElement.innerHTML = `<p class="error-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng "${orderNumberParam}".</p>`;
+                updateOrderStatusBadge("Không tìm thấy");
             }
-            
-            document.addEventListener('click', function(event) {
-                const sidebar = document.getElementById('sidebar');
-                const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-                    if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-                        sidebar.classList.remove('open');
-                    }
-                }
-            });
-        });
+        } catch (e) {
+            console.error("Lỗi khi xử lý dữ liệu: ", e);
+            contentElement.innerHTML = '<p class="error-message"><i class="fas fa-database"></i>Lỗi khi truy xuất dữ liệu.</p>';
+            updateOrderStatusBadge("Lỗi dữ liệu");
+        }
+    } else {
+        contentElement.innerHTML = '<p class="error-message"><i class="fas fa-history"></i>Không tìm thấy dữ liệu lịch sử. Vui lòng quay lại trang chính và thử lại.</p>';
+        updateOrderStatusBadge("Không có dữ liệu");
+    }
+});
+
+
     </script>
 
 
 </body>
 </html>
-
