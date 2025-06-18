@@ -891,7 +891,7 @@ body.dark-mode .table-wrapper::-webkit-scrollbar-thumb:hover {
 /* Thêm padding cho select để chừa không gian cho icon */
 .filter-container select {
     padding-left: 34px; /* Rộng hơn một chút cho icon */
-    min-width: 200px;   /* Chiều rộng tối thiểu cho các bộ lọc */
+    min-width: 150px;   /* Chiều rộng tối thiểu cho các bộ lọc */
 }
 
 /* Icon bên trong bộ lọc */
@@ -953,6 +953,225 @@ body.dark-mode .filter-icon {
 body.dark-mode .filter-group::after {
     color: var(--text-dark);
 }
+/* === CSS MỚI: Bố cục 2 cột cho trang Chờ Ghép === */
+.dual-panel-layout {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Ngăn cuộn ở layout chính */
+}
+
+.dual-panel-layout .main-panel {
+    flex: 3; /* Chiếm 3/5 không gian */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.dual-panel-layout .side-panel {
+    flex: 2; /* Chiếm 2/5 không gian */
+    display: flex;
+    flex-direction: column;
+    background-color: var(--card-bg-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-light-outer);
+    border: 1px solid var(--border-color-light);
+    overflow: hidden;
+    min-width: 0;
+}
+body.dark-mode .dual-panel-layout .side-panel {
+    background-color: var(--card-bg-dark);
+    box-shadow: var(--shadow-dark-outer);
+    border-color: var(--border-color-dark);
+}
+
+/* === CSS MỚI: Định dạng cho Panel Gợi ý === */
+.suggestion-panel-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color-light);
+    flex-shrink: 0;
+}
+body.dark-mode .suggestion-panel-header {
+    border-bottom-color: var(--border-color-dark);
+}
+.suggestion-panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+body.dark-mode .suggestion-panel-header h3 {
+    color: var(--secondary-color);
+}
+.suggestion-panel-header h3 i {
+    margin-right: 8px;
+    color: #f5c518;
+}
+
+.suggestion-list {
+    overflow-y: auto;
+    padding: 10px;
+    flex-grow: 1;
+}
+
+.suggestion-card {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease-in-out;
+}
+body.dark-mode .suggestion-card {
+    background-color: var(--background-dark);
+    border-color: var(--border-color-dark);
+}
+.suggestion-card:hover {
+    box-shadow: var(--shadow-light-outer);
+    border-color: var(--primary-color);
+}
+body.dark-mode .suggestion-card:hover {
+    border-color: var(--secondary-color);
+}
+
+.suggestion-card-header {
+    padding: 12px;
+    background-color: rgba(0, 48, 135, 0.05);
+    border-bottom: 1px solid var(--border-color-light);
+    font-size: 14px;
+}
+body.dark-mode .suggestion-card-header {
+    background-color: rgba(0, 174, 255, 0.1);
+    border-bottom-color: var(--border-color-dark);
+}
+.suggestion-card-header strong {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+body.dark-mode .suggestion-card-header strong {
+    color: var(--secondary-color);
+}
+.suggestion-card-header .car-spec {
+    font-size: 12.5px;
+    color: var(--text-light);
+    display: block;
+    margin-top: 4px;
+}
+body.dark-mode .suggestion-card-header .car-spec {
+     color: var(--text-dark);
+}
+
+.suggestion-card-body {
+    padding: 0;
+}
+.suggestion-card-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+.suggestion-card-body th, .suggestion-card-body td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color-light);
+}
+body.dark-mode .suggestion-card-body th, body.dark-mode .suggestion-card-body td {
+     border-bottom-color: var(--border-color-dark);
+}
+.suggestion-card-body tr:last-child td {
+    border-bottom: none;
+}
+.suggestion-card-body th {
+    font-weight: 500;
+    background-color: rgba(0,0,0,0.02);
+}
+body.dark-mode .suggestion-card-body th {
+    background-color: rgba(255,255,255,0.03);
+}
+
+.suggestion-card .btn-sm-action {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+}
+/* === [MỚI] NÂNG CẤP BỐ CỤC NGANG CHO MODAL CHỈNH SỬA === */
+#editModal .modal-content {
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease;
+    border-top: 4px solid var(--primary-color);
+}
+body.dark-mode #editModal .modal-content {
+    border-top: 4px solid var(--secondary-color);
+}
+
+#editModal .modal-body {
+    padding: 20px;
+}
+
+/* Sử dụng Grid để sắp xếp các hàng */
+.edit-form-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mặc định 1 cột trên màn hình nhỏ */
+    gap: 16px; /* Khoảng cách giữa các hàng */
+}
+
+/* Khi màn hình đủ rộng (máy tính bảng, desktop), chia thành 2 cột */
+@media (min-width: 768px) {
+    .edit-form-grid {
+        grid-template-columns: repeat(2, 1fr);
+        column-gap: 25px; /* Khoảng cách giữa các cột */
+    }
+}
+
+/* Sử dụng Flexbox cho mỗi hàng (nhãn + input) */
+.form-group-horizontal {
+    display: flex;
+    align-items: center; /* Căn giữa theo chiều dọc */
+    gap: 10px; /* Khoảng cách giữa nhãn và input */
+}
+
+.form-label-horizontal {
+    flex-basis: 120px; /* Đặt chiều rộng cơ bản cho nhãn để các input thẳng hàng */
+    flex-shrink: 0;    /* Ngăn nhãn bị co lại */
+    text-align: right; /* Căn phải cho đẹp */
+    font-weight: 500;
+    font-size: 13.5px;
+    color: var(--text-light);
+}
+body.dark-mode .form-label-horizontal {
+    color: var(--text-dark);
+}
+
+.form-input-horizontal {
+    flex-grow: 1; /* Ô input chiếm hết phần không gian còn lại */
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color-light);
+    border-radius: 6px;
+    background-color: var(--background-light);
+    color: var(--text-light);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+.form-input-horizontal:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+}
+body.dark-mode .form-input-horizontal {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+    border-color: var(--border-color-dark);
+}
+/* === [MỚI] CSS cho trạng thái "Chờ Ký Hóa Đơn" === */
+.status-chokyhoadon {
+    background-color: #f5f3ff; /* Nền tím nhạt */
+    color: #6d28d9;      /* Chữ màu tím đậm */
+    border-color: #ddd6fe;
+}
+body.dark-mode .status-chokyhoadon {
+    background-color: #2e1065;
+    color: #c4b5fd;
+    border-color: #5b21b6;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -963,8 +1182,8 @@ body.dark-mode .filter-group::after {
         <ul class="menu" id="sidebar-nav">
             <li><a href="#" class="active" onclick="switchView('dashboard')"><i class="fas fa-tachometer-alt fa-fw"></i><span>Bảng Điều Khiển</span></a></li>
             <li><a href="#" onclick="switchView('khoXe')"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a></li>
-            <li><a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Yêu Cầu Chờ Ghép</span></a></li>
-            <li><a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Yêu Cầu Đã Ghép</span></a></li>
+            <li><a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a></li>
+            <li><a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a></li>
             <li><a href="#" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a></li>
             <li><a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a></li>
         </ul>
@@ -980,19 +1199,21 @@ body.dark-mode .filter-group::after {
                 <h1 id="view-title">Bảng Điều Khiển</h1>
             </div>
             <div class="navbar-controls">
-                <div class="notification-bell" onclick="toggleNotificationPanel()">
-                    <i class="fas fa-bell"></i>
-                    <span id="notification-badge" class="notification-badge"></span>
-                </div>
-                <div id="notification-panel" class="notification-panel">
-                    <div class="notification-header">Thông Báo</div>
-                    <ul id="notification-list" class="notification-list">
-                        </ul>
-                </div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
-                    <i class="fas fa-moon" id="theme-icon"></i>
-                </button>
-            </div>
+    <div class="notification-bell" onclick="toggleNotificationPanel()">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="notification-badge"></span>
+        
+        <div id="notification-panel" class="notification-panel">
+            <div class="notification-header">Thông Báo</div>
+            <ul id="notification-list" class="notification-list">
+            </ul>
+        </div>
+    </div>
+    
+    <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+</div>
         </header>
         <div class="main-content" id="main-content">
             </div>
@@ -1002,17 +1223,92 @@ body.dark-mode .filter-group::after {
     <button onclick="scrollToTop()" id="scrollToTopBtn" title="Cuộn lên đầu trang"><i class="fas fa-arrow-up"></i></button>
 
     <div id="confirmationModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="confirmationModalTitle">Xác nhận</h2><button class="modal-close" onclick="closeModal('confirmationModal')">&times;</button></div><div class="modal-body"><p id="confirmationModalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p><div id="confirmationModalInputContainer" style="display: none; margin-top: 15px;"><label id="confirmationModalInputLabel" for="confirmationModalInput"></label><input type="text" id="confirmationModalInput" class="modal-body-input"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('confirmationModal')">Hủy</button><button id="confirmationModalConfirmBtn" class="btn btn-danger">Xác Nhận</button></div></div></div>
+<div id="unmatchModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Xác Nhận Hủy Ghép Xe</h2>
+            <button class="modal-close" onclick="closeModal('unmatchModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Bạn sắp hủy ghép xe cho đơn hàng <b id="unmatchOrderNumber"></b>. Vui lòng nhập lý do:</p>
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="unmatchReason">Lý do hủy ghép (bắt buộc):</label>
+                <textarea id="unmatchReason" rows="3" placeholder="Ví dụ: Sai thông tin xe, khách hàng đổi ý..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('unmatchModal')">Xem Lại</button>
+            <button id="confirmUnmatchBtn" class="btn btn-danger">Xác Nhận Hủy Ghép</button>
+        </div>
+    </div>
+</div>
+<div id="suggestionModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Gợi Ý Ghép Xe Cho Đơn Hàng <span id="suggestionOrderNumber" class="text-primary"></span></h2>
+                <button class="modal-close" onclick="closeModal('suggestionModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="suggestionModalBody">
+                </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('suggestionModal')">Hủy</button>
+                <button id="confirmSuggestionMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button>
+            </div>
+        </div>
+    </div>
     <div id="manualMatchModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Ghép Xe Thủ Công</h2><button class="modal-close" onclick="closeModal('manualMatchModal')">&times;</button></div><div class="modal-body" id="manualMatchModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('manualMatchModal')">Hủy</button><button id="confirmMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button></div></div></div>
     <div id="cancelModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Xác Nhận Hủy Yêu Cầu</h2><button class="modal-close" onclick="closeModal('cancelModal')">&times;</button></div><div class="modal-body"><p>Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <b id="cancelOrderNumber"></b> không?</p><div class="form-group" style="margin-top: 15px;"><label for="cancelReason">Lý do hủy (bắt buộc):</label><textarea id="cancelReason" rows="3" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin..."></textarea></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('cancelModal')">Xem Lại</button><button id="confirmCancelBtn" class="btn btn-danger">Xác Nhận Hủy</button></div></div></div>
     <div id="supplementModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Yêu Cầu Bổ Sung Hồ Sơ</h2><button class="modal-close" onclick="closeModal('supplementModal')">&times;</button></div><div class="modal-body"><p>Nhập nội dung cần TVBH bổ sung cho đơn hàng <b id="supplementOrderNumber"></b>:</p><div class="form-group" style="margin-top: 15px;"><label for="supplementReason">Nội dung yêu cầu:</label><textarea id="supplementReason" rows="3" placeholder="Ví dụ: Ảnh HĐMB bị mờ, thiếu chữ ký..."></textarea></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('supplementModal')">Hủy</button><button id="confirmSupplementBtn" class="btn btn-primary">Gửi Yêu Cầu</button></div></div></div>
     <div id="uploadInvoiceModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Tải Lên Hóa Đơn Đã Xuất</h2><button class="modal-close" onclick="closeModal('uploadInvoiceModal')">&times;</button></div><div class="modal-body"><p>Tải lên file hóa đơn (PDF, ảnh...) cho đơn hàng <b id="uploadOrderNumber"></b>:</p><div class="form-group" style="margin-top: 15px;"><label for="issuedInvoiceFile">Chọn tệp hóa đơn:</label><input type="file" id="issuedInvoiceFile" accept=".pdf,.jpeg,.png,.jpg,.xlsx,.xls"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('uploadInvoiceModal')">Hủy</button><button id="confirmUploadBtn" class="btn btn-primary">Tải Lên và Hoàn Tất</button></div></div></div>
     <div id="addCarModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Thêm Xe Mới vào Kho</h2><button class="modal-close" onclick="closeModal('addCarModal')">&times;</button></div><div class="modal-body"><p>Nhập số VIN của xe cần thêm. Hệ thống sẽ tự động tra cứu và thêm xe vào kho.</p><div class="form-group"><label for="newCarVin">Số VIN (bắt buộc 17 ký tự)</label><input type="text" id="newCarVin" maxlength="17" placeholder="Nhập chính xác 17 ký tự VIN"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addCarModal')">Hủy</button><button class="btn btn-primary" onclick="submitNewCar()">Tra cứu và Thêm Xe</button></div></div></div>
-
+<div id="editModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="editModalTitle">Chỉnh Sửa Dữ Liệu</h2>
+            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="editModalBody">
+            </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editModal')">Hủy</button>
+            <button id="confirmEditBtn" class="btn btn-primary">Lưu Thay Đổi</button>
+        </div>
+    </div>
+</div>
+<div id="excelImportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Nhập Xe Hàng Loạt từ Excel</h2>
+            <button class="modal-close" onclick="closeModal('excelImportModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 13.5px; color: var(--text-light); opacity: 0.9; margin-bottom: 1rem;">
+                Chọn file Excel (.xlsx, .xls). File phải có các cột với tiêu đề chính xác: 
+                <strong>SỐ VIN, Dòng xe, Phiên bản, Ngoại thất, Nội thất</strong>.
+                <br>Hệ thống sẽ tự động bỏ qua các xe có Số VIN đã tồn tại trong kho.
+            </p>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <input type="file" id="excel-file-input-modal" style="display: none;" accept=".xlsx, .xls" onchange="handleFileSelectForModal(event)">
+                <label for="excel-file-input-modal" id="excel-file-label-modal" style="flex-grow: 1; cursor: pointer; background-color: var(--background-light); border: 1px dashed var(--primary-color); color: var(--primary-color); font-weight: 500; padding: 10px 15px; border-radius: 6px; text-align: center; transition: background-color 0.2s;">
+                    <i class="fas fa-file-excel"></i> Chọn File...
+                </label>
+            </div>
+            <p id="file-name-display-modal" style="font-size: 12px; color: var(--no-data-text-color-light); margin-top: 0.5rem; font-style: italic;"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('excelImportModal')">Hủy</button>
+            <button id="import-excel-btn-modal" onclick="importFromExcelModal()" class="btn btn-primary" disabled>
+                <i id="import-modal-spinner" class="fas fa-spinner fa-spin" style="margin-right: 8px; display: none;"></i>
+                <span id="import-modal-btn-text">Nhập Dữ Liệu</span>
+            </button>
+        </div>
+    </div>
+</div>
     <div id="connection-status" title="Trạng thái kết nối"></div>
 
 <script>
     // =================================================================
-    // UI HELPER FUNCTIONS (FROM NEW TEMPLATE)
+    // UI HELPER FUNCTIONS
     // =================================================================
     function applyInitialTheme() {
         const savedTheme = localStorage.getItem("theme") || "light";
@@ -1068,13 +1364,9 @@ body.dark-mode .filter-group::after {
     }
 
 
-    // =================================================================
-    // SECTION 1: CONFIGURATION AND STATE MANAGEMENT
-    // =================================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzhT0CIbNpNGUlKP-idzGHfuYG4VXNp2GFQ7VvCQJuY9Ko5lSB-unptTOQ53Ww0XKT8/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzTYovGv0_JcbmdTY45WFKIZdu0aIOwfi__vqJJd6STREjhuZ336cOjScwF_zkS8caw/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
-    // === ĐÃ SỬA LỖI: Cập nhật appState đầy đủ ===
     const appState = {
         data: null,
         currentView: 'dashboard',
@@ -1172,8 +1464,6 @@ body.dark-mode .filter-group::after {
             }
         }
     }
-
-    
     
     function startPolling() {
         if (appState.connection.isPolling) return;
@@ -1189,19 +1479,51 @@ body.dark-mode .filter-group::after {
         clearTimeout(appState.connection.pollController);
         console.log("Tạm dừng cập nhật dữ liệu nền.");
     }
-    
-    // =================================================================
-    // SECTION 3: RENDERING LOGIC
-    // =================================================================
 
-    // === [SỬA ĐỔI] TỐI ƯU HÓA TÌM KIẾM VỚI DEBOUNCE ===
-    /**
-     * Hàm Debounce: Trì hoãn việc thực thi một hàm cho đến khi người dùng ngừng
-     * thực hiện một hành động (ví dụ: gõ phím) trong một khoảng thời gian nhất định.
-     * @param {Function} func Hàm cần trì hoãn.
-     * @param {number} delay Thời gian trì hoãn (mili giây).
-     * @returns {Function} Hàm mới đã được "debounced".
-     */
+   async function performActionOnRow({ action, params, buttonElement }) {
+    let originalHtml = '';
+    if (buttonElement) {
+        originalHtml = buttonElement.innerHTML;
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', action);
+        for (const key in params) {
+            if (params[key] !== null && params[key] !== undefined) {
+                formData.append(key, params[key]);
+            }
+        }
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+        
+        const result = await response.json();
+        if (result.status === "SUCCESS") {
+            showToast(result.message || 'Hành động thành công!', 'success');
+            await fetchInitialData(true); // Tải lại dữ liệu trong nền
+            return { success: true };
+        } else {
+            throw new Error(result.message || 'Hành động thất bại từ API');
+        }
+    } catch (error) {
+        console.error(`Lỗi khi thực hiện hành động '${action}':`, error);
+        showToast(`Lỗi: ${error.message}`, 'error');
+        return { success: false }; // Trả về thất bại, khối finally sẽ xử lý nút.
+    } finally {
+        // [SỬA ĐỔI QUAN TRỌNG]
+        // Luôn khôi phục lại trạng thái của nút bấm bất kể thành công hay thất bại.
+        // Điều này sửa lỗi spinner quay vô hạn trên các nút trong modal.
+        if (buttonElement) {
+            buttonElement.disabled = false;
+            buttonElement.innerHTML = originalHtml;
+        }
+    }
+}
     function debounce(func, delay) {
         let timeoutId;
         return function(...args) {
@@ -1212,35 +1534,19 @@ body.dark-mode .filter-group::after {
         };
     }
 
-    // Tạo một phiên bản "debounced" của hàm render chính, với độ trễ 400ms.
-    // Việc này sẽ được dùng riêng cho các ô tìm kiếm.
-    const debouncedRender = debounce(render, 4000);
+    // [FIXED] Debounce delay reduced from 4000ms to a more responsive 400ms.
+    const debouncedRender = debounce(render, 400);
 
-    /**
-     * Xử lý sự kiện nhập liệu trên ô tìm kiếm.
-     * Cập nhật trạng thái tìm kiếm và gọi hàm render đã được "debounced".
-     * @param {string} view Tên của view hiện tại (ví dụ: 'khoXe').
-     * @param {string} value Giá trị từ ô tìm kiếm.
-     */
     function handleSearchInput(view, value) {
         if (appState[view]) {
             appState[view].searchTerm = value;
-            // Gọi hàm render có độ trễ, không gọi render() trực tiếp.
             debouncedRender();
         }
     }
 
-    /**
-     * Xử lý thay đổi bộ lọc (dropdown).
-     * Cập nhật bộ lọc và render lại ngay lập tức vì sự kiện 'onchange' chỉ xảy ra một lần.
-     * @param {string} view Tên của view.
-     * @param {string} filterName Tên của bộ lọc (ví dụ: 'dongXe').
-     * @param {string} value Giá trị được chọn.
-     */
     function handleFilterChange(view, filterName, value) {
         if (appState[view] && appState[view].filters) {
             appState[view].filters[filterName] = value;
-            // Render ngay lập tức vì người dùng đã chọn xong.
             render();
         }
     }
@@ -1282,66 +1588,58 @@ body.dark-mode .filter-group::after {
                 <div style="${cardStyle} #dc3545;"><strong>Tổng số đơn đã hủy:</strong> ${huyghep?.length || 0}</div>
             </div>`;
     }
-    
-    // THAY THẾ TOÀN BỘ HÀM renderKhoXeView CŨ BẰNG HÀM NÀY
-
-// THAY THẾ TOÀN BỘ HÀM renderKhoXeView CŨ BẰNG HÀM NÀY
 
 function renderKhoXeView() {
     const data = appState.data.khoxe || [];
     const { searchTerm, filters, sortKey, sortDir } = appState.khoXe;
 
-    // Tự động lấy các tùy chọn cho bộ lọc từ dữ liệu hiện có
     const carModels = [...new Set(data.map(item => item['Dòng xe']))].sort();
     const carVersions = [...new Set(data.map(item => item['Phiên bản']))].sort();
     const carStatuses = [...new Set(data.map(item => item['Trạng thái']))].sort();
 
-    // Cấu trúc HTML mới cho thanh công cụ
+    // [SỬA ĐỔI] Rút ngắn văn bản và chiều rộng của các trường lọc
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm kiếm theo VIN, Mã DMS..." 
+                    <input type="text" placeholder="Tìm VIN, DMS..." 
                            oninput="handleSearchInput('khoXe', this.value)" 
                            value="${searchTerm || ''}"
-                           style="padding-left: 34px; min-width: 250px;">
+                           style="padding-left: 34px; min-width: 180px;">
                 </div>
-
                 <div class="filter-group">
                     <i class="fas fa-car filter-icon"></i>
                     <select onchange="handleFilterChange('khoXe', 'dongXe', this.value)">
-                        <option value="">Tất cả Dòng Xe</option>
+                        <option value="">Dòng Xe</option>
                         ${carModels.map(model => `<option value="${model}" ${filters.dongXe === model ? 'selected' : ''}>${model}</option>`).join('')}
                     </select>
                 </div>
-                
                 <div class="filter-group">
                     <i class="fas fa-cogs filter-icon"></i>
                     <select onchange="handleFilterChange('khoXe', 'phienBan', this.value)">
-                        <option value="">Tất cả Phiên Bản</option>
+                        <option value="">Phiên Bản</option>
                         ${carVersions.map(version => `<option value="${version}" ${filters.phienBan === version ? 'selected' : ''}>${version}</option>`).join('')}
                     </select>
                 </div>
-
                 <div class="filter-group">
                     <i class="fas fa-tag filter-icon"></i>
                     <select onchange="handleFilterChange('khoXe', 'trangThai', this.value)">
-                        <option value="">Tất cả Trạng Thái</option>
+                        <option value="">Trạng Thái</option>
                         ${carStatuses.map(status => `<option value="${status}" ${filters.trangThai === status ? 'selected' : ''}>${status}</option>`).join('')}
                     </select>
                 </div>
-            </div>
-            <div style="display: flex; gap: 10px; flex-shrink: 0;">
-                <button class="btn btn-success" onclick="handleAddCar()"><i class="fas fa-plus"></i> Thêm Xe</button>
-                <button class="btn btn-danger" onclick="handleDeleteCar()"><i class="fas fa-trash-alt"></i> Xóa Xe</button>
-                <button class="btn btn-primary" onclick="handleRestoreCar()"><i class="fas fa-undo"></i> Phục Hồi Xe</button>
+                
+                <div style="display: flex; gap: 10px; flex-shrink: 0; margin-left: auto;">
+                    <button class="btn btn-success" onclick="handleAddCar()"><i class="fas fa-plus"></i> Thêm Xe</button>
+                    <button class="btn btn-success" onclick="openExcelImportModal()"><i class="fas fa-file-excel"></i> Nhập Excel</button>
+                    <button class="btn btn-danger" onclick="handleDeleteCar()"><i class="fas fa-trash-alt"></i> Xóa Xe</button>
+                    <button class="btn btn-primary" onclick="handleRestoreCar()"><i class="fas fa-undo"></i> Phục Hồi Xe</button>
+                </div>
             </div>
         </div>`;
     
-    // Áp dụng logic lọc và tìm kiếm
     let filteredData = data;
-
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
         filteredData = filteredData.filter(row => 
@@ -1358,35 +1656,36 @@ function renderKhoXeView() {
         filteredData = filteredData.filter(row => row['Trạng thái'] === filters.trangThai);
     }
     
-    // Sắp xếp dữ liệu đã được lọc
     sortData(filteredData, sortKey, sortDir);
     
-    // Render bảng
     const tableHeaders = [
         { key: 'VIN', label: 'Số VIN' }, { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản' },
         { key: 'Ngoại thất', label: 'Ngoại Thất' }, { key: 'Nội thất', label: 'Nội Thất' }, { key: 'Trạng thái', label: 'Trạng Thái' },
         { key: 'Ngày nhập', label: 'Ngày Nhập Kho' }, { key: 'Mã DMS', label: 'Mã DMS' }
     ];
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, filteredData, appState.khoXe) + `</div>`;
-}    
-    // === ĐÃ NÂNG CẤP ===
-    function renderChuaGhepView() {
-    const data = appState.data.chuaghep || [];
+
+    const getActionsForRow = (row) => {
+        return [
+            { label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
+        ];
+    };
+    
+    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, filteredData, appState.khoXe, getActionsForRow) + `</div>`;
+}
+
+function renderChuaGhepView() {
+    const chuaGhepData = appState.data.chuaghep || [];
+    const khoXeData = appState.data.khoxe || [];
     const { searchTerm, filters } = appState.chuaGhep;
 
-    // Tự động lấy các tùy chọn cho bộ lọc từ dữ liệu
-    const carModels = [...new Set(data.map(item => item['Dòng xe']))].sort();
-    const salesConsultants = [...new Set(data.map(item => item['Tên tư vấn bán hàng']))].sort();
-
+    const carModels = [...new Set(chuaGhepData.map(item => item['Dòng xe']))].sort();
+    const salesConsultants = [...new Set(chuaGhepData.map(item => item['Tên tư vấn bán hàng']))].sort();
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm theo Tên KH, Số ĐH..." 
-                           oninput="handleSearchInput('chuaGhep', this.value)" 
-                           value="${searchTerm || ''}" 
-                           style="padding-left: 34px; min-width: 250px;">
+                    <input type="text" placeholder="Tìm theo Tên KH, Số ĐH..." oninput="handleSearchInput('chuaGhep', this.value)" value="${searchTerm || ''}" style="padding-left: 34px; min-width: 250px;">
                 </div>
                 <div class="filter-group">
                     <i class="fas fa-car filter-icon"></i>
@@ -1408,7 +1707,7 @@ function renderKhoXeView() {
             </div>
         </div>`;
 
-    let filteredData = data;
+    let filteredData = chuaGhepData.filter(row => String(row['Kết quả'] || '').toLowerCase().includes('chưa'));
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
         filteredData = filteredData.filter(row =>
@@ -1423,28 +1722,41 @@ function renderKhoXeView() {
         filteredData = filteredData.filter(row => row['Tên tư vấn bán hàng'] === filters.tvbh);
     }
 
-    const tableHeaders = [
-        { key: 'Số đơn hàng', label: 'Số Đơn Hàng' }, { key: 'Tên khách hàng', label: 'Tên Khách Hàng' },
-        { key: 'Tên tư vấn bán hàng', label: 'Tư Vấn Bán Hàng' }, { key: 'Dòng xe', label: 'Dòng Xe' },
-        { key: 'Phiên bản', label: 'Phiên Bản'}, { key: 'Ngoại thất', label: 'Ngoại Thất' }, { key: 'Nội thất', label: 'Nội Thất' },
-        { key: 'Kết quả', label: 'Trạng Thái' }
-    ];
-    const actions = [
-        { label: 'Ghép Xe', class: 'btn-action', handler: 'handleManualMatch' },
+    const suggestions = generateGlobalSuggestions(chuaGhepData, khoXeData);
+    const actions = (row) => [
+        { label: 'Ghép Thủ Công', class: 'btn-action', handler: 'handleManualMatch' },
+        { label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' },
         { label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' }
     ];
-    
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('chuaGhepTable', tableHeaders, filteredData, null, actions) + `</div>`;
+
+    if (suggestions.length > 0) {
+        const mainTableHTML = `<div class="table-wrapper">` + renderChuaGhepGroupedTable('chuaGhepTable', filteredData, actions) + `</div>`;
+        const suggestionPanelHTML = renderSuggestionPanel(suggestions);
+        mainContentEl.innerHTML = `
+            <div class="dual-panel-layout">
+                <div class="main-panel">
+                    ${toolbarHTML}
+                    ${mainTableHTML}
+                </div>
+                <div class="side-panel">
+                    ${suggestionPanelHTML}
+                </div>
+            </div>
+        `;
+        attachSuggestionPanelListeners();
+    } else {
+        const mainTableHTML = `<div class="table-wrapper">` + renderChuaGhepGroupedTable('chuaGhepTable', filteredData, actions) + `</div>`;
+        mainContentEl.innerHTML = `
+            ${toolbarHTML}
+            ${mainTableHTML}
+        `;
+    }
 }
 
-    // === ĐÃ NÂNG CẤP ===
-    function renderDaGhepView() {
+function renderDaGhepView() {
     const data = appState.data.daghep || [];
-    const { searchTerm, filters } = appState.daGhep;
+    const { searchTerm } = appState.daGhep;
 
-    const carModels = [...new Set(data.map(item => item['Dòng xe']))].sort();
-    const salesConsultants = [...new Set(data.map(item => item['Tên tư vấn bán hàng']))].sort();
-    
     const toolbarHTML = `
         <div class="view-toolbar">
              <div class="filter-container">
@@ -1453,29 +1765,11 @@ function renderKhoXeView() {
                     <input type="text" placeholder="Tìm theo Số ĐH, VIN, Tên KH..." 
                            oninput="handleSearchInput('daGhep', this.value)" 
                            value="${searchTerm || ''}" 
-                           style="padding-left: 34px; min-width: 250px;">
+                           style="padding-left: 34px; min-width: 300px;">
                 </div>
-                <div class="filter-group">
-                    <i class="fas fa-car filter-icon"></i>
-                    <select onchange="handleFilterChange('daGhep', 'dongXe', this.value)">
-                        <option value="">Tất cả Dòng Xe</option>
-                        ${carModels.map(model => `<option value="${model}" ${filters.dongXe === model ? 'selected' : ''}>${model}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <i class="fas fa-user-tie filter-icon"></i>
-                    <select onchange="handleFilterChange('daGhep', 'tvbh', this.value)">
-                        <option value="">Tất cả TVBH</option>
-                        ${salesConsultants.map(tv => `<option value="${tv}" ${filters.tvbh === tv ? 'selected' : ''}>${tv}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-            <div style="display: flex; gap: 10px; flex-shrink: 0;">
-                <button class="btn btn-danger" onclick="handleDeleteOrder()"><i class="fas fa-times-circle"></i> Xóa Đơn Hàng</button>
-                <button class="btn btn-secondary" onclick="handleDeleteOldDaGhep()"><i class="fas fa-calendar-times"></i> Xóa Đơn Ghép Tháng Trước</button>
             </div>
         </div>`;
-    
+
     let filteredData = data;
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
@@ -1485,30 +1779,21 @@ function renderKhoXeView() {
             (row['Tên khách hàng']?.toLowerCase().includes(lowercasedTerm))
         );
     }
-    if (filters.dongXe) {
-        filteredData = filteredData.filter(row => row['Dòng xe'] === filters.dongXe);
-    }
-    if (filters.tvbh) {
-        filteredData = filteredData.filter(row => row['Tên tư vấn bán hàng'] === filters.tvbh);
-    }
-
-    const tableHeaders = [
-        { key: 'Số đơn hàng', label: 'Số Đơn Hàng' }, { key: 'VIN', label: 'Số VIN' },
-        { key: 'Tên khách hàng', label: 'Tên Khách Hàng' }, { key: 'Dòng xe', label: 'Dòng Xe' },
-        { key: 'Phiên bản', label: 'Phiên Bản'}, { key: 'Ngoại thất', label: 'Ngoại Thất' }, { key: 'Nội thất', label: 'Nội Thất' },
-        { key: 'Kết quả', label: 'Trạng Thái' }, { key: 'Thời gian ghép', label: 'Thời Gian Ghép' }
-    ];
-    const getActionsForRow = (row) => {
-        const status = String(row['Kết quả'] || '').toLowerCase().trim();
-        if (!status.includes('đã xuất hóa đơn') && !status.includes('đã hủy')) {
-             return [{ label: 'Hủy Ghép', class: 'btn-secondary', handler: 'handleCancelRequest' }];
-        }
-        return [];
-    };
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('daGhepTable', tableHeaders, filteredData, null, getActionsForRow) + `</div>`;
-}
     
-    function renderXuatHoaDonView() {
+    const getActionsForRow = (row) => {
+        const actions = [{ label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
+        const status = String(row['Kết quả'] || '').toLowerCase().trim();
+        if (status === 'đã ghép') {
+             actions.push({ label: 'Hủy Ghép', class: 'btn-warning', handler: 'handleUnmatchRequest' });
+        }
+        return actions;
+    };
+    
+    const tableHTML = `<div class="table-wrapper">` + renderDaGhepGroupedTable('daGhepTable', filteredData, getActionsForRow) + `</div>`;
+    mainContentEl.innerHTML = toolbarHTML + tableHTML;
+}
+
+function renderXuatHoaDonView() {
     if (!appState.data || !appState.data.xuathoadon) {
         mainContentEl.innerHTML = `<div class="loading-container">Dữ liệu chưa sẵn sàng...</div>`;
         return;
@@ -1517,7 +1802,7 @@ function renderKhoXeView() {
     const data = appState.data.xuathoadon.filter(row => row['SỐ ĐƠN HÀNG'] && String(row['SỐ ĐƠN HÀNG']).trim() !== '');
     
     let dataWithDetails = data.map(row => {
-        const orderFromDaGhep = appState.data.daghep.find(d => d['Số đơn hàng'] === row['SỐ ĐƠN HÀNG']);
+        const orderFromDaGhep = appState.data.daghep.find(d => String(d['Số đơn hàng'] || '').trim() === String(row['SỐ ĐƠN HÀNG'] || '').trim());
         const status = orderFromDaGhep ? orderFromDaGhep['Kết quả'] : 'Không rõ';
         
         let linksHtml = '<div class="file-badge-container">';
@@ -1579,22 +1864,27 @@ function renderKhoXeView() {
 
     const getActionsForRow = (row) => {
         const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
-        let actions = [];
+        let actions = [{ label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
+        
         if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
             actions.push({ label: 'Phê Duyệt', class: 'btn-action', handler: 'handleApproveRequest' });
             actions.push({ label: 'Y/C Bổ Sung', class: 'btn-warning', handler: 'handleRequestSupplement' });
         } else if (status === 'đã phê duyệt') {
-            actions.push({ label: 'Tải Lên HĐ', class: 'btn-primary', handler: 'handleUploadIssuedInvoice' });
+            actions.push({ label: 'Chờ Ký HĐ', class: 'btn-primary', handler: 'handlePendingSignature' });
+        } else if (status === 'chờ ký hóa đơn') {
+            actions.push({ label: 'Tải Lên HĐ', class: 'btn-success', handler: 'handleUploadIssuedInvoice' });
         }
+
         if (status !== 'đã xuất hóa đơn' && status !== 'đã hủy') {
             actions.push({ label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' });
         }
         return actions;
     };
+
     mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderXuatHoaDonGroupedTable('xuatHoaDonTable', dataWithDetails, getActionsForRow) + `</div>`;
 }
     
-    function renderHuyGhepView() {
+function renderHuyGhepView() {
     const data = appState.data.huyghep || [];
     const { searchTerm } = appState.huyGhep;
     
@@ -1630,20 +1920,16 @@ function renderKhoXeView() {
     mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('huyGhepTable', tableHeaders, filteredData) + `</div>`;
 }
     
-    function renderDataTable(id, headers, rows, viewState = null, actions = null) {
-    // 1. Xử lý trường hợp không có dữ liệu
+function renderDataTable(id, headers, rows, viewState = null, actions = null) {
     if (!rows || rows.length === 0) {
         return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
     }
     
-    // 2. Kiểm tra xem có cần render cột Hành Động không
     const hasActions = typeof actions === 'function' || (Array.isArray(actions) && actions.length > 0);
     
-    // 3. Tạo HTML cho các cột tiêu đề (header)
     const headerHTML = headers.map(header => {
         let headerContent = header.label;
         let headerOnClick = '';
-        // Thêm chức năng sắp xếp nếu có viewState
         if (viewState && viewState.sortKey) { 
             const isSorted = viewState.sortKey === header.key;
             const icon = isSorted 
@@ -1655,42 +1941,46 @@ function renderKhoXeView() {
         return `<th ${headerOnClick}>${headerContent}</th>`;
     }).join('') + (hasActions ? '<th>Hành Động</th>' : '');
 
-    // 4. Tạo HTML cho các hàng dữ liệu (row)
     const rowsHTML = rows.map((row) => {
         const rowId = row['Số đơn hàng'] || row['SỐ ĐƠN HÀNG'] || row['VIN'];
         const isHighlighted = rowId && rowId === appState.highlightedId;
         const highlightClass = isHighlighted ? 'highlight-row' : '';
 
-        // Tạo các ô (cell) cho mỗi hàng
         const cellsHTML = headers.map(header => {
             let cellValue = row[header.key] || '';
+            const dateTimeKeys = ['Thời gian nhập', 'Thời gian ghép', 'Thời gian hủy'];
+            const dateOnlyKeys = ['Ngày nhập', 'Ngày cọc', 'NGÀY CỌC', 'NGÀY XUẤT HÓA ĐƠN'];
 
-            // Định dạng các cột ngày tháng
-            if (['Ngày nhập', 'Thời gian ghép', 'Thời gian hủy', 'NGÀY CỌC', 'NGÀY XUẤT HÓA ĐƠN'].includes(header.key) && cellValue) {
-                try { 
+            try {
+                if (dateTimeKeys.includes(header.key) && cellValue) {
                     const date = new Date(cellValue);
-                    if (!isNaN(date)) {
-                       cellValue = date.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    if (!isNaN(date.getTime())) {
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        cellValue = `${hours}:${minutes} ${day}/${month}/${year}`;
                     }
-                } catch (e) { /* Bỏ qua nếu định dạng sai */ }
-            }
-            // Xử lý cột 'Hồ sơ' chứa HTML đặc biệt
-            else if (header.key === 'Hồ sơ') {
-                return `<td data-label="${header.label}">${cellValue}</td>`; 
-            }
-            // Áp dụng huy hiệu trạng thái
-            else if (['Trạng thái', 'Kết quả', 'Trạng thái xử lý'].includes(header.key)) {
+                } else if (dateOnlyKeys.includes(header.key) && cellValue) {
+                    const date = new Date(cellValue);
+                    if (!isNaN(date.getTime())) {
+                        cellValue = date.toLocaleDateString('vi-VN', {
+                            year: 'numeric', month: '2-digit', day: '2-digit'
+                        });
+                    }
+                }
+            } catch (e) { /* Ignore invalid date values */ }
+
+            if (['Trạng thái', 'Kết quả', 'Trạng thái xử lý'].includes(header.key)) {
                 return `<td data-label="${header.label}"><span class="status-badge ${getStatusBadgeClass(cellValue)}">${cellValue}</span></td>`;
             }
 
-            // Thêm data-label cho responsive và thoát các ký tự HTML để bảo mật
             return `<td data-label="${header.label}">${escapeHtml(cellValue)}</td>`;
         }).join('');
         
-        // Tạo các nút hành động
         let actionsHTML = '';
         if (hasActions) {
-            // Lấy danh sách nút hành động (có thể là mảng tĩnh hoặc từ hàm)
             let actionButtons = (typeof actions === 'function') ? actions(row) : actions;
             actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => 
                 `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`
@@ -1700,139 +1990,288 @@ function renderKhoXeView() {
         return `<tr id="row-${rowId}" class="${highlightClass}">${cellsHTML}${actionsHTML}</tr>`;
     }).join('');
     
-    // 5. Logic chạy sau khi bảng được render vào DOM
     setTimeout(() => {
-        // Tự động cuộn đến hàng được đánh dấu (nếu có)
         if (appState.highlightedId) {
             const highlightedRow = document.getElementById(`row-${appState.highlightedId}`);
             if (highlightedRow) {
                 highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                     highlightedRow.classList.remove('highlight-row');
-                }, 2500);
+                setTimeout(() => { highlightedRow.classList.remove('highlight-row'); }, 2500);
             }
             appState.highlightedId = null; 
         }
 
-        // Gắn một trình lắng nghe sự kiện duy nhất cho toàn bộ bảng (Event Delegation)
         const tableEl = document.getElementById(id);
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
                 const button = event.target.closest('button[data-action]');
                 if (button) {
-                    event.preventDefault(); // Ngăn hành vi mặc định của button
+                    event.preventDefault();
                     const handlerName = button.dataset.action;
                     if (!handlerName) return;
                     try {
                         const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
                         if (typeof window[handlerName] === 'function') {
-                            // [NÂNG CẤP] Truyền cả dữ liệu hàng và element của nút được bấm
                             window[handlerName](rowData, button);
-                        } else {
-                            console.error(`Handler function not found: ${handlerName}`);
                         }
-                    } catch (e) {
-                        console.error("Failed to parse row data:", e);
-                        showToast('Lỗi: Không thể đọc dữ liệu của dòng này.', 'error');
-                    }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
                 }
             });
         }
     }, 100);
 
-    // 6. Trả về chuỗi HTML cuối cùng của bảng
     return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
 }
 
-    // === Hàm render bảng đặc biệt cho trang Xử Lý Hóa Đơn ===
-    function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
-        if (!rows || rows.length === 0) {
-            return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
-        }
-        
-        const newHeaders = [
-            'STT', 'Khách Hàng & Đơn Hàng', 'Thông Số Xe', 
-            'Thông Số Kỹ Thuật', 'Thông Tin Thêm', 'Ngày Tháng', 
-            'Trạng Thái', 'Hồ Sơ', 'Hành Động'
-        ];
-
-        const headerHTML = newHeaders.map(label => `<th>${label}</th>`).join('');
-
-        const rowsHTML = rows.map((row, index) => {
-            const rowId = row['SỐ ĐƠN HÀNG'];
-            const isHighlighted = rowId && rowId === appState.highlightedId;
-            const highlightClass = isHighlighted ? 'highlight-row' : '';
-
-            const stt = row['SỐ TT'] || (index + 1);
-            const tenKH = escapeHtml(row['TÊN KHÁCH HÀNG']);
-            const soDH = escapeHtml(row['SỐ ĐƠN HÀNG']);
-            const tvbh = escapeHtml(row['TƯ VẤN BÁN HÀNG']);
-            const dongXe = escapeHtml(row['DÒNG XE']);
-            const phienBan = escapeHtml(row['PHIÊN BẢN']);
-            const ngoaiThat = escapeHtml(row['NGOẠI THẤT']);
-            const noiThat = escapeHtml(row['NỘI THẤT']);
-            const soVin = escapeHtml(row['SỐ VIN']);
-            const soDongCo = escapeHtml(row['SỐ ĐỘNG CƠ']);
-            const chinhSach = escapeHtml(row['CHÍNH SÁCH']);
-            const poPin = escapeHtml(row['PO PIN']);
-            const ngayCoc = row['NGÀY CỌC'] ? new Date(row['NGÀY CỌC']).toLocaleDateString('vi-VN') : 'N/A';
-            const ngayXHD = row['NGÀY XUẤT HÓA ĐƠN'] ? new Date(row['NGÀY XUẤT HÓA ĐƠN']).toLocaleDateString('vi-VN') : 'N/A';
-            const trangThai = row['Trạng thái xử lý'] || '';
-            const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
-
-            let actionButtons = actionsCallback(row);
-            let actionsHTML = `<td data-label="Hành động">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
-
-            return `
-                <tr id="row-${rowId}" class="${highlightClass}">
-                    <td data-label="STT"><span class="main-info">${stt}</span></td>
-                    <td data-label="Khách Hàng & Đơn Hàng"><div class="main-info">${tenKH || 'N/A'}</div><div class="sub-info"><span class="id-tag">${soDH || 'N/A'}</span><br>TVBH: ${tvbh || 'N/A'}</div></td>
-                    <td data-label="Thông Số Xe"><div class="main-info">${dongXe || 'N/A'} - ${phienBan || 'N/A'}</div><div class="sub-info">Ngoại thất: ${ngoaiThat || 'N/A'}<br>Nội thất: ${noiThat || 'N/A'}</div></td>
-                    <td data-label="Thông Số Kỹ Thuật"><div class="main-info">VIN: <span class="id-tag">${soVin || 'N/A'}</span></div><div class="sub-info">SĐC: ${soDongCo || 'N/A'}</div></td>
-                    <td data-label="Thông Tin Thêm"><div class="main-info">CS: ${chinhSach || 'N/A'}</div><div class="sub-info">PO Pin: ${poPin || 'N/A'}</div></td>
-                    <td data-label="Ngày Tháng"><div class="main-info">Ngày cọc: ${ngayCoc}</div><div class="sub-info">Ngày XHĐ: ${ngayXHD}</div></td>
-                    <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
-                    <td data-label="Hồ sơ">${hoSoHTML}</td>
-                    ${actionsHTML}
-                </tr>
-            `;
-        }).join('');
-        
-        setTimeout(() => {
-            if (appState.highlightedId) {
-                const highlightedRow = document.getElementById(`row-${appState.highlightedId}`);
-                if (highlightedRow) {
-                    highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => { highlightedRow.classList.remove('highlight-row'); }, 2500);
-                }
-                appState.highlightedId = null; 
-            }
-             const tableEl = document.getElementById(id);
-            if (tableEl && !tableEl.dataset.listenerAttached) {
-                tableEl.dataset.listenerAttached = 'true';
-                tableEl.addEventListener('click', function(event) {
-                    const button = event.target.closest('button[data-action]');
-                    if (button) {
-                        event.preventDefault();
-                        const handlerName = button.dataset.action;
-                        if (!handlerName) return;
-                        try {
-                            const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
-                            if (typeof window[handlerName] === 'function') {
-                                window[handlerName](rowData);
-                            }
-                        } catch (e) { console.error("Lỗi parse data:", e); }
-                    }
-                });
-            }
-        }, 100);
-
-        return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
+    if (!rows || rows.length === 0) {
+        return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
     }
     
+    const newHeaders = [
+        'STT', 'Khách Hàng & Đơn Hàng', 'Thông Số Xe', 
+        'Thông Số Kỹ Thuật', 'Thông Tin Thêm', 'Ngày Tháng', 
+        'Trạng Thái', 'Hồ Sơ', 'Hành Động'
+    ];
+
+    const headerHTML = newHeaders.map(label => `<th>${label}</th>`).join('');
+
+    const rowsHTML = rows.map((row, index) => {
+        const rowId = row['SỐ ĐƠN HÀNG'];
+        const isHighlighted = rowId && rowId === appState.highlightedId;
+        const highlightClass = isHighlighted ? 'highlight-row' : '';
+
+        const stt = row['SỐ TT'] || (index + 1);
+        const tenKH = escapeHtml(row['TÊN KHÁCH HÀNG']);
+        const soDH = escapeHtml(row['SỐ ĐƠN HÀNG']);
+        const tvbh = escapeHtml(row['TƯ VẤN BÁN HÀNG']);
+        const dongXe = escapeHtml(row['DÒNG XE']);
+        const phienBan = escapeHtml(row['PHIÊN BẢN']);
+        const ngoaiThat = escapeHtml(row['NGOẠI THẤT']);
+        const noiThat = escapeHtml(row['NỘI THẤT']);
+        const soVin = escapeHtml(row['SỐ VIN']);
+        const soDongCo = escapeHtml(row['SỐ ĐỘNG CƠ']);
+        const chinhSach = escapeHtml(row['CHÍNH SÁCH']);
+        const poPin = escapeHtml(row['PO PIN']);
+        const ngayCoc = row['NGÀY CỌC'] ? new Date(row['NGÀY CỌC']).toLocaleDateString('vi-VN') : 'N/A';
+        const ngayXHD = row['NGÀY XUẤT HÓA ĐƠN'] ? new Date(row['NGÀY XUẤT HÓA ĐƠN']).toLocaleDateString('vi-VN') : 'N/A';
+        const trangThai = row['Trạng thái xử lý'] || '';
+        const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
+
+        let actionButtons = actionsCallback(row);
+        let actionsHTML = `<td data-label="Hành động">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+
+        return `
+            <tr id="row-${rowId}" class="${highlightClass}">
+                <td data-label="STT"><span class="main-info">${stt}</span></td>
+                <td data-label="Khách Hàng & Đơn Hàng"><div class="main-info">${tenKH || 'N/A'}</div><div class="sub-info"><span class="id-tag">${soDH || 'N/A'}</span><br>TVBH: ${tvbh || 'N/A'}</div></td>
+                <td data-label="Thông Số Xe"><div class="main-info">${dongXe || 'N/A'} - ${phienBan || 'N/A'}</div><div class="sub-info">Ngoại thất: ${ngoaiThat || 'N/A'}<br>Nội thất: ${noiThat || 'N/A'}</div></td>
+                <td data-label="Thông Số Kỹ Thuật"><div class="main-info">VIN: <span class="id-tag">${soVin || 'N/A'}</span></div><div class="sub-info">SĐC: ${soDongCo || 'N/A'}</div></td>
+                <td data-label="Thông Tin Thêm"><div class="main-info">CS: ${chinhSach || 'N/A'}</div><div class="sub-info">PO Pin: ${poPin || 'N/A'}</div></td>
+                <td data-label="Ngày Tháng"><div class="main-info">Ngày cọc: ${ngayCoc}</div><div class="sub-info">Ngày XHĐ: ${ngayXHD}</div></td>
+                <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
+                <td data-label="Hồ sơ">${hoSoHTML}</td>
+                ${actionsHTML}
+            </tr>
+        `;
+    }).join('');
+    
+    setTimeout(() => {
+        if (appState.highlightedId) {
+            const highlightedRow = document.getElementById(`row-${appState.highlightedId}`);
+            if (highlightedRow) {
+                highlightedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => { highlightedRow.classList.remove('highlight-row'); }, 2500);
+            }
+            appState.highlightedId = null; 
+        }
+         const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function(event) {
+                const button = event.target.closest('button[data-action]');
+                if (button) {
+                    event.preventDefault();
+                    const handlerName = button.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') {
+                            window[handlerName](rowData, button);
+                        }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+}
+
+function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
+    if (!rows || rows.length === 0) {
+        return `<div class="no-data-container">Không có yêu cầu nào đang chờ ghép.</div>`;
+    }
+    
+    const headers = ['Thông Tin Đơn Hàng', 'Yêu Cầu Xe', 'Thời Gian', 'Trạng Thái', 'Hành Động'];
+    const headerHTML = headers.map(label => `<th>${label}</th>`).join('');
+
+    const rowsHTML = rows.map(row => {
+        const rowId = row['Số đơn hàng'];
+        const isHighlighted = rowId && rowId === appState.highlightedId;
+        const highlightClass = isHighlighted ? 'highlight-row' : '';
+
+        const soDH = escapeHtml(row['Số đơn hàng']);
+        const tenKH = escapeHtml(row['Tên khách hàng']);
+        const tvbh = escapeHtml(row['Tên tư vấn bán hàng']);
+        const dongXe = escapeHtml(row['Dòng xe']);
+        const phienBan = escapeHtml(row['Phiên bản']);
+        const ngoaiThat = escapeHtml(row['Ngoại thất']);
+        const noiThat = escapeHtml(row['Nội thất']);
+        const trangThai = escapeHtml(row['Kết quả']);
+
+        let thoiGianYeuCau = row['Thời gian nhập'] || '';
+        try {
+            const date = new Date(thoiGianYeuCau);
+            if (!isNaN(date.getTime())) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                thoiGianYeuCau = `${hours}:${minutes} <span class="sub-info">${day}/${month}/${date.getFullYear()}</span>`;
+            }
+        } catch(e) { /* Ignore errors */ }
+
+        const actionButtons = actionsCallback(row);
+        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+
+        return `
+            <tr id="row-${rowId}" class="${highlightClass}">
+                <td data-label="Thông Tin Đơn Hàng">
+                    <div class="main-info">${tenKH}</div>
+                    <div class="sub-info"><span class="id-tag">${soDH}</span><br>TVBH: ${tvbh}</div>
+                </td>
+                <td data-label="Yêu Cầu Xe">
+                    <div class="main-info">${dongXe} - ${phienBan}</div>
+                    <div class="sub-info">Ngoại thất: ${ngoaiThat}<br>Nội thất: ${noiThat}</div>
+                </td>
+                <td data-label="Thời Gian"><div class="main-info">${thoiGianYeuCau}</div></td>
+                <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
+                ${actionsHTML}
+            </tr>
+        `;
+    }).join('');
+
+    setTimeout(() => {
+        const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function(event) {
+                const button = event.target.closest('button[data-action]');
+                if (button) {
+                    event.preventDefault();
+                    const handlerName = button.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') {
+                            window[handlerName](rowData, button);
+                        }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+    
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+}
+
+function renderDaGhepGroupedTable(id, rows, actionsCallback) {
+    if (!rows || rows.length === 0) {
+        return `<div class="no-data-container">Chưa có đơn hàng nào được ghép.</div>`;
+    }
+    
+    const headers = ['Thông Tin Đơn Hàng', 'Xe Đã Ghép', 'Chi Tiết Xe', 'Thời Gian Ghép', 'Trạng Thái', 'Hành Động'];
+    const headerHTML = headers.map(label => `<th>${label}</th>`).join('');
+
+    const rowsHTML = rows.map(row => {
+        const rowId = row['Số đơn hàng'];
+        
+        const tenKH = escapeHtml(row['Tên khách hàng']);
+        const soDH = escapeHtml(row['Số đơn hàng']);
+        const tvbh = escapeHtml(row['Tên tư vấn bán hàng']);
+        const dongXe = escapeHtml(row['Dòng xe']);
+        const phienBan = escapeHtml(row['Phiên bản']);
+        const soVin = escapeHtml(row['VIN']);
+        const ngoaiThat = escapeHtml(row['Ngoại thất']);
+        const noiThat = escapeHtml(row['Nội thất']);
+        const soNgayGhep = row['Số ngày ghép'] !== '' ? row['Số ngày ghép'] : '0';
+        const trangThai = escapeHtml(row['Kết quả']);
+
+        let thoiGianGhep = row['Thời gian ghép'] || '';
+        try {
+            const date = new Date(thoiGianGhep);
+            if (!isNaN(date.getTime())) {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                thoiGianGhep = `${hours}:${minutes} <span class="sub-info">${day}/${month}/${date.getFullYear()}</span>`;
+            }
+        } catch(e) {}
+
+        const actionButtons = actionsCallback(row);
+        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+
+        return `
+            <tr id="row-${rowId}">
+                <td data-label="Thông Tin Đơn Hàng">
+                    <div class="main-info">${tenKH}</div>
+                    <div class="sub-info"><span class="id-tag">${soDH}</span><br>TVBH: ${tvbh}</div>
+                </td>
+                <td data-label="Xe Đã Ghép">
+                    <div class="main-info">${dongXe} - ${phienBan}</div>
+                    <div class="sub-info">VIN: <span class="id-tag">${soVin}</span></div>
+                </td>
+                <td data-label="Chi Tiết Xe">
+                    <div class="sub-info">Ngoại thất: ${ngoaiThat}<br>Nội thất: ${noiThat}</div>
+                </td>
+                <td data-label="Thời Gian Ghép">
+                    <div class="main-info">${thoiGianGhep}</div>
+                    <div class="sub-info">(${soNgayGhep} ngày)</div>
+                </td>
+                <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
+                ${actionsHTML}
+            </tr>
+        `;
+    }).join('');
+
+    setTimeout(() => {
+        const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function(event) {
+                const button = event.target.closest('button[data-action]');
+                if (button) {
+                    event.preventDefault();
+                    const handlerName = button.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') {
+                            window[handlerName](rowData, button);
+                        }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+    
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+}
+
     // =================================================================
-    // SECTION 4: EVENT HANDLERS
+    // SECTION 4: ACTION HANDLERS
     // =================================================================
 
     function switchView(viewName) {
@@ -1857,313 +2296,314 @@ function renderKhoXeView() {
     }
         
     function handleManualMatch(order, btnElement) {
-    const orderNumber = order['Số đơn hàng'];
-    const modalBody = document.getElementById('manualMatchModalBody');
-    const confirmBtn = document.getElementById('confirmMatchBtn');
-    const availableCars = appState.data.khoxe.filter(car => 
-        String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
-        car['Dòng xe'] === order['Dòng xe'] &&
-        car['Phiên bản'] === order['Phiên bản'] &&
-        car['Ngoại thất'] === order['Ngoại thất'] &&
-        String(order['Nội thất']).includes(car['Nội thất'])
-    );
-    let carOptionsHTML = '<option value="">-- Chọn một xe từ kho --</option>';
-    if (availableCars.length > 0) {
-        carOptionsHTML += availableCars.map(car => `<option value="${car.VIN}">${car.VIN} - ${car['Dòng xe']} - ${car['Ngoại thất']}</option>`).join('');
-    } else {
-        carOptionsHTML = '<option value="" disabled>Không có xe phù hợp trong kho</option>';
+        const orderNumber = order['Số đơn hàng'];
+        const modalBody = document.getElementById('manualMatchModalBody');
+        const confirmBtn = document.getElementById('confirmMatchBtn');
+        const availableCars = appState.data.khoxe.filter(car => 
+            String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
+            car['Dòng xe'] === order['Dòng xe'] &&
+            car['Phiên bản'] === order['Phiên bản'] &&
+            car['Ngoại thất'] === order['Ngoại thất'] &&
+            String(order['Nội thất']).includes(car['Nội thất'])
+        );
+        let carOptionsHTML = '<option value="">-- Chọn một xe từ kho --</option>';
+        if (availableCars.length > 0) {
+            carOptionsHTML += availableCars.map(car => `<option value="${car.VIN}">${car.VIN} - ${car['Dòng xe']} - ${car['Ngoại thất']}</option>`).join('');
+        } else {
+            carOptionsHTML = '<option value="" disabled>Không có xe phù hợp trong kho</option>';
+        }
+        modalBody.innerHTML = `
+            <div class="form-group"><label>Yêu cầu cho đơn hàng:</label><div class="info-box">${orderNumber} - ${order['Tên khách hàng']}</div></div>
+            <div class="form-group"><label>Thông tin xe yêu cầu:</label><div class="info-box">${order['Dòng xe']} / ${order['Phiên bản']} / ${order['Nội thất']}</div></div>
+            <div class="form-group"><label for="vinSelect">Chọn xe phù hợp để ghép:</label><select id="vinSelect">${carOptionsHTML}</select></div>`;
+        
+        confirmBtn.onclick = () => submitManualMatch(orderNumber, btnElement);
+        openModal('manualMatchModal');
     }
-    modalBody.innerHTML = `
-        <div class="form-group"><label>Yêu cầu cho đơn hàng:</label><div class="info-box">${orderNumber} - ${order['Tên khách hàng']}</div></div>
-        <div class="form-group"><label>Thông tin xe yêu cầu:</label><div class="info-box">${order['Dòng xe']} / ${order['Phiên bản']} / ${order['Nội thất']}</div></div>
-        <div class="form-group"><label for="vinSelect">Chọn xe phù hợp để ghép:</label><select id="vinSelect">${carOptionsHTML}</select></div>`;
-    
-    // Nâng cấp: Nút xác nhận trong modal sẽ gọi hàm submit với btnElement của hàng đó
-    confirmBtn.onclick = () => submitManualMatch(orderNumber, btnElement);
-    openModal('manualMatchModal');
-}
 
     async function submitManualMatch(orderNumber, btnElement) {
-    const selectedVin = document.getElementById('vinSelect').value;
-    if (!selectedVin) { 
-        showToast('Vui lòng chọn một xe để ghép.', 'warning'); 
-        return; 
+        const selectedVin = document.getElementById('vinSelect').value;
+        if (!selectedVin) { 
+            showToast('Vui lòng chọn một xe để ghép.', 'warning'); 
+            return; 
+        }
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
+        closeModal('manualMatchModal');
+        
+        // Thực thi hành động ghép xe dưới nền
+        performActionOnRow({
+            action: 'manualMatchCar',
+            params: { orderNumber, vin: selectedVin },
+            buttonElement: btnElement // Sử dụng nút từ hàng trong bảng
+        });
     }
-    closeModal('manualMatchModal');
-    
-    // Gọi hàm mới thay vì performAction cũ
-    await performActionOnRow({
-        action: 'manualMatchCar',
-        params: { orderNumber, vin: selectedVin },
-        buttonElement: btnElement
-    });
-}
 
-    // Sửa đổi để nhận `btnElement` làm tham số thứ hai
-function handleCancelRequest(order, btnElement) {
-    const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
-    document.getElementById('cancelOrderNumber').textContent = orderNumber;
-    const reasonTextarea = document.getElementById('cancelReason');
-    reasonTextarea.value = '';
-    reasonTextarea.style.borderColor = '';
+    function handleCancelRequest(order, btnElement) {
+        const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
+        document.getElementById('cancelOrderNumber').textContent = orderNumber;
+        const reasonTextarea = document.getElementById('cancelReason');
+        reasonTextarea.value = '';
+        reasonTextarea.style.borderColor = '';
 
-    // [SỬA ĐỔI] onclick sẽ gọi hàm submit và truyền btnElement theo
-    document.getElementById('confirmCancelBtn').onclick = () => {
-        submitCancellation(orderNumber, btnElement);
-    };
-    openModal('cancelModal');
-}
-
-// Sửa đổi để sử dụng hàm performActionOnRow mới
-async function submitCancellation(orderNumber, btnElement) {
-    const reasonInput = document.getElementById('cancelReason');
-    const reason = reasonInput.value.trim();
-    if (!reason) {
-        showToast('Vui lòng nhập lý do hủy.', 'warning');
-        reasonInput.style.borderColor = 'red';
-        reasonInput.focus();
-        return;
+        document.getElementById('confirmCancelBtn').onclick = () => {
+            submitCancellation(orderNumber, btnElement);
+        };
+        openModal('cancelModal');
     }
-    closeModal('cancelModal');
 
-    // [NÂNG CẤP] Gọi hàm mới thay vì performAction cũ
-    await performActionOnRow({
-        action: 'cancelRequest',
-        params: { orderNumber, reason, cancelledBy: 'Admin' },
-        buttonElement: btnElement
-    });
-}
+    async function submitCancellation(orderNumber, btnElement) {
+        const reasonInput = document.getElementById('cancelReason');
+        const reason = reasonInput.value.trim();
+        if (!reason) {
+            showToast('Vui lòng nhập lý do hủy.', 'warning');
+            reasonInput.style.borderColor = 'red';
+            reasonInput.focus();
+            return;
+        }
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
+        closeModal('cancelModal');
+        
+        // Thực thi hành động hủy dưới nền
+        performActionOnRow({
+            action: 'cancelRequest',
+            params: { orderNumber, reason, cancelledBy: 'Admin' },
+            buttonElement: btnElement
+        });
+    }
+
+    function handleUnmatchRequest(order, btnElement) {
+        const orderNumber = order['Số đơn hàng'];
+        document.getElementById('unmatchOrderNumber').textContent = orderNumber;
+        
+        const reasonTextarea = document.getElementById('unmatchReason');
+        reasonTextarea.value = '';
+        reasonTextarea.style.borderColor = '';
+
+        document.getElementById('confirmUnmatchBtn').onclick = () => {
+            submitUnmatchRequest(orderNumber, btnElement);
+        };
+        openModal('unmatchModal');
+    }
+
+    async function submitUnmatchRequest(orderNumber, btnElement) {
+        const reasonInput = document.getElementById('unmatchReason');
+        const reason = reasonInput.value.trim();
+        
+        if (!reason) {
+            showToast('Vui lòng nhập lý do hủy ghép.', 'warning');
+            reasonInput.style.borderColor = 'red';
+            reasonInput.focus();
+            return;
+        }
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
+        closeModal('unmatchModal');
+        
+        // Thực thi hành động hủy ghép dưới nền
+        performActionOnRow({
+            action: 'unmatchOrder',
+            params: { orderNumber, reason },
+            buttonElement: btnElement
+        });
+    }
     
     function handleApproveRequest(order, btnElement) {
-    const orderNumber = order['SỐ ĐƠN HÀNG'];
-    showConfirmationModal(
-        'Phê Duyệt Yêu Cầu', 
-        `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}?`, 
-        // Callback bây giờ sẽ gọi hàm performActionOnRow
-        () => {
-            performActionOnRow({
-                action: 'approveSelectedInvoiceRequest',
-                params: { orderNumber },
-                buttonElement: btnElement
-            });
-        },
-        'btn-success' // Giữ màu xanh cho nút xác nhận
-    );
-}
+        const orderNumber = order['SỐ ĐƠN HÀNG'];
+        showConfirmationModal(
+            'Phê Duyệt Yêu Cầu', 
+            `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}?`, 
+            () => {
+                performActionOnRow({
+                    action: 'approveSelectedInvoiceRequest',
+                    params: { orderNumber },
+                    buttonElement: btnElement
+                });
+            },
+            'btn-success'
+        );
+    }
 
-    function handleRequestSupplement(order) {
+    function handleRequestSupplement(order, btnElement) {
         const orderNumber = order['SỐ ĐƠN HÀNG'];
         document.getElementById('supplementOrderNumber').textContent = orderNumber;
         document.getElementById('supplementReason').value = '';
-        document.getElementById('confirmSupplementBtn').onclick = () => submitSupplementRequest(orderNumber);
+
+        document.getElementById('confirmSupplementBtn').onclick = () => submitSupplementRequest(orderNumber, btnElement);
         openModal('supplementModal');
     }
 
-    function submitSupplementRequest(orderNumber) {
+    async function submitSupplementRequest(orderNumber, btnElement) {
         const reason = document.getElementById('supplementReason').value.trim();
-        if (!reason) { showToast('Vui lòng nhập nội dung cần bổ sung.', 'warning'); return; }
+        if (!reason) {
+            showToast('Vui lòng nhập nội dung cần bổ sung.', 'warning');
+            return;
+        }
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
         closeModal('supplementModal');
-        performAction('requestSupplementForInvoice', { orderNumber, reason });
+        
+        // Thực thi hành động yêu cầu bổ sung dưới nền
+        performActionOnRow({
+            action: 'requestSupplementForInvoice',
+            params: { orderNumber, reason },
+            buttonElement: btnElement 
+        });
     }
 
-    function handleUploadIssuedInvoice(order) {
-        const orderNumber = order['SỐ ĐƠN HÀNG'];
-        document.getElementById('uploadOrderNumber').textContent = orderNumber;
-        document.getElementById('issuedInvoiceFile').value = '';
-        document.getElementById('confirmUploadBtn').onclick = () => submitIssuedInvoice(orderNumber);
-        openModal('uploadInvoiceModal');
-    }
+    function handleUploadIssuedInvoice(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    const customerName = order['TÊN KHÁCH HÀNG']; // Lấy tên khách hàng từ dữ liệu của đơn hàng
 
-    async function submitIssuedInvoice(orderNumber) {
-        const fileInput = document.getElementById('issuedInvoiceFile');
-        if (fileInput.files.length === 0) { showToast('Vui lòng chọn một tệp hóa đơn.', 'warning'); return; }
-        const file = fileInput.files[0];
-        closeModal('uploadInvoiceModal');
-        mainContentEl.innerHTML = `<div class="loading-container"><i class="fas fa-spinner fa-spin"></i> Đang tải file lên...</div>`;
-        try {
-            const base64String = await fileToBase64(file);
-            await performAction('uploadIssuedInvoice', {
+    document.getElementById('uploadOrderNumber').textContent = orderNumber;
+    document.getElementById('issuedInvoiceFile').value = '';
+    
+    // Gán sự kiện cho nút xác nhận trong modal.
+    // Quan trọng: Truyền thêm 'customerName' vào hàm submit.
+    document.getElementById('confirmUploadBtn').onclick = () => submitIssuedInvoice(orderNumber, customerName, btnElement);
+    
+    openModal('uploadInvoiceModal');
+}
+
+    async function submitIssuedInvoice(orderNumber, customerName, btnElement) {
+    const fileInput = document.getElementById('issuedInvoiceFile');
+    if (fileInput.files.length === 0) {
+        showToast('Vui lòng chọn một tệp hóa đơn.', 'warning');
+        return;
+    }
+    const file = fileInput.files[0];
+    
+    // Đóng modal ngay lập tức
+    closeModal('uploadInvoiceModal');
+
+    // Lấy phần mở rộng của file gốc (ví dụ: "pdf", "jpg")
+    const originalFileName = file.name;
+    const fileExtension = originalFileName.slice(((originalFileName.lastIndexOf(".") - 1) >>> 0) + 2);
+
+    // Tạo tên file mới theo định dạng "Hóa đơn [TÊN KHÁCH HÀNG IN HOA].extension"
+    const newFileName = `Hóa đơn ${customerName.toUpperCase()}.${fileExtension}`;
+
+    try {
+        const base64String = await fileToBase64(file);
+        
+        // Gọi hàm action với tên file mới
+        await performActionOnRow({
+            action: 'uploadIssuedInvoice',
+            params: {
                 orderNumber: orderNumber,
-                invoiceFileName: file.name,
+                invoiceFileName: newFileName, // Sử dụng tên file mới đã tạo
                 invoiceFileBase64: base64String.split(',')[1],
                 invoiceMimeType: file.type,
                 uploadedBy: 'Admin'
-            });
-        } catch (error) {
-            showToast(`Lỗi khi xử lý file: ${error.message}`, 'error');
-            render();
-        }
+            },
+            buttonElement: btnElement 
+        });
+    } catch (error) {
+        showToast(`Lỗi khi xử lý file: ${error.message}`, 'error');
     }
+}
 
     function handleAddCar() {
         document.getElementById('newCarVin').value = '';
         openModal('addCarModal');
     }
 
-    // [NÂNG CẤP] Hiển thị spinner trên nút của modal và không tải lại toàn trang
-async function submitNewCar() {
-    const vin = document.getElementById('newCarVin').value.trim().toUpperCase();
-    if (!vin || vin.length !== 17) {
-        showToast('Lỗi: Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
-        return;
-    }
-    
-    // Lấy nút xác nhận từ modal
-    const modalConfirmBtn = document.querySelector('#addCarModal .btn-primary');
-    const originalHtml = modalConfirmBtn.innerHTML;
-    modalConfirmBtn.disabled = true;
-    modalConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-
-    try {
-        const formData = new URLSearchParams({ action: 'findAndAddCarByVin', vin: vin });
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
-        
-        const result = await response.json();
-        if (result.status === "SUCCESS") {
-            showToast(result.message || 'Hành động thành công!', 'success');
-            closeModal('addCarModal');
-            await fetchInitialData(true); // Tải lại dữ liệu nền
-        } else {
-            throw new Error(result.message || 'Hành động thất bại từ API');
-        }
-    } catch (error) {
-        console.error("Lỗi khi thêm xe mới:", error);
-        showToast(`Lỗi: ${error.message}`, 'error');
-    } finally {
-        // Luôn khôi phục lại nút trên modal dù thành công hay thất bại
-        modalConfirmBtn.disabled = false;
-        modalConfirmBtn.innerHTML = originalHtml;
-    }
-}
-
-    function handleDeleteCar() {
-    // 1. Lấy các element của modal xác nhận
-    const titleEl = document.getElementById('confirmationModalTitle');
-    const messageEl = document.getElementById('confirmationModalMessage');
-    const inputContainer = document.getElementById('confirmationModalInputContainer');
-    const inputLabelEl = document.getElementById('confirmationModalInputLabel');
-    const inputEl = document.getElementById('confirmationModalInput');
-    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-
-    // 2. Thiết lập nội dung cho modal
-    titleEl.textContent = 'Xóa Xe Khỏi Kho';
-    messageEl.textContent = 'Vui lòng nhập số VIN của xe cần xóa khỏi kho.';
-    inputLabelEl.textContent = 'Số VIN';
-    inputEl.value = '';
-    inputEl.placeholder = 'Nhập 17 ký tự VIN...';
-    inputEl.type = 'text';
-    inputContainer.style.display = 'block';
-    confirmBtn.className = 'btn btn-danger';
-    confirmBtn.innerHTML = 'Xác Nhận Xóa';
-
-    // 3. Gắn sự kiện click với logic async và spinner
-    // Dùng cloneNode để xóa các event listener cũ
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    
-    newConfirmBtn.onclick = async () => {
-        const vin = inputEl.value.trim().toUpperCase();
-        if (!vin) {
-            showToast('Vui lòng nhập số VIN.', 'warning');
+    async function submitNewCar() {
+        const vin = document.getElementById('newCarVin').value.trim().toUpperCase();
+        if (!vin || vin.length !== 17) {
+            showToast('Lỗi: Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
             return;
         }
+        
+        const buttonElement = document.querySelector('#addCarModal .btn-primary');
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
+        closeModal('addCarModal');
+        
+        // Thực thi hành động dưới nền
+        performActionOnRow({
+            action: 'findAndAddCarByVin',
+            params: { vin },
+            buttonElement: buttonElement
+        });
+    }
 
-        const originalHtml = newConfirmBtn.innerHTML;
-        newConfirmBtn.disabled = true;
-        newConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xóa...';
-
-        try {
-            const formData = new URLSearchParams({ action: 'deleteCarFromStockLogic', vinToDelete: vin });
-            const response = await fetch(API_URL, { method: 'POST', body: formData });
-            if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+    function handleDeleteCar() {
+    showPromptModal(
+        'Xóa Xe Khỏi Kho', 
+        'Vui lòng nhập số VIN của xe cần xóa khỏi kho.', 
+        'Số VIN', 
+        // Hàm callback mới, nhận cả giá trị vin và nút modal
+        async (vin, modalButton) => { 
+            const { success } = await performActionOnRow({
+                action: 'deleteCarFromStockLogic',
+                params: { vinToDelete: vin.toUpperCase() },
+                buttonElement: modalButton // Truyền nút của modal để hiển thị spinner
+            });
             
-            const result = await response.json();
-            if (result.status !== "SUCCESS") throw new Error(result.message || 'Hành động thất bại');
-
-            showToast(result.message || 'Xóa xe thành công!', 'success');
-            closeModal('confirmationModal');
-            await fetchInitialData(true); // Tải lại dữ liệu nền
-        } catch (error) {
-            showToast(`Lỗi: ${error.message}`, 'error');
-            newConfirmBtn.disabled = false;
-            newConfirmBtn.innerHTML = originalHtml;
+            // Chỉ đóng modal khi hành động thành công
+            if (success) {
+                closeModal('confirmationModal');
+            }
         }
-    };
-    
-    // 4. Mở modal
-    openModal('confirmationModal');
-    inputEl.focus();
+    );
 }
 
     function handleRestoreCar() {
-        showPromptModal('Phục Hồi Xe Vào Kho', 'Vui lòng nhập số VIN của xe cần phục hồi vào kho:', 'Số VIN', (vin) => {
-            if(vin) performAction('restoreCarToStockLogic', { vinToRestore: vin });
-        });
-    }
+    showPromptModal(
+        'Phục Hồi Xe Vào Kho', 
+        'Vui lòng nhập số VIN của xe cần phục hồi.', 
+        'Số VIN',
+        async (vin, modalButton) => {
+            const { success } = await performActionOnRow({
+                action: 'restoreCarToStockLogic',
+                params: { vinToRestore: vin.toUpperCase() },
+                buttonElement: modalButton // Truyền nút của modal để hiển thị spinner
+            });
 
-    function handleDeleteOrder() {
-        showPromptModal('Xóa Đơn Hàng Vĩnh Viễn', 'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:', 'Số đơn hàng', (orderNumber) => {
-            if(orderNumber) performAction('deleteOrderLogic', { orderNumber: orderNumber });
-        });
-    }
-    
-    function handleArchiveOrders() {
-    // 1. Lấy các element của modal xác nhận
-    const titleEl = document.getElementById('confirmationModalTitle');
-    const messageEl = document.getElementById('confirmationModalMessage');
-    const inputContainer = document.getElementById('confirmationModalInputContainer');
-    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-
-    // 2. Thiết lập nội dung cho modal
-    titleEl.textContent = 'Lưu Trữ Hóa Đơn';
-    messageEl.textContent = 'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.';
-    inputContainer.style.display = 'none'; // Không cần ô nhập liệu
-    confirmBtn.className = 'btn btn-primary';
-    confirmBtn.innerHTML = 'Xác Nhận';
-
-    // 3. Gắn sự kiện click với logic async và spinner
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-    newConfirmBtn.onclick = async () => {
-        const originalHtml = newConfirmBtn.innerHTML;
-        newConfirmBtn.disabled = true;
-        newConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu trữ...';
-
-        try {
-            const formData = new URLSearchParams({ action: 'archiveInvoicedOrdersMonthly' });
-            const response = await fetch(API_URL, { method: 'POST', body: formData });
-            if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
-            
-            const result = await response.json();
-            if (result.status !== "SUCCESS") throw new Error(result.message || 'Hành động thất bại');
-
-            showToast(result.message || 'Lưu trữ thành công!', 'success');
-            closeModal('confirmationModal');
-            await fetchInitialData(true); // Tải lại dữ liệu nền
-        } catch (error) {
-            showToast(`Lỗi: ${error.message}`, 'error');
-        } finally {
-            // Luôn khôi phục nút modal
-            newConfirmBtn.disabled = false;
-            newConfirmBtn.innerHTML = originalHtml;
+            // Chỉ đóng modal khi hành động thành công
+            if (success) {
+                closeModal('confirmationModal');
+            }
         }
-    };
-    
-    // 4. Mở modal
-    openModal('confirmationModal');
+    );
 }
 
-    function handleDeleteOldDaGhep() {
-        showConfirmationModal('Xóa Đơn Ghép Cũ', 'CẢNH BÁO: Hành động này không thể hoàn tác. Bạn có chắc muốn xóa các đơn đã xuất hóa đơn của tháng trước khỏi sheet \'DaGhep\'?', () => {
-             performAction('deleteMonthlyInvoicedOrdersFromDaGhepLogic', {});
-        });
+    function handleDeleteOrder() {
+    showPromptModal(
+        'Xóa Đơn Hàng Vĩnh Viễn', 
+        'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:', 
+        'Số đơn hàng', 
+        async (orderNumber, modalButton) => { // Nhận nút modal làm tham số
+            const { success } = await performActionOnRow({
+                action: 'deleteOrderLogic',
+                params: { orderNumber: orderNumber },
+                buttonElement: modalButton // Sử dụng nút modal để hiển thị spinner
+            });
+            if (success) {
+                closeModal('confirmationModal');
+            }
+        }
+    );
+}
+    
+    function handleArchiveOrders() {
+        showConfirmationModal(
+            'Lưu Trữ Hóa Đơn', 
+            'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.', 
+            async () => {
+                 const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
+                await performActionOnRow({
+                    action: 'archiveInvoicedOrdersMonthly',
+                    params: {},
+                    buttonElement: confirmBtn
+                });
+            },
+            'btn-primary'
+        );
     }
-
+    
     // =================================================================
     // SECTION 5: UTILITIES AND HELPERS
     // =================================================================
@@ -2188,28 +2628,35 @@ async function submitNewCar() {
     }
 
     function sortData(data, key, direction) {
-        data.sort((a, b) => {
-            let valA = a[key]; let valB = b[key];
-            if (['Ngày nhập', 'Thời gian ghép', 'Thời gian hủy'].includes(key)) {
-                valA = valA ? new Date(valA).getTime() : 0;
-                valB = valB ? new Date(valB).getTime() : 0;
-            }
-            if (valA < valB) return direction === 'asc' ? -1 : 1;
-            if (valA > valB) return direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-    }
+    data.sort((a, b) => {
+        let valA = a[key]; 
+        let valB = b[key];
+        
+        // This part correctly handles date/time comparisons
+        if (['Ngày nhập', 'Thời gian ghép', 'Thời gian hủy', 'Ngày cọc'].includes(key)) {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
 
     function showConfirmationModal(title, message, onConfirmCallback, confirmButtonClass = 'btn-danger') {
         document.getElementById('confirmationModalTitle').textContent = title;
-        document.getElementById('confirmationModalMessage').textContent = message;
+        document.getElementById('confirmationModalMessage').innerHTML = message; // Use innerHTML for potential bold tags
         
         const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
         confirmBtn.className = `btn ${confirmButtonClass}`;
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
         newConfirmBtn.addEventListener('click', () => { 
+            // [SỬA ĐỔI] Đóng modal ngay lập tức
             closeModal('confirmationModal'); 
+            // Sau đó mới thực thi hành động callback
             onConfirmCallback(); 
         });
 
@@ -2218,63 +2665,36 @@ async function submitNewCar() {
     }
 
     function showPromptModal(title, message, inputLabel, onConfirmCallback) {
-        document.getElementById('confirmationModalTitle').textContent = title;
-        document.getElementById('confirmationModalMessage').textContent = message;
-        const inputContainer = document.getElementById('confirmationModalInputContainer');
-        const inputEl = document.getElementById('confirmationModalInput');
-        const labelEl = document.getElementById('confirmationModalInputLabel');
-        labelEl.textContent = inputLabel;
-        inputEl.value = '';
-        inputEl.placeholder = `Nhập ${inputLabel}...`;
-        inputContainer.style.display = 'block';
-        const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-        confirmBtn.className = 'btn btn-primary';
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.addEventListener('click', () => {
-            const inputValue = inputEl.value.trim();
-            if (!inputValue) { showToast(`Vui lòng nhập ${inputLabel}.`, 'warning'); return; }
-            closeModal('confirmationModal');
-            onConfirmCallback(inputValue);
-        });
-        openModal('confirmationModal');
-        inputEl.focus();
-    }
-async function performActionOnRow({ action, params, buttonElement }) {
-    const originalHtml = buttonElement.innerHTML;
-    buttonElement.disabled = true;
-    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    document.getElementById('confirmationModalTitle').textContent = title;
+    document.getElementById('confirmationModalMessage').innerHTML = message;
+    const inputContainer = document.getElementById('confirmationModalInputContainer');
+    const inputEl = document.getElementById('confirmationModalInput');
+    const labelEl = document.getElementById('confirmationModalInputLabel');
+    labelEl.textContent = inputLabel;
+    inputEl.value = '';
+    inputEl.placeholder = `Nhập ${inputLabel}...`;
+    inputContainer.style.display = 'block';
 
-    try {
-        const formData = new URLSearchParams();
-        formData.append('action', action);
-        for (const key in params) {
-            if (params[key] !== null && params[key] !== undefined) {
-                formData.append(key, params[key]);
-            }
+    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
+    confirmBtn.className = 'btn btn-primary';
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    // Gán sự kiện onclick mới. Hàm callback giờ đây là async và sẽ quản lý trạng thái của nút.
+    newConfirmBtn.onclick = async () => {
+        const inputValue = inputEl.value.trim();
+        if (!inputValue) { 
+            showToast(`Vui lòng nhập ${inputLabel}.`, 'warning'); 
+            return; 
         }
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
-        
-        const result = await response.json();
-        if (result.status === "SUCCESS") {
-            showToast(result.message || 'Hành động thành công!', 'success');
-            // Tải lại dữ liệu trong nền (chế độ silent) thay vì tải lại cả trang
-            await fetchInitialData(true); 
-        } else {
-            throw new Error(result.message || 'Hành động thất bại từ API');
-        }
-    } catch (error) {
-        console.error(`Lỗi khi thực hiện hành động '${action}':`, error);
-        showToast(`Lỗi: ${error.message}`, 'error');
-        // Chỉ khôi phục lại nút nếu có lỗi, vì nếu thành công, bảng sẽ được vẽ lại.
-        buttonElement.disabled = false;
-        buttonElement.innerHTML = originalHtml;
-    }
+        // Gọi callback và truyền cả giá trị nhập vào và chính nút bấm này để hiển thị spinner
+        await onConfirmCallback(inputValue, newConfirmBtn);
+    };
+    
+    openModal('confirmationModal');
+    inputEl.focus();
 }
+
     function updateNotifications(serverItems) {
         if (appState.notifications.isMarkingAsRead) return;
         const itemsForAdmin = serverItems.filter(item => item && String(item.message || '').trim() && item.createdBy !== ADMIN_IDENTIFIER);
@@ -2371,24 +2791,26 @@ async function performActionOnRow({ action, params, buttonElement }) {
     }
 
     function getStatusBadgeClass(status) {
-        if (!status || typeof status !== 'string') return 'status-default';
-        const lowerStatus = status.toLowerCase().trim();
-        switch (lowerStatus) {
-            case 'đã ghép': return 'status-daghep';
-            case 'chưa ghép':
-            case 'chưa tìm thấy vin':
-            case 'chờ ghép (bulk)':
-            case 'chờ ghép (vin cũ không hợp lệ)': return 'status-chuaghep';
-            case 'chờ phê duyệt': return 'status-chopheduyet';
-            case 'đã phê duyệt': return 'status-dapheduyet';
-            case 'đã xuất hóa đơn': return 'status-daxuathoadon';
-            case 'yêu cầu bổ sung': return 'status-yeucaubosung';
-            case 'đã bổ sung': return 'status-dabosung';
-            case 'đã hủy':
-            case 'đã hủy (ui)': return 'status-dahuy';
-            default: return 'status-default';
-        }
+    if (!status || typeof status !== 'string') return 'status-default';
+    const lowerStatus = status.toLowerCase().trim();
+    switch (lowerStatus) {
+        case 'đã ghép': return 'status-daghep';
+        case 'chưa ghép':
+        case 'chưa tìm thấy vin':
+        case 'chờ ghép (bulk)':
+        case 'chờ ghép (vin cũ không hợp lệ)': return 'status-chuaghep';
+        case 'chờ phê duyệt': return 'status-chopheduyet';
+        case 'đã phê duyệt': return 'status-dapheduyet';
+        // [THÊM MỚI] Nhận diện và tô màu cho trạng thái mới
+        case 'chờ ký hóa đơn': return 'status-chokyhoadon';
+        case 'đã xuất hóa đơn': return 'status-daxuathoadon';
+        case 'yêu cầu bổ sung': return 'status-yeucaubosung';
+        case 'đã bổ sung': return 'status-dabosung';
+        case 'đã hủy':
+        case 'đã hủy (ui)': return 'status-dahuy';
+        default: return 'status-default';
     }
+}
 
     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') return unsafe;
@@ -2412,11 +2834,188 @@ async function performActionOnRow({ action, params, buttonElement }) {
             toast.addEventListener('transitionend', () => toast.remove());
         }, duration);
     }
+
+    function handleSuggestion(order, btnElement) {
+        const orderNumber = order['Số đơn hàng'];
+        const modalBody = document.getElementById('suggestionModalBody');
+        const confirmBtn = document.getElementById('confirmSuggestionMatchBtn');
+        
+        const suggestedCars = appState.data.khoxe.filter(car => 
+            String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
+            car['Dòng xe'] === order['Dòng xe'] &&
+            car['Phiên bản'] === order['Phiên bản'] &&
+            car['Ngoại thất'] === order['Ngoại thất'] &&
+            String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
+        ).sort((a, b) => new Date(a['Ngày nhập']) - new Date(b['Ngày nhập']));
+
+        document.getElementById('suggestionOrderNumber').textContent = orderNumber;
+
+        if (suggestedCars.length > 0) {
+            let suggestionsHTML = `
+                <p>Tìm thấy <b>${suggestedCars.length}</b> xe phù hợp trong kho. Vui lòng chọn một xe để ghép:</p>
+                <div class="table-wrapper" style="max-height: 40vh; margin-top: 15px;">
+                    <table class="data-table">
+                        <thead><tr><th>Chọn</th><th>Số VIN</th><th>Mã DMS</th><th>Ngoại thất</th><th>Nội thất</th><th>Ngày nhập kho</th></tr></thead>
+                        <tbody>`;
+            
+            suggestedCars.forEach((car, index) => {
+                const ngayNhapFormatted = car['Ngày nhập'] ? new Date(car['Ngày nhập']).toLocaleString('vi-VN') : 'N/A';
+                suggestionsHTML += `
+                    <tr>
+                        <td><input type="radio" name="suggestedVin" value="${car.VIN}" id="vin_${index}" ${index === 0 ? 'checked' : ''}></td>
+                        <td><label for="vin_${index}">${car.VIN}</label></td>
+                        <td>${car['Mã DMS'] || 'N/A'}</td>
+                        <td>${car['Ngoại thất']}</td>
+                        <td>${car['Nội thất']}</td>
+                        <td>${ngayNhapFormatted}</td>
+                    </tr>`;
+            });
+
+            suggestionsHTML += `</tbody></table></div>`;
+            modalBody.innerHTML = suggestionsHTML;
+            confirmBtn.style.display = 'inline-block';
+        } else {
+            modalBody.innerHTML = `<div class="no-data-container" style="padding: 20px 0;">Không tìm thấy xe nào phù hợp trong kho.</div>`;
+            confirmBtn.style.display = 'none';
+        }
+
+        confirmBtn.onclick = () => submitSuggestedMatch(orderNumber, btnElement);
+        openModal('suggestionModal');
+    }
+
+    async function submitSuggestedMatch(orderNumber, btnElement) {
+        const selectedVinInput = document.querySelector('input[name="suggestedVin"]:checked');
+        if (!selectedVinInput) {
+            showToast('Vui lòng chọn một xe từ danh sách gợi ý.', 'warning');
+            return;
+        }
+        const selectedVin = selectedVinInput.value;
+        
+        // [SỬA ĐỔI] Đóng modal ngay lập tức
+        closeModal('suggestionModal');
+        
+        // Thực thi hành động ghép xe dưới nền
+        performActionOnRow({
+            action: 'manualMatchCar',
+            params: { orderNumber, vin: selectedVin },
+            buttonElement: btnElement
+        });
+    }
+
+    function generateGlobalSuggestions(chuaGhepData, khoXeData) {
+    const suggestions = [];
+    // Chỉ lấy xe có sẵn
+    const availableCars = khoXeData.filter(car => String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép');
+    // Chỉ lấy đơn hàng đang chờ
+    const pendingOrders = chuaGhepData.filter(order => String(order['Kết quả']).toLowerCase().includes('chưa'));
+
+    if (availableCars.length === 0 || pendingOrders.length === 0) {
+        return [];
+    }
+
+    availableCars.forEach(car => {
+        let matchingOrders = pendingOrders.filter(order =>
+            car['Dòng xe'] === order['Dòng xe'] &&
+            car['Phiên bản'] === order['Phiên bản'] &&
+            car['Ngoại thất'] === order['Ngoại thất'] &&
+            String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
+        );
+
+        if (matchingOrders.length > 0) {
+            // [NÂNG CẤP 1]: Sắp xếp đơn hàng theo ngày cọc (cũ nhất trước)
+            matchingOrders.sort((a, b) => new Date(a['Ngày cọc'] || 0) - new Date(b['Ngày cọc'] || 0));
+            suggestions.push({ car: car, orders: matchingOrders });
+        }
+    });
+
+    // [NÂNG CẤP 2]: Sắp xếp các gợi ý theo ngày nhập xe (xe cũ nhất ưu tiên)
+    suggestions.sort((a, b) => new Date(a.car['Ngày nhập'] || 0) - new Date(b.car['Ngày nhập'] || 0));
     
+    return suggestions;
+}
+
+    function renderSuggestionPanel(suggestions) {
+        let listHTML = '';
+        if (suggestions.length === 0) {
+            listHTML = `<div class="no-data-container" style="padding: 50px 20px;">Không có gợi ý ghép xe nào phù hợp.</div>`;
+        } else {
+            suggestions.forEach(suggestion => {
+                const car = suggestion.car;
+                const orders = suggestion.orders;
+                const ngayNhapFormatted = car['Ngày nhập'] ? new Date(car['Ngày nhập']).toLocaleDateString('vi-VN') : 'N/A';
+
+                let ordersTableHTML = `
+                    <table>
+                        <thead><tr><th>Số ĐH</th><th>Khách hàng</th><th>Ngày cọc</th><th>Hành động</th></tr></thead>
+                        <tbody>`;
+                orders.forEach(order => {
+                    const ngayCocFormatted = order['Ngày cọc'] ? new Date(order['Ngày cọc']).toLocaleDateString('vi-VN') : 'N/A';
+                    ordersTableHTML += `
+                        <tr>
+                            <td>${order['Số đơn hàng']}</td>
+                            <td>${order['Tên khách hàng']}</td>
+                            <td>${ngayCocFormatted}</td>
+                            <td>
+                                <button class="btn btn-sm-action btn-primary" data-action="directMatch" data-vin="${car.VIN}" data-order-number="${order['Số đơn hàng']}">
+                                    Ghép
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+                ordersTableHTML += `</tbody></table>`;
+
+                listHTML += `
+                    <div class="suggestion-card">
+                        <div class="suggestion-card-header">
+                            <strong>VIN: ${car.VIN}</strong>
+                            <span class="car-spec">${car['Dòng xe']} - ${car['Phiên bản']}</span>
+                            <span class="car-spec">Ngày nhập: ${ngayNhapFormatted}</span>
+                        </div>
+                        <div class="suggestion-card-body">
+                            ${ordersTableHTML}
+                        </div>
+                    </div>`;
+            });
+        }
+
+        return `
+            <div class="suggestion-panel-header">
+                <h3><i class="fas fa-lightbulb"></i> Gợi ý Ghép xe</h3>
+            </div>
+            <div class="suggestion-list" id="suggestion-list-container">
+                ${listHTML}
+            </div>
+        `;
+    }
+
+    function attachSuggestionPanelListeners() {
+        const container = document.getElementById('suggestion-list-container');
+        if (container) {
+            container.addEventListener('click', function(event) {
+                const button = event.target.closest('button[data-action="directMatch"]');
+                if (button) {
+                    event.preventDefault();
+                    handleDirectMatch(button.dataset.vin, button.dataset.orderNumber, button);
+                }
+            });
+        }
+    }
+
+    async function handleDirectMatch(vin, orderNumber, btnElement) {
+        if (!vin || !orderNumber) {
+            showToast('Lỗi: Thiếu thông tin VIN hoặc Số đơn hàng.', 'error');
+            return;
+        }
+        await performActionOnRow({
+            action: 'manualMatchCar',
+            params: { orderNumber, vin },
+            buttonElement: btnElement
+        });
+    }
+
     // =================================================================
     // SECTION 6: INITIALIZATION
     // =================================================================
-    
     document.addEventListener('DOMContentLoaded', () => {
         applyInitialTheme();
         initScrollToTopButton();
@@ -2435,18 +3034,17 @@ async function performActionOnRow({ action, params, buttonElement }) {
         notificationListEl.addEventListener('click', (event) => {
             const item = event.target.closest('.notification-item[data-view]');
             if (item) {
-                const view = item.dataset.view;
-                const id = item.dataset.id;
-                appState.highlightedId = id; 
-                switchView(view); 
+                event.stopPropagation();
+                appState.highlightedId = item.dataset.id; 
+                switchView(item.dataset.view); 
                 toggleNotificationPanel();
             }
         });
 
         document.addEventListener('click', function(event) {
-            const isBellClick = event.target.closest('.notification-bell');
-            const isPanelClick = event.target.closest('.notification-panel');
-            if (appState.notifications.isPanelOpen && !isPanelClick && !isBellClick) {
+            const bell = event.target.closest('.notification-bell');
+            const panel = event.target.closest('.notification-panel');
+            if (appState.notifications.isPanelOpen && !bell && !panel) {
                 toggleNotificationPanel();
             }
              const sidebar = document.getElementById('sidebar');
@@ -2458,6 +3056,246 @@ async function performActionOnRow({ action, params, buttonElement }) {
             }
         });
     });
+/**
+ * [HÀM NÂNG CẤP] Mở modal và tạo form chỉnh sửa với bố cục HÀNG NGANG.
+ */
+function handleEditRow(rowData, btnElement) {
+    const view = appState.currentView;
+    const modalBody = document.getElementById('editModalBody');
+    const modalTitle = document.getElementById('editModalTitle');
+    const confirmBtn = document.getElementById('confirmEditBtn');
+    modalBody.innerHTML = ''; // Xóa form cũ
+
+    const viewConfig = {
+        khoXe: {
+            sheetName: 'KhoXe', primaryKeyColumn: 'VIN', title: 'Chỉnh Sửa Thông Tin Xe',
+            fields: ['Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Mã DMS', 'Trạng thái']
+        },
+        daGhep: {
+            sheetName: 'DaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Đã Ghép',
+            fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc']
+        },
+        chuaGhep: {
+            sheetName: 'ChuaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Chờ Ghép',
+            fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc']
+        },
+        xuatHoaDon: {
+            sheetName: 'Xuathoadon', primaryKeyColumn: 'SỐ ĐƠN HÀNG', title: 'Chỉnh Sửa Thông Tin Hóa Đơn',
+            fields: ['TÊN KHÁCH HÀNG', 'TƯ VẤN BÁN HÀNG', 'PO PIN', 'CHÍNH SÁCH']
+        }
+    };
+    
+    const config = viewConfig[view];
+    if (!config) {
+        showToast('Chức năng chỉnh sửa không được hỗ trợ cho mục này.', 'warning');
+        return;
+    }
+
+    modalTitle.textContent = config.title;
+    const primaryKeyValue = rowData[config.primaryKeyColumn];
+    
+    // Xây dựng form với cấu trúc HTML mới cho bố cục ngang
+    let formBodyHTML = `
+        <div class="form-group">
+            <label style="font-weight: 500;">${config.primaryKeyColumn} (Không thể sửa)</label>
+            <div class="info-box" style="margin-top: 5px; background-color: var(--background-light); font-weight: 600;">${primaryKeyValue}</div>
+        </div>
+        <hr style="border: none; border-top: 1px solid var(--border-color-light); margin: 20px 0;">
+        <div class="edit-form-grid">
+    `;
+
+    config.fields.forEach(field => {
+        const value = rowData[field] || '';
+        const isDateField = field.toLowerCase().includes('ngày') || field.toLowerCase().includes('date');
+        const inputType = isDateField ? 'date' : 'text';
+        let fieldValueForInput = value;
+        
+        if (isDateField && value) {
+            try {
+                let date;
+                if (String(value).includes('/')) {
+                    const parts = value.split(' ')[0].split('/');
+                    date = (parts.length === 3) ? new Date(`${parts[2]}-${parts[1]}-${parts[0]}`) : new Date(value);
+                } else { date = new Date(value); }
+                
+                if (!isNaN(date.getTime())) {
+                  fieldValueForInput = date.toISOString().split('T')[0];
+                } else { fieldValueForInput = ''; }
+            } catch(e) { fieldValueForInput = ''; }
+        }
+        
+        // Cấu trúc HTML mới cho mỗi hàng ngang
+        formBodyHTML += `
+            <div class="form-group-horizontal">
+                <label for="edit-${field}" class="form-label-horizontal">${field}</label>
+                <input type="${inputType}" id="edit-${field}" class="form-input-horizontal" data-field-name="${field}" value="${escapeHtml(fieldValueForInput)}">
+            </div>
+        `;
+    });
+
+    formBodyHTML += '</div>'; // Đóng thẻ .edit-form-grid
+    modalBody.innerHTML = formBodyHTML;
+
+    confirmBtn.onclick = () => submitEditForm(config.sheetName, config.primaryKeyColumn, primaryKeyValue, btnElement);
+    openModal('editModal');
+}
+
+async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnElement) {
+    const modalBody = document.getElementById('editModalBody');
+    const inputs = modalBody.querySelectorAll('input[data-field-name]');
+    
+    const params = {
+        sheetName,
+        primaryKeyColumn,
+        primaryKeyValue,
+        updatedBy: ADMIN_IDENTIFIER
+    };
+
+    inputs.forEach(input => {
+        const fieldName = input.dataset.fieldName;
+        params[fieldName] = input.value;
+    });
+
+    const modalConfirmButton = document.getElementById('confirmEditBtn');
+    
+    const { success } = await performActionOnRow({
+        action: 'updateRowData',
+        params: params,
+        buttonElement: modalConfirmButton // Show spinner on the modal's save button
+    });
+
+    if (success) {
+        closeModal('editModal');
+    }
+}
+// =================================================================
+// SECTION MỚI: XỬ LÝ NHẬP XE HÀNG LOẠT (SỬ DỤNG MODAL)
+// =================================================================
+
+let modalSelectedFile = null;
+
+function openExcelImportModal() {
+    // Đặt lại trạng thái của modal trước khi mở
+    modalSelectedFile = null;
+    const fileInput = document.getElementById('excel-file-input-modal');
+    if (fileInput) fileInput.value = ''; // Xóa file đã chọn trước đó
+    
+    const fileNameDisplay = document.getElementById('file-name-display-modal');
+    if (fileNameDisplay) fileNameDisplay.textContent = '';
+
+    const fileLabel = document.getElementById('excel-file-label-modal');
+    if (fileLabel) {
+        fileLabel.innerHTML = '<i class="fas fa-file-excel"></i> Chọn File...';
+        fileLabel.style.borderColor = 'var(--primary-color)';
+    }
+
+    const importBtn = document.getElementById('import-excel-btn-modal');
+    if (importBtn) importBtn.disabled = true;
+
+    openModal('excelImportModal');
+}
+
+function handleFileSelectForModal(event) {
+    const fileInput = event.target;
+    const fileLabel = document.getElementById('excel-file-label-modal');
+    const fileNameDisplay = document.getElementById('file-name-display-modal');
+    const importBtn = document.getElementById('import-excel-btn-modal');
+
+    if (fileInput.files.length > 0) {
+        modalSelectedFile = fileInput.files[0];
+        fileNameDisplay.textContent = `File đã chọn: ${modalSelectedFile.name}`;
+        importBtn.disabled = false;
+        fileLabel.style.borderColor = '#28a745';
+        fileLabel.innerHTML = `<i class="fas fa-check-circle"></i> File đã được chọn`;
+    } else {
+        modalSelectedFile = null;
+        fileNameDisplay.textContent = '';
+        importBtn.disabled = true;
+        fileLabel.style.borderColor = 'var(--primary-color)';
+        fileLabel.innerHTML = '<i class="fas fa-file-excel"></i> Chọn File...';
+    }
+}
+        
+function importFromExcelModal() {
+    if (!modalSelectedFile) {
+        showToast('Vui lòng chọn một file Excel trước.', 'warning');
+        return;
+    }
+
+    const importBtn = document.getElementById('import-excel-btn-modal');
+    const btnText = document.getElementById('import-modal-btn-text');
+    const spinner = document.getElementById('import-modal-spinner');
+
+    // Cập nhật giao diện nút bấm trong modal
+    importBtn.disabled = true;
+    btnText.textContent = 'Đang xử lý...';
+    spinner.style.display = 'inline-block';
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+        try {
+            const data = event.target.result;
+            const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+            const firstSheetName = workbook.SheetNames[0];
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName]);
+
+            if (jsonData.length === 0) {
+                throw new Error('File Excel không có dữ liệu.');
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'importCarsFromExcel');
+            formData.append('carData', JSON.stringify(jsonData));
+            formData.append('importedBy', ADMIN_IDENTIFIER);
+
+            const response = await fetch(API_URL, { method: 'POST', body: formData });
+            if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+            
+            const result = await response.json();
+            if (result.status === "SUCCESS") {
+                showToast(result.message, 'success', 6000);
+                closeModal('excelImportModal');
+                await fetchInitialData(true);
+            } else {
+                throw new Error(result.message);
+            }
+
+        } catch (error) {
+            console.error("Lỗi khi nhập từ Excel:", error);
+            showToast(`Nhập thất bại: ${error.message}`, 'error', 6000);
+        } finally {
+            // Đặt lại trạng thái nút bấm trong modal bất kể kết quả
+            importBtn.disabled = false;
+            btnText.textContent = 'Nhập Dữ Liệu';
+            spinner.style.display = 'none';
+        }
+    };
+    reader.onerror = function() {
+        showToast('Không thể đọc file đã chọn.', 'error');
+        importBtn.disabled = false;
+        btnText.textContent = 'Nhập Dữ Liệu';
+        spinner.style.display = 'none';
+    };
+    reader.readAsBinaryString(modalSelectedFile);
+}
+/**
+ * [HÀM MỚI] Xử lý khi nhấn nút "Chờ Ký Hóa Đơn".
+ */
+function handlePendingSignature(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    showConfirmationModal(
+        'Xác Nhận Chuyển Trạng Thái',
+        `Bạn có chắc muốn chuyển đơn hàng <strong>${orderNumber}</strong> sang trạng thái "Chờ ký hóa đơn"?<br>Hành động này sẽ ghi nhận ngày xuất hóa đơn là hôm nay.`,
+        () => {
+            performActionOnRow({
+                action: 'markAsPendingSignature',
+                params: { orderNumber: orderNumber },
+                buttonElement: btnElement
+            });
+        },
+        'btn-primary'
+    );
+}
 </script>
 </body>
 </html>
