@@ -550,7 +550,14 @@ body.dark-mode .modal-footer { border-top-color: var(--border-color-dark); }
     color: #212529; 
 }
 
-
+/* === CSS MỚI CHO NÚT MÀU CAM === */
+.btn-orange { 
+    background-color: #f97316; /* Màu cam */
+    box-shadow: 0 2px 5px rgba(249, 115, 22, 0.4);
+}
+.btn-orange:hover { 
+    background-color: #ea580c; /* Màu cam đậm hơn khi di chuột qua */
+}
 /* Status Badges - Using the new system */
 .status-badge {
     padding: 4px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 500;
@@ -888,10 +895,13 @@ body.dark-mode .table-wrapper::-webkit-scrollbar-thumb:hover {
     min-height: 38px; /* Đồng bộ chiều cao */
 }
 
-/* Thêm padding cho select để chừa không gian cho icon */
-.filter-container select {
-    padding-left: 34px; /* Rộng hơn một chút cho icon */
-    min-width: 150px;   /* Chiều rộng tối thiểu cho các bộ lọc */
+/* [THAY THẾ] Quy tắc MỚI để đồng bộ kích thước tất cả các ô lọc */
+.filter-container .filter-group > input[type="text"],
+.filter-container .filter-group > select {
+    padding: 8px 12px; /* Đặt lại padding chung */
+    padding-left: 34px; /* Padding riêng cho icon bên trái */
+    width: 150px; /* Đặt chiều rộng CỐ ĐỊNH cho tất cả. Bạn có thể thay đổi số này */
+    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
 }
 
 /* Icon bên trong bộ lọc */
@@ -1172,6 +1182,84 @@ body.dark-mode .status-chokyhoadon {
     color: #c4b5fd;
     border-color: #5b21b6;
 }
+/* Dán đoạn CSS này vào dưới .btn-warning */
+.btn-purple { 
+    background-color: #6d28d9; /* Màu tím đậm */
+    box-shadow: 0 2px 5px rgba(109, 40, 217, 0.4);
+}
+.btn-purple:hover { 
+    background-color: #5b21b6; /* Màu tím đậm hơn khi di chuột qua */
+}
+/* === CSS MỚI: Định dạng cho Dòng thời gian (Timeline) === */
+.timeline-container {
+    padding: 10px;
+}
+.timeline {
+    position: relative;
+    padding-left: 30px;
+    border-left: 3px solid var(--border-color-light);
+}
+body.dark-mode .timeline {
+    border-left-color: var(--border-color-dark);
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+}
+.timeline-item:last-child {
+    margin-bottom: 5px;
+}
+.timeline-icon {
+    position: absolute;
+    left: -43px;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--background-light);
+    border: 3px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--primary-color);
+}
+body.dark-mode .timeline-icon {
+    background-color: var(--background-dark);
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+}
+.timeline-content {
+    background-color: var(--background-light);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color-light);
+}
+body.dark-mode .timeline-content {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+}
+.timeline-content .action-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+.timeline-content .details {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 8px;
+    white-space: pre-wrap; /* Giữ nguyên các dấu xuống dòng trong chi tiết */
+}
+body.dark-mode .timeline-content .details {
+    color: #aeb5be;
+}
+.timeline-footer {
+    font-size: 11.5px;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+    opacity: 0.8;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1260,7 +1348,32 @@ body.dark-mode .status-chokyhoadon {
     <div id="cancelModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Xác Nhận Hủy Yêu Cầu</h2><button class="modal-close" onclick="closeModal('cancelModal')">&times;</button></div><div class="modal-body"><p>Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <b id="cancelOrderNumber"></b> không?</p><div class="form-group" style="margin-top: 15px;"><label for="cancelReason">Lý do hủy (bắt buộc):</label><textarea id="cancelReason" rows="3" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin..."></textarea></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('cancelModal')">Xem Lại</button><button id="confirmCancelBtn" class="btn btn-danger">Xác Nhận Hủy</button></div></div></div>
     <div id="supplementModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Yêu Cầu Bổ Sung Hồ Sơ</h2><button class="modal-close" onclick="closeModal('supplementModal')">&times;</button></div><div class="modal-body"><p>Nhập nội dung cần TVBH bổ sung cho đơn hàng <b id="supplementOrderNumber"></b>:</p><div class="form-group" style="margin-top: 15px;"><label for="supplementReason">Nội dung yêu cầu:</label><textarea id="supplementReason" rows="3" placeholder="Ví dụ: Ảnh HĐMB bị mờ, thiếu chữ ký..."></textarea></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('supplementModal')">Hủy</button><button id="confirmSupplementBtn" class="btn btn-primary">Gửi Yêu Cầu</button></div></div></div>
     <div id="uploadInvoiceModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Tải Lên Hóa Đơn Đã Xuất</h2><button class="modal-close" onclick="closeModal('uploadInvoiceModal')">&times;</button></div><div class="modal-body"><p>Tải lên file hóa đơn (PDF, ảnh...) cho đơn hàng <b id="uploadOrderNumber"></b>:</p><div class="form-group" style="margin-top: 15px;"><label for="issuedInvoiceFile">Chọn tệp hóa đơn:</label><input type="file" id="issuedInvoiceFile" accept=".pdf,.jpeg,.png,.jpg,.xlsx,.xls"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('uploadInvoiceModal')">Hủy</button><button id="confirmUploadBtn" class="btn btn-primary">Tải Lên và Hoàn Tất</button></div></div></div>
-    <div id="addCarModal" class="modal"><div class="modal-content"><div class="modal-header"><h2>Thêm Xe Mới vào Kho</h2><button class="modal-close" onclick="closeModal('addCarModal')">&times;</button></div><div class="modal-body"><p>Nhập số VIN của xe cần thêm. Hệ thống sẽ tự động tra cứu và thêm xe vào kho.</p><div class="form-group"><label for="newCarVin">Số VIN (bắt buộc 17 ký tự)</label><input type="text" id="newCarVin" maxlength="17" placeholder="Nhập chính xác 17 ký tự VIN"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addCarModal')">Hủy</button><button class="btn btn-primary" onclick="submitNewCar()">Tra cứu và Thêm Xe</button></div></div></div>
+    <div id="addCarModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Thêm Xe Mới vào Kho</h2>
+            <button class="modal-close" onclick="closeModal('addCarModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 15px;">Nhập số VIN hoặc dùng camera <i class="fas fa-camera"></i> để quét từ giấy tờ xe.</p>
+            <div class="form-group">
+                <label for="newCarVin">Số VIN (bắt buộc 17 ký tự)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="newCarVin" maxlength="17" placeholder="Nhập hoặc quét VIN..." style="flex-grow: 1;">
+                    <input type="file" id="ocr-file-input" accept="image/*" style="display: none;" onchange="handleOcrFileChange(event)">
+                    <button class="btn btn-secondary" onclick="document.getElementById('ocr-file-input').click()" title="Quét VIN từ ảnh">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div id="ocr-status" style="font-size: 12px; margin-top: 8px; color: var(--primary-color); height: 1.2em;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addCarModal')">Hủy</button>
+            <button class="btn btn-primary" onclick="submitNewCar()">Tra cứu và Thêm Xe</button>
+        </div>
+    </div>
+</div>
 <div id="editModal" class="modal">
     <div class="modal-content" style="max-width: 600px;">
         <div class="modal-header">
@@ -1301,6 +1414,38 @@ body.dark-mode .status-chokyhoadon {
                 <i id="import-modal-spinner" class="fas fa-spinner fa-spin" style="margin-right: 8px; display: none;"></i>
                 <span id="import-modal-btn-text">Nhập Dữ Liệu</span>
             </button>
+        </div>
+    </div>
+</div>
+<div id="timelineModal" class="modal">
+    <div class="modal-content" style="max-width: 650px;">
+        <div class="modal-header">
+            <h2 id="timelineModalTitle">Lịch sử Đơn hàng</h2>
+            <button class="modal-close" onclick="closeModal('timelineModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="timelineModalBody">
+            </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('timelineModal')">Đóng</button>
+        </div>
+    </div>
+</div>
+<div id="lookupModal" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2 id="lookupModalTitle">Tra Cứu Lịch Sử Đơn Hàng</h2>
+            <button class="modal-close" onclick="closeModal('lookupModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="lookupModalMessage" style="margin-bottom: 15px;">Vui lòng nhập chính xác Số đơn hàng bạn muốn xem lịch sử chi tiết.</p>
+            <div class="form-group">
+                <label id="lookupModalInputLabel" for="lookupModalInput">Số đơn hàng</label>
+                <input type="text" id="lookupModalInput" class="form-input-horizontal" placeholder="Ví dụ: SO-123456">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('lookupModal')">Hủy</button>
+            <button id="lookupModalConfirmBtn" class="btn btn-primary">Tra cứu</button>
         </div>
     </div>
 </div>
@@ -1364,7 +1509,7 @@ body.dark-mode .status-chokyhoadon {
     }
 
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzTYovGv0_JcbmdTY45WFKIZdu0aIOwfi__vqJJd6STREjhuZ336cOjScwF_zkS8caw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycby8yFPw6U3HNxW3-umTMB4K2TTiIzN8KVpE__z0DOnqG-wfKtKVMWnHWJ6oE1lYYPk6tw/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
     const appState = {
@@ -1373,11 +1518,13 @@ body.dark-mode .status-chokyhoadon {
         loading: true,
         error: null,
         currentDataVersion: '0',
+        // Giữ nguyên cho Kho Xe, đã đúng
         khoXe: { searchTerm: '', sortKey: 'Ngày nhập', sortDir: 'desc', filters: { dongXe: '', phienBan: '', trangThai: '' } },
-        chuaGhep: { searchTerm: '', filters: { dongXe: '', tvbh: '' } },
-        daGhep: { searchTerm: '', filters: { dongXe: '', tvbh: '' } },
-        xuatHoaDon: { searchTerm: '', filters: { trangThai: '', tvbh: '' } },
-        huyGhep: { searchTerm: '' },
+        // Thêm sắp xếp mặc định cho các trang còn lại
+        chuaGhep: { searchTerm: '', sortKey: 'Thời gian nhập', sortDir: 'desc', filters: { dongXe: '', tvbh: '' } },
+        daGhep: { searchTerm: '', sortKey: 'Thời gian ghép', sortDir: 'desc', filters: { dongXe: '', tvbh: '', ngoaiThat: '', trangThai: '' } },
+        xuatHoaDon: { searchTerm: '', sortKey: 'NGÀY CỌC', sortDir: 'desc', filters: { trangThai: '', tvbh: '', dongXe: '', ngoaiThat: '' } },
+        huyGhep: { searchTerm: '', sortKey: 'Thời gian hủy', sortDir: 'desc' },
         highlightedId: null, 
         connection: { 
             isPolling: false, pollController: null, currentDelay: 30000, 
@@ -1680,6 +1827,7 @@ function renderChuaGhepView() {
 
     const carModels = [...new Set(chuaGhepData.map(item => item['Dòng xe']))].sort();
     const salesConsultants = [...new Set(chuaGhepData.map(item => item['Tên tư vấn bán hàng']))].sort();
+    
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
@@ -1702,8 +1850,11 @@ function renderChuaGhepView() {
                     </select>
                 </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <button class="btn btn-danger" onclick="handleDeleteOrder()"><i class="fas fa-times-circle"></i> Xóa Đơn Hàng</button>
+            <div style="flex-shrink: 0; display: flex; gap: 10px;">
+                <button class="btn btn-orange" onclick="handleShowTimeline()">
+                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
+                </button>
+                <button class="btn btn-danger" onclick="handleDeleteOrder()"><i class="fas fa-times-circle"></i> <span>Xóa Đơn Hàng</span></button>
             </div>
         </div>`;
 
@@ -1721,12 +1872,13 @@ function renderChuaGhepView() {
     if (filters.tvbh) {
         filteredData = filteredData.filter(row => row['Tên tư vấn bán hàng'] === filters.tvbh);
     }
-
+    const { sortKey, sortDir } = appState.chuaGhep;
+    sortData(filteredData, sortKey, sortDir);
     const suggestions = generateGlobalSuggestions(chuaGhepData, khoXeData);
     const actions = (row) => [
-        { label: 'Ghép Thủ Công', class: 'btn-action', handler: 'handleManualMatch' },
-        { label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' },
-        { label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' }
+        { icon: 'fa-link', label: 'Ghép Thủ Công', class: 'btn-action', handler: 'handleManualMatch' },
+        { icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' },
+        { icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' }
     ];
 
     if (suggestions.length > 0) {
@@ -1755,18 +1907,57 @@ function renderChuaGhepView() {
 
 function renderDaGhepView() {
     const data = appState.data.daghep || [];
-    const { searchTerm } = appState.daGhep;
+    const { searchTerm, filters } = appState.daGhep;
 
+    // [CẬP NHẬT] Lấy các giá trị duy nhất để tạo option cho bộ lọc
+    const carModels = [...new Set(data.map(item => item['Dòng xe']))].filter(Boolean).sort();
+    const salesConsultants = [...new Set(data.map(item => item['Tên tư vấn bán hàng']))].filter(Boolean).sort();
+    const exteriors = [...new Set(data.map(item => item['Ngoại thất']))].filter(Boolean).sort();
+    const statuses = [...new Set(data.map(item => item['Kết quả']))].filter(Boolean).sort();
+
+    // [CẬP NHẬT] Thêm các thẻ select cho bộ lọc vào toolbar
     const toolbarHTML = `
         <div class="view-toolbar">
              <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm theo Số ĐH, VIN, Tên KH..." 
-                           oninput="handleSearchInput('daGhep', this.value)" 
-                           value="${searchTerm || ''}" 
-                           style="padding-left: 34px; min-width: 300px;">
+                    <input type="text" placeholder="Tìm KH, SỐ ĐH, VIN..." 
+       oninput="handleSearchInput('daGhep', this.value)" 
+       value="${searchTerm || ''}">
                 </div>
+                <div class="filter-group">
+                    <i class="fas fa-user-tie filter-icon"></i>
+                    <select onchange="handleFilterChange('daGhep', 'tvbh', this.value)">
+                        <option value="">Tất cả TVBH</option>
+                        ${salesConsultants.map(tv => `<option value="${tv}" ${filters.tvbh === tv ? 'selected' : ''}>${tv}</option>`).join('')}
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <i class="fas fa-car filter-icon"></i>
+                    <select onchange="handleFilterChange('daGhep', 'dongXe', this.value)">
+                        <option value="">Tất cả Dòng Xe</option>
+                        ${carModels.map(model => `<option value="${model}" ${filters.dongXe === model ? 'selected' : ''}>${model}</option>`).join('')}
+                    </select>
+                </div>
+                 <div class="filter-group">
+                    <i class="fas fa-palette filter-icon"></i>
+                    <select onchange="handleFilterChange('daGhep', 'ngoaiThat', this.value)">
+                        <option value="">Tất cả Ngoại thất</option>
+                        ${exteriors.map(color => `<option value="${color}" ${filters.ngoaiThat === color ? 'selected' : ''}>${color}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-tag filter-icon"></i>
+                    <select onchange="handleFilterChange('daGhep', 'trangThai', this.value)">
+                        <option value="">Tất cả Trạng thái</option>
+                        ${statuses.map(status => `<option value="${status}" ${filters.trangThai === status ? 'selected' : ''}>${status}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div style="flex-shrink: 0;">
+                <button class="btn btn-purple" onclick="handleShowTimeline()">
+                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
+                </button>
             </div>
         </div>`;
 
@@ -1780,11 +1971,36 @@ function renderDaGhepView() {
         );
     }
     
+    // [CẬP NHẬT] Áp dụng logic cho các bộ lọc mới
+    if (filters.dongXe) {
+        filteredData = filteredData.filter(row => row['Dòng xe'] === filters.dongXe);
+    }
+    if (filters.tvbh) {
+        filteredData = filteredData.filter(row => row['Tên tư vấn bán hàng'] === filters.tvbh);
+    }
+    if (filters.ngoaiThat) {
+        filteredData = filteredData.filter(row => row['Ngoại thất'] === filters.ngoaiThat);
+    }
+    if (filters.trangThai) {
+        filteredData = filteredData.filter(row => row['Kết quả'] === filters.trangThai);
+    }
+    const { sortKey, sortDir } = appState.daGhep;
+    sortData(filteredData, sortKey, sortDir);
     const getActionsForRow = (row) => {
-        const actions = [{ label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
+        const actions = [
+            { icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
+        ];
         const status = String(row['Kết quả'] || '').toLowerCase().trim();
+        
         if (status === 'đã ghép') {
-             actions.push({ label: 'Hủy Ghép', class: 'btn-warning', handler: 'handleUnmatchRequest' });
+             actions.push({ icon: 'fa-unlink', label: 'Hủy Ghép', class: 'btn-warning', handler: 'handleUnmatchRequest' });
+             actions.push({ 
+                icon: 'fa-paper-plane',
+                label: 'Gửi lại Mail', 
+                class: 'btn-purple',
+                handler: 'handleResendEmail', 
+                type: 'match_success' 
+             });
         }
         return actions;
     };
@@ -1825,17 +2041,43 @@ function renderXuatHoaDonView() {
     });
     
     const { searchTerm, filters } = appState.xuatHoaDon;
-    const statusOptions = [...new Set(dataWithDetails.map(item => item['Trạng thái xử lý']))].sort();
 
+    // [CẬP NHẬT] Lấy các giá trị duy nhất để tạo option cho bộ lọc
+    const statusOptions = [...new Set(dataWithDetails.map(item => item['Trạng thái xử lý']))].filter(Boolean).sort();
+    const salesConsultants = [...new Set(dataWithDetails.map(item => item['TƯ VẤN BÁN HÀNG']))].filter(Boolean).sort();
+    const carModels = [...new Set(dataWithDetails.map(item => item['DÒNG XE']))].filter(Boolean).sort();
+    const exteriors = [...new Set(dataWithDetails.map(item => item['NGOẠI THẤT']))].filter(Boolean).sort();
+
+    // [CẬP NHẬT] Thêm các thẻ select cho bộ lọc vào toolbar
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm theo Tên KH, Số ĐH, VIN..." 
-                           oninput="handleSearchInput('xuatHoaDon', this.value)" 
-                           value="${searchTerm || ''}" 
-                           style="padding-left: 34px; min-width: 250px;">
+                    <input type="text" placeholder="Tìm KH, Số ĐH, VIN..." 
+       oninput="handleSearchInput('xuatHoaDon', this.value)" 
+       value="${searchTerm || ''}">
+                </div>
+                 <div class="filter-group">
+                    <i class="fas fa-user-tie filter-icon"></i>
+                    <select onchange="handleFilterChange('xuatHoaDon', 'tvbh', this.value)">
+                        <option value="">Tất cả TVBH</option>
+                        ${salesConsultants.map(tv => `<option value="${tv}" ${filters.tvbh === tv ? 'selected' : ''}>${tv}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-car filter-icon"></i>
+                    <select onchange="handleFilterChange('xuatHoaDon', 'dongXe', this.value)">
+                        <option value="">Tất cả Dòng xe</option>
+                        ${carModels.map(model => `<option value="${model}" ${filters.dongXe === model ? 'selected' : ''}>${model}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-palette filter-icon"></i>
+                    <select onchange="handleFilterChange('xuatHoaDon', 'ngoaiThat', this.value)">
+                        <option value="">Tất cả Ngoại thất</option>
+                        ${exteriors.map(color => `<option value="${color}" ${filters.ngoaiThat === color ? 'selected' : ''}>${color}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="filter-group">
                     <i class="fas fa-tag filter-icon"></i>
@@ -1845,8 +2087,11 @@ function renderXuatHoaDonView() {
                     </select>
                 </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <button class="btn btn-secondary" onclick="handleArchiveOrders()"><i class="fas fa-archive"></i> Lưu Trữ Hóa Đơn Tháng Trước</button>
+            <div style="flex-shrink: 0; display: flex; gap: 10px;">
+                <button class="btn btn-purple" onclick="handleShowTimeline()">
+                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
+                </button>
+                <button class="btn btn-secondary" onclick="handleArchiveOrders()"><i class="fas fa-archive"></i> <span>Lưu Trữ HĐ</span></button>
             </div>
         </div>`;
     
@@ -1858,25 +2103,46 @@ function renderXuatHoaDonView() {
             (row['SỐ VIN']?.toLowerCase().includes(lowercasedTerm))
         );
     }
+
+    // [CẬP NHẬT] Áp dụng logic cho các bộ lọc mới
     if (filters.trangThai) {
         dataWithDetails = dataWithDetails.filter(row => row['Trạng thái xử lý'] === filters.trangThai);
     }
-
+     if (filters.tvbh) {
+        dataWithDetails = dataWithDetails.filter(row => row['TƯ VẤN BÁN HÀNG'] === filters.tvbh);
+    }
+    if (filters.dongXe) {
+        dataWithDetails = dataWithDetails.filter(row => row['DÒNG XE'] === filters.dongXe);
+    }
+    if (filters.ngoaiThat) {
+        dataWithDetails = dataWithDetails.filter(row => row['NGOẠI THẤT'] === filters.ngoaiThat);
+    }
+    const { sortKey, sortDir } = appState.xuatHoaDon;
+    sortData(dataWithDetails, sortKey, sortDir);
     const getActionsForRow = (row) => {
         const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
-        let actions = [{ label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
+        let actions = [
+            { icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
+        ];
         
         if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
-            actions.push({ label: 'Phê Duyệt', class: 'btn-action', handler: 'handleApproveRequest' });
-            actions.push({ label: 'Y/C Bổ Sung', class: 'btn-warning', handler: 'handleRequestSupplement' });
+            actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', class: 'btn-success', handler: 'handleApproveRequest' });
+            actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', class: 'btn-warning', handler: 'handleRequestSupplement' });
         } else if (status === 'đã phê duyệt') {
-            actions.push({ label: 'Chờ Ký HĐ', class: 'btn-primary', handler: 'handlePendingSignature' });
+            actions.push({ icon: 'fa-signature', label: 'Chờ Ký HĐ', class: 'btn-primary', handler: 'handlePendingSignature' });
         } else if (status === 'chờ ký hóa đơn') {
-            actions.push({ label: 'Tải Lên HĐ', class: 'btn-success', handler: 'handleUploadIssuedInvoice' });
+            actions.push({ icon: 'fa-upload', label: 'Tải Lên HĐ', class: 'btn-success', handler: 'handleUploadIssuedInvoice' });
+        }
+
+        if (status === 'yêu cầu bổ sung') {
+            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại YCBS', class: 'btn-purple', handler: 'handleResendEmail', type: 'invoice_request_supplement' });
+        }
+        if (status === 'đã xuất hóa đơn') {
+            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại HĐ', class: 'btn-purple', handler: 'handleResendEmail', type: 'invoice_issued' });
         }
 
         if (status !== 'đã xuất hóa đơn' && status !== 'đã hủy') {
-            actions.push({ label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' });
+            actions.push({ icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' });
         }
         return actions;
     };
@@ -1893,11 +2159,16 @@ function renderHuyGhepView() {
             <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm theo Số ĐH, Tên KH, VIN..." 
+                    <input type="text" placeholder="Tìm kiếm trong Đơn hàng đã hủy..." 
                            oninput="handleSearchInput('huyGhep', this.value)" 
-                           value="${searchTerm || ''}"
+                           value="${searchTerm || ''}" 
                            style="padding-left: 34px; min-width: 300px;">
                 </div>
+            </div>
+            <div style="flex-shrink: 0;">
+                <button class="btn btn-orange" onclick="handleShowTimeline()">
+                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
+                </button>
             </div>
         </div>`;
 
@@ -1910,16 +2181,20 @@ function renderHuyGhepView() {
             (row['VIN']?.toLowerCase().includes(lowercasedTerm))
         );
     }
-    
+    const { sortKey, sortDir } = appState.huyGhep;
+    sortData(filteredData, sortKey, sortDir);
     const tableHeaders = [
         { key: 'Thời gian hủy', label: 'Thời Gian Hủy' }, { key: 'Số đơn hàng', label: 'Số Đơn Hàng' },
         { key: 'Tên khách hàng', label: 'Tên Khách Hàng' }, { key: 'VIN', label: 'Số VIN' },
         { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản'},
         { key: 'Người hủy', label: 'Người Hủy' }, { key: 'Kết quả', label: 'Lý do' }
     ];
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('huyGhepTable', tableHeaders, filteredData) + `</div>`;
-}
     
+    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('huyGhepTable', tableHeaders, filteredData, null, null) + `</div>`;
+}
+
+    
+// Thay thế toàn bộ hàm renderDataTable cũ bằng hàm này
 function renderDataTable(id, headers, rows, viewState = null, actions = null) {
     if (!rows || rows.length === 0) {
         return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
@@ -1948,29 +2223,10 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
 
         const cellsHTML = headers.map(header => {
             let cellValue = row[header.key] || '';
-            const dateTimeKeys = ['Thời gian nhập', 'Thời gian ghép', 'Thời gian hủy'];
-            const dateOnlyKeys = ['Ngày nhập', 'Ngày cọc', 'NGÀY CỌC', 'NGÀY XUẤT HÓA ĐƠN'];
-
-            try {
-                if (dateTimeKeys.includes(header.key) && cellValue) {
-                    const date = new Date(cellValue);
-                    if (!isNaN(date.getTime())) {
-                        const hours = String(date.getHours()).padStart(2, '0');
-                        const minutes = String(date.getMinutes()).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const year = date.getFullYear();
-                        cellValue = `${hours}:${minutes} ${day}/${month}/${year}`;
-                    }
-                } else if (dateOnlyKeys.includes(header.key) && cellValue) {
-                    const date = new Date(cellValue);
-                    if (!isNaN(date.getTime())) {
-                        cellValue = date.toLocaleDateString('vi-VN', {
-                            year: 'numeric', month: '2-digit', day: '2-digit'
-                        });
-                    }
-                }
-            } catch (e) { /* Ignore invalid date values */ }
+            const dateKeys = ['Thời gian nhập', 'Thời gian ghép', 'Thời gian hủy', 'Ngày nhập', 'Ngày cọc', 'NGÀY CỌC', 'Ngày xuất hóa đơn', 'NGÀY XUẤT HÓA ĐƠN'];
+            if (dateKeys.includes(header.key)) {
+                cellValue = formatCustomDateTime(cellValue);
+            }
 
             if (['Trạng thái', 'Kết quả', 'Trạng thái xử lý'].includes(header.key)) {
                 return `<td data-label="${header.label}"><span class="status-badge ${getStatusBadgeClass(cellValue)}">${cellValue}</span></td>`;
@@ -1982,9 +2238,15 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         let actionsHTML = '';
         if (hasActions) {
             let actionButtons = (typeof actions === 'function') ? actions(row) : actions;
+            
+            // === SỬA LỖI QUAN TRỌNG TẠI ĐÂY ===
+            // Cập nhật lại cách tạo HTML cho nút để bao gồm cả icon và chữ
             actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => 
-                `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`
+                `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''} title="${action.label}">` +
+                `<i class="fas ${action.icon || 'fa-question-circle'}"></i><span>${action.label}</span>` +
+                `</button>`
             ).join(' ')}</td>`;
+            // === KẾT THÚC SỬA LỖI ===
         }
         
         return `<tr id="row-${rowId}" class="${highlightClass}">${cellsHTML}${actionsHTML}</tr>`;
@@ -2029,7 +2291,7 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
     }
     
     const newHeaders = [
-        'STT', 'Khách Hàng & Đơn Hàng', 'Thông Số Xe', 
+        'Khách Hàng & Đơn Hàng', 'Thông Số Xe', 
         'Thông Số Kỹ Thuật', 'Thông Tin Thêm', 'Ngày Tháng', 
         'Trạng Thái', 'Hồ Sơ', 'Hành Động'
     ];
@@ -2041,7 +2303,6 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const isHighlighted = rowId && rowId === appState.highlightedId;
         const highlightClass = isHighlighted ? 'highlight-row' : '';
 
-        const stt = row['SỐ TT'] || (index + 1);
         const tenKH = escapeHtml(row['TÊN KHÁCH HÀNG']);
         const soDH = escapeHtml(row['SỐ ĐƠN HÀNG']);
         const tvbh = escapeHtml(row['TƯ VẤN BÁN HÀNG']);
@@ -2053,17 +2314,22 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const soDongCo = escapeHtml(row['SỐ ĐỘNG CƠ']);
         const chinhSach = escapeHtml(row['CHÍNH SÁCH']);
         const poPin = escapeHtml(row['PO PIN']);
-        const ngayCoc = row['NGÀY CỌC'] ? new Date(row['NGÀY CỌC']).toLocaleDateString('vi-VN') : 'N/A';
-        const ngayXHD = row['NGÀY XUẤT HÓA ĐƠN'] ? new Date(row['NGÀY XUẤT HÓA ĐƠN']).toLocaleDateString('vi-VN') : 'N/A';
+        
+        // === THAY ĐỔI TẠI ĐÂY ===
+        const ngayCoc = formatCustomDateTime(row['NGÀY CỌC']);
+        const ngayXHD = formatCustomDateTime(row['NGÀY XUẤT HÓA ĐƠN']);
+        // === KẾT THÚC THAY ĐỔI ===
+
         const trangThai = row['Trạng thái xử lý'] || '';
         const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
 
         let actionButtons = actionsCallback(row);
-        let actionsHTML = `<td data-label="Hành động">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+        let actionsHTML = `<td data-label="Hành động">${actionButtons.map(action => 
+            `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''}>${action.label}</button>`
+        ).join(' ')}</td>`;
 
         return `
             <tr id="row-${rowId}" class="${highlightClass}">
-                <td data-label="STT"><span class="main-info">${stt}</span></td>
                 <td data-label="Khách Hàng & Đơn Hàng"><div class="main-info">${tenKH || 'N/A'}</div><div class="sub-info"><span class="id-tag">${soDH || 'N/A'}</span><br>TVBH: ${tvbh || 'N/A'}</div></td>
                 <td data-label="Thông Số Xe"><div class="main-info">${dongXe || 'N/A'} - ${phienBan || 'N/A'}</div><div class="sub-info">Ngoại thất: ${ngoaiThat || 'N/A'}<br>Nội thất: ${noiThat || 'N/A'}</div></td>
                 <td data-label="Thông Số Kỹ Thuật"><div class="main-info">VIN: <span class="id-tag">${soVin || 'N/A'}</span></div><div class="sub-info">SĐC: ${soDongCo || 'N/A'}</div></td>
@@ -2130,17 +2396,9 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         const noiThat = escapeHtml(row['Nội thất']);
         const trangThai = escapeHtml(row['Kết quả']);
 
-        let thoiGianYeuCau = row['Thời gian nhập'] || '';
-        try {
-            const date = new Date(thoiGianYeuCau);
-            if (!isNaN(date.getTime())) {
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                thoiGianYeuCau = `${hours}:${minutes} <span class="sub-info">${day}/${month}/${date.getFullYear()}</span>`;
-            }
-        } catch(e) { /* Ignore errors */ }
+        // === THAY ĐỔI TẠI ĐÂY ===
+        const thoiGianYeuCau = formatCustomDateTime(row['Thời gian nhập']);
+        // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
         const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
@@ -2208,20 +2466,14 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         const soNgayGhep = row['Số ngày ghép'] !== '' ? row['Số ngày ghép'] : '0';
         const trangThai = escapeHtml(row['Kết quả']);
 
-        let thoiGianGhep = row['Thời gian ghép'] || '';
-        try {
-            const date = new Date(thoiGianGhep);
-            if (!isNaN(date.getTime())) {
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                thoiGianGhep = `${hours}:${minutes} <span class="sub-info">${day}/${month}/${date.getFullYear()}</span>`;
-            }
-        } catch(e) {}
+        // === THAY ĐỔI TẠI ĐÂY ===
+        const thoiGianGhep = formatCustomDateTime(row['Thời gian ghép']);
+        // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
-        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => 
+            `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''}>${action.label}</button>`
+        ).join(' ')}</td>`;
 
         return `
             <tr id="row-${rowId}">
@@ -2509,25 +2761,32 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         openModal('addCarModal');
     }
 
-    async function submitNewCar() {
-        const vin = document.getElementById('newCarVin').value.trim().toUpperCase();
-        if (!vin || vin.length !== 17) {
-            showToast('Lỗi: Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
-            return;
-        }
-        
-        const buttonElement = document.querySelector('#addCarModal .btn-primary');
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('addCarModal');
-        
-        // Thực thi hành động dưới nền
-        performActionOnRow({
-            action: 'findAndAddCarByVin',
-            params: { vin },
-            buttonElement: buttonElement
-        });
+    // Thay thế toàn bộ hàm cũ bằng hàm này
+async function submitNewCar() {
+    const vinInput = document.getElementById('newCarVin');
+    const vin = vinInput.value.trim().toUpperCase();
+
+    if (!vin || vin.length !== 17) {
+        showToast('Lỗi: Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
+        vinInput.focus();
+        return;
     }
+
+    // Lấy nút bấm từ trong modal
+    const buttonElement = document.querySelector('#addCarModal .btn-primary');
+    
+    // Gọi hàm thực hiện hành động và chờ kết quả trả về
+    const { success } = await performActionOnRow({
+        action: 'findAndAddCarByVin',
+        params: { vin },
+        buttonElement: buttonElement // Truyền nút bấm để nó tự hiển thị spinner
+    });
+
+    // Chỉ đóng modal sau khi hành động đã hoàn tất và thành công
+    if (success) {
+        closeModal('addCarModal');
+    }
+}
 
     function handleDeleteCar() {
     showPromptModal(
@@ -2816,7 +3075,26 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         if (typeof unsafe !== 'string') return unsafe;
         return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
+function formatCustomDateTime(dateValue) {
+    if (!dateValue) return 'N/A';
+    try {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return 'N/A';
 
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+
+        // === THAY ĐỔI ĐỊNH DẠNG TẠI ĐÂY ===
+        // Định dạng theo yêu cầu mới: hh:mm dd/MM/yyyy
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+        // === KẾT THÚC THAY ĐỔI ===
+    } catch (e) {
+        return 'N/A';
+    }
+}
     function showToast(message, type = 'info', duration = 4000) {
         let toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
@@ -3295,6 +3573,175 @@ function handlePendingSignature(order, btnElement) {
         },
         'btn-primary'
     );
+}
+/**
+ * [HÀM MỚI] - Xử lý sự kiện khi nhấn nút "Gửi lại Mail".
+ * Mở modal xác nhận trước khi thực hiện hành động.
+ * @param {object} order - Dữ liệu của dòng được chọn.
+ * @param {HTMLElement} btnElement - Nút bấm đã được nhấn.
+ */
+function handleResendEmail(order, btnElement) {
+    const emailType = btnElement.dataset.type;
+    const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
+    
+    let emailTypeName = "thông báo";
+    if (emailType === 'match_success') emailTypeName = "thông báo GHÉP XE";
+    if (emailType === 'invoice_issued') emailTypeName = "HÓA ĐƠN ĐÃ PHÁT HÀNH";
+    if (emailType === 'invoice_request_supplement') emailTypeName = "YÊU CẦU BỔ SUNG";
+
+    showConfirmationModal(
+        'Xác Nhận Gửi Lại Email',
+        `Bạn có chắc chắn muốn gửi lại ${emailTypeName} cho đơn hàng <strong>${orderNumber}</strong>?`,
+        () => {
+            performActionOnRow({
+                action: 'resendEmail',
+                params: { 
+                    orderNumber: orderNumber,
+                    emailType: emailType 
+                },
+                buttonElement: btnElement
+            });
+        },
+        'btn-primary' // Sử dụng nút màu xanh dương
+    );
+}
+async function handleOcrFileChange(event) {
+    const fileInput = event.target;
+    const statusEl = document.getElementById('ocr-status');
+    const vinInput = document.getElementById('newCarVin');
+
+    if (fileInput.files.length === 0) {
+        statusEl.textContent = '';
+        return;
+    }
+
+    const file = fileInput.files[0];
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang chuẩn bị nhận diện...';
+
+    try {
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    statusEl.textContent = `Đang nhận diện... ${Math.round(m.progress * 100)}%`;
+                }
+            }
+        });
+        
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+
+        // Regex để tìm chuỗi 17 ký tự (không chứa I, O, Q) - chuẩn VIN
+        const vinRegex = /[A-HJ-NPR-Z0-9]{17}/gi;
+        const cleanedText = text.replace(/\s+/g, ''); // Xóa hết khoảng trắng
+        const matches = cleanedText.match(vinRegex);
+
+        if (matches && matches.length > 0) {
+            const foundVin = matches[0].toUpperCase();
+            vinInput.value = foundVin;
+            statusEl.innerHTML = `<i class="fas fa-check-circle" style="color: #28a745;"></i> Đã tìm thấy VIN: ${foundVin}`;
+            showToast('Đã quét và điền số VIN thành công!', 'success');
+        } else {
+            statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Không tìm thấy số VIN hợp lệ trong ảnh.';
+            showToast('Không tìm thấy số VIN hợp lệ trong ảnh. Vui lòng thử lại với ảnh rõ nét hơn hoặc nhập tay.', 'warning', 6000);
+        }
+    } catch (error) {
+        console.error('Lỗi OCR:', error);
+        statusEl.textContent = 'Đã có lỗi xảy ra khi nhận diện.';
+        showToast('Lỗi khi nhận diện hình ảnh.', 'error');
+    } finally {
+        // Đặt lại input file để người dùng có thể chọn lại cùng một file nếu muốn
+        fileInput.value = '';
+    }
+}
+async function handleShowTimeline() {
+    // Hàm này mở một cửa sổ (modal) để người dùng nhập số đơn hàng.
+    const lookupInput = document.getElementById('lookupModalInput');
+    lookupInput.value = '';
+
+    const confirmBtn = document.getElementById('lookupModalConfirmBtn');
+    confirmBtn.onclick = async () => {
+        const orderNumber = lookupInput.value.trim();
+        if (!orderNumber) {
+            showToast('Vui lòng nhập số đơn hàng.', 'warning');
+            return;
+        }
+        closeModal('lookupModal');
+
+        // Sau khi có số đơn hàng, nó sẽ tìm và hiển thị lịch sử trong một cửa sổ khác.
+        const timelineModalTitle = document.getElementById('timelineModalTitle');
+        const timelineModalBody = document.getElementById('timelineModalBody');
+        timelineModalTitle.textContent = `Lịch sử Đơn hàng: ${orderNumber}`;
+        timelineModalBody.innerHTML = '<div class="loading-container"><i class="fas fa-spinner fa-spin"></i> Đang tải lịch sử...</div>';
+        openModal('timelineModal');
+
+        try {
+            // Đây là lệnh gọi mạng yêu cầu trang web phải chạy trên một máy chủ (http://).
+            const response = await fetch(`${API_URL}?action=getOrderHistory&orderNumber=${encodeURIComponent(orderNumber)}`);
+            if (!response.ok) throw new Error('Lỗi mạng khi tải lịch sử.');
+
+            const result = await response.json();
+            if (result.status === "SUCCESS") {
+                if (result.history.length === 0) {
+                    timelineModalBody.innerHTML = `<div class="no-data-container">Không tìm thấy lịch sử cho đơn hàng <strong>${orderNumber}</strong>.</div>`;
+                } else {
+                    renderTimeline(result.history, timelineModalBody);
+                }
+            } else {
+                throw new Error(result.message || 'Không thể tải lịch sử từ server.');
+            }
+        } catch (error) {
+            timelineModalBody.innerHTML = `<div class="error-container">${error.message}</div>`;
+        }
+    };
+
+    openModal('lookupModal');
+    lookupInput.focus();
+}
+function renderTimeline(historyData, container) {
+    if (!historyData || historyData.length === 0) {
+        container.innerHTML = '<div class="no-data-container">Không tìm thấy lịch sử cho đơn hàng này.</div>';
+        return;
+    }
+
+    const getIconForAction = (action) => {
+        const lowerAction = action.toLowerCase();
+        if (lowerAction.includes('tạo yc') || lowerAction.includes('chờ ghép')) return 'fa-plus-circle';
+        if (lowerAction.includes('ghép')) return 'fa-link';
+        if (lowerAction.includes('hủy ghép')) return 'fa-unlink';
+        if (lowerAction.includes('yêu cầu xuất hóa đơn')) return 'fa-file-import';
+        if (lowerAction.includes('phê duyệt')) return 'fa-check-double';
+        if (lowerAction.includes('bổ sung')) return 'fa-exclamation-circle';
+        if (lowerAction.includes('chờ ký')) return 'fa-signature';
+        if (lowerAction.includes('tải lên')) return 'fa-upload';
+        if (lowerAction.includes('hủy đơn') || lowerAction.includes('hủy xuất') || lowerAction.includes('xóa')) return 'fa-times-circle';
+        return 'fa-info-circle';
+    };
+
+    let timelineHTML = '<div class="timeline-container"><div class="timeline">';
+    historyData.forEach(item => {
+        const timestamp = formatCustomDateTime(item['Thời gian']);
+        const action = escapeHtml(item['Hành động']);
+        const details = escapeHtml(item['Chi tiết']);
+        const user = escapeHtml(item['Người thực hiện']);
+        const icon = getIconForAction(action);
+
+        timelineHTML += `
+            <div class="timeline-item">
+                <div class="timeline-icon"><i class="fas ${icon}"></i></div>
+                <div class="timeline-content">
+                    <div class="action-title">${action}</div>
+                    <p class="details">${details}</p>
+                    <div class="timeline-footer">
+                        <span><i class="fas fa-user fa-fw"></i> ${user}</span>
+                        <span><i class="fas fa-clock fa-fw"></i> ${timestamp}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    timelineHTML += '</div></div>';
+
+    container.innerHTML = timelineHTML;
 }
 </script>
 </body>
