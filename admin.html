@@ -1692,6 +1692,207 @@ body.dark-mode .actions-dropdown-menu {
     background-color: var(--primary-color);
     color: white;
 }
+/* === [MỚI] CSS CHO MENU HÀNH ĐỘNG DROPDOWN TRONG BẢNG === */
+.actions-cell {
+    position: relative;
+    text-align: right; /* Đảm bảo nút dropdown căn phải cho đẹp */
+    white-space: nowrap;
+}
+
+.actions-dropdown-btn {
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+body.dark-mode .actions-dropdown-btn {
+     color: var(--text-dark);
+}
+
+.actions-dropdown-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-color: var(--border-color-light);
+}
+body.dark-mode .actions-dropdown-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+    border-color: var(--border-color-dark);
+}
+
+.actions-dropdown-menu {
+    display: none; /* Mặc định ẩn đi */
+    position: absolute;
+    top: calc(100% + 5px); /* Vị trí ngay dưới nút bấm */
+    right: 0;
+    z-index: 10;
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-light-outer);
+    list-style: none;
+    padding: 6px 0;
+    margin: 0;
+    min-width: 200px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+body.dark-mode .actions-dropdown-menu {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+}
+
+/* Lớp .active để hiển thị menu */
+.actions-dropdown-menu.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.actions-dropdown-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 13.5px;
+    white-space: nowrap;
+}
+body.dark-mode .actions-dropdown-menu li a {
+    color: var(--text-dark);
+}
+.actions-dropdown-menu li a:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+.actions-dropdown-menu li a i {
+    width: 16px;
+    text-align: center;
+    opacity: 0.8;
+}/* === [NÂNG CẤP] KIỂU HIỂN THỊ HỒ SƠ DẠNG ICON VỚI TOOLTIP === */
+.file-icon-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Căn các icon về bên trái */
+    gap: 12px; /* Khoảng cách giữa các icon */
+    height: 100%;
+}
+
+/* Định dạng cho mỗi mục icon (bao gồm cả tooltip) */
+.file-icon-link {
+    position: relative; /* Bắt buộc để định vị tooltip */
+    display: inline-block;
+    color: var(--text-light);
+}
+
+.file-icon-link .icon-display {
+    font-size: 18px; /* Kích thước icon */
+    transition: transform 0.2s ease;
+}
+
+.file-icon-link:hover .icon-display {
+    transform: scale(1.2); /* Phóng to icon khi di chuột qua */
+}
+
+
+/* Định dạng cho tooltip */
+.tooltip-text {
+    visibility: hidden; /* Ẩn tooltip mặc định */
+    width: max-content; /* Chiều rộng tự động theo nội dung */
+    max-width: 200px;
+    background-color: #2c3e50; /* Nền đen mờ */
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 6px 10px;
+    position: absolute;
+    z-index: 10;
+    bottom: 140%; /* Vị trí phía trên icon */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Mũi tên của tooltip */
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #2c3e50 transparent transparent transparent;
+}
+
+/* Hiển thị tooltip khi hover */
+.file-icon-link:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Định dạng cho icon bị vô hiệu hóa (hồ sơ chưa có) */
+.file-icon-missing {
+    font-size: 18px;
+    color: #bdc3c7; /* Màu xám nhạt */
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+body.dark-mode .file-icon-missing {
+    color: #7f8c8d;
+}
+
+/* Màu sắc đặc trưng cho từng icon */
+.file-icon-link .hdm-icon { color: #3b82f6; } /* Xanh dương */
+.file-icon-link .dnxhd-icon { color: #8b5cf6; } /* Tím */
+.file-icon-link .issued-icon { color: #22c55e; } /* Xanh lá */
+/* === [NÂNG CẤP] Thêm Zebra-Striping cho bảng dữ liệu === */
+.data-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 48, 135, 0.025); /* Một màu nền rất nhạt cho hàng chẵn */
+}
+
+/* Hiệu ứng hover vẫn được giữ nguyên và nổi bật hơn */
+.data-table tbody tr:hover {
+    background-color: rgba(0, 48, 135, 0.08);
+}
+
+/* Chế độ tối */
+body.dark-mode .data-table tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .data-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+/* === [NÂNG CẤP] Giao diện trạng thái trống đẹp hơn === */
+.empty-state-container {
+    text-align: center;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.empty-state-container svg {
+    width: 150px;
+    height: auto;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.empty-state-container p {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--no-data-text-color-light);
+}
     </style>
 </head>
 <body data-theme="light" class="doraemon-theme">
@@ -2500,46 +2701,57 @@ function renderXuatHoaDonView() {
 
     const data = appState.data.xuathoadon.filter(row => row['SỐ ĐƠN HÀNG'] && String(row['SỐ ĐƠN HÀNG']).trim() !== '');
     
+    // === CẬP NHẬT LOGIC RENDER HỒ SƠ SANG DẠNG ICON-TOOLTIP ===
     let dataWithDetails = data.map(row => {
         const orderFromDaGhep = appState.data.daghep.find(d => String(d['Số đơn hàng'] || '').trim() === String(row['SỐ ĐƠN HÀNG'] || '').trim());
         const status = orderFromDaGhep ? orderFromDaGhep['Kết quả'] : 'Không rõ';
         
-        let linksHtml = '<div class="file-badge-container">';
-        if (row['URL Hợp Đồng']) {
-            linksHtml += `<a href="${row['URL Hợp Đồng']}" target="_blank" onclick="event.stopPropagation()" class="file-badge hdm-badge"><i class="fas fa-file-contract fa-fw"></i> HĐMB</a>`;
-        }
-        if (row['URL Đề Nghị XHĐ']) {
-            linksHtml += `<a href="${row['URL Đề Nghị XHĐ']}" target="_blank" onclick="event.stopPropagation()" class="file-badge dnxhd-badge"><i class="fas fa-file-invoice fa-fw"></i> ĐNXHĐ</a>`;
-        }
-        if (row['URL Hóa Đơn Đã Xuất']) {
-            linksHtml += `<a href="${row['URL Hóa Đơn Đã Xuất']}" target="_blank" onclick="event.stopPropagation()" class="file-badge issued-badge"><i class="fas fa-file-invoice-dollar fa-fw"></i> HĐ Đã Xuất</a>`;
-        }
+        const documents = [
+            { key: 'URL Hợp Đồng', label: 'Hợp đồng mua bán', icon: 'fa-file-contract', cssClass: 'hdm-icon' },
+            { key: 'URL Đề Nghị XHĐ', label: 'Đề nghị xuất hóa đơn', icon: 'fa-file-invoice', cssClass: 'dnxhd-icon' },
+            { key: 'URL Hóa Đơn Đã Xuất', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar', cssClass: 'issued-icon' }
+        ];
+
+        let filesCount = 0;
+        let linksHtml = '<div class="file-icon-bar">';
+
+        documents.forEach(doc => {
+            const url = row[doc.key];
+            if (url) {
+                filesCount++;
+                linksHtml += `
+                    <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="file-icon-link">
+                        <i class="fas ${doc.icon} icon-display ${doc.cssClass}"></i>
+                        <span class="tooltip-text">${doc.label}</span>
+                    </a>
+                `;
+            } else {
+                // Hiển thị icon bị mờ nếu không có URL
+                linksHtml += `
+                    <i class="fas ${doc.icon} file-icon-missing" title="${doc.label} (chưa có)"></i>
+                `;
+            }
+        });
         linksHtml += '</div>';
 
-        if (linksHtml === '<div class="file-badge-container"></div>') {
-            linksHtml = '<span class="no-files-text">Chưa có hồ sơ</span>';
-        }
+        const finalHoSoHTML = filesCount > 0 ? linksHtml : '<span class="no-files-text">Chưa có hồ sơ</span>';
         
-        return { ...row, 'Trạng thái xử lý': status, 'Hồ sơ': linksHtml };
+        return { ...row, 'Trạng thái xử lý': status, 'Hồ sơ': finalHoSoHTML };
     });
+    // === KẾT THÚC CẬP NHẬT ===
     
     const { searchTerm, filters } = appState.xuatHoaDon;
-
-    // [CẬP NHẬT] Lấy các giá trị duy nhất để tạo option cho bộ lọc
     const statusOptions = [...new Set(dataWithDetails.map(item => item['Trạng thái xử lý']))].filter(Boolean).sort();
     const salesConsultants = [...new Set(dataWithDetails.map(item => item['TƯ VẤN BÁN HÀNG']))].filter(Boolean).sort();
     const carModels = [...new Set(dataWithDetails.map(item => item['DÒNG XE']))].filter(Boolean).sort();
     const exteriors = [...new Set(dataWithDetails.map(item => item['NGOẠI THẤT']))].filter(Boolean).sort();
 
-    // [CẬP NHẬT] Thêm các thẻ select cho bộ lọc vào toolbar
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
                 <div class="filter-group">
                     <i class="fas fa-search filter-icon"></i>
-                    <input type="text" placeholder="Tìm KH, Số ĐH, VIN..." 
-       oninput="handleSearchInput('xuatHoaDon', this.value)" 
-       value="${searchTerm || ''}">
+                    <input type="text" placeholder="Tìm KH, Số ĐH, VIN..." oninput="handleSearchInput('xuatHoaDon', this.value)" value="${searchTerm || ''}">
                 </div>
                  <div class="filter-group">
                     <i class="fas fa-user-tie filter-icon"></i>
@@ -2570,7 +2782,6 @@ function renderXuatHoaDonView() {
                     </select>
                 </div>
             </div>
-            
         </div>`;
     
     if (searchTerm) {
@@ -2582,7 +2793,6 @@ function renderXuatHoaDonView() {
         );
     }
 
-    // [CẬP NHẬT] Áp dụng logic cho các bộ lọc mới
     if (filters.trangThai) {
         dataWithDetails = dataWithDetails.filter(row => row['Trạng thái xử lý'] === filters.trangThai);
     }
@@ -2599,28 +2809,28 @@ function renderXuatHoaDonView() {
     sortData(dataWithDetails, sortKey, sortDir);
     const getActionsForRow = (row) => {
         const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
-        let actions = [
-            { icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
-        ];
+        let actions = [];
         
         if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
-            actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', class: 'btn-success', handler: 'handleApproveRequest' });
-            actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', class: 'btn-warning', handler: 'handleRequestSupplement' });
+            actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', handler: 'handleApproveRequest' });
+            actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', handler: 'handleRequestSupplement' });
         } else if (status === 'đã phê duyệt') {
-            actions.push({ icon: 'fa-signature', label: 'Chờ Ký HĐ', class: 'btn-primary', handler: 'handlePendingSignature' });
+            actions.push({ icon: 'fa-signature', label: 'Chờ Ký HĐ', handler: 'handlePendingSignature' });
         } else if (status === 'chờ ký hóa đơn') {
-            actions.push({ icon: 'fa-upload', label: 'Tải Lên HĐ', class: 'btn-success', handler: 'handleUploadIssuedInvoice' });
+            actions.push({ icon: 'fa-upload', label: 'Tải Lên HĐ', handler: 'handleUploadIssuedInvoice' });
         }
 
         if (status === 'yêu cầu bổ sung') {
-            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại YCBS', class: 'btn-purple', handler: 'handleResendEmail', type: 'invoice_request_supplement' });
+            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại YCBS', handler: 'handleResendEmail', type: 'invoice_request_supplement' });
         }
         if (status === 'đã xuất hóa đơn') {
-            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại HĐ', class: 'btn-purple', handler: 'handleResendEmail', type: 'invoice_issued' });
+            actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại HĐ', handler: 'handleResendEmail', type: 'invoice_issued' });
         }
-
+        
+        actions.push({ icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', handler: 'handleEditRow' });
+        
         if (status !== 'đã xuất hóa đơn' && status !== 'đã hủy') {
-            actions.push({ icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', class: 'btn-danger', handler: 'handleCancelRequest' });
+            actions.push({ icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', handler: 'handleCancelRequest' });
         }
         return actions;
     };
@@ -2671,7 +2881,16 @@ function renderHuyGhepView() {
 // Thay thế toàn bộ hàm renderDataTable cũ bằng hàm này
 function renderDataTable(id, headers, rows, viewState = null, actions = null) {
     if (!rows || rows.length === 0) {
-        return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
+        return `
+    <div class="empty-state-container">
+        <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e0e0e0" d="M102,34.8H84.1V23.2c0-4.9-4-8.8-8.8-8.8H52.7c-4.9,0-8.8,4-8.8,8.8v11.6H26c-5.4,0-9.8,4.4-9.8,9.8V105c0,5.4,4.4,9.8,9.8,9.8h76c5.4,0,9.8-4.4,9.8-9.8V44.6C111.8,39.2,107.4,34.8,102,34.8z M52.7,23.2h22.5v11.6H52.7V23.2z"/>
+            <path fill="#f0f0f0" d="M96.7,69.5H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,69.5,96.7,69.5z"/>
+            <path fill="#f0f0f0" d="M96.7,86.4H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,86.4,96.7,86.4z"/>
+        </svg>
+        <p>Không có dữ liệu để hiển thị</p>
+    </div>
+`;
     }
     
     const hasActions = typeof actions === 'function' || (Array.isArray(actions) && actions.length > 0);
@@ -2713,14 +2932,7 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         if (hasActions) {
             let actionButtons = (typeof actions === 'function') ? actions(row) : actions;
             
-            // === SỬA LỖI QUAN TRỌNG TẠI ĐÂY ===
-            // Cập nhật lại cách tạo HTML cho nút để bao gồm cả icon và chữ
-            actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => 
-                `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''} title="${action.label}">` +
-                `<i class="fas ${action.icon || 'fa-question-circle'}"></i><span>${action.label}</span>` +
-                `</button>`
-            ).join(' ')}</td>`;
-            // === KẾT THÚC SỬA LỖI ===
+            actionsHTML = renderRowActionsDropdown(actionButtons, row);
         }
         
         return `<tr id="row-${rowId}" class="${highlightClass}">${cellsHTML}${actionsHTML}</tr>`;
@@ -2740,7 +2952,7 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('button[data-action]');
+                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -2761,7 +2973,16 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
 
 function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
     if (!rows || rows.length === 0) {
-        return `<div class="no-data-container">Không có dữ liệu để hiển thị.</div>`;
+        return `
+    <div class="empty-state-container">
+        <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e0e0e0" d="M102,34.8H84.1V23.2c0-4.9-4-8.8-8.8-8.8H52.7c-4.9,0-8.8,4-8.8,8.8v11.6H26c-5.4,0-9.8,4.4-9.8,9.8V105c0,5.4,4.4,9.8,9.8,9.8h76c5.4,0,9.8-4.4,9.8-9.8V44.6C111.8,39.2,107.4,34.8,102,34.8z M52.7,23.2h22.5v11.6H52.7V23.2z"/>
+            <path fill="#f0f0f0" d="M96.7,69.5H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,69.5,96.7,69.5z"/>
+            <path fill="#f0f0f0" d="M96.7,86.4H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,86.4,96.7,86.4z"/>
+        </svg>
+        <p>Không có dữ liệu để hiển thị</p>
+    </div>
+`;
     }
     
     const newHeaders = [
@@ -2798,9 +3019,7 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
 
         let actionButtons = actionsCallback(row);
-        let actionsHTML = `<td data-label="Hành động">${actionButtons.map(action => 
-            `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''}>${action.label}</button>`
-        ).join(' ')}</td>`;
+        let actionsHTML = renderRowActionsDropdown(actionButtons, row);
 
         return `
             <tr id="row-${rowId}" class="${highlightClass}">
@@ -2829,7 +3048,7 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('button[data-action]');
+                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -2850,7 +3069,16 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
 
 function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
     if (!rows || rows.length === 0) {
-        return `<div class="no-data-container">Không có yêu cầu nào đang chờ ghép.</div>`;
+        return `
+    <div class="empty-state-container">
+        <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e0e0e0" d="M102,34.8H84.1V23.2c0-4.9-4-8.8-8.8-8.8H52.7c-4.9,0-8.8,4-8.8,8.8v11.6H26c-5.4,0-9.8,4.4-9.8,9.8V105c0,5.4,4.4,9.8,9.8,9.8h76c5.4,0,9.8-4.4,9.8-9.8V44.6C111.8,39.2,107.4,34.8,102,34.8z M52.7,23.2h22.5v11.6H52.7V23.2z"/>
+            <path fill="#f0f0f0" d="M96.7,69.5H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,69.5,96.7,69.5z"/>
+            <path fill="#f0f0f0" d="M96.7,86.4H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,86.4,96.7,86.4z"/>
+        </svg>
+        <p>Không có dữ liệu để hiển thị</p>
+    </div>
+`;
     }
     
     const headers = ['Thông Tin Đơn Hàng', 'Yêu Cầu Xe', 'Thời Gian', 'Trạng Thái', 'Hành Động'];
@@ -2875,7 +3103,7 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
-        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}'>${action.label}</button>`).join(' ')}</td>`;
+        const actionsHTML = renderRowActionsDropdown(actionButtons, row);
 
         return `
             <tr id="row-${rowId}" class="${highlightClass}">
@@ -2899,7 +3127,7 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('button[data-action]');
+                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -2920,7 +3148,16 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
 
 function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     if (!rows || rows.length === 0) {
-        return `<div class="no-data-container">Chưa có đơn hàng nào được ghép.</div>`;
+        return `
+    <div class="empty-state-container">
+        <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#e0e0e0" d="M102,34.8H84.1V23.2c0-4.9-4-8.8-8.8-8.8H52.7c-4.9,0-8.8,4-8.8,8.8v11.6H26c-5.4,0-9.8,4.4-9.8,9.8V105c0,5.4,4.4,9.8,9.8,9.8h76c5.4,0,9.8-4.4,9.8-9.8V44.6C111.8,39.2,107.4,34.8,102,34.8z M52.7,23.2h22.5v11.6H52.7V23.2z"/>
+            <path fill="#f0f0f0" d="M96.7,69.5H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,69.5,96.7,69.5z"/>
+            <path fill="#f0f0f0" d="M96.7,86.4H31.3c-2.2,0-4-1.8-4-4s1.8-4,4-4h65.4c2.2,0,4,1.8,4,4S98.9,86.4,96.7,86.4z"/>
+        </svg>
+        <p>Không có dữ liệu để hiển thị</p>
+    </div>
+`;
     }
     
     const headers = ['Thông Tin Đơn Hàng', 'Xe Đã Ghép', 'Chi Tiết Xe', 'Thời Gian Ghép', 'Trạng Thái', 'Hành Động'];
@@ -2945,9 +3182,7 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
-        const actionsHTML = `<td data-label="Hành động" style="white-space: nowrap;">${actionButtons.map(action => 
-            `<button class="btn ${action.class}" data-action="${action.handler}" data-order='${JSON.stringify(row).replace(/'/g, "&apos;")}' ${action.type ? `data-type="${action.type}"` : ''}>${action.label}</button>`
-        ).join(' ')}</td>`;
+        const actionsHTML = renderRowActionsDropdown(actionButtons, row);
 
         return `
             <tr id="row-${rowId}">
@@ -2977,7 +3212,7 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('button[data-action]');
+                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -3264,63 +3499,62 @@ async function submitNewCar() {
 }
 
     function handleDeleteCar() {
-document.getElementById('action-dropdown-panel').classList.remove('active');
+    document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Xóa Xe Khỏi Kho', 
         'Vui lòng nhập số VIN của xe cần xóa khỏi kho.', 
         'Số VIN', 
-        // Hàm callback mới, nhận cả giá trị vin và nút modal
-        async (vin, modalButton) => { 
-            const { success } = await performActionOnRow({
+        // Callback mới
+        (vin, modalButton) => { 
+            // ĐÓNG MODAL NGAY LẬP TỨC
+            closeModal('confirmationModal');
+
+            // Thực thi hành động dưới nền
+            performActionOnRow({
                 action: 'deleteCarFromStockLogic',
                 params: { vinToDelete: vin.toUpperCase() },
-                buttonElement: modalButton // Truyền nút của modal để hiển thị spinner
+                buttonElement: null // Không cần hiển thị spinner trên nút nào cả, vì hành động đến từ menu
             });
-            
-            // Chỉ đóng modal khi hành động thành công
-            if (success) {
-                closeModal('confirmationModal');
-            }
         }
     );
 }
 
     function handleRestoreCar() {
-document.getElementById('action-dropdown-panel').classList.remove('active');
+    document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Phục Hồi Xe Vào Kho', 
         'Vui lòng nhập số VIN của xe cần phục hồi.', 
         'Số VIN',
-        async (vin, modalButton) => {
-            const { success } = await performActionOnRow({
+        (vin, modalButton) => {
+            // ĐÓNG MODAL NGAY LẬP TỨC
+            closeModal('confirmationModal');
+            
+            // Thực thi hành động dưới nền
+            performActionOnRow({
                 action: 'restoreCarToStockLogic',
                 params: { vinToRestore: vin.toUpperCase() },
-                buttonElement: modalButton // Truyền nút của modal để hiển thị spinner
+                buttonElement: null
             });
-
-            // Chỉ đóng modal khi hành động thành công
-            if (success) {
-                closeModal('confirmationModal');
-            }
         }
     );
 }
 
     function handleDeleteOrder() {
-document.getElementById('action-dropdown-panel').classList.remove('active');
+    document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Xóa Đơn Hàng Vĩnh Viễn', 
         'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:', 
         'Số đơn hàng', 
-        async (orderNumber, modalButton) => { // Nhận nút modal làm tham số
-            const { success } = await performActionOnRow({
+        (orderNumber, modalButton) => {
+            // ĐÓNG MODAL NGAY LẬP TỨC
+            closeModal('confirmationModal');
+            
+            // Thực thi hành động dưới nền
+            performActionOnRow({
                 action: 'deleteOrderLogic',
                 params: { orderNumber: orderNumber },
-                buttonElement: modalButton // Sử dụng nút modal để hiển thị spinner
+                buttonElement: null
             });
-            if (success) {
-                closeModal('confirmationModal');
-            }
         }
     );
 }
@@ -3925,17 +4159,16 @@ async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnE
         params[fieldName] = input.value;
     });
 
-    const modalConfirmButton = document.getElementById('confirmEditBtn');
+    // ĐÓNG MODAL NGAY LẬP TỨC
+    closeModal('editModal');
     
-    const { success } = await performActionOnRow({
+    // Thực hiện hành động trên nút bấm gốc của bảng (nút "Chỉnh Sửa")
+    // Nút này sẽ hiển thị spinner, không làm ảnh hưởng đến modal nữa.
+    performActionOnRow({
         action: 'updateRowData',
         params: params,
-        buttonElement: modalConfirmButton // Show spinner on the modal's save button
+        buttonElement: btnElement // Sử dụng nút bấm gốc từ hàng trong bảng
     });
-
-    if (success) {
-        closeModal('editModal');
-    }
 }
 // =================================================================
 // SECTION MỚI: XỬ LÝ NHẬP XE HÀNG LOẠT (SỬ DỤNG MODAL)
@@ -4529,6 +4762,74 @@ function openTab(evt, tabName) {
 
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+}
+/**
+ * [HÀM MỚI] Bật/tắt menu hành động cho một hàng cụ thể.
+ */
+function toggleRowActions(event) {
+    event.stopPropagation(); // Ngăn sự kiện lan ra ngoài
+    const btn = event.currentTarget;
+    const menu = btn.nextElementSibling;
+
+    // Trước khi mở menu mới, đóng tất cả các menu khác đang mở
+    document.querySelectorAll('.actions-dropdown-menu.active').forEach(openMenu => {
+        if (openMenu !== menu) {
+            openMenu.classList.remove('active');
+        }
+    });
+
+    menu.classList.toggle('active');
+}
+
+// Thêm đoạn này vào bên trong hàm sự kiện DOMContentLoaded
+// để xử lý việc click ra ngoài sẽ đóng menu.
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (các code cũ của bạn)
+
+    // THÊM BỘ LẮNG NGHE MỚI NÀY
+    document.addEventListener('click', (event) => {
+        // ... (code xử lý đóng menu "Tia sét" và "Chuông" của bạn đã có)
+
+        // Đóng menu hành động trong bảng nếu click ra ngoài
+        const activeRowMenu = document.querySelector('.actions-dropdown-menu.active');
+        if (activeRowMenu && !activeRowMenu.parentElement.contains(event.target)) {
+            activeRowMenu.classList.remove('active');
+        }
+    });
+});
+/**
+ * [HÀM MỚI] Tạo HTML cho menu hành động dạng dropdown.
+ */
+function renderRowActionsDropdown(actions, rowData) {
+    if (!actions || actions.length === 0) {
+        return '<td></td>'; // Trả về ô trống nếu không có hành động
+    }
+
+    // Chuyển đổi dữ liệu hàng thành chuỗi JSON an toàn
+    const rowDataString = JSON.stringify(rowData).replace(/'/g, "&apos;");
+
+    const menuItemsHTML = actions.map(action => {
+        // Dùng `a` thay cho `button` để phù hợp với cấu trúc menu
+        return `
+            <li>
+                <a href="#" data-action="${action.handler}" data-order='${rowDataString}' ${action.type ? `data-type="${action.type}"` : ''}>
+                    <i class="fas ${action.icon || 'fa-question-circle'}"></i>
+                    <span>${action.label}</span>
+                </a>
+            </li>
+        `;
+    }).join('');
+
+    return `
+        <td class="actions-cell">
+            <button class="actions-dropdown-btn" onclick="toggleRowActions(event)" title="Thao tác">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="actions-dropdown-menu">
+                ${menuItemsHTML}
+            </ul>
+        </td>
+    `;
 }
 </script>
 </body>
