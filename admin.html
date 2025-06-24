@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -1260,20 +1261,452 @@ body.dark-mode .timeline-content .details {
     justify-content: space-between;
     opacity: 0.8;
 }
+/* === [MỚI] CSS cho Trung tâm Tác vụ (Action Center) === */
+.action-center-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.action-card {
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-light-outer);
+    transition: all var(--transition-speed) ease;
+    overflow: hidden;
+}
+body.dark-mode .action-card {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+    box-shadow: var(--shadow-dark-outer);
+}
+.action-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed-fast) ease;
+}
+.action-card-header:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+body.dark-mode .action-card-header:hover {
+    background-color: rgba(255,255,255,0.03);
+}
+.action-card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+body.dark-mode .action-card-header h3 {
+    color: var(--text-dark);
+}
+.action-card-header .icon {
+    color: var(--primary-color);
+}
+body.dark-mode .action-card-header .icon {
+    color: var(--secondary-color);
+}
+.action-card-header .count-badge {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    min-width: 28px;
+    text-align: center;
+}
+body.dark-mode .action-card-header .count-badge {
+    background-color: var(--secondary-color);
+    color: var(--background-dark);
+}
+.action-card-header .chevron-icon {
+    transition: transform var(--transition-speed-fast) ease;
+}
+.action-card.active .chevron-icon {
+    transform: rotate(180deg);
+}
+.action-card-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+    padding: 0 20px;
+}
+.action-card.active .action-card-body {
+    padding: 10px 0 20px 0;
+    max-height: 1000px; /* Large enough to not clip content */
+}
+#view-title .fas {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900; /* Bắt buộc cho icon loại "fas" (solid) */
+    margin-right: 12px; /* Tạo khoảng cách giữa icon và chữ */
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* === [NÂNG CẤP] Phong cách Tối giản & Hiện đại === */
+.elegant-theme {
+    font-family: 'Inter', sans-serif;
+    background-color: #F8F9FA; /* Nền xám rất nhạt cho cảm giác sạch sẽ */
+}
+.elegant-theme .action-card {
+    border: 1px solid #EAECEF;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    background-color: #FFFFFF;
+    /* Bỏ các style cũ không cần thiết */
+    border-left: none;
+}
+.elegant-theme .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(41, 128, 185, 0.1);
+}
+.elegant-theme .action-card-header {
+    background: #FFFFFF; /* Nền trắng sạch sẽ */
+    padding: 18px 25px;
+    border-bottom: 1px solid #F1F3F4;
+}
+.elegant-theme .action-card.active .action-card-header {
+    border-bottom-color: transparent;
+}
+.elegant-theme .action-card-header h3 {
+    color: #343A40; /* Màu chữ chính, không quá đen */
+    font-weight: 600;
+    font-size: 1rem;
+    text-shadow: none;
+}
+/* Style mới cho icon, nằm trong một vòng tròn có nền */
+.elegant-theme .action-card-header .icon {
+    background-color: #E7F3FF;
+    color: #007bff;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    text-align: center;
+    font-size: 1rem;
+    line-height: 20px; /* Căn giữa icon */
+    transition: transform 0.2s ease;
+}
+.elegant-theme .action-card-header:hover .icon {
+    transform: scale(1.1);
+}
+/* Style mới cho huy hiệu số, dạng viên thuốc */
+.elegant-theme .action-card-header .count-badge {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    box-shadow: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    height: 24px;
+    padding: 0 10px;
+    line-height: 24px;
+    border-radius: 12px; 
+}
+/* Trạng thái khi không có tác vụ */
+.elegant-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+.elegant-empty-state .empty-icon {
+    font-size: 3rem;
+    color: #28a745; /* Màu xanh lá cây thành công */
+    background-color: #eaf6ec;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+.elegant-empty-state p {
+    font-size: 1rem;
+    color: #6c757d; /* Xám dịu */
+    font-weight: 500;
+}
+
+/* Tắt animation của chuông, trả về style gốc */
+#view-title .fa-bell {
+     animation: none;
+     color: var(--primary-color);
+     text-shadow: none;
+}
+/* === [MỚI] CSS cho Thẻ Tóm tắt (KPI Cards) === */
+.summary-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+.summary-card {
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.summary-card .icon {
+    font-size: 1.8rem;
+    padding: 12px;
+    border-radius: 50%;
+    color: #fff;
+}
+.summary-card .info .value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+.summary-card .info .title {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+body.dark-mode .summary-card .info .title {
+    color: #aeb5be;
+}
+
+/* Màu sắc cho các icon thẻ tóm tắt */
+.summary-card.overdue .icon { background-color: #dc3545; }
+.summary-card.pending .icon { background-color: #ffc107; }
+.summary-card.new-today .icon { background-color: #007bff; }
+.summary-card.completed .icon { background-color: #28a745; }
+
+
+/* === [MỚI] CSS cho Phân cấp độ ưu tiên bằng màu sắc === */
+.action-card[data-priority="high"] {
+    border-left: 5px solid #dc3545;
+}
+.action-card[data-priority="medium"] {
+    border-left: 5px solid #ffc107;
+}
+.action-card[data-priority="low"] {
+    border-left: 5px solid #17a2b8;
+}
+
+/* === [MỚI] CSS cho nút "Xem tất cả" === */
+.view-all-btn {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.view-all-btn:hover {
+    color: var(--primary-color-lighter);
+}
+.view-all-btn .fas {
+    margin-left: 5px;
+    transition: transform 0.2s ease;
+}
+.view-all-btn:hover .fas {
+    transform: translateX(3px);
+}
+/* === CSS MỚI: Dành cho Tab trong Modal === */
+.tabs {
+    display: flex;
+    gap: 0;
+}
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+    opacity: 0.6;
+    transition: all 0.2s ease-in-out;
+}
+.tab-link:hover {
+    opacity: 1;
+    background-color: rgba(0,0,0,0.02);
+}
+.tab-link.active {
+    opacity: 1;
+    border-bottom-color: var(--primary-color);
+}
+.tab-content {
+    display: none;
+}
+/* === [MỚI] CSS cho Menu Thao tác nhanh === */
+.action-dropdown-menu {
+    position: relative;
+}
+
+.dropdown-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px); /* Vị trí dưới nút bấm, có khoảng cách */
+    right: 0;
+    width: 260px;
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-light-outer);
+    z-index: 1002;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+body.dark-mode .dropdown-panel {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+}
+
+.dropdown-panel.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    padding: 12px 15px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color-light);
+}
+body.dark-mode .dropdown-header {
+    border-bottom-color: var(--border-color-dark);
+}
+
+.dropdown-list {
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+}
+
+.dropdown-list li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--text-light);
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+body.dark-mode .dropdown-list li a {
+    color: var(--text-dark);
+}
+
+.dropdown-list li a:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+body.dark-mode .dropdown-list li a:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.dropdown-list li a .fa-fw {
+    width: 20px;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border-color-light);
+    margin: 8px 0;
+}
+body.dark-mode .dropdown-divider {
+    background-color: var(--border-color-dark);
+}
+/* === CSS MỚI: Menu hành động dropdown trong bảng === */
+.actions-cell {
+    position: relative;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.actions-dropdown-container {
+    display: inline-flex;
+    gap: 5px;
+}
+
+.actions-dropdown-btn {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color-light);
+    color: var(--text-light);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+body.dark-mode .actions-dropdown-btn {
+     background-color: var(--background-dark);
+     border-color: var(--border-color-dark);
+     color: var(--text-dark);
+}
+.actions-dropdown-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+body.dark-mode .actions-dropdown-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.actions-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 2px);
+    right: 0;
+    z-index: 10;
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 6px;
+    box-shadow: var(--shadow-light-outer);
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    min-width: 160px;
+}
+body.dark-mode .actions-dropdown-menu {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+}
+
+.actions-dropdown-menu.active {
+    display: block;
+}
+
+.actions-dropdown-menu li a {
+    display: block;
+    padding: 8px 15px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 13px;
+}
+.actions-dropdown-menu li a:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
     </style>
 </head>
-<body data-theme="light">
+<body data-theme="light" class="doraemon-theme">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h2>Admin Panel</h2>
         </div>
         <ul class="menu" id="sidebar-nav">
-            <li><a href="#" class="active" onclick="switchView('dashboard')"><i class="fas fa-tachometer-alt fa-fw"></i><span>Bảng Điều Khiển</span></a></li>
-            <li><a href="#" onclick="switchView('khoXe')"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a></li>
-            <li><a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a></li>
-            <li><a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a></li>
-            <li><a href="#" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a></li>
-            <li><a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a></li>
+            <li><a href="#" class="active" onclick="switchView('actionCenter')"><i class="fas fa-bell fa-fw"></i><span>Trung tâm Tác vụ</span></a></li>
+    
+    <li><a href="#" onclick="switchView('khoXe')"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a></li>
+    <li><a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a></li>
+    <li><a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a></li>
+    <li><a href="#" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a></li>
+    <li><a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a></li>
         </ul>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
     </aside>
@@ -1287,18 +1720,37 @@ body.dark-mode .timeline-content .details {
                 <h1 id="view-title">Bảng Điều Khiển</h1>
             </div>
             <div class="navbar-controls">
-    <div class="notification-bell" onclick="toggleNotificationPanel()">
-        <i class="fas fa-bell"></i>
-        <span id="notification-badge" class="notification-badge"></span>
-        
-        <div id="notification-panel" class="notification-panel">
-            <div class="notification-header">Thông Báo</div>
-            <ul id="notification-list" class="notification-list">
+    <div class="action-dropdown-menu">
+        <button class="nav-btn" onclick="toggleActionMenu(event)" title="Thao tác nhanh">
+            <i class="fas fa-bolt"></i>
+        </button>
+        <div id="action-dropdown-panel" class="dropdown-panel">
+            <div class="dropdown-header">Thao Tác Nhanh</div>
+            <ul class="dropdown-list">
+                <li><a href="#" onclick="handleAddCar()"><i class="fas fa-plus fa-fw"></i> Thêm Xe Mới</a></li>
+                <li><a href="#" onclick="openExcelImportModal()"><i class="fas fa-file-excel fa-fw"></i> Nhập Xe từ Excel</a></li>
+                <li><a href="#" onclick="handleAddDeposit()"><i class="fas fa-hand-holding-usd fa-fw"></i> Thêm Cọc Khách Hàng</a></li>
+                <div class="dropdown-divider"></div>
+                <li><a href="#" onclick="handleDeleteCar()"><i class="fas fa-trash-alt fa-fw"></i> Xóa Xe Khỏi Kho</a></li>
+                <li><a href="#" onclick="handleRestoreCar()"><i class="fas fa-undo fa-fw"></i> Phục Hồi Xe Đã Xóa</a></li>
+                <li><a href="#" onclick="handleDeleteOrder()"><i class="fas fa-times-circle fa-fw"></i> Xóa Đơn Hàng</a></li>
+                <div class="dropdown-divider"></div>
+                <li><a href="#" onclick="handleShowTimeline()"><i class="fas fa-history fa-fw"></i> Tra cứu Lịch sử Đơn hàng</a></li>
+                <li><a href="#" onclick="handleArchiveOrders()"><i class="fas fa-archive fa-fw"></i> Lưu Trữ Hóa Đơn</a></li>
             </ul>
         </div>
     </div>
+
+    <div class="notification-bell">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="notification-badge"></span>
+        <div id="notification-panel" class="notification-panel">
+            <div class="notification-header">Thông Báo</div>
+            <ul id="notification-list" class="notification-list"></ul>
+        </div>
+    </div>
     
-    <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Chuyển đổi giao diện Sáng/Tối">
         <i class="fas fa-moon" id="theme-icon"></i>
     </button>
 </div>
@@ -1449,6 +1901,47 @@ body.dark-mode .timeline-content .details {
         </div>
     </div>
 </div>
+<div id="addDepositModal" class="modal">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2>Thêm Thông Tin Đặt Cọc</h2>
+            <button class="modal-close" onclick="closeModal('addDepositModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding-top: 0;">
+            <div class="tabs" style="border-bottom: 1px solid var(--border-color-light); margin-bottom: 20px;">
+                <button class="tab-link active" onclick="openTab(event, 'singleDeposit')">Nhập Lẻ</button>
+                <button class="tab-link" onclick="openTab(event, 'batchDeposit')">Nhập Hàng Loạt</button>
+            </div>
+
+            <div id="singleDeposit" class="tab-content" style="display: block;">
+                <p style="margin-bottom: 15px;">Nhập thông tin của một khách hàng đã đặt cọc.</p>
+                <div class="form-group-horizontal" style="margin-bottom: 15px;">
+                    <label for="depositCustomerName" class="form-label-horizontal" style="flex-basis: 130px;">Tên khách hàng:</label>
+                    <input type="text" id="depositCustomerName" class="form-input-horizontal" placeholder="Ví dụ: Nguyễn Văn A">
+                </div>
+                <div class="form-group-horizontal">
+                    <label for="depositDate" class="form-label-horizontal" style="flex-basis: 130px;">Ngày cọc:</label>
+                    <input type="date" id="depositDate" class="form-input-horizontal">
+                </div>
+            </div>
+
+            <div id="batchDeposit" class="tab-content" style="display: none;">
+                 <p style="margin-bottom: 10px;">Dán danh sách khách hàng và ngày cọc vào ô bên dưới.</p>
+                 <p style="font-size: 12px; font-style: italic; color: var(--no-data-text-color-light); margin-bottom: 15px;">
+                    <strong>Định dạng:</strong> Mỗi dòng là một khách hàng. Phân cách Tên và Ngày bằng dấu phẩy (,).<br>
+                    <strong>Ví dụ:</strong><br>
+                    Nguyễn Văn B, 22/06/2025<br>
+                    Trần Thị C, 23/06/2025
+                 </p>
+                <textarea id="batchDepositInput" rows="8" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color-light); background-color: var(--background-light); color: var(--text-light); font-family: 'Roboto Mono', monospace; font-size: 13px;" placeholder="Dán danh sách vào đây..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addDepositModal')">Hủy</button>
+            <button id="confirmAddDepositBtn" class="btn btn-primary" onclick="submitNewDeposit()">Lưu Thông Tin</button>
+        </div>
+    </div>
+</div>
     <div id="connection-status" title="Trạng thái kết nối"></div>
 
 <script>
@@ -1490,7 +1983,18 @@ body.dark-mode .timeline-content .details {
     function toggleMobileSidebar() {
         document.getElementById("sidebar").classList.toggle("open");
     }
-    
+function toggleActionMenu(event) {
+    event.stopPropagation(); // Ngăn sự kiện click lan ra document
+
+    // Nếu bảng thông báo đang mở, hãy đóng nó trước
+    if (appState.notifications.isPanelOpen) {
+        toggleNotificationPanel(); 
+    }
+
+    // Sau đó mới bật/tắt menu thao tác nhanh
+    const panel = document.getElementById('action-dropdown-panel');
+    panel.classList.toggle('active');
+}
     function initScrollToTopButton() {
         const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
         const contentArea = document.querySelector('.main-content');
@@ -1509,12 +2013,12 @@ body.dark-mode .timeline-content .details {
     }
 
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwfYNy5JA_ttRByJfeJQkd0ukvxhBc3Xxljy6OCzHSV4qeSIh6hJP8OuOOI_1Yo_kdv7g/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzNMNwVSiGed_ItRzVpDztDrbyxxtqRoBXDmQUPZWn4_h8KavgD9RJNXYKlKgwflU1X1A/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
     const appState = {
         data: null,
-        currentView: 'dashboard',
+        currentView: 'actionCenter',
         loading: true,
         error: null,
         currentDataVersion: '0',
@@ -1709,10 +2213,17 @@ body.dark-mode .timeline-content .details {
         }
         
         const activeLink = sidebarNavEl.querySelector(`a[onclick="switchView('${appState.currentView}')"]`);
-        viewTitleEl.innerText = activeLink ? activeLink.querySelector('span').textContent : 'Trang Quản Trị';
+        if (activeLink) {
+    const iconHTML = activeLink.querySelector('i')?.outerHTML || '';
+    const textHTML = activeLink.querySelector('span')?.textContent || 'Trang Quản Trị';
+    viewTitleEl.innerHTML = `${iconHTML} ${textHTML}`;
+} else {
+    viewTitleEl.innerHTML = 'Trang Quản Trị';
+}
 
         switch (appState.currentView) {
-            case 'dashboard': renderDashboardView(); break;
+           
+case 'actionCenter': renderActionCenterView(); break;
             case 'khoXe': renderKhoXeView(); break;
             case 'chuaGhep': renderChuaGhepView(); break;
             case 'daGhep': renderDaGhepView(); break;
@@ -1722,21 +2233,7 @@ body.dark-mode .timeline-content .details {
         }
     }
 
-    function renderDashboardView() {
-        const { daghep, chuaghep, khoxe, xuathoadon, huyghep } = appState.data;
-        const cardStyle = "padding: 20px; border-radius: 8px; box-shadow: var(--shadow-light-outer); background-color: var(--card-bg-light); border-left: 5px solid;";
-        
-        mainContentEl.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="${cardStyle} var(--primary-color);"><strong>Tổng số xe trong kho:</strong> ${khoxe?.length || 0}</div>
-                <div style="${cardStyle} #ffc107;"><strong>Số yêu cầu đang chờ ghép:</strong> ${chuaghep?.length || 0}</div>
-                <div style="${cardStyle} #28a745;"><strong>Số yêu cầu đã ghép thành công:</strong> ${daghep?.length || 0}</div>
-                <div style="${cardStyle} #17a2b8;"><strong>Số đơn hàng chờ xử lý hóa đơn:</strong> ${xuathoadon?.length || 0}</div>
-                <div style="${cardStyle} #dc3545;"><strong>Tổng số đơn đã hủy:</strong> ${huyghep?.length || 0}</div>
-            </div>`;
-    }
-
-function renderKhoXeView() {
+    function renderKhoXeView() {
     const data = appState.data.khoxe || [];
     const { searchTerm, filters, sortKey, sortDir } = appState.khoXe;
 
@@ -1777,12 +2274,7 @@ function renderKhoXeView() {
                     </select>
                 </div>
                 
-                <div style="display: flex; gap: 10px; flex-shrink: 0; margin-left: auto;">
-                    <button class="btn btn-success" onclick="handleAddCar()"><i class="fas fa-plus"></i> Thêm Xe</button>
-                    <button class="btn btn-success" onclick="openExcelImportModal()"><i class="fas fa-file-excel"></i> Nhập Excel</button>
-                    <button class="btn btn-danger" onclick="handleDeleteCar()"><i class="fas fa-trash-alt"></i> Xóa Xe</button>
-                    <button class="btn btn-primary" onclick="handleRestoreCar()"><i class="fas fa-undo"></i> Phục Hồi Xe</button>
-                </div>
+                
             </div>
         </div>`;
     
@@ -1850,12 +2342,7 @@ function renderChuaGhepView() {
                     </select>
                 </div>
             </div>
-            <div style="flex-shrink: 0; display: flex; gap: 10px;">
-                <button class="btn btn-orange" onclick="handleShowTimeline()">
-                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
-                </button>
-                <button class="btn btn-danger" onclick="handleDeleteOrder()"><i class="fas fa-times-circle"></i> <span>Xóa Đơn Hàng</span></button>
-            </div>
+           
         </div>`;
 
     let filteredData = chuaGhepData.filter(row => String(row['Kết quả'] || '').toLowerCase().includes('chưa'));
@@ -1954,11 +2441,7 @@ function renderDaGhepView() {
                     </select>
                 </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <button class="btn btn-purple" onclick="handleShowTimeline()">
-                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
-                </button>
-            </div>
+          
         </div>`;
 
     let filteredData = data;
@@ -2087,12 +2570,7 @@ function renderXuatHoaDonView() {
                     </select>
                 </div>
             </div>
-            <div style="flex-shrink: 0; display: flex; gap: 10px;">
-                <button class="btn btn-purple" onclick="handleShowTimeline()">
-                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
-                </button>
-                <button class="btn btn-secondary" onclick="handleArchiveOrders()"><i class="fas fa-archive"></i> <span>Lưu Trữ HĐ</span></button>
-            </div>
+            
         </div>`;
     
     if (searchTerm) {
@@ -2165,11 +2643,7 @@ function renderHuyGhepView() {
                            style="padding-left: 34px; min-width: 300px;">
                 </div>
             </div>
-            <div style="flex-shrink: 0;">
-                <button class="btn btn-orange" onclick="handleShowTimeline()">
-                    <i class="fas fa-history"></i><span>Tra cứu Lịch sử</span>
-                </button>
-            </div>
+            
         </div>`;
 
     let filteredData = data;
@@ -2757,9 +3231,10 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
 }
 
     function handleAddCar() {
-        document.getElementById('newCarVin').value = '';
-        openModal('addCarModal');
-    }
+    document.getElementById('action-dropdown-panel').classList.remove('active'); // THÊM DÒNG NÀY
+    document.getElementById('newCarVin').value = '';
+    openModal('addCarModal');
+}
 
     // Thay thế toàn bộ hàm cũ bằng hàm này
 async function submitNewCar() {
@@ -2789,6 +3264,7 @@ async function submitNewCar() {
 }
 
     function handleDeleteCar() {
+document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Xóa Xe Khỏi Kho', 
         'Vui lòng nhập số VIN của xe cần xóa khỏi kho.', 
@@ -2810,6 +3286,7 @@ async function submitNewCar() {
 }
 
     function handleRestoreCar() {
+document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Phục Hồi Xe Vào Kho', 
         'Vui lòng nhập số VIN của xe cần phục hồi.', 
@@ -2830,6 +3307,7 @@ async function submitNewCar() {
 }
 
     function handleDeleteOrder() {
+document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
         'Xóa Đơn Hàng Vĩnh Viễn', 
         'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:', 
@@ -2848,6 +3326,7 @@ async function submitNewCar() {
 }
     
     function handleArchiveOrders() {
+ document.getElementById('action-dropdown-panel').classList.remove('active');
         showConfirmationModal(
             'Lưu Trữ Hóa Đơn', 
             'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.', 
@@ -2998,32 +3477,39 @@ async function submitNewCar() {
     }
 
     async function toggleNotificationPanel() {
-        appState.notifications.isPanelOpen = !appState.notifications.isPanelOpen;
-        notificationPanelEl.style.display = appState.notifications.isPanelOpen ? 'block' : 'none';
-        if (appState.notifications.isPanelOpen && appState.notifications.unreadCount > 0) {
-            const previousUnreadCount = appState.notifications.unreadCount;
-            appState.notifications.isMarkingAsRead = true;
-            appState.notifications.unreadCount = 0;
-            renderNotifications(); 
-            try {
-                const response = await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: new URLSearchParams({ action: 'markAllNotificationsAsRead' }) 
-                });
-                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-                const result = await response.json();
-                if (result.status !== 'SUCCESS') throw new Error(result.message || "Backend failed to mark as read.");
-                appState.notifications.items.forEach(item => item.isRead = true);
-            } catch (err) {
-                console.error("Could not mark notifications as read:", err);
-                appState.notifications.unreadCount = previousUnreadCount;
-                renderNotifications();
-                showToast('Lỗi khi đánh dấu đã đọc.', 'error');
-            } finally {
-                appState.notifications.isMarkingAsRead = false;
-            }
+    // Đóng menu "Thao tác nhanh" (tia sét) nếu nó đang mở
+    const actionPanel = document.getElementById('action-dropdown-panel');
+    if (actionPanel.classList.contains('active')) {
+        actionPanel.classList.remove('active');
+    }
+
+    // Tiếp tục logic bật/tắt và xử lý thông báo như cũ
+    appState.notifications.isPanelOpen = !appState.notifications.isPanelOpen;
+    notificationPanelEl.style.display = appState.notifications.isPanelOpen ? 'block' : 'none';
+    if (appState.notifications.isPanelOpen && appState.notifications.unreadCount > 0) {
+        const previousUnreadCount = appState.notifications.unreadCount;
+        appState.notifications.isMarkingAsRead = true;
+        appState.notifications.unreadCount = 0;
+        renderNotifications(); 
+        try {
+            const response = await fetch(API_URL, { 
+                method: 'POST', 
+                body: new URLSearchParams({ action: 'markAllNotificationsAsRead' }) 
+            });
+            if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+            const result = await response.json();
+            if (result.status !== 'SUCCESS') throw new Error(result.message || "Backend failed to mark as read.");
+            appState.notifications.items.forEach(item => item.isRead = true);
+        } catch (err) {
+            console.error("Could not mark notifications as read:", err);
+            appState.notifications.unreadCount = previousUnreadCount;
+            renderNotifications();
+            showToast('Lỗi khi đánh dấu đã đọc.', 'error');
+        } finally {
+            appState.notifications.isMarkingAsRead = false;
         }
     }
+}
 
     function formatTimeAgo(timestamp) {
         if (!timestamp) return '';
@@ -3291,9 +3777,6 @@ function formatCustomDateTime(dateValue) {
         });
     }
 
-    // =================================================================
-    // SECTION 6: INITIALIZATION
-    // =================================================================
     document.addEventListener('DOMContentLoaded', () => {
         applyInitialTheme();
         initScrollToTopButton();
@@ -3309,34 +3792,42 @@ function formatCustomDateTime(dateValue) {
             else startPolling();
         });
 
-        notificationListEl.addEventListener('click', (event) => {
-            const item = event.target.closest('.notification-item[data-view]');
-            if (item) {
-                event.stopPropagation();
-                appState.highlightedId = item.dataset.id; 
-                switchView(item.dataset.view); 
-                toggleNotificationPanel();
+        const notificationBellEl = document.querySelector('.notification-bell');
+        if (notificationBellEl) {
+            // Chỉ cần gọi hàm toggle, vì logic đóng popup kia đã nằm trong hàm toggle rồi
+            notificationBellEl.addEventListener('click', (event) => {
+                 event.stopPropagation(); // Ngăn sự kiện lan tới document
+                 const item = event.target.closest('.notification-item[data-view]');
+                 if (item) {
+                     appState.highlightedId = item.dataset.id;
+                     switchView(item.dataset.view);
+                     if (appState.notifications.isPanelOpen) {
+                         toggleNotificationPanel();
+                     }
+                 } else {
+                     toggleNotificationPanel();
+                 }
+            });
+        }
+        
+        // BỘ LẮNG NGHE SỰ KIỆN TOÀN CỤC (ĐỂ BẤM RA NGOÀI)
+        document.addEventListener('click', (event) => {
+            const actionMenuPanel = document.getElementById('action-dropdown-panel');
+            const actionMenuContainer = document.querySelector('.action-dropdown-menu');
+            
+            // Đóng menu "Tia sét" nếu click ra ngoài
+            if (actionMenuPanel.classList.contains('active') && !actionMenuContainer.contains(event.target)) {
+                 actionMenuPanel.classList.remove('active');
             }
-        });
 
-        document.addEventListener('click', function(event) {
-            const bell = event.target.closest('.notification-bell');
-            const panel = event.target.closest('.notification-panel');
-            if (appState.notifications.isPanelOpen && !bell && !panel) {
+            // Đóng bảng "Chuông" nếu click ra ngoài
+            if (appState.notifications.isPanelOpen && !notificationBellEl.contains(event.target)) {
                 toggleNotificationPanel();
-            }
-             const sidebar = document.getElementById('sidebar');
-            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 900 && sidebar.classList.contains('open')) {
-                if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
-                    sidebar.classList.remove('open');
-                }
             }
         });
     });
-/**
- * [HÀM NÂNG CẤP] Mở modal và tạo form chỉnh sửa với bố cục HÀNG NGANG.
- */
+
+
 function handleEditRow(rowData, btnElement) {
     const view = appState.currentView;
     const modalBody = document.getElementById('editModalBody');
@@ -3453,6 +3944,7 @@ async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnE
 let modalSelectedFile = null;
 
 function openExcelImportModal() {
+document.getElementById('action-dropdown-panel').classList.remove('active');
     // Đặt lại trạng thái của modal trước khi mở
     modalSelectedFile = null;
     const fileInput = document.getElementById('excel-file-input-modal');
@@ -3654,7 +4146,7 @@ async function handleOcrFileChange(event) {
     }
 }
 async function handleShowTimeline() {
-    // Hàm này mở một cửa sổ (modal) để người dùng nhập số đơn hàng.
+    document.getElementById('action-dropdown-panel').classList.remove('active');
     const lookupInput = document.getElementById('lookupModalInput');
     lookupInput.value = '';
 
@@ -3742,6 +4234,301 @@ function renderTimeline(historyData, container) {
     timelineHTML += '</div></div>';
 
     container.innerHTML = timelineHTML;
+}
+// THAY THẾ LẦN CUỐI HÀM renderActionCenterView BẰNG PHIÊN BẢN HOÀN THIỆN NÀY
+function renderActionCenterView() {
+    if (!appState.data) {
+        mainContentEl.innerHTML = '<div class="no-data-container">Đang tải dữ liệu...</div>';
+        return;
+    }
+
+    const parseCustomDate = (dateStr) => {
+        if (!dateStr || typeof dateStr !== 'string') return null;
+        const parts = dateStr.split(' ');
+        if (parts.length === 0) return null;
+        const dateParts = parts[0].split('/');
+        if (dateParts.length !== 3) return new Date(dateStr);
+        const timeParts = parts.length > 1 ? parts[1].split(':') : [0, 0, 0];
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0] || 0, timeParts[1] || 0, timeParts[2] || 0);
+    };
+
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    
+    const daghepData = appState.data.daghep || [];
+    const xuathoadonData = appState.data.xuathoadon || [];
+
+    const overdueInvoices = daghepData.filter(row => {
+        const days = parseInt(row['Số ngày ghép'], 10);
+        return !isNaN(days) && days >= 4 && String(row['Kết quả'] || '').trim().toLowerCase() === 'đã ghép';
+    });
+    
+    const supplementRequests = daghepData.filter(row => String(row['Kết quả'] || '').trim().toLowerCase() === 'yêu cầu bổ sung');
+    const supplementedAndWaiting = daghepData.filter(row => String(row['Kết quả'] || '').trim().toLowerCase() === 'đã bổ sung');
+    const approvalRequests = daghepData.filter(row => String(row['Kết quả'] || '').trim().toLowerCase() === 'chờ phê duyệt');
+    const pendingSignatureAndUpload = xuathoadonData.filter(row => {
+        const status = String(row['Trạng thái xử lý'] || '').trim().toLowerCase();
+        return status === 'đã phê duyệt' || status === 'chờ ký hóa đơn';
+    });
+    const latestPairingRequests = (appState.data.chuaghep || []).filter(row => {
+        const entryTime = parseCustomDate(row['Thời gian nhập']);
+        return entryTime && entryTime > twentyFourHoursAgo && String(row['Kết quả'] || '').toLowerCase().includes('chưa');
+    });
+
+    // --- [MỚI] Tính toán các giá trị cho Thẻ Tóm tắt ---
+    const totalOverdue = overdueInvoices.length;
+    const totalPending = supplementRequests.length + supplementedAndWaiting.length + approvalRequests.length + pendingSignatureAndUpload.length;
+    const newToday = latestPairingRequests.length;
+
+    const actionItems = [
+        {
+            title: 'Đơn hàng quá hạn xuất hóa đơn (> 4 ngày)',
+            icon: 'fa-calendar-times', type: 'overdue', priority: 'high', data: overdueInvoices,
+            viewTarget: 'xuatHoaDon', // Thêm mục tiêu để điều hướng
+            renderer: (id, data) => renderDaGhepGroupedTable(id, data, (row) => [
+                { icon: 'fa-file-invoice-dollar', label: 'Xử lý HĐ', class: 'btn-action', handler: () => navigateToView('xuatHoaDon', { trangThai: 'Đã ghép' }) }
+            ])
+        },
+        {
+            title: 'Hồ sơ cần bổ sung', icon: 'fa-exclamation-triangle', type: 'supplement', priority: 'high', data: supplementRequests,
+            viewTarget: 'xuatHoaDon',
+            renderer: (id, data) => renderDaGhepGroupedTable(id, data, (row) => [
+                 { icon: 'fa-paper-plane', label: 'Gửi lại YCBS', class: 'btn-purple', handler: 'handleResendEmail', type: 'invoice_request_supplement' }
+            ])
+        },
+        { 
+            title: 'Chờ Phê duyệt lại (sau khi bổ sung)', icon: 'fa-history', type: 're-approval', priority: 'medium', data: supplementedAndWaiting,
+            viewTarget: 'xuatHoaDon',
+            renderer: (id, data) => renderDaGhepGroupedTable(id, data, (row) => [
+                { icon: 'fa-check-double', label: 'Duyệt lại', class: 'btn-success', handler: 'handleApproveRequest' },
+                { icon: 'fa-pencil-alt', label: 'Sửa', class: 'btn-secondary', handler: 'handleEditRow' },
+            ])
+        },
+        {
+            title: 'Yêu cầu xuất hóa đơn cần phê duyệt', icon: 'fa-check-double', type: 'approval', priority: 'medium', data: approvalRequests,
+            viewTarget: 'xuatHoaDon',
+            renderer: (id, data) => renderXuatHoaDonGroupedTable(id, data, (row) => [
+                { icon: 'fa-check-double', label: 'Duyệt', class: 'btn-success', handler: 'handleApproveRequest' },
+                { icon: 'fa-exclamation-triangle', label: 'Bổ Sung', class: 'btn-warning', handler: 'handleRequestSupplement' }
+            ])
+        },
+        {
+            title: 'Chờ Ký và Tải lên Hóa đơn', icon: 'fa-signature', type: 'pending-signature', priority: 'low', data: pendingSignatureAndUpload,
+            viewTarget: 'xuatHoaDon',
+            renderer: (id, data) => renderXuatHoaDonGroupedTable(id, data, (row) => {
+                const status = String(row['Trạng thái xử lý'] || '').trim().toLowerCase();
+                if (status === 'đã phê duyệt') return [{ icon: 'fa-signature', label: 'Chờ Ký HĐ', class: 'btn-primary', handler: 'handlePendingSignature' }];
+                if (status === 'chờ ký hóa đơn') return [{ icon: 'fa-upload', label: 'Tải Lên HĐ', class: 'btn-success', handler: 'handleUploadIssuedInvoice' }];
+                return [];
+            })
+        },
+        {
+            title: 'Yêu cầu ghép xe mới (24h qua)', icon: 'fa-plus-circle', type: 'new-pairing', priority: 'low', data: latestPairingRequests,
+            viewTarget: 'chuaGhep',
+            renderer: (id, data) => renderChuaGhepGroupedTable(id, data, (row) => [
+                { icon: 'fa-link', label: 'Ghép Xe', class: 'btn-action', handler: 'handleManualMatch' },
+                { icon: 'fa-pencil-alt', label: 'Sửa', class: 'btn-secondary', handler: 'handleEditRow' },
+            ])
+        }
+    ];
+
+    // --- Render HTML ---
+    let summaryHTML = `
+        <div class="summary-container">
+            <div class="summary-card overdue">
+                <div class="icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="info">
+                    <div class="value">${totalOverdue}</div>
+                    <div class="title">Đơn Quá Hạn</div>
+                </div>
+            </div>
+            <div class="summary-card pending">
+                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+                <div class="info">
+                    <div class="value">${totalPending}</div>
+                    <div class="title">Tác Vụ Đang Chờ</div>
+                </div>
+            </div>
+            <div class="summary-card new-today">
+                <div class="icon"><i class="fas fa-plus-circle"></i></div>
+                <div class="info">
+                    <div class="value">${newToday}</div>
+                    <div class="title">Yêu Cầu Mới (24h)</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    let actionCardsHTML = '';
+    actionItems.forEach((item, index) => {
+        const count = item.data.length;
+        const viewAllButton = count > 0 ? `<a href="#" class="view-all-btn" onclick="navigateToView('${item.viewTarget}')">Xem tất cả <i class="fas fa-arrow-right"></i></a>` : '';
+
+        actionCardsHTML += `
+            <div class="action-card" data-type="${item.type}" data-priority="${item.priority || 'low'}">
+                <div class="action-card-header">
+                    <h3><i class="fas ${item.icon} icon"></i> ${item.title}</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        ${viewAllButton}
+                        <span class="count-badge">${count}</span>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                </div>
+                <div class="action-card-body" id="action-body-${index}">
+                    ${count > 0 ? item.renderer(`action-table-${index}`, item.data) : `
+                        <div class="elegant-empty-state">
+                            <div class="empty-icon"><i class="fas fa-check-circle"></i></div>
+                            <p>Tất cả công việc đã hoàn thành!</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+    
+    mainContentEl.innerHTML = `<div class="action-center-container elegant-theme">${summaryHTML}${actionCardsHTML}</div>`;
+
+    const headers = document.querySelectorAll('.action-card-header');
+    headers.forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Không toggle khi click vào link "Xem tất cả"
+            if (e.target.closest('.view-all-btn')) return;
+
+            const card = header.parentElement;
+            if (card.querySelector('.elegant-empty-state') === null) {
+               card.classList.toggle('active');
+            }
+        });
+    });
+}
+// DÁN HÀM NÀY VÀO TRONG THẺ <script>
+function navigateToView(viewName, filters = {}) {
+    // Đặt lại tất cả bộ lọc của view đó trước khi áp dụng bộ lọc mới
+    const defaultFilters = { dongXe: '', phienBan: '', trangThai: '', tvbh: '', ngoaiThat: '' };
+    if (appState[viewName] && appState[viewName].filters) {
+        appState[viewName].filters = { ...defaultFilters, ...filters };
+    }
+    switchView(viewName); // Hàm này đã có sẵn và sẽ tự động render lại
+}
+function handleAddDeposit() {
+ document.getElementById('action-dropdown-panel').classList.remove('active');
+    // Reset các trường input mỗi khi mở
+    document.getElementById('depositCustomerName').value = '';
+    document.getElementById('depositDate').value = new Date().toISOString().split('T')[0]; // Mặc định là ngày hôm nay
+    openModal('addDepositModal');
+}
+
+/**
+ * [HÀM MỚI] Gửi thông tin cọc mới lên server.
+ */
+async function submitNewDeposit() {
+    const modalButton = document.getElementById('confirmAddDepositBtn');
+    
+    // Kiểm tra xem tab nào đang hoạt động
+    const isSingleMode = document.getElementById('singleDeposit').style.display === 'block';
+
+    if (isSingleMode) {
+        // --- Xử lý cho chế độ NHẬP LẺ ---
+        const customerName = document.getElementById('depositCustomerName').value.trim();
+        const depositDate = document.getElementById('depositDate').value;
+
+        if (!customerName || !depositDate) {
+            showToast('Vui lòng nhập đầy đủ Tên khách hàng và Ngày cọc.', 'warning');
+            return;
+        }
+
+        const { success } = await performActionOnRow({
+            action: 'addDepositInfo',
+            params: {
+                customerName: customerName,
+                depositDate: depositDate,
+                addedBy: ADMIN_IDENTIFIER //
+            },
+            buttonElement: modalButton
+        });
+
+        if (success) {
+            closeModal('addDepositModal');
+        }
+
+    } else {
+        // --- Xử lý cho chế độ NHẬP HÀNG LOẠT ---
+        const batchText = document.getElementById('batchDepositInput').value.trim();
+        if (!batchText) {
+            showToast('Vui lòng dán danh sách đặt cọc vào ô văn bản.', 'warning');
+            return;
+        }
+
+        const lines = batchText.split('\n');
+        const deposits = [];
+        let parseError = false;
+
+        for (const line of lines) {
+            if (line.trim() === '') continue; // Bỏ qua dòng trống
+
+            const parts = line.split(',');
+            if (parts.length < 2) {
+                parseError = true;
+                break;
+            }
+            
+            const customerName = parts[0].trim();
+            const dateStr = parts.slice(1).join(',').trim(); // Lấy phần còn lại làm ngày
+            
+            // Chuyển đổi ngày từ dd/MM/yyyy sang yyyy-MM-dd để input type="date" và JS Date() hiểu
+            const dateParts = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+            if (!customerName || !dateParts) {
+                 parseError = true;
+                 break;
+            }
+            // new Date(year, monthIndex, day)
+            const isoDate = new Date(dateParts[3], dateParts[2] - 1, dateParts[1]);
+
+            deposits.push({ customerName, depositDate: isoDate.toISOString() });
+        }
+
+        if (parseError) {
+            showToast('Lỗi định dạng trong danh sách. Vui lòng kiểm tra lại theo mẫu.', 'error', 5000);
+            return;
+        }
+
+        if (deposits.length === 0) {
+            showToast('Không có dữ liệu hợp lệ nào để thêm.', 'warning');
+            return;
+        }
+
+        const { success } = await performActionOnRow({
+            action: 'addBatchDeposits',
+            params: {
+                deposits: JSON.stringify(deposits),
+                addedBy: ADMIN_IDENTIFIER //
+            },
+            buttonElement: modalButton
+        });
+
+        if (success) {
+            closeModal('addDepositModal');
+            document.getElementById('batchDepositInput').value = ''; // Xóa nội dung đã nhập
+        }
+    }
+}
+
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    const modal = evt.target.closest('.modal-body');
+
+    tabcontent = modal.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    tablinks = modal.getElementsByClassName("tab-link");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
 }
 </script>
 </body>
