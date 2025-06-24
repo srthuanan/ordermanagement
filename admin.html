@@ -3283,22 +3283,27 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 
     async function submitManualMatch(orderNumber, btnElement) {
-        const selectedVin = document.getElementById('vinSelect').value;
-        if (!selectedVin) { 
-            showToast('Vui lòng chọn một xe để ghép.', 'warning'); 
-            return; 
-        }
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('manualMatchModal');
-        
-        // Thực thi hành động ghép xe dưới nền
-        performActionOnRow({
-            action: 'manualMatchCar',
-            params: { orderNumber, vin: selectedVin },
-            buttonElement: btnElement // Sử dụng nút từ hàng trong bảng
-        });
+    const selectedVin = document.getElementById('vinSelect').value;
+    if (!selectedVin) {
+        showToast('Vui lòng chọn một xe để ghép.', 'warning');
+        return;
     }
+
+    // [SỬA] Lấy đúng nút "Xác Nhận" trong modal
+    const modalButton = document.getElementById('confirmMatchBtn');
+
+    // [SỬA] Chờ cho hành động hoàn tất
+    const { success } = await performActionOnRow({
+        action: 'manualMatchCar',
+        params: { orderNumber, vin: selectedVin },
+        buttonElement: modalButton // Truyền nút của modal vào đây
+    });
+
+    // [SỬA] Chỉ đóng modal nếu thành công
+    if (success) {
+        closeModal('manualMatchModal');
+    }
+}
 
     function handleCancelRequest(order, btnElement) {
         const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
@@ -3314,25 +3319,27 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 
     async function submitCancellation(orderNumber, btnElement) {
-        const reasonInput = document.getElementById('cancelReason');
-        const reason = reasonInput.value.trim();
-        if (!reason) {
-            showToast('Vui lòng nhập lý do hủy.', 'warning');
-            reasonInput.style.borderColor = 'red';
-            reasonInput.focus();
-            return;
-        }
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('cancelModal');
-        
-        // Thực thi hành động hủy dưới nền
-        performActionOnRow({
-            action: 'cancelRequest',
-            params: { orderNumber, reason, cancelledBy: 'Admin' },
-            buttonElement: btnElement
-        });
+    const reasonInput = document.getElementById('cancelReason');
+    const reason = reasonInput.value.trim();
+    if (!reason) {
+        showToast('Vui lòng nhập lý do hủy.', 'warning');
+        reasonInput.style.borderColor = 'red';
+        reasonInput.focus();
+        return;
     }
+    
+    const modalButton = document.getElementById('confirmCancelBtn');
+
+    const { success } = await performActionOnRow({
+        action: 'cancelRequest',
+        params: { orderNumber, reason, cancelledBy: 'Admin' },
+        buttonElement: modalButton
+    });
+
+    if (success) {
+        closeModal('cancelModal');
+    }
+}
 
     function handleUnmatchRequest(order, btnElement) {
         const orderNumber = order['Số đơn hàng'];
@@ -3349,26 +3356,27 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 
     async function submitUnmatchRequest(orderNumber, btnElement) {
-        const reasonInput = document.getElementById('unmatchReason');
-        const reason = reasonInput.value.trim();
-        
-        if (!reason) {
-            showToast('Vui lòng nhập lý do hủy ghép.', 'warning');
-            reasonInput.style.borderColor = 'red';
-            reasonInput.focus();
-            return;
-        }
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('unmatchModal');
-        
-        // Thực thi hành động hủy ghép dưới nền
-        performActionOnRow({
-            action: 'unmatchOrder',
-            params: { orderNumber, reason },
-            buttonElement: btnElement
-        });
+    const reasonInput = document.getElementById('unmatchReason');
+    const reason = reasonInput.value.trim();
+    if (!reason) {
+        showToast('Vui lòng nhập lý do hủy ghép.', 'warning');
+        reasonInput.style.borderColor = 'red';
+        reasonInput.focus();
+        return;
     }
+    
+    const modalButton = document.getElementById('confirmUnmatchBtn');
+
+    const { success } = await performActionOnRow({
+        action: 'unmatchOrder',
+        params: { orderNumber, reason },
+        buttonElement: modalButton
+    });
+
+    if (success) {
+        closeModal('unmatchModal');
+    }
+}
     
     function handleApproveRequest(order, btnElement) {
         const orderNumber = order['SỐ ĐƠN HÀNG'];
@@ -3396,22 +3404,27 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 
     async function submitSupplementRequest(orderNumber, btnElement) {
-        const reason = document.getElementById('supplementReason').value.trim();
-        if (!reason) {
-            showToast('Vui lòng nhập nội dung cần bổ sung.', 'warning');
-            return;
-        }
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('supplementModal');
-        
-        // Thực thi hành động yêu cầu bổ sung dưới nền
-        performActionOnRow({
-            action: 'requestSupplementForInvoice',
-            params: { orderNumber, reason },
-            buttonElement: btnElement 
-        });
+    const reason = document.getElementById('supplementReason').value.trim();
+    if (!reason) {
+        showToast('Vui lòng nhập nội dung cần bổ sung.', 'warning');
+        return;
     }
+
+    // Lấy nút bấm từ trong modal
+    const modalButton = document.getElementById('confirmSupplementBtn');
+
+    // Chờ cho hành động hoàn tất và hiển thị spinner trên nút của modal
+    const { success } = await performActionOnRow({
+        action: 'requestSupplementForInvoice',
+        params: { orderNumber, reason },
+        buttonElement: modalButton
+    });
+
+    // Chỉ đóng modal sau khi hành động thành công
+    if (success) {
+        closeModal('supplementModal');
+    }
+}
 
     function handleUploadIssuedInvoice(order, btnElement) {
     const orderNumber = order['SỐ ĐƠN HÀNG'];
@@ -3434,33 +3447,36 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         return;
     }
     const file = fileInput.files[0];
-    
-    // Đóng modal ngay lập tức
-    closeModal('uploadInvoiceModal');
 
-    // Lấy phần mở rộng của file gốc (ví dụ: "pdf", "jpg")
-    const originalFileName = file.name;
-    const fileExtension = originalFileName.slice(((originalFileName.lastIndexOf(".") - 1) >>> 0) + 2);
+    // Lấy nút bấm từ trong modal
+    const modalButton = document.getElementById('confirmUploadBtn');
 
-    // Tạo tên file mới theo định dạng "Hóa đơn [TÊN KHÁCH HÀNG IN HOA].extension"
-    const newFileName = `Hóa đơn ${customerName.toUpperCase()}.${fileExtension}`;
-
+    // Đặt khối try...catch để xử lý lỗi khi đọc file
     try {
         const base64String = await fileToBase64(file);
-        
-        // Gọi hàm action với tên file mới
-        await performActionOnRow({
+        const originalFileName = file.name;
+        const fileExtension = originalFileName.slice(((originalFileName.lastIndexOf(".") - 1) >>> 0) + 2);
+        const newFileName = `Hóa đơn ${customerName.toUpperCase()}.${fileExtension}`;
+
+        // Chờ cho hành động hoàn tất và hiển thị spinner trên nút của modal
+        const { success } = await performActionOnRow({
             action: 'uploadIssuedInvoice',
             params: {
                 orderNumber: orderNumber,
-                invoiceFileName: newFileName, // Sử dụng tên file mới đã tạo
+                invoiceFileName: newFileName,
                 invoiceFileBase64: base64String.split(',')[1],
                 invoiceMimeType: file.type,
                 uploadedBy: 'Admin'
             },
-            buttonElement: btnElement 
+            buttonElement: modalButton
         });
+
+        // Chỉ đóng modal sau khi hành động thành công
+        if (success) {
+            closeModal('uploadInvoiceModal');
+        }
     } catch (error) {
+        // Nếu có lỗi trong quá trình xử lý file, spinner sẽ tự động được gỡ bỏ bởi hàm performActionOnRow
         showToast(`Lỗi khi xử lý file: ${error.message}`, 'error');
     }
 }
@@ -3882,23 +3898,28 @@ function formatCustomDateTime(dateValue) {
     }
 
     async function submitSuggestedMatch(orderNumber, btnElement) {
-        const selectedVinInput = document.querySelector('input[name="suggestedVin"]:checked');
-        if (!selectedVinInput) {
-            showToast('Vui lòng chọn một xe từ danh sách gợi ý.', 'warning');
-            return;
-        }
-        const selectedVin = selectedVinInput.value;
-        
-        // [SỬA ĐỔI] Đóng modal ngay lập tức
-        closeModal('suggestionModal');
-        
-        // Thực thi hành động ghép xe dưới nền
-        performActionOnRow({
-            action: 'manualMatchCar',
-            params: { orderNumber, vin: selectedVin },
-            buttonElement: btnElement
-        });
+    const selectedVinInput = document.querySelector('input[name="suggestedVin"]:checked');
+    if (!selectedVinInput) {
+        showToast('Vui lòng chọn một xe từ danh sách gợi ý.', 'warning');
+        return;
     }
+    const selectedVin = selectedVinInput.value;
+
+    // Lấy nút bấm từ trong modal
+    const modalButton = document.getElementById('confirmSuggestionMatchBtn');
+
+    // Chờ cho hành động hoàn tất và hiển thị spinner trên nút của modal
+    const { success } = await performActionOnRow({
+        action: 'manualMatchCar',
+        params: { orderNumber, vin: selectedVin },
+        buttonElement: modalButton
+    });
+
+    // Chỉ đóng modal sau khi hành động thành công
+    if (success) {
+        closeModal('suggestionModal');
+    }
+}
 
     function generateGlobalSuggestions(chuaGhepData, khoXeData) {
     const suggestions = [];
@@ -4146,7 +4167,7 @@ function handleEditRow(rowData, btnElement) {
 async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnElement) {
     const modalBody = document.getElementById('editModalBody');
     const inputs = modalBody.querySelectorAll('input[data-field-name]');
-    
+
     const params = {
         sheetName,
         primaryKeyColumn,
@@ -4159,20 +4180,21 @@ async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnE
         params[fieldName] = input.value;
     });
 
-    // ĐÓNG MODAL NGAY LẬP TỨC
-    closeModal('editModal');
-    
-    // Thực hiện hành động trên nút bấm gốc của bảng (nút "Chỉnh Sửa")
-    // Nút này sẽ hiển thị spinner, không làm ảnh hưởng đến modal nữa.
-    performActionOnRow({
+    // Lấy nút bấm từ trong modal
+    const modalButton = document.getElementById('confirmEditBtn');
+
+    // Chờ cho hành động hoàn tất và hiển thị spinner trên nút của modal
+    const { success } = await performActionOnRow({
         action: 'updateRowData',
         params: params,
-        buttonElement: btnElement // Sử dụng nút bấm gốc từ hàng trong bảng
+        buttonElement: modalButton
     });
+
+    // Chỉ đóng modal sau khi hành động thành công
+    if (success) {
+        closeModal('editModal');
+    }
 }
-// =================================================================
-// SECTION MỚI: XỬ LÝ NHẬP XE HÀNG LOẠT (SỬ DỤNG MODAL)
-// =================================================================
 
 let modalSelectedFile = null;
 
