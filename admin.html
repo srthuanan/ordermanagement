@@ -6,11 +6,7 @@
     <title>Trang Quản Trị - VinFast Minh Đạo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -4115,35 +4111,52 @@ function formatCustomDateTime(dateValue) {
     }
 }
 
-    function generateGlobalSuggestions(chuaGhepData, khoXeData) {
-    const suggestions = [];
-    // Chỉ lấy xe có sẵn
+    // HÀM MỚI - ĐÃ TỐI ƯU HÓA
+function generateGlobalSuggestions(chuaGhepData, khoXeData) {
+    // Bước 1: Chỉ lấy những dữ liệu cần thiết
     const availableCars = khoXeData.filter(car => String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép');
-    // Chỉ lấy đơn hàng đang chờ
     const pendingOrders = chuaGhepData.filter(order => String(order['Kết quả']).toLowerCase().includes('chưa'));
 
     if (availableCars.length === 0 || pendingOrders.length === 0) {
         return [];
     }
 
-    availableCars.forEach(car => {
-        let matchingOrders = pendingOrders.filter(order =>
-            car['Dòng xe'] === order['Dòng xe'] &&
-            car['Phiên bản'] === order['Phiên bản'] &&
-            car['Ngoại thất'] === order['Ngoại thất'] &&
-            String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
-        );
+    // Bước 2: Nhóm các đơn hàng đang chờ vào một Map để tra cứu nhanh.
+    // Đây là "phép màu" giúp tăng tốc độ.
+    const ordersMap = new Map();
+    pendingOrders.forEach(order => {
+        // Tạo một "chìa khóa" duy nhất dựa trên cấu hình xe
+        const key = `${order['Dòng xe']}|${order['Phiên bản']}|${order['Ngoại thất']}`.toLowerCase();
+        if (!ordersMap.has(key)) {
+            ordersMap.set(key, []);
+        }
+        ordersMap.get(key).push(order);
+    });
 
-        if (matchingOrders.length > 0) {
-            // [NÂNG CẤP 1]: Sắp xếp đơn hàng theo ngày cọc (cũ nhất trước)
-            matchingOrders.sort((a, b) => new Date(a['Ngày cọc'] || 0) - new Date(b['Ngày cọc'] || 0));
-            suggestions.push({ car: car, orders: matchingOrders });
+    // Bước 3: Lặp qua xe có sẵn và tra cứu trong Map (thao tác này rất nhanh)
+    const suggestions = [];
+    availableCars.forEach(car => {
+        const key = `${car['Dòng xe']}|${car['Phiên bản']}|${car['Ngoại thất']}`.toLowerCase();
+        
+        // Nếu có đơn hàng nào khớp với chìa khóa này
+        if (ordersMap.has(key)) {
+            // Lọc thêm theo nội thất (vì nội thất có thể không khớp hoàn toàn)
+            const potentialOrders = ordersMap.get(key);
+            const matchingOrders = potentialOrders.filter(order => 
+                String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
+            );
+
+            if (matchingOrders.length > 0) {
+                // Sắp xếp các đơn hàng tìm được theo ngày cọc (cũ nhất trước)
+                matchingOrders.sort((a, b) => new Date(a['Ngày cọc'] || 0) - new Date(b['Ngày cọc'] || 0));
+                suggestions.push({ car: car, orders: matchingOrders });
+            }
         }
     });
 
-    // [NÂNG CẤP 2]: Sắp xếp các gợi ý theo ngày nhập xe (xe cũ nhất ưu tiên)
+    // Bước 4: Sắp xếp các gợi ý theo ngày nhập xe (xe cũ nhất ưu tiên)
     suggestions.sort((a, b) => new Date(a.car['Ngày nhập'] || 0) - new Date(b.car['Ngày nhập'] || 0));
-    
+
     return suggestions;
 }
 
