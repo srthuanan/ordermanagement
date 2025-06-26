@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -1893,6 +1892,85 @@ body.dark-mode .data-table tbody tr:hover {
     font-weight: 500;
     color: var(--no-data-text-color-light);
 }
+/* === [NÂNG CẤP] CSS CHO CHUÔNG THÔNG BÁO GIỐNG FACEBOOK === */
+
+/* Hiệu ứng rung chuông khi có thông báo mới */
+@keyframes bell-ring {
+    0%, 100% { transform: rotate(0); }
+    10% { transform: rotate(30deg); }
+    20% { transform: rotate(-25deg); }
+    30% { transform: rotate(20deg); }
+    40% { transform: rotate(-15deg); }
+    50% { transform: rotate(10deg); }
+    60% { transform: rotate(-5deg); }
+}
+.notification-bell.new-notification .fa-bell {
+    animation: bell-ring 0.8s ease-in-out;
+}
+
+/* Nền màu xanh cho thông báo chưa đọc */
+.notification-item.unread {
+    background-color: #e7f3ff; /* Màu xanh dương rất nhạt */
+}
+body.dark-mode .notification-item.unread {
+    background-color: rgba(56, 139, 253, 0.15); /* Màu xanh tương thích với nền tối */
+}
+
+.notification-footer {
+    padding: 10px;
+    border-top: 1px solid var(--border-color-light);
+    display: flex;
+    justify-content: center; /* Đã sửa để căn giữa */
+    align-items: center;
+    background-color: var(--card-bg-light);
+    position: sticky;
+    bottom: 0;
+}
+body.dark-mode .notification-footer {
+    border-top-color: var(--border-color-dark);
+    background-color: var(--card-bg-dark);
+}
+
+/* Nút bấm trong footer */
+.notification-footer-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+.notification-footer-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+body.dark-mode .notification-footer-btn {
+    color: var(--secondary-color);
+}
+body.dark-mode .notification-footer-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* Cải thiện giao diện khi không có thông báo */
+.notification-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+.notification-empty-state i {
+    font-size: 3rem;
+    color: #ced4da;
+    margin-bottom: 15px;
+}
+body.dark-mode .notification-empty-state i {
+    color: #495057;
+}
+.notification-empty-state p {
+    font-size: 0.9rem;
+    color: var(--no-data-text-color-light);
+    font-weight: 500;
+}
     </style>
 </head>
 <body data-theme="light" class="doraemon-theme">
@@ -1946,9 +2024,13 @@ body.dark-mode .data-table tbody tr:hover {
         <i class="fas fa-bell"></i>
         <span id="notification-badge" class="notification-badge"></span>
         <div id="notification-panel" class="notification-panel">
-            <div class="notification-header">Thông Báo</div>
-            <ul id="notification-list" class="notification-list"></ul>
-        </div>
+    <div class="notification-header">Thông Báo</div>
+    <ul id="notification-list" class="notification-list">
+        </ul>
+    <div class="notification-footer">
+    <button class="notification-footer-btn" onclick="markAllAsReadFromButton(event)">Đánh dấu tất cả đã đọc</button>
+</div>
+</div>
     </div>
     
     <button class="theme-toggle-btn" onclick="toggleTheme()" title="Chuyển đổi giao diện Sáng/Tối">
@@ -2008,17 +2090,10 @@ body.dark-mode .data-table tbody tr:hover {
             <button class="modal-close" onclick="closeModal('addCarModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <p style="margin-bottom: 15px;">Nhập số VIN hoặc dùng camera <i class="fas fa-camera"></i> để quét từ giấy tờ xe.</p>
+            <p style="margin-bottom: 15px;">Nhập số VIN của xe (bắt buộc 17 ký tự).</p>
             <div class="form-group">
                 <label for="newCarVin">Số VIN (bắt buộc 17 ký tự)</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="newCarVin" maxlength="17" placeholder="Nhập hoặc quét VIN..." style="flex-grow: 1;">
-                    <input type="file" id="ocr-file-input" accept="image/*" style="display: none;" onchange="handleOcrFileChange(event)">
-                    <button class="btn btn-secondary" onclick="document.getElementById('ocr-file-input').click()" title="Quét VIN từ ảnh">
-                        <i class="fas fa-camera"></i>
-                    </button>
-                </div>
-                <div id="ocr-status" style="font-size: 12px; margin-top: 8px; color: var(--primary-color); height: 1.2em;"></div>
+                <input type="text" id="newCarVin" maxlength="17" placeholder="Nhập 17 ký tự VIN..." style="width: 100%;">
             </div>
         </div>
         <div class="modal-footer">
@@ -2436,13 +2511,21 @@ case 'actionCenter': renderActionCenterView(); break;
 
     function renderKhoXeView() {
     const data = appState.data.khoxe || [];
+    const daghepData = appState.data.daghep || [];
     const { searchTerm, filters, sortKey, sortDir } = appState.khoXe;
+
+    // Tạo một Map để tra cứu nhanh từ VIN -> Số đơn hàng
+    const vinToSoDonHangMap = new Map();
+    daghepData.forEach(order => {
+        if (order.VIN && order['Số đơn hàng']) {
+            vinToSoDonHangMap.set(order.VIN, order['Số đơn hàng']);
+        }
+    });
 
     const carModels = [...new Set(data.map(item => item['Dòng xe']))].sort();
     const carVersions = [...new Set(data.map(item => item['Phiên bản']))].sort();
     const carStatuses = [...new Set(data.map(item => item['Trạng thái']))].sort();
 
-    // [SỬA ĐỔI] Rút ngắn văn bản và chiều rộng của các trường lọc
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
@@ -2474,8 +2557,6 @@ case 'actionCenter': renderActionCenterView(); break;
                         ${carStatuses.map(status => `<option value="${status}" ${filters.trangThai === status ? 'selected' : ''}>${status}</option>`).join('')}
                     </select>
                 </div>
-                
-                
             </div>
         </div>`;
     
@@ -2497,7 +2578,37 @@ case 'actionCenter': renderActionCenterView(); break;
     }
     
     sortData(filteredData, sortKey, sortDir);
-    
+
+    // *** BẮT ĐẦU PHẦN NÂNG CẤP ***
+    // Tạo một bản sao sâu của dữ liệu để sửa đổi mà không ảnh hưởng đến state gốc
+    const dataWithLinks = JSON.parse(JSON.stringify(filteredData));
+
+    // Lặp qua dữ liệu đã lọc để thêm link vào cột Trạng thái
+    dataWithLinks.forEach(car => {
+        const trangThai = car['Trạng thái'];
+        const vin = car['VIN'];
+
+        if (trangThai.toLowerCase() === 'đã ghép' && vinToSoDonHangMap.has(vin)) {
+            const soDonHang = vinToSoDonHangMap.get(vin);
+            
+            // Thay thế giá trị text của cột "Trạng thái" bằng một thẻ <a>
+            car['Trạng thái'] = `
+                <a href="#"
+                   class="cross-view-link"
+                   data-target-view="daGhep"
+                   data-filter-value="${soDonHang}"
+                   data-highlight-id="${soDonHang}"
+                   title="Xem đơn hàng ${soDonHang}">
+                   <span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span>
+                </a>
+            `;
+        } else {
+            // Đối với các trạng thái khác, giữ nguyên huy hiệu
+            car['Trạng thái'] = `<span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span>`;
+        }
+    });
+    // *** KẾT THÚC PHẦN NÂNG CẤP ***
+
     const tableHeaders = [
         { key: 'VIN', label: 'Số VIN' }, { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản' },
         { key: 'Ngoại thất', label: 'Ngoại Thất' }, { key: 'Nội thất', label: 'Nội Thất' }, { key: 'Trạng thái', label: 'Trạng Thái' },
@@ -2510,7 +2621,8 @@ case 'actionCenter': renderActionCenterView(); break;
         ];
     };
     
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, filteredData, appState.khoXe, getActionsForRow) + `</div>`;
+    // Truyền dữ liệu đã có link vào hàm render
+    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, dataWithLinks, appState.khoXe, getActionsForRow) + `</div>`;
 }
 
 function renderChuaGhepView() {
@@ -3231,18 +3343,40 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
 }
 
-    // =================================================================
-    // SECTION 4: ACTION HANDLERS
-    // =================================================================
+    function switchView(viewName, initialFilter = null) {
+    // Nếu không có gì thay đổi và không có filter, không làm gì cả
+    if (appState.currentView === viewName && !initialFilter) return;
 
-    function switchView(viewName) {
-        if (appState.currentView === viewName && !appState.highlightedId) return;
-        appState.currentView = viewName;
-        sidebarNavEl.querySelectorAll('a').forEach(link => {
-            link.classList.toggle('active', link.getAttribute('onclick') === `switchView('${viewName}')`);
-        });
-        render();
+    appState.currentView = viewName;
+    
+    // *** BẮT ĐẦU PHẦN NÂNG CẤP ***
+    // Nếu có bộ lọc được truyền vào từ link
+    if (initialFilter) {
+        // Kiểm tra xem state cho view đích có tồn tại không
+        if (appState[viewName]) {
+            // Đặt giá trị tìm kiếm cho view đích
+            appState[viewName].searchTerm = initialFilter.value || '';
+            
+            // Đặt ID của dòng cần tô sáng
+            appState.highlightedId = initialFilter.highlightId || null;
+
+            // Bạn có thể reset các bộ lọc khác nếu muốn
+            // Ví dụ: appState[viewName].filters.dongXe = '';
+        }
+    } else {
+        // Nếu chuyển view bình thường, xóa ID cần tô sáng
+        appState.highlightedId = null;
     }
+    // *** KẾT THÚC PHẦN NÂNG CẤP ***
+
+    sidebarNavEl.querySelectorAll('a').forEach(link => {
+        link.classList.toggle('active', link.getAttribute('onclick') === `switchView('${viewName}')`);
+    });
+
+    // Gọi hàm render() tổng. Hàm này sẽ tự động đọc appState đã được cập nhật
+    // và hiển thị đúng view với dữ liệu đã được lọc và tô sáng.
+    render();
+}
     
     function handleSort(viewKey, sortKey) {
         const viewState = appState[viewKey];
@@ -3684,47 +3818,77 @@ async function submitNewCar() {
 }
 
     function updateNotifications(serverItems) {
-        if (appState.notifications.isMarkingAsRead) return;
-        const itemsForAdmin = serverItems.filter(item => item && String(item.message || '').trim() && item.createdBy !== ADMIN_IDENTIFIER);
-        const unreadCountForAdmin = itemsForAdmin.filter(item => !item.isRead).length;
-        if (JSON.stringify(appState.notifications.items) !== JSON.stringify(itemsForAdmin) || appState.notifications.unreadCount !== unreadCountForAdmin) {
-            appState.notifications.items = itemsForAdmin;
-            appState.notifications.unreadCount = unreadCountForAdmin;
-            renderNotifications();
+    if (appState.notifications.isMarkingAsRead) return;
+
+    const itemsForAdmin = serverItems.filter(item => item && String(item.message || '').trim() && item.createdBy !== ADMIN_IDENTIFIER);
+    const newUnreadCount = itemsForAdmin.filter(item => !item.isRead).length;
+
+    // [NÂNG CẤP] Kích hoạt hiệu ứng rung chuông khi có thông báo mới
+    if (newUnreadCount > appState.notifications.unreadCount) {
+        const bellIconContainer = document.querySelector('.notification-bell');
+        if (bellIconContainer) {
+            bellIconContainer.classList.add('new-notification');
+            setTimeout(() => {
+                bellIconContainer.classList.remove('new-notification');
+            }, 800); // Thời gian khớp với animation
         }
     }
 
-    function renderNotifications() {
-        if (appState.notifications.unreadCount > 0) {
-            notificationBadgeEl.textContent = appState.notifications.unreadCount;
-            notificationBadgeEl.style.display = 'block';
-        } else {
-            notificationBadgeEl.style.display = 'none';
-        }
-        notificationListEl.innerHTML = '';
-        const visibleItems = appState.notifications.items.filter(item => item && item.message && String(item.message).trim() !== '');
-        if (visibleItems.length === 0) {
-            notificationListEl.innerHTML = '<li style="text-align: center; padding: 20px; color: #888;">Không có thông báo mới.</li>';
-            return;
-        }
-        visibleItems.forEach(item => {
-            const li = document.createElement('li');
-            li.className = `notification-item ${item.type || 'info'}`;
-            if (item.targetView && item.targetId) {
-                li.dataset.view = item.targetView;
-                li.dataset.id = item.targetId;
-            }
-            const iconMap = { success: 'fa-check-circle', warning: 'fa-exclamation-triangle', danger: 'fa-times-circle', info: 'fa-info-circle' };
-            const iconClass = iconMap[item.type] || 'fa-info-circle';
-            li.innerHTML = `
-                <div class="icon"><i class="fas ${iconClass}"></i></div>
-                <div class="content">
-                    <div class="message">${escapeHtml(item.message)}</div>
-                    <div class="time">${formatTimeAgo(item.timestamp)}</div>
-                </div>`;
-            notificationListEl.appendChild(li);
-        });
+    // Cập nhật trạng thái và render lại như cũ
+    if (JSON.stringify(appState.notifications.items) !== JSON.stringify(itemsForAdmin) || appState.notifications.unreadCount !== newUnreadCount) {
+        appState.notifications.items = itemsForAdmin;
+        appState.notifications.unreadCount = newUnreadCount;
+        renderNotifications();
     }
+}
+
+    function renderNotifications() {
+    // Cập nhật huy hiệu số
+    if (appState.notifications.unreadCount > 0) {
+        notificationBadgeEl.textContent = appState.notifications.unreadCount;
+        notificationBadgeEl.style.display = 'block';
+    } else {
+        notificationBadgeEl.style.display = 'none';
+    }
+
+    notificationListEl.innerHTML = '';
+    const visibleItems = appState.notifications.items.filter(item => item && item.message && String(item.message).trim() !== '');
+    const footer = document.querySelector('.notification-footer');
+
+    // [NÂNG CẤP] Giao diện trạng thái rỗng
+    if (visibleItems.length === 0) {
+        notificationListEl.innerHTML = `
+            <div class="notification-empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <p>Bạn không có thông báo nào.</p>
+            </div>`;
+        if (footer) footer.style.display = 'none'; // Ẩn footer nếu không có thông báo
+        return;
+    }
+    
+    if (footer) footer.style.display = 'flex'; // Hiện footer nếu có
+
+    visibleItems.forEach(item => {
+        const li = document.createElement('li');
+        // [NÂNG CẤP] Thêm class 'unread' nếu chưa đọc
+        const isUnread = !item.isRead;
+        li.className = `notification-item ${item.type || 'info'} ${isUnread ? 'unread' : ''}`;
+        
+        if (item.targetView && item.targetId) {
+            li.dataset.view = item.targetView;
+            li.dataset.id = item.targetId;
+        }
+        const iconMap = { success: 'fa-check-circle', warning: 'fa-exclamation-triangle', danger: 'fa-times-circle', info: 'fa-info-circle' };
+        const iconClass = iconMap[item.type] || 'fa-info-circle';
+        li.innerHTML = `
+            <div class="icon"><i class="fas ${iconClass}"></i></div>
+            <div class="content">
+                <div class="message">${escapeHtml(item.message)}</div>
+                <div class="time">${formatTimeAgo(item.timestamp)}</div>
+            </div>`;
+        notificationListEl.appendChild(li);
+    });
+}
 
     async function toggleNotificationPanel() {
     // Đóng menu "Thao tác nhanh" (tia sét) nếu nó đang mở
@@ -3733,31 +3897,61 @@ async function submitNewCar() {
         actionPanel.classList.remove('active');
     }
 
-    // Tiếp tục logic bật/tắt và xử lý thông báo như cũ
+    // Tiếp tục logic bật/tắt
     appState.notifications.isPanelOpen = !appState.notifications.isPanelOpen;
     notificationPanelEl.style.display = appState.notifications.isPanelOpen ? 'block' : 'none';
+    
+    // Logic xử lý khi mở bảng thông báo
     if (appState.notifications.isPanelOpen && appState.notifications.unreadCount > 0) {
-        const previousUnreadCount = appState.notifications.unreadCount;
-        appState.notifications.isMarkingAsRead = true;
-        appState.notifications.unreadCount = 0;
-        renderNotifications(); 
-        try {
-            const response = await fetch(API_URL, { 
-                method: 'POST', 
-                body: new URLSearchParams({ action: 'markAllNotificationsAsRead' }) 
-            });
-            if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
-            const result = await response.json();
-            if (result.status !== 'SUCCESS') throw new Error(result.message || "Backend failed to mark as read.");
-            appState.notifications.items.forEach(item => item.isRead = true);
-        } catch (err) {
-            console.error("Could not mark notifications as read:", err);
-            appState.notifications.unreadCount = previousUnreadCount;
-            renderNotifications();
-            showToast('Lỗi khi đánh dấu đã đọc.', 'error');
-        } finally {
-            appState.notifications.isMarkingAsRead = false;
+        
+        // [NÂNG CẤP] Cung cấp phản hồi tức thì cho người dùng
+        document.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.classList.remove('unread');
+        });
+        notificationBadgeEl.style.display = 'none';
+
+        // Gửi yêu cầu đánh dấu đã đọc lên server dưới nền
+        markAllAsReadFromButton();
+    }
+}
+/**
+ * [HÀM MỚI] Đánh dấu tất cả thông báo là đã đọc, được gọi từ nhiều nơi.
+ * @param {Event} [event] - Sự kiện click (tùy chọn) để ngăn chặn hành vi mặc định.
+ */
+async function markAllAsReadFromButton(event) {
+    if(event) event.stopPropagation(); // Ngăn các sự kiện click khác
+
+    // Nếu không có gì để đánh dấu, thì không làm gì cả
+    if(appState.notifications.unreadCount === 0) return;
+
+    const previousUnreadCount = appState.notifications.unreadCount;
+    const previousItemsState = JSON.parse(JSON.stringify(appState.notifications.items));
+
+    // Cập nhật trạng thái ngay lập tức trên giao diện
+    appState.notifications.isMarkingAsRead = true;
+    appState.notifications.unreadCount = 0;
+    appState.notifications.items.forEach(item => item.isRead = true);
+    renderNotifications(); // Render lại với trạng thái mới
+
+    try {
+        const response = await fetch(API_URL, { 
+            method: 'POST', 
+            body: new URLSearchParams({ action: 'markAllNotificationsAsRead' }) 
+        });
+        const result = await response.json();
+        if (!response.ok || result.status !== 'SUCCESS') {
+           throw new Error(result.message || "Lỗi server");
         }
+        // Thành công: không cần làm gì thêm vì giao diện đã được cập nhật
+    } catch (err) {
+        console.error("Lỗi khi đánh dấu đã đọc:", err);
+        // Nếu thất bại, khôi phục lại trạng thái cũ trên giao diện
+        appState.notifications.unreadCount = previousUnreadCount;
+        appState.notifications.items = previousItemsState;
+        renderNotifications(); // Render lại với trạng thái đã khôi phục
+        showToast('Không thể đánh dấu đã đọc. Vui lòng thử lại.', 'error');
+    } finally {
+        appState.notifications.isMarkingAsRead = false;
     }
 }
 
@@ -4046,7 +4240,31 @@ function formatCustomDateTime(dateValue) {
             if (document.visibilityState === 'hidden') stopPolling();
             else startPolling();
         });
+const mainContainer = document.getElementById('main-container');
+    if (mainContainer) {
+        mainContainer.addEventListener('click', function(event) {
+            // Tìm phần tử cha gần nhất có class 'cross-view-link'
+            const link = event.target.closest('.cross-view-link');
 
+            // Nếu tìm thấy một link
+            if (link) {
+                event.preventDefault(); // Ngăn trình duyệt chuyển trang
+
+                // Lấy thông tin từ các data-attributes
+                const targetView = link.dataset.targetView;
+                const filterValue = link.dataset.filterValue;
+                const highlightId = link.dataset.highlightId;
+
+                // Nếu có đủ thông tin, thực hiện chuyển view
+                if (targetView && filterValue) {
+                    switchView(targetView, {
+                        value: filterValue,
+                        highlightId: highlightId 
+                    });
+                }
+            }
+        });
+    }
         const notificationBellEl = document.querySelector('.notification-bell');
         if (notificationBellEl) {
             // Chỉ cần gọi hàm toggle, vì logic đóng popup kia đã nằm trong hàm toggle rồi
@@ -4352,54 +4570,7 @@ function handleResendEmail(order, btnElement) {
         'btn-primary' // Sử dụng nút màu xanh dương
     );
 }
-async function handleOcrFileChange(event) {
-    const fileInput = event.target;
-    const statusEl = document.getElementById('ocr-status');
-    const vinInput = document.getElementById('newCarVin');
 
-    if (fileInput.files.length === 0) {
-        statusEl.textContent = '';
-        return;
-    }
-
-    const file = fileInput.files[0];
-    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang chuẩn bị nhận diện...';
-
-    try {
-        const worker = await Tesseract.createWorker('eng', 1, {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    statusEl.textContent = `Đang nhận diện... ${Math.round(m.progress * 100)}%`;
-                }
-            }
-        });
-        
-        const { data: { text } } = await worker.recognize(file);
-        await worker.terminate();
-
-        // Regex để tìm chuỗi 17 ký tự (không chứa I, O, Q) - chuẩn VIN
-        const vinRegex = /[A-HJ-NPR-Z0-9]{17}/gi;
-        const cleanedText = text.replace(/\s+/g, ''); // Xóa hết khoảng trắng
-        const matches = cleanedText.match(vinRegex);
-
-        if (matches && matches.length > 0) {
-            const foundVin = matches[0].toUpperCase();
-            vinInput.value = foundVin;
-            statusEl.innerHTML = `<i class="fas fa-check-circle" style="color: #28a745;"></i> Đã tìm thấy VIN: ${foundVin}`;
-            showToast('Đã quét và điền số VIN thành công!', 'success');
-        } else {
-            statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Không tìm thấy số VIN hợp lệ trong ảnh.';
-            showToast('Không tìm thấy số VIN hợp lệ trong ảnh. Vui lòng thử lại với ảnh rõ nét hơn hoặc nhập tay.', 'warning', 6000);
-        }
-    } catch (error) {
-        console.error('Lỗi OCR:', error);
-        statusEl.textContent = 'Đã có lỗi xảy ra khi nhận diện.';
-        showToast('Lỗi khi nhận diện hình ảnh.', 'error');
-    } finally {
-        // Đặt lại input file để người dùng có thể chọn lại cùng một file nếu muốn
-        fileInput.value = '';
-    }
-}
 async function handleShowTimeline() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
     const lookupInput = document.getElementById('lookupModalInput');
@@ -4803,8 +4974,7 @@ function toggleRowActions(event) {
     menu.classList.toggle('active');
 }
 
-// Thêm đoạn này vào bên trong hàm sự kiện DOMContentLoaded
-// để xử lý việc click ra ngoài sẽ đóng menu.
+
 document.addEventListener('DOMContentLoaded', () => {
     // ... (các code cũ của bạn)
 
