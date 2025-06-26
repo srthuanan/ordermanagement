@@ -5511,7 +5511,7 @@ function renderHistoryTable(dataToRender) {
         
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
-        const isOwner = row["Tên tư vấn bán hàng"] === currentUser;
+        const isOwner = normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser);
 
         let dropdownItemsHtml = '';
         let hasActions = false;
