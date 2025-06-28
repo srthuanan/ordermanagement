@@ -1987,6 +1987,26 @@ body.dark-mode .notification-empty-state i {
     color: var(--no-data-text-color-light);
     font-weight: 500;
 }
+/* === CSS MỚI: LỚP PHỦ CHO SIDEBAR DI ĐỘNG === */
+#sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Nền đen mờ */
+    z-index: 1000; /* Nằm dưới sidebar (z-index: 1001) nhưng trên mọi thứ khác */
+
+    /* Hiệu ứng mờ dần */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
     </style>
 </head>
 <body data-theme="light" class="doraemon-theme">
@@ -2005,6 +2025,8 @@ body.dark-mode .notification-empty-state i {
         </ul>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
     </aside>
+
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
 
     <div class="main-container" id="main-container">
         <header class="navbar">
@@ -2273,8 +2295,14 @@ body.dark-mode .notification-empty-state i {
     }
 
     function toggleMobileSidebar() {
-    document.getElementById("sidebar").classList.toggle("open");
-    document.body.classList.toggle('mobile-sidebar-open');
+    // Lấy các phần tử cần thiết
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+
+    // Bật/tắt các lớp active
+    sidebar.classList.toggle("open");
+    overlay.classList.toggle("active");
+    document.body.classList.toggle('mobile-sidebar-open'); // Giữ lại để khóa cuộn
 }
 function toggleActionMenu(event) {
     event.stopPropagation(); // Ngăn sự kiện click lan ra document
