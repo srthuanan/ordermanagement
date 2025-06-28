@@ -629,13 +629,33 @@ body.dark-mode .notification-item:hover { background: rgba(255,255,255,0.05); }
 .notification-item.danger .icon { color: #dc3545; }
 
 /* Responsive */
+/* Thêm quy tắc này vào cuối file CSS của bạn để khóa cuộn trang */
+body.mobile-sidebar-open {
+    overflow: hidden;
+}
+
 @media (max-width: 900px) {
-    .sidebar { transform: translateX(-100%); position: fixed; z-index: 1001; }
-    .sidebar.open { transform: translateX(0); }
-    .main-container { margin-left: 0; width: 100%; }
-    .navbar { left: 0; padding-left: 55px; /* space for hamburger */ }
-    .toggle-btn { display: none; }
-    .mobile-menu-btn { display: block; }
+    .sidebar {
+        transform: translateX(-100%);
+        /* Không cần khai báo lại position và z-index vì đã có ở style gốc */
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    .navbar {
+        left: 0;
+        padding-left: 55px; /* Khoảng trống cho nút hamburger */
+    }
+    .toggle-btn {
+        display: none;
+    }
+    .mobile-menu-btn {
+        display: block;
+    }
 }
 
 @media (max-width: 767px) {
@@ -2253,8 +2273,9 @@ body.dark-mode .notification-empty-state i {
     }
 
     function toggleMobileSidebar() {
-        document.getElementById("sidebar").classList.toggle("open");
-    }
+    document.getElementById("sidebar").classList.toggle("open");
+    document.body.classList.toggle('mobile-sidebar-open');
+}
 function toggleActionMenu(event) {
     event.stopPropagation(); // Ngăn sự kiện click lan ra document
 
@@ -3509,20 +3530,23 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
 }
     
     function handleApproveRequest(order, btnElement) {
-        const orderNumber = order['SỐ ĐƠN HÀNG'];
-        showConfirmationModal(
-            'Phê Duyệt Yêu Cầu', 
-            `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}?`, 
-            () => {
-                performActionOnRow({
-                    action: 'approveSelectedInvoiceRequest',
-                    params: { orderNumber },
-                    buttonElement: btnElement
-                });
-            },
-            'btn-success'
-        );
-    }
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    showConfirmationModal(
+        'Phê Duyệt Yêu Cầu',
+        `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}?`,
+        async (modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
+                action: 'approveSelectedInvoiceRequest',
+                params: { orderNumber },
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
+            });
+            if (success) {
+                closeModal('confirmationModal'); // Đóng modal sau khi thành công
+            }
+        },
+        'btn-success'
+    );
+}
 
     function handleRequestSupplement(order, btnElement) {
         const orderNumber = order['SỐ ĐƠN HÀNG'];
@@ -3647,20 +3671,18 @@ async function submitNewCar() {
     function handleDeleteCar() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
-        'Xóa Xe Khỏi Kho', 
-        'Vui lòng nhập số VIN của xe cần xóa khỏi kho.', 
-        'Số VIN', 
-        // Callback mới
-        (vin, modalButton) => { 
-            // ĐÓNG MODAL NGAY LẬP TỨC
-            closeModal('confirmationModal');
-
-            // Thực thi hành động dưới nền
-            performActionOnRow({
+        'Xóa Xe Khỏi Kho',
+        'Vui lòng nhập số VIN của xe cần xóa khỏi kho.',
+        'Số VIN',
+        async (vin, modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
                 action: 'deleteCarFromStockLogic',
                 params: { vinToDelete: vin.toUpperCase() },
-                buttonElement: null // Không cần hiển thị spinner trên nút nào cả, vì hành động đến từ menu
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
             });
+            if (success) {
+                closeModal('confirmationModal');
+            }
         }
     );
 }
@@ -3668,19 +3690,18 @@ async function submitNewCar() {
     function handleRestoreCar() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
-        'Phục Hồi Xe Vào Kho', 
-        'Vui lòng nhập số VIN của xe cần phục hồi.', 
+        'Phục Hồi Xe Vào Kho',
+        'Vui lòng nhập số VIN của xe cần phục hồi.',
         'Số VIN',
-        (vin, modalButton) => {
-            // ĐÓNG MODAL NGAY LẬP TỨC
-            closeModal('confirmationModal');
-            
-            // Thực thi hành động dưới nền
-            performActionOnRow({
+        async (vin, modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
                 action: 'restoreCarToStockLogic',
                 params: { vinToRestore: vin.toUpperCase() },
-                buttonElement: null
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
             });
+            if (success) {
+                closeModal('confirmationModal');
+            }
         }
     );
 }
@@ -3688,43 +3709,40 @@ async function submitNewCar() {
     function handleDeleteOrder() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
     showPromptModal(
-        'Xóa Đơn Hàng Vĩnh Viễn', 
-        'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:', 
-        'Số đơn hàng', 
-        (orderNumber, modalButton) => {
-            // ĐÓNG MODAL NGAY LẬP TỨC
-            closeModal('confirmationModal');
-            
-            // Thực thi hành động dưới nền
-            performActionOnRow({
+        'Xóa Đơn Hàng Vĩnh Viễn',
+        'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:',
+        'Số đơn hàng',
+        async (orderNumber, modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
                 action: 'deleteOrderLogic',
                 params: { orderNumber: orderNumber },
-                buttonElement: null
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
             });
+            if (success) {
+                closeModal('confirmationModal');
+            }
         }
     );
 }
     
     function handleArchiveOrders() {
- document.getElementById('action-dropdown-panel').classList.remove('active');
-        showConfirmationModal(
-            'Lưu Trữ Hóa Đơn', 
-            'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.', 
-            async () => {
-                 const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-                await performActionOnRow({
-                    action: 'archiveInvoicedOrdersMonthly',
-                    params: {},
-                    buttonElement: confirmBtn
-                });
-            },
-            'btn-primary'
-        );
-    }
-    
-    // =================================================================
-    // SECTION 5: UTILITIES AND HELPERS
-    // =================================================================
+    document.getElementById('action-dropdown-panel').classList.remove('active');
+    showConfirmationModal(
+        'Lưu Trữ Hóa Đơn',
+        'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.',
+        async (modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
+                action: 'archiveInvoicedOrdersMonthly',
+                params: {},
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
+            });
+            if (success) {
+                closeModal('confirmationModal');
+            }
+        },
+        'btn-primary'
+    );
+}
 
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -3763,24 +3781,25 @@ async function submitNewCar() {
 }
 
     function showConfirmationModal(title, message, onConfirmCallback, confirmButtonClass = 'btn-danger') {
-        document.getElementById('confirmationModalTitle').textContent = title;
-        document.getElementById('confirmationModalMessage').innerHTML = message; // Use innerHTML for potential bold tags
-        
-        const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-        confirmBtn.className = `btn ${confirmButtonClass}`;
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        
-        newConfirmBtn.addEventListener('click', () => { 
-            // [SỬA ĐỔI] Đóng modal ngay lập tức
-            closeModal('confirmationModal'); 
-            // Sau đó mới thực thi hành động callback
-            onConfirmCallback(); 
-        });
+    document.getElementById('confirmationModalTitle').textContent = title;
+    document.getElementById('confirmationModalMessage').innerHTML = message; // Sử dụng innerHTML cho các tag như <strong>
 
-        document.getElementById('confirmationModalInputContainer').style.display = 'none';
-        openModal('confirmationModal');
-    }
+    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
+    confirmBtn.className = `btn ${confirmButtonClass}`;
+
+    // Tạo một bản sao của nút để xóa các sự kiện cũ
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+    // Gán sự kiện mới. Hàm callback sẽ nhận nút bấm làm đối số.
+    // QUAN TRỌNG: Không còn đóng modal ở đây nữa.
+    newConfirmBtn.addEventListener('click', () => {
+        onConfirmCallback(newConfirmBtn); // Truyền nút bấm vào callback
+    });
+
+    document.getElementById('confirmationModalInputContainer').style.display = 'none';
+    openModal('confirmationModal');
+}
 
     function showPromptModal(title, message, inputLabel, onConfirmCallback) {
     document.getElementById('confirmationModalTitle').textContent = title;
@@ -3795,20 +3814,23 @@ async function submitNewCar() {
 
     const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
     confirmBtn.className = 'btn btn-primary';
+
+    // Tạo bản sao của nút để xóa sự kiện cũ
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
-    // Gán sự kiện onclick mới. Hàm callback giờ đây là async và sẽ quản lý trạng thái của nút.
+    // Gán sự kiện onclick mới.
+    // QUAN TRỌNG: Việc đóng modal sẽ được xử lý bên trong callback.
     newConfirmBtn.onclick = async () => {
         const inputValue = inputEl.value.trim();
-        if (!inputValue) { 
-            showToast(`Vui lòng nhập ${inputLabel}.`, 'warning'); 
-            return; 
+        if (!inputValue) {
+            showToast(`Vui lòng nhập ${inputLabel}.`, 'warning');
+            return;
         }
-        // Gọi callback và truyền cả giá trị nhập vào và chính nút bấm này để hiển thị spinner
+        // Gọi callback và truyền giá trị nhập vào và chính nút bấm này
         await onConfirmCallback(inputValue, newConfirmBtn);
     };
-    
+
     openModal('confirmationModal');
     inputEl.focus();
 }
@@ -4534,34 +4556,29 @@ function importFromExcelModal() {
     };
     reader.readAsBinaryString(modalSelectedFile);
 }
-/**
- * [HÀM MỚI] Xử lý khi nhấn nút "Chờ Ký Hóa Đơn".
- */
+
 function handlePendingSignature(order, btnElement) {
     const orderNumber = order['SỐ ĐƠN HÀNG'];
     showConfirmationModal(
         'Xác Nhận Chuyển Trạng Thái',
         `Bạn có chắc muốn chuyển đơn hàng <strong>${orderNumber}</strong> sang trạng thái "Chờ ký hóa đơn"?<br>Hành động này sẽ ghi nhận ngày xuất hóa đơn là hôm nay.`,
-        () => {
-            performActionOnRow({
+        async (modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
                 action: 'markAsPendingSignature',
                 params: { orderNumber: orderNumber },
-                buttonElement: btnElement
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
             });
+            if (success) {
+                closeModal('confirmationModal');
+            }
         },
         'btn-primary'
     );
 }
-/**
- * [HÀM MỚI] - Xử lý sự kiện khi nhấn nút "Gửi lại Mail".
- * Mở modal xác nhận trước khi thực hiện hành động.
- * @param {object} order - Dữ liệu của dòng được chọn.
- * @param {HTMLElement} btnElement - Nút bấm đã được nhấn.
- */
 function handleResendEmail(order, btnElement) {
     const emailType = btnElement.dataset.type;
     const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
-    
+
     let emailTypeName = "thông báo";
     if (emailType === 'match_success') emailTypeName = "thông báo GHÉP XE";
     if (emailType === 'invoice_issued') emailTypeName = "HÓA ĐƠN ĐÃ PHÁT HÀNH";
@@ -4570,17 +4587,20 @@ function handleResendEmail(order, btnElement) {
     showConfirmationModal(
         'Xác Nhận Gửi Lại Email',
         `Bạn có chắc chắn muốn gửi lại ${emailTypeName} cho đơn hàng <strong>${orderNumber}</strong>?`,
-        () => {
-            performActionOnRow({
+        async (modalButton) => { // Nhận modalButton từ callback
+            const { success } = await performActionOnRow({
                 action: 'resendEmail',
-                params: { 
+                params: {
                     orderNumber: orderNumber,
-                    emailType: emailType 
+                    emailType: emailType
                 },
-                buttonElement: btnElement
+                buttonElement: modalButton // Hiển thị spinner trên nút của modal
             });
+            if (success) {
+                closeModal('confirmationModal');
+            }
         },
-        'btn-primary' // Sử dụng nút màu xanh dương
+        'btn-primary'
     );
 }
 
