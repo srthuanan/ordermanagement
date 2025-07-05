@@ -2007,6 +2007,62 @@ body.dark-mode .notification-empty-state i {
     opacity: 1;
     visibility: visible;
 }
+/* === CSS MỚI: Cho phép copy dữ liệu khi hover === */
+.copyable-field {
+    position: relative;
+    cursor: pointer;
+    display: flex; /* Dùng flex để căn chỉnh nội dung và icon */
+    align-items: center;
+    width: 100%;
+    padding: 2px 0;
+}
+
+.copyable-field .copy-text {
+    flex-grow: 1; /* Cho phép text chiếm hết không gian còn lại */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.copyable-field .copy-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+    padding: 5px;
+    font-size: 13px; /* Điều chỉnh kích thước icon */
+    background-color: var(--background-light); /* Thêm nền để không bị chữ đè lên */
+}
+
+body.dark-mode .copyable-field .copy-icon {
+    color: var(--secondary-color);
+    background-color: var(--background-dark);
+}
+
+.copyable-field:hover .copy-icon {
+    opacity: 1; /* Hiện icon khi hover */
+}
+
+.copy-icon:hover {
+    color: var(--primary-color-lighter); /* Đổi màu icon khi hover */
+}
+
+.copy-icon:active {
+    transform: translateY(-50%) scale(0.9); /* Hiệu ứng bấm nút */
+}
+/* === CSS MỚI: Thêm kiểu toast tinh tế hơn === */
+.toast.toast-subtle {
+    background-color: #2c3e50; /* Màu xám đen giống tooltip */
+    color: #ffffff;
+    padding: 8px 16px;       /* Giảm padding cho nhỏ gọn */
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 16px;     /* Bo tròn thành hình con nhộng */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
     </style>
 </head>
 <body data-theme="light" class="doraemon-theme">
@@ -2559,7 +2615,6 @@ case 'actionCenter': renderActionCenterView(); break;
     const daghepData = appState.data.daghep || [];
     const { searchTerm, filters, sortKey, sortDir } = appState.khoXe;
 
-    // Tạo một Map để tra cứu nhanh từ VIN -> Số đơn hàng
     const vinToSoDonHangMap = new Map();
     daghepData.forEach(order => {
         if (order.VIN && order['Số đơn hàng']) {
@@ -2624,19 +2679,13 @@ case 'actionCenter': renderActionCenterView(); break;
     
     sortData(filteredData, sortKey, sortDir);
 
-    // *** BẮT ĐẦU PHẦN NÂNG CẤP ***
-    // Tạo một bản sao sâu của dữ liệu để sửa đổi mà không ảnh hưởng đến state gốc
     const dataWithLinks = JSON.parse(JSON.stringify(filteredData));
 
-    // Lặp qua dữ liệu đã lọc để thêm link vào cột Trạng thái
     dataWithLinks.forEach(car => {
         const trangThai = car['Trạng thái'];
         const vin = car['VIN'];
-
         if (trangThai.toLowerCase() === 'đã ghép' && vinToSoDonHangMap.has(vin)) {
             const soDonHang = vinToSoDonHangMap.get(vin);
-            
-            // Thay thế giá trị text của cột "Trạng thái" bằng một thẻ <a>
             car['Trạng thái'] = `
                 <a href="#"
                    class="cross-view-link"
@@ -2645,14 +2694,11 @@ case 'actionCenter': renderActionCenterView(); break;
                    data-highlight-id="${soDonHang}"
                    title="Xem đơn hàng ${soDonHang}">
                    <span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span>
-                </a>
-            `;
+                </a>`;
         } else {
-            // Đối với các trạng thái khác, giữ nguyên huy hiệu
             car['Trạng thái'] = `<span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span>`;
         }
     });
-    // *** KẾT THÚC PHẦN NÂNG CẤP ***
 
     const tableHeaders = [
         { key: 'VIN', label: 'Số VIN' }, { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản' },
@@ -2662,12 +2708,16 @@ case 'actionCenter': renderActionCenterView(); break;
 
     const getActionsForRow = (row) => {
         return [
-            { label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
+            { icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }
         ];
     };
     
-    // Truyền dữ liệu đã có link vào hàm render
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, dataWithLinks, appState.khoXe, getActionsForRow) + `</div>`;
+    // **THAY ĐỔI QUAN TRỌNG Ở ĐÂY**
+    // Thêm một mảng chứa tên các cột bạn muốn có chức năng sao chép
+    const copyableFieldsForKhoXe = ['VIN', 'Mã DMS'];
+
+    // Truyền mảng này vào hàm renderDataTable
+    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, dataWithLinks, appState.khoXe, getActionsForRow, copyableFieldsForKhoXe) + `</div>`;
 }
 
 function renderChuaGhepView() {
@@ -3036,7 +3086,7 @@ function renderHuyGhepView() {
 
     
 // Thay thế toàn bộ hàm renderDataTable cũ bằng hàm này
-function renderDataTable(id, headers, rows, viewState = null, actions = null) {
+function renderDataTable(id, headers, rows, viewState = null, actions = null, copyableFields = []) {
     if (!rows || rows.length === 0) {
         return `
     <div class="empty-state-container">
@@ -3049,6 +3099,18 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
     </div>
 `;
     }
+
+    const createCopyableHtml = (displayValue, copyValue) => {
+        const valueToCopy = copyValue || displayValue;
+        if (!valueToCopy || valueToCopy === 'N/A') {
+            return `<div class="copyable-field"><span class="copy-text">${escapeHtml(displayValue) || 'N/A'}</span></div>`;
+        }
+        const valueForJs = escapeHtml(String(valueToCopy)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<div class="copyable-field" title="Click icon để sao chép">
+                    <span class="copy-text">${escapeHtml(displayValue)}</span>
+                    <i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i>
+                </div>`;
+    };
     
     const hasActions = typeof actions === 'function' || (Array.isArray(actions) && actions.length > 0);
     
@@ -3074,11 +3136,19 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         const cellsHTML = headers.map(header => {
             let cellValue = row[header.key] || '';
             const dateKeys = ['Thời gian nhập', 'Thời gian ghép', 'Thời gian hủy', 'Ngày nhập', 'Ngày cọc', 'NGÀY CỌC', 'Ngày xuất hóa đơn', 'NGÀY XUẤT HÓA ĐƠN'];
+            
             if (dateKeys.includes(header.key)) {
                 cellValue = formatCustomDateTime(cellValue);
             }
+            
+            if (copyableFields.includes(header.key)) {
+                 return `<td data-label="${header.label}">${createCopyableHtml(cellValue, cellValue)}</td>`;
+            }
 
             if (['Trạng thái', 'Kết quả', 'Trạng thái xử lý'].includes(header.key)) {
+                if (String(cellValue).startsWith('<a') || String(cellValue).startsWith('<span')) {
+                    return `<td data-label="${header.label}">${cellValue}</td>`;
+                }
                 return `<td data-label="${header.label}"><span class="status-badge ${getStatusBadgeClass(cellValue)}">${cellValue}</span></td>`;
             }
 
@@ -3088,7 +3158,6 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         let actionsHTML = '';
         if (hasActions) {
             let actionButtons = (typeof actions === 'function') ? actions(row) : actions;
-            
             actionsHTML = renderRowActionsDropdown(actionButtons, row);
         }
         
@@ -3109,7 +3178,7 @@ function renderDataTable(id, headers, rows, viewState = null, actions = null) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
+                const button = event.target.closest('a[data-action]');
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -3142,6 +3211,18 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
 `;
     }
     
+    const createCopyableHtml = (displayValue, copyValue) => {
+        const valueToCopy = copyValue || displayValue;
+        if (!valueToCopy || valueToCopy === 'N/A') {
+            return `<div class="copyable-field"><span class="copy-text">${escapeHtml(displayValue) || 'N/A'}</span></div>`;
+        }
+        const valueForJs = escapeHtml(String(valueToCopy)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<div class="copyable-field" title="Click icon để sao chép">
+                    <span class="copy-text">${escapeHtml(displayValue)}</span>
+                    <i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i>
+                </div>`;
+    };
+
     const newHeaders = [
         'Khách Hàng & Đơn Hàng', 'Thông Số Xe', 
         'Thông Số Kỹ Thuật', 'Thông Tin Thêm', 'Ngày Tháng', 
@@ -3155,23 +3236,20 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const isHighlighted = rowId && rowId === appState.highlightedId;
         const highlightClass = isHighlighted ? 'highlight-row' : '';
 
-        const tenKH = escapeHtml(row['TÊN KHÁCH HÀNG']);
-        const soDH = escapeHtml(row['SỐ ĐƠN HÀNG']);
-        const tvbh = escapeHtml(row['TƯ VẤN BÁN HÀNG']);
-        const dongXe = escapeHtml(row['DÒNG XE']);
-        const phienBan = escapeHtml(row['PHIÊN BẢN']);
-        const ngoaiThat = escapeHtml(row['NGOẠI THẤT']);
-        const noiThat = escapeHtml(row['NỘI THẤT']);
-        const soVin = escapeHtml(row['SỐ VIN']);
-        const soDongCo = escapeHtml(row['SỐ ĐỘNG CƠ']);
-        const chinhSach = escapeHtml(row['CHÍNH SÁCH']);
-        const poPin = escapeHtml(row['PO PIN']);
-        
-        // === THAY ĐỔI TẠI ĐÂY ===
+        // Dữ liệu thô
+        const tenKH = row['TÊN KHÁCH HÀNG'];
+        const soDH = row['SỐ ĐƠN HÀNG'];
+        const tvbh = row['TƯ VẤN BÁN HÀNG'];
+        const dongXe = row['DÒNG XE'];
+        const phienBan = row['PHIÊN BẢN'];
+        const ngoaiThat = row['NGOẠI THẤT'];
+        const noiThat = row['NỘI THẤT'];
+        const soVin = row['SỐ VIN'];
+        const soDongCo = row['SỐ ĐỘNG CƠ'];
+        const chinhSach = row['CHÍNH SÁCH'];
+        const poPin = row['PO PIN'];
         const ngayCoc = formatCustomDateTime(row['NGÀY CỌC']);
         const ngayXHD = formatCustomDateTime(row['NGÀY XUẤT HÓA ĐƠN']);
-        // === KẾT THÚC THAY ĐỔI ===
-
         const trangThai = row['Trạng thái xử lý'] || '';
         const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
 
@@ -3180,11 +3258,32 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
 
         return `
             <tr id="row-${rowId}" class="${highlightClass}">
-                <td data-label="Khách Hàng & Đơn Hàng"><div class="main-info">${tenKH || 'N/A'}</div><div class="sub-info"><span class="id-tag">${soDH || 'N/A'}</span><br>TVBH: ${tvbh || 'N/A'}</div></td>
-                <td data-label="Thông Số Xe"><div class="main-info">${dongXe || 'N/A'} - ${phienBan || 'N/A'}</div><div class="sub-info">Ngoại thất: ${ngoaiThat || 'N/A'}<br>Nội thất: ${noiThat || 'N/A'}</div></td>
-                <td data-label="Thông Số Kỹ Thuật"><div class="main-info">VIN: <span class="id-tag">${soVin || 'N/A'}</span></div><div class="sub-info">SĐC: ${soDongCo || 'N/A'}</div></td>
-                <td data-label="Thông Tin Thêm"><div class="main-info">CS: ${chinhSach || 'N/A'}</div><div class="sub-info">PO Pin: ${poPin || 'N/A'}</div></td>
-                <td data-label="Ngày Tháng"><div class="main-info">Ngày cọc: ${ngayCoc}</div><div class="sub-info">Ngày XHĐ: ${ngayXHD}</div></td>
+                <td data-label="Khách Hàng & Đơn Hàng">
+                    <div class="main-info">${createCopyableHtml(tenKH, tenKH)}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml(soDH, soDH)}
+                        ${createCopyableHtml(tvbh, tvbh)}
+                    </div>
+                </td>
+                <td data-label="Thông Số Xe">
+                    <div class="main-info">${createCopyableHtml(dongXe + ' - ' + phienBan, dongXe + ' - ' + phienBan)}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml('NT: ' + ngoaiThat, ngoaiThat)}
+                        ${createCopyableHtml('NTh: ' + noiThat, noiThat)}
+                    </div>
+                </td>
+                <td data-label="Thông Số Kỹ Thuật">
+                    <div class="main-info">${createCopyableHtml('VIN: ' + soVin, soVin)}</div>
+                    <div class="sub-info">${createCopyableHtml('SĐC: ' + soDongCo, soDongCo)}</div>
+                </td>
+                <td data-label="Thông Tin Thêm">
+                     <div class="main-info">${createCopyableHtml('CS: ' + chinhSach, chinhSach)}</div>
+                     <div class="sub-info">${createCopyableHtml('PO Pin: ' + poPin, poPin)}</div>
+                </td>
+                <td data-label="Ngày Tháng">
+                    <div class="main-info">Ngày cọc: ${ngayCoc}</div>
+                    <div class="sub-info">Ngày XHĐ: ${ngayXHD}</div>
+                </td>
                 <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
                 <td data-label="Hồ sơ">${hoSoHTML}</td>
                 ${actionsHTML}
@@ -3205,7 +3304,7 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
+                const button = event.target.closest('a[data-action]');
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -3237,6 +3336,18 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
     </div>
 `;
     }
+
+    const createCopyableHtml = (displayValue, copyValue) => {
+        const valueToCopy = copyValue || displayValue;
+        if (!valueToCopy || valueToCopy === 'N/A') {
+            return `<div class="copyable-field"><span class="copy-text">${escapeHtml(displayValue) || 'N/A'}</span></div>`;
+        }
+        const valueForJs = escapeHtml(String(valueToCopy)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<div class="copyable-field" title="Click icon để sao chép">
+                    <span class="copy-text">${escapeHtml(displayValue)}</span>
+                    <i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i>
+                </div>`;
+    };
     
     const headers = ['Thông Tin Đơn Hàng', 'Yêu Cầu Xe', 'Thời Gian', 'Trạng Thái', 'Hành Động'];
     const headerHTML = headers.map(label => `<th>${label}</th>`).join('');
@@ -3246,18 +3357,15 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         const isHighlighted = rowId && rowId === appState.highlightedId;
         const highlightClass = isHighlighted ? 'highlight-row' : '';
 
-        const soDH = escapeHtml(row['Số đơn hàng']);
-        const tenKH = escapeHtml(row['Tên khách hàng']);
-        const tvbh = escapeHtml(row['Tên tư vấn bán hàng']);
-        const dongXe = escapeHtml(row['Dòng xe']);
-        const phienBan = escapeHtml(row['Phiên bản']);
-        const ngoaiThat = escapeHtml(row['Ngoại thất']);
-        const noiThat = escapeHtml(row['Nội thất']);
+        const soDH = row['Số đơn hàng'];
+        const tenKH = row['Tên khách hàng'];
+        const tvbh = row['Tên tư vấn bán hàng'];
+        const dongXe = row['Dòng xe'];
+        const phienBan = row['Phiên bản'];
+        const ngoaiThat = row['Ngoại thất'];
+        const noiThat = row['Nội thất'];
         const trangThai = escapeHtml(row['Kết quả']);
-
-        // === THAY ĐỔI TẠI ĐÂY ===
         const thoiGianYeuCau = formatCustomDateTime(row['Thời gian nhập']);
-        // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
         const actionsHTML = renderRowActionsDropdown(actionButtons, row);
@@ -3265,12 +3373,18 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         return `
             <tr id="row-${rowId}" class="${highlightClass}">
                 <td data-label="Thông Tin Đơn Hàng">
-                    <div class="main-info">${tenKH}</div>
-                    <div class="sub-info"><span class="id-tag">${soDH}</span><br>TVBH: ${tvbh}</div>
+                    <div class="main-info">${createCopyableHtml(tenKH, tenKH)}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml(soDH, soDH)}
+                        ${createCopyableHtml(tvbh, tvbh)}
+                    </div>
                 </td>
                 <td data-label="Yêu Cầu Xe">
-                    <div class="main-info">${dongXe} - ${phienBan}</div>
-                    <div class="sub-info">Ngoại thất: ${ngoaiThat}<br>Nội thất: ${noiThat}</div>
+                    <div class="main-info">${createCopyableHtml(dongXe + ' - ' + phienBan, dongXe + ' - ' + phienBan)}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml('NT: ' + ngoaiThat, ngoaiThat)}
+                        ${createCopyableHtml('NTh: ' + noiThat, noiThat)}
+                    </div>
                 </td>
                 <td data-label="Thời Gian"><div class="main-info">${thoiGianYeuCau}</div></td>
                 <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
@@ -3284,7 +3398,7 @@ function renderChuaGhepGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
+                const button = event.target.closest('a[data-action]');
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -3316,6 +3430,18 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     </div>
 `;
     }
+
+    const createCopyableHtml = (displayValue, copyValue) => {
+        const valueToCopy = copyValue || displayValue;
+        if (!valueToCopy || valueToCopy === 'N/A') {
+            return `<div class="copyable-field"><span class="copy-text">${escapeHtml(displayValue) || 'N/A'}</span></div>`;
+        }
+        const valueForJs = escapeHtml(String(valueToCopy)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<div class="copyable-field" title="Click icon để sao chép">
+                    <span class="copy-text">${escapeHtml(displayValue)}</span>
+                    <i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i>
+                </div>`;
+    };
     
     const headers = ['Thông Tin Đơn Hàng', 'Xe Đã Ghép', 'Chi Tiết Xe', 'Thời Gian Ghép', 'Trạng Thái', 'Hành Động'];
     const headerHTML = headers.map(label => `<th>${label}</th>`).join('');
@@ -3323,20 +3449,17 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     const rowsHTML = rows.map(row => {
         const rowId = row['Số đơn hàng'];
         
-        const tenKH = escapeHtml(row['Tên khách hàng']);
-        const soDH = escapeHtml(row['Số đơn hàng']);
-        const tvbh = escapeHtml(row['Tên tư vấn bán hàng']);
-        const dongXe = escapeHtml(row['Dòng xe']);
-        const phienBan = escapeHtml(row['Phiên bản']);
-        const soVin = escapeHtml(row['VIN']);
-        const ngoaiThat = escapeHtml(row['Ngoại thất']);
-        const noiThat = escapeHtml(row['Nội thất']);
+        const tenKH = row['Tên khách hàng'];
+        const soDH = row['Số đơn hàng'];
+        const tvbh = row['Tên tư vấn bán hàng'];
+        const dongXe = row['Dòng xe'];
+        const phienBan = row['Phiên bản'];
+        const soVin = row['VIN'];
+        const ngoaiThat = row['Ngoại thất'];
+        const noiThat = row['Nội thất'];
         const soNgayGhep = row['Số ngày ghép'] !== '' ? row['Số ngày ghép'] : '0';
         const trangThai = escapeHtml(row['Kết quả']);
-
-        // === THAY ĐỔI TẠI ĐÂY ===
         const thoiGianGhep = formatCustomDateTime(row['Thời gian ghép']);
-        // === KẾT THÚC THAY ĐỔI ===
 
         const actionButtons = actionsCallback(row);
         const actionsHTML = renderRowActionsDropdown(actionButtons, row);
@@ -3344,15 +3467,21 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         return `
             <tr id="row-${rowId}">
                 <td data-label="Thông Tin Đơn Hàng">
-                    <div class="main-info">${tenKH}</div>
-                    <div class="sub-info"><span class="id-tag">${soDH}</span><br>TVBH: ${tvbh}</div>
+                    <div class="main-info">${createCopyableHtml(tenKH, tenKH)}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml(soDH, soDH)}
+                        ${createCopyableHtml(tvbh, tvbh)}
+                    </div>
                 </td>
                 <td data-label="Xe Đã Ghép">
-                    <div class="main-info">${dongXe} - ${phienBan}</div>
-                    <div class="sub-info">VIN: <span class="id-tag">${soVin}</span></div>
+                    <div class="main-info">${createCopyableHtml(dongXe + ' - ' + phienBan, dongXe + ' - ' + phienBan)}</div>
+                    <div class="sub-info">${createCopyableHtml('VIN: ' + soVin, soVin)}</div>
                 </td>
                 <td data-label="Chi Tiết Xe">
-                    <div class="sub-info">Ngoại thất: ${ngoaiThat}<br>Nội thất: ${noiThat}</div>
+                    <div class="sub-info">
+                        ${createCopyableHtml('NT: ' + ngoaiThat, ngoaiThat)}
+                        ${createCopyableHtml('NTh: ' + noiThat, noiThat)}
+                    </div>
                 </td>
                 <td data-label="Thời Gian Ghép">
                     <div class="main-info">${thoiGianGhep}</div>
@@ -3369,7 +3498,7 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
         if (tableEl && !tableEl.dataset.listenerAttached) {
             tableEl.dataset.listenerAttached = 'true';
             tableEl.addEventListener('click', function(event) {
-                const button = event.target.closest('a[data-action]'); // Sửa từ 'button' thành 'a'
+                const button = event.target.closest('a[data-action]');
                 if (button) {
                     event.preventDefault();
                     const handlerName = button.dataset.action;
@@ -5083,6 +5212,23 @@ function renderRowActionsDropdown(actions, rowData) {
             </ul>
         </td>
     `;
+}
+function copyToClipboard(text, event) {
+    if (event) {
+        event.stopPropagation(); // Ngăn các sự kiện click khác
+    }
+    // Nếu text rỗng hoặc là 'N/A' thì không làm gì cả
+    if (!text || text.trim() === 'N/A' || text.trim() === '') {
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        // Sử dụng kiểu toast 'subtle' và thông báo ngắn gọn hơn
+        showToast('Đã sao chép!', 'subtle', 2000); 
+    }).catch(err => {
+        console.error('Lỗi khi sao chép: ', err);
+        showToast('Sao chép thất bại!', 'error');
+    });
 }
 </script>
 </body>
