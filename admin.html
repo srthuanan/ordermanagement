@@ -2910,41 +2910,43 @@ function renderXuatHoaDonView() {
     
     // === CẬP NHẬT LOGIC RENDER HỒ SƠ SANG DẠNG ICON-TOOLTIP ===
     let dataWithDetails = data.map(row => {
-        const orderFromDaGhep = appState.data.daghep.find(d => String(d['Số đơn hàng'] || '').trim() === String(row['SỐ ĐƠN HÀNG'] || '').trim());
-        const status = orderFromDaGhep ? orderFromDaGhep['Kết quả'] : 'Không rõ';
+    const orderFromDaGhep = appState.data.daghep.find(d => String(d['Số đơn hàng'] || '').trim() === String(row['SỐ ĐƠN HÀNG'] || '').trim());
+    const status = orderFromDaGhep ? orderFromDaGhep['Kết quả'] : 'Không rõ';
+    
+    const documents = [
+        { key: 'URL Hợp Đồng', label: 'Hợp đồng mua bán', icon: 'fa-file-contract', cssClass: 'hdm-icon' },
+        { key: 'URL Đề Nghị XHĐ', label: 'Đề nghị xuất hóa đơn', icon: 'fa-file-invoice', cssClass: 'dnxhd-icon' },
+        { key: 'URL Hóa Đơn Đã Xuất', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar', cssClass: 'issued-icon' }
+    ];
+
+    let filesCount = 0;
+    let linksHtml = '<div class="file-icon-bar">';
+
+    documents.forEach(doc => {
+        const url = row[doc.key];
         
-        const documents = [
-            { key: 'URL Hợp Đồng', label: 'Hợp đồng mua bán', icon: 'fa-file-contract', cssClass: 'hdm-icon' },
-            { key: 'URL Đề Nghị XHĐ', label: 'Đề nghị xuất hóa đơn', icon: 'fa-file-invoice', cssClass: 'dnxhd-icon' },
-            { key: 'URL Hóa Đơn Đã Xuất', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar', cssClass: 'issued-icon' }
-        ];
-
-        let filesCount = 0;
-        let linksHtml = '<div class="file-icon-bar">';
-
-        documents.forEach(doc => {
-            const url = row[doc.key];
-            if (url) {
-                filesCount++;
-                linksHtml += `
-                    <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="file-icon-link">
-                        <i class="fas ${doc.icon} icon-display ${doc.cssClass}"></i>
-                        <span class="tooltip-text">${doc.label}</span>
-                    </a>
-                `;
-            } else {
-                // Hiển thị icon bị mờ nếu không có URL
-                linksHtml += `
-                    <i class="fas ${doc.icon} file-icon-missing" title="${doc.label} (chưa có)"></i>
-                `;
-            }
-        });
-        linksHtml += '</div>';
-
-        const finalHoSoHTML = filesCount > 0 ? linksHtml : '<span class="no-files-text">Chưa có hồ sơ</span>';
-        
-        return { ...row, 'Trạng thái xử lý': status, 'Hồ sơ': finalHoSoHTML };
+        // [THAY ĐỔI] Điều kiện mới: Hiển thị icon đầy đủ chỉ khi có URL VÀ (đó không phải là icon Hóa đơn HOẶC trạng thái không phải là "Chờ ký hóa đơn")
+        if (url && !(doc.key === 'URL Hóa Đơn Đã Xuất' && status.toLowerCase().trim() === 'chờ ký hóa đơn')) {
+            filesCount++;
+            linksHtml += `
+                <a href="${url}" target="_blank" onclick="event.stopPropagation()" class="file-icon-link">
+                    <i class="fas ${doc.icon} icon-display ${doc.cssClass}"></i>
+                    <span class="tooltip-text">${doc.label}</span>
+                </a>
+            `;
+        } else {
+            // Các trường hợp còn lại (không có URL, hoặc là icon Hóa đơn ở trạng thái chờ ký) sẽ hiển thị icon dạng chìm
+            linksHtml += `
+                <i class="fas ${doc.icon} file-icon-missing" title="${doc.label} (chưa có)"></i>
+            `;
+        }
     });
+    linksHtml += '</div>';
+
+    const finalHoSoHTML = filesCount > 0 ? linksHtml : '<span class="no-files-text">Chưa có hồ sơ</span>';
+    
+    return { ...row, 'Trạng thái xử lý': status, 'Hồ sơ': finalHoSoHTML };
+});
     // === KẾT THÚC CẬP NHẬT ===
     
     const { searchTerm, filters } = appState.xuatHoaDon;
