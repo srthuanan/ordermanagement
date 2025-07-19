@@ -1424,7 +1424,23 @@ body.dark-mode #scrollToTopBtn { box-shadow: var(--shadow-dark-outer); }
     .grid-container .controls { justify-content: flex-end; }
     .export-btn-container { width: auto; }
 }
+#cho-xe-section {
+    display: flex;
+    flex-direction: row; /* Hiển thị các phần tử con cạnh nhau */
+    gap: 20px; /* Tạo khoảng cách giữa 2 cột */
+    align-items: flex-start; /* Căn các cột theo mép trên */
+}
 
+/* Cột bên trái (Form đăng ký) */
+#cho-xe-section > #dang-ky-cho-section {
+    flex: 3; /* Chiếm 3 phần chiều rộng */
+    position: sticky; 
+    top: 65px; 
+}
+
+#cho-xe-section > #danh-sach-cho-section {
+    flex: 7; /* Chiếm 7 phần chiều rộng */
+}
 #chic-upload-wrapper { /* Styles from original */ }
 #chic-upload-wrapper.file-selected {
     border-style: solid;
@@ -2019,6 +2035,10 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
     color: #5eead4; /* dark:teal-400 */
     border-color: #115e59; /* dark:teal-800 */
 }
+#cho-xe-section > #dang-ky-cho-section,
+#cho-xe-section > #danh-sach-cho-section {
+    width: auto; /* Ghi đè thuộc tính width: 100% để flexbox hoạt động chính xác */
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2028,10 +2048,11 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
         </button>
         <div class="logo"><h1>VINFAST MINH ĐẠO</h1></div>
         <div class="tabs">
-            <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe">Yêu Cầu Ghép Xe</a>
-            <a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
-            <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
-        </div>
+    <a href="#" onclick="switchTab('cho-xe', this)" data-tooltip="Đăng ký và xem danh sách chờ xe">Yêu Cầu Tìm Xe</a>
+    <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe trực tiếp">Tạo Yêu Cầu</a>
+    <a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
+    <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
+</div>
         <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i></button>
         <div class="navbar-controls">
             <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
@@ -2133,7 +2154,56 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
                 </div>
             </form>
         </div>
+<div id="cho-xe-section" class="main-container-section hidden">
+        
+        <div class="form-container" id="dang-ky-cho-section">
+            <h2>Tạo Yêu Cầu Tìm Xe</h2>
+            <form id="dang-ky-cho-form" onsubmit="submitWaitingRequest(event)">
+                <input name="ten_ban_hang" id="ten_ban_hang_wait" readonly required placeholder="Tên tư vấn viên" class="form-input"/>
+                <input name="ten_khach_hang" id="ten_khach_hang_wait" placeholder="Nhập tên khách hàng" required oninput="this.value = this.value.toUpperCase();" class="form-input"/>
+                <select name="dong_xe" id="dong_xe_wait" required class="form-select">
+                    </select>
+                <select name="phien_ban" id="phien_ban_wait" required class="form-select">
+                    <option value="" disabled selected>Chọn phiên bản</option>
+                </select>
+                <select name="ngoai_that" id="ngoai_that_wait" required class="form-select">
+                    </select>
+                <select name="noi_that" id="noi_that_wait" required class="form-select">
+                    </select>
+                <textarea name="ghi_chu" id="ghi_chu_wait" placeholder="Thêm ghi chú nếu cần (VD: Khách cần xe gấp)" rows="2" class="form-input"></textarea>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Gửi Yêu Cầu</span>
+                    </button>
+                </div>
+            </form>
+        </div>
 
+        <div class="grid-container" id="danh-sach-cho-section">
+            <h3>Danh Sách Chờ Tìm Xe</h3>
+            <div class="table-wrapper">
+                <table id="waiting-list-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên Khách Hàng</th>
+                            <th>Yêu Cầu Xe</th>
+                            <th>Thời Gian ĐK</th>
+                            <th>Trạng Thái</th>
+                            <th>VIN Gợi Ý</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waiting-list-body">
+                        <tr class="table-placeholder"><td colspan="7"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+  
         <div class="grid-container hidden" id="history-section">
 <div class="summary-section hidden" id="summary-section-form-view">
     <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">Tổng Quan Lịch Sử Ghép</h3>
@@ -2515,15 +2585,17 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
 let vehicleAnalyticsData = null;
 let filtersPopulated = false; 
 let currentDataVersion = '0';
-let pollingInterval;
+let pollingInterval
+let globalWaitingData = [];
 let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbxGELEkQbt5M8XeYCb9lEoeWFCitL5XtQGF9uU_7GgMkiZLJsD09Ghxr2t5PVjAU62cxg/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzyLsEoX4DGjxZk9R256sUi1Vl0t6LGdRgNZmAdvUS-d2bHaA2r0kiyanpM7nuJiTRBOA/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
+const CACHED_DATA_KEY = 'vinfastAppCachedData_v2';
 
 
 function getQueryParam(param) {
@@ -2608,7 +2680,31 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     loadFormDraft();
 
-    // 3. Khởi tạo các thành phần giao diện
+    // --- Khởi tạo cho form "Đăng Ký Chờ Xe" ---
+    const consultantInputWait = document.getElementById("ten_ban_hang_wait");
+    if (consultantInputWait) {
+        consultantInputWait.value = sessionStorage.getItem("currentConsultant") || "";
+    }
+
+    // Sao chép các tùy chọn từ form chính sang form chờ để đồng bộ
+    const mainDongXe = document.getElementById('dong_xe');
+    const waitDongXe = document.getElementById('dong_xe_wait');
+    if (mainDongXe && waitDongXe) {
+        waitDongXe.innerHTML = mainDongXe.innerHTML;
+        waitDongXe.addEventListener('change', () => restrictVersion(waitDongXe));
+    }
+    const mainNgoaiThat = document.getElementById('ngoai_that');
+    const waitNgoaiThat = document.getElementById('ngoai_that_wait');
+    if (mainNgoaiThat && waitNgoaiThat) waitNgoaiThat.innerHTML = mainNgoaiThat.innerHTML;
+
+    const mainNoiThat = document.getElementById('noi_that');
+    const waitNoiThat = document.getElementById('noi_that_wait');
+    if (mainNoiThat && waitNoiThat) waitNoiThat.innerHTML = mainNoiThat.innerHTML;
+
+    // Khởi tạo và giới hạn các phiên bản xe cho form chờ
+    restrictVersion(waitDongXe);
+
+    // 3. Khởi tạo các thành phần giao diện khác
     bulkTableBody = document.getElementById('bulk-order-editable-table-body');
     bulkTotalRowsEl = document.getElementById('bulk-total-rows');
     bulkValidRowsEl = document.getElementById('bulk-valid-rows');
@@ -2689,13 +2785,10 @@ document.addEventListener("DOMContentLoaded", function() {
     if(carModelSelect) carModelSelect.addEventListener('change', applyFilters);
     if(statusSelect) statusSelect.addEventListener('change', applyFilters);
 
-    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
-    // Gắn sự kiện để kiểm tra và hiển thị cảnh báo xe hot/tồn kho
     const phienBanSelect = document.getElementById('phien_ban');
     const ngoaiThatSelect = document.getElementById('ngoai_that');
     if (phienBanSelect) phienBanSelect.addEventListener('change', checkAndDisplayVehicleWarning);
     if (ngoaiThatSelect) ngoaiThatSelect.addEventListener('change', checkAndDisplayVehicleWarning);
-    // --- KẾT THÚC PHẦN BỔ SUNG ---
 
     // 7. Xử lý tab khi tải trang
     const requestedTab = getQueryParam('tab');
@@ -2705,25 +2798,22 @@ document.addEventListener("DOMContentLoaded", function() {
             switchTab('form', formTabLink);
         }
     } else {
-        // Hành vi mặc định: mở tab Lịch sử
         const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
         if (historyTabLink) {
             switchTab('history', historyTabLink);
         }
     }
     
-    // 8. Tải dữ liệu lần đầu và khởi động cơ chế Polling
+    // 8. Tải dữ liệu lần đầu, khởi động Polling và xử lý URL
     fetchHistory().then(() => {
-        startPolling(); // Bắt đầu hỏi server để cập nhật
+        startPolling();
+        handleUrlParameters(); // Gọi hàm xử lý link từ email
     }).catch(error => {
         console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
         showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
     });
 
-    // --- BẮT ĐẦU PHẦN BỔ SUNG ---
-    // Tải dữ liệu phân tích xe để phục vụ cảnh báo
     fetchVehicleAnalytics();
-    // --- KẾT THÚC PHẦN BỔ SUNG ---
 });
 
 function applyInitialTheme() {
@@ -2983,63 +3073,94 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
     tbody.innerHTML = `<tr class="table-placeholder"><td colspan="${colspan}"><i class="${iconClass}"></i> ${message}</td></tr>`;
 }
 
-// HÀM ĐỂ THAY THẾ
-async function fetchHistory(showLoadingPlaceholder = true) {
-    return new Promise(async (resolve, reject) => {
+/**
+     * [HÀM MỚI] Xử lý và hiển thị dữ liệu từ cache hoặc server.
+     * Hàm này nhận dữ liệu và chịu trách nhiệm cập nhật toàn bộ giao diện người dùng.
+     */
+    function processAndRenderData(data) {
+        if (!data || data.status !== "SUCCESS") {
+            console.warn("Dữ liệu không hợp lệ để xử lý.", data);
+            return;
+        }
+
+        // Cập nhật các biến toàn cục với dữ liệu mới nhất
+        currentDataVersion = data.version;
+        const daghep = data.daghep || [];
+        const chuaghep = data.chuaghep || [];
+        globalWaitingData = data.dangkycho || [];
+        globalHistoryData = [...daghep, ...chuaghep].sort((a, b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+
+        // Lọc dữ liệu dựa trên người dùng (Admin hay TVBH)
+        const currentUser = sessionStorage.getItem("currentConsultant");
+        const isAdmin = currentUser === ADMIN_USER;
+        let dataForHistoryTable = isAdmin ? globalHistoryData : globalHistoryData.filter(row => normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser));
+
+        // Gọi các hàm để vẽ lại các thành phần trên giao diện
+        renderHistoryTable(dataForHistoryTable);
+        renderWaitingListTable();
+        renderSummary(globalHistoryData);
+        populateFilterDropdowns();
+    }
+
+    /**
+     * [HÀM ĐÃ NÂNG CẤP] Tải dữ liệu theo cơ chế "Stale-While-Revalidate".
+     * Hiển thị dữ liệu cũ (nếu có) trước, sau đó kiểm tra và cập nhật phiên bản mới.
+     */
+    async function fetchHistory(showLoadingPlaceholder = true) {
         if (showLoadingPlaceholder) {
-            setTablePlaceholder("table-body", "Đang tải dữ liệu lịch sử...", "fas fa-spinner fa-spin");
+            setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
         }
 
+        // 1. Render ngay lập tức từ cache (nếu có) để có giao diện tức thì
+        const cachedDataJSON = sessionStorage.getItem(CACHED_DATA_KEY);
+        if (cachedDataJSON) {
+            console.log("Hiển thị dữ liệu ban đầu từ sessionStorage cache.");
+            processAndRenderData(JSON.parse(cachedDataJSON));
+        }
+
+        // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
         try {
-            // Sử dụng API không có action để lấy toàn bộ dữ liệu
-            const response = await fetch(apiURL);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Lỗi mạng khi tải lịch sử: ${response.status} ${errorText || response.statusText}`);
+            const versionResponse = await fetch(apiURL + "?action=getVersion");
+            if (!versionResponse.ok) {
+                throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
             }
-            const data = await response.json();
+            const serverVersionData = await versionResponse.json();
+            const serverVersion = serverVersionData.version;
 
-            // Cập nhật số phiên bản của client sau khi tải dữ liệu thành công
-            if (data.version) {
-                currentDataVersion = data.version;
-                console.log(`Phiên bản dữ liệu của client đã được cập nhật thành: ${currentDataVersion}`);
+            const localVersion = cachedDataJSON ? JSON.parse(cachedDataJSON).version : '-1';
+
+            // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
+            if (serverVersion !== localVersion) {
+                console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
+                const fullResponse = await fetch(apiURL); // Gọi doGet chính
+                if (!fullResponse.ok) {
+                    throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
+                }
+                const fullData = await fullResponse.json();
+
+                if (fullData.status === "SUCCESS") {
+                    processAndRenderData(fullData); // Cập nhật giao diện với dữ liệu mới
+                    sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData)); // Lưu cache mới
+                    console.log("Giao diện và cache đã được cập nhật lên phiên bản mới nhất.");
+                } else {
+                    throw new Error(fullData.message || "Lỗi không xác định từ server khi tải dữ liệu đầy đủ.");
+                }
+            } else {
+                console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
+                // Nếu cache rỗng và phiên bản khớp, có nghĩa là thực sự không có dữ liệu
+                if (!cachedDataJSON && globalHistoryData.length === 0) {
+                    renderHistoryTable([]); // Hiển thị thông báo "Không có dữ liệu"
+                    renderWaitingListTable();
+                }
             }
-            
-            const daghep = data.daghep || [];
-            const chuaghep = data.chuaghep || [];
-            globalHistoryData = [...daghep, ...chuaghep].sort((a, b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
-            
-            sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
-
-            const currentUser = sessionStorage.getItem("currentConsultant");
-            const isAdmin = currentUser === ADMIN_USER;
-
-            // Lấy dữ liệu phù hợp với người dùng hiện tại
-            let dataForHistoryTable = isAdmin 
-                ? globalHistoryData 
-                : globalHistoryData.filter(row => 
-                    normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser)
-                );
-
-            if (document.getElementById('history-section') && !document.getElementById('history-section').classList.contains('hidden')) {
-                renderHistoryTable(dataForHistoryTable);
-                renderSummary(globalHistoryData);
-            }
-            
-            // **[LOGIC MỚI]** Điền dữ liệu cho các dropdown của bộ lọc
-            populateFilterDropdowns(); 
-
-            resolve(globalHistoryData);
-
         } catch (error) {
-            console.error("Lỗi nghiêm trọng khi tải dữ liệu lịch sử:", error);
-            if (showLoadingPlaceholder) {
-                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử làm mới.`, "fas fa-exclamation-triangle");
+            console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
+            // Chỉ hiển thị lỗi nếu không có gì trong cache để hiển thị
+            if (!cachedDataJSON) {
+                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
             }
-            reject(error);
         }
-    });
-}
+    }
 
 function refreshData() {
     fetchHistory();
@@ -3552,6 +3673,14 @@ async function confirmSubmit() {
         showNotification(`Gửi yêu cầu thất bại: ${error.message}`, 'error', 5000);
     } finally {
         closeModal("loading-modal");
+pendingPairingData = null;
+const form = document.getElementById('vinfast-form');
+['dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'].forEach(id => {
+    const el = form.querySelector(`#${id}`);
+    if(el) el.disabled = false;
+});
+let hiddenInput = form.querySelector('input[name="waitingRequestId"]');
+if (hiddenInput) hiddenInput.value = "";
         submitButton.disabled = false; // Kích hoạt lại nút sau khi hoàn tất
     }
 }
@@ -3565,6 +3694,7 @@ function closeModalAndRedirect() {
     }
 }
 
+// THAY THẾ TOÀN BỘ HÀM switchTab CŨ BẰNG HÀM NÀY
 function switchTab(tabName, element) {
     // Đánh dấu tab đang hoạt động
     document.querySelectorAll(".navbar .tabs a").forEach(tab => tab.classList.remove("active"));
@@ -3572,83 +3702,88 @@ function switchTab(tabName, element) {
         element.classList.add("active");
     }
 
-    // Lấy các thành phần giao diện cần điều khiển
+    // Lấy tham chiếu đến các section chính và các section tổng quan
     const sections = {
         'form': document.getElementById('form-section'),
         'history': document.getElementById('history-section'),
-        'bulk-entry-table': document.getElementById('bulk-entry-table-section')
+        'bulk-entry-table': document.getElementById('bulk-entry-table-section'),
+        'cho-xe': document.getElementById('cho-xe-section')
     };
+    const mainContainer = document.getElementById('main-container');
     const summaryFormView = document.getElementById('summary-section-form-view');
     const summaryHistoryView = document.getElementById('summary-section-history-view');
-    const mainContainer = document.getElementById('main-container');
 
-    // Ẩn tất cả các phần chính và các phần tổng quan trước
+    // Ẩn tất cả các section chính trước khi hiển thị section mong muốn
     Object.values(sections).forEach(section => {
         if (section) section.classList.add('hidden');
     });
-    if(summaryFormView) summaryFormView.classList.add('hidden');
-    if(summaryHistoryView) summaryHistoryView.classList.add('hidden');
 
+    // Ẩn tất cả các section tổng quan
+    if (summaryFormView) summaryFormView.classList.add('hidden');
+    if (summaryHistoryView) summaryHistoryView.classList.add('hidden');
 
-    // Hàm helper để hiển thị section với hiệu ứng
-    const showSection = (sectionEl) => {
-        if (sectionEl) {
-            sectionEl.classList.remove('hidden');
-            sectionEl.style.animation = 'none';
-            sectionEl.offsetHeight; // Kích hoạt reflow để reset animation
-            sectionEl.style.animation = '';
-        }
-    };
+    // Hiển thị section chính được chọn
+    if (sections[tabName]) {
+        sections[tabName].classList.remove('hidden');
+    }
 
-    const isDataCached = globalHistoryData && globalHistoryData.length > 0;
+    // Xử lý bố cục đặc biệt cho từng tab
+    if (mainContainer) {
+        if (tabName === 'form') {
+            mainContainer.classList.add('form-active');
+            // Khi ở tab "Tạo Yêu Cầu", hiển thị cả form và bảng lịch sử (ở dạng thu gọn)
+            if(sections.history) sections.history.classList.remove('hidden');
+            // Và chỉ hiển thị phần tổng quan dành cho view này
+            if(summaryFormView) summaryFormView.classList.remove('hidden');
 
-    if (tabName === 'form') {
-        if (mainContainer) mainContainer.classList.add('form-active');
-        showSection(sections.form);
-        showSection(sections.history); // Vẫn hiện khung lịch sử chung
+            // Logic tự động điền form (đã có từ trước)
+            if (pendingPairingData) {
+                const form = document.getElementById('vinfast-form');
+                form.querySelector('#ten_khach_hang').value = pendingPairingData['Tên khách hàng'];
+                form.querySelector('#dong_xe').value = pendingPairingData['Dòng xe'];
+                restrictVersion(form.querySelector('#dong_xe'), pendingPairingData['Phiên bản']);
+                form.querySelector('#phien_ban').value = pendingPairingData['Phiên bản'];
+                form.querySelector('#ngoai_that').value = pendingPairingData['Ngoại thất'];
+                form.querySelector('#noi_that').value = pendingPairingData['Nội thất'];
+                
+                let hiddenInput = form.querySelector('input[name="waitingRequestId"]');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'waitingRequestId';
+                    form.appendChild(hiddenInput);
+                }
+                hiddenInput.value = pendingPairingData['ID Yêu Cầu'];
 
-        // Chỉ hiển thị bố cục tổng quan DÀNH RIÊNG cho tab Form
-        showSection(summaryFormView);
-
-        // Logic tải dữ liệu
-        if (isDataCached) {
-            applyFilters();
-            renderSummary(globalHistoryData);
-        } else {
-            fetchHistory();
-        }
-
-    } else {
-        if (mainContainer) mainContainer.classList.remove('form-active');
-
-        if (tabName === 'history') {
-            showSection(sections.history);
-
-            // Chỉ hiển thị bố cục tổng quan DÀNH RIÊNG cho tab History
-            showSection(summaryHistoryView);
-
-            // Logic tải dữ liệu
-            if (isDataCached) {
-                applyFilters();
-                renderSummary(globalHistoryData);
+                ['dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'].forEach(id => {
+                    const el = form.querySelector(`#${id}`);
+                    if(el) el.disabled = true;
+                });
+                
+                showNotification("Thông tin đã được điền sẵn. Vui lòng tải UNC và gửi đi.", "info", 5000);
             } else {
-                fetchHistory();
+                 const form = document.getElementById('vinfast-form');
+                 ['dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'].forEach(id => {
+                    const el = form.querySelector(`#${id}`);
+                    if(el) el.disabled = false;
+                });
             }
-        } else if (tabName === 'bulk-entry-table') {
-            showSection(sections['bulk-entry-table']);
-            if (bulkTableBody && bulkTableBody.children.length === 0) {
-                addBulkOrderRow();
+        } else {
+            mainContainer.classList.remove('form-active');
+            // *** ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG NHẤT ***
+            // Khi ở tab "Lịch sử", hiển thị phần tổng quan và tìm kiếm
+            if (tabName === 'history') {
+                if(summaryHistoryView) summaryHistoryView.classList.remove('hidden');
             }
         }
     }
 
-    // Đóng menu trên di động sau khi chọn tab
+    // Đóng menu trên mobile sau khi chọn
     const mobileMenu = document.querySelector(".navbar .tabs");
     if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger");
     if (hamburger) hamburger.classList.remove("active");
 }
-
 function toggleMenu() {
     const mobileMenu = document.querySelector(".navbar .tabs");
     const hamburger = document.querySelector(".hamburger");
@@ -3691,15 +3826,20 @@ function showNotification(message, type = "info", duration = 3000) {
 }
 
 function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
-    const phienBanSelect = document.querySelector('select[name="phien_ban"]');
-    const noiThatSelect = document.querySelector('select[name="noi_that"]');
+    // Tìm form cha của ô "Dòng xe" vừa được thay đổi
+    const parentForm = dongXeSelectElement.closest('form');
+    if (!parentForm) {
+        console.error("Lỗi: Không tìm thấy form chứa ô chọn dòng xe.");
+        return;
+    }
+
+    // Tìm các ô chọn "Phiên bản" và "Nội thất" nằm BÊN TRONG form đó
+    const phienBanSelect = parentForm.querySelector('select[name="phien_ban"]');
+    const noiThatSelect = parentForm.querySelector('select[name="noi_that"]');
 
     if (!phienBanSelect) {
-        showNotification("Lỗi: Không tìm thấy trường chọn Phiên Bản!", "error", 3000);
-    }
-    if (!noiThatSelect && !phienBanSelect) {
-      showNotification("Lỗi: Không tìm thấy trường chọn Nội thất!", "error", 3000);
-      return;
+        // Không cần báo lỗi nghiêm trọng nếu không tìm thấy, vì có thể form không có
+        return;
     }
 
     const selectedDongXe = dongXeSelectElement.value;
@@ -3715,53 +3855,42 @@ function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
         "LIMO": ["LIMO"],
         "MINIO": ["MINIO"]
     };
-    const allPossibleVersions = ["Base", "Eco", "Plus", "Plus_Metal", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"];
-
+    
+    // Lấy danh sách phiên bản có sẵn hoặc tất cả nếu không có trong map
     const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
 
-    if (phienBanSelect) {
-        const previousSelectedPhienBan = phienBanSelect.value;
-        phienBanSelect.innerHTML = '<option value="" disabled>Chọn phiên bản</option>';
-        availableVersions.forEach(version => {
-            const option = document.createElement('option');
-            option.value = version;
-            option.textContent = version;
-            phienBanSelect.appendChild(option);
-        });
+    const previousSelectedPhienBan = phienBanSelect.value;
+    phienBanSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>'; // Luôn có placeholder
+    
+    availableVersions.forEach(version => {
+        const option = document.createElement('option');
+        option.value = version;
+        option.textContent = version;
+        phienBanSelect.appendChild(option);
+    });
 
-        if (selectedDongXe === "VF 3") {
-            phienBanSelect.value = "Base";
-        } else if (selectedDongXe === "VF 5") {
-            phienBanSelect.value = "Plus";
-        } else if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
-            phienBanSelect.value = savedPhienBanValue;
-        } else if (availableVersions.includes(previousSelectedPhienBan)) {
-            phienBanSelect.value = previousSelectedPhienBan;
-        } else {
-            if (phienBanSelect.options.length > 0) {
-                 phienBanSelect.selectedIndex = 0;
-            }
-        }
+    // Tự động chọn hoặc giữ lại lựa chọn cũ nếu có thể
+    if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
+        phienBanSelect.value = savedPhienBanValue;
+    } else if (availableVersions.includes(previousSelectedPhienBan)) {
+        phienBanSelect.value = previousSelectedPhienBan;
+    } else if (selectedDongXe === "VF 3") {
+        phienBanSelect.value = "Base";
+    } else if (selectedDongXe === "VF 5") {
+        phienBanSelect.value = "Plus";
     }
 
+    // Tự động chọn nội thất cho VF 3 và VF 5 nếu có
     if (noiThatSelect) {
         if (selectedDongXe === "VF 3" || selectedDongXe === "VF 5") {
-            let blackOptionExists = false;
-            for (let i = 0; i < noiThatSelect.options.length; i++) {
-                if (noiThatSelect.options[i].value === "Black") {
-                    blackOptionExists = true;
-                    break;
-                }
-            }
-            if (blackOptionExists) {
-                noiThatSelect.value = "Black";
-            } else if (noiThatSelect.options.length > 0 && noiThatSelect.options[0].value === "") {
-                 noiThatSelect.selectedIndex = 0;
-            }
+            noiThatSelect.value = "Black";
         }
     }
-    checkAndDisplayVehicleWarning();
-    // --- KẾT THÚC PHẦN BỔ SUNG ---
+    
+    // Kích hoạt lại việc kiểm tra cảnh báo xe hot/tồn kho (nếu có)
+    if (typeof checkAndDisplayVehicleWarning === 'function') {
+        checkAndDisplayVehicleWarning();
+    }
 }
 function initScrollToTopButton() {
     const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
@@ -5511,7 +5640,7 @@ function renderHistoryTable(dataToRender) {
         
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
-        const isOwner = normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser);
+        const isOwner = row["Tên tư vấn bán hàng"] === currentUser;
 
         let dropdownItemsHtml = '';
         let hasActions = false;
@@ -5661,7 +5790,169 @@ function checkAndDisplayVehicleWarning() {
     // Nếu không có điều kiện nào ở trên được thỏa mãn, div cảnh báo sẽ vẫn bị ẩn.
     // --- KẾT THÚC LOGIC CẢNH BÁO MỚI ---
 }
+// THÊM CÁC HÀM MỚI NÀY VÀO CUỐI THẺ <script>
 
+// Hàm gửi yêu cầu đăng ký chờ
+async function submitWaitingRequest(event) {
+    event.preventDefault();
+    const form = document.getElementById('dang-ky-cho-form');
+    if (!form.checkValidity()) {
+        showNotification("Vui lòng điền đầy đủ thông tin xe.", "error");
+        form.reportValidity();
+        return;
+    }
+
+    showOldLoadingModal("Đang Gửi Yêu Cầu Chờ...");
+    const formData = new FormData(form);
+    formData.append('action', 'addWaitingRequest');
+
+    try {
+        const response = await fetch(apiURL, { method: 'POST', body: formData });
+        const result = await response.json();
+
+        if (result.status === "SUCCESS") {
+            showNotification(result.message, 'success');
+            form.reset();
+            // Reset select và các giá trị mặc định
+            document.getElementById('ten_ban_hang_wait').value = sessionStorage.getItem("currentConsultant") || "";
+            restrictVersion(document.getElementById('dong_xe_wait'));
+            // Tải lại dữ liệu để cập nhật danh sách chờ
+            await fetchHistory(false);
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        showNotification(`Lỗi: ${error.message}`, 'error');
+    } finally {
+        closeModal('loading-modal');
+    }
+}
+// DÁN HÀM MỚI NÀY VÀO TRONG THẺ <script>
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+// THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY
+function renderWaitingListTable() {
+    const tbody = document.getElementById("waiting-list-body");
+    if (!tbody) return;
+
+    const currentUser = sessionStorage.getItem("currentConsultant");
+    const isAdmin = currentUser === ADMIN_USER;
+
+    // Lọc dữ liệu cho TVBH hiện tại
+    let dataToRender = globalWaitingData.filter(row => normalizeName(row["Tên TVBH"]) === normalizeName(currentUser));
+
+    if (!dataToRender || dataToRender.length === 0) {
+        setTablePlaceholder("waiting-list-body", "Chưa có yêu cầu nào trong danh sách chờ.", "fas fa-folder-open");
+        return;
+    }
+
+    // Sắp xếp: "Đã có xe" lên đầu, sau đó theo thời gian đăng ký mới nhất
+    dataToRender.sort((a, b) => {
+        if (a['Trạng thái'] === 'Đã có xe' && b['Trạng thái'] !== 'Đã có xe') return -1;
+        if (a['Trạng thái'] !== 'Đã có xe' && b['Trạng thái'] === 'Đã có xe') return 1;
+        return new Date(b['Thời gian đăng ký']) - new Date(a['Thời gian đăng ký']);
+    });
+
+    tbody.innerHTML = dataToRender.map((row, i) => {
+        const status = row["Trạng thái"];
+        const statusClass = status === 'Đã có xe' ? 'status-vin-matched' : 'status-pending-invoice';
+        const carInfo = `${row['Dòng xe']} ${row['Phiên bản']} <br> ${row['Ngoại thất']} / ${row['Nội thất']}`;
+        
+        // --- BẮT ĐẦU NÂNG CẤP ---
+        const ghiChu = row['Ghi chú'] || '';
+        // Làm nổi bật dòng nếu có ghi chú (tức là có phản hồi từ Admin)
+        const highlightClass = ghiChu ? 'bg-amber-50 dark:bg-amber-900/20' : '';
+        // --- KẾT THÚC NÂNG CẤP ---
+
+        const encodedRowData = btoa(unescape(encodeURIComponent(JSON.stringify(row))));
+
+        let actionButton = '';
+        if (status === 'Đã có xe') {
+            actionButton = `<button class="btn btn-sm btn-primary" 
+                                    onclick="initiatePairingRequest(JSON.parse(decodeURIComponent(escape(atob('${encodedRowData}')))))" 
+                                    type="button">
+                                <i class="fas fa-file-signature"></i> Tạo Yêu Cầu Ghép
+                            </button>`;
+        }
+
+        // --- BẮT ĐẦU NÂNG CẤP: Thêm cột "Ghi chú" vào bảng ---
+        return `
+            <tr class="${highlightClass}">
+                <td data-label="STT">${i + 1}</td>
+                <td data-label="Tên KH">${escapeHtml(row["Tên khách hàng"])}</td>
+                <td data-label="Yêu Cầu Xe">${carInfo}</td>
+                <td data-label="Thời Gian ĐK">${formatDateTime(row["Thời gian đăng ký"])}</td>
+                <td data-label="Trạng Thái"><span class="status-badge ${statusClass}">${escapeHtml(status)}</span></td>
+                
+                <td data-label="Phản Hồi Admin" class="text-amber-700 dark:text-amber-400 font-medium text-xs whitespace-pre-wrap">${escapeHtml(ghiChu)}</td>
+                
+                <td data-label="Hành Động">${actionButton}</td>
+            </tr>
+        `;
+        // --- KẾT THÚC NÂNG CẤP ---
+    }).join("");
+
+    // Cập nhật lại tiêu đề bảng để thêm cột mới
+    const thead = document.getElementById('waiting-list-table')?.querySelector('thead tr');
+    if (thead) {
+        thead.innerHTML = `
+            <th>STT</th>
+            <th>Tên Khách Hàng</th>
+            <th>Yêu Cầu Xe</th>
+            <th>Thời Gian ĐK</th>
+            <th>Trạng Thái</th>
+            <th>Phản Hồi Admin</th>
+            <th>Hành Động</th>
+        `;
+    }
+}
+
+// Biến tạm để lưu dữ liệu chờ xử lý
+let pendingPairingData = null;
+
+// Hàm khởi tạo quá trình ghép xe từ danh sách chờ
+function initiatePairingRequest(rowData) {
+    // Lưu dữ liệu của yêu cầu chờ vào biến tạm
+    pendingPairingData = rowData;
+
+    // Chuyển sang tab "Tạo Yêu Cầu"
+    const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
+    if (formTabLink) {
+        switchTab('form', formTabLink);
+    } else {
+        showNotification("Lỗi: Không tìm thấy tab 'Tạo Yêu Cầu'.", "error");
+    }
+}
+// DÁN HÀM MỚI NÀY VÀO TRONG THẺ <script>
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const requestId = urlParams.get('requestId');
+
+    // Kiểm tra xem có đúng là hành động tạo yêu cầu ghép từ email không
+    if (action === 'createPairing' && requestId) {
+        console.log(`Phát hiện yêu cầu tạo ghép từ URL cho ID: ${requestId}`);
+
+        // Tìm yêu cầu chờ tương ứng trong dữ liệu đã tải
+        const waitingRequestData = globalWaitingData.find(item => item["ID Yêu Cầu"] === requestId);
+
+        if (waitingRequestData) {
+            // Nếu tìm thấy, gọi hàm khởi tạo ghép xe
+            initiatePairingRequest(waitingRequestData);
+            showNotification("Đang tự động điền thông tin từ yêu cầu chờ...", "info", 3000);
+        } else {
+            // Nếu không tìm thấy (có thể yêu cầu đã được xử lý)
+            showNotification("Yêu cầu ghép xe này không còn hợp lệ hoặc đã được xử lý.", "warning", 5000);
+            // Chuyển người dùng về tab danh sách chờ để họ tự kiểm tra
+            const waitingListTab = document.querySelector('.tabs a[onclick*="cho-xe"]');
+            if (waitingListTab) {
+                switchTab('cho-xe', waitingListTab);
+            }
+        }
+    }
+}
 </script>
 </body>
 </html>
