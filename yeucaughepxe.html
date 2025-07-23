@@ -5345,14 +5345,16 @@ function viewOrderDetail(orderNumber) {
         showNotification("Đơn hàng này không có số đơn hàng hợp lệ để xem chi tiết.", "warning");
         return;
     }
+
+    // *** PHẦN SỬA LỖI QUAN TRỌNG ***
+    // Trước khi chuyển trang, lưu toàn bộ dữ liệu lịch sử vào sessionStorage.
+    // Điều này đảm bảo trang chi tiết có dữ liệu cần thiết để tìm và hiển thị.
+    sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+
     // Chuyển hướng đến trang chi tiết
     window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
 }
-/**
- * [HÀM ĐÃ SỬA] Hiển thị modal thành công cho việc gửi hàng loạt.
- * @param {number} count - Số lượng đơn hàng đã gửi thành công.
- * @param {string} redirectOrderNumber - Số đơn hàng của yêu cầu đầu tiên để chuyển hướng khi đóng.
- */
+
 function showBulkSuccessModal(count, redirectOrderNumber) {
     const modal = document.getElementById('success-modal');
     if (!modal) {
