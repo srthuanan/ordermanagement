@@ -2463,47 +2463,56 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
     </div>
     
     <div class="modal" id="invoice-confirm-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
-                <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
-                    Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
-                    <div>
-                        <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
-                        <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                            <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                            <div class="flex flex-col items-center justify-center text-center p-2">
-                                <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
-                                <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
-                        <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                            <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                            <div class="flex flex-col items-center justify-center text-center p-2">
-                                <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
-                                <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
-                            </div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
+            <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
+                Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
+                <div>
+                    <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
+                    <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
+                            <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
                         </div>
                     </div>
                 </div>
-                <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
-                    Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
-                </p>
+                <div>
+                    <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
+                    <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
+                        <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
+                        <div class="flex flex-col items-center justify-center text-center p-2">
+                            <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
+                            <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
-                <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
+
+            <div class="mt-4 p-3 border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <label for="vinclub-confirm-checkbox" class="flex items-center cursor-pointer">
+                    <input id="vinclub-confirm-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-color focus:ring-primary-color">
+                    <span class="ml-3 text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Tôi xác nhận: Khách hàng đã tạo và xác thực thành công tài khoản Vinclub. <span class="text-red-500 font-bold">*</span>
+                    </span>
+                </label>
             </div>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
+                Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
+            </p>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+            <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
         </div>
     </div>
+</div>
 
     <div class="modal" id="supplementary-file-modal">
         <div class="modal-content">
@@ -5106,14 +5115,35 @@ function fileToBase64(file) {
     });
 }
 
-// Thay thế toàn bộ hàm processInvoiceRequest cũ
 async function processInvoiceRequest(orderNumber) {
     const confirmButton = document.getElementById('confirm-invoice-button');
     if (confirmButton.disabled) return; // Ngăn click liên tục
-    
+
+    // --- BẮT ĐẦU PHẦN THÊM MỚI ---
+    // 1. Lấy và kiểm tra hộp kiểm Vinclub
+    const vinclubCheckbox = document.getElementById('vinclub-confirm-checkbox');
+    if (!vinclubCheckbox || !vinclubCheckbox.checked) {
+        showNotification("Bạn phải xác nhận khách hàng đã tạo tài khoản Vinclub.", "error", 4000);
+        
+        // Tạo hiệu ứng nhấp nháy để thu hút sự chú ý
+        const checkboxWrapper = vinclubCheckbox.closest('div');
+        if (checkboxWrapper) {
+            checkboxWrapper.style.transition = 'all 0.2s';
+            checkboxWrapper.style.transform = 'scale(1.03)';
+            checkboxWrapper.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.5)'; // Red glow
+            setTimeout(() => {
+                checkboxWrapper.style.transform = '';
+                checkboxWrapper.style.boxShadow = '';
+            }, 600);
+        }
+        return; // Dừng hàm nếu chưa xác nhận
+    }
+    // --- KẾT THÚC PHẦN THÊM MỚI ---
+
     const hopDongInput = document.getElementById('hop_dong_file_input');
     const deNghiInput = document.getElementById('denghi_xhd_file_input');
 
+    // 2. Kiểm tra các file đã được tải lên (logic cũ)
     if (!hopDongInput || hopDongInput.files.length === 0) {
         showNotification("Vui lòng tải lên file Hợp đồng mua bán.", "error", 4000);
         return;
@@ -5123,6 +5153,7 @@ async function processInvoiceRequest(orderNumber) {
         return;
     }
     
+    // 3. Tiến hành gửi yêu cầu (logic cũ)
     confirmButton.disabled = true; // Vô hiệu hóa nút
     closeModal('invoice-confirm-modal');
     showOldLoadingModal("Đang mã hóa và gửi tệp...", "Quá trình này có thể mất một lúc...");
