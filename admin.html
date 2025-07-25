@@ -5065,7 +5065,7 @@ function handleChatInputKey(event) {
 }
 
 /**
- * Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
+ * [ĐÃ SỬA LỖI] Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
  */
 async function sendGlobalAIChatMessage() {
     const inputEl = document.getElementById('ai-chat-input');
@@ -5102,7 +5102,8 @@ async function sendGlobalAIChatMessage() {
         formData.append('action', 'getGlobalAiResponse'); // Action mới
         formData.append('userPrompt', userPrompt);
 
-        const response = await fetch(API_URL, {
+        // Sử dụng biến apiURL đã có sẵn trong tệp của bạn
+        const response = await fetch(apiURL, {
             method: 'POST',
             body: formData
         });
@@ -5115,12 +5116,19 @@ async function sendGlobalAIChatMessage() {
         const loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.classList.remove('loading');
         loadingIndicator.innerHTML = `<div class="message-content">${result.suggestion.replace(/\n/g, '<br>')}</div>`;
+        
+        // === [DÒNG SỬA LỖI] ===
+        // Xóa ID của chỉ báo loading để đảm bảo tin nhắn tiếp theo không bị ghi đè.
+        loadingIndicator.removeAttribute('id');
+        // === KẾT THÚC SỬA LỖI ===
 
     } catch (error) {
         console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
         const loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.classList.remove('loading');
         loadingIndicator.innerHTML = `<div class="message-content" style="border-color: #dc2626; color: #dc2626;">Lỗi: ${error.message}</div>`;
+        // Cũng xóa ID ở đây để tránh lỗi lặp lại
+        loadingIndicator.removeAttribute('id');
     } finally {
         // Bật lại nút gửi
         sendBtn.disabled = false;
