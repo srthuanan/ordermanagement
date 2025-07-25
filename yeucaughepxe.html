@@ -2039,6 +2039,177 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
 #cho-xe-section > #danh-sach-cho-section {
     width: auto; /* Ghi đè thuộc tính width: 100% để flexbox hoạt động chính xác */
 }
+/* === [THÊM MỚI] CSS CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG === */
+.global-ai-chat-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 1050;
+}
+
+.ai-chat-bubble {
+    width: 70px; /* To hơn */
+    height: 70px; /* To hơn */
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Nền gradient tím */
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.4);
+    font-size: 28px; /* Icon to hơn */
+    transition: all 0.3s ease;
+}
+.ai-chat-bubble:hover {
+    transform: scale(1.1);
+    background: var(--primary-color-darker);
+}
+
+.ai-chat-window {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 0;
+    width: 370px;
+    height: 500px;
+    background: var(--card-bg-light);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color-light);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ai-chat-window.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ai-chat-header {
+    flex-shrink: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color-light);
+    background: var(--background-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ai-chat-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ai-chat-close-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text-muted-light);
+}
+
+.ai-chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.user-message, .ai-message {
+    margin-bottom: 15px;
+    display: flex;
+    max-width: 90%;
+}
+.user-message {
+    margin-left: auto;
+    flex-direction: row-reverse;
+}
+.message-content {
+    padding: 10px 15px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.user-message .message-content {
+    background: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+.ai-message .message-content {
+    background: var(--background-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
+    border-bottom-left-radius: 5px;
+}
+.ai-message.loading .message-content {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background-color: var(--text-muted-light);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+.ai-chat-input-area {
+    flex-shrink: 0;
+    padding: 15px;
+    border-top: 1px solid var(--border-color-light);
+    display: flex;
+    gap: 10px;
+}
+.ai-chat-input-area textarea {
+    flex-grow: 1;
+    border: 1px solid var(--border-color-light);
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 14px;
+    resize: none;
+    height: 40px;
+    line-height: 20px;
+    background: var(--background-light);
+    color: var(--text-light);
+}
+.ai-chat-input-area textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.2);
+}
+.ai-chat-input-area button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ai-chat-input-area button:hover {
+    background: var(--primary-color-darker);
+}
+.ai-chat-input-area button:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2077,7 +2248,31 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
     </div>
+<div class="global-ai-chat-container">
+    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
+        <i class="fas fa-robot"></i>
+    </button>
 
+    <div id="ai-chat-window" class="ai-chat-window">
+        <div class="ai-chat-header">
+            <h3><i class="fas fa-robot"></i> Trợ Lý Hệ Thống</h3>
+            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
+        </div>
+        <div id="ai-chat-messages" class="ai-chat-messages">
+            <div class="ai-message">
+                <div class="message-content">
+                    Xin chào! Tôi có thể giúp gì cho bạn về dữ liệu xe và đơn hàng hôm nay?
+                </div>
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
+            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
     <div class="main-container" id="main-container">
         <div class="form-container" id="form-section">
             <h2>Thêm Yêu Cầu Ghép Xe</h2>
@@ -2600,7 +2795,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbzyLsEoX4DGjxZk9R256sUi1Vl0t6LGdRgNZmAdvUS-d2bHaA2r0kiyanpM7nuJiTRBOA/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwtngLtPICCpANV-hEJelT63i48mrjnu5gcJvEhdKmX7dX3wsnQVZC8b-oZPHGu3zN8ZQ/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -5984,6 +6179,98 @@ function handleUrlParameters() {
                 switchTab('cho-xe', waitingListTab);
             }
         }
+    }
+}
+// [THÊM MỚI] CÁC HÀM XỬ LÝ CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG
+
+/**
+ * Bật/tắt hiển thị cửa sổ chat.
+ */
+function toggleGlobalAIChat() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    chatWindow.classList.toggle('open');
+}
+
+/**
+ * Xử lý khi người dùng nhấn Enter trong ô chat.
+ */
+function handleChatInputKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Ngăn xuống dòng
+        sendGlobalAIChatMessage();
+    }
+}
+
+/**
+ * [ĐÃ SỬA LỖI] Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
+ */
+async function sendGlobalAIChatMessage() {
+    const inputEl = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send-btn');
+    const messagesContainer = document.getElementById('ai-chat-messages');
+    const userPrompt = inputEl.value.trim();
+
+    if (!userPrompt) return;
+
+    // Hiển thị tin nhắn của người dùng
+    messagesContainer.innerHTML += `
+        <div class="user-message">
+            <div class="message-content">${escapeHtml(userPrompt)}</div>
+        </div>
+    `;
+    inputEl.value = ''; // Xóa nội dung đã nhập
+    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Cuộn xuống cuối
+
+    // Hiển thị chỉ báo "AI đang trả lời..."
+    messagesContainer.innerHTML += `
+        <div class="ai-message loading" id="loading-indicator">
+            <div class="message-content">
+                <div class="typing-indicator"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+    `;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Vô hiệu hóa nút gửi
+    sendBtn.disabled = true;
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'getGlobalAiResponse'); // Action mới
+        formData.append('userPrompt', userPrompt);
+
+        // Sử dụng biến apiURL đã có sẵn trong tệp của bạn
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+
+        const result = await response.json();
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        // Thay thế chỉ báo loading bằng câu trả lời của AI
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.classList.remove('loading');
+        loadingIndicator.innerHTML = `<div class="message-content">${result.suggestion.replace(/\n/g, '<br>')}</div>`;
+        
+        // === [DÒNG SỬA LỖI] ===
+        // Xóa ID của chỉ báo loading để đảm bảo tin nhắn tiếp theo không bị ghi đè.
+        loadingIndicator.removeAttribute('id');
+        // === KẾT THÚC SỬA LỖI ===
+
+    } catch (error) {
+        console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.classList.remove('loading');
+        loadingIndicator.innerHTML = `<div class="message-content" style="border-color: #dc2626; color: #dc2626;">Lỗi: ${error.message}</div>`;
+        // Cũng xóa ID ở đây để tránh lỗi lặp lại
+        loadingIndicator.removeAttribute('id');
+    } finally {
+        // Bật lại nút gửi
+        sendBtn.disabled = false;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        inputEl.focus();
     }
 }
 </script>
