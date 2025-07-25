@@ -1450,6 +1450,178 @@ body.dark-mode .top-navbar {
     background-color: #f1f5f9;
     border-color: #e2e8f0;
 }
+/* === [THÊM MỚI] CSS CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG === */
+.global-ai-chat-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 1050;
+}
+
+.ai-chat-bubble {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.4);
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+.ai-chat-bubble:hover {
+    transform: scale(1.1);
+    background: var(--primary-color-darker);
+}
+
+.ai-chat-window {
+    position: absolute;
+    bottom: calc(100% + 15px);
+    right: 0;
+    width: 370px;
+    height: 500px;
+    background: var(--card-bg-light);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color-light);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    /* Hiệu ứng animation */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ai-chat-window.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.ai-chat-header {
+    flex-shrink: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color-light);
+    background: var(--background-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ai-chat-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ai-chat-close-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text-muted-light);
+}
+
+.ai-chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.user-message, .ai-message {
+    margin-bottom: 15px;
+    display: flex;
+    max-width: 90%;
+}
+.user-message {
+    margin-left: auto;
+    flex-direction: row-reverse;
+}
+.message-content {
+    padding: 10px 15px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.user-message .message-content {
+    background: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+.ai-message .message-content {
+    background: var(--background-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
+    border-bottom-left-radius: 5px;
+}
+.ai-message.loading .message-content {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background-color: var(--text-muted-light);
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+.ai-chat-input-area {
+    flex-shrink: 0;
+    padding: 15px;
+    border-top: 1px solid var(--border-color-light);
+    display: flex;
+    gap: 10px;
+}
+.ai-chat-input-area textarea {
+    flex-grow: 1;
+    border: 1px solid var(--border-color-light);
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 14px;
+    resize: none;
+    height: 40px;
+    line-height: 20px;
+    background: var(--background-light);
+    color: var(--text-light);
+}
+.ai-chat-input-area textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.2);
+}
+.ai-chat-input-area button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ai-chat-input-area button:hover {
+    background: var(--primary-color-darker);
+}
+.ai-chat-input-area button:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1489,7 +1661,31 @@ body.dark-mode .top-navbar {
             </ul>
         </div>
     </div>
-    
+    <div class="global-ai-chat-container">
+    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
+        <i class="fas fa-magic"></i>
+    </button>
+
+    <div id="ai-chat-window" class="ai-chat-window">
+        <div class="ai-chat-header">
+            <h3><i class="fas fa-robot"></i> Trợ Lý Hệ Thống</h3>
+            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
+        </div>
+        <div id="ai-chat-messages" class="ai-chat-messages">
+            <div class="ai-message">
+                <div class="message-content">
+                    Xin chào! Tôi có thể giúp gì cho bạn về dữ liệu xe và đơn hàng hôm nay?
+                </div>
+            </div>
+        </div>
+        <div class="ai-chat-input-area">
+            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
+            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
     <div class="notification-bell">
         <button class="nav-btn" title="Thông báo">
             <i class="fas fa-bell"></i>
@@ -1522,7 +1718,35 @@ body.dark-mode .top-navbar {
         </main>
 </div>
 
+<div id="aiAssistantModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2 id="aiModalTitle"><i class="fas fa-magic" style="color: var(--primary-color);"></i> Trợ lý AI</h2>
+            <button class="modal-close" onclick="closeModal('aiAssistantModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 15px;">Gửi một yêu cầu tự do cho AI xử lý dựa trên dữ liệu của đơn hàng <strong id="aiOrderNumber" style="color: var(--primary-color);"></strong>:</p>
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="aiCustomPromptInput">Yêu cầu của bạn:</label>
+                <textarea id="aiCustomPromptInput" rows="4" style="width: 100%;" placeholder="Ví dụ: Soạn một email thân thiện báo cho khách hàng xe đã về đến showroom và mời họ đến làm thủ tục nhận xe."></textarea>
+            </div>
+            <button id="aiSubmitBtn" class="btn btn-primary" onclick="submitAiCustomPrompt()">
+                <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+            </button>
+            <hr style="border: none; border-top: 1px solid var(--border-color-light); margin: 20px 0;">
 
+            <label for="aiSuggestionOutput">Kết quả từ AI:</label>
+            <textarea id="aiSuggestionOutput" rows="10" style="width: 100%; margin-top: 5px;" placeholder="Nội dung do AI tạo ra sẽ xuất hiện ở đây..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('aiAssistantModal')">Đóng</button>
+            <button class="btn btn-success" onclick="copyToClipboard(document.getElementById('aiSuggestionOutput').value)">
+                <i class="fas fa-copy"></i> Sao chép Nội dung
+            </button>
+        </div>
+    </div>
+</div>
 
     <div id="confirmationModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="confirmationModalTitle">Xác nhận</h2><button class="modal-close" onclick="closeModal('confirmationModal')">&times;</button></div><div class="modal-body"><p id="confirmationModalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p><div id="confirmationModalInputContainer" style="display: none; margin-top: 15px;"><label id="confirmationModalInputLabel" for="confirmationModalInput"></label><input type="text" id="confirmationModalInput" class="modal-body-input"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('confirmationModal')">Hủy</button><button id="confirmationModalConfirmBtn" class="btn btn-danger">Xác Nhận</button></div></div></div>
 <div id="unmatchModal" class="modal">
@@ -1761,7 +1985,7 @@ function toggleActionMenu(event) {
     }
 
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwgziObdgRCjQU6mVO9WwJltQ6-bYYvXEzEC3XwvnoSNuxKbQBpljCvzwaZY1DP9Yl8DQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw6ja74q8ny1be7rf9_dW6RVz7hcwZCqf0cYE3hmd_UxR2N84UKPkGsMdggCUzje4UWpQ/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
     // Thay thế toàn bộ đối tượng appState cũ bằng đối tượng này
@@ -2264,7 +2488,10 @@ function renderXuatHoaDonView() {
         });
         linksHtml += '</div>';
         const finalHoSoHTML = filesCount > 0 ? linksHtml : '<span class="no-files-text">Chưa có hồ sơ</span>';
-        return { ...row, 'Trạng thái xử lý': status, 'Hồ sơ': finalHoSoHTML };
+        
+        // Gộp trạng thái vào dữ liệu để dễ dàng truy cập
+        const finalStatus = orderFromDaGhep ? (orderFromDaGhep['Kết quả'] || 'Không rõ') : 'Không rõ';
+        return { ...row, 'Trạng thái xử lý': finalStatus, 'Hồ sơ': finalHoSoHTML };
     });
     
     const { searchTerm, filters } = appState.xuatHoaDon;
@@ -2282,7 +2509,6 @@ function renderXuatHoaDonView() {
     if (filters.dongXe) dataWithDetails = dataWithDetails.filter(row => row['DÒNG XE'] === filters.dongXe);
     if (filters.ngoaiThat) dataWithDetails = dataWithDetails.filter(row => row['NGOẠI THẤT'] === filters.ngoaiThat);
     
-    // [MỚI] Lấy tổng số lượng sau khi lọc
     const totalCount = dataWithDetails.length;
 
     const toolbarHTML = `
@@ -2299,9 +2525,14 @@ function renderXuatHoaDonView() {
     
     const { sortKey, sortDir } = appState.xuatHoaDon;
     sortData(dataWithDetails, sortKey, sortDir);
+
     const getActionsForRow = (row) => {
         const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
         let actions = [];
+
+        // Thêm nút AI vào đầu danh sách
+        actions.push({ icon: 'fa-magic', label: 'Trợ lý AI', handler: 'handleAIAssistant' });
+
         if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
             actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', handler: 'handleApproveRequest' });
             actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', handler: 'handleRequestSupplement' });
@@ -2314,6 +2545,7 @@ function renderXuatHoaDonView() {
         if (status === 'đã xuất hóa đơn') actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại HĐ', handler: 'handleResendEmail', type: 'invoice_issued' });
        
         if (status !== 'đã xuất hóa đơn' && status !== 'đã hủy') actions.push({ icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', handler: 'handleCancelRequest' });
+        
         return actions;
     };
 
@@ -4732,6 +4964,169 @@ async function handleInlineEdit(element) {
 
     // Khôi phục lại giao diện bình thường
     element.style.opacity = '1';
+}
+// DÁN CÁC HÀM JAVASCRIPT NÀY VÀO THẺ <script> CỦA BẠN
+
+let currentOrderForAI = null; // Biến tạm để lưu dữ liệu đơn hàng cho AI
+
+/**
+ * Mở modal Trợ lý AI và lưu lại thông tin đơn hàng hiện tại.
+ */
+function handleAIAssistant(order, btnElement) {
+    currentOrderForAI = order; // Lưu lại dữ liệu của hàng được chọn
+    
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    document.getElementById('aiOrderNumber').textContent = orderNumber;
+    document.getElementById('aiCustomPromptInput').value = ''; // Xóa yêu cầu cũ
+    document.getElementById('aiSuggestionOutput').value = ''; // Xóa kết quả cũ
+    document.getElementById('aiSuggestionOutput').placeholder = 'Nội dung do AI tạo ra sẽ xuất hiện ở đây...';
+
+    openModal('aiAssistantModal');
+}
+
+async function submitAiCustomPrompt() {
+    if (!currentOrderForAI) {
+        showToast("Lỗi: Không có thông tin đơn hàng để xử lý.", "error");
+        return;
+    }
+
+    const promptText = document.getElementById('aiCustomPromptInput').value.trim();
+    if (!promptText) {
+        showToast("Vui lòng nhập yêu cầu cho Trợ lý AI.", "warning");
+        return;
+    }
+
+    const outputTextarea = document.getElementById('aiSuggestionOutput');
+    const submitButton = document.getElementById('aiSubmitBtn');
+    const originalButtonHtml = submitButton.innerHTML;
+
+    // Hiển thị trạng thái đang tải
+    outputTextarea.value = '';
+    outputTextarea.placeholder = 'Trợ lý AI đang suy nghĩ... Vui lòng chờ trong giây lát.';
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+    try {
+        const params = {
+            action: 'getAiSuggestion',
+            orderData: JSON.stringify(currentOrderForAI),
+            customPrompt: promptText // [THAY ĐỔI] Gửi yêu cầu tự do thay vì promptKey
+        };
+        
+        const formData = new URLSearchParams();
+        for (const key in params) {
+            formData.append(key, params[key]);
+        }
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+        
+        const result = await response.json();
+
+        if (result.status === "SUCCESS") {
+            outputTextarea.value = result.suggestion;
+        } else {
+            throw new Error(result.message || "Hành động thất bại từ API");
+        }
+
+    } catch (error) {
+        console.error("Lỗi khi gọi Trợ lý AI:", error);
+        outputTextarea.value = `Đã xảy ra lỗi: ${error.message}`;
+        showToast(`Lỗi: ${error.message}`, 'error');
+    } finally {
+        // Khôi phục lại trạng thái bình thường
+        outputTextarea.placeholder = 'Nội dung do AI tạo ra sẽ xuất hiện ở đây...';
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonHtml;
+    }
+}
+// [THÊM MỚI] CÁC HÀM XỬ LÝ CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG
+
+/**
+ * Bật/tắt hiển thị cửa sổ chat.
+ */
+function toggleGlobalAIChat() {
+    const chatWindow = document.getElementById('ai-chat-window');
+    chatWindow.classList.toggle('open');
+}
+
+/**
+ * Xử lý khi người dùng nhấn Enter trong ô chat.
+ */
+function handleChatInputKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Ngăn xuống dòng
+        sendGlobalAIChatMessage();
+    }
+}
+
+/**
+ * Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
+ */
+async function sendGlobalAIChatMessage() {
+    const inputEl = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send-btn');
+    const messagesContainer = document.getElementById('ai-chat-messages');
+    const userPrompt = inputEl.value.trim();
+
+    if (!userPrompt) return;
+
+    // Hiển thị tin nhắn của người dùng
+    messagesContainer.innerHTML += `
+        <div class="user-message">
+            <div class="message-content">${escapeHtml(userPrompt)}</div>
+        </div>
+    `;
+    inputEl.value = ''; // Xóa nội dung đã nhập
+    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Cuộn xuống cuối
+
+    // Hiển thị chỉ báo "AI đang trả lời..."
+    messagesContainer.innerHTML += `
+        <div class="ai-message loading" id="loading-indicator">
+            <div class="message-content">
+                <div class="typing-indicator"><span></span><span></span><span></span></div>
+            </div>
+        </div>
+    `;
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Vô hiệu hóa nút gửi
+    sendBtn.disabled = true;
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'getGlobalAiResponse'); // Action mới
+        formData.append('userPrompt', userPrompt);
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+
+        const result = await response.json();
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        // Thay thế chỉ báo loading bằng câu trả lời của AI
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.classList.remove('loading');
+        loadingIndicator.innerHTML = `<div class="message-content">${result.suggestion.replace(/\n/g, '<br>')}</div>`;
+
+    } catch (error) {
+        console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
+        const loadingIndicator = document.getElementById('loading-indicator');
+        loadingIndicator.classList.remove('loading');
+        loadingIndicator.innerHTML = `<div class="message-content" style="border-color: #dc2626; color: #dc2626;">Lỗi: ${error.message}</div>`;
+    } finally {
+        // Bật lại nút gửi
+        sendBtn.disabled = false;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        inputEl.focus();
+    }
 }
 </script>
 </body>
