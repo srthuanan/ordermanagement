@@ -1430,178 +1430,6 @@ body.dark-mode .top-navbar {
     background-color: #f1f5f9;
     border-color: #e2e8f0;
 }
-/* === [THÊM MỚI] CSS CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG === */
-.global-ai-chat-container {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    z-index: 1050;
-}
-
-.ai-chat-bubble {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.4);
-    font-size: 24px;
-    transition: all 0.3s ease;
-}
-.ai-chat-bubble:hover {
-    transform: scale(1.1);
-    background: var(--primary-color-darker);
-}
-
-.ai-chat-window {
-    position: absolute;
-    bottom: calc(100% + 15px);
-    right: 0;
-    width: 370px;
-    height: 500px;
-    background: var(--card-bg-light);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border-color-light);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    
-    /* Hiệu ứng animation */
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ai-chat-window.open {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.ai-chat-header {
-    flex-shrink: 0;
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color-light);
-    background: var(--background-light);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.ai-chat-header h3 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.ai-chat-close-btn {
-    background: none;
-    border: none;
-    font-size: 22px;
-    cursor: pointer;
-    color: var(--text-muted-light);
-}
-
-.ai-chat-messages {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.user-message, .ai-message {
-    margin-bottom: 15px;
-    display: flex;
-    max-width: 90%;
-}
-.user-message {
-    margin-left: auto;
-    flex-direction: row-reverse;
-}
-.message-content {
-    padding: 10px 15px;
-    border-radius: 18px;
-    font-size: 14px;
-    line-height: 1.5;
-}
-.user-message .message-content {
-    background: var(--primary-color);
-    color: white;
-    border-bottom-right-radius: 5px;
-}
-.ai-message .message-content {
-    background: var(--background-light);
-    color: var(--text-light);
-    border: 1px solid var(--border-color-light);
-    border-bottom-left-radius: 5px;
-}
-.ai-message.loading .message-content {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-.typing-indicator span {
-    width: 8px;
-    height: 8px;
-    background-color: var(--text-muted-light);
-    border-radius: 50%;
-    display: inline-block;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-.ai-chat-input-area {
-    flex-shrink: 0;
-    padding: 15px;
-    border-top: 1px solid var(--border-color-light);
-    display: flex;
-    gap: 10px;
-}
-.ai-chat-input-area textarea {
-    flex-grow: 1;
-    border: 1px solid var(--border-color-light);
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 14px;
-    resize: none;
-    height: 40px;
-    line-height: 20px;
-    background: var(--background-light);
-    color: var(--text-light);
-}
-.ai-chat-input-area textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.2);
-}
-.ai-chat-input-area button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary-color);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.ai-chat-input-area button:hover {
-    background: var(--primary-color-darker);
-}
-.ai-chat-input-area button:disabled {
-    background-color: #94a3b8;
-    cursor: not-allowed;
-}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1641,31 +1469,7 @@ body.dark-mode .top-navbar {
             </ul>
         </div>
     </div>
-    <div class="global-ai-chat-container">
-    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
-        <i class="fas fa-magic"></i>
-    </button>
-
-    <div id="ai-chat-window" class="ai-chat-window">
-        <div class="ai-chat-header">
-            <h3><i class="fas fa-robot"></i> Trợ Lý Hệ Thống</h3>
-            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
-        </div>
-        <div id="ai-chat-messages" class="ai-chat-messages">
-            <div class="ai-message">
-                <div class="message-content">
-                    Xin chào! Tôi có thể giúp gì cho bạn về dữ liệu xe và đơn hàng hôm nay?
-                </div>
-            </div>
-        </div>
-        <div class="ai-chat-input-area">
-            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
-            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-</div>
+  
     <div class="notification-bell">
         <button class="nav-btn" title="Thông báo">
             <i class="fas fa-bell"></i>
@@ -1965,7 +1769,7 @@ function toggleActionMenu(event) {
     }
 
 
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxGZiMfZjfXRF6Vg4iGbXSdt5LBxJO3e3NMmy_w67H7rLn8g_YDlo0K8-mueFeg_Dx98w/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwOc2_VpkVWxW_4_r3EOteZrEm4CfbLyOrTCkEjFwV3wWHr25zgRcbVghkFylUcDpmsYQ/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
     // Thay thế toàn bộ đối tượng appState cũ bằng đối tượng này
@@ -2469,7 +2273,6 @@ function renderXuatHoaDonView() {
         linksHtml += '</div>';
         const finalHoSoHTML = filesCount > 0 ? linksHtml : '<span class="no-files-text">Chưa có hồ sơ</span>';
         
-        // Gộp trạng thái vào dữ liệu để dễ dàng truy cập
         const finalStatus = orderFromDaGhep ? (orderFromDaGhep['Kết quả'] || 'Không rõ') : 'Không rõ';
         return { ...row, 'Trạng thái xử lý': finalStatus, 'Hồ sơ': finalHoSoHTML };
     });
@@ -2501,7 +2304,22 @@ function renderXuatHoaDonView() {
                 <div class="filter-group"><i class="fas fa-tag filter-icon"></i><select onchange="handleFilterChange('xuatHoaDon', 'trangThai', this.value)"><option value="">Tất cả Trạng Thái</option>${statusOptions.map(opt => `<option value="${opt}" ${filters.trangThai === opt ? 'selected' : ''}>${opt}</option>`).join('')}</select></div>
             </div>
             <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
-        </div>`;
+            
+            <div class="action-dropdown-menu" style="margin-left: 15px;">
+                <button class="btn btn-primary" onclick="toggleBulkActionsMenu(event)" id="bulk-actions-btn" disabled>
+                    <i class="fas fa-play"></i> Hành Động Hàng Loạt (<span id="bulk-selected-count">0</span>)
+                </button>
+                <div id="bulk-actions-panel" class="dropdown-panel">
+                    <ul class="dropdown-list">
+                        <li><a href="#" onclick="handleBulkAction('approveSelectedInvoiceRequest', 'Phê Duyệt')"><i class="fas fa-check-double fa-fw"></i> Phê Duyệt Các Mục Đã Chọn</a></li>
+                        <li><a href="#" onclick="handleBulkAction('requestSupplementForInvoice', 'Y/C Bổ Sung')"><i class="fas fa-exclamation-triangle fa-fw"></i> Y/C Bổ Sung Hàng Loạt</a></li>
+                        <li><a href="#" onclick="handleBulkAction('markAsPendingSignature', 'Chờ Ký Hóa Đơn')"><i class="fas fa-signature fa-fw"></i> Chuyển sang Chờ Ký HĐ</a></li>
+                        <div class="dropdown-divider"></div>
+                        <li><a href="#" onclick="handleBulkAction('cancelRequest', 'Hủy Yêu Cầu')"><i class="fas fa-trash-alt fa-fw"></i> Hủy Các Yêu Cầu Đã Chọn</a></li>
+                    </ul>
+                </div>
+            </div>
+            </div>`;
     
     const { sortKey, sortDir } = appState.xuatHoaDon;
     sortData(dataWithDetails, sortKey, sortDir);
@@ -2509,10 +2327,7 @@ function renderXuatHoaDonView() {
     const getActionsForRow = (row) => {
         const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
         let actions = [];
-
-        // Thêm nút AI vào đầu danh sách
         actions.push({ icon: 'fa-magic', label: 'Trợ lý AI', handler: 'handleAIAssistant' });
-
         if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
             actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', handler: 'handleApproveRequest' });
             actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', handler: 'handleRequestSupplement' });
@@ -2523,9 +2338,7 @@ function renderXuatHoaDonView() {
         }
         if (status === 'yêu cầu bổ sung') actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại YCBS', handler: 'handleResendEmail', type: 'invoice_request_supplement' });
         if (status === 'đã xuất hóa đơn') actions.push({ icon: 'fa-paper-plane', label: 'Gửi lại HĐ', handler: 'handleResendEmail', type: 'invoice_issued' });
-       
         if (status !== 'đã xuất hóa đơn' && status !== 'đã hủy') actions.push({ icon: 'fa-trash-alt', label: 'Hủy Yêu Cầu', handler: 'handleCancelRequest' });
-        
         return actions;
     };
 
@@ -2708,7 +2521,8 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         return `<div class="copyable-field" title="Click icon để sao chép"><span class="copy-text">${escapeHtml(displayValue)}</span><i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i></div>`;
     };
 
-    const mainHeaders = ['STT', 'Khách Hàng', 'Số Đơn Hàng', 'Ngày Cọc', 'Trạng Thái', 'Hành Động'];
+    // === THAY ĐỔI TIÊU ĐỀ BẢNG ===
+    const mainHeaders = ['<input type="checkbox" id="select-all-invoices" onclick="toggleAllInvoiceSelection(this)">', 'STT', 'Khách Hàng', 'Số Đơn Hàng', 'Ngày Cọc', 'Trạng Thái', 'Hành Động'];
     const headerHTML = mainHeaders.map(label => `<th>${label}</th>`).join('');
 
     let rowsHTML = '';
@@ -2716,16 +2530,14 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const rowId = row['SỐ ĐƠN HÀNG'];
         const highlightClass = (rowId && rowId === appState.highlightedId) ? 'highlight-row' : '';
 
-        // Dữ liệu cho dòng chính
         const tenKH = row['TÊN KHÁCH HÀNG'];
         const soDH = row['SỐ ĐƠN HÀNG'];
         const ngayCoc = formatCustomDateTime(row['NGÀY CỌC']).split(' ')[1] || 'N/A';
-        const trangThai = row['Trạng thái xử lý'] || ''; // <-- DÒNG BỊ THIẾU ĐÃ ĐƯỢC THÊM VÀO ĐÂY
+        const trangThai = row['Trạng thái xử lý'] || '';
 
         const actionButtons = actionsCallback(row);
         const inlineActionsHTML = renderInlineRowActions(actionButtons, row);
 
-        // Dữ liệu cho phần chi tiết
         const tvbh = row['TƯ VẤN BÁN HÀNG'];
         const dongXe = row['DÒNG XE'], phienBan = row['PHIÊN BẢN'];
         const ngoaiThat = row['NGOẠI THẤT'], noiThat = row['NỘI THẤT'];
@@ -2734,14 +2546,15 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
         const ngayXHD = formatCustomDateTime(row['NGÀY XUẤT HÓA ĐƠN']).split(' ')[1] || 'N/A';
         const hoSoHTML = row['Hồ sơ'] || '<span class="no-files-text">Chưa có hồ sơ</span>';
 
-        // Tạo HTML cho dòng chính
+        // === THAY ĐỔI CẤU TRÚC HÀNG (TR) ===
         rowsHTML += `
-            <tr id="row-${rowId}" class="expandable-row ${highlightClass}" onclick="toggleDetailsRow('${rowId}')">
-                <td data-label="STT"><b>${index + 1}</b></td>
-                <td data-label="Khách Hàng">${createCopyableHtml(tenKH)}</td>
-                <td data-label="Số Đơn Hàng">${createCopyableHtml(soDH)}</td>
-                <td data-label="Ngày Cọc">${ngayCoc}</td>
-                <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
+            <tr id="row-${rowId}" class="expandable-row ${highlightClass}" data-order-number="${rowId}">
+                <td class="checkbox-cell" onclick="event.stopPropagation()"><input type="checkbox" class="invoice-checkbox" value="${rowId}" onchange="updateBulkActionButtonState()"></td>
+                <td data-label="STT" onclick="toggleDetailsRow('${rowId}')"><b>${index + 1}</b></td>
+                <td data-label="Khách Hàng" onclick="toggleDetailsRow('${rowId}')">${createCopyableHtml(tenKH)}</td>
+                <td data-label="Số Đơn Hàng" onclick="toggleDetailsRow('${rowId}')">${createCopyableHtml(soDH)}</td>
+                <td data-label="Ngày Cọc" onclick="toggleDetailsRow('${rowId}')">${ngayCoc}</td>
+                <td data-label="Trạng Thái" onclick="toggleDetailsRow('${rowId}')"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></td>
                 <td data-label="Hành Động">
                     <div class="actions-cell-inline">
                         <div class="inline-buttons-container">${inlineActionsHTML}</div>
@@ -2750,7 +2563,6 @@ function renderXuatHoaDonGroupedTable(id, rows, actionsCallback) {
             </tr>
         `;
 
-        // Tạo HTML cho dòng chi tiết (ẩn)
         rowsHTML += `
             <tr id="details-row-${rowId}" class="details-row">
                 <td colspan="${mainHeaders.length}" class="details-cell">
@@ -3921,88 +3733,7 @@ function renderSuggestionPanel(suggestions) {
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        applyInitialTheme();
-        initScrollToTopButton();
-        if (window.innerWidth > 900 && localStorage.getItem('sidebarState') === 'collapsed') {
-            toggleSidebarDesktop();
-        }
-
-        fetchInitialData();
-        startPolling();
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') stopPolling();
-            else startPolling();
-        });
-const mainContainer = document.getElementById('main-content');
-    if (mainContainer) {
-        mainContainer.addEventListener('click', function(event) {
-            // Tìm phần tử cha gần nhất có class 'cross-view-link'
-            const link = event.target.closest('.cross-view-link');
-
-            // Nếu tìm thấy một link
-            if (link) {
-                event.preventDefault(); // Ngăn trình duyệt chuyển trang
-
-                // Lấy thông tin từ các data-attributes
-                const targetView = link.dataset.targetView;
-                const filterValue = link.dataset.filterValue;
-                const highlightId = link.dataset.highlightId;
-
-                // Nếu có đủ thông tin, thực hiện chuyển view
-                if (targetView && filterValue) {
-                    switchView(targetView, {
-                        value: filterValue,
-                        highlightId: highlightId 
-                    });
-                }
-            }
-        });
-    }
-const navLinksContainer = document.querySelector('.navbar-links');
-    if(navLinksContainer) {
-        navLinksContainer.addEventListener('click', (e) => {
-            if (e.target.tagName === 'A' && window.innerWidth <= 1024) {
-                navLinksContainer.classList.remove('open');
-            }
-        });
-    }
-        const notificationBellEl = document.querySelector('.notification-bell');
-        if (notificationBellEl) {
-            // Chỉ cần gọi hàm toggle, vì logic đóng popup kia đã nằm trong hàm toggle rồi
-            notificationBellEl.addEventListener('click', (event) => {
-                 event.stopPropagation(); // Ngăn sự kiện lan tới document
-                 const item = event.target.closest('.notification-item[data-view]');
-                 if (item) {
-                     appState.highlightedId = item.dataset.id;
-                     switchView(item.dataset.view);
-                     if (appState.notifications.isPanelOpen) {
-                         toggleNotificationPanel();
-                     }
-                 } else {
-                     toggleNotificationPanel();
-                 }
-            });
-        }
-        
-        // BỘ LẮNG NGHE SỰ KIỆN TOÀN CỤC (ĐỂ BẤM RA NGOÀI)
-        document.addEventListener('click', (event) => {
-            const actionMenuPanel = document.getElementById('action-dropdown-panel');
-            const actionMenuContainer = document.querySelector('.action-dropdown-menu');
-            
-            // Đóng menu "Tia sét" nếu click ra ngoài
-            if (actionMenuPanel.classList.contains('active') && !actionMenuContainer.contains(event.target)) {
-                 actionMenuPanel.classList.remove('active');
-            }
-
-            // Đóng bảng "Chuông" nếu click ra ngoài
-            if (appState.notifications.isPanelOpen && !notificationBellEl.contains(event.target)) {
-                toggleNotificationPanel();
-            }
-        });
-    });
-
+    
 
 function handleEditRow(rowData, btnElement) {
     const view = appState.currentView;
@@ -4657,23 +4388,6 @@ function toggleRowActions(event) {
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    // ... (các code cũ của bạn)
-
-    // THÊM BỘ LẮNG NGHE MỚI NÀY
-    document.addEventListener('click', (event) => {
-        // ... (code xử lý đóng menu "Tia sét" và "Chuông" của bạn đã có)
-
-        // Đóng menu hành động trong bảng nếu click ra ngoài
-        const activeRowMenu = document.querySelector('.actions-dropdown-menu.active');
-        if (activeRowMenu && !activeRowMenu.parentElement.contains(event.target)) {
-            activeRowMenu.classList.remove('active');
-        }
-    });
-});
-/**
- * [HÀM MỚI] Tạo HTML cho menu hành động dạng dropdown.
- */
 function renderRowActionsDropdown(actions, rowData) {
     if (!actions || actions.length === 0) {
         return '<td></td>'; // Trả về ô trống nếu không có hành động
@@ -5024,98 +4738,222 @@ async function submitAiCustomPrompt() {
         submitButton.innerHTML = originalButtonHtml;
     }
 }
-// [THÊM MỚI] CÁC HÀM XỬ LÝ CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG
 
-/**
- * Bật/tắt hiển thị cửa sổ chat.
- */
-function toggleGlobalAIChat() {
-    const chatWindow = document.getElementById('ai-chat-window');
-    chatWindow.classList.toggle('open');
+function toggleBulkActionsMenu(event) {
+    event.stopPropagation();
+    const panel = document.getElementById('bulk-actions-panel');
+    panel.classList.toggle('active');
 }
 
 /**
- * Xử lý khi người dùng nhấn Enter trong ô chat.
+ * Chọn hoặc bỏ chọn tất cả các checkbox trong bảng hóa đơn.
  */
-function handleChatInputKey(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Ngăn xuống dòng
-        sendGlobalAIChatMessage();
+function toggleAllInvoiceSelection(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.invoice-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = masterCheckbox.checked;
+    });
+    updateBulkActionButtonState();
+}
+
+function updateBulkActionButtonState() {
+    const selectedCheckboxes = document.querySelectorAll('.invoice-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    const bulkBtn = document.getElementById('bulk-actions-btn');
+    const countSpan = document.getElementById('bulk-selected-count');
+
+    if (countSpan) {
+        countSpan.textContent = count;
+    }
+    if (bulkBtn) {
+        bulkBtn.disabled = count === 0;
+    }
+
+    // Bỏ check ở checkbox "chọn tất cả" nếu có ít nhất một mục con không được chọn
+    const masterCheckbox = document.getElementById('select-all-invoices');
+    if (masterCheckbox) {
+        const totalCheckboxes = document.querySelectorAll('.invoice-checkbox').length;
+        masterCheckbox.checked = (count > 0 && count === totalCheckboxes);
     }
 }
 
-/**
- * [ĐÃ SỬA LỖI] Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
- */
-async function sendGlobalAIChatMessage() {
-    const inputEl = document.getElementById('ai-chat-input');
-    const sendBtn = document.getElementById('ai-chat-send-btn');
-    const messagesContainer = document.getElementById('ai-chat-messages');
-    const userPrompt = inputEl.value.trim();
+async function handleBulkAction(action, actionName) {
+    const selectedCheckboxes = document.querySelectorAll('.invoice-checkbox:checked');
+    const selectedOrderNumbers = Array.from(selectedCheckboxes).map(cb => cb.value);
 
-    if (!userPrompt) return;
+    if (selectedOrderNumbers.length === 0) {
+        showToast('Vui lòng chọn ít nhất một đơn hàng.', 'warning');
+        return;
+    }
 
-    // Hiển thị tin nhắn của người dùng
-    messagesContainer.innerHTML += `
-        <div class="user-message">
-            <div class="message-content">${escapeHtml(userPrompt)}</div>
-        </div>
-    `;
-    inputEl.value = ''; // Xóa nội dung đã nhập
-    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Cuộn xuống cuối
+    // Đóng menu lại
+    const panel = document.getElementById('bulk-actions-panel');
+    if (panel) {
+        panel.classList.remove('active');
+    }
 
-    // Hiển thị chỉ báo "AI đang trả lời..."
-    messagesContainer.innerHTML += `
-        <div class="ai-message loading" id="loading-indicator">
-            <div class="message-content">
-                <div class="typing-indicator"><span></span><span></span><span></span></div>
-            </div>
-        </div>
-    `;
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // Đối với các hành động cần nhập lý do
+    if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
+        const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
+        const label = action === 'cancelRequest' ? 'Lý do hủy (áp dụng cho tất cả):' : 'Nội dung yêu cầu (áp dụng cho tất cả):';
 
-    // Vô hiệu hóa nút gửi
-    sendBtn.disabled = true;
+        showPromptModal(title, `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`, label, async (reason, modalButton) => {
+            await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
+            closeModal('confirmationModal');
+        });
+    } else { // Đối với các hành động chỉ cần xác nhận
+        showConfirmationModal(
+            'Xác Nhận Hành Động Hàng Loạt',
+            `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
+            async (modalButton) => {
+                await executeBulkAction(action, selectedOrderNumbers, modalButton);
+                closeModal('confirmationModal');
+            },
+            'btn-primary'
+        );
+    }
+}
+
+async function executeBulkAction(action, orderNumbers, buttonElement, additionalParams = {}) {
+    let originalHtml = buttonElement.innerHTML;
+    buttonElement.disabled = true;
+    buttonElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang xử lý ${orderNumbers.length} mục...`;
 
     try {
+        const params = {
+            action: action,
+            orderNumbers: JSON.stringify(orderNumbers), // Gửi mảng dưới dạng chuỗi JSON
+            ...additionalParams
+        };
+
         const formData = new URLSearchParams();
-        formData.append('action', 'getGlobalAiResponse'); // Action mới
-        formData.append('userPrompt', userPrompt);
+        for (const key in params) {
+            formData.append(key, params[key]);
+        }
 
-        // Sử dụng biến apiURL đã có sẵn trong tệp của bạn
-        const response = await fetch(apiURL, {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
-
+        const response = await fetch(API_URL, { method: 'POST', body: formData });
         const result = await response.json();
-        if (result.status !== 'SUCCESS') throw new Error(result.message);
 
-        // Thay thế chỉ báo loading bằng câu trả lời của AI
-        const loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.classList.remove('loading');
-        loadingIndicator.innerHTML = `<div class="message-content">${result.suggestion.replace(/\n/g, '<br>')}</div>`;
-        
-        // === [DÒNG SỬA LỖI] ===
-        // Xóa ID của chỉ báo loading để đảm bảo tin nhắn tiếp theo không bị ghi đè.
-        loadingIndicator.removeAttribute('id');
-        // === KẾT THÚC SỬA LỖI ===
-
+        if (result.status === "SUCCESS") {
+            showToast(result.message || 'Hành động hàng loạt thành công!', 'success');
+            await fetchInitialData(true); // Tải lại dữ liệu nền
+        } else {
+            throw new Error(result.message || 'Hành động hàng loạt thất bại.');
+        }
     } catch (error) {
-        console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
-        const loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.classList.remove('loading');
-        loadingIndicator.innerHTML = `<div class="message-content" style="border-color: #dc2626; color: #dc2626;">Lỗi: ${error.message}</div>`;
-        // Cũng xóa ID ở đây để tránh lỗi lặp lại
-        loadingIndicator.removeAttribute('id');
+        console.error(`Lỗi khi thực hiện ${action} hàng loạt:`, error);
+        showToast(`Lỗi: ${error.message}`, 'error');
     } finally {
-        // Bật lại nút gửi
-        sendBtn.disabled = false;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        inputEl.focus();
+        buttonElement.disabled = false;
+        buttonElement.innerHTML = originalHtml;
+
+        // Bỏ chọn tất cả sau khi thực hiện xong
+        const masterCheckbox = document.getElementById('select-all-invoices');
+        if (masterCheckbox) {
+            masterCheckbox.checked = false;
+        }
+        document.querySelectorAll('.invoice-checkbox').forEach(cb => cb.checked = false);
+        updateBulkActionButtonState();
     }
 }
+// =================================================================
+// CÁC HÀM LẮNG NGHE SỰ KIỆN CHÍNH (CHẠY KHI TRANG ĐÃ SẴN SÀNG)
+// =================================================================
+
+// Hàm lắng nghe chính khi trang đã tải xong
+document.addEventListener('DOMContentLoaded', () => {
+    applyInitialTheme();
+    initScrollToTopButton();
+
+    fetchInitialData();
+    startPolling();
+
+    // Lắng nghe sự kiện khi người dùng chuyển tab hoặc cửa sổ
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            stopPolling();
+        } else {
+            startPolling();
+        }
+    });
+
+    // Lắng nghe sự kiện click trong vùng nội dung chính (dành cho link chuyển view)
+    const mainContainer = document.getElementById('main-content');
+    if (mainContainer) {
+        mainContainer.addEventListener('click', function(event) {
+            const link = event.target.closest('.cross-view-link');
+            if (link) {
+                event.preventDefault();
+                const targetView = link.dataset.targetView;
+                const filterValue = link.dataset.filterValue;
+                const highlightId = link.dataset.highlightId;
+                if (targetView && filterValue) {
+                    switchView(targetView, {
+                        value: filterValue,
+                        highlightId: highlightId 
+                    });
+                }
+            }
+        });
+    }
+
+    // Lắng nghe sự kiện cho menu điều hướng trên di động
+    const navLinksContainer = document.querySelector('.navbar-links');
+    if (navLinksContainer) {
+        navLinksContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' && window.innerWidth <= 1024) {
+                navLinksContainer.classList.remove('open');
+            }
+        });
+    }
+
+    // Lắng nghe sự kiện cho icon chuông thông báo
+    const notificationBellEl = document.querySelector('.notification-bell');
+    if (notificationBellEl) {
+        notificationBellEl.addEventListener('click', (event) => {
+             event.stopPropagation();
+             const item = event.target.closest('.notification-item[data-view]');
+             if (item) {
+                 appState.highlightedId = item.dataset.id;
+                 switchView(item.dataset.view);
+                 if (appState.notifications.isPanelOpen) {
+                     toggleNotificationPanel();
+                 }
+             } else {
+                 toggleNotificationPanel();
+             }
+        });
+    }
+});
+
+// DUY NHẤT MỘT HÀM LẮNG NGHE CLICK TOÀN CỤC để đóng tất cả popup/menu
+document.addEventListener('click', (event) => {
+    // 1. Đóng menu "Thao tác nhanh" (hình tia sét)
+    const actionMenuPanel = document.getElementById('action-dropdown-panel');
+    const actionMenuContainer = document.querySelector('.action-dropdown-menu');
+    if (actionMenuPanel && actionMenuContainer && actionMenuPanel.classList.contains('active') && !actionMenuContainer.contains(event.target)) {
+        actionMenuPanel.classList.remove('active');
+    }
+
+    // 2. Đóng bảng "Thông báo" (hình chuông)
+    const notificationBellEl = document.querySelector('.notification-bell');
+    if (appState.notifications.isPanelOpen && notificationBellEl && !notificationBellEl.contains(event.target)) {
+        toggleNotificationPanel();
+    }
+
+    // 3. Đóng menu "Hành động hàng loạt"
+    const bulkActionPanel = document.getElementById('bulk-actions-panel');
+    const bulkActionBtn = document.getElementById('bulk-actions-btn');
+    if (bulkActionPanel && bulkActionBtn && bulkActionPanel.classList.contains('active') && !bulkActionBtn.contains(event.target) && !bulkActionPanel.contains(event.target)) {
+        bulkActionPanel.classList.remove('active');
+    }
+    
+    // 4. Đóng menu hành động trên từng hàng trong bảng
+    const activeRowMenu = document.querySelector('.actions-dropdown-menu.active');
+    if (activeRowMenu && !activeRowMenu.parentElement.contains(event.target)) {
+        activeRowMenu.classList.remove('active');
+    }
+});
 </script>
 </body>
 </html>
