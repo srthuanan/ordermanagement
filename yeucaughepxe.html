@@ -2039,176 +2039,173 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
 #cho-xe-section > #danh-sach-cho-section {
     width: auto; /* Ghi đè thuộc tính width: 100% để flexbox hoạt động chính xác */
 }
-/* === [THÊM MỚI] CSS CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG === */
-.global-ai-chat-container {
+/* CSS for Gemini Chatbot */
+#gemini-fab {
     position: fixed;
     bottom: 25px;
     right: 25px;
-    z-index: 1050;
-}
-
-.ai-chat-bubble {
-    width: 70px; /* To hơn */
-    height: 70px; /* To hơn */
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Nền gradient tím */
+    width: 60px;
+    height: 60px;
+    /* THAY ĐỔI MÀU NỀN */
+    background: linear-gradient(135deg, #8a2be2 0%, #4a00e0 100%);
+    /* THAY ĐỔI HÌNH DẠNG */
+    border-radius: 16px;
     color: white;
-    border: none;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.4);
-    font-size: 28px; /* Icon to hơn */
-    transition: all 0.3s ease;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(74, 0, 224, 0.4); /* Thay đổi đổ bóng cho phù hợp */
+    z-index: 1011;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.ai-chat-bubble:hover {
+#gemini-fab:hover {
     transform: scale(1.1);
-    background: var(--primary-color-darker);
+    box-shadow: 0 8px 25px rgba(0, 48, 135, 0.3);
 }
-
-.ai-chat-window {
-    position: absolute;
-    bottom: calc(100% + 15px);
-    right: 0;
-    width: 370px;
+#gemini-chat-window {
+    position: fixed;
+    bottom: 100px;
+    right: 25px;
+    width: 350px;
+    max-width: 90vw;
     height: 500px;
-    background: var(--card-bg-light);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    max-height: 70vh;
+    background-color: var(--card-bg-light);
     border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-light-outer);
+    z-index: 1010;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    
-    visibility: hidden;
+    transform: scale(0.95) translateY(20px);
     opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
 }
-
-.ai-chat-window.open {
-    visibility: visible;
+#gemini-chat-window.open {
+    transform: scale(1) translateY(0);
     opacity: 1;
-    transform: translateY(0);
+    visibility: visible;
 }
-
-.ai-chat-header {
-    flex-shrink: 0;
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color-light);
-    background: var(--background-light);
+#gemini-chat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-.ai-chat-header h3 {
-    margin: 0;
-    font-size: 1rem;
+    padding: 10px 15px;
+    /* THAY ĐỔI MÀU NỀN HEADER */
+    background: linear-gradient(135deg, #4a00e0 0%, #8a2be2 100%);
+    color: white;
     font-weight: 600;
-    color: var(--primary-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
-.ai-chat-close-btn {
+#gemini-chat-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: white;
+}
+#gemini-chat-close-btn {
     background: none;
     border: none;
-    font-size: 22px;
+    color: white;
+    font-size: 20px;
     cursor: pointer;
-    color: var(--text-muted-light);
+    opacity: 0.8;
+    transition: opacity 0.2s;
 }
-
-.ai-chat-messages {
+#gemini-chat-close-btn:hover {
+    opacity: 1;
+}
+#gemini-chat-messages {
     flex-grow: 1;
-    padding: 20px;
+    padding: 15px;
     overflow-y: auto;
-}
-
-.user-message, .ai-message {
-    margin-bottom: 15px;
     display: flex;
-    max-width: 90%;
+    flex-direction: column;
+    gap: 12px;
 }
-.user-message {
-    margin-left: auto;
-    flex-direction: row-reverse;
-}
-.message-content {
-    padding: 10px 15px;
+.gemini-message {
+    padding: 8px 12px;
     border-radius: 18px;
-    font-size: 14px;
+    max-width: 80%;
     line-height: 1.5;
 }
-.user-message .message-content {
-    background: var(--primary-color);
+.gemini-message.user {
+    /* THAY ĐỔI MÀU BONG BÓNG CHAT CỦA BẠN */
+    background-color: #5d0fcc;
     color: white;
-    border-bottom-right-radius: 5px;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
 }
-.ai-message .message-content {
-    background: var(--background-light);
+.gemini-message.bot {
+    background-color: var(--background-light);
     color: var(--text-light);
     border: 1px solid var(--border-color-light);
-    border-bottom-left-radius: 5px;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
 }
-.ai-message.loading .message-content {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-.typing-indicator span {
+.gemini-message.bot.loading span {
+    display: inline-block;
     width: 8px;
     height: 8px;
-    background-color: var(--text-muted-light);
     border-radius: 50%;
-    display: inline-block;
+    background-color: var(--text-light);
     animation: bounce 1.4s infinite ease-in-out both;
 }
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-.ai-chat-input-area {
-    flex-shrink: 0;
-    padding: 15px;
-    border-top: 1px solid var(--border-color-light);
-    display: flex;
-    gap: 10px;
+.gemini-message.bot.loading span:nth-child(1) { animation-delay: -0.32s; }
+.gemini-message.bot.loading span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
 }
-.ai-chat-input-area textarea {
+#gemini-chat-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid var(--border-color-light);
+}
+#gemini-chat-input {
     flex-grow: 1;
+    padding: 8px 12px;
     border: 1px solid var(--border-color-light);
     border-radius: 20px;
-    padding: 10px 15px;
+    margin-right: 8px;
     font-size: 14px;
-    resize: none;
-    height: 40px;
-    line-height: 20px;
-    background: var(--background-light);
+    background-color: var(--background-light);
     color: var(--text-light);
 }
-.ai-chat-input-area textarea:focus {
+#gemini-chat-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
 }
-.ai-chat-input-area button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+#gemini-chat-send-btn {
     border: none;
     background: var(--primary-color);
     color: white;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
     font-size: 16px;
     cursor: pointer;
+    flex-shrink: 0;
     transition: background-color 0.2s;
 }
-.ai-chat-input-area button:hover {
-    background: var(--primary-color-darker);
+#gemini-chat-send-btn:hover {
+    background-color: var(--primary-color-darker);
 }
-.ai-chat-input-area button:disabled {
-    background-color: #94a3b8;
-    cursor: not-allowed;
+body.dark-mode .gemini-message.bot {
+     background-color: var(--background-dark);
+     border-color: var(--border-color-dark);
+}
+body.dark-mode #gemini-chat-input {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+    border-color: var(--border-color-dark);
+}
+body.dark-mode #gemini-chat-input:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
 }
     </style>
 </head>
@@ -2248,29 +2245,21 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
     </div>
-<div class="global-ai-chat-container">
-    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
-        <i class="fas fa-robot"></i>
-    </button>
+<div id="gemini-fab" title="Trò chuyện với AI">
+    <i class="fas fa-brain"></i>
+</div>
 
-    <div id="ai-chat-window" class="ai-chat-window">
-        <div class="ai-chat-header">
-            <h3><i class="fas fa-robot"></i> Trợ Lý Hệ Thống</h3>
-            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
-        </div>
-        <div id="ai-chat-messages" class="ai-chat-messages">
-            <div class="ai-message">
-                <div class="message-content">
-                    Xin chào! Tôi có thể giúp gì cho bạn về dữ liệu xe và đơn hàng hôm nay?
-                </div>
-            </div>
-        </div>
-        <div class="ai-chat-input-area">
-            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
-            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
+<div id="gemini-chat-window">
+    <div id="gemini-chat-header">
+        <h3>Trợ lý</h3>
+        <button id="gemini-chat-close-btn">&times;</button>
+    </div>
+    <div id="gemini-chat-messages">
+        <div class="gemini-message bot">Xin chào! Tôi có thể giúp gì về việc tính giá xe VinFast?</div>
+    </div>
+    <div id="gemini-chat-input-container">
+        <input type="text" id="gemini-chat-input" placeholder="Nhập câu hỏi của bạn...">
+        <button id="gemini-chat-send-btn"><i class="fas fa-paper-plane"></i></button>
     </div>
 </div>
     <div class="main-container" id="main-container">
@@ -2546,7 +2535,162 @@ body.dark-mode #vehicle-analytics-warning.slow-moving {
             </div>
         </div>
     </div>
-    
+    <script type="module">
+    import { GoogleGenerativeAI } from "https://cdn.skypack.dev/@google/generative-ai";
+
+    // --- PASTE YOUR GOOGLE AI STUDIO API KEY HERE ---
+    const API_KEY = "AIzaSyBKojoD7zpkjkIxy0czgNW3AhmBQzcdowI"; // IMPORTANT: Replace with your actual API key
+
+    // --- Elements ---
+    const fab = document.getElementById('gemini-fab');
+    const chatWindow = document.getElementById('gemini-chat-window');
+    const closeBtn = document.getElementById('gemini-chat-close-btn');
+    const messagesContainer = document.getElementById('gemini-chat-messages');
+    const input = document.getElementById('gemini-chat-input');
+    const sendBtn = document.getElementById('gemini-chat-send-btn');
+    let genAI;
+
+    // --- Initialization ---
+    try {
+        genAI = new GoogleGenerativeAI(API_KEY);
+    } catch (error) {
+        console.error("Failed to initialize GoogleGenerativeAI. Check API Key.", error);
+        addMessage("bot", "Lỗi: Không thể kết nối với AI. Vui lòng kiểm tra API Key trong mã nguồn.");
+    }
+
+    // --- Helper Functions ---
+
+    /**
+     * Adds a message to the chat display.
+     * @param {string} sender - 'user' or 'bot'.
+     * @param {string} text - The message content.
+     * @param {boolean} [isLoading=false] - True to show a loading indicator.
+     * @returns {HTMLElement} The created message element.
+     */
+    function addMessage(sender, text, isLoading = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('gemini-message', sender);
+
+        if (isLoading) {
+            messageDiv.classList.add('loading');
+            messageDiv.innerHTML = '<span></span><span></span><span></span>';
+        } else {
+            // Basic Markdown to HTML conversion
+            let formattedText = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+            messageDiv.innerHTML = formattedText;
+        }
+
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return messageDiv;
+    }
+
+    /**
+     * Shows a "bot is thinking" indicator.
+     * @returns {HTMLElement} The indicator element.
+     */
+    function showThinkingIndicator() {
+        return addMessage('bot', '', true);
+    }
+
+    /**
+     * Gathers context from the price calculator form.
+     * @returns {string} A formatted string of the current calculator state.
+     */
+    function getCalculatorContext() {
+    // Lấy thông tin về tab đang hoạt động
+    const activeTabEl = document.querySelector('.navbar .tabs a.active');
+    const activeTabText = activeTabEl ? activeTabEl.textContent.trim() : 'Không xác định';
+
+    // Lấy thông tin tổng quan từ bảng lịch sử (nếu có)
+    const totalRequests = document.getElementById('total-don-count')?.textContent || '0';
+
+    // Tạo chuỗi ngữ cảnh mới phù hợp với trang này
+    return `
+        Thông tin ngữ cảnh hiện tại từ trang "Yêu Cầu Ghép Xe":
+        - Người dùng đang ở tab: ${activeTabText}
+        - Tổng số yêu cầu trong bảng lịch sử: ${totalRequests}
+        - Nhiệm vụ của bạn là trả lời các câu hỏi chung về sản phẩm VinFast, quy trình làm việc hoặc các yêu cầu hỗ trợ khác. Không cố gắng tìm thông tin chi tiết về giá vì bạn không ở trên trang tính giá.
+    `;
+}
+
+    /**
+     * Handles sending a message to the Gemini API.
+     */
+    async function handleSendMessage() {
+    const messageText = input.value.trim();
+    if (messageText === '' || !genAI) {
+        return;
+    }
+
+    addMessage('user', messageText);
+    input.value = '';
+    sendBtn.disabled = true;
+
+    const thinkingIndicator = showThinkingIndicator();
+
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // Ngữ cảnh này không cần lấy thêm thông tin từ trang nữa,
+        // vì vai trò của AI đã được xác định rõ.
+        const context = `
+            Bạn là Trợ lý AI chuyên nghiệp của VinFast Thuận An, được tích hợp vào hệ thống quản lý nội bộ.
+            Nhiệm vụ của bạn là hướng dẫn và hỗ trợ nhân viên kinh doanh sử dụng các chức năng của trang "Yêu Cầu Ghép Xe".
+            Các chức năng chính bạn cần am hiểu và có thể hướng dẫn bao gồm:
+            - **Yêu Cầu Ghép Xe:** Cách điền form, ý nghĩa các trường, quy trình xác nhận.
+            - **Yêu Cầu Hàng Loạt:** Cách nhập nhiều đơn hàng, cách kiểm tra lỗi và gửi đi.
+            - **Lịch Sử Ghép:** Cách xem, tìm kiếm và lọc lịch sử các yêu cầu đã tạo.
+            - **Yêu Cầu Tìm Xe:** Mục đích và cách tạo một yêu cầu tìm xe khi chưa có sẵn.
+            - **Quy trình Hóa đơn:** Các bước để yêu cầu xuất hóa đơn, bổ sung file, tải hóa đơn đã xuất và ý nghĩa các trạng thái liên quan.
+
+            Hãy trả lời một cách ngắn gọn, tập trung vào nghiệp vụ và luôn sử dụng tiếng Việt.
+        `;
+
+        const prompt = `
+            ${context}
+
+            Câu hỏi của nhân viên: "${messageText}"
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        thinkingIndicator.remove();
+        addMessage('bot', text);
+
+    } catch (error) {
+        console.error("Error calling Gemini API:", error);
+        thinkingIndicator.remove();
+        addMessage('bot', 'Xin lỗi, tôi đang gặp sự cố khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.');
+    } finally {
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+
+    // --- Event Listeners ---
+    fab.addEventListener('click', () => {
+        chatWindow.classList.toggle('open');
+    });
+
+    closeBtn.addEventListener('click', () => {
+        chatWindow.classList.remove('open');
+    });
+
+    sendBtn.addEventListener('click', handleSendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSendMessage();
+        }
+    });
+</script>
     <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
@@ -6181,98 +6325,7 @@ function handleUrlParameters() {
         }
     }
 }
-// [THÊM MỚI] CÁC HÀM XỬ LÝ CHO CHATBOX TRỢ LÝ ẢO TOÀN TRANG
 
-/**
- * Bật/tắt hiển thị cửa sổ chat.
- */
-function toggleGlobalAIChat() {
-    const chatWindow = document.getElementById('ai-chat-window');
-    chatWindow.classList.toggle('open');
-}
-
-/**
- * Xử lý khi người dùng nhấn Enter trong ô chat.
- */
-function handleChatInputKey(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Ngăn xuống dòng
-        sendGlobalAIChatMessage();
-    }
-}
-
-/**
- * [ĐÃ SỬA LỖI] Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
- */
-async function sendGlobalAIChatMessage() {
-    const inputEl = document.getElementById('ai-chat-input');
-    const sendBtn = document.getElementById('ai-chat-send-btn');
-    const messagesContainer = document.getElementById('ai-chat-messages');
-    const userPrompt = inputEl.value.trim();
-
-    if (!userPrompt) return;
-
-    // Hiển thị tin nhắn của người dùng
-    messagesContainer.innerHTML += `
-        <div class="user-message">
-            <div class="message-content">${escapeHtml(userPrompt)}</div>
-        </div>
-    `;
-    inputEl.value = ''; // Xóa nội dung đã nhập
-    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Cuộn xuống cuối
-
-    // Hiển thị chỉ báo "AI đang trả lời..."
-    messagesContainer.innerHTML += `
-        <div class="ai-message loading" id="loading-indicator">
-            <div class="message-content">
-                <div class="typing-indicator"><span></span><span></span><span></span></div>
-            </div>
-        </div>
-    `;
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    // Vô hiệu hóa nút gửi
-    sendBtn.disabled = true;
-
-    try {
-        const formData = new URLSearchParams();
-        formData.append('action', 'getGlobalAiResponse'); // Action mới
-        formData.append('userPrompt', userPrompt);
-
-        // Sử dụng biến apiURL đã có sẵn trong tệp của bạn
-        const response = await fetch(apiURL, {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
-
-        const result = await response.json();
-        if (result.status !== 'SUCCESS') throw new Error(result.message);
-
-        // Thay thế chỉ báo loading bằng câu trả lời của AI
-        const loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.classList.remove('loading');
-        loadingIndicator.innerHTML = `<div class="message-content">${result.suggestion.replace(/\n/g, '<br>')}</div>`;
-        
-        // === [DÒNG SỬA LỖI] ===
-        // Xóa ID của chỉ báo loading để đảm bảo tin nhắn tiếp theo không bị ghi đè.
-        loadingIndicator.removeAttribute('id');
-        // === KẾT THÚC SỬA LỖI ===
-
-    } catch (error) {
-        console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
-        const loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.classList.remove('loading');
-        loadingIndicator.innerHTML = `<div class="message-content" style="border-color: #dc2626; color: #dc2626;">Lỗi: ${error.message}</div>`;
-        // Cũng xóa ID ở đây để tránh lỗi lặp lại
-        loadingIndicator.removeAttribute('id');
-    } finally {
-        // Bật lại nút gửi
-        sendBtn.disabled = false;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        inputEl.focus();
-    }
-}
 </script>
 </body>
 </html>
