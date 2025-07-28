@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tính Giá Xe VinFast</title>
+    <title>Tính Giá Xe VinFast với Trợ lý AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -1064,6 +1064,222 @@
             color: var(--log-negative-dark);
         }
 
+        /* --- START: AI Chatbot Styles --- */
+        #ai-chat-fab {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1011;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #ai-chat-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        #ai-chat-container {
+            position: fixed;
+            bottom: 100px;
+            right: 25px;
+            width: 380px;
+            max-width: 90vw;
+            height: 550px;
+            max-height: 70vh;
+            background-color: var(--card-bg-light);
+            border: 1px solid var(--border-color-light);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light-outer);
+            z-index: 1010;
+            display: flex;
+            flex-direction: column;
+            transition: opacity 0.3s var(--transition-easing), transform 0.3s var(--transition-easing);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+        }
+        #ai-chat-container.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.dark-mode .chat-header h3 {
+            color: var(--secondary-color);
+        }
+        #close-chat-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            line-height: 1;
+        }
+        #chat-messages {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+        }
+        .chat-message .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .chat-message .message-content {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .chat-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .chat-message.user .avatar {
+            background-color: var(--secondary-color);
+        }
+        .chat-message.user .message-content {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        body.dark-mode .chat-message.user .message-content {
+            background-color: var(--primary-color-lighter);
+        }
+        .chat-message.ai .message-content {
+            background-color: var(--background-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color-light);
+            border-bottom-left-radius: 2px;
+        }
+        body.dark-mode .chat-message.ai .message-content {
+            background-color: var(--background-dark);
+            border-color: var(--border-color-dark);
+        }
+        .chat-message.typing-indicator {
+            align-self: flex-start;
+        }
+        .typing-indicator .message-content {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .typing-indicator .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-light);
+            opacity: 0.5;
+            border-radius: 50%;
+            animation: typing-blink 1.4s infinite both;
+        }
+        body.dark-mode .typing-indicator .dot {
+             background-color: var(--text-dark);
+        }
+        .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-blink {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+        #chat-form {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid var(--border-color-light);
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        #chat-input {
+            flex-grow: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color-light);
+            border-radius: 20px;
+            background-color: var(--background-light);
+            color: var(--text-light);
+            font-size: 0.9em;
+            transition: all var(--transition-speed-fast) ease;
+        }
+        #chat-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+        }
+        body.dark-mode #chat-input {
+            background-color: var(--background-dark);
+            color: var(--text-dark);
+            border-color: var(--border-color-dark);
+        }
+        body.dark-mode #chat-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
+        }
+        #send-chat-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+        }
+        #send-chat-btn:hover {
+            background-color: var(--primary-color-lighter);
+        }
+        #send-chat-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        body.dark-mode #send-chat-btn:disabled {
+            background-color: #555;
+        }
+        /* --- END: AI Chatbot Styles --- */
+
+
         @media (max-width: 900px) {
             .sidebar { transform: translateX(-100%); width: 220px; box-shadow: 5px 0 15px rgba(0,0,0,0.2); z-index: 1007; }
             .sidebar.open { transform: translateX(0); }
@@ -1146,6 +1362,21 @@
                 top: 10px; /* Adjusted for mobile */
                 right: 12px; /* Adjusted for mobile */
             }
+            /* AI Chat Responsive */
+            #ai-chat-fab {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                bottom: 15px;
+                right: 15px;
+            }
+            #ai-chat-container {
+                left: 10px;
+                right: 10px;
+                bottom: 75px;
+                height: 65vh;
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -1174,7 +1405,7 @@
             <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">
                 <i class="fas fa-bars"></i>
             </button>
-            <h1></h1>
+            <h1>Công Cụ Tính Giá Xe VinFast</h1>
         </div>
         <div class="navbar-controls"> <button class="theme-toggle-btn" id="themeToggle" aria-label="Chuyển đổi giao diện">
                 <i class="fas fa-moon" id="theme-icon"></i>
@@ -1362,6 +1593,28 @@
         <h4 id="guidanceModalHeader"><i class="fas fa-info-circle"></i>Hướng Dẫn</h4>
         <p id="guidanceTextModal">Chào mừng bạn đến với công cụ tính giá. Vui lòng bắt đầu bằng cách chọn một Mã Model.</p>
     </div>
+
+    <!-- START: AI Chatbot Elements -->
+    <button id="ai-chat-fab" aria-label="Mở Trợ lý AI">
+        <i class="fas fa-robot"></i>
+    </button>
+    <div id="ai-chat-container">
+        <div class="chat-header">
+            <h3><i class="fas fa-robot"></i> Trợ lý AI Gemini</h3>
+            <button id="close-chat-btn" aria-label="Đóng Trò chuyện">&times;</button>
+        </div>
+        <div id="chat-messages">
+            <!-- Messages will be injected here by JavaScript -->
+        </div>
+        <form id="chat-form">
+            <input type="text" id="chat-input" placeholder="Hỏi về xe hoặc khuyến mãi..." autocomplete="off">
+            <button type="submit" id="send-chat-btn" aria-label="Gửi tin nhắn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+    <!-- END: AI Chatbot Elements -->
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -2419,6 +2672,190 @@
             populateModelDropdown();
             resetFormInputs();
             updateCorpPolicyVisibility(); // Initial check for Corp Policy
+
+
+            // --- START: AI Chatbot Logic ---
+            const chatFab = document.getElementById('ai-chat-fab');
+            const chatContainer = document.getElementById('ai-chat-container');
+            const closeChatBtn = document.getElementById('close-chat-btn');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatMessages = document.getElementById('chat-messages');
+            const sendChatBtn = document.getElementById('send-chat-btn');
+
+            chatFab.addEventListener('click', () => {
+                chatContainer.classList.toggle('visible');
+                if (chatContainer.classList.contains('visible')) {
+                    chatInput.focus();
+                    // Display initial greeting if chat is empty
+                    if (chatMessages.children.length === 0) {
+                        displayMessage("Xin chào! Tôi là trợ lý AI của VinFast Thuận An. Tôi có thể giúp gì cho bạn về việc tính giá xe?", 'ai');
+                    }
+                }
+            });
+
+            closeChatBtn.addEventListener('click', () => {
+                chatContainer.classList.remove('visible');
+            });
+
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handleSendMessage();
+            });
+
+            function displayMessage(message, sender) {
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = `chat-message ${sender}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.innerHTML = `<i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i>`;
+
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = message;
+
+                messageWrapper.appendChild(avatar);
+                messageWrapper.appendChild(messageContent);
+                chatMessages.appendChild(messageWrapper);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function showTypingIndicator() {
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'chat-message ai typing-indicator';
+                typingIndicator.id = 'typing-indicator';
+                typingIndicator.innerHTML = `
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="message-content">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                `;
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function removeTypingIndicator() {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            function gatherFormContext() {
+                let context = "Tình trạng tính giá hiện tại của người dùng:\n";
+                const model = modelKeySelect.value;
+                if (model) {
+                    context += `- Model xe: ${model}\n`;
+                    context += `- Giá niêm yết: ${formatCurrency(parseFloat(baseMsrpInput.value), true)}\n`;
+                    context += `- Năm VIN: ${vinYearInput.value || 'Chưa nhập'}\n`;
+                    context += `- Ngày XHĐ dự kiến: ${expectedInvoiceDateInput.value || 'Chưa nhập'}\n`;
+
+                    const selectedOptions = [];
+                    if (isSdiBatteryCheckbox.checked) selectedOptions.push("Pin SDI");
+                    if (is2ZoneACCheckbox.checked) selectedOptions.push("Điều hòa 2 vùng");
+                    if (hasCaptainSeatsCheckbox.checked) selectedOptions.push("Ghế cơ trưởng");
+                    if (hasPanoramicRoofCheckbox.checked) selectedOptions.push("Trần kính");
+                    if (selectedAdvancedColorSelect.value) selectedOptions.push(`Màu nâng cao: ${selectedAdvancedColorSelect.options[selectedAdvancedColorSelect.selectedIndex].text}`);
+                    if (selectedOptions.length > 0) {
+                        context += `- Tùy chọn đã chọn: ${selectedOptions.join(', ')}\n`;
+                    }
+
+                    const appliedPromos = [];
+                    if (applyManhLietTinhThanVietNamPromoCheckbox.checked) appliedPromos.push("Mãnh liệt tinh thần VN L3");
+                    if (applyVf7PlusCashbackCheckbox.checked) appliedPromos.push("KM Tiền mặt VF7+");
+                    if (applyVinfascinationDynamicCheckbox.checked) appliedPromos.push("Vinfascination");
+                    if (takeInsuranceCashDynamicCheckbox.checked) appliedPromos.push("Quy đổi bảo hiểm");
+                    if (applyCorpDiscountCheckbox.checked) appliedPromos.push("Ưu đãi Doanh nghiệp (Corp)");
+                    if (tradeInOldCarTypeSelect.value !== "Không đổi") appliedPromos.push(`Thu cũ đổi mới (Xe cũ: ${tradeInOldCarTypeSelect.value})`);
+                    if (vinClubTierSelect.value !== "Không có") appliedPromos.push(`VinClub hạng ${vinClubTierSelect.value}`);
+
+                    if (appliedPromos.length > 0) {
+                        context += `- Khuyến mãi đã chọn: ${appliedPromos.join(', ')}\n`;
+                    }
+                    
+                    if (customerPriceResultP.textContent !== "0 VNĐ") {
+                       context += `- Kết quả tính giá hiện tại:\n`;
+                       context += `  - Giá trên hóa đơn: ${invoicePriceResultP.textContent}\n`;
+                       context += `  - Giá khách hàng trả: ${customerPriceResultP.textContent}\n`;
+                       context += `  - Ghi chú: ${notesResultPre.textContent}\n`;
+                    }
+
+                } else {
+                    context += "Người dùng chưa chọn model xe nào.\n";
+                }
+                return context;
+            }
+
+            async function handleSendMessage() {
+                const userMessage = chatInput.value.trim();
+                if (!userMessage) return;
+
+                displayMessage(userMessage, 'user');
+                chatInput.value = '';
+                sendChatBtn.disabled = true;
+
+                showTypingIndicator();
+
+                try {
+                    const context = gatherFormContext();
+                    // Updated prompt for clarity and better instructions to the AI
+                    const prompt = `Bạn là một trợ lý AI thân thiện và chuyên nghiệp của đại lý VinFast Thuận An. Vai trò của bạn là trả lời câu hỏi của khách hàng dựa trên ngữ cảnh được cung cấp từ công cụ tính giá và kiến thức chung của bạn về xe VinFast. Hãy trả lời một cách chuyên nghiệp và súc tích bằng tiếng Việt. Nếu câu hỏi không liên quan đến VinFast hoặc việc tính giá, hãy lịch sự trả lời rằng bạn chỉ có thể hỗ trợ các chủ đề liên quan.
+
+Ngữ cảnh hiện tại của người dùng trên công cụ:
+${context}
+
+Câu hỏi của khách hàng: "${userMessage}"
+
+Vui lòng đưa ra câu trả lời rõ ràng và hữu ích.`;
+                    
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    
+                    // IMPORTANT: The apiKey is left as an empty string.
+                    // The execution environment (like Canvas) will securely handle the API key.
+                    // This prevents the key from being exposed in the client-side code and resolves the 400 error when run in the correct environment.
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        // Provide a more user-friendly error message
+                        const errorData = await response.json();
+                        console.error("API Error Response:", errorData);
+                        throw new Error(`Lỗi từ máy chủ: ${errorData.error?.message || response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    let aiResponse = "Xin lỗi, tôi chưa thể trả lời câu hỏi này. Vui lòng thử lại.";
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        aiResponse = result.candidates[0].content.parts[0].text;
+                    }
+                    
+                    removeTypingIndicator();
+                    displayMessage(aiResponse, 'ai');
+
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    removeTypingIndicator();
+                    displayMessage(`Rất tiếc, đã có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng đảm bảo bạn đang xem trang này qua nút 'Preview' và thử lại. Lỗi: ${error.message}`, 'ai');
+                } finally {
+                    sendChatBtn.disabled = false;
+                    chatInput.focus();
+                }
+            }
+            // --- END: AI Chatbot Logic ---
 
         });
     </script>
