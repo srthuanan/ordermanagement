@@ -35,6 +35,8 @@
             --updated-policy-color: #28a745; /* Green for updated policies */
         }
 
+        html { scroll-behavior: smooth; }
+
         body.dark-mode {
             --background-light: var(--background-dark);
             --text-light: var(--text-dark);
@@ -215,6 +217,7 @@
             display: flex; justify-content: center; align-items: flex-start;
             flex-grow: 1;
             padding-bottom: calc(var(--footer-height) + 20px);
+            position: relative; /* Needed for on-page-nav positioning */
         }
         .main-container.collapsed { margin-left: 60px; width: calc(100% - 60px); }
 
@@ -432,6 +435,165 @@
             background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
         }
 
+        /* --- Tooltip Styles --- */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary-color-darker);
+            cursor: help;
+        }
+        body.dark-mode .tooltip {
+             border-bottom: 1px dotted var(--primary-color-lighter);
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: var(--primary-color-darker);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85em;
+            font-weight: 400;
+            border-bottom: none;
+        }
+        body.dark-mode .tooltip .tooltip-text {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+        }
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--primary-color-darker) transparent transparent transparent;
+        }
+        body.dark-mode .tooltip .tooltip-text::after {
+             border-color: var(--card-bg-dark) transparent transparent transparent;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* --- Back to Top Button Styles --- */
+        .back-to-top-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s, background-color 0.3s, transform 0.3s;
+        }
+        .back-to-top-btn.show {
+            display: flex;
+            opacity: 0.8;
+        }
+        .back-to-top-btn:hover {
+            opacity: 1;
+            background-color: var(--primary-color-lighter);
+            transform: scale(1.1);
+        }
+
+        /* --- On-page Nav Styles --- */
+        .on-page-nav {
+            position: sticky;
+            top: calc(var(--header-height) + 20px);
+            width: 200px;
+            margin-left: 20px;
+            padding: 15px;
+            background-color: var(--card-bg-light);
+            border-radius: 8px;
+            border: 1px solid var(--border-color-light);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            align-self: flex-start; /* Important for sticky positioning */
+            display: none; /* Hidden by default, shown on large screens */
+        }
+         body.dark-mode .on-page-nav {
+            background-color: var(--card-bg-dark);
+            border-color: var(--border-color-dark);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .on-page-nav h4 {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color-light);
+             body.dark-mode border-bottom: 1px solid var(--border-color-dark);
+        }
+        .on-page-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+        .on-page-nav li a {
+            display: block;
+            padding: 6px 10px;
+            font-size: 0.8em;
+            text-decoration: none;
+            color: var(--text-light);
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s, padding-left 0.2s;
+            border-left: 3px solid transparent;
+        }
+        body.dark-mode .on-page-nav li a {
+             color: var(--text-dark);
+        }
+        .on-page-nav li a:hover {
+            background-color: rgba(0,0,0,0.05);
+            color: var(--primary-color);
+        }
+         body.dark-mode .on-page-nav li a:hover {
+             background-color: rgba(255,255,255,0.05);
+             color: var(--secondary-color);
+         }
+        .on-page-nav li a.active-nav-link {
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: rgba(0, 174, 255, 0.1);
+            border-left: 3px solid var(--secondary-color);
+            padding-left: 15px;
+        }
+         body.dark-mode .on-page-nav li a.active-nav-link {
+            color: var(--secondary-color);
+            background-color: rgba(0, 174, 255, 0.15);
+         }
+
+
+        @media (min-width: 1400px) { /* Show on-page nav on larger screens */
+            .main-container {
+                justify-content: space-between; /* Allow nav to sit on the side */
+            }
+            .on-page-nav {
+                display: block;
+            }
+        }
         @media (max-width: 900px) {
             .sidebar { transform: translateX(-100%); width: 220px; box-shadow: 5px 0 15px rgba(0,0,0,0.2); z-index: 1007; }
             .sidebar.open { transform: translateX(0); }
@@ -461,6 +623,7 @@
             .search-filter-controls { flex-direction: column; align-items: stretch; }
             .search-filter-controls > * { margin-bottom: 8px; }
             .search-filter-controls button { width: 100%; }
+            .back-to-top-btn { width: 35px; height: 35px; font-size: 14px; bottom: 20px; right: 20px;}
         }
     </style>
 </head>
@@ -528,7 +691,8 @@
             </div>
             <div class="tab-container">
                 <div class="tab-buttons">
-                    <button class="tab-button active" onclick="openPolicyTab(event, 'policy1')">CS Hỗ Trợ Chuyển Đổi Xe</button>
+                    <button class="tab-button active" onclick="openPolicyTab(event, 'changelog')">Lịch sử thay đổi</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy1')">CS Hỗ Trợ Chuyển Đổi Xe</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy2')">CS Giá Bán Xe Điện</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy3')">CS Thúc Đẩy Bán Hàng</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy4')">CS Xe Dừng Sản Xuất</button>
@@ -539,7 +703,37 @@
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy9')">CS Corporate</button>
                 </div>
 
-                <div id="policy1" class="tab-content active policy-document">
+                <div id="changelog" class="tab-content active policy-document">
+                    <h2>Lịch sử Cập nhật Chính sách</h2>
+                    <div class="policy-section">
+                        <h3>Ngày 24 tháng 07 năm 2025</h3>
+                        <ul>
+                            <li><strong>CS Thúc Đẩy Bán Hàng:</strong> Bổ sung "Chính sách hỗ trợ bán hàng cho VF 3" (hỗ trợ 3 triệu cho xe sản xuất trước 18/03/2025).</li>
+                            <li><strong>CS Thúc Đẩy Bán Hàng:</strong> Bổ sung "Chương trình ưu đãi chuyển đổi xanh" (hỗ trợ lãi suất 3%/năm tại Hà Nội).</li>
+                        </ul>
+                    </div>
+                     <div class="policy-section">
+                        <h3>Ngày 16 tháng 07 năm 2025</h3>
+                        <ul>
+                            <li><strong>CS Xe Dừng Sản Xuất:</strong> Cập nhật chính sách và giá bán cho các dòng xe đã dừng sản xuất (VF3 màu GSM, VF 5S, VF 6S, v.v.).</li>
+                             <li><strong>CS Xe Dừng Sản Xuất:</strong> Bổ sung chính sách giảm giá cho xe theo năm VIN (2022, 2023, 2024).</li>
+                        </ul>
+                    </div>
+                     <div class="policy-section">
+                        <h3>Ngày 05 tháng 07 năm 2025</h3>
+                        <ul>
+                             <li><strong>CS Hỗ Trợ Chuyển Đổi Xe:</strong> Cập nhật mức hỗ trợ và quy trình triển khai cho chương trình đổi xe xăng sang xe điện. Mở rộng cho các dòng VF3, VF5.</li>
+                        </ul>
+                    </div>
+                     <div class="policy-section">
+                        <h3>Ngày 22 tháng 05 năm 2025</h3>
+                        <ul>
+                             <li><strong>CS Thúc Đẩy Bán Hàng:</strong> Ra mắt chương trình "Mãnh liệt tinh thần Việt Nam - Vì tương lai xanh lần 3" (giảm 4% trên giá MSRP).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="policy1" class="tab-content policy-document">
                     <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2 class="policy-updated-title">Chính sách Hỗ trợ cho Khách hàng Chuyển đổi từ Xe Xăng sang Xe Điện (<span class="text-updated-highlight">05/07/2025</span>)</h2>
                     <div class="policy-section">
@@ -633,10 +827,10 @@
                             <li>Áp dụng cho Khách hàng hoặc vợ chồng/con cái/tứ thân phụ mẫu/công ty do họ sở hữu số cổ phần/phần góp lớn nhất sở hữu xe xăng từ 03 tháng trở lên có nhu cầu đổi từ xe xăng sang xe điện <span class="text-updated-highlight">VF3, VF5</span>, VF 6, VF 7, VF 8, VF 9.</li>
                             <li>Xe mới có thể được đứng tên bởi chính chủ sở hữu xe xăng hoặc vợ chồng, con cái, tứ thân phụ mẫu; hoặc công ty do họ sở hữu số cổ phần/ phần vốn góp lớn nhất. Trường hợp chủ sở hữu xe xăng cũ là pháp nhân, xe mới có thể được đứng tên pháp nhân đó hoặc cá nhân sở hữu cổ phần/ phần vốn góp lớn nhất.</li>
                             <li><span class="text-updated-highlight">Chính sách này được áp dụng đồng thời cùng Chính sách khuyến mãi bán lẻ hiện hành; Chương trình Mãnh liệt tinh thần Việt Nam, Chính sách VinClub, chính sách bán buôn.</span></li>
-                            <li>Khách hàng có quyền tự bán xe cũ hoặc bán qua hệ thống Salon đối tác của GF, miễn chứng minh được giao dịch bán thì đều được hưởng hỗ trợ.</li>
-                            <li>ĐLPP có trách nhiệm kiểm tra đảm bảo việc hỗ trợ đúng đối tượng khách hàng đổi từ xe xăng cũ sang xe điện VinFast. Nếu vi phạm, ĐLPP sẽ chịu mức phạt bằng 10 lần số tiền VinFast hỗ trợ.</li>
-                            <li>ĐLPP cần có bàn phục vụ riêng, ưu tiên và chỉ dẫn rõ ràng, nổi bật cho khách hàng bán xe xăng cũ để mua xe điện VinFast.</li>
-                            <li class="text-updated-highlight">Chính sách có áp dụng cho CBNV Vingroup, tuy nhiên, CBNV chỉ được lựa chọn giữa 1 trong 2 ưu đãi: Chính sách Hỗ trợ khách hàng chuyển đổi từ xe xăng sang xe điện HOẶC Chính sách hỗ trợ 2% / 01 xe điện khi sở hữu xe xăng VinFast.</li>
+                            <li>Khách hàng có quyền tự bán xe cũ hoặc bán qua hệ thống Salon đối tác của <span class="tooltip">GF<span class="tooltip-text">Green & Future - Đơn vị phụ trách mảng kinh doanh xe điện của VinFast</span></span>, miễn chứng minh được giao dịch bán thì đều được hưởng hỗ trợ.</li>
+                            <li><span class="tooltip">ĐLPP<span class="tooltip-text">Đại lý Phân phối</span></span> có trách nhiệm kiểm tra đảm bảo việc hỗ trợ đúng đối tượng khách hàng đổi từ xe xăng cũ sang xe điện VinFast. Nếu vi phạm, <span class="tooltip">ĐLPP<span class="tooltip-text">Đại lý Phân phối</span></span> sẽ chịu mức phạt bằng 10 lần số tiền VinFast hỗ trợ.</li>
+                            <li><span class="tooltip">ĐLPP<span class="tooltip-text">Đại lý Phân phối</span></span> cần có bàn phục vụ riêng, ưu tiên và chỉ dẫn rõ ràng, nổi bật cho khách hàng bán xe xăng cũ để mua xe điện VinFast.</li>
+                            <li class="text-updated-highlight">Chính sách có áp dụng cho <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span> Vingroup, tuy nhiên, <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span> chỉ được lựa chọn giữa 1 trong 2 ưu đãi: Chính sách Hỗ trợ khách hàng chuyển đổi từ xe xăng sang xe điện HOẶC Chính sách hỗ trợ 2% / 01 xe điện khi sở hữu xe xăng VinFast.</li>
                             <li>Mức hỗ trợ theo từng mốc thời gian áp dụng theo thời điểm xuất hóa đơn.</li>
                             <li><span class="text-updated-highlight">Cho phép khách hàng đã cọc từ ngày 22/5/2025 đến 24/6/2025 (theo dữ liệu DMS) được chọn chính sách tại thời điểm cọc hoặc thời điểm xuất hóa đơn với điều kiện phải xuất hóa đơn trước 15/07/2025.</span></li>
                             <li>Đối với xe xăng các hãng khác (bao gồm xe máy dầu diesel): chỉ áp dụng cho các xe du lịch dưới 9 chỗ và xe bán tải.</li>
@@ -652,7 +846,7 @@
                                         <th>Nội dung công việc</th>
                                         <th>Dự kiến thời gian</th>
                                         <th>Đại lý/020</th>
-                                        <th>GF</th>
+                                        <th><span class="tooltip">GF<span class="tooltip-text">Green & Future - Đơn vị phụ trách mảng kinh doanh xe điện của VinFast</span></span></th>
                                         <th>Salon xe cũ</th>
                                         <th>VF Trading</th>
                                     </tr>
@@ -746,8 +940,8 @@
                                     <tr>
                                         <th>Dòng xe</th>
                                         <th>Phiên bản</th>
-                                        <th>Giá bán MSRP kèm pin (Tiêu chuẩn)</th>
-                                        <th>Giá bán MSRP kèm pin (Nâng cấp)</th>
+                                        <th>Giá bán <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span> kèm pin (Tiêu chuẩn)</th>
+                                        <th>Giá bán <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span> kèm pin (Nâng cấp)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -927,7 +1121,7 @@
                     </div>
                     <div class="policy-section text-updated-highlight">
                         <h3 class="text-updated-highlight">III. CHƯƠNG TRÌNH ƯU ĐÃI “MÃNH LIỆT TINH THẦN VIỆT NAM – VÌ TƯƠNG LAI XANH LẦN 3”</h3>
-                        <p><strong class="text-updated-highlight">Mức ưu đãi:</strong> <span class="text-updated-highlight">4% trên giá MSRP.</span></p>
+                        <p><strong class="text-updated-highlight">Mức ưu đãi:</strong> <span class="text-updated-highlight">4% trên giá <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span>.</span></p>
                         <p><strong class="text-updated-highlight">Hình thức ưu đãi:</strong> <span class="text-updated-highlight">Giảm giá bằng tiền mặt.</span></p>
                         <p><strong class="text-updated-highlight">Thời gian áp dụng:</strong> <span class="text-updated-highlight">Từ 22/05/2025 đến 31/12/2025.</span></p>
                         <p><strong class="text-updated-highlight">Đối tượng áp dụng:</strong> <span class="text-updated-highlight">Toàn bộ khách hàng xuất hóa đơn trong thời gian áp dụng. Các khách hàng xuất hóa đơn từ ngày 22/05/2025 đến 31/05/2025 được áp dụng đồng thời chương trình “Mãnh liệt tinh thần Việt Nam – Vì tương lai xanh lần 3 với Chương trình "VINFASCIANATION - MÙA HÈ RỰC RỠ CÙNG VINFAST".</span></p>
@@ -977,7 +1171,7 @@
                         <h3 class="text-updated-highlight">2. CHÍNH SÁCH BÁN HÀNG CHO XE VIN 2022, VIN 2023 VÀ VIN 2024</h3>
                         <div class="policy-table-container">
                             <table class="policy-table">
-                                <thead><tr><th>Năm VIN</th><th>Dòng xe</th><th class="text-right">Mức giảm trên giá MSRP</th></tr></thead>
+                                <thead><tr><th>Năm VIN</th><th>Dòng xe</th><th class="text-right">Mức giảm trên giá <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span></th></tr></thead>
                                 <tbody class="text-updated-highlight">
                                     <tr>
                                         <td rowspan="6">VIN 2024</td>
@@ -1023,14 +1217,14 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Mức giảm trên giá MSRP xe kèm pin CATL</td>
+                                        <td>Mức giảm trên giá <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span> xe kèm pin CATL</td>
                                         <td class="text-right">104.000.000</td>
                                         <td class="text-right">110.000.000</td>
                                         <td class="text-right">125.000.000</td>
                                         <td class="text-right">135.000.000</td>
                                     </tr>
                                     <tr>
-                                        <td>Mức giảm trên giá MSRP xe bản điều hòa 3 vùng</td>
+                                        <td>Mức giảm trên giá <span class="tooltip">MSRP<span class="tooltip-text">Manufacturer's Suggested Retail Price (Giá bán lẻ đề xuất của nhà sản xuất)</span></span> xe bản điều hòa 3 vùng</td>
                                         <td></td>
                                         <td></td>
                                         <td class="text-right">15.000.000</td>
@@ -1281,15 +1475,15 @@
                                         <td>Tiếp cận dịch vụ sửa chữa nhanh và thuận tiện</td>
                                         <td>
                                             Giao nhận xe miễn phí tại địa điểm theo KH yêu cầu (trong giờ hành chính).<br>
-                                            Khoảng cách tối đa: từ 30 km trở xuống trong bán kính từ XDV gần nhất.<br>
-                                            VF sẽ hỗ trợ chi phí cho NPP xử lý sự vụ.
+                                            Khoảng cách tối đa: từ 30 km trở xuống trong bán kính từ <span class="tooltip">XDV<span class="tooltip-text">Xưởng Dịch vụ</span></span> gần nhất.<br>
+                                            VF sẽ hỗ trợ chi phí cho <span class="tooltip">NPP<span class="tooltip-text">Nhà Phân phối</span></span> xử lý sự vụ.
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>3</td>
                                         <td>Trải nghiệm vượt trội khi vào Xưởng dịch vụ</td>
                                         <td>
-                                            Được tiếp đón và tư vấn bởi các CVDV, KTV có kinh nghiệm và tay nghề cao nhất khi mang xe tới XDV.<br>
+                                            Được tiếp đón và tư vấn bởi các <span class="tooltip">CVDV<span class="tooltip-text">Cố vấn Dịch vụ</span></span>, KTV có kinh nghiệm và tay nghề cao nhất khi mang xe tới <span class="tooltip">XDV<span class="tooltip-text">Xưởng Dịch vụ</span></span>.<br>
                                             Ưu tiên sắp xếp lịch bảo dưỡng và sửa chữa phù hợp với thời gian và nhu cầu của KH.<br>
                                             KH được tiếp nhận/phục vụ và ưu tiên sửa chữa ngay.<br>
                                             Xe VF 9 sẽ được sửa chữa bởi những KTV xuất sắc nhất và được kiểm tra chất lượng bởi Quản đốc trước khi giao xe cho KH.
@@ -1303,8 +1497,8 @@
                         <h3>Lưu ý:</h3>
                         <ul>
                             <li>Các mốc thời gian tính từ ngày xuất hóa đơn.</li>
-                            <li>Nếu khách hàng quan tâm, GF cho khách hàng mượn xe trải nghiệm 01 tuần.</li>
-                            <li>Nếu khách hàng gặp vấn đề dịch vụ cần phải sửa xe, GF cho khách hàng mượn 01 xe VF 8 thay thế để sử dụng.</li>
+                            <li>Nếu khách hàng quan tâm, <span class="tooltip">GF<span class="tooltip-text">Green & Future - Đơn vị phụ trách mảng kinh doanh xe điện của VinFast</span></span> cho khách hàng mượn xe trải nghiệm 01 tuần.</li>
+                            <li>Nếu khách hàng gặp vấn đề dịch vụ cần phải sửa xe, <span class="tooltip">GF<span class="tooltip-text">Green & Future - Đơn vị phụ trách mảng kinh doanh xe điện của VinFast</span></span> cho khách hàng mượn 01 xe VF 8 thay thế để sử dụng.</li>
                             <li>Khách hàng mua VF 8S Lux và VF 8 Lux Plus phải cam kết không chạy dịch vụ, nếu sau đó đăng ký chạy dịch vụ thì VinFast sẽ thu hồi các ưu đãi nếu có và truy thu các quyền lợi đã sử dụng. Thời hạn bảo hành sẽ giảm xuống 3 năm hoặc 100.000 Km (tùy điều kiện nào đến trước).</li>
                         </ul>
                     </div>
@@ -1395,7 +1589,7 @@
                     <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Corporate Ô tô điện VinFast (22/04/2025)</h2>
                     <div class="policy-section">
-                        <h3>I. Dành cho Doanh nghiệp đối tác và CQNN</h3>
+                        <h3>I. Dành cho Doanh nghiệp đối tác và <span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span></h3>
                         <div class="policy-table-container">
                             <table class="policy-table">
                                 <thead>
@@ -1407,12 +1601,12 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td rowspan="2">1. Dành cho CBNV</td>
+                                        <td rowspan="2">1. Dành cho <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span></td>
                                         <td>Từ 17/02 - 31/05/2025</td>
                                         <td>
                                             Mức ưu đãi tính trên chính sách bán lẻ từng thời điểm (*):<br>
                                             - Nếu mua qua kênh 020: 3%<br>
-                                            - Nếu mua qua kênh ĐLPP: 2%
+                                            - Nếu mua qua kênh <span class="tooltip">ĐLPP<span class="tooltip-text">Đại lý Phân phối</span></span>: 2%
                                         </td>
                                     </tr>
                                     <tr>
@@ -1420,18 +1614,18 @@
                                         <td>3%</td>
                                     </tr>
                                     <tr>
-                                        <td rowspan="2">2. Dành cho Doanh nghiệp Nhà nước/ CQNN và BLĐ Doanh nghiệp đối tác</td>
+                                        <td rowspan="2">2. Dành cho Doanh nghiệp Nhà nước/ <span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span> và BLĐ Doanh nghiệp đối tác</td>
                                         <td>Nếu mua &ge;100 xe ô tô:</td>
                                         <td>
                                             - 02 suất ưu đãi 20% trên chính sách bán lẻ tại từng thời điểm (đối với doanh nghiệp đối tác sẽ dành cho CT/TGĐ)<br>
-                                            - 05 suất ưu đãi 10% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/CQNN)
+                                            - 05 suất ưu đãi 10% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/<span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span>)
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Nếu mua &lt;100 xe ô tô:</td>
                                         <td>
                                             - 02 suất ưu đãi 10% trên chính sách bán lẻ tại từng thời điểm (đối với doanh nghiệp đối tác sẽ dành cho CT/TGĐ)<br>
-                                            - 05 suất ưu đãi 5% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/CQNN)
+                                            - 05 suất ưu đãi 5% trên chính sách bán lẻ tại từng thời điểm (danh sách tùy theo chỉ đạo của BLĐ công ty/<span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span>)
                                         </td>
                                     </tr>
                                     <tr>
@@ -1444,7 +1638,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p>(*) Đối với ưu đãi dành cho CBNV, doanh nghiệp đối tác, CQNN, sẽ được lựa chọn theo 1 trong 2 hình thức:</p>
+                        <p>(*) Đối với ưu đãi dành cho <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span>, doanh nghiệp đối tác, <span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span>, sẽ được lựa chọn theo 1 trong 2 hình thức:</p>
                         <ul>
                             <li>Trích 1% ưu đãi chuyên vào quỹ Công đoàn/ quỹ Văn thể của Đối tác;</li>
                             <li>Hoặc chiết khấu toàn bộ ưu đãi vào giá xe.</li>
@@ -1465,7 +1659,7 @@
                                          <td>1. Dành cho hiệp hội doanh nghiệp trẻ Việt Nam, HUBA, YPO, hiệp hội trực thuộc VCCI, President club, VASEP</td>
                                          <td>
                                              <ul>
-                                                 <li>Đối với dòng xe VF 3, VF 5, VF 6, VF 7: áp dụng chiết khấu 3% trên chính sách bán lẻ dành cho CBNV thuộc doanh nghiệp thành viên/ hội viên của các Hiệp hội Doanh nhân, Doanh nghiệp khi có xác nhận của Hiệp hội.</li>
+                                                 <li>Đối với dòng xe VF 3, VF 5, VF 6, VF 7: áp dụng chiết khấu 3% trên chính sách bán lẻ dành cho <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span> thuộc doanh nghiệp thành viên/ hội viên của các Hiệp hội Doanh nhân, Doanh nghiệp khi có xác nhận của Hiệp hội.</li>
                                                  <li>Đối với dòng xe VF 8/9: áp dụng chiết khấu 10% trên chính sách bán lẻ cho lãnh đạo doanh nghiệp là thành viên của hiệp hội từ 3 tháng trở lên - tối đa 2 suất/ doanh nghiệp. Từ xe từ thứ 3, chiết khấu 3% trên chính sách bán lẻ từng thời điểm.</li>
                                              </ul>
                                          </td>
@@ -1481,11 +1675,11 @@
                             <li>Với các xe xuất hóa đơn tới hết 31/05/2025, khách hàng có quyền lựa chọn một trong số các chính sách có hiệu lực từ thời điểm đặt cọc đến thời điểm xuất hóa đơn. Từ 01/06/2025, riêng với chính sách Corporate, khách hàng chỉ được áp dụng ưu đãi theo chính sách tại thời điểm xuất hoá đơn.</li>
                             <li>Hướng dẫn chi tiết thêm về đối tượng áp dụng:
                                 <ul>
-                                    <li>Đối với Doanh nghiệp đối tác và CQNN: CBNV, công chức, viên chức, người lao động cần ký HĐLĐ chính thức (nếu có) và phải có xác nhận của đơn vị đối tác (theo danh sách đối tác được PCT09 trình xin TGĐ phê duyệt triển khai theo từng thời điểm). Áp dụng cả với vợ chồng, con cái, tứ thân phụ mẫu, anh chị em ruột.</li>
+                                    <li>Đối với Doanh nghiệp đối tác và <span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span>: <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span>, công chức, viên chức, người lao động cần ký HĐLĐ chính thức (nếu có) và phải có xác nhận của đơn vị đối tác (theo danh sách đối tác được PCT09 trình xin TGĐ phê duyệt triển khai theo từng thời điểm). Áp dụng cả với vợ chồng, con cái, tứ thân phụ mẫu, anh chị em ruột.</li>
                                     <li>Đối với Hội người cao tuổi Việt Nam: Chỉ áp dụng cho cán bộ chuyên trách và ủy viên Chấp hành trực thuộc TW và các chi hội địa phương của Hội người cao tuổi Việt Nam. Áp dụng cho cả vợ/chồng, con cái.</li>
-                                    <li>Đối với CBNV của trường dạy lái xe, chỉ áp dụng khi đứng tên chính chủ hoặc vợ/chồng đứng tên xe; Trường hợp là giảng viên trường dạy lái xe, ngoài xác nhận của trường cần thêm chứng nhận giáo viên thực hành dạy lái xe.</li>
+                                    <li>Đối với <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span> của trường dạy lái xe, chỉ áp dụng khi đứng tên chính chủ hoặc vợ/chồng đứng tên xe; Trường hợp là giảng viên trường dạy lái xe, ngoài xác nhận của trường cần thêm chứng nhận giáo viên thực hành dạy lái xe.</li>
                                     <li>Đối với trường dạy lái xe: Chỉ được áp dụng ưu đãi 5% trên chính sách bán lẻ khi mua xe đứng tên trường và sử dụng với mục đích dạy lái.</li>
-                                    <li>Đối với các Hiệp hội doanh nhân, doanh nghiệp: Chỉ áp dụng cho CBNV, lãnh đạo doanh nghiệp thành viên hiệp hội mua xe đứng tên chính chủ.</li>
+                                    <li>Đối với các Hiệp hội doanh nhân, doanh nghiệp: Chỉ áp dụng cho <span class="tooltip">CBNV<span class="tooltip-text">Cán bộ Nhân viên</span></span>, lãnh đạo doanh nghiệp thành viên hiệp hội mua xe đứng tên chính chủ.</li>
                                 </ul>
                             </li>
                             <li>Chính sách này không được áp dụng đồng thời với chính sách khuyến mãi ưu đãi khác, không áp dụng voucher Sống xanh /Vinhomes, ngoại trừ:
@@ -1503,10 +1697,18 @@
                 </div>
                 </div>
         </div>
+        <div id="onPageNav" class="on-page-nav">
+             <h4>Trong mục này</h4>
+             <ul id="onPageNavList"></ul>
+        </div>
     </div>
     <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
+
+    <button id="backToTopBtn" class="back-to-top-btn" aria-label="Cuộn lên đầu trang">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -1522,6 +1724,9 @@
             const searchInput = document.getElementById('searchInput');
             const filterCarModelSelect = document.getElementById('filterCarModel');
             const clearFilterBtn = document.getElementById('clearFilterBtn');
+            const backToTopBtn = document.getElementById('backToTopBtn');
+            const onPageNav = document.getElementById('onPageNav');
+            const onPageNavList = document.getElementById('onPageNavList');
 
             // --- Theme Management ---
             function applyTheme(theme) {
@@ -1623,6 +1828,79 @@
                 }
             });
 
+            // --- Back to Top Button ---
+            function handleScroll() {
+                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                    backToTopBtn.classList.add('show');
+                } else {
+                    backToTopBtn.classList.remove('show');
+                }
+            }
+            window.addEventListener('scroll', handleScroll);
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // --- On-page Navigation & Intersection Observer ---
+            let observer;
+            function updateOnPageNav() {
+                onPageNavList.innerHTML = ''; // Clear previous links
+                const activeTab = document.querySelector('.tab-content.active');
+                if (!activeTab) return;
+
+                const sections = activeTab.querySelectorAll('.policy-section');
+                if (sections.length < 2) { // Hide nav if not enough sections
+                    onPageNav.style.display = 'none';
+                    return;
+                }
+                
+                if (window.innerWidth >= 1400) {
+                    onPageNav.style.display = 'block';
+                }
+
+                // Disconnect previous observer if it exists
+                if (observer) {
+                    observer.disconnect();
+                }
+
+                const observerOptions = {
+                    root: null, // relative to the viewport
+                    rootMargin: '0px 0px -60% 0px', // trigger when a section is in the top 40% of the screen
+                    threshold: 0
+                };
+
+                observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const id = entry.target.id;
+                        const navLink = onPageNavList.querySelector(`a[href="#${id}"]`);
+                        if (entry.isIntersecting && navLink) {
+                            // Remove active class from all other links
+                            onPageNavList.querySelectorAll('a').forEach(link => link.classList.remove('active-nav-link'));
+                            // Add active class to the current one
+                            navLink.classList.add('active-nav-link');
+                        }
+                    });
+                }, observerOptions);
+
+                sections.forEach((section, index) => {
+                    const header = section.querySelector('h3');
+                    if (header) {
+                        const id = `section-${activeTab.id}-${index}`;
+                        section.id = id; // Assign a unique ID to the section
+                        
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = `#${id}`;
+                        a.textContent = header.textContent;
+                        li.appendChild(a);
+                        onPageNavList.appendChild(li);
+
+                        // Observe the section
+                        observer.observe(section);
+                    }
+                });
+            }
+
             // --- Tab Functionality ---
             window.openPolicyTab = function(evt, policyName) {
                 var i, tabcontent, tablinks;
@@ -1652,6 +1930,7 @@
                     });
                 }
                 localStorage.setItem('activePolicyTab', policyName); 
+                updateOnPageNav(); // Update the on-page nav for the new tab
             }
 
             // --- Active Sidebar Link ---
