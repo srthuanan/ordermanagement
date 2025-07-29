@@ -2081,79 +2081,76 @@ body.dark-mode {
     --ai-bubble-gradient-end-dark: #0072ff; /* Xanh đậm */
 }
 
-
-/* ======================================================= */
-/* === PHONG CÁCH CHUNG (LIGHT MODE) === */
-/* ======================================================= */
-
 .global-ai-chat-container {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    z-index: 1050;
+    position: fixed; /* Ghim cố định vào màn hình, tách khỏi luồng trang */
+    bottom: 20px;    /* Cách lề dưới 20px */
+    right: 20px;     /* Cách lề phải 20px */
+    z-index: 1010;   /* Đảm bảo nó nổi lên trên các thành phần khác như footer */
 }
-
-.ai-chat-bubble {
-    width: 70px;
-    height: 70px;
+#ai-chat-bubble {
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
-    /* Sử dụng biến cho gradient */
+    /* Sử dụng biến gradient có sẵn trong file */
     background: linear-gradient(135deg, var(--ai-bubble-gradient-start-light) 0%, var(--ai-bubble-gradient-end-light) 100%);
-    color: white; /* Giữ nguyên màu trắng cho icon */
+    color: white;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-light-outer); /* Sử dụng biến bóng đổ */
+    box-shadow: var(--shadow-light-outer);
     font-size: 28px;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Hiệu ứng nảy lên */
 }
-.ai-chat-bubble:hover {
+#ai-chat-bubble:hover {
     transform: scale(1.1);
-    background: var(--primary-color-darker); /* Giữ nguyên biến */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-.ai-chat-window {
+/* --- Cửa sổ Chat chính --- */
+#ai-chat-window {
     position: absolute;
     bottom: calc(100% + 15px);
     right: 0;
     width: 370px;
     height: 500px;
-    background: var(--card-bg-light); /* Sử dụng biến */
+    max-width: 90vw;
+    /* Đồng bộ giao diện "card" với web */
+    background: var(--card-bg-light);
     border-radius: 12px;
-    box-shadow: var(--shadow-light-outer); /* Sử dụng biến bóng đổ */
-    border: 1px solid var(--border-color-light); /* Sử dụng biến */
+    box-shadow: var(--shadow-light-outer);
+    border: 1px solid var(--border-color-light);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-
     visibility: hidden;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.ai-chat-window.open {
+#ai-chat-window.open {
     visibility: visible;
     opacity: 1;
     transform: translateY(0);
 }
 
+/* --- Tiêu đề Chat - ĐỒNG BỘ VỚI NAVBAR CHÍNH --- */
 .ai-chat-header {
     flex-shrink: 0;
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color-light); /* Sử dụng biến */
-    background: var(--background-light); /* Sử dụng biến */
+    padding: 12px 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    /* THAY ĐỔI: Sử dụng gradient giống navbar chính */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    color: white; /* Đổi màu chữ thành trắng cho dễ đọc */
 }
 .ai-chat-header h3 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 16px;
     font-weight: 600;
-    color: var(--primary-color); /* Sử dụng biến */
+    color: white; /* Đảm bảo chữ luôn trắng */
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2161,22 +2158,25 @@ body.dark-mode {
 .ai-chat-close-btn {
     background: none;
     border: none;
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
-    color: var(--text-muted-light); /* Sử dụng biến */
-    transition: color 0.2s ease-in-out; /* Thêm transition */
+    color: rgba(255, 255, 255, 0.8); /* Màu nhạt hơn */
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 .ai-chat-close-btn:hover {
-    color: var(--primary-color); /* Thay đổi màu khi hover */
+    color: white; /* Sáng lên khi hover */
+    transform: rotate(90deg);
 }
 
+/* --- Khu vực tin nhắn --- */
 .ai-chat-messages {
     flex-grow: 1;
     padding: 20px;
     overflow-y: auto;
-    background-color: var(--background-light); /* Thêm nền cho vùng tin nhắn */
+    background-color: var(--background-light); /* Màu nền chính của trang */
 }
 
+/* --- Bong bóng Chat --- */
 .user-message, .ai-message {
     margin-bottom: 15px;
     display: flex;
@@ -2193,154 +2193,118 @@ body.dark-mode {
     line-height: 1.5;
 }
 .user-message .message-content {
-    background: var(--primary-color); /* Sử dụng biến */
-    color: white; /* Giữ nguyên màu trắng */
+    background: var(--primary-color);
+    color: white;
     border-bottom-right-radius: 5px;
 }
 .ai-message .message-content {
-    background: var(--background-light); /* Sử dụng biến */
-    color: var(--text-light); /* Sử dụng biến */
-    border: 1px solid var(--border-color-light); /* Sử dụng biến */
+    /* THAY ĐỔI: Dùng màu card để nổi bật hơn */
+    background: var(--card-bg-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
     border-bottom-left-radius: 5px;
 }
-.ai-message.loading .message-content {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
+
+/* --- Chỉ báo "Đang gõ..." --- */
+.ai-message.loading .message-content { display: flex; gap: 5px; align-items: center; }
 .typing-indicator span {
-    width: 8px;
-    height: 8px;
-    background-color: var(--text-muted-light); /* Sử dụng biến */
-    border-radius: 50%;
-    display: inline-block;
+    width: 8px; height: 8px;
+    background-color: var(--text-muted-light);
+    border-radius: 50%; display: inline-block;
     animation: bounce 1.4s infinite ease-in-out both;
 }
 .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
 .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
+/* --- Khu vực nhập liệu --- */
 .ai-chat-input-area {
     flex-shrink: 0;
     padding: 15px;
-    border-top: 1px solid var(--border-color-light); /* Sử dụng biến */
+    border-top: 1px solid var(--border-color-light);
     display: flex;
     gap: 10px;
-    background-color: var(--card-bg-light); /* Thêm nền cho vùng nhập liệu */
+    background-color: var(--card-bg-light);
 }
 .ai-chat-input-area textarea {
     flex-grow: 1;
-    border: 1px solid var(--border-color-light); /* Sử dụng biến */
+    border: 1px solid var(--border-color-light);
     border-radius: 20px;
     padding: 10px 15px;
     font-size: 14px;
     resize: none;
     height: 40px;
     line-height: 20px;
-    background: var(--background-light); /* Sử dụng biến */
-    color: var(--text-light); /* Sử dụng biến */
+    background: var(--background-light);
+    color: var(--text-light);
+    transition: border-color var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease;
 }
 .ai-chat-input-area textarea:focus {
     outline: none;
-    border-color: var(--primary-color); /* Sử dụng biến */
-    box-shadow: 0 0 0 3px rgba(0, 51, 160, 0.2); /* Giữ nguyên rgba, sẽ được thay đổi trong dark mode */
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
 }
 .ai-chat-input-area button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary-color); /* Sử dụng biến */
-    color: white; /* Giữ nguyên màu trắng */
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    width: 40px; height: 40px;
+    border-radius: 50%; border: none;
+    background: var(--primary-color);
+    color: white;
+    font-size: 16px; cursor: pointer;
+    transition: background-color var(--transition-speed-fast) ease;
 }
-.ai-chat-input-area button:hover {
-    background: var(--primary-color-darker); /* Sử dụng biến */
-}
+.ai-chat-input-area button:hover:not(:disabled) { background: var(--primary-color-lighter); }
 .ai-chat-input-area button:disabled {
-    background-color: var(--border-color-light); /* Thay bằng biến màu xám nhạt */
-    color: var(--text-muted-light); /* Thêm màu chữ cho disabled */
+    background-color: var(--border-color-light);
+    color: var(--text-muted-light);
     cursor: not-allowed;
 }
 
 
 /* ======================================================= */
-/* === DARK MODE OVERRIDES (TỰ ĐỘNG KHI CHUYỂN THEME) === */
+/* === TỰ ĐỘNG ĐỒNG BỘ VỚI DARK MODE === */
 /* ======================================================= */
-body.dark-mode .ai-chat-bubble {
-    background: linear-gradient(135deg, var(--ai-bubble-gradient-start-dark) 0%, var(--ai-bubble-gradient-end-dark) 100%);
-    color: #111; /* Màu chữ đen cho dark mode bubble */
-    box-shadow: var(--shadow-dark-outer);
-}
-body.dark-mode .ai-chat-bubble:hover {
-    background: var(--primary-color-lighter); /* Sáng hơn một chút */
-}
 
-body.dark-mode .ai-chat-window {
-    background: var(--card-bg-dark);
+body.dark-mode #ai-chat-bubble {
+    background: linear-gradient(135deg, var(--ai-bubble-gradient-start-dark) 0%, var(--ai-bubble-gradient-end-dark) 100%);
     box-shadow: var(--shadow-dark-outer);
-    border: 1px solid var(--border-color-dark);
 }
 
 body.dark-mode .ai-chat-header {
-    border-bottom: 1px solid var(--border-color-dark);
-    background: var(--background-dark);
-}
-body.dark-mode .ai-chat-header h3 {
-    color: var(--primary-color); /* Primary color của dark mode */
-}
-body.dark-mode .ai-chat-close-btn {
-    color: var(--text-muted-dark);
-}
-body.dark-mode .ai-chat-close-btn:hover {
-    color: var(--primary-color);
+    /* Tự động cập nhật theo biến --primary-color của dark mode */
+    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
 }
 
-body.dark-mode .ai-chat-messages {
-    background-color: var(--background-dark);
+body.dark-mode .ai-chat-header h3,
+body.dark-mode .ai-chat-close-btn {
+    color: var(--text-dark); /* Dùng màu chữ của dark-mode cho dễ đọc */
 }
 
 body.dark-mode .user-message .message-content {
-    background: var(--primary-color); /* Primary color của dark mode */
-    color: var(--text-dark); /* Màu chữ cho dark mode user message */
-}
-body.dark-mode .ai-message .message-content {
-    background: var(--background-dark);
-    color: var(--text-dark);
-    border: 1px solid var(--border-color-dark);
+    /* Tự động cập nhật theo biến --primary-color của dark mode */
+    background: var(--primary-color);
+    color: #111; /* Chữ tối màu trên nền sáng của dark mode */
 }
 
-body.dark-mode .typing-indicator span {
-    background-color: var(--text-muted-dark);
-}
-
-body.dark-mode .ai-chat-input-area {
-    border-top: 1px solid var(--border-color-dark);
-    background-color: var(--card-bg-dark);
-}
-body.dark-mode .ai-chat-input-area textarea {
-    border: 1px solid var(--border-color-dark);
-    background: var(--background-dark);
-    color: var(--text-dark);
-}
 body.dark-mode .ai-chat-input-area textarea:focus {
     border-color: var(--primary-color); /* Primary color của dark mode */
-    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25); /* Shadow cho dark mode focus */
+    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
 }
+
 body.dark-mode .ai-chat-input-area button {
-    background: var(--primary-color); /* Primary color của dark mode */
-    color: #111; /* Màu chữ đen cho dark mode button */
+    /* Tự động cập nhật theo biến --primary-color của dark mode */
+    background: var(--primary-color);
+    color: #111;
 }
-body.dark-mode .ai-chat-input-area button:hover {
+body.dark-mode .ai-chat-input-area button:hover:not(:disabled) {
     background: var(--primary-color-lighter);
 }
 body.dark-mode .ai-chat-input-area button:disabled {
     background-color: var(--border-color-dark);
     color: var(--text-muted-dark);
 }
-
+/* ======================================================= */
+/* === KẾT THÚC CSS CHO TRỢ LÝ ẢO TOÀN CỤC === */
+/* ======================================================= */
     </style>
 </head>
 <body data-theme="light">
@@ -2386,7 +2350,7 @@ body.dark-mode .ai-chat-input-area button:disabled {
 
     <div id="ai-chat-window" class="ai-chat-window">
         <div class="ai-chat-header">
-            <h3><i class="fas fa-robot"></i> Trợ Lý Hệ Thống</h3>
+            <h3><i class="fas fa-robot"></i> Trợ Lý </h3>
             <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
         </div>
         <div id="ai-chat-messages" class="ai-chat-messages">
@@ -2403,6 +2367,27 @@ body.dark-mode .ai-chat-input-area button:disabled {
             </button>
         </div>
     </div>
+</div>
+<div id="ai-context-manual" hidden>
+  <h3>Sổ Tay Hướng Dẫn Chức Năng Website Ghép Xe</h3>
+
+  <h4>Quy trình Yêu Cầu Ghép Xe:</h4>
+  - Người dùng vào tab "Yêu Cầu Ghép Xe".
+  - Điền đầy đủ thông tin khách hàng, thông tin xe.
+  - Tải lên ảnh Ủy Nhiệm Chi để hệ thống tự động lấy ngày cọc.
+  - Nhấn "Xác Nhận" để xem lại, sau đó nhấn "Gửi" để hoàn tất.
+
+  <h4>Quy trình Yêu Cầu Xuất Hóa Đơn:</h4>
+  - Chỉ có thể yêu cầu xuất hóa đơn khi một yêu cầu ghép xe có trạng thái là "Đã Ghép".
+  - Trong bảng Lịch Sử Ghép, tìm đến dòng có trạng thái "Đã Ghép".
+  - Trong cột "Hành động", bấm vào nút menu (...) và chọn "Y/C Xuất Hóa đơn".
+  - Một cửa sổ sẽ hiện ra, yêu cầu người dùng tải lên "Hợp đồng mua bán" và "Đề nghị xuất hóa đơn".
+  - Người dùng phải tick vào ô xác nhận đã tạo tài khoản Vinclub cho khách hàng.
+  - Nhấn "Gửi Yêu Cầu" để hoàn tất. Trạng thái của đơn hàng sẽ chuyển thành "Chờ phê duyệt".
+
+  <h4>Các chức năng khác:</h4>
+  - Tab "Yêu Cầu Hàng Loạt" dùng để nhập nhiều đơn hàng từ Excel.
+  - Admin có quyền tải lên hóa đơn đã xuất cho các yêu cầu có trạng thái "Chờ ký hóa đơn".
 </div>
     <div class="main-container" id="main-container">
         <div class="form-container" id="form-section">
@@ -2927,6 +2912,7 @@ let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
 const apiURL = "https://script.google.com/macros/s/AKfycbwtngLtPICCpANV-hEJelT63i48mrjnu5gcJvEhdKmX7dX3wsnQVZC8b-oZPHGu3zN8ZQ/exec";
+const chatbotApiURL = "https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -6356,9 +6342,6 @@ function handleChatInputKey(event) {
     }
 }
 
-/**
- * [ĐÃ SỬA ĐỔI] Gửi tin nhắn từ chatbox đến backend và hiển thị kết quả.
- */
 async function sendGlobalAIChatMessage() {
     const inputEl = document.getElementById('ai-chat-input');
     const sendBtn = document.getElementById('ai-chat-send-btn');
@@ -6367,51 +6350,70 @@ async function sendGlobalAIChatMessage() {
     if (!userPrompt) return;
 
     appendMessage(userPrompt, 'user');
-    inputEl.value = ''; // Clear input
+    inputEl.value = ''; // Xóa input
     inputEl.disabled = true;
     sendBtn.disabled = true;
 
-    // Append a "thinking" message, store its reference to remove it later
+    // Thêm chỉ báo "đang suy nghĩ..." và lưu tham chiếu để xóa sau
     const thinkingMessageElement = appendMessage('thinking', 'ai');
 
     try {
         const formData = new URLSearchParams();
-        formData.append('action', 'getGlobalAiResponse'); // Action for your Google Apps Script
+        formData.append('action', 'getGlobalAiResponse');
         formData.append('userPrompt', userPrompt);
 
-        // Get context from the current page
-        // Ensure you extract relevant text and not too much, or it could hit limits
-        const pageContextElement = document.getElementById('main-container'); // Or document.body
-        const pageContextText = pageContextElement ? pageContextElement.innerText : document.body.innerText;
-        formData.append('pageContext', pageContextText);
+        // --- BẮT ĐẦU THAY ĐỔI ---
+        const pageContextElement = document.getElementById('main-container');
+        const manualContextElement = document.getElementById('ai-context-manual');
 
-        const response = await fetch(apiURL, { // Use your existing apiURL constant
+        const pageContextText = pageContextElement ? pageContextElement.innerText : '';
+        const manualContextText = manualContextElement ? manualContextElement.innerText : '';
+
+        // Kết hợp cả hai ngữ cảnh để AI có thông tin đầy đủ nhất
+        const fullContext = `
+            HƯỚNG DẪN SỬ DỤNG WEBSITE:\n${manualContextText}\n
+            ---
+            NỘI DUNG HIỂN THỊ TRÊN MÀN HÌNH HIỆN TẠI:\n${pageContextText}
+        `;
+        formData.append('pageContext', fullContext);
+        // --- KẾT THÚC THAY ĐỔI ---
+
+        const response = await fetch(chatbotApiURL, {
             method: 'POST',
             body: formData
         });
+
         if (!response.ok) {
             throw new Error(`Lỗi mạng: ${response.statusText}`);
         }
 
-        const result = await response.json();
-        if (result.status !== 'SUCCESS') {
-            throw new Error(result.message || 'Lỗi không xác định từ máy chủ AI.');
-        }
+        // ==================== PHẦN SỬA LỖI ====================
+        // Đọc phản hồi dưới dạng văn bản thô thay vì JSON
+        const aiResponseText = await response.text();
 
-        // Remove the thinking indicator and replace with AI's actual response
-        thinkingMessageElement.remove(); // Use .remove() on the stored element
-        appendMessage(result.suggestion, 'ai');
+        // Xóa chỉ báo "đang suy nghĩ..."
+        thinkingMessageElement.remove();
+        
+        // Hiển thị trực tiếp văn bản nhận được
+        appendMessage(aiResponseText, 'ai');
+        // ==================== KẾT THÚC PHẦN SỬA LỖI ====================
 
     } catch (error) {
         console.error("Lỗi khi gọi Trợ lý Ảo Toàn cục:", error);
-        // Remove thinking indicator even on error
-        thinkingMessageElement.remove();
-        appendMessage(`Lỗi: ${error.message}. Vui lòng thử lại sau.`, 'ai');
+        
+        // Xóa chỉ báo "đang suy nghĩ..." ngay cả khi có lỗi
+        if(thinkingMessageElement) thinkingMessageElement.remove();
+        
+        // Hiển thị thông báo lỗi trong khung chat
+        appendMessage(`Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`, 'ai');
+        
     } finally {
         inputEl.disabled = false;
         sendBtn.disabled = false;
         inputEl.focus();
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        if(chatMessagesContainer) {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
     }
 }
 </script>
