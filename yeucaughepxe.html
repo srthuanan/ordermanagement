@@ -2237,7 +2237,8 @@ body.dark-mode {
     line-height: 20px;
     background: var(--background-light);
     color: var(--text-light);
-    transition: border-color var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow-y: hidden; /* <-- Thêm dòng này để ẩn thanh cuộn dọc */
 }
 .ai-chat-input-area textarea:focus {
     outline: none;
