@@ -1446,179 +1446,232 @@
     background-color: var(--background-light);
     flex: 1; padding: 1rem; overflow-y: auto;
 }
-.chat-message {
-    display: flex;
-    margin-bottom: 15px;
-}
-.chat-message .message-bubble {
-    max-width: 80%;
-    padding: 10px 15px;
-    border-radius: 18px;
-    line-height: 1.5;
-    font-size: 14px;
-}
+/* ======================================================= */
+/* START: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME)      */
+/* ======================================================= */
 
-/* --- Bong bóng tin nhắn --- */
-
-
-/* --- Vùng nhập liệu --- */
-#ai-chat-window .p-3.border-t {
-    background-color: var(--card-bg-light);
-    border-top: 1px solid var(--border-color-light);
-    padding: 0.75rem;
-}
-#ai-chat-input {
-    background: var(--background-light);
-    color: var(--text-light);
-    border: 1px solid var(--border-color-light);
-    flex: 1; padding: 8px 16px; border-radius: 9999px; font-size: 14px;
-}
-#ai-chat-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
-    outline: none;
-}
-#ai-chat-send {
-    background-color: var(--primary-color);
-    margin-left: 0.75rem; color: white; border-radius: 50%; height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; border: none; cursor: pointer;
-}
-#ai-chat-send:hover {
-    background-color: var(--primary-color-lighter);
-}
-
-/* --- Chỉ báo "đang suy nghĩ" --- */
-#ai-chat-messages .thinking-indicator {
+/* --- Nút bấm nổi để mở chat --- */
+#ai-chat-toggle {
+    position: fixed;
+    bottom: 50px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-}
-#ai-chat-messages .thinking-indicator .dot {
-    background-color: #a0a0a0;
-    height: 8px;
-    width: 8px;
-    margin: 0 3px;
-    border-radius: 50%;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-#ai-chat-messages .thinking-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
-#ai-chat-messages .thinking-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1.0); }
-}
-/* === BONG BÓNG CHAT NÂNG CẤP (CÓ ĐUÔI) === */
-.chat-message .message-bubble {
-    position: relative; /* Cần thiết để định vị "đuôi" */
-    max-width: 80%;
-    padding: 10px 15px;
-    border-radius: 18px; /* Bo tròn tất cả các góc trước */
-    line-height: 1.5;
-    font-size: 14px;
+    justify-content: center;
+    font-size: 28px;
+    cursor: pointer;
+    z-index: 1011;
+    border: none;
+    /* Sử dụng màu chủ đạo của web */
+    background: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-light-outer);
+    transition: background-color var(--transition-speed-fast) ease, transform 0.2s ease;
 }
 
-/* Bong bóng của AI (bên trái) */
+#ai-chat-toggle:hover {
+    background: var(--primary-color-lighter);
+    transform: scale(1.1);
+}
+
+/* --- Cửa sổ Chat Chính --- */
+#ai-chat-window {
+    position: fixed;
+    bottom: 125px;
+    right: 25px;
+    width: 370px; /* Tăng chiều rộng một chút */
+    max-width: 90vw;
+    height: 520px; /* Tăng chiều cao một chút */
+    max-height: 70vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1010;
+    
+    /* Đồng bộ giao diện "card" với web */
+    background-color: var(--card-bg-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
+    box-shadow: var(--shadow-light-outer);
+    
+    /* Hiệu ứng xuất hiện */
+    transform: scale(0.95) translateY(20px);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s var(--transition-easing), opacity 0.3s var(--transition-easing), visibility 0.3s;
+    pointer-events: none;
+}
+
+#ai-chat-window.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* --- Tiêu đề của Chat --- */
+#ai-chat-window .chat-header { /* Thay thế class cũ bằng class này trong HTML */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    color: white;
+    /* Đồng bộ với header chính của web */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    border-bottom: 1px solid transparent;
+}
+
+#ai-chat-window .chat-header h3 {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#ai-chat-window #ai-chat-close {
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+#ai-chat-window #ai-chat-close:hover {
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* --- Khu vực hiển thị tin nhắn --- */
+#ai-chat-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    /* Sử dụng màu nền chính của trang */
+    background-color: var(--background-light);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- Định dạng cho các bong bóng chat --- */
+.chat-message {
+    display: flex;
+    max-width: 85%;
+}
+.message-bubble {
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+/* Tin nhắn của AI */
 .ai-message {
-    justify-content: flex-start;
+    align-self: flex-start;
 }
 .ai-message .message-bubble {
-    background-color: #e9ecef;
-    color: #333;
-    border-bottom-left-radius: 4px; /* Góc dưới bên trái nhọn hơn */
-}
-.ai-message .message-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: -8px;
-    width: 0;
-    height: 0;
-    border: 10px solid transparent;
-    border-top-color: #e9ecef;
-    transform: rotate(45deg);
+    background-color: var(--card-bg-light); /* Giống màu card */
+    color: var(--text-light);
+    border: 1px solid var(--border-color-light);
+    border-top-left-radius: 4px;
 }
 
-/* Bong bóng của người dùng (bên phải) */
+/* Tin nhắn của người dùng */
 .user-message {
-    justify-content: flex-end;
+    align-self: flex-end;
 }
 .user-message .message-bubble {
-    background-color: var(--primary-color);
+    background-color: var(--primary-color); /* Màu chủ đạo */
     color: white;
-    border-bottom-right-radius: 4px; /* Góc dưới bên phải nhọn hơn */
-}
-.user-message .message-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: -8px;
-    width: 0;
-    height: 0;
-    border: 10px solid transparent;
-    border-top-color: var(--primary-color);
-    transform: rotate(-45deg);
+    border-bottom-right-radius: 4px;
 }
 
-/* === DARK MODE CHO BONG BÓNG CHAT NÂNG CẤP === */
-body.dark-mode .ai-message .message-bubble {
-    background-color: var(--primary-color-darker);
-    color: var(--text-dark);
-}
-body.dark-mode .ai-message .message-bubble::after {
-    border-top-color: var(--primary-color-darker);
+/* --- Khu vực nhập liệu --- */
+.chat-input-area { /* Thay thế các class cũ bằng class này trong HTML */
+    padding: 12px;
+    border-top: 1px solid var(--border-color-light);
+    background-color: var(--card-bg-light);
 }
 
-body.dark-mode .user-message .message-bubble {
-    background-color: var(--secondary-color);
-    color: #111;
+.chat-input-area .flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-body.dark-mode .user-message .message-bubble::after {
-    border-top-color: var(--secondary-color);
+
+#ai-chat-input {
+    flex: 1;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 20px;
+    /* Đồng bộ với các ô input khác */
+    border: 1px solid var(--border-color-light);
+    background: var(--background-light);
+    color: var(--text-light);
+    transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
 }
+
+#ai-chat-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+}
+
+#ai-chat-send {
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* Đồng bộ với màu chủ đạo */
+    background: var(--primary-color);
+    color: white;
+    transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+}
+#ai-chat-send:hover {
+    background: var(--primary-color-lighter);
+    transform: scale(1.1);
+}
+#ai-chat-send:disabled {
+    background-color: var(--border-color-light);
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- Tự động đồng bộ với DARK MODE --- */
+/* Khi body có class .dark-mode, các biến CSS tự động thay đổi giá trị, 
+   và toàn bộ giao diện chatbot sẽ được cập nhật mà không cần thêm code.
+   Tuy nhiên, ta cần định nghĩa lại một số box-shadow và màu focus đặc thù. */
+
 body.dark-mode #ai-chat-toggle {
-    background: var(--secondary-color);
-    color: #111;
     box-shadow: var(--shadow-dark-outer);
-}
-body.dark-mode #ai-chat-toggle:hover {
-    background: #00beff; 
 }
 body.dark-mode #ai-chat-window {
-    background-color: var(--card-bg-dark);
-    color: var(--text-dark);
-    border: 1px solid var(--border-color-dark);
     box-shadow: var(--shadow-dark-outer);
-}
-body.dark-mode #ai-chat-window .flex.justify-between.items-center.p-3.text-white {
-    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-}
-body.dark-mode #ai-chat-messages {
-    background-color: var(--background-dark);
-}
-
-body.dark-mode #ai-chat-window .p-3.border-t {
-    background-color: var(--card-bg-dark);
-    border-top-color: var(--border-color-dark);
-}
-body.dark-mode #ai-chat-input {
-    background: var(--background-dark);
-    color: var(--text-dark);
-    border: 1px solid var(--border-color-dark);
 }
 body.dark-mode #ai-chat-input:focus {
     border-color: var(--secondary-color);
     box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
 }
-body.dark-mode #ai-chat-send {
-    background-color: var(--secondary-color);
-    color: #111;
+body.dark-mode #ai-chat-send:disabled {
+     background-color: var(--border-color-dark);
 }
-body.dark-mode #ai-chat-send:hover {
-    background-color: #00beff;
-}
-body.dark-mode #ai-chat-messages .thinking-indicator .dot {
-    background-color: var(--border-color-dark);
-}
+
 /* ======================================================= */
-/* END: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME) */
+/* END: GEMINI AI CHATBOT CSS                              */
 /* ======================================================= */
     </style>
 </head>
@@ -1651,28 +1704,6 @@ body.dark-mode #ai-chat-messages .thinking-indicator .dot {
         <i class="fas fa-bars"></i>
     </button>
 
-<button id="ai-chat-toggle" class="fixed bottom-16 right-5 h-14 w-14 rounded-full text-white flex items-center justify-center shadow-lg transition-transform transform hover:scale-110 z-[1011]">
-    <i class="fas fa-robot text-2xl"></i>
-</button>
-<div id="ai-chat-window" class="fixed bottom-28 right-5 w-full max-w-sm h-3/5 max-h-[600px] rounded-lg shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-in-out pointer-events-none z-[1010]">
-    <div class="flex justify-between items-center p-3 text-white rounded-t-lg">
-        <h3 class="font-bold text-lg flex items-center"><i class="fas fa-brain mr-2"></i>Trợ lý</h3>
-        <button id="ai-chat-close" class="text-2xl hover:text-gray-200">&times;</button>
-    </div>
-    <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto">
-        <div class="chat-message ai-message">
-            <div class="message-bubble">Xin chào! Tôi có thể giúp gì về dữ liệu trong kho xe VinFast Thuận An?</div>
-        </div>
-    </div>
-    <div class="p-3 border-t">
-        <div class="flex items-center">
-            <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." class="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2">
-            <button id="ai-chat-send" class="ml-3 text-white rounded-full h-10 w-10 flex items-center justify-center transition">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-</div>
 
     <div class="main-container" id="main-container">
         <div class="grid-container">
@@ -1767,7 +1798,31 @@ body.dark-mode #ai-chat-messages .thinking-indicator .dot {
             <button onclick="closeSuggestionModal()" class="modal-suggestion-button">Đã xem</button>
         </div>
     </div>
+<button id="ai-chat-toggle">
+    <i class="fas fa-robot"></i>
+</button>
 
+<div id="ai-chat-window">
+    <div class="chat-header">
+        <h3><i class="fas fa-brain"></i> Trợ lý</h3>
+        <button id="ai-chat-close" aria-label="Đóng chat">&times;</button>
+    </div>
+
+    <div id="ai-chat-messages">
+        <div class="chat-message ai-message">
+            <div class="message-bubble">Xin chào! Tôi có thể giúp bạn tìm kiếm thông tin xe trong kho không?</div>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <div class="flex">
+            <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
+            <button id="ai-chat-send" aria-label="Gửi tin nhắn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
     <footer><p>© 2025 VinFast Thuận An</p></footer>
     <div id="notification"></div>
 
@@ -2528,16 +2583,16 @@ body.dark-mode #ai-chat-messages .thinking-indicator .dot {
                 showNotification("Vui lòng chọn một xe từ danh sách trước.", "warning", 3000);
             }
         }
-// =======================================================
-// START: GEMINI AI CHATBOT JAVASCRIPT
-// =======================================================
+// --- LOGIC CHO AI CHATBOT ---
 const chatToggleButton = document.getElementById('ai-chat-toggle');
 const chatWindow = document.getElementById('ai-chat-window');
 const chatCloseButton = document.getElementById('ai-chat-close');
 const chatMessagesContainer = document.getElementById('ai-chat-messages');
 const chatInput = document.getElementById('ai-chat-input');
 const chatSendButton = document.getElementById('ai-chat-send');
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmNzDXcAaH5QpU9-q7Yb-wzFu1ZIKVsiMWU3J-lNKpJ_2dVwO5N01LMebamD53q-MnPw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec';
+
+const aiResponseCache = new Map();
 
 if (chatToggleButton) chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
 if (chatCloseButton) chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
@@ -2545,23 +2600,23 @@ if (chatSendButton) chatSendButton.addEventListener('click', sendMessageToAi);
 if (chatInput) chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessageToAi(); });
 
 function appendMessage(text, sender) {
+    if (!chatMessagesContainer) return null;
     const messageDiv = document.createElement('div');
     messageDiv.className = `chat-message ${sender}-message`;
 
     const bubbleDiv = document.createElement('div');
     bubbleDiv.className = 'message-bubble';
 
-    if(sender === 'ai' && text === 'thinking') {
+    if (sender === 'ai' && text === 'thinking') {
         const thinkingIndicator = document.createElement('div');
         thinkingIndicator.className = 'thinking-indicator';
         thinkingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
         bubbleDiv.appendChild(thinkingIndicator);
     } else {
-        // Thay thế markdown đơn giản thành HTML
         let formattedText = text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italic
-            .replace(/\n/g, '<br>');                   // New lines
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
         bubbleDiv.innerHTML = formattedText;
     }
 
@@ -2580,44 +2635,91 @@ async function sendMessageToAi() {
     chatInput.disabled = true;
     chatSendButton.disabled = true;
 
+    if (aiResponseCache.has(message.toLowerCase())) {
+        const cachedResponse = aiResponseCache.get(message.toLowerCase());
+        appendMessage(cachedResponse, 'ai');
+        chatInput.disabled = false;
+        chatSendButton.disabled = false;
+        chatInput.focus();
+        return;
+    }
+    
     const thinkingMessageElement = appendMessage('thinking', 'ai');
 
     try {
-        const formData = new FormData();
-        formData.append('action', 'getGlobalAiResponse');
-        formData.append('userPrompt', message);
+        const responseText = await sendRequestWithBackoff(message, thinkingMessageElement);
+        
+        aiResponseCache.set(message.toLowerCase(), responseText);
 
-        // Lấy ngữ cảnh từ trang hiện tại
-        const pageContextText = document.body.innerText;
-        formData.append('pageContext', pageContextText);
-
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error(`Lỗi mạng: ${response.statusText}`);
+        if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+            chatMessagesContainer.removeChild(thinkingMessageElement);
         }
-
-        const resultText = await response.text();
-
-        chatMessagesContainer.removeChild(thinkingMessageElement);
-        appendMessage(resultText, 'ai');
+        appendMessage(responseText, 'ai');
 
     } catch (error) {
-        console.error('Lỗi khi gọi AI:', error);
-        chatMessagesContainer.removeChild(thinkingMessageElement);
-        appendMessage('Xin lỗi, đã có lỗi xảy ra khi kết nối. Vui lòng thử lại sau.', 'ai');
+        console.error('Lỗi sau nhiều lần thử lại:', error);
+        if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+            chatMessagesContainer.removeChild(thinkingMessageElement);
+        }
+        appendMessage('Rất tiếc, đã có lỗi kết nối nghiêm trọng. Vui lòng thử lại sau ít phút.', 'ai');
     } finally {
         chatInput.disabled = false;
         chatSendButton.disabled = false;
         chatInput.focus();
     }
 }
-// =======================================================
-// END: GEMINI AI CHATBOT JAVASCRIPT
-// =======================================================
+
+async function sendRequestWithBackoff(userPrompt, thinkingMessageElement, maxRetries = 4, initialDelay = 1000) {
+    let delay = initialDelay;
+
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'getGlobalAiResponse');
+            formData.append('userPrompt', userPrompt);
+            formData.append('pageContext', document.body.innerText);
+
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.status === 429) {
+                const retryAfter = response.headers.get('Retry-After');
+                let waitTime = delay;
+                if (retryAfter) {
+                    const retryAfterSeconds = parseInt(retryAfter, 10);
+                    if (!isNaN(retryAfterSeconds)) {
+                        waitTime = retryAfterSeconds * 1000;
+                    }
+                }
+                const error = new Error('429 Too Many Requests');
+                error.waitTime = waitTime;
+                throw error;
+            }
+
+            if (!response.ok) {
+                throw new Error(`Lỗi mạng: ${response.statusText}`);
+            }
+
+            return await response.text();
+
+        } catch (error) {
+            if (error.message.includes('429') && i < maxRetries - 1) {
+                const waitTime = error.waitTime || delay;
+                if (thinkingMessageElement) {
+                    const bubble = thinkingMessageElement.querySelector('.message-bubble');
+                    if(bubble) bubble.innerHTML = `Máy chủ đang bận. Sẽ thử lại sau ${Math.round(waitTime / 1000)} giây...`;
+                }
+                const jitter = Math.random() * 500;
+                await new Promise(resolve => setTimeout(resolve, waitTime + jitter));
+                delay *= 2;
+            } else {
+                throw error;
+            }
+        }
+    }
+}
     </script>
 </body>
 </html>
