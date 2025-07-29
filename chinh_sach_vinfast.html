@@ -2387,16 +2387,16 @@
                 }
             }
             
-            // =======================================================
-            // START: GEMINI AI CHATBOT JAVASCRIPT (REPLACE OLD ONE)
-            // =======================================================
             const chatToggleButton = document.getElementById('ai-chat-toggle');
             const chatWindow = document.getElementById('ai-chat-window');
             const chatCloseButton = document.getElementById('ai-chat-close');
             const chatMessagesContainer = document.getElementById('ai-chat-messages');
             const chatInput = document.getElementById('ai-chat-input');
             const chatSendButton = document.getElementById('ai-chat-send');
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmNzDXcAaH5QpU9-q7Yb-wzFu1ZIKVsiMWU3J-lNKpJ_2dVwO5N01LMebamD53q-MnPw/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec';
+
+            // --- TỐI ƯU #1: KHỞI TẠO BỘ NHỚ ĐỆM (CACHE) ---
+            const aiResponseCache = new Map();
 
             chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
             chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
@@ -2422,7 +2422,7 @@
                 messageDiv.appendChild(bubbleDiv);
                 chatMessagesContainer.appendChild(messageDiv);
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                return messageDiv; // Return the entire message element
+                return messageDiv;
             }
 
             async function sendMessageToAi() {
@@ -2432,41 +2432,99 @@
                 appendMessage(message, 'user');
                 chatInput.value = '';
                 chatInput.disabled = true;
+                chatSendButton.disabled = true;
 
+                // --- TỐI ƯU #2: KIỂM TRA CACHE TRƯỚC KHI GỌI AI ---
+                if (aiResponseCache.has(message.toLowerCase())) {
+                    const cachedResponse = aiResponseCache.get(message.toLowerCase());
+                    appendMessage(cachedResponse, 'ai');
+                    
+                    // Kích hoạt lại input sau khi lấy từ cache
+                    chatInput.disabled = false;
+                    chatSendButton.disabled = false;
+                    chatInput.focus();
+                    return; // Dừng tại đây, không gọi AI
+                }
+                
+                // Nếu không có trong cache, tiếp tục quy trình gọi AI
                 const thinkingMessageElement = appendMessage('thinking', 'ai');
 
                 try {
-                    const formData = new FormData();
-                    formData.append('action', 'getGlobalAiResponse');
-                    formData.append('userPrompt', message);
-                    formData.append('pageContext', document.body.innerText);
-
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Lỗi mạng: ${response.statusText}`);
-                    }
-
-                    const resultText = await response.text();
+                    const responseText = await sendRequestWithBackoff(message, thinkingMessageElement);
                     
-                    chatMessagesContainer.removeChild(thinkingMessageElement);
-                    appendMessage(resultText, 'ai');
+                    // --- TỐI ƯU #3: LƯU KẾT QUẢ VÀO CACHE ---
+                    aiResponseCache.set(message.toLowerCase(), responseText);
+
+                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+                        chatMessagesContainer.removeChild(thinkingMessageElement);
+                    }
+                    appendMessage(responseText, 'ai');
 
                 } catch (error) {
-                    console.error('Lỗi khi gọi AI:', error);
-                    chatMessagesContainer.removeChild(thinkingMessageElement);
-                    appendMessage('Xin lỗi, đã có lỗi xảy ra khi kết nối. Vui lòng thử lại sau.', 'ai');
+                    console.error('Lỗi sau nhiều lần thử lại:', error);
+                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+                        chatMessagesContainer.removeChild(thinkingMessageElement);
+                    }
+                    appendMessage('Rất tiếc, đã có lỗi kết nối nghiêm trọng. Vui lòng thử lại sau ít phút.', 'ai');
                 } finally {
                     chatInput.disabled = false;
+                    chatSendButton.disabled = false;
                     chatInput.focus();
                 }
             }
-            // =======================================================
-            // END: GEMINI AI CHATBOT JAVASCRIPT
-            // =======================================================
+			
+			// Hàm sendRequestWithBackoff giữ nguyên như cũ, không cần thay đổi
+            async function sendRequestWithBackoff(userPrompt, thinkingMessageElement, maxRetries = 4, initialDelay = 1000) {
+                let delay = initialDelay;
+
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('action', 'getGlobalAiResponse');
+                        formData.append('userPrompt', userPrompt);
+                        formData.append('pageContext', document.body.innerText);
+
+                        const response = await fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.status === 429) {
+                            const retryAfter = response.headers.get('Retry-After');
+                            let waitTime = delay;
+                            if (retryAfter) {
+                                const retryAfterSeconds = parseInt(retryAfter, 10);
+                                if (!isNaN(retryAfterSeconds)) {
+                                    waitTime = retryAfterSeconds * 1000;
+                                }
+                            }
+                            const error = new Error('429 Too Many Requests');
+                            error.waitTime = waitTime;
+                            throw error;
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(`Lỗi mạng: ${response.statusText}`);
+                        }
+
+                        return await response.text();
+
+                    } catch (error) {
+                        if (error.message.includes('429') && i < maxRetries - 1) {
+                            const waitTime = error.waitTime || delay;
+                            if (thinkingMessageElement) {
+                                const bubble = thinkingMessageElement.querySelector('.message-bubble');
+                                bubble.innerHTML = `Máy chủ đang bận. Sẽ thử lại sau ${Math.round(waitTime / 1000)} giây...`;
+                            }
+                            const jitter = Math.random() * 500;
+                            await new Promise(resolve => setTimeout(resolve, waitTime + jitter));
+                            delay *= 2;
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+            }
         });
     </script>
 </body>
