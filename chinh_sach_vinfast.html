@@ -625,268 +625,185 @@
             .search-filter-controls button { width: 100%; }
             .back-to-top-btn { width: 35px; height: 35px; font-size: 14px; bottom: 20px; right: 20px;}
         }
-/* ================================== */
-/* == BẮT ĐẦU: CSS TRỢ LÝ ẢO GEMINI == */
-/* ================================== */
-.gemini-chat-open-btn {
-    position: fixed;
-    bottom: 80px; /* Nâng lên trên nút "Back to Top" */
-    right: 25px;
-    width: 50px;
-    height: 50px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
-    transition: all 0.3s ease;
-}
 
-.gemini-chat-open-btn:hover {
-    background-color: var(--primary-color-lighter);
-    transform: scale(1.1);
-}
+        /* ======================================================= */
+        /* START: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME) */
+        /* ======================================================= */
+        
+        /* --- Nút bấm nổi --- */
+        #ai-chat-toggle {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-light-outer);
+            transition: background-color var(--transition-speed-fast) ease, transform 0.2s ease;
+        }
+        #ai-chat-toggle:hover {
+            background: var(--primary-color-lighter);
+            transform: scale(1.1);
+        }
+        
+        /* --- Cửa sổ Chat --- */
+        #ai-chat-window {
+            background-color: var(--card-bg-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color-light);
+            box-shadow: var(--shadow-light-outer);
+        }
+        #ai-chat-window.visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
 
-.gemini-chat-container {
-    position: fixed;
-    bottom: 80px;
-    right: 25px;
-    width: 350px;
-    max-width: 90vw;
-    height: 500px;
-    max-height: 70vh;
-    background-color: var(--card-bg-light);
-    border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 1002;
-    transform: scale(0.5) translateY(100px);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+        /* --- Header của Chat --- */
+        #ai-chat-window .rounded-t-lg {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+            color: white;
+            border-bottom: 1px solid transparent;
+        }
+        #ai-chat-window h3 {
+            color: white;
+        }
+        #ai-chat-window #ai-chat-close {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.2s ease-in-out;
+        }
+        #ai-chat-window #ai-chat-close:hover {
+            color: white;
+        }
+        
+        /* --- Vùng tin nhắn --- */
+        #ai-chat-messages {
+            background-color: var(--background-light);
+        }
+        .chat-message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .chat-message .message-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            line-height: 1.5;
+        }
 
-.gemini-chat-container.visible {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
+        /* --- Bong bóng tin nhắn --- */
+        .ai-message {
+            justify-content: flex-start;
+        }
+        .ai-message .message-bubble {
+            background-color: #e9ecef; /* Màu xám nhạt trung tính */
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+        .user-message {
+            justify-content: flex-end;
+        }
+        .user-message .message-bubble {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        /* --- Vùng nhập liệu --- */
+        #ai-chat-window .p-3.border-t {
+            background-color: var(--card-bg-light);
+            border-top-color: var(--border-color-light);
+        }
+        #ai-chat-input {
+            background: var(--background-light);
+            color: var(--text-light);
+            border: 1px solid var(--border-color-light);
+        }
+        #ai-chat-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+        }
+        #ai-chat-send {
+            background-color: var(--primary-color);
+        }
+        #ai-chat-send:hover {
+            background-color: var(--primary-color-lighter);
+        }
+        
+        /* --- Chỉ báo "đang suy nghĩ" --- */
+        #ai-chat-messages .thinking-indicator {
+            display: flex;
+            align-items: center;
+        }
+        #ai-chat-messages .thinking-indicator .dot {
+            background-color: #a0a0a0;
+            height: 8px;
+            width: 8px;
+            margin: 0 3px;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        #ai-chat-messages .thinking-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
+        #ai-chat-messages .thinking-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1.0); }
+        }
 
-body.dark-mode .gemini-chat-container {
-    background-color: var(--card-bg-dark);
-    border: 1px solid var(--border-color-dark);
-}
+        /* ======================================================= */
+        /* === DARK MODE OVERRIDES (TỰ ĐỘNG KHI CHUYỂN THEME) === */
+        /* ======================================================= */
+        body.dark-mode #ai-chat-toggle {
+            background: var(--secondary-color);
+            color: #111;
+            box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode #ai-chat-toggle:hover {
+            background: #00beff; /* Sáng hơn một chút */
+        }
+        body.dark-mode #ai-chat-window {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+            box-shadow: var(--shadow-dark-outer);
+        }
+        body.dark-mode #ai-chat-window .rounded-t-lg {
+            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+        }
+        body.dark-mode #ai-chat-messages {
+            background-color: var(--background-dark);
+        }
+        body.dark-mode .ai-message .message-bubble {
+            background-color: var(--primary-color-darker);
+            color: var(--text-dark);
+        }
+        body.dark-mode .user-message .message-bubble {
+            background-color: var(--secondary-color);
+            color: #111;
+        }
+        body.dark-mode #ai-chat-window .p-3.border-t {
+            background-color: var(--card-bg-dark);
+            border-top-color: var(--border-color-dark);
+        }
+        body.dark-mode #ai-chat-input {
+            background: var(--background-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color-dark);
+        }
+        body.dark-mode #ai-chat-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
+        }
+        body.dark-mode #ai-chat-send {
+            background-color: var(--secondary-color);
+            color: #111;
+        }
+        body.dark-mode #ai-chat-send:hover {
+            background-color: #00beff;
+        }
+        body.dark-mode #ai-chat-messages .thinking-indicator .dot {
+            background-color: var(--border-color-dark);
+        }
+        /* ======================================================= */
+        /* END: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME) */
+        /* ======================================================= */
 
-.gemini-chat-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-    color: white;
-    padding: 10px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-body.dark-mode .gemini-chat-header {
-    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-}
-
-
-.gemini-chat-title {
-    font-weight: 600;
-    font-size: 1.1em;
-}
-.gemini-chat-title i {
-    margin-right: 8px;
-}
-
-.gemini-chat-close-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    line-height: 1;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
-
-.gemini-chat-close-btn:hover {
-    opacity: 1;
-}
-
-.gemini-chat-messages {
-    flex-grow: 1;
-    padding: 15px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.gemini-chat-message {
-    max-width: 85%;
-    padding: 8px 12px;
-    border-radius: 10px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    animation: fadeInMessage 0.3s ease;
-}
-
-@keyframes fadeInMessage {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.gemini-chat-message.user {
-    background-color: var(--primary-color);
-    color: white;
-    border-bottom-right-radius: 2px;
-    align-self: flex-end;
-}
-
-.gemini-chat-message.assistant {
-    background-color: var(--border-color-light);
-    color: var(--text-light);
-    border-bottom-left-radius: 2px;
-    align-self: flex-start;
-}
-.gemini-chat-message.assistant.loading {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.gemini-chat-message.assistant.loading .dot-flashing {
-  position: relative;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
-  background-color: var(--primary-color-darker);
-  color: var(--primary-color-darker);
-  animation: dot-flashing 1s infinite linear alternate;
-  animation-delay: .5s;
-}
-.gemini-chat-message.assistant.loading .dot-flashing::before, .gemini-chat-message.assistant.loading .dot-flashing::after {
-  content: '';
-  display: inline-block;
-  position: absolute;
-  top: 0;
-}
-.gemini-chat-message.assistant.loading .dot-flashing::before {
-  left: -10px;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
-  background-color: var(--primary-color-darker);
-  color: var(--primary-color-darker);
-  animation: dot-flashing 1s infinite alternate;
-  animation-delay: 0s;
-}
-.gemini-chat-message.assistant.loading .dot-flashing::after {
-  left: 10px;
-  width: 5px;
-  height: 5px;
-  border-radius: 5px;
-  background-color: var(--primary-color-darker);
-  color: var(--primary-color-darker);
-  animation: dot-flashing 1s infinite alternate;
-  animation-delay: 1s;
-}
-
-@keyframes dot-flashing {
-  0% {
-    background-color: var(--primary-color-darker);
-  }
-  50%, 100% {
-    background-color: #ebe6ff;
-  }
-}
-
-
-body.dark-mode .gemini-chat-message.user {
-    background-color: var(--primary-color-lighter);
-}
-body.dark-mode .gemini-chat-message.assistant {
-     background-color: #2c3340;
-     color: var(--text-dark);
-}
-
-.gemini-chat-input-container {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid var(--border-color-light);
-    flex-shrink: 0;
-}
-
-body.dark-mode .gemini-chat-input-container {
-    border-top: 1px solid var(--border-color-dark);
-}
-
-.gemini-chat-input {
-    flex-grow: 1;
-    border: 1px solid var(--border-color-light);
-    border-radius: 20px;
-    padding: 8px 15px;
-    resize: none;
-    height: 38px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.gemini-chat-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.2);
-}
-body.dark-mode .gemini-chat-input {
-    background-color: #2c3340;
-    border-color: var(--border-color-dark);
-    color: var(--text-dark);
-}
-body.dark-mode .gemini-chat-input:focus {
-     border-color: var(--secondary-color);
-     box-shadow: 0 0 0 2px rgba(0, 174, 255, 0.2);
-}
-
-.gemini-chat-send-btn {
-    margin-left: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    cursor: pointer;
-    font-size: 16px;
-    flex-shrink: 0;
-    transition: all 0.2s;
-}
-
-.gemini-chat-send-btn:hover {
-    background-color: var(--primary-color-lighter);
-}
-.gemini-chat-send-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-body.dark-mode .gemini-chat-send-btn {
-    background-color: var(--primary-color-lighter);
-}
-body.dark-mode .gemini-chat-send-btn:hover {
-    background-color: var(--secondary-color);
-}
-/* ================================ */
-/* == KẾT THÚC: CSS TRỢ LÝ ẢO GEMINI == */
-/* ================================ */
     </style>
 </head>
 <body data-theme="light">
@@ -1964,29 +1881,29 @@ body.dark-mode .gemini-chat-send-btn:hover {
              <ul id="onPageNavList"></ul>
         </div>
     </div>
-<div id="gemini-chat-container" class="gemini-chat-container">
-    <div class="gemini-chat-header">
-        <div class="gemini-chat-title">
-            <i class="fas fa-robot"></i> Trợ lý
-        </div>
-        <button id="gemini-chat-close-btn" class="gemini-chat-close-btn">&times;</button>
-    </div>
-    <div id="gemini-chat-messages" class="gemini-chat-messages">
-        </div>
-    <div class="gemini-chat-input-container">
-        <textarea id="gemini-chat-input" class="gemini-chat-input" placeholder="Hỏi đáp về chính sách..."></textarea>
-        <button id="gemini-chat-send-btn" class="gemini-chat-send-btn">
-            <i class="fas fa-paper-plane"></i>
-        </button>
-    </div>
-</div>
 
-<button id="gemini-chat-open-btn" class="gemini-chat-open-btn">
-    <i class="fas fa-robot"></i>
-</button>
-<footer>
-    © 2025 VinFast Minh Đạo Thuận An
-</footer>
+    <button id="ai-chat-toggle" class="fixed bottom-16 right-5 h-14 w-14 rounded-full text-white flex items-center justify-center shadow-lg transition-transform transform hover:scale-110 z-[1011]">
+        <i class="fas fa-robot text-2xl"></i>
+    </button>
+    <div id="ai-chat-window" class="fixed bottom-28 right-5 w-full max-w-sm h-3/5 max-h-[600px] rounded-lg shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-in-out pointer-events-none z-[1010]">
+        <div class="flex justify-between items-center p-3 text-white rounded-t-lg">
+            <h3 class="font-bold text-lg flex items-center"><i class="fas fa-brain mr-2"></i>Trợ lý</h3>
+            <button id="ai-chat-close" class="text-2xl hover:text-gray-200">&times;</button>
+        </div>
+        <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto">
+            <div class="chat-message ai-message">
+                <div class="message-bubble">Xin chào! Tôi có thể giúp gì cho bạn về các chính sách của VinFast?</div>
+            </div>
+        </div>
+        <div class="p-3 border-t">
+            <div class="flex items-center">
+                <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." class="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2">
+                <button id="ai-chat-send" class="ml-3 text-white rounded-full h-10 w-10 flex items-center justify-center transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     <footer>
         © 2025 VinFast Minh Đạo Thuận An
     </footer>
@@ -1997,6 +1914,8 @@ body.dark-mode .gemini-chat-send-btn:hover {
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // ... (Phần code cũ của bạn cho sidebar, theme, search... giữ nguyên ở đây) ...
+            
             // --- DOM Element References ---
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.getElementById('mainContainer');
@@ -2143,14 +2062,13 @@ body.dark-mode .gemini-chat-send-btn:hover {
                     onPageNav.style.display = 'block';
                 }
 
-                // Disconnect previous observer if it exists
                 if (observer) {
                     observer.disconnect();
                 }
 
                 const observerOptions = {
-                    root: null, // relative to the viewport
-                    rootMargin: '0px 0px -60% 0px', // trigger when a section is in the top 40% of the screen
+                    root: null,
+                    rootMargin: '0px 0px -60% 0px',
                     threshold: 0
                 };
 
@@ -2159,9 +2077,7 @@ body.dark-mode .gemini-chat-send-btn:hover {
                         const id = entry.target.id;
                         const navLink = onPageNavList.querySelector(`a[href="#${id}"]`);
                         if (entry.isIntersecting && navLink) {
-                            // Remove active class from all other links
                             onPageNavList.querySelectorAll('a').forEach(link => link.classList.remove('active-nav-link'));
-                            // Add active class to the current one
                             navLink.classList.add('active-nav-link');
                         }
                     });
@@ -2171,7 +2087,7 @@ body.dark-mode .gemini-chat-send-btn:hover {
                     const header = section.querySelector('h3');
                     if (header) {
                         const id = `section-${activeTab.id}-${index}`;
-                        section.id = id; // Assign a unique ID to the section
+                        section.id = id;
                         
                         const li = document.createElement('li');
                         const a = document.createElement('a');
@@ -2180,7 +2096,6 @@ body.dark-mode .gemini-chat-send-btn:hover {
                         li.appendChild(a);
                         onPageNavList.appendChild(li);
 
-                        // Observe the section
                         observer.observe(section);
                     }
                 });
@@ -2215,7 +2130,7 @@ body.dark-mode .gemini-chat-send-btn:hover {
                     });
                 }
                 localStorage.setItem('activePolicyTab', policyName); 
-                updateOnPageNav(); // Update the on-page nav for the new tab
+                updateOnPageNav(); 
             }
 
             // --- Active Sidebar Link ---
@@ -2466,138 +2381,92 @@ body.dark-mode .gemini-chat-send-btn:hover {
             if (savedActiveTab && document.getElementById(savedActiveTab)) {
                 window.openPolicyTab(null, savedActiveTab);
             } else if (document.querySelector('.tab-button')) {
-                // Make sure to click the first button if no saved tab or if saved tab doesn't exist
                 const firstTabButton = document.querySelector('.tab-buttons .tab-button');
                 if (firstTabButton) {
                      firstTabButton.click();
                 }
             }
-// =================================== //
-// == BẮT ĐẦU: LOGIC TRỢ LÝ ẢO GEMINI == //
-// =================================== //
-const openChatBtn = document.getElementById('gemini-chat-open-btn');
-const closeChatBtn = document.getElementById('gemini-chat-close-btn');
-const chatContainer = document.getElementById('gemini-chat-container');
-const sendChatBtn = document.getElementById('gemini-chat-send-btn');
-const chatInput = document.getElementById('gemini-chat-input');
-const chatMessages = document.getElementById('gemini-chat-messages');
+            
+            // =======================================================
+            // START: GEMINI AI CHATBOT JAVASCRIPT (REPLACE OLD ONE)
+            // =======================================================
+            const chatToggleButton = document.getElementById('ai-chat-toggle');
+            const chatWindow = document.getElementById('ai-chat-window');
+            const chatCloseButton = document.getElementById('ai-chat-close');
+            const chatMessagesContainer = document.getElementById('ai-chat-messages');
+            const chatInput = document.getElementById('ai-chat-input');
+            const chatSendButton = document.getElementById('ai-chat-send');
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmNzDXcAaH5QpU9-q7Yb-wzFu1ZIKVsiMWU3J-lNKpJ_2dVwO5N01LMebamD53q-MnPw/exec';
 
-const API_KEY = 'AIzaSyBKojoD7zpkjkIxy0czgNW3AhmBQzcdowI';
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
+            chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
+            chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
+            chatSendButton.addEventListener('click', sendMessageToAi);
+            chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessageToAi(); });
 
-let conversationHistory = [];
+            function appendMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${sender}-message`;
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                
+                if(sender === 'ai' && text === 'thinking') {
+                    const thinkingIndicator = document.createElement('div');
+                    thinkingIndicator.className = 'thinking-indicator';
+                    thinkingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                    bubbleDiv.appendChild(thinkingIndicator);
+                } else {
+                    bubbleDiv.textContent = text;
+                }
+                
+                messageDiv.appendChild(bubbleDiv);
+                chatMessagesContainer.appendChild(messageDiv);
+                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                return messageDiv; // Return the entire message element
+            }
 
-// Hàm mở/đóng cửa sổ chat
-openChatBtn.addEventListener('click', () => {
-    chatContainer.classList.toggle('visible');
-    if (chatMessages.children.length === 0) {
-        addMessageToChat('Chào bạn! Tôi là trợ lý ảo của VinFast Thuận An. Tôi có thể giúp gì về các chính sách xe?', 'assistant');
-    }
-});
+            async function sendMessageToAi() {
+                const message = chatInput.value.trim();
+                if (!message) return;
 
-closeChatBtn.addEventListener('click', () => {
-    chatContainer.classList.remove('visible');
-});
+                appendMessage(message, 'user');
+                chatInput.value = '';
+                chatInput.disabled = true;
 
-// Hàm thêm tin nhắn vào cửa sổ chat
-function addMessageToChat(message, sender, isLoading = false) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('gemini-chat-message', sender);
+                const thinkingMessageElement = appendMessage('thinking', 'ai');
 
-    if (isLoading) {
-        messageElement.classList.add('loading');
-        messageElement.innerHTML = '<div class="dot-flashing"></div>';
-    } else {
-        // Chuyển đổi markdown đơn giản sang HTML (in đậm và danh sách)
-        let formattedMessage = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formattedMessage = formattedMessage.replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>');
-        formattedMessage = formattedMessage.replace(/<\/ul>\s?<ul>/g, '');
-        messageElement.innerHTML = formattedMessage;
-    }
-    
-    chatMessages.appendChild(messageElement);
-    chatMessages.scrollTop = chatMessages.scrollHeight; // Tự động cuộn xuống
-    return messageElement;
-}
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'getGlobalAiResponse');
+                    formData.append('userPrompt', message);
+                    formData.append('pageContext', document.body.innerText);
 
-// Hàm gửi tin nhắn
-async function sendMessage() {
-    const message = chatInput.value.trim();
-    if (message === '') return;
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-    addMessageToChat(message, 'user');
-    chatInput.value = '';
-    sendChatBtn.disabled = true;
+                    if (!response.ok) {
+                        throw new Error(`Lỗi mạng: ${response.statusText}`);
+                    }
 
-    const loadingElement = addMessageToChat('', 'assistant', true);
+                    const resultText = await response.text();
+                    
+                    chatMessagesContainer.removeChild(thinkingMessageElement);
+                    appendMessage(resultText, 'ai');
 
-    try {
-        // Lấy nội dung toàn bộ trang web làm ngữ cảnh
-        const pageContent = document.documentElement.innerText;
-        
-        // Xây dựng prompt
-        const prompt = `Bạn là một trợ lý ảo am hiểu về các chính sách của VinFast được cung cấp trong ngữ cảnh sau. Dựa vào nội dung dưới đây để trả lời câu hỏi của người dùng một cách ngắn gọn, chính xác và thân thiện. Không tự bịa ra thông tin không có trong văn bản.
-        
-        --- Bối cảnh chính sách ---
-        ${pageContent}
-        --- Hết bối cảnh ---
-
-        Câu hỏi của người dùng: "${message}"`;
-
-        const requestBody = {
-            contents: [{
-                parts: [{ "text": prompt }]
-            }],
-            // Nếu muốn duy trì ngữ cảnh cuộc trò chuyện, bạn có thể quản lý 'history' ở đây
-        };
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Lỗi API: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        chatMessages.removeChild(loadingElement); // Xóa animation loading
-
-        if (data.candidates && data.candidates.length > 0) {
-            const assistantMessage = data.candidates[0].content.parts[0].text;
-            addMessageToChat(assistantMessage, 'assistant');
-        } else {
-            addMessageToChat('Xin lỗi, tôi chưa thể xử lý yêu cầu này. Vui lòng thử lại.', 'assistant');
-        }
-
-    } catch (error) {
-        console.error('Lỗi khi gọi Gemini API:', error);
-        chatMessages.removeChild(loadingElement); // Xóa animation loading
-        addMessageToChat('Đã có lỗi xảy ra. Vui lòng kiểm tra lại API Key và kết nối mạng.', 'assistant');
-    } finally {
-        sendChatBtn.disabled = false;
-        chatInput.focus();
-    }
-}
-
-// Gửi khi nhấn nút Send
-sendChatBtn.addEventListener('click', sendMessage);
-
-// Gửi khi nhấn phím Enter
-chatInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Ngăn xuống dòng
-        sendMessage();
-    }
-});
-
-// ================================= //
-// == KẾT THÚC: LOGIC TRỢ LÝ ẢO GEMINI == //
-// ================================= //
+                } catch (error) {
+                    console.error('Lỗi khi gọi AI:', error);
+                    chatMessagesContainer.removeChild(thinkingMessageElement);
+                    appendMessage('Xin lỗi, đã có lỗi xảy ra khi kết nối. Vui lòng thử lại sau.', 'ai');
+                } finally {
+                    chatInput.disabled = false;
+                    chatInput.focus();
+                }
+            }
+            // =======================================================
+            // END: GEMINI AI CHATBOT JAVASCRIPT
+            // =======================================================
         });
     </script>
 </body>
