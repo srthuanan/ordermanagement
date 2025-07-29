@@ -1758,7 +1758,26 @@
             function formatDateToDDMMYYYY(dateObj) { if (!dateObj || !(dateObj instanceof Date)) return 'N/A'; let day = dateObj.getUTCDate().toString().padStart(2, '0'); let month = (dateObj.getUTCMonth() + 1).toString().padStart(2, '0'); let year = dateObj.getUTCFullYear(); return `${day}/${month}/${year}`; }
 
             function calculateVinFastPrice(modelKey, baseMsrp, vinYear, options, eligibilityInfo) {
-                // VIN Year discounts updated as per PDF from July 16, 2025
+                // SỬA LỖI: Thêm đoạn kiểm tra đầu vào để đảm bảo modelKey không phải là undefined
+                if (!modelKey || typeof modelKey !== 'string') {
+                    console.error("Lỗi: modelKey không hợp lệ hoặc không xác định. Hàm đã dừng lại.");
+                    // Trả về một đối tượng kết quả trống để giao diện không bị lỗi
+                    return { 
+                        invoicePrice: 0, 
+                        customerPrice: 0, 
+                        basePriceUsed: 0,
+                        priceBaseForPercentageDiscount: 0,
+                        vinfascinationCashApplied: 0,
+                        insuranceCashApplied: 0,
+                        manhLietTinhThanVn3AppliedAmount: 0,
+                        vf7PlusCashbackApplied: 0,
+                        tradeInApplied: 0,
+                        calculationLog: [], 
+                        notes: ["Lỗi: Vui lòng chọn một Mã Model hợp lệ để bắt đầu tính giá."] 
+                    };
+                }
+                // Kết thúc phần sửa lỗi, phần còn lại của hàm giữ nguyên
+
                  const VIN_YEAR_DISCOUNTS = {
                     "2024": { "VF 3": 10000000, "VF 5": 15000000, "VF 6": 20000000, "VF 7": 20000000, "VF 8 Eco/S Lux": 70000000, "VF 8 Plus/Lux Plus": 85000000, "VF 9 Eco": 100000000, "VF 9 Plus": 120000000 },
                     "2023": { "VF 5 Plus": 50000000, "VF 6 Plus": 70000000, "VF 8 Eco/S Lux": 150000000, "VF 8 Plus/Lux Plus": 180000000, "VF 9 Plus": 250000000 },
@@ -1787,7 +1806,6 @@
                 let giaSauKMCodinh = giaHienTai;
                 const loaiXeChung = getGeneralModelType(modelKey);
                 
-                // Enhanced logic to create a more specific key for VIN Year Discounts
                 function getVinYearDiscountKey(modelKey) {
                     if (!modelKey) return null;
                     const keyLower = modelKey.toLowerCase();
@@ -1802,7 +1820,7 @@
                     } else if (keyLower.includes("vf 6 - plus")) {
                          return "VF 6 Plus";
                     }
-                    return loaiXeChung; // Fallback to general model
+                    return loaiXeChung;
                 }
                 const vinYearDiscountKey = getVinYearDiscountKey(modelKey);
 
@@ -1835,14 +1853,14 @@
                 }
 
                 let advancedColorCostApplied = 0;
-                let otherPositiveOptionsCostForMltvnl3 = 0; // For other positive cost options (VF9 seats, roof)
+                let otherPositiveOptionsCostForMltvnl3 = 0;
 
                 if (options && loaiXeChung) {
                     if (loaiXeChung === "VF 9") {
                         if (options.hasCaptainSeats_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"]) {
                             const item = OPTIONAL_EQUIPMENT["VF 9"]["captain_seats_6"];
                             giaSauKMCodinh += item.cost;
-                            if (item.cost > 0) { // Check if it's a surcharge
+                            if (item.cost > 0) {
                                 otherPositiveOptionsCostForMltvnl3 += item.cost;
                             }
                             nhatKyTinhToan.push({ step: "A3.1", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh });
@@ -1850,7 +1868,7 @@
                         if (options.hasPanoramicRoof_VF9 && OPTIONAL_EQUIPMENT["VF 9"] && OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"]) {
                             const item = OPTIONAL_EQUIPMENT["VF 9"]["panoramic_roof"];
                             giaSauKMCodinh += item.cost;
-                             if (item.cost > 0) { // Check if it's a surcharge
+                             if (item.cost > 0) {
                                 otherPositiveOptionsCostForMltvnl3 += item.cost;
                             }
                             nhatKyTinhToan.push({ step: "A3.2", type: "surcharge", description: item.description, amount: item.cost, current_subtotal: giaSauKMCodinh });
@@ -1860,7 +1878,7 @@
                         const colorOption = OPTIONAL_EQUIPMENT[loaiXeChung][options.selectedAdvancedColor];
                         giaSauKMCodinh += colorOption.cost;
                         if (colorOption.cost > 0) {
-                           advancedColorCostApplied = colorOption.cost; // This will be added to baseForMltvnl3
+                           advancedColorCostApplied = colorOption.cost;
                         }
                         nhatKyTinhToan.push({ step: "A3.3", type: colorOption.cost >= 0 ? "surcharge" : "discount", description: colorOption.description, amount: colorOption.cost, current_subtotal: giaSauKMCodinh });
                     }
@@ -1883,7 +1901,7 @@
 
                 if (eligibilityInfo.applyManhLietTinhThanVietNamPromo) {
                     if (invoiceDate && invoiceDate >= MLTTVN3_INVOICE_START_DATE && invoiceDate <= MLTTVN3_INVOICE_END_DATE) {
-                        const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied + otherPositiveOptionsCostForMltvnl3; // UPDATED BASE
+                        const baseForMltvnl3 = originalMsrpForMltvnl3 + advancedColorCostApplied + otherPositiveOptionsCostForMltvnl3;
                         manhLietTinhThanVn3DiscountAmount = Math.round(baseForMltvnl3 * MANH_LIET_TINH_THAN_VN3_PERCENTAGE);
 
                         giaSauKMCodinh -= manhLietTinhThanVn3DiscountAmount;
@@ -1965,16 +1983,14 @@
                 let mucHoTroThuCuApplied = 0;
                 let priceBaseForPercentageDiscountInReturn = priceBeforeVinclubTradeInBlock;
 
-                // --- LOGIC FOR APPLYING TRADE-IN AND VINCLUB/CORP BASED ON DATE ---
                 let isAfterSpecialPolicyStartDate = false;
-                 const SPECIAL_TRADE_IN_POLICY_START_DATE_CHECK = new Date(Date.UTC(2025, 4, 22)); // May 22, 2025
+                 const SPECIAL_TRADE_IN_POLICY_START_DATE_CHECK = new Date(Date.UTC(2025, 4, 22));
                  if (invoiceDate && invoiceDate >= SPECIAL_TRADE_IN_POLICY_START_DATE_CHECK) {
                      isAfterSpecialPolicyStartDate = true;
                  }
 
                 if (isAfterSpecialPolicyStartDate) {
                     ghiChu.push(`LƯU Ý: Áp dụng thứ tự ưu tiên (Thu cũ đổi mới TRƯỚC VinClub/Corp) cho ngày XHĐ từ ${formatDateToDDMMYYYY(SPECIAL_TRADE_IN_POLICY_START_DATE_CHECK)}.`);
-                    // 1. Apply Trade-in First
                     if (eligibilityInfo.tradeInOldCarType && eligibilityInfo.tradeInOldCarType !== "Không đổi") {
                         const TRADE_IN_P1_START = new Date(Date.UTC(2025, 4, 22)); const TRADE_IN_P1_END = new Date(Date.UTC(2025, 5, 23));
                         const TRADE_IN_P2_START = new Date(Date.UTC(2025, 5, 24)); const TRADE_IN_P2_END = new Date(Date.UTC(2025, 6, 3));
@@ -1985,8 +2001,8 @@
                         else if (invoiceDate >= TRADE_IN_P1_START && invoiceDate <= TRADE_IN_P1_END) { applicableTradeInPolicy = TRADE_IN_DISCOUNTS_P1_MAY22_JUN23; }
 
                         if (applicableTradeInPolicy && applicableTradeInPolicy[loaiXeChung]) {
-                            let tradeInTypeKey = "AllOtherBrands"; // Default for newer policies
-                            if (invoiceDate <= TRADE_IN_P1_END) { // Period with differentiation
+                            let tradeInTypeKey = "AllOtherBrands";
+                            if (invoiceDate <= TRADE_IN_P1_END) {
                                 tradeInTypeKey = eligibilityInfo.tradeInOldCarType === "VinFast Xăng Cũ" ? "VinFastXangCu" : "HangKhac";
                             }
                             const mucHoTro = applicableTradeInPolicy[loaiXeChung][tradeInTypeKey];
@@ -2000,7 +2016,6 @@
                     nhatKyTinhToan.push({ step: "SPECIAL_BASE_FOR_VINCLUB", type: "info", description: "Giá làm cơ sở tính KM Vinclub/Corp (sau Thu cũ)", amount: giaTamThoiCustomer, current_subtotal: giaTamThoiCustomer });
                     priceBaseForPercentageDiscountInReturn = giaTamThoiCustomer;
 
-                    // 2. Apply VinClub/Corp on the new base (after trade-in)
                     if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) {
                         const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier];
                         mucGiamVinclubHoacCorp = Math.round(giaTamThoiCustomer * phanTramGiamVinclub); giaTamThoiCustomer -= mucGiamVinclubHoacCorp;
@@ -2010,7 +2025,7 @@
                         mucGiamVinclubHoacCorp = Math.round(giaTamThoiCustomer * CORP_DISCOUNT_PERCENTAGE); giaTamThoiCustomer -= mucGiamVinclubHoacCorp;
                         nhatKyTinhToan.push({ step: "C2_SPECIAL", type: "discount_percentage", description: `Giảm giá Corp (${(CORP_DISCOUNT_PERCENTAGE * 100).toFixed(1)}%) - tính trên giá sau Thu cũ`, amount: -mucGiamVinclubHoacCorp, base_for_percentage: priceBaseForPercentageDiscountInReturn, current_subtotal: giaTamThoiCustomer });
                     }
-                } else { // Original Logic (for dates before May 22, 2025)
+                } else {
                      priceBaseForPercentageDiscountInReturn = priceBeforeVinclubTradeInBlock;
                      if (eligibilityInfo.vinClubTier && eligibilityInfo.vinClubTier !== "Không có" && VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier]) {
                         const phanTramGiamVinclub = VINCLUB_DISCOUNT_PERCENTAGES[eligibilityInfo.vinClubTier];
@@ -2608,26 +2623,15 @@
             const chatMessagesContainer = document.getElementById('ai-chat-messages');
             const chatInput = document.getElementById('ai-chat-input');
             const chatSendButton = document.getElementById('ai-chat-send');
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec';
 
-            // URL của Web App sau khi bạn triển khai Google Apps Script
-            // !! QUAN TRỌNG: THAY THẾ BẰNG URL WEB APP CỦA BẠN !!
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmNzDXcAaH5QpU9-q7Yb-wzFu1ZIKVsiMWU3J-lNKpJ_2dVwO5N01LMebamD53q-MnPw/exec';
+            // --- TỐI ƯU #1: KHỞI TẠO BỘ NHỚ ĐỆM (CACHE) ---
+            const aiResponseCache = new Map();
 
-            // Mở/đóng cửa sổ chat
-            chatToggleButton.addEventListener('click', () => {
-                chatWindow.classList.toggle('visible');
-            });
-            chatCloseButton.addEventListener('click', () => {
-                chatWindow.classList.remove('visible');
-            });
-
-            // Gửi tin nhắn khi nhấn nút hoặc Enter
+            chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
+            chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
             chatSendButton.addEventListener('click', sendMessageToAi);
-            chatInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    sendMessageToAi();
-                }
-            });
+            chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessageToAi(); });
 
             function appendMessage(text, sender) {
                 const messageDiv = document.createElement('div');
@@ -2635,13 +2639,20 @@
                 
                 const bubbleDiv = document.createElement('div');
                 bubbleDiv.className = 'message-bubble';
-                bubbleDiv.textContent = text;
+                
+                if(sender === 'ai' && text === 'thinking') {
+                    const thinkingIndicator = document.createElement('div');
+                    thinkingIndicator.className = 'thinking-indicator';
+                    thinkingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                    bubbleDiv.appendChild(thinkingIndicator);
+                } else {
+                    bubbleDiv.textContent = text;
+                }
                 
                 messageDiv.appendChild(bubbleDiv);
                 chatMessagesContainer.appendChild(messageDiv);
-                
-                // Tự động cuộn xuống tin nhắn mới nhất
                 chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                return messageDiv; // Trả về để có thể xóa sau
             }
 
             async function sendMessageToAi() {
@@ -2651,43 +2662,93 @@
                 appendMessage(message, 'user');
                 chatInput.value = '';
                 chatInput.disabled = true;
+                chatSendButton.disabled = true;
 
-                // Hiển thị chỉ báo "đang suy nghĩ"
-                const thinkingIndicator = document.createElement('div');
-                thinkingIndicator.className = 'chat-message ai-message thinking-indicator';
-                thinkingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-                chatMessagesContainer.appendChild(thinkingIndicator);
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                // --- TỐI ƯU #2: KIỂM TRA CACHE TRƯỚC KHI GỌI AI ---
+                if (aiResponseCache.has(message.toLowerCase())) {
+                    const cachedResponse = aiResponseCache.get(message.toLowerCase());
+                    appendMessage(cachedResponse, 'ai');
+                    chatInput.disabled = false;
+                    chatSendButton.disabled = false;
+                    chatInput.focus();
+                    return; // Dừng, không gọi AI
+                }
+                
+                const thinkingMessageElement = appendMessage('thinking', 'ai');
 
                 try {
-                    const formData = new FormData();
-                    formData.append('action', 'getGlobalAiResponse');
-                    formData.append('userPrompt', message);
-                    // Lấy toàn bộ văn bản trên trang làm ngữ cảnh
-                    formData.append('pageContext', document.body.innerText);
+                    const responseText = await sendRequestWithBackoff(message, thinkingMessageElement);
+                    
+                    // --- TỐI ƯU #3: LƯU KẾT QUẢ VÀO CACHE ---
+                    aiResponseCache.set(message.toLowerCase(), responseText);
 
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Lỗi mạng: ${response.statusText}`);
+                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+                        chatMessagesContainer.removeChild(thinkingMessageElement);
                     }
-
-                    const resultText = await response.text(); // Nhận về văn bản thuần
-
-                    // Xóa chỉ báo "đang suy nghĩ" và hiển thị câu trả lời
-                    chatMessagesContainer.removeChild(thinkingIndicator);
-                    appendMessage(resultText, 'ai'); // Hiển thị trực tiếp
+                    appendMessage(responseText, 'ai');
 
                 } catch (error) {
-                    console.error('Lỗi khi gọi AI:', error);
-                    chatMessagesContainer.removeChild(thinkingIndicator);
-                    appendMessage('Xin lỗi, đã có lỗi xảy ra khi kết nối. Vui lòng thử lại sau.', 'ai');
+                    console.error('Lỗi sau nhiều lần thử lại:', error);
+                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
+                        chatMessagesContainer.removeChild(thinkingMessageElement);
+                    }
+                    appendMessage('Rất tiếc, đã có lỗi kết nối nghiêm trọng. Vui lòng thử lại sau ít phút.', 'ai');
                 } finally {
                     chatInput.disabled = false;
+                    chatSendButton.disabled = false;
                     chatInput.focus();
+                }
+            }
+			
+            async function sendRequestWithBackoff(userPrompt, thinkingMessageElement, maxRetries = 4, initialDelay = 1000) {
+                let delay = initialDelay;
+
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('action', 'getGlobalAiResponse');
+                        formData.append('userPrompt', userPrompt);
+                        formData.append('pageContext', document.body.innerText);
+
+                        const response = await fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.status === 429) {
+                            const retryAfter = response.headers.get('Retry-After');
+                            let waitTime = delay;
+                            if (retryAfter) {
+                                const retryAfterSeconds = parseInt(retryAfter, 10);
+                                if (!isNaN(retryAfterSeconds)) {
+                                    waitTime = retryAfterSeconds * 1000;
+                                }
+                            }
+                            const error = new Error('429 Too Many Requests');
+                            error.waitTime = waitTime;
+                            throw error;
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(`Lỗi mạng: ${response.statusText}`);
+                        }
+
+                        return await response.text();
+
+                    } catch (error) {
+                        if (error.message.includes('429') && i < maxRetries - 1) {
+                            const waitTime = error.waitTime || delay;
+                            if (thinkingMessageElement) {
+                                const bubble = thinkingMessageElement.querySelector('.message-bubble');
+                                bubble.innerHTML = `Máy chủ đang bận. Sẽ thử lại sau ${Math.round(waitTime / 1000)} giây...`;
+                            }
+                            const jitter = Math.random() * 500;
+                            await new Promise(resolve => setTimeout(resolve, waitTime + jitter));
+                            delay *= 2;
+                        } else {
+                            throw error;
+                        }
+                    }
                 }
             }
         });
