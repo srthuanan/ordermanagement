@@ -1440,14 +1440,13 @@ body.dark-mode .top-navbar {
             <span>VINFAST THUẬN AN</span>
         </div>
         <nav class="navbar-links" id="sidebar-nav">
-            <a href="#" class="active" onclick="switchView('actionCenter')"><i class="fas fa-bell fa-fw"></i><span>Trung tâm Tác vụ</span></a>
-            <a href="#" onclick="switchView('dangKyCho')"><i class="fas fa-list-alt fa-fw"></i><span>Đăng Ký Chờ</span></a>
-            <a href="#" onclick="switchView('khoXe')"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
-            <a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a>
-            <a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
-            <a href="#" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a>
-            <a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a>
-        </nav>
+    <a href="#" onclick="switchView('dangKyCho')"><i class="fas fa-list-alt fa-fw"></i><span>Đăng Ký Chờ</span></a>
+    <a href="#" onclick="switchView('khoXe')"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+    <a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a>
+    <a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
+    <a href="#" class="active" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a>
+    <a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a>
+</nav>
         <div class="navbar-controls">
     <div class="action-dropdown-menu">
         <button class="nav-btn" onclick="toggleActionMenu(event)" title="Thao tác nhanh">
@@ -1775,7 +1774,7 @@ function toggleActionMenu(event) {
     // Thay thế toàn bộ đối tượng appState cũ bằng đối tượng này
 const appState = {
     data: null,
-    currentView: 'actionCenter',
+    currentView: 'xuatHoaDon',
     loading: true,
     error: null,
     currentDataVersion: '0',
@@ -1960,7 +1959,7 @@ const appState = {
         }
     }
     
-    function render() {
+  function render() {
     // Lấy trước các thành phần HTML chính
     const viewToolbarContainer = mainContentEl.querySelector('.view-toolbar');
     
@@ -1968,14 +1967,14 @@ const appState = {
     const toolbarHTML = viewToolbarContainer ? viewToolbarContainer.outerHTML : '';
 
     if (appState.loading) {
-    mainContentEl.innerHTML = toolbarHTML + `
-        <div class="table-loading-container">
-            <lottie-player src="https://lottie.host/a638f323-1d2a-4254-8800-27f3948e3650/3SFrF7x1yF.json" background="transparent" speed="1" style="width: 250px; height: 250px;" loop autoplay></lottie-player>
-            <p>Đang tải dữ liệu, vui lòng chờ...</p>
-        </div>
-    `;
-    return;
-}
+        mainContentEl.innerHTML = toolbarHTML + `
+            <div class="table-loading-container">
+                <lottie-player src="https://lottie.host/a638f323-1d2a-4254-8800-27f3948e3650/3SFrF7x1yF.json" background="transparent" speed="1" style="width: 250px; height: 250px;" loop autoplay></lottie-player>
+                <p>Đang tải dữ liệu, vui lòng chờ...</p>
+            </div>
+        `;
+        return;
+    }
 
     // Xử lý khi có lỗi
     if (appState.error) {
@@ -3648,35 +3647,40 @@ function generateGlobalSuggestions(chuaGhepData, khoXeData) {
 }
 
     // Thay thế toàn bộ hàm cũ bằng hàm này
+// Thay thế toàn bộ hàm cũ bằng hàm này
 function renderSuggestionPanel(suggestions) {
     let listHTML = '';
-    if (suggestions.length === 0) {
-        listHTML = `<div class="no-data-container" style="padding: 50px 20px;">Không có gợi ý ghép xe nào phù hợp.</div>`;
+
+    // [KHẮC PHỤC] Thêm xử lý khi không có gợi ý nào
+    if (!suggestions || suggestions.length === 0) {
+        listHTML = `<div class="elegant-empty-state" style="padding-top: 50px;">
+                        <div class="empty-icon" style="background-color: #f0fdf4; color: #16a34a;"><i class="fas fa-check-circle"></i></div>
+                        <p>Tuyệt vời!<br>Không có đơn hàng nào chờ ghép phù hợp với xe trong kho.</p>
+                    </div>`;
     } else {
         suggestions.forEach(suggestion => {
             const car = suggestion.car;
             const orders = suggestion.orders;
             
-            // [SỬA] Sử dụng hàm formatCustomDateTime để tránh lỗi "Invalid Date"
-            const ngayNhapFormatted = formatCustomDateTime(car['Ngày nhập']).split(' ')[1] || 'N/A'; // Chỉ lấy phần ngày
+            // [KHẮC PHỤC] Sử dụng hàm formatCustomDateTime để đảm bảo định dạng ngày chính xác
+            const ngayNhapFormatted = formatCustomDateTime(car['Ngày nhập']).split(' ')[1] || 'N/A'; // Chỉ lấy phần ngày dd/MM/yyyy
 
-            // [SỬA] Bảng con được định dạng lại hoàn toàn
             let ordersTableHTML = `
-                <table class="suggestion-inner-table">
+                <table class="suggestion-card-body table">
                     <tbody>`;
             orders.forEach(order => {
-                const ngayCocFormatted = formatCustomDateTime(order['Ngày cọc']).split(' ')[1] || 'N/A'; // Chỉ lấy phần ngày
+                // [KHẮC PHỤC] Sử dụng formatCustomDateTime cho cả ngày cọc
+                const ngayCocFormatted = formatCustomDateTime(order['Ngày cọc']).split(' ')[1] || 'N/A';
                 
-                // [SỬA LỖI CHÍNH] Thêm các thẻ <td> để chia cột dữ liệu
                 ordersTableHTML += `
                     <tr>
                         <td>
-                            <div style="font-weight: 500;">${order['Tên khách hàng']}</div>
-                            <div style="font-size: 11px; opacity: 0.8;">${order['Số đơn hàng']}</div>
+                            <div style="font-weight: 500;">${escapeHtml(order['Tên khách hàng'])}</div>
+                            <div style="font-size: 11px; opacity: 0.8;">${escapeHtml(order['Số đơn hàng'])}</div>
                         </td>
                         <td style="text-align: center;">${ngayCocFormatted}</td>
                         <td style="text-align: right;">
-                            <button class="btn btn-sm btn-primary btn-sm-action" data-action="directMatch" data-vin="${car.VIN}" data-order-number="${order['Số đơn hàng']}">
+                            <button class="btn btn-sm btn-primary btn-sm-action" data-action="directMatch" data-vin="${escapeHtml(car.VIN)}" data-order-number="${escapeHtml(order['Số đơn hàng'])}">
                                 Ghép
                             </button>
                         </td>
@@ -3687,8 +3691,8 @@ function renderSuggestionPanel(suggestions) {
             listHTML += `
                 <div class="suggestion-card">
                     <div class="suggestion-card-header">
-                        <strong>VIN: ${car.VIN}</strong>
-                        <span class="car-spec">${car['Dòng xe']} - ${car['Phiên bản']}</span>
+                        <strong>VIN: ${escapeHtml(car.VIN)}</strong>
+                        <span class="car-spec">${escapeHtml(car['Dòng xe'])} - ${escapeHtml(car['Phiên bản'])}</span>
                         <span class="car-spec">Ngày nhập: ${ngayNhapFormatted}</span>
                     </div>
                     <div class="suggestion-card-body">
@@ -4093,154 +4097,7 @@ function renderTimeline(historyData, container) {
 
     container.innerHTML = timelineHTML;
 }
-function renderUnifiedActionCenterView() {
-    if (!appState.data) {
-        mainContentEl.innerHTML = '<div class="loading-container">Đang tải dữ liệu...</div>';
-        return;
-    }
 
-    if (!appState.actionCenter) {
-        appState.actionCenter = {
-            filters: { taskType: '', priority: '', tvbh: '' },
-            sortKey: 'priority',
-            sortDir: 'asc'
-        };
-    }
-
-    let masterTaskList = [];
-    const daghepData = appState.data.daghep || [];
-    const xuathoadonData = appState.data.xuathoadon || [];
-    
-    const overdueInvoices = daghepData.filter(row => parseInt(row['Số ngày ghép'], 10) >= 4 && String(row['Kết quả'] || '').trim().toLowerCase() === 'đã ghép');
-    const supplementRequests = xuathoadonData.filter(row => String(row['Trạng thái xử lý'] || '').trim().toLowerCase() === 'yêu cầu bổ sung');
-    const approvalRequests = xuathoadonData.filter(row => String(row['Trạng thái xử lý'] || '').trim().toLowerCase() === 'chờ phê duyệt' || String(row['Trạng thái xử lý'] || '').trim().toLowerCase() === 'đã bổ sung');
-    const pendingSignatureAndUpload = xuathoadonData.filter(row => {
-        const status = String(row['Trạng thái xử lý'] || '').trim().toLowerCase();
-        return status === 'đã phê duyệt' || status === 'chờ ký hóa đơn';
-    });
-    
-    overdueInvoices.forEach(row => masterTaskList.push({ ...row, taskType: 'Quá hạn XHĐ', priority: 1, taskDate: row['Thời gian ghép'] }));
-    supplementRequests.forEach(row => masterTaskList.push({ ...row, taskType: 'Cần bổ sung hồ sơ', priority: 1, taskDate: row['NGÀY YÊU CẦU XHĐ'] }));
-    approvalRequests.forEach(row => masterTaskList.push({ ...row, taskType: 'Chờ phê duyệt XHĐ', priority: 2, taskDate: row['NGÀY YÊU CẦU XHĐ'] }));
-    pendingSignatureAndUpload.forEach(row => masterTaskList.push({ ...row, taskType: 'Chờ ký & Tải lên HĐ', priority: 3, taskDate: row['NGÀY XUẤT HÓA ĐƠN'] }));
-
-    const { filters, sortKey, sortDir } = appState.actionCenter;
-    let filteredTasks = masterTaskList;
-
-    if (filters.taskType) filteredTasks = filteredTasks.filter(task => task.taskType === filters.taskType);
-    if (filters.priority) filteredTasks = filteredTasks.filter(task => task.priority == filters.priority);
-    if (filters.tvbh) filteredTasks = filteredTasks.filter(task => (task['Tên tư vấn bán hàng'] || task['TƯ VẤN BÁN HÀNG']) === filters.tvbh);
-    
-    filteredTasks.sort((a, b) => {
-        let valA = a[sortKey]; let valB = b[sortKey];
-        if (sortKey === 'taskDate') { valA = new Date(valA || 0).getTime(); valB = new Date(valB || 0).getTime(); }
-        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    const uniqueTaskTypes = [...new Set(masterTaskList.map(t => t.taskType))];
-    const uniqueTvbh = [...new Set(masterTaskList.map(t => t['Tên tư vấn bán hàng'] || t['TƯ VẤN BÁN HÀNG']))].sort();
-
-    const toolbarHTML = `
-        <div class="view-toolbar">
-            <div class="filter-container">
-                <div class="filter-group"><i class="fas fa-tasks filter-icon"></i><select onchange="handleFilterChange('actionCenter', 'taskType', this.value)"><option value="">Tất cả Loại Tác Vụ</option>${uniqueTaskTypes.map(type => `<option value="${type}" ${filters.taskType === type ? 'selected' : ''}>${type}</option>`).join('')}</select></div>
-                <div class="filter-group"><i class="fas fa-flag filter-icon"></i><select onchange="handleFilterChange('actionCenter', 'priority', this.value)"><option value="">Tất cả Mức Ưu Tiên</option><option value="1" ${filters.priority == 1 ? 'selected' : ''}>Cao</option><option value="2" ${filters.priority == 2 ? 'selected' : ''}>Trung bình</option><option value="3" ${filters.priority == 3 ? 'selected' : ''}>Thấp</option></select></div>
-                <div class="filter-group"><i class="fas fa-user-tie filter-icon"></i><select onchange="handleFilterChange('actionCenter', 'tvbh', this.value)"><option value="">Tất cả TVBH</option>${uniqueTvbh.map(name => `<option value="${name}" ${filters.tvbh === name ? 'selected' : ''}>${name}</option>`).join('')}</select></div>
-            </div>
-            <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng số tác vụ: <strong>${filteredTasks.length}</strong></div>
-        </div>
-    `;
-
-    const getPriorityBadge = (priority) => {
-        if (priority === 1) return '<span class="priority-badge priority-high"><i class="fas fa-exclamation-circle"></i> Cao</span>';
-        if (priority === 2) return '<span class="priority-badge priority-medium"><i class="fas fa-hourglass-half"></i> Trung bình</span>';
-        return '<span class="priority-badge priority-low"><i class="fas fa-info-circle"></i> Thấp</span>';
-    };
-
-    let rowsHTML = '';
-    if (filteredTasks.length === 0) {
-        rowsHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="elegant-empty-state"><div class="empty-icon"><i class="fas fa-check-circle"></i></div><p>Tuyệt vời! Không có tác vụ nào cần xử lý.</p></div></td></tr>`;
-    } else {
-        rowsHTML = filteredTasks.map((task, index) => {
-            // *** ĐÂY LÀ THAY ĐỔI QUAN TRỌNG ***
-            // Gọi hàm mới để tạo link điều hướng thay vì các nút hành động trực tiếp
-            const actionsHTML = renderTaskActionLink(task);
-
-            return `
-                <tr>
-                    <td data-label="STT"><b>${index + 1}</b></td>
-                    <td data-label="Mức Ưu Tiên">${getPriorityBadge(task.priority)}</td>
-                    <td data-label="Loại Tác Vụ">${task.taskType}</td>
-                    <td data-label="Thông Tin Đơn Hàng">
-                        <div class="main-info">${task['TÊN KHÁCH HÀNG'] || task['Tên khách hàng']}</div>
-                        <div class="sub-info">${task['SỐ ĐƠN HÀNG'] || task['Số đơn hàng']}</div>
-                    </td>
-                    <td data-label="Ngày Phát Sinh">${formatCustomDateTime(task.taskDate)}</td>
-                    <td data-label="Hành Động" class="actions-cell-inline">${actionsHTML}</td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    const tableHTML = `
-        <div class="table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th onclick="handleSort('actionCenter', 'priority')">Mức Ưu Tiên <i class="fas fa-sort"></i></th>
-                        <th>Loại Tác Vụ</th>
-                        <th>Thông Tin Đơn Hàng</th>
-                        <th onclick="handleSort('actionCenter', 'taskDate')">Ngày Phát Sinh <i class="fas fa-sort"></i></th>
-                        <th>Hành Động</th>
-                    </tr>
-                </thead>
-                <tbody>${rowsHTML}</tbody>
-            </table>
-        </div>
-    `;
-
-    mainContentEl.innerHTML = toolbarHTML + tableHTML;
-}
-function renderTaskActionLink(task) {
-    let targetView = '';
-    let label = 'Xem chi tiết';
-    let icon = 'fa-arrow-right';
-    const orderNumber = task['SỐ ĐƠN HÀNG'] || task['Số đơn hàng'];
-
-    if (!orderNumber) return '<span>-</span>';
-
-    // Xác định view đích và nhãn nút dựa trên loại tác vụ
-    switch(task.taskType) {
-        case 'Quá hạn XHĐ':
-            targetView = 'daGhep'; 
-            label = 'Xem đơn hàng đã ghép';
-            break;
-        case 'Cần bổ sung hồ sơ':
-        case 'Chờ phê duyệt XHĐ':
-        case 'Chờ ký & Tải lên HĐ':
-            targetView = 'xuatHoaDon';
-            label = 'Xử lý hóa đơn';
-            icon = 'fa-file-invoice-dollar';
-            break;
-        default:
-            return '<span>-</span>';
-    }
-    
-    // Giá trị để tìm kiếm và ID để tô sáng chính là số đơn hàng
-    const filterValue = orderNumber;
-    const highlightId = orderNumber;
-    
-    // Sử dụng lại style của nút icon đã có
-    return `
-        <a href="#" class="btn-icon" title="${label}" 
-           onclick="switchView('${targetView}', { value: '${filterValue}', highlightId: '${highlightId}' }); event.preventDefault();">
-            <i class="fas ${icon}"></i>
-        </a>
-    `;
-}
 function navigateToView(viewName, filters = {}) {
     // Đặt lại tất cả bộ lọc của view đó trước khi áp dụng bộ lọc mới
     const defaultFilters = { dongXe: '', phienBan: '', trangThai: '', tvbh: '', ngoaiThat: '' };
@@ -4369,56 +4226,6 @@ function openTab(evt, tabName) {
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
 }
-/**
- * [HÀM MỚI] Bật/tắt menu hành động cho một hàng cụ thể.
- */
-function toggleRowActions(event) {
-    event.stopPropagation(); // Ngăn sự kiện lan ra ngoài
-    const btn = event.currentTarget;
-    const menu = btn.nextElementSibling;
-
-    // Trước khi mở menu mới, đóng tất cả các menu khác đang mở
-    document.querySelectorAll('.actions-dropdown-menu.active').forEach(openMenu => {
-        if (openMenu !== menu) {
-            openMenu.classList.remove('active');
-        }
-    });
-
-    menu.classList.toggle('active');
-}
-
-
-function renderRowActionsDropdown(actions, rowData) {
-    if (!actions || actions.length === 0) {
-        return '<td></td>'; // Trả về ô trống nếu không có hành động
-    }
-
-    // Chuyển đổi dữ liệu hàng thành chuỗi JSON an toàn
-    const rowDataString = JSON.stringify(rowData).replace(/'/g, "&apos;");
-
-    const menuItemsHTML = actions.map(action => {
-        // Dùng `a` thay cho `button` để phù hợp với cấu trúc menu
-        return `
-            <li>
-                <a href="#" data-action="${action.handler}" data-order='${rowDataString}' ${action.type ? `data-type="${action.type}"` : ''}>
-                    <i class="fas ${action.icon || 'fa-question-circle'}"></i>
-                    <span>${action.label}</span>
-                </a>
-            </li>
-        `;
-    }).join('');
-
-    return `
-        <td class="actions-cell">
-            <button class="actions-dropdown-btn" onclick="toggleRowActions(event)" title="Thao tác">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="actions-dropdown-menu">
-                ${menuItemsHTML}
-            </ul>
-        </td>
-    `;
-}
 function copyToClipboard(text, event) {
     if (event) {
         event.stopPropagation(); // Ngăn các sự kiện click khác
@@ -4539,42 +4346,6 @@ async function saveNote(buttonElement, requestId) {
         buttonElement.innerHTML = originalButtonHtml;
     }
 }
-/**
- * [HÀM MỚI] Chỉ tạo nội dung bên trong của menu hành động (không có thẻ <td>)
- * Dùng riêng cho bảng có thể mở rộng.
- */
-function renderRowActionsDropdownContent(actions, rowData) {
-    if (!actions || actions.length === 0) {
-        return ''; // Trả về chuỗi rỗng
-    }
-
-    const rowDataString = JSON.stringify(rowData).replace(/'/g, "&apos;");
-
-    const menuItemsHTML = actions.map(action => {
-        return `
-            <li>
-                <a href="#" data-action="${action.handler}" data-order='${rowDataString}' ${action.type ? `data-type="${action.type}"` : ''}>
-                    <i class="fas ${action.icon || 'fa-question-circle'}"></i>
-                    <span>${action.label}</span>
-                </a>
-            </li>
-        `;
-    }).join('');
-
-    return `
-        <div class="actions-cell">
-            <button class="actions-dropdown-btn" onclick="toggleRowActions(event)" title="Thao tác">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
-            <ul class="actions-dropdown-menu">
-                ${menuItemsHTML}
-            </ul>
-        </div>
-    `;
-}
-/**
- * [HÀM MỚI] Tạo HTML cho các nút hành động hiển thị trực tiếp (không có dropdown)
- */
 function renderInlineRowActions(actions, rowData) {
     if (!actions || actions.length === 0) {
         return '';
@@ -4610,13 +4381,18 @@ function renderInlineRowActions(actions, rowData) {
     }).join('');
 }
 /**
- * [HÀM MỚI] Xử lý việc lưu dữ liệu sau khi chỉnh sửa trực tiếp trên bảng.
+ * Xử lý việc lưu dữ liệu sau khi chỉnh sửa trực tiếp trên bảng.
+ * Hàm này được gọi bởi sự kiện 'onblur' của các trường contenteditable.
  */
 async function handleInlineEdit(element) {
     const newValue = element.textContent.trim();
     const originalValue = element.dataset.originalValue;
     
-    // Nếu không có gì thay đổi thì không làm gì cả
+    // Lưu ý: Nếu người dùng sửa xong và tải lại trang ngay mà không click ra ngoài,
+    // sự kiện onblur sẽ không được kích hoạt và thay đổi sẽ không được lưu.
+    // Đây là hành vi mong đợi của onblur.
+    
+    // Nếu không có gì thay đổi thì không làm gì cả để tránh gọi API không cần thiết.
     if (newValue === originalValue) {
         return;
     }
@@ -4624,39 +4400,39 @@ async function handleInlineEdit(element) {
     const fieldName = element.dataset.fieldName;
     const orderNumber = element.dataset.orderNumber;
 
-    // Hiển thị trạng thái đang lưu
+    // Làm mờ trường để cho người dùng biết hành động đang được xử lý.
     element.style.opacity = '0.5';
     
     const params = {
         sheetName: 'Xuathoadon',
         primaryKeyColumn: 'SỐ ĐƠN HÀNG',
         primaryKeyValue: orderNumber,
-        [fieldName]: newValue, // Sử dụng computed property name
-        updatedBy: ADMIN_IDENTIFIER
+        [fieldName]: newValue, // Sử dụng computed property name để gửi đúng tên trường
+        updatedBy: 'Admin'
     };
     
     const { success } = await performActionOnRow({
         action: 'updateRowData',
         params: params,
-        buttonElement: null // Không có nút bấm cụ thể, chỉ là hành động nền
+        buttonElement: null // Đây là hành động nền, không có nút bấm cụ thể.
     });
 
     if (success) {
         showToast(`Đã cập nhật "${fieldName}"!`, 'success', 2000);
         // Cập nhật lại giá trị gốc để so sánh cho lần sửa tiếp theo
         element.dataset.originalValue = newValue;
-        // Cập nhật lại dữ liệu trong appState để đồng bộ
+        // Cập nhật lại dữ liệu trong trạng thái của ứng dụng (appState) để đồng bộ
         const record = appState.data.xuathoadon.find(r => r['SỐ ĐƠN HÀNG'] === orderNumber);
         if (record) {
             record[fieldName] = newValue;
         }
     } else {
-        // Nếu thất bại, trả lại giá trị cũ
+        // Nếu thất bại, trả lại giá trị cũ trên giao diện
         element.textContent = originalValue;
         showToast(`Cập nhật thất bại!`, 'error');
     }
 
-    // Khôi phục lại giao diện bình thường
+    // Khôi phục lại giao diện bình thường sau khi xử lý xong.
     element.style.opacity = '1';
 }
 // DÁN CÁC HÀM JAVASCRIPT NÀY VÀO THẺ <script> CỦA BẠN
