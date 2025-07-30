@@ -13,6 +13,9 @@
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/vi.js"></script>
     <style>
@@ -1914,13 +1917,15 @@ body.dark-mode .main-container.form-active #history-table td {
     box-shadow: none;
 }
 /* === CSS CHO MENU HÀNH ĐỘNG DROPDOWN ("KEBAB MENU") === */
+
+/* Định vị tương đối cho ô chứa nút, rất quan trọng! */
 .actions-cell {
-    position: relative; /* Quan trọng để định vị menu con */
-    text-align: right;  /* Căn nút ... về bên phải */
-    padding-right: 15px !important; /* Thêm khoảng trống để menu không bị sát lề */
+    position: relative;
+    text-align: right;
+    padding-right: 15px !important;
 }
 
-/* Nút ... để mở menu */
+/* Nút 3 chấm (...) để mở menu */
 .action-menu-toggle {
     background: transparent;
     border: 1px solid transparent;
@@ -1946,18 +1951,16 @@ body.dark-mode .action-menu-toggle:hover {
 
 /* Khung chứa menu dropdown */
 .action-menu-dropdown {
-    position: absolute;
-    right: 5px; /* Căn menu theo mép phải của ô */
-    top: calc(100% + 2px); /* Hiển thị ngay dưới nút ... */
+    position: absolute; /* Sẽ được đổi thành 'fixed' bằng JS khi hiển thị */
     background-color: var(--card-bg-light);
     border: 1px solid var(--border-color-light);
     border-radius: 8px;
     box-shadow: var(--shadow-light-outer);
-    z-index: 20;
-    min-width: 200px;
+    z-index: 1050; /* Z-index rất cao để đảm bảo nổi lên trên mọi thứ */
+    min-width: 220px;
     padding: 6px;
-    display: none; /* Ẩn mặc định */
-    animation: fadeIn 0.15s ease-out;
+    display: none; /* Ẩn theo mặc định */
+    animation: fadeIn 0.15s ease-out; /* Hiệu ứng xuất hiện mượt mà */
 }
 body.dark-mode .action-menu-dropdown {
     background-color: var(--card-bg-dark);
@@ -1965,18 +1968,24 @@ body.dark-mode .action-menu-dropdown {
     box-shadow: var(--shadow-dark-outer);
 }
 
-/* Lớp để hiện menu bằng JavaScript */
+/* Lớp 'show' để hiện menu bằng JavaScript */
 .action-menu-dropdown.show {
     display: block;
+    position: fixed; /* Rất quan trọng: định vị theo cửa sổ trình duyệt */
+}
+
+/* Lớp 'show-upwards' để menu bung lên trên khi không đủ không gian ở dưới */
+.action-menu-dropdown.show-upwards {
+    /* JS sẽ tính toán vị trí, lớp này chỉ là đánh dấu nếu cần */
 }
 
 /* Các mục trong menu */
 .action-menu-dropdown .action-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px; /* Tăng khoảng cách cho thoáng */
     padding: 10px 12px;
-    font-size: 13px;
+    font-size: 13.5px; /* Tăng nhẹ kích thước font */
     color: var(--text-light);
     border-radius: 6px;
     cursor: pointer;
@@ -1984,31 +1993,51 @@ body.dark-mode .action-menu-dropdown {
     border: none;
     width: 100%;
     text-align: left;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 .action-menu-dropdown .action-item:hover {
-    background-color: rgba(0, 48, 135, 0.08);
+    background-color: var(--primary-color);
+    color: #ffffff;
 }
 body.dark-mode .action-menu-dropdown .action-item {
     color: var(--text-dark);
 }
 body.dark-mode .action-menu-dropdown .action-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--primary-color-lighter);
+    color: var(--card-bg-dark);
 }
 
+/* Căn chỉnh icon cho thẳng hàng */
 .action-menu-dropdown .action-item i.fa-fw {
     width: 20px;
-    color: #888;
+    color: var(--text-muted-light);
+    transition: color 0.2s ease;
+}
+.action-menu-dropdown .action-item:hover i.fa-fw {
+    color: #ffffff;
 }
 body.dark-mode .action-menu-dropdown .action-item i.fa-fw {
-    color: #aaa;
+    color: var(--text-muted-dark);
 }
+body.dark-mode .action-menu-dropdown .action-item:hover i.fa-fw {
+    color: var(--card-bg-dark);
+}
+
+/* Kiểu riêng cho hành động nguy hiểm (như Xóa, Hủy) */
 .action-menu-dropdown .action-item.danger {
     color: #e74c3c;
 }
 .action-menu-dropdown .action-item.danger i.fa-fw {
     color: #e74c3c;
 }
+.action-menu-dropdown .action-item.danger:hover {
+    background-color: #c0392b;
+    color: #ffffff;
+}
+.action-menu-dropdown .action-item.danger:hover i.fa-fw {
+    color: #ffffff;
+}
+
 
 /* Đường kẻ phân cách trong menu */
 .action-menu-dropdown .divider {
@@ -2019,12 +2048,18 @@ body.dark-mode .action-menu-dropdown .action-item i.fa-fw {
 body.dark-mode .action-menu-dropdown .divider {
     background-color: var(--border-color-dark);
 }
-/* CSS để menu bung lên trên khi cần */
-.action-menu-dropdown.show-upwards {
-    top: auto; /* Tắt định vị top */
-    bottom: calc(100% + 2px); /* Định vị ngay trên nút ... */
+
+/* Hiệu ứng fadeIn */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
-/* Thêm vào trong thẻ <style> */
 
 #vehicle-analytics-warning.visible {
     opacity: 1;
@@ -2376,6 +2411,306 @@ body.dark-mode .notification-item.type-success .notification-icon { background-c
 body.dark-mode .notification-item.type-danger .notification-icon { background-color: #58151c; color: #f1aeb5; }
 body.dark-mode .notification-item.type-warning .notification-icon { background-color: #533f03; color: #ffeeba; }
 body.dark-mode .notification-item.type-info .notification-icon { background-color: #032830; color: #9eeaf9; }
+/* ======================================================= */
+/* === CSS NÂNG CẤP CHO MODAL XUẤT HÓA ĐƠN === */
+/* ======================================================= */
+
+/* --- Tiêu đề Modal --- */
+.modal-header-customized {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom: 1px solid transparent;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
+    position: relative;
+}
+body.dark-mode .modal-header-customized {
+    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+}
+.modal-header-customized .header-icon-wrapper {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 16px;
+}
+.modal-header-customized h2 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+    flex-grow: 1;
+}
+
+/* --- Nút Đóng Modal --- */
+.modal-close-btn-customized {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.modal-close-btn-customized:hover {
+    transform: rotate(90deg);
+    color: #ffffff;
+}
+
+/* --- Nội dung Modal & Text --- */
+#invoice-confirm-modal .modal-body {
+    padding: 15px 20px;
+}
+.confirmation-text {
+    font-size: 15px;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--text-light);
+}
+body.dark-mode .confirmation-text {
+    color: var(--text-dark);
+}
+.order-number-highlight {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+body.dark-mode .order-number-highlight {
+    color: var(--secondary-color);
+}
+.action-description {
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin-top: 15px;
+    color: var(--text-muted-light);
+    text-align: center;
+}
+body.dark-mode .action-description {
+    color: var(--text-muted-dark);
+}
+.required-star {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* --- Khu vực tải tệp (File Upload) --- */
+.file-upload-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mặc định 1 cột cho mobile */
+    gap: 15px;
+    margin-bottom: 20px;
+}
+@media (min-width: 500px) { /* 2 cột trên màn hình rộng hơn */
+    .file-upload-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+.file-upload-area {
+    text-align: left;
+}
+.file-upload-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-light);
+    margin-bottom: 6px;
+}
+body.dark-mode .file-upload-label {
+    color: var(--text-dark);
+}
+.file-upload-wrapper {
+    position: relative;
+    width: 100%;
+    height: 90px;
+    border: 2px dashed var(--border-color-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: var(--background-light);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+body.dark-mode .file-upload-wrapper {
+    background-color: var(--background-dark);
+    border-color: var(--border-color-dark);
+}
+.file-upload-wrapper:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 48, 135, 0.05);
+}
+body.dark-mode .file-upload-wrapper:hover {
+    border-color: var(--primary-color-lighter);
+    background-color: rgba(0, 174, 255, 0.1);
+}
+.file-upload-wrapper.file-selected { /* Lớp được thêm bởi JS */
+    border-style: solid;
+    border-color: var(--primary-color);
+}
+.file-upload-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+.file-upload-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-muted-light);
+    pointer-events: none; /* Cho phép click xuyên qua */
+}
+body.dark-mode .file-upload-prompt {
+    color: var(--text-muted-dark);
+}
+.file-upload-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    color: var(--primary-color);
+    opacity: 0.7;
+}
+body.dark-mode .file-upload-icon {
+    color: var(--secondary-color);
+}
+.file-upload-text {
+    font-size: 12px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px; /* Ngăn tên file quá dài */
+}
+
+/* --- Ô xác nhận Vinclub --- */
+.vinclub-confirmation-wrapper {
+    background-color: var(--warning-bg-light);
+    border: 1px solid #ffecb5;
+    border-radius: 8px;
+    padding: 12px;
+}
+body.dark-mode .vinclub-confirmation-wrapper {
+    background-color: var(--warning-bg-dark);
+    border-color: #a5850c;
+}
+.vinclub-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.vinclub-checkbox {
+    height: 18px;
+    width: 18px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    border-color: var(--warning-text-light);
+    color: var(--primary-color); /* Màu dấu tick */
+    transition: all 0.2s ease;
+}
+.vinclub-checkbox:focus {
+    ring: 2px;
+    ring-offset: 0;
+    ring-color: var(--primary-color);
+}
+body.dark-mode .vinclub-checkbox {
+    border-color: var(--warning-text-dark);
+    background-color: var(--card-bg-dark);
+}
+.vinclub-text {
+    margin-left: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--warning-text-light);
+}
+body.dark-mode .vinclub-text {
+    color: var(--warning-text-dark);
+}
+/* ======================================================= */
+/* === CSS CHO HỘP THÔNG TIN ĐƠN HÀNG BỔ SUNG === */
+/* ======================================================= */
+
+.order-info-box {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+body.dark-mode .order-info-box {
+    background-color: var(--background-dark);
+    border-color: var(--border-color-dark);
+}
+.order-info-box p {
+    margin: 0;
+    padding: 2px 0;
+}
+.order-info-box strong {
+    color: var(--text-light);
+    min-width: 110px;
+    display: inline-block;
+}
+body.dark-mode .order-info-box strong {
+     color: var(--text-dark);
+}
+/* === CSS NÂNG CẤP CHO CÁC Ô LỌC (DROPDOWN) === */
+
+/* Áp dụng kiểu dáng cho các thẻ <select> trong bộ lọc */
+#filter-container select {
+    /* 1. Xóa giao diện mặc định của trình duyệt */
+    -webkit-appearance: none;
+    appearance: none;
+
+    /* 2. Kiểu dáng cơ bản */
+    display: block;
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem; /* Tăng padding bên phải để chứa mũi tên */
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-light);
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 6px;
+    box-shadow: var(--shadow-light-inner);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+    /* 3. Mũi tên tùy chỉnh (dùng SVG) */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1.2em 1.2em;
+}
+
+/* 4. Trạng thái khi được chọn (focus) */
+#filter-container select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+}
+
+/* 5. Tương thích với Giao diện tối (Dark Mode) */
+body.dark-mode #filter-container select {
+    color: var(--text-dark);
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-color-dark);
+    box-shadow: var(--shadow-dark-inner);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+body.dark-mode #filter-container select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2408,7 +2743,7 @@ body.dark-mode .notification-item.type-info .notification-icon { background-colo
             <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
                 <i class="fas fa-moon" id="theme-icon"></i>
             </button>
-            <button class="nav-btn" onclick="toggleAutoRefresh()" data-tooltip="Tự động làm mới (30s)"><i class="fas fa-sync-alt"></i></button>
+           
             <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
             <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
         </div>
@@ -2858,98 +3193,116 @@ body.dark-mode .notification-item.type-info .notification-icon { background-colo
     </div>
     
     <div class="modal" id="invoice-confirm-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2><i class="fas fa-paper-plane"></i> Xác Nhận Yêu Cầu Xuất Hóa Đơn</h2>
-            <button class="modal-close-btn" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
+    <div class="modal-content" style="max-width: 520px;"> 
+        <div class="modal-header-customized"> <div class="header-icon-wrapper">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <h2>Yêu Cầu Xuất Hóa Đơn</h2>
+            <button class="modal-close-btn-customized" onclick="closeModal('invoice-confirm-modal')"><i class="fas fa-times"></i></button>
         </div>
+
         <div class="modal-body">
-            <p style="font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 15px;">
-                Bạn có chắc chắn muốn gửi yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="text-primary-color dark:text-secondary-color"></strong> không?
+            <p class="confirmation-text">
+                Yêu cầu xuất hóa đơn cho đơn hàng <strong id="invoice-order-number-display" class="order-number-highlight"></strong>?
             </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-left">
-                <div>
-                    <label for="hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán <span class="text-red-500">*</span></label>
-                    <div id="hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-contract text-2xl text-primary-color dark:text-secondary-color"></i>
-                            <span class="text-xs" id="hopdong-prompt-text">Chọn file HĐMB</span>
+            
+            <div class="file-upload-grid">
+                <div class="file-upload-area">
+                    <label for="hop_dong_file_input" class="file-upload-label">1. Hợp đồng mua bán <span class="required-star">*</span></label>
+                    <div id="hopdong-upload-wrapper" class="file-upload-wrapper">
+                        <input type="file" id="hop_dong_file_input" name="hop_dong_file" class="file-upload-input" accept="image/*,application/pdf">
+                        <div class="file-upload-prompt">
+                            <i class="fas fa-file-contract file-upload-icon"></i>
+                            <span id="hopdong-prompt-text" class="file-upload-text">Chọn file HĐMB</span>
                         </div>
                     </div>
                 </div>
-                <div>
-                    <label for="denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị xuất hóa đơn <span class="text-red-500">*</span></label>
-                    <div id="denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary-color dark:hover:border-secondary-color transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                        <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                        <div class="flex flex-col items-center justify-center text-center p-2">
-                            <i class="fas fa-file-invoice-dollar text-2xl text-primary-color dark:text-secondary-color"></i>
-                            <span class="text-xs" id="denghi-prompt-text">Chọn file ĐN/XHĐ</span>
+                <div class="file-upload-area">
+                    <label for="denghi_xhd_file_input" class="file-upload-label">2. Đề nghị xuất hóa đơn <span class="required-star">*</span></label>
+                    <div id="denghi-upload-wrapper" class="file-upload-wrapper">
+                        <input type="file" id="denghi_xhd_file_input" name="denghi_xhd_file" class="file-upload-input" accept="image/*,application/pdf">
+                        <div class="file-upload-prompt">
+                            <i class="fas fa-file-invoice-dollar file-upload-icon"></i>
+                            <span id="denghi-prompt-text" class="file-upload-text">Chọn file ĐN/XHĐ</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-4 p-3 border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <label for="vinclub-confirm-checkbox" class="flex items-center cursor-pointer">
-                    <input id="vinclub-confirm-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-color focus:ring-primary-color">
-                    <span class="ml-3 text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                        Tôi xác nhận: Khách hàng đã tạo và xác thực thành công tài khoản Vinclub. <span class="text-red-500 font-bold">*</span>
+            <div class="vinclub-confirmation-wrapper">
+                <label for="vinclub-confirm-checkbox" class="vinclub-label">
+                    <input id="vinclub-confirm-checkbox" type="checkbox" class="vinclub-checkbox">
+                    <span class="vinclub-text">
+                        Tôi xác nhận: Khách hàng đã tạo và xác thực thành công tài khoản Vinclub. <span class="required-star">*</span>
                     </span>
                 </label>
             </div>
-            <p style="font-size: 13px; line-height: 1.5; margin-top: 10px; color: #6c757d; text-align: center;" class="dark:text-gray-400">
+            <p class="action-description">
                 Hành động này sẽ chuyển đơn hàng vào danh sách chờ xử lý.
             </p>
         </div>
-        <div class="modal-footer" style="justify-content: center;">
-            <button class="modal-btn secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
-            <button class="modal-btn primary" id="confirm-invoice-button">Gửi Yêu Cầu</button>
+
+        <div class="modal-footer" style="border-top-color: var(--border-color-light); padding-top: 15px; margin-top: 5px;">
+             <button class="btn btn-secondary" onclick="closeModal('invoice-confirm-modal')">Xem Lại</button>
+            <button id="confirm-invoice-button" class="btn btn-primary">
+                <i class="fas fa-check"></i>
+                <span>Gửi Yêu Cầu</span>
+            </button>
         </div>
     </div>
 </div>
 
     <div class="modal" id="supplementary-file-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-file-upload"></i> Bổ Sung/Thay Thế File</h2>
-                <button class="modal-close-btn" onclick="closeModal('supplementary-file-modal')"><i class="fas fa-times"></i></button>
+    <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-header-customized">
+            <div class="header-icon-wrapper">
+                <i class="fas fa-file-upload"></i>
             </div>
-            <div class="modal-body">
-                <div id="supp-modal-order-info" class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg text-sm">
+            <h2>Bổ Sung / Thay Thế Hồ Sơ</h2>
+            <button class="modal-close-btn-customized" onclick="closeModal('supplementary-file-modal')"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="modal-body">
+            <div id="supp-modal-order-info" class="order-info-box">
                 </div>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 text-center">
-                    Chỉ cần chọn file bạn muốn thay thế. Các file không được chọn sẽ được giữ nguyên.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="supp_hop_dong_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">1. Hợp đồng mua bán (Mới)</label>
-                        <div id="supp-hopdong-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                            <input type="file" id="supp_hop_dong_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                            <div class="flex flex-col items-center justify-center text-center p-2">
-                                <i class="fas fa-file-contract text-2xl text-blue-600 dark:text-blue-400"></i>
-                                <span class="text-xs" id="supp-hopdong-prompt-text">Chọn file HĐMB mới</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="supp_denghi_xhd_file_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">2. Đề nghị XHĐ (Mới)</label>
-                        <div id="supp-denghi-upload-wrapper" class="relative w-full h-16 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-green-500 dark:hover:border-green-400 transition-colors duration-200 cursor-pointer bg-white dark:bg-gray-700/30">
-                            <input type="file" id="supp_denghi_xhd_file_input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf">
-                            <div class="flex flex-col items-center justify-center text-center p-2">
-                                <i class="fas fa-file-invoice-dollar text-2xl text-green-600 dark:text-green-400"></i>
-                                <span class="text-xs" id="supp-denghi-prompt-text">Chọn file ĐN/XHĐ mới</span>
-                            </div>
+            
+            <p class="confirmation-text" style="font-size: 13px; margin-bottom: 15px;">
+                Chỉ cần chọn và tải lên file bạn muốn thay thế. Các file không được chọn sẽ được giữ nguyên.
+            </p>
+
+            <div class="file-upload-grid">
+                <div class="file-upload-area">
+                    <label for="supp_hop_dong_file_input" class="file-upload-label">1. Hợp đồng mua bán (Mới)</label>
+                    <div id="supp-hopdong-upload-wrapper" class="file-upload-wrapper">
+                        <input type="file" id="supp_hop_dong_file_input" class="file-upload-input" accept="image/*,application/pdf">
+                        <div class="file-upload-prompt">
+                            <i class="fas fa-file-contract file-upload-icon"></i>
+                            <span id="supp-hopdong-prompt-text" class="file-upload-text">Chọn file HĐMB mới</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button class="modal-btn secondary" onclick="closeModal('supplementary-file-modal')">Hủy Bỏ</button>
-                <button class="modal-btn primary" id="confirm-supp-file-button">Gửi File Bổ Sung</button>
+                <div class="file-upload-area">
+                    <label for="supp_denghi_xhd_file_input" class="file-upload-label">2. Đề nghị Xuất hóa đơn (Mới)</label>
+                    <div id="supp-denghi-upload-wrapper" class="file-upload-wrapper">
+                        <input type="file" id="supp_denghi_xhd_file_input" class="file-upload-input" accept="image/*,application/pdf">
+                        <div class="file-upload-prompt">
+                            <i class="fas fa-file-invoice-dollar file-upload-icon"></i>
+                            <span id="supp-denghi-prompt-text" class="file-upload-text">Chọn file ĐN/XHĐ mới</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="modal-footer" style="border-top-color: var(--border-color-light); padding-top: 15px; margin-top: 5px;">
+            <button class="btn btn-secondary" onclick="closeModal('supplementary-file-modal')">Hủy Bỏ</button>
+            <button id="confirm-supp-file-button" class="btn btn-primary">
+                <i class="fas fa-check"></i>
+                <span>Gửi File</span>
+            </button>
+        </div>
     </div>
+</div>
 
     <div class="modal" id="admin-invoice-upload-modal">
         <div class="modal-content">
@@ -4204,18 +4557,7 @@ function toggleMenu() {
     if (hamburger) hamburger.classList.toggle("active");
 }
 
-function toggleAutoRefresh() {
-    const icon = document.querySelector('.nav-btn[onclick="toggleAutoRefresh()"] i');
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval); autoRefreshInterval = null;
-        showNotification("Tự động làm mới đã tắt!", "info", 2000);
-        if(icon) { icon.classList.remove('fa-spin'); icon.parentElement.style.color = ''; icon.parentElement.style.boxShadow = ''; }
-    } else {
-        autoRefreshInterval = setInterval(refreshData, 30000);
-        showNotification("Tự động làm mới mỗi 30 giây!", "info", 2000);
-        if(icon) { icon.classList.add('fa-spin'); icon.parentElement.style.color = '#28a745'; icon.parentElement.style.boxShadow = '0 0 10px #28a745';}
-    }
-}
+
 
 function setupScrollSync() {
     document.querySelectorAll(".table-wrapper").forEach(wrapper => {
@@ -5650,12 +5992,19 @@ function openSupplementaryFileModal(event, orderNumber) {
     infoDiv.innerHTML = `
         <p><strong>Số Đơn Hàng:</strong> ${orderData["Số đơn hàng"]}</p>
         <p><strong>Khách Hàng:</strong> ${orderData["Tên khách hàng"]}</p>
-        <p><strong>Số VIN:</strong> ${orderData["VIN"]}</p>
+        <p><strong>Số VIN:</strong> ${orderData["VIN"] || 'Chưa có'}</p>
     `;
 
-    // Reset các input file cũ
+    // =================================================================
+    // === [PHẦN THÊM MỚI] Gắn sự kiện để hiển thị tên file đã chọn ===
+    // =================================================================
+    // Hàm setupSimpleFileUpload đã có sẵn trong file của bạn.
+    // Tham số cuối cùng `true` để đảm bảo giao diện được reset mỗi khi mở modal.
     setupSimpleFileUpload('supp_hop_dong_file_input', 'supp-hopdong-upload-wrapper', 'supp-hopdong-prompt-text', true);
     setupSimpleFileUpload('supp_denghi_xhd_file_input', 'supp-denghi-upload-wrapper', 'supp-denghi-prompt-text', true);
+    // =================================================================
+    // === KẾT THÚC PHẦN THÊM MỚI                                      ===
+    // =================================================================
 
 
     // Gán sự kiện cho nút "Gửi"
@@ -5726,7 +6075,7 @@ async function processSupplementaryFiles(orderNumber) {
     }
 }
 
-// Sửa lại hàm setupSimpleFileUpload để có thể reset
+// [HÀM ĐÃ SỬA LỖI]
 function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = false) {
     const fileInput = document.getElementById(inputId);
     const wrapper = document.getElementById(wrapperId);
@@ -5737,37 +6086,39 @@ function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = f
         return;
     }
     
-    const originalPrompt = promptText.getAttribute('data-original-text') || promptText.textContent;
-    if (!isResetting) {
-        promptText.setAttribute('data-original-text', originalPrompt);
+    // Lưu lại văn bản gốc nếu chưa có
+    if (!promptText.hasAttribute('data-original-text')) {
+        promptText.setAttribute('data-original-text', promptText.textContent);
     }
-    
-    // Hàm reset
+    const originalPrompt = promptText.getAttribute('data-original-text');
+
+    // Hàm nội bộ để reset giao diện
     const resetUI = () => {
-        fileInput.value = ''; // Quan trọng: Xóa file đã chọn
+        fileInput.value = ''; // Quan trọng: Xóa file đã chọn trong input
         promptText.textContent = originalPrompt;
-        promptText.style.fontSize = ''; // Reset style
+        promptText.style.fontSize = ''; // Trả về kích thước font gốc
         wrapper.classList.remove('file-selected');
-        wrapper.style.borderColor = '';
     };
 
-    // Nếu đang gọi để reset, chỉ reset và thoát
-    if (isResetting) {
-        resetUI();
-        return;
-    }
-
-    // Gắn sự kiện change
-    fileInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
+    // Gắn sự kiện 'change' vào input file.
+    // Dùng .onchange để đảm bảo chỉ có một hàm xử lý duy nhất được gắn.
+    fileInput.onchange = function() {
+        if (this.files && this.files.length > 0) {
+            // Khi có file, hiển thị tên file
             promptText.textContent = this.files[0].name;
-            promptText.style.fontSize = '10px';
+            promptText.style.fontSize = '12px'; // Điều chỉnh kích thước font cho dễ đọc
             wrapper.classList.add('file-selected');
-            wrapper.style.borderColor = 'var(--primary-color)';
         } else {
+            // Khi không có file (người dùng nhấn hủy), reset giao diện
             resetUI();
         }
-    });
+    };
+
+    // Nếu có yêu cầu reset (khi mở modal), gọi hàm resetUI
+    // Logic này giờ sẽ chạy sau khi đã gắn sự kiện, nên sẽ không còn lỗi.
+    if (isResetting) {
+        resetUI();
+    }
 }
 /**
  * [HÀM MỚI] Chuyển hướng đến trang chi tiết đơn hàng khi nhấp vào một hàng.
@@ -5934,46 +6285,60 @@ function downloadInvoice(event, fileUrl) {
 }
 
 function toggleActionMenu(event, buttonElement) {
-    event.stopPropagation();
+    event.stopPropagation(); // Ngăn sự kiện click lan ra hàng của bảng
 
     const dropdownToOpen = buttonElement.nextElementSibling;
-    // Kiểm tra xem menu được nhấp có phải là menu đang mở hay không
     const isAlreadyOpen = activeDropdown.element === dropdownToOpen;
 
-    // Luôn đóng bất kỳ menu nào đang mở trước
+    // Luôn đóng menu đang mở trước khi thực hiện hành động mới
     closeActiveDropdown();
 
-    // Nếu menu chúng ta vừa đóng không phải là menu vừa được nhấp vào, thì hãy mở menu mới
+    // Nếu menu vừa đóng không phải là menu được click, thì ta sẽ mở menu mới
     if (!isAlreadyOpen && dropdownToOpen) {
-        const originalParent = buttonElement.parentElement;
-        activeDropdown = { element: dropdownToOpen, originalParent: originalParent };
+        // Lưu lại menu và vị trí gốc của nó
+        activeDropdown = { 
+            element: dropdownToOpen, 
+            originalParent: dropdownToOpen.parentElement 
+        };
 
-        // Nhấc menu ra và gắn vào body để định vị
+        // Nhấc menu ra và gắn vào body để thoát khỏi các giới hạn của bảng
         document.body.appendChild(dropdownToOpen);
+        
+        // Hiển thị menu. Lớp 'show' sẽ đổi position thành 'fixed'
         dropdownToOpen.classList.add('show');
 
-        // Logic định vị lại menu để không bị tràn màn hình (giữ nguyên)
+        // Sử dụng requestAnimationFrame để đảm bảo trình duyệt đã tính toán kích thước của menu
         requestAnimationFrame(() => {
             if (!dropdownToOpen.classList.contains('show')) return;
 
             const buttonRect = buttonElement.getBoundingClientRect();
             const menuRect = dropdownToOpen.getBoundingClientRect();
 
-            // Căn chỉnh vị trí top/bottom
-            if (menuRect.bottom > window.innerHeight - 10) {
-                // Bung lên trên
-                dropdownToOpen.style.top = `${buttonRect.top - menuRect.height - 2}px`;
+            let top, left;
+
+            // Xử lý vị trí theo chiều dọc (Top/Bottom)
+            if (buttonRect.bottom + menuRect.height > window.innerHeight - 10) {
+                // Không đủ không gian ở dưới -> Bung lên trên
+                top = buttonRect.top - menuRect.height - 2;
+                dropdownToOpen.classList.add('show-upwards');
             } else {
-                // Bung xuống dưới (mặc định)
-                dropdownToOpen.style.top = `${buttonRect.bottom + 2}px`;
+                // Đủ không gian -> Bung xuống dưới (mặc định)
+                top = buttonRect.bottom + 2;
+                dropdownToOpen.classList.remove('show-upwards');
             }
 
-            // Căn chỉnh vị trí left/right
-            if (menuRect.right > window.innerWidth - 10) {
-                 dropdownToOpen.style.left = `${buttonRect.right - menuRect.width}px`;
+            // Xử lý vị trí theo chiều ngang (Left/Right)
+            if (buttonRect.left + menuRect.width > window.innerWidth - 10) {
+                // Bị tràn lề phải -> Căn theo lề phải của nút
+                left = buttonRect.right - menuRect.width;
             } else {
-                dropdownToOpen.style.left = `${buttonRect.left}px`;
+                // Mặc định -> Căn theo lề trái của nút
+                left = buttonRect.left;
             }
+
+            // Gán vị trí cuối cùng cho menu
+            dropdownToOpen.style.top = `${top}px`;
+            dropdownToOpen.style.left = `${left}px`;
         });
     }
 }
@@ -5982,27 +6347,18 @@ window.addEventListener('click', function(event) {
     if (activeDropdown.element && !activeDropdown.element.contains(event.target)) {
         closeActiveDropdown();
     }
-
-    // Logic đóng sidebar mobile (giữ nguyên từ file gốc)
-    const sidebar = document.getElementById('sidebar');
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-        if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-            sidebar.classList.remove('open');
-        }
-    }
 });
 
 function closeActiveDropdown() {
     if (activeDropdown.element && activeDropdown.originalParent) {
-        // Ẩn và reset style trước khi trả về
+        // Ẩn menu trước khi trả về
         activeDropdown.element.classList.remove('show', 'show-upwards');
+        
+        // Reset các style inline đã gán bởi JS
         activeDropdown.element.style.top = '';
-        activeDropdown.element.style.right = '';
         activeDropdown.element.style.left = '';
-        activeDropdown.element.style.bottom = '';
-
-        // Trả dropdown về lại vị trí ban đầu trong DOM
+        
+        // Trả dropdown về lại vị trí ban đầu trong cây DOM
         activeDropdown.originalParent.appendChild(activeDropdown.element);
     }
     // Reset biến trạng thái
@@ -6045,58 +6401,58 @@ function startPolling() {
 }
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
-    if (!tbody) return;
-
-    const tableHeader = document.getElementById('table-header').querySelector('tr');
-    let actionHeaderExists = Array.from(tableHeader.cells).some(th => th.textContent.trim().toLowerCase() === 'hành động');
-    if (!actionHeaderExists) {
-        const actionTh = document.createElement('th');
-        actionTh.textContent = 'Hành động';
-        actionTh.setAttribute('title', 'Thao tác với đơn hàng');
-        tableHeader.appendChild(actionTh);
+    if (!tbody) {
+        console.error("Không tìm thấy phần tử tbody của bảng lịch sử.");
+        return;
     }
-    
+
+    // Xử lý trường hợp không có dữ liệu
     if (!dataToRender || dataToRender.length === 0) {
         setTablePlaceholder("table-body", "Không có dữ liệu phù hợp.", "fas fa-folder-open");
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
 
+    // Tạo HTML cho từng dòng của bảng
     tbody.innerHTML = dataToRender.map((row, i) => {
+        // Lấy các thông tin cần thiết từ mỗi dòng dữ liệu
         const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
         const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
         const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
         const statusClass = getStatusClass(statusTextOriginal);
         const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
         
+        // Lấy thông tin người dùng hiện tại để xác định quyền
         const currentUser = sessionStorage.getItem("currentConsultant");
         const isAdmin = currentUser === ADMIN_USER;
         const isOwner = row["Tên tư vấn bán hàng"] === currentUser;
 
+        // Chuẩn bị biến để xây dựng menu
         let dropdownItemsHtml = '';
         let hasActions = false;
 
         // --- Logic xác định các hành động có thể thực hiện ---
         const canRequestInvoice = !isAdmin && isOwner && normalizedStatusText === 'đã ghép';
         const canUpdateFiles = !isAdmin && isOwner && normalizedStatusText === 'yêu cầu bổ sung';
-        
-        // [CẬP NHẬT] Loại bỏ trạng thái 'đã phê duyệt' để không cho phép hủy sau khi đã duyệt.
-        const canCancel = !isAdmin && isOwner && ['đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
-
-        // [CẬP NHẬT] Loại bỏ 'đã phê duyệt'. Admin chỉ có thể tải lên hóa đơn khi trạng thái là "Chờ ký hóa đơn" hoặc khi cần "Yêu cầu bổ sung".
+        const canCancel = !isAdmin && isOwner && ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
         const canUploadInvoice = isAdmin && ['chờ ký hóa đơn', 'yêu cầu bổ sung'].includes(normalizedStatusText);
-
         const canDownloadInvoice = (isAdmin || isOwner) && !!row.LinkHoaDonDaXuat;
 
-        // --- Xây dựng các mục trong menu dropdown ---
+        // --- Xây dựng các mục HTML cho menu dropdown ---
+
+        // Hành động của Admin
         if (canUploadInvoice) {
             dropdownItemsHtml += `<button class="action-item" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Tải lên Hóa đơn</span></button>`;
             hasActions = true;
         }
+
+        // Hành động chung
         if (canDownloadInvoice) {
             dropdownItemsHtml += `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-file-download fa-fw"></i><span>Tải Hóa đơn đã xuất</span></button>`;
             hasActions = true;
         }
+        
+        // Hành động của TVBH
         if (canRequestInvoice) {
             dropdownItemsHtml += `<button class="action-item" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-paper-plane fa-fw"></i><span>Y/C Xuất Hóa đơn</span></button>`;
             hasActions = true;
@@ -6106,10 +6462,12 @@ function renderHistoryTable(dataToRender) {
             hasActions = true;
         }
 
+        // Thêm đường kẻ phân cách nếu có cả hành động thường và hành động nguy hiểm
         if (canCancel && hasActions) {
             dropdownItemsHtml += `<div class="divider"></div>`;
         }
         
+        // Hành động hủy (nguy hiểm)
         if (canCancel) {
             dropdownItemsHtml += `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>`;
             hasActions = true;
@@ -6119,17 +6477,16 @@ function renderHistoryTable(dataToRender) {
         let finalActionCellHtml = '';
         if (hasActions) {
             finalActionCellHtml = `
-                <div class="relative inline-block text-left">
-                    <button class="action-menu-toggle" onclick="toggleActionMenu(event, this)">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div class="action-menu-dropdown">
-                        ${dropdownItemsHtml}
-                    </div>
+                <button class="action-menu-toggle" onclick="toggleActionMenu(event, this)">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="action-menu-dropdown">
+                    ${dropdownItemsHtml}
                 </div>
             `;
         }
         
+        // Trả về chuỗi HTML hoàn chỉnh cho thẻ <tr>
         return `
             <tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
                <td data-label="STT"><span>${i + 1}</span></td>
@@ -6138,7 +6495,7 @@ function renderHistoryTable(dataToRender) {
                <td data-label="Số Đơn Hàng" title="${orderNumber}">${orderNumber}</td>
                <td data-label="Dòng Xe" title="${row["Dòng xe"] || ""}">${row["Dòng xe"] || "N/A"}</td>
                <td data-label="Phiên Bản" title="${row["Phiên bản"] || ""}">${row["Phiên bản"] || "N/A"}</td>
-               <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}" ><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
+               <td data-label="Ngoại Thất" title="${row["Ngoại thất"] || ""}"><span style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span></td>
                <td data-label="Nội Thất" title="${row["Nội thất"] || ""}">${row["Nội thất"] || "N/A"}</td>
                <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
                <td class="actions-cell" onclick="event.stopPropagation();">
@@ -6147,6 +6504,7 @@ function renderHistoryTable(dataToRender) {
             </tr>`;
     }).join("");
     
+    // Cập nhật tổng số đơn hàng hiển thị
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
 // Thêm hàm mới này vào trong thẻ <script>
