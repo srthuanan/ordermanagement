@@ -13,6 +13,8 @@
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/vi.js"></script>
     <style>
 :root {
     /* Original CSS Variables from yeucaughepxe.html */
@@ -2303,9 +2305,77 @@ body.dark-mode .ai-chat-input-area button:disabled {
     background-color: var(--border-color-dark);
     color: var(--text-muted-dark);
 }
-/* ======================================================= */
-/* === KẾT THÚC CSS CHO TRỢ LÝ ẢO TOÀN CỤC === */
-/* ======================================================= */
+/* Dán vào trong thẻ <style> */
+
+/* CSS cho danh sách thông báo */
+#notification-list .notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color-light);
+    transition: background-color 0.2s ease;
+}
+#notification-list .notification-item:last-child {
+    border-bottom: none;
+}
+#notification-list .notification-item:hover {
+    background-color: rgba(0, 48, 135, 0.05);
+}
+body.dark-mode #notification-list .notification-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#notification-list .notification-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+#notification-list .notification-content {
+    flex-grow: 1;
+}
+
+#notification-list .notification-message {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+body.dark-mode #notification-list .notification-message {
+    color: var(--text-dark);
+}
+
+#notification-list .notification-time {
+    font-size: 11px;
+    color: var(--text-muted-light);
+}
+body.dark-mode #notification-list .notification-time {
+    color: var(--text-muted-dark);
+}
+
+#notification-list .no-notifications {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted-light);
+    font-size: 13px;
+}
+
+/* Màu sắc cho từng loại thông báo */
+.notification-item.type-success .notification-icon { background-color: #d1e7dd; color: #0f5132; }
+.notification-item.type-danger .notification-icon { background-color: #f8d7da; color: #721c24; }
+.notification-item.type-warning .notification-icon { background-color: #fff3cd; color: #856404; }
+.notification-item.type-info .notification-icon { background-color: #cff4fc; color: #055160; }
+
+body.dark-mode .notification-item.type-success .notification-icon { background-color: #143624; color: #a3cfbb; }
+body.dark-mode .notification-item.type-danger .notification-icon { background-color: #58151c; color: #f1aeb5; }
+body.dark-mode .notification-item.type-warning .notification-icon { background-color: #533f03; color: #ffeeba; }
+body.dark-mode .notification-item.type-info .notification-icon { background-color: #032830; color: #9eeaf9; }
     </style>
 </head>
 <body data-theme="light">
@@ -2322,6 +2392,19 @@ body.dark-mode .ai-chat-input-area button:disabled {
 </div>
         <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i></button>
         <div class="navbar-controls">
+<div class="relative" id="notification-bell-container">
+    <button class="nav-btn" onclick="handleNotificationBellClick()" data-tooltip="Thông báo" aria-label="Thông báo">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-gray-800 hidden">0</span>
+    </button>
+    <div id="notification-panel" class="absolute right-0 mt-2 w-80 max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden overflow-hidden" style="z-index: 100;">
+        <div class="p-3 font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700">
+            Thông Báo
+        </div>
+        <div id="notification-list" class="max-h-96 overflow-y-auto">
+            </div>
+    </div>
+</div>
             <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
                 <i class="fas fa-moon" id="theme-icon"></i>
             </button>
@@ -2912,7 +2995,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbwtngLtPICCpANV-hEJelT63i48mrjnu5gcJvEhdKmX7dX3wsnQVZC8b-oZPHGu3zN8ZQ/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwoNlBjleqYKNGs11QceA7Q3WO-MonGkBlyr_cf6ir_WAMSezydskVCzQlZyP7UEl7KxA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3422,12 +3505,9 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
         renderWaitingListTable();
         renderSummary(globalHistoryData);
         populateFilterDropdowns();
+renderNotifications(data.notifications, data.unreadCount);
     }
 
-    /**
-     * [HÀM ĐÃ NÂNG CẤP] Tải dữ liệu theo cơ chế "Stale-While-Revalidate".
-     * Hiển thị dữ liệu cũ (nếu có) trước, sau đó kiểm tra và cập nhật phiên bản mới.
-     */
     async function fetchHistory(showLoadingPlaceholder = true) {
         if (showLoadingPlaceholder) {
             setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
@@ -3440,8 +3520,18 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
             processAndRenderData(JSON.parse(cachedDataJSON));
         }
 
-        // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
         try {
+            // ==================== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ====================
+
+            // Lấy thông tin người dùng và vai trò để gửi lên backend
+            const currentUser = sessionStorage.getItem("currentConsultant") || "";
+            // Thay "PHẠM THÀNH NHÂN" bằng tên đăng nhập của Admin nếu khác
+            const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
+            
+            // Xây dựng URL có chứa thông tin người dùng
+            const userApiURL = `${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
+
+            // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
             const versionResponse = await fetch(apiURL + "?action=getVersion");
             if (!versionResponse.ok) {
                 throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
@@ -3454,7 +3544,9 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
             // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
             if (serverVersion !== localVersion) {
                 console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
-                const fullResponse = await fetch(apiURL); // Gọi doGet chính
+                
+                // Sử dụng URL đã có thông tin người dùng để gọi
+                const fullResponse = await fetch(userApiURL); // Gọi doGet chính
                 if (!fullResponse.ok) {
                     throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
                 }
@@ -3469,15 +3561,14 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
                 }
             } else {
                 console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
-                // Nếu cache rỗng và phiên bản khớp, có nghĩa là thực sự không có dữ liệu
                 if (!cachedDataJSON && globalHistoryData.length === 0) {
-                    renderHistoryTable([]); // Hiển thị thông báo "Không có dữ liệu"
+                    renderHistoryTable([]); 
                     renderWaitingListTable();
                 }
             }
+            // ==================== KẾT THÚC THAY ĐỔI QUAN TRỌNG ====================
         } catch (error) {
             console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
-            // Chỉ hiển thị lỗi nếu không có gì trong cache để hiển thị
             if (!cachedDataJSON) {
                 setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
             }
@@ -6411,6 +6502,92 @@ async function sendGlobalAIChatMessage() {
         }
     }
 }
+function renderNotifications(notifications, unreadCount) {
+    const badge = document.getElementById('notification-badge');
+    const list = document.getElementById('notification-list');
+
+    if (!badge || !list) return;
+
+    // Cập nhật số trên chuông
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+
+    // Hiển thị danh sách thông báo
+    if (!notifications || notifications.length === 0) {
+        list.innerHTML = '<div class="no-notifications">Không có thông báo nào.</div>';
+        return;
+    }
+
+    const iconMap = {
+        success: 'fa-check-circle',
+        danger: 'fa-times-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+
+    list.innerHTML = notifications.map(n => {
+        const iconClass = iconMap[n.type] || 'fa-bell';
+        const timeAgo = moment(n.timestamp).fromNow(); // Sử dụng thư viện moment.js nếu có, hoặc tự tính
+
+        return `
+            <div class="notification-item type-${n.type}" title="${new Date(n.timestamp).toLocaleString()}">
+                <div class="notification-icon">
+                    <i class="fas ${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <p class="notification-message">${escapeHtml(n.message)}</p>
+                    <p class="notification-time">${timeAgo}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+// [THAY THẾ TOÀN BỘ HÀM handleNotificationBellClick CŨ]
+async function handleNotificationBellClick() {
+    const panel = document.getElementById('notification-panel');
+    const badge = document.getElementById('notification-badge');
+    if (!panel || !badge) return;
+
+    panel.classList.toggle('hidden');
+
+    // Nếu panel đang mở và có thông báo chưa đọc, gửi yêu cầu đánh dấu đã đọc
+    if (!panel.classList.contains('hidden') && !badge.classList.contains('hidden')) {
+        try {
+            const payload = new FormData();
+            payload.append('action', 'markAllNotificationsAsRead');
+            payload.append('currentUser', sessionStorage.getItem("currentConsultant"));
+            // Thêm dòng này để xác định đây không phải là Admin
+            payload.append('isAdmin', 'false'); 
+
+            const response = await fetch(apiURL, { method: 'POST', body: payload });
+            const result = await response.json();
+
+            if (result.status === 'SUCCESS') {
+                // Cập nhật giao diện ngay lập tức
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            console.error("Lỗi khi đánh dấu đã đọc:", error);
+            showNotification("Có lỗi khi đánh dấu thông báo đã đọc.", "error");
+        }
+    }
+}
+
+// Đóng panel thông báo khi click ra ngoài
+window.addEventListener('click', function(e) {
+    const container = document.getElementById('notification-bell-container');
+    const panel = document.getElementById('notification-panel');
+    if (container && panel && !container.contains(e.target) && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+    }
+});
 </script>
 </body>
 </html>
