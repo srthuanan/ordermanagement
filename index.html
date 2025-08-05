@@ -2747,7 +2747,7 @@ body.dark-mode .typing-indicator span {
                 if (result.success) {
                     sessionStorage.setItem("isLoggedIn", "true");
                     sessionStorage.setItem("currentUser", result.username);
-                    sessionStorage.setItem("userRole", result.role || "employee");
+                    sessionStorage.setItem("userRole", "admin");
 
                     const consultantName = userToConsultantMap[result.username.toLowerCase()];
                     if (consultantName) {
