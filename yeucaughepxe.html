@@ -6432,11 +6432,11 @@ function renderHistoryTable(dataToRender) {
         let hasActions = false;
 
         // --- Logic xác định các hành động có thể thực hiện ---
-        const canRequestInvoice = !isAdmin && isOwner && normalizedStatusText === 'đã ghép';
-        const canUpdateFiles = !isAdmin && isOwner && normalizedStatusText === 'yêu cầu bổ sung';
-        const canCancel = !isAdmin && isOwner && ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
-        const canUploadInvoice = isAdmin && ['chờ ký hóa đơn', 'yêu cầu bổ sung'].includes(normalizedStatusText);
-        const canDownloadInvoice = (isAdmin || isOwner) && !!row.LinkHoaDonDaXuat;
+        const canRequestInvoice = normalizedStatusText === 'đã ghép';
+        const canUpdateFiles = normalizedStatusText === 'yêu cầu bổ sung';
+        const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
+        const canUploadInvoice = ['chờ ký hóa đơn', 'yêu cầu bổ sung'].includes(normalizedStatusText);
+        const canDownloadInvoice = !!row.LinkHoaDonDaXuat;
 
         // --- Xây dựng các mục HTML cho menu dropdown ---
 
