@@ -6445,12 +6445,6 @@ function renderHistoryTable(dataToRender) {
             dropdownItemsHtml += `<button class="action-item" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Tải lên Hóa đơn</span></button>`;
             hasActions = true;
         }
-
-        // Hành động chung
-        if (canDownloadInvoice) {
-            dropdownItemsHtml += `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-file-download fa-fw"></i><span>Tải Hóa đơn đã xuất</span></button>`;
-            hasActions = true;
-        }
         
         // Hành động của TVBH
         if (canRequestInvoice) {
