@@ -351,7 +351,24 @@
     display: none;
 }
 .sidebar .menu a.active {
-    animation: activeLinkPulse 1.5s infinite ease-in-out;
+    background: linear-gradient(90deg, rgba(0, 174, 255, 0.25) 0%, rgba(0, 174, 255, 0) 100%);
+    color: #fff;
+    font-weight: 600;
+    border-left: 4px solid var(--secondary-color);
+    padding-left: 8px;
+    /* Thêm dòng này để kích hoạt hiệu ứng */
+    animation: pulsing-glow 2.5s ease-in-out infinite;
+}
+@keyframes pulsing-glow {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 174, 255, 0.3), inset 0 0 5px rgba(0, 174, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 174, 255, 0.7), inset 0 0 10px rgba(0, 174, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 174, 255, 0.3), inset 0 0 5px rgba(0, 174, 255, 0.1);
+  }
 }
         body.dark-mode .sidebar .menu a.active { background: var(--primary-color); }
         body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
