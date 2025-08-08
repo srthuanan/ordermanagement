@@ -224,31 +224,29 @@
             max-width: 0;
         }
         .sidebar .menu a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding-left: 15px; /* Nhấn mạnh hơn khi hover */
-            transform: translateX(3px); /* Hiệu ứng đẩy nhẹ */
-        }
-        .sidebar.collapsed .menu a:hover {
-            padding-left: 10px;
-            transform: scale(1.05); /* Phóng to icon khi hover ở trạng thái thu gọn */
-        }
-        .sidebar .menu a:hover i {
-            transform: scale(1.1) rotate(5deg); /* Icon hơi nghiêng và phóng to */
-        }
-        body.dark-mode .sidebar .menu a:hover {
-            background: var(--primary-color-lighter);
-            color: #fff;
-        }
-        .sidebar .menu a.active {
-            background: var(--secondary-color);
-            color: #fff;
-            font-weight: 600;
-        }
-        .sidebar .menu a.active::before {
-            left: 0;
-            background-color: #fff; /* Gạch chân màu trắng cho link active */
-        }
+    background: linear-gradient(90deg, rgba(0, 174, 255, 0.15) 0%, rgba(0, 174, 255, 0) 100%);
+    color: #fff;
+    padding-left: 12px; /* Giữ nguyên padding để không bị giật */
+    transform: none; /* Bỏ transform để ổn định hơn */
+}
+
+/* Định dạng cho tab đang được chọn */
+.sidebar .menu a.active {
+    background: linear-gradient(90deg, rgba(0, 174, 255, 0.25) 0%, rgba(0, 174, 255, 0) 100%);
+    color: #fff; /* Giữ màu chữ trắng */
+    font-weight: 600;
+    /* Thêm một đường viền trái để làm điểm nhấn */
+    border-left: 4px solid var(--secondary-color);
+    padding-left: 8px; /* Giảm padding trái để bù lại cho border */
+}
+
+/* Bỏ hiệu ứng gạch chân cũ */
+.sidebar .menu a.active::before, .sidebar .menu a:hover::before {
+    display: none;
+}
+.sidebar .menu a.active {
+    animation: activeLinkPulse 1.5s infinite ease-in-out;
+}
         /* NÂNG CẤP: Hiệu ứng Pulse/Glow cho Link Sidebar Active */
         .sidebar .menu a.active {
             animation: activeLinkPulse 1.5s infinite ease-in-out;
