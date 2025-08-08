@@ -350,6 +350,9 @@
 .sidebar .menu a.active::before, .sidebar .menu a:hover::before {
     display: none;
 }
+.sidebar .menu a.active {
+    animation: activeLinkPulse 1.5s infinite ease-in-out;
+}
         body.dark-mode .sidebar .menu a.active { background: var(--primary-color); }
         body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
 
