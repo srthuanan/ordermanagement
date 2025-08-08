@@ -571,50 +571,54 @@
             min-height: 360px; 
             width: 100%;
         }
-        .table-container { 
-            flex: 0 0 70%; 
-            background: var(--card-bg-light);
-            border-radius: 10px; 
-            padding: 0; 
-            box-shadow: var(--shadow-light-outer);
-            overflow: auto; 
-            max-height: calc(100vh - 265px);
-            position: relative;
-            border: 1px solid var(--border-color-light);
-            transition: all var(--transition-speed) ease;
-        }
+      .table-container {
+    flex: 0 0 70%;
+    background: var(--card-bg-light);
+    border-radius: 10px;
+    /* Thay đổi padding ở đây để tạo khoảng đệm cả trái và phải */
+    padding: 0 10px;
+    box-shadow: var(--shadow-light-outer);
+    overflow: auto;
+    /* Thêm thuộc tính quan trọng này */
+    scrollbar-gutter: stable;
+    max-height: calc(100vh - 265px);
+    position: relative;
+    border: 1px solid var(--border-color-light);
+    transition: all var(--transition-speed) ease;
+}
         body.dark-mode .table-container {
             background: var(--card-bg-dark);
             box-shadow: var(--shadow-dark-outer);
             border: 1px solid var(--border-color-dark);
         }
         table {
-            width: 100%;
-            border-collapse: collapse; 
-            font-size: 13px;
-            table-layout: fixed; 
-        }
+    width: 100%;
+    border-collapse: collapse; 
+    font-size: 12px; /* Giảm kích thước chữ */
+    table-layout: fixed; 
+}
         th, td {
-            padding: 10px 12px; 
-            text-align: left;
-            border-bottom: 1px solid var(--border-color-light);
-            white-space: nowrap; 
-        }
+    padding: 8px 10px; /* Giảm khoảng đệm */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color-light);
+    white-space: nowrap; 
+}
         body.dark-mode th, body.dark-mode td {
             border-bottom: 1px solid var(--border-color-dark);
         }
         th {
-            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: #fff;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            cursor: pointer; /* Change cursor to indicate clickable */
-            transition: background var(--transition-speed-fast) ease;
-        }
+    background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
+    color: #fff;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background var(--transition-speed-fast) ease;
+    font-size: 11.5px; /* Thêm dòng này để giảm kích thước chữ */
+}
         th:hover {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
         }
@@ -664,10 +668,10 @@
         .table-placeholder .fas.fa-spinner { animation: spin 1.5s linear infinite; } 
 
         .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11.5px;
-            font-weight: 500;
+    padding: 2px 4px; /* Giảm khoảng đệm */
+    border-radius: 10px;
+    font-size: 10px; /* Giảm kích thước chữ */
+    font-weight: 500;
             text-align: center;
             display: inline-block;
             min-width: 90px; 
@@ -2280,34 +2284,64 @@ body.dark-mode #ai-chat-send:disabled {
         }
 
         function showDetail(row, index) {
-            currentSelectedCarData = row;
-            const detailBody = document.querySelector("#detail-body tbody");
-            const detailPanelH3 = document.querySelector("#detail-panel h3");
-            const requestBtn = document.getElementById('requestPairingBtn');
+    // Lưu dữ liệu của xe đang được chọn
+    currentSelectedCarData = row;
 
-            if (detailPanelH3) detailPanelH3.textContent = 'Chi Tiết Xe'; 
-            if (!detailBody) return;
+    // Lấy các phần tử HTML cần cập nhật
+    const detailBody = document.querySelector("#detail-body tbody");
+    const detailPanelH3 = document.querySelector("#detail-panel h3");
+    const requestBtn = document.getElementById('requestPairingBtn');
 
-            const headers = ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số VIN", "Mã DMS", "Trạng thái", "Ngày nhập"];
-            let html = "";
-            headers.forEach((header, i) => {
-                let value = row[i] || "N/A";
-                let cellStyle = (i === 2) ? getExteriorColorStyle(value) : "";
-                let valueDisplay = value;
+    // Cập nhật tiêu đề của bảng chi tiết
+    if (detailPanelH3) {
+        detailPanelH3.textContent = 'Chi Tiết Xe';
+    }
 
-                if (i === 4 && value && value !== "N/A") { 
-                    valueDisplay = `<span class="highlight">${value}</span>`;
-                } else if (i === 5) {
-                    valueDisplay = `<strong>${value}</strong>`;
-                } else if (i === 6) {
-                    const statusClass = getStatusClassForKhoXe(value);
-                    valueDisplay = `<span class="status-badge ${statusClass}">${value}</span>`;
-                }
-                html += `<tr><th>${header}</th><td style="${cellStyle}">${valueDisplay}</td></tr>`;
-            });
-            detailBody.innerHTML = html || `<tr><td colspan='2'>Không có chi tiết.</td></tr>`;
-            if (requestBtn) requestBtn.style.display = 'block';
+    if (!detailBody) {
+        // Thoát nếu không tìm thấy phần tử tbody
+        return;
+    }
+
+    // Định nghĩa các tiêu đề cho bảng chi tiết
+    const headers = ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số VIN", "Mã DMS", "Trạng thái", "Ngày nhập"];
+    let html = "";
+
+    // Lặp qua từng thuộc tính của xe để tạo hàng trong bảng chi tiết
+    headers.forEach((header, i) => {
+        let value = row[i] || "N/A";
+        let valueDisplay = value;
+        let cellStyle = "";
+
+        // Áp dụng định dạng đặc biệt cho các trường cụ thể
+        if (i === 2) { // Ngoại thất
+            cellStyle = getExteriorColorStyle(value);
+        } else if (i === 4 && value && value !== "N/A") { // Số VIN
+            // Thêm icon sao chép vào bên cạnh số VIN
+            valueDisplay = `
+                <span class="highlight" id="detail-vin-value">${value}</span>
+                <i class="fas fa-copy" 
+                   onclick="copyDetailValue('detail-vin-value')" 
+                   style="cursor: pointer; margin-left: 8px; color: var(--primary-color);"
+                   title="Sao chép Số VIN"></i>`;
+        } else if (i === 5) { // Mã DMS
+            valueDisplay = `<strong>${value}</strong>`;
+        } else if (i === 6) { // Trạng thái
+            const statusClass = getStatusClassForKhoXe(value);
+            valueDisplay = `<span class="status-badge ${statusClass}">${value}</span>`;
         }
+
+        // Tạo HTML cho một hàng (tr) của bảng
+        html += `<tr><th>${header}</th><td style="${cellStyle}">${valueDisplay}</td></tr>`;
+    });
+
+    // Cập nhật nội dung của bảng chi tiết
+    detailBody.innerHTML = html || "<tr><td colspan='2' style='text-align:center;'>Không có chi tiết để hiển thị.</td></tr>";
+
+    // Hiển thị nút "Yêu Cầu Ghép Xe Ngay"
+    if (requestBtn) {
+        requestBtn.style.display = 'block';
+    }
+}
 
         async function refreshData() {
             showLoading();
@@ -2718,6 +2752,37 @@ async function sendRequestWithBackoff(userPrompt, thinkingMessageElement, maxRet
                 throw error;
             }
         }
+    }
+}
+/**
+ * Sao chép nội dung của một phần tử vào clipboard dựa trên ID.
+ * @param {string} elementId - ID của phần tử chứa giá trị cần sao chép.
+ */
+function copyDetailValue(elementId) {
+    const element = document.getElementById(elementId);
+    if (element && navigator.clipboard) {
+        const valueToCopy = element.innerText;
+        navigator.clipboard.writeText(valueToCopy).then(() => {
+            // Hiển thị thông báo thành công
+            showNotification(`Đã sao chép: ${valueToCopy}`, 'success', 2000);
+        }).catch(err => {
+            console.error('Lỗi khi sao chép: ', err);
+            showNotification('Lỗi khi sao chép!', 'error', 2000);
+        });
+    } else {
+         console.error('Không tìm thấy phần tử hoặc trình duyệt không hỗ trợ clipboard API.');
+         // Fallback cho trình duyệt cũ (hiếm gặp)
+         try {
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().removeAllRanges(); 
+            window.getSelection().addRange(range); 
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            showNotification(`Đã sao chép: ${element.innerText}`, 'success', 2000);
+         } catch(e) {
+            showNotification('Không thể sao chép trên trình duyệt này.', 'error', 2000);
+         }
     }
 }
     </script>
