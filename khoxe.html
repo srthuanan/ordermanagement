@@ -13,74 +13,80 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
-        /* === BẢNG MÀU VÀ BIẾN CSS TỪ INDEX.HTML === */
         :root {
-            --font-main: 'Plus Jakarta Sans', sans-serif;
-            
-            /* Bảng màu Light Mode */
-            --background-light: #f8f9fa; /* Nền xám rất nhạt */
-            --card-bg-light: #ffffff;
-            --text-light: #212529; /* Text đen đậm */
-            --text-muted-light: #6c757d; /* Text phụ */
-            --border-light: #e9ecef; /* Viền siêu nhạt */
-            /* Dán vào trong thẻ :root */
---exterior-orange-text: #f39c12;
---exterior-blue-text: #2980b9;
---exterior-yellow-text: #b8860b;
---exterior-pink-text: #d354aa;
---exterior-green-text: #27ae60;
---exterior-grey-text: #7f8c8d;
---exterior-white-text: #2c3e50;
-            /* Bảng màu Dark Mode */
-            --background-dark: #121212; /* Nền đen sâu */
-            --card-bg-dark: #1e1e1e; /* Nền card tối */
-            --text-dark: #e9ecef; /* Text trắng ngà */
-            --text-muted-dark: #adb5bd; /* Text phụ tối */
-            --border-dark: #343a40; /* Viền tối */
+    /* === FONT CHỦ ĐẠO === */
+    --font-main: 'Plus Jakarta Sans', sans-serif;
 
-            /* Accent Gradient - Dải màu nhấn chủ đạo */
-            --gradient-start: #4f46e5; /* Indigo */
-            --gradient-end: #14b8a6; /* Teal */
-            --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
-            
-            /* Bóng đổ hiện đại */
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1); /* Glow cho focus */
-            --shadow-glow-dark: 0 0 0 4px rgb(20 184 166 / 0.2);
+    /* === BẢNG MÀU CHUNG === */
+    --gradient-start: #4f46e5; /* Indigo */
+    --gradient-end: #14b8a6; /* Teal */
+    --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    
+    /* === BẢNG MÀU GIAO DIỆN SÁNG (LIGHT MODE) === */
+    --background-light: #f8f9fa;
+    --card-bg-light: #ffffff;
+    --text-light: #212529;
+    --text-muted-light: #6c757d;
+    --border-light: #e9ecef;
 
-            /* Tốc độ chuyển động */
-            --transition-fast: 0.2s;
-            --transition-medium: 0.3s;
-            --transition-slow: 0.5s;
-             /* === MÀU CHO TRẠNG THÁI KHO XE (ĐÃ ĐỒNG BỘ) === */
-            --status-san-sang-bg-light: #e0f2f1;
-            --status-san-sang-text-light: #00796b;
-            --status-da-ghep-bg-light: #e3f2fd;
-            --status-da-ghep-text-light: #1e88e5;
-            --status-chua-ghep-bg-light: #fff8e1;
-            --status-chua-ghep-text-light: #f57c00;
-            --status-da-ban-bg-light: #f1f2f6;
-            --status-da-ban-text-light: #57606f;
-            --status-cho-vbc-bg-light: #e8eaf6;
-            --status-cho-vbc-text-light: #3f51b5;
-            --status-default-bg-light: #eceff1;
-            --status-default-text-light: #546e7a;
-            
-            --status-san-sang-bg-dark: #1a3c3a;
-            --status-san-sang-text-dark: #80cbc4;
-            --status-da-ghep-bg-dark: #1c3a56;
-            --status-da-ghep-text-dark: #90caf9;
-            --status-chua-ghep-bg-dark: #4b3c1c;
-            --status-chua-ghep-text-dark: #ffe082;
-            --status-da-ban-bg-dark: #393e46;
-            --status-da-ban-text-dark: #a6acb3;
-            --status-cho-vbc-bg-dark: #2c304d;
-            --status-cho-vbc-text-dark: #b3bcf5;
-            --status-default-bg-dark: #37474f;
-            --status-default-text-dark: #b0bec5;
-        }
+    /* === BẢNG MÀU GIAO DIỆN TỐI (DARK MODE) === */
+    --background-dark: #121212;
+    --card-bg-dark: #1e1e1e;
+    --text-dark: #e9ecef;
+    --text-muted-dark: #adb5bd;
+    --border-dark: #343a40;
+    
+    /* === MÀU CHỮ CHO NGOẠI THẤT (LIGHT MODE) === */
+    --exterior-orange-text: #f39c12;
+    --exterior-blue-text: #2980b9;
+    --exterior-yellow-text: #b8860b;
+    --exterior-pink-text: #d354aa;
+    --exterior-green-text: #27ae60;
+    --exterior-grey-text: #7f8c8d;
+    --exterior-white-text: #2c3e50; /* Dùng cho xe màu trắng để có độ tương phản */
+    --exterior-red-text: #c0392b; /* Thêm màu đỏ cho đầy đủ */
+    --exterior-bronze-text: #a1794b; /* Thêm màu đồng */
+
+    /* === MÀU CHO TRẠNG THÁI (LIGHT MODE) === */
+    --status-san-sang-bg-light: #e0f2f1;
+    --status-san-sang-text-light: #00796b;
+    --status-da-ghep-bg-light: #e3f2fd;
+    --status-da-ghep-text-light: #1e88e5;
+    --status-chua-ghep-bg-light: #fff8e1;
+    --status-chua-ghep-text-light: #f57c00;
+    --status-da-ban-bg-light: #f1f2f6;
+    --status-da-ban-text-light: #57606f;
+    --status-cho-vbc-bg-light: #e8eaf6;
+    --status-cho-vbc-text-light: #3f51b5;
+    --status-default-bg-light: #eceff1;
+    --status-default-text-light: #546e7a;
+
+    /* === MÀU CHO TRẠNG THÁI (DARK MODE) === */
+    --status-san-sang-bg-dark: #1a3c3a;
+    --status-san-sang-text-dark: #80cbc4;
+    --status-da-ghep-bg-dark: #1c3a56;
+    --status-da-ghep-text-dark: #90caf9;
+    --status-chua-ghep-bg-dark: #4b3c1c;
+    --status-chua-ghep-text-dark: #ffe082;
+    --status-da-ban-bg-dark: #393e46;
+    --status-da-ban-text-dark: #a6acb3;
+    --status-cho-vbc-bg-dark: #2c304d;
+    --status-cho-vbc-text-dark: #b3bcf5;
+    --status-default-bg-dark: #37474f;
+    --status-default-text-dark: #b0bec5;
+
+    /* === BÓNG ĐỔ & HIỆU ỨNG === */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1);
+    --shadow-glow-dark: 0 0 0 4px rgb(20 184 166 / 0.2);
+
+    /* === TỐC ĐỘ CHUYỂN ĐỘNG === */
+    --transition-fast: 0.2s;
+    --transition-medium: 0.3s;
+    --transition-slow: 0.5s;
+}
 
         /* === THIẾT LẬP CƠ BẢN & THANH CUỘN === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,9 +99,20 @@
             transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
         }
         body.dark-mode {
-            background: var(--background-dark);
-            color: var(--text-dark);
-        }
+    background: var(--background-dark);
+    color: var(--text-dark);
+
+    /* === MÀU CHỮ CHO NGOẠI THẤT (DARK MODE) === */
+    --exterior-orange-text: #f5b041;
+    --exterior-blue-text: #5dade2;
+    --exterior-yellow-text: #f4d03f;
+    --exterior-pink-text: #e573e0;
+    --exterior-green-text: #2ecc71;
+    --exterior-grey-text: #bdc3c7;
+    --exterior-white-text: #ecf0f1;
+    --exterior-red-text: #e74c3c;
+    --exterior-bronze-text: #c5a37f;
+}
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
