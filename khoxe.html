@@ -846,9 +846,15 @@ body.dark-mode .total-vehicles {
 /* Áp dụng cho các màn hình nhỏ hơn 768px (máy tính bảng và điện thoại) */
 @media (max-width: 768px) {
 /* ================================================= */
-/* === GIAO DIỆN THẺ (CARD VIEW) CHO BẢNG DỮ LIỆU === */
+/* === SỬA LỖI HIỂN THỊ CHO BỘ LỌC TRÊN DI ĐỘNG === */
 /* ================================================= */
-
+.filter-section input, .filter-section select {
+    height: auto; /* Yêu cầu trình duyệt tự tính chiều cao vừa đủ */
+    min-height: unset; /* Gỡ bỏ mọi quy tắc chiều cao tối thiểu bị thừa */
+    padding: 12px 15px; /* Thiết lập lại khoảng đệm bên trong cho hợp lý */
+    font-size: 14px; /* Đảm bảo cỡ chữ không quá to */
+    margin-bottom: 5px; /* Thêm một chút khoảng cách dưới mỗi ô */
+}
 /* Ẩn bảng và tiêu đề gốc trên di động */
 .data-table thead,
 .data-table tr {
