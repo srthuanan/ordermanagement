@@ -1274,6 +1274,130 @@ body.user-logged-in #welcomeSection {
 body.user-logged-in #dashboard-container {
     display: block;
 }
+/* ================================================= */
+/* === MÃ CSS TỐI ƯU HÓA CHO THIẾT BỊ DI ĐỘNG === */
+/* ================================================= */
+
+/* Sử dụng media query cho các màn hình nhỏ hơn 768px (máy tính bảng và điện thoại) */
+@media (max-width: 768px) {
+
+    /* 1. Tinh chỉnh Header cho gọn gàng hơn */
+    .header-title {
+        font-size: 14px; /* Giảm kích thước chữ của tiêu đề chính */
+    }
+
+    .navbar-controls {
+        gap: 5px; /* Giảm khoảng cách giữa các nút điều khiển */
+    }
+    
+    .nav-btn, .theme-toggle, .language-btn {
+        width: 34px; /* Thu nhỏ các nút một chút */
+        height: 34px;
+        font-size: 14px;
+    }
+
+    /* 2. Giảm khoảng đệm của nội dung chính để tiết kiệm không gian */
+    .internal-section, .dashboard-section {
+        padding: 20px 15px; /* Giảm padding ngang và dọc */
+    }
+    
+    .main-content {
+        margin-top: 60px; /* Điều chỉnh lại margin top */
+        margin-bottom: 50px; /* Điều chỉnh lại margin bottom cho footer */
+    }
+
+    /* 3. Tối ưu hóa Hero Section */
+    .hero h2 {
+        font-size: 20px; /* Giảm cỡ chữ tiêu đề hero */
+    }
+    .hero p {
+        font-size: 13px; /* Giảm cỡ chữ mô tả hero */
+    }
+    .hero .login-btn {
+        padding: 6px 20px;
+        font-size: 13px;
+    }
+    
+    /* 4. Tinh chỉnh lại các tiêu đề mục */
+    .internal-section h3, .dashboard-section h3 {
+        font-size: 22px; /* Giảm kích thước tiêu đề các mục */
+    }
+    
+    .internal-section p.section-subtitle {
+        font-size: 14px; /* Giảm kích thước chữ mô tả mục */
+        margin-bottom: 25px;
+    }
+
+    /* 5. Cho phép Bảng dữ liệu có thể cuộn ngang (QUAN TRỌNG NHẤT) */
+    /* Điều này đảm bảo tất cả thông tin trong bảng đều có thể xem được
+       bằng cách trượt (swipe) qua trái/phải mà không làm vỡ bố cục trang. */
+    .table-container {
+        overflow-x: auto; /* Thêm thuộc tính này */
+        -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt hơn trên iOS */
+    }
+    
+    /* Gợi ý cho người dùng rằng bảng có thể cuộn */
+    .table-container::after {
+        content: 'Trượt ngang để xem thêm ->';
+        display: block;
+        text-align: right;
+        font-size: 11px;
+        color: var(--text-muted-light);
+        padding: 8px 5px 0 0;
+        font-style: italic;
+    }
+
+    body.dark-mode .table-container::after {
+        color: var(--text-muted-dark);
+    }
+
+
+    /* 6. Tinh chỉnh Dashboard cho điện thoại */
+    .dashboard-header {
+        padding: 15px;
+        flex-direction: column; /* Chuyển header sang dạng cột */
+        text-align: center;
+        gap: 10px;
+    }
+    .dashboard-header .header-text h3,
+    .dashboard-header .header-text p {
+        text-align: center; /* Căn giữa lại chữ trong header */
+    }
+
+    .dashboard-header .header-text h3 {
+        font-size: 22px;
+    }
+     .dashboard-header .header-text p {
+        font-size: 14px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Cho phép thẻ nhỏ hơn */
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 24px;
+    }
+
+    /* 7. Điều chỉnh Modal đăng nhập */
+    .modal-content {
+        padding: 25px 20px;
+    }
+
+    /* 8. Điều chỉnh cửa sổ AI Chat */
+     #ai-chat-window {
+        width: 95vw; /* Chiếm gần hết chiều rộng màn hình */
+        height: 70vh; /* Chiều cao lớn hơn để dễ sử dụng */
+        max-width: 95vw;
+        bottom: 15px;
+        right: 15px;
+    }
+}
     </style>
 <body>
 <script>
