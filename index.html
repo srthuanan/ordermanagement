@@ -2877,6 +2877,31 @@ async function sendGlobalAIChatMessage() {
         }
     }
 }
+        // =================================================================
+// BỔ SUNG: TỰ ĐỘNG ĐÓNG SIDEBAR TRÊN DI ĐỘNG KHI CHỌN MỘT MỤC
+// =================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Lấy ra khu vực chứa các liên kết menu
+    const navMenu = document.getElementById('navMenu');
+    const sidebar = document.getElementById('sidebar');
+
+    if (navMenu && sidebar) {
+        // Thêm một trình nghe sự kiện 'click' vào toàn bộ khu vực menu
+        navMenu.addEventListener('click', (event) => {
+            // Chỉ thực hiện hành động này trên màn hình di động (nơi có sidebar trượt ra)
+            if (window.innerWidth <= 900) {
+                // Kiểm tra xem phần tử được nhấp có phải là một liên kết <a> không
+                const link = event.target.closest('a');
+                
+                // Nếu người dùng thực sự nhấp vào một liên kết
+                if (link) {
+                    // Đóng sidebar lại
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+    }
+});
     </script>
 </body>
 </html>
