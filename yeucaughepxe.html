@@ -633,35 +633,108 @@ body.dark-mode .table-placeholder-pro {
     font-size: 15px;
     font-weight: 500;
 }
+/* ===================================================================== */
+/* === [THAY THẾ] CSS CHO THẺ TRẠNG THÁI (GIAO DIỆN PRO) === */
+/* ===================================================================== */
+
+/* 1. Định dạng cơ bản cho tất cả thẻ trạng thái */
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 6px 12px;
+    border-radius: 8px; /* Giảm bo góc để tạo hình chữ nhật mềm mại */
     font-size: 11px;
     font-weight: 700;
-    text-align: center;
+    text-align: left; /* Căn chữ về bên trái */
     display: inline-block;
-    min-width: 90px;
+    min-width: 120px; /* Tăng chiều rộng tối thiểu */
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: none;
-}
-/* Mapping old classes to new variables */
-.status-invoice-issued, .status-vin-matched { background-color: var(--status-da-ghep-bg-light); color: var(--status-da-ghep-text-light); }
-.status-vin-not-found, .status-pending-invoice, .status-pending-approval, .status-supplemented, .status-approved { background-color: var(--status-chua-ghep-bg-light); color: var(--status-chua-ghep-text-light); }
-.status-supplement-required { background-color: #fee2e2; color: #b91c1c; } /* Giữ lại màu đỏ riêng cho yêu cầu bổ sung */
-.status-cancelled { background-color: var(--status-da-ban-bg-light); color: var(--status-da-ban-text-light); }
-.status-default { background-color: var(--status-default-bg-light); color: var(--status-default-text-light); }
+    transition: all 0.2s ease;
 
-body.dark-mode .status-invoice-issued,
-body.dark-mode .status-vin-matched { background-color: var(--status-da-ghep-bg-dark); color: var(--status-da-ghep-text-dark); }
-body.dark-mode .status-vin-not-found,
-body.dark-mode .status-pending-invoice,
+    /* Nền và màu chữ sẽ được định nghĩa bằng biến */
+    background-color: var(--status-color-bg);
+    color: var(--status-color-main);
+    
+    /* Đường kẻ màu đặc trưng bên trái */
+    border-left: 4px solid var(--status-color-main);
+}
+
+/* 2. Định nghĩa màu cho TỪNG LOẠI TRẠNG THÁI cụ thể */
+
+/* --- Trạng thái: Đã Xuất Hóa Đơn (Thành công mỹ mãn) --- */
+.status-invoice-issued {
+    --status-color-main: #16a34a; /* Xanh lá cây đậm */
+    --status-color-bg: #f0fdf4;   /* Xanh lá cây rất nhạt */
+}
+body.dark-mode .status-invoice-issued {
+    --status-color-main: #4ade80; /* Xanh lá cây sáng */
+    --status-color-bg: #162a22;   /* Nền tối của xanh lá */
+}
+
+/* --- Trạng thái: Đã Ghép (Hoàn tất một bước) --- */
+.status-vin-matched {
+    --status-color-main: #2563eb; /* Xanh dương đậm */
+    --status-color-bg: #eff6ff;   /* Xanh dương rất nhạt */
+}
+body.dark-mode .status-vin-matched {
+    --status-color-main: #60a5fa; /* Xanh dương sáng */
+    --status-color-bg: #1e293b;   /* Nền tối của xanh dương */
+}
+
+/* --- Trạng thái: Chờ Phê Duyệt / Chờ Ký Hóa Đơn (Đang chờ) --- */
+.status-pending-approval,
+.status-approved {
+    --status-color-main: #c2410c; /* Cam đậm */
+    --status-color-bg: #fff7ed;   /* Cam rất nhạt */
+}
 body.dark-mode .status-pending-approval,
-body.dark-mode .status-supplemented,
-body.dark-mode .status-approved { background-color: var(--status-chua-ghep-bg-dark); color: var(--status-chua-ghep-text-dark); }
-body.dark-mode .status-supplement-required { background-color: #450a0a; color: #fca5a5; }
-body.dark-mode .status-cancelled { background-color: var(--status-da-ban-bg-dark); color: var(--status-da-ban-text-dark); }
-body.dark-mode .status-default { background-color: var(--status-default-bg-dark); color: var(--status-default-text-dark); }
+body.dark-mode .status-approved {
+    --status-color-main: #fb923c; /* Cam sáng */
+    --status-color-bg: #43200e;   /* Nền tối của cam */
+}
+
+/* --- Trạng thái: Yêu Cầu Bổ Sung (Cần hành động) --- */
+.status-supplement-required {
+    --status-color-main: #dc2626; /* Đỏ đậm */
+    --status-color-bg: #fef2f2;   /* Đỏ rất nhạt */
+}
+body.dark-mode .status-supplement-required {
+    --status-color-main: #f87171; /* Đỏ sáng */
+    --status-color-bg: #450a0a;   /* Nền tối của đỏ */
+}
+
+/* --- Trạng thái: Đã Bổ Sung (Đã xử lý) --- */
+.status-supplemented {
+    --status-color-main: #6d28d9; /* Tím đậm */
+    --status-color-bg: #f5f3ff;   /* Tím rất nhạt */
+}
+body.dark-mode .status-supplemented {
+    --status-color-main: #a78bfa; /* Tím sáng */
+    --status-color-bg: #2b1c4a;   /* Nền tối của tím */
+}
+
+/* --- Trạng thái: Đã Hủy (Không hoạt động) --- */
+.status-cancelled {
+    --status-color-main: #64748b; /* Xám đậm */
+    --status-color-bg: #f8fafc;   /* Xám rất nhạt */
+}
+body.dark-mode .status-cancelled {
+    --status-color-main: #94a3b8; /* Xám sáng */
+    --status-color-bg: #1e293b;   /* Nền tối của xám */
+}
+
+/* --- Trạng thái: Chưa Ghép & Mặc Định (Trung tính) --- */
+.status-vin-not-found,
+.status-default,
+.status-pending-invoice {
+    --status-color-main: #71717a; /* Xám trung bình */
+    --status-color-bg: #f4f4f5;   /* Xám nhạt */
+}
+body.dark-mode .status-vin-not-found,
+body.dark-mode .status-default,
+body.dark-mode .status-pending-invoice {
+    --status-color-main: #a1a1aa; /* Xám sáng hơn */
+    --status-color-bg: #27272a;   /* Nền tối của xám */
+}
 
 
 /* Giữ lại các style cho modal và các thành phần khác, chỉ cần đảm bảo chúng dùng biến mới */
@@ -1107,42 +1180,45 @@ body {
 #notification-panel {
     z-index: 1012 !important; /* Tăng z-index để cao hơn cả chat AI */
 }
-/* ================================================================================= */
-/* ===== BẮT ĐẦU: MÃ TỐI ƯU (GỘP SỬA LỖI CUỘN + MÀU NỀN TIÊU ĐỀ) ===== */
-/* ================================================================================= */
+/* [THAY THẾ TOÀN BỘ KHỐI CŨ BẰNG KHỐI NÀY] */
 
 /* 1. Thiết lập cho container chính và section bảng */
 .main-container {
-    height: calc(109vh - 120px); 
+    height: calc(100vh - 100px); /* Điều chỉnh lại chiều cao */
     display: flex;
     flex-direction: column;
 }
+
 .grid-container#history-section {
-    flex-grow: 1;
-    /* Các thuộc tính display: flex; đã được gỡ bỏ để sửa lỗi */
+    flex-grow: 1; /* Cho phép co giãn */
+    display: flex; /* Bật flexbox để quản lý layout bên trong */
+    flex-direction: column;
+    min-height: 0; /* Ngăn co giãn ngoài ý muốn */
 }
+
 .table-wrapper {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* Chỉ cuộn dọc */
     position: relative;
 }
 
-/* 2. [TỐI ƯU] Gộp tất cả định dạng cho tiêu đề bảng (th) vào một nơi duy nhất */
+/* [SỬA LỖI TRIỆT ĐỂ] THAY THẾ TOÀN BỘ KHỐI CSS CŨ BẰNG KHỐI NÀY */
+
+/* 1. Nâng toàn bộ khối a header (thead) lên một lớp cao hơn */
+#history-table > thead#table-header {
+    position: relative; /* BẮT BUỘC: Tạo một "lớp" (stacking context) mới */
+    z-index: 30;      /* QUAN TRỌNG: Đặt z-index cao hơn hẳn menu con (z-index: 10) */
+}
+
+/* 2. Giữ nguyên thuộc tính sticky cho từng ô tiêu đề (th) để chúng ghim lại khi cuộn */
 #history-table th,
 #waiting-list-table th {
-    /* --- Cố định tiêu đề khi cuộn --- */
-    position: -webkit-sticky;
-    position: sticky;
+    position: sticky; 
     top: 0;
-    z-index: 2;
-
-    /* --- MÀU NỀN & GIAO DIỆN (CHẾ ĐỘ SÁNG) --- */
-    background-color: #EEEEEE; 
-    color: var(--text-light); 
-
-    /* --- Đường kẻ & Căn chỉnh --- */
+    /* z-index ở đây không còn quan trọng bằng z-index của a nữa, nhưng giữ lại cũng không sao */
+    background-color: #f3f4f6;
+    color: var(--text-light);
     border-bottom: 2px solid var(--gradient-start);
-    border-right: 1px solid var(--border-light);
     text-align: center;
     text-transform: uppercase;
     font-size: 12px;
@@ -1151,213 +1227,20 @@ body {
     cursor: pointer;
 }
 
-/* 3. [TỐI ƯU] Tùy chỉnh riêng cho GIAO DIỆN TỐI (DARK MODE) */
+/* 3. Style cho giao diện tối (không đổi) */
 body.dark-mode #history-table th,
 body.dark-mode #waiting-list-table th {
-    background-color: rgba(255, 255, 255, 0.05); 
+    background-color: #1f2937;
     color: var(--text-dark);
     border-bottom-color: var(--gradient-end);
-    border-right-color: var(--border-dark);
 }
 
-/* --- Các định dạng phụ cho bảng --- */
-#history-table td {
-    border-right: 1px solid var(--border-light);
-}
-body.dark-mode #history-table td {
-    border-right-color: var(--border-dark);
-}
-#history-table th:last-child,
-#history-table td:last-child {
-    border-right: none;
-}
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS ĐẦY ĐỦ CHO KIỂU HÀNH ĐỘNG CHÍNH + MENU PHỤ === */
-/* ===================================================================== */
-
-/* Định dạng cho ô chứa các nút hành động */
-.actions-cell {
-    position: relative;
-    text-align: center;
-}
-
-/* Container bọc nhóm hành động (nút chính và menu) */
-.primary-action-group {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Căn giữa nhóm trong ô */
-    gap: 6px; /* Khoảng cách giữa nút chính và menu 3 chấm */
-}
-
-/* Nút bấm hành động chính (kích thước nhỏ hơn) */
-.primary-action-group .btn-sm {
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 8px;
-    white-space: nowrap; /* Ngăn nút bị xuống dòng */
-}
-
-
-/* Nút để bật/tắt menu (icon ba chấm) */
-.action-menu-toggle {
-    background: transparent;
-    border: 1px solid var(--border-light);
-    color: var(--text-muted-light);
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.action-menu-toggle:hover {
-    background: var(--background-light);
-    color: var(--text-light);
-    border-color: var(--text-muted-light);
-}
-
-body.dark-mode .action-menu-toggle {
-    color: var(--text-muted-dark);
-    border-color: var(--border-dark);
-}
-
-body.dark-mode .action-menu-toggle:hover {
-    background: var(--background-dark);
+/* 3. Tùy chỉnh cho GIAO DIỆN TỐI (DARK MODE) */
+body.dark-mode #history-table th,
+body.dark-mode #waiting-list-table th {
+    background-color: #1f2937;
     color: var(--text-dark);
-}
-
-/* Khung menu thả xuống (dropdown) - mặc định ẩn */
-.action-menu-dropdown {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    z-index: 1015;
-    background: var(--card-bg-light);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    box-shadow: var(--shadow-lg);
-    width: max-content;
-    min-width: 200px;
-    padding: 6px;
-    transform: translateY(10px) scale(0.95);
-    transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease, visibility 0s var(--transition-fast);
-    transform-origin: top right;
-}
-
-body.dark-mode .action-menu-dropdown {
-    background: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
-
-/* Trạng thái hiển thị của menu */
-.action-menu-dropdown.show {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease, visibility 0s;
-}
-
-/* Khi menu bung lên trên */
-.action-menu-dropdown.show-upwards {
-    transform-origin: bottom right;
-}
-
-/* Từng mục hành động trong menu */
-.action-menu-dropdown .action-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    text-align: left;
-    color: var(--text-light);
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-}
-
-body.dark-mode .action-menu-dropdown .action-item {
-    color: var(--text-dark);
-}
-
-.action-menu-dropdown .action-item:hover {
-    background-color: var(--background-light);
-    color: var(--gradient-start);
-}
-
-body.dark-mode .action-menu-dropdown .action-item:hover {
-    background-color: var(--background-dark);
-    color: var(--gradient-end);
-}
-
-/* Icon bên trong mục hành động */
-.action-menu-dropdown .action-item i {
-    width: 14px;
-    text-align: center;
-    color: var(--text-muted-light);
-    transition: color var(--transition-fast) ease;
-}
-
-body.dark-mode .action-menu-dropdown .action-item i {
-    color: var(--text-muted-dark);
-}
-
-.action-menu-dropdown .action-item:hover i {
-    color: inherit;
-}
-
-/* Mục hành động nguy hiểm (như Xóa) */
-.action-menu-dropdown .action-item.danger {
-    color: #e74c3c;
-}
-.action-menu-dropdown .action-item.danger:hover {
-    background-color: #e74c3c1a;
-}
-.action-menu-dropdown .action-item.danger i {
-    color: #e74c3c;
-}
-
-/* Đường kẻ phân cách */
-.action-menu-dropdown .divider {
-    height: 1px;
-    background-color: var(--border-light);
-    margin: 6px 0;
-}
-
-body.dark-mode .action-menu-dropdown .divider {
-    background-color: var(--border-dark);
-}
-/* === PHƯƠNG ÁN 2: GRADIENT HIỆN ĐẠI (XÁM - CHÀM) === */
-
-.btn.btn-pro-gradient {
-    background: linear-gradient(135deg, #9ca3af, #4f46e5); /* Gradient từ xám sang chàm */
-    color: white;
-    border: none;
-    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-}
-
-.btn.btn-pro-gradient:hover:not(:disabled) {
-    background: linear-gradient(135deg, #b8bdc5, #6366f1);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
-
-/* Giao diện TỐI (Dark Mode) */
-body.dark-mode .btn.btn-pro-gradient {
-    background: linear-gradient(135deg, #4b5563, #4f46e5);
-}
-
-body.dark-mode .btn.btn-pro-gradient:hover:not(:disabled) {
-    background: linear-gradient(135deg, #5b6879, #6366f1);
+    border-bottom-color: var(--gradient-end);
 }
 /* ================================================================= */
 /* ===================================================================== */
@@ -2314,6 +2197,211 @@ body.dark-mode .bulk-order-row.invalid-row { background-color: rgba(69, 10, 10, 
 body.dark-mode .row-status.error { color: #fca5a5; }
 .row-status.success { color: #00796b; font-weight: 500; }
 body.dark-mode .row-status.success { color: #80cbc4; }
+/* ================================================================== */
+/* === [NÂNG CẤP] GIAO DIỆN CỤM NÚT HÀNH ĐỘNG TRONG BẢNG (PRO) === */
+/* ================================================================== */
+
+/* 1. Container chính cho nhóm hành động */
+.primary-action-group {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Căn giữa các nút */
+    gap: 4px; /* Khoảng cách nhỏ giữa nút chính và menu */
+    position: relative; /* Cần cho menu con */
+}
+
+/* 2. Style chung cho các nút trong bảng để nhỏ gọn hơn */
+.primary-action-group .btn-sm {
+    padding: 6px 12px; /* Giảm padding */
+    font-size: 12px;   /* Giảm cỡ chữ */
+    font-weight: 600;
+    border-radius: 8px; /* Bo góc nhẹ nhàng */
+    flex-shrink: 0;
+}
+
+/* 3. Nút hành động chính (màu gradient) */
+.primary-action-group .btn-pro-gradient {
+    background: var(--gradient);
+    color: white;
+    border: none;
+}
+.primary-action-group .btn-pro-gradient:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* 4. Nút Menu "..." */
+.action-menu-toggle {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted-light);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.action-menu-toggle:hover {
+    background-color: var(--card-bg-light);
+    border-color: var(--gradient-start);
+    color: var(--gradient-start);
+}
+body.dark-mode .action-menu-toggle {
+    background-color: var(--background-dark);
+    border-color: var(--border-dark);
+    color: var(--text-muted-dark);
+}
+body.dark-mode .action-menu-toggle:hover {
+    border-color: var(--gradient-end);
+    color: var(--gradient-end);
+}
+
+/* 5. Khung menu xổ xuống */
+.action-menu-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px); /* Vị trí mặc định: dưới nút toggle */
+    z-index: 10;
+    width: 220px;
+    background: var(--card-bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    /* Hiệu ứng */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.95);
+    transform-origin: top right;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+/* Trạng thái hiển thị menu */
+.action-menu-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* [QUAN TRỌNG] Style để menu mở lên trên khi ở gần cuối bảng */
+.action-menu-dropdown.show-upwards {
+    top: auto;
+    bottom: calc(100% + 5px);
+    transform-origin: bottom right;
+}
+
+body.dark-mode .action-menu-dropdown {
+    background: var(--card-bg-dark);
+    border-color: var(--border-dark);
+}
+
+/* 6. Các mục trong menu (action-item) */
+.action-menu-dropdown .action-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease;
+    width: 100%;
+}
+.action-menu-dropdown .action-item i {
+    font-size: 14px;
+    width: 16px; /* Cố định chiều rộng icon */
+    text-align: center;
+    color: var(--text-muted-light);
+    transition: color var(--transition-fast) ease;
+}
+.action-menu-dropdown .action-item:hover {
+    background-color: var(--background-light);
+    color: var(--text-light);
+}
+.action-menu-dropdown .action-item:hover i {
+    color: var(--gradient-start);
+}
+
+/* Style cho mục nguy hiểm (Hủy) */
+.action-menu-dropdown .action-item.danger:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+.action-menu-dropdown .action-item.danger:hover i {
+    color: #b91c1c;
+}
+
+body.dark-mode .action-menu-dropdown .action-item {
+    color: var(--text-dark);
+}
+body.dark-mode .action-menu-dropdown .action-item i {
+    color: var(--text-muted-dark);
+}
+body.dark-mode .action-menu-dropdown .action-item:hover {
+    background-color: var(--background-dark);
+}
+body.dark-mode .action-menu-dropdown .action-item:hover i {
+    color: var(--gradient-end);
+}
+body.dark-mode .action-menu-dropdown .action-item.danger:hover {
+    background-color: #450a0a;
+    color: #fca5a5;
+}
+body.dark-mode .action-menu-dropdown .action-item.danger:hover i {
+    color: #fca5a5;
+}
+
+/* 7. Dải phân cách trong menu */
+.action-menu-dropdown .divider {
+    height: 1px;
+    background-color: var(--border-light);
+    margin: 4px 6px;
+}
+body.dark-mode .action-menu-dropdown .divider {
+    background-color: var(--border-dark);
+}
+
+/* 8. Căn chỉnh lại ô chứa hành động */
+#history-table .actions-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+/* === BỔ SUNG KẺ BẢNG DỮ LIỆU (THÊM VÀO CUỐI) === */
+
+/* 1. Áp dụng cho các bảng chính */
+#history-table th, #history-table td,
+#waiting-list-table th, #waiting-list-table td,
+#bulk-order-editable-table th, #bulk-order-editable-table td {
+    /* Thêm đường kẻ bên phải cho mỗi ô */
+    border-right: 1px solid var(--border-light);
+}
+
+/* 2. Bỏ đường kẻ thừa ở cột cuối cùng cho gọn */
+#history-table th:last-child, #history-table td:last-child,
+#waiting-list-table th:last-child, #waiting-list-table td:last-child,
+#bulk-order-editable-table th:last-child, #bulk-order-editable-table td:last-child {
+    border-right: none;
+}
+
+/* 3. Đảm bảo màu đường kẻ đúng với giao diện tối (Dark Mode) */
+body.dark-mode #history-table th, body.dark-mode #history-table td,
+body.dark-mode #waiting-list-table th, body.dark-mode #waiting-list-table td,
+body.dark-mode #bulk-order-editable-table th, body.dark-mode #bulk-order-editable-table td {
+    border-right-color: var(--border-dark);
+}
     </style>
 </head>
 <body data-theme="light">
@@ -5615,86 +5703,56 @@ function downloadInvoice(event, fileUrl) {
     }
 }
 
+function closeAllActionMenus(exceptElement = null) {
+    document.querySelectorAll('.action-menu-dropdown.show').forEach(dropdown => {
+        if (dropdown !== exceptElement) {
+            dropdown.classList.remove('show', 'show-upwards');
+        }
+    });
+}
+
+// Hàm toggleActionMenu ĐÃ SỬA LỖI
 function toggleActionMenu(event, buttonElement) {
-    event.stopPropagation(); // Ngăn sự kiện click lan ra hàng của bảng
+    event.stopPropagation(); // Ngăn sự kiện lan ra ngoài
 
     const dropdownToOpen = buttonElement.nextElementSibling;
-    const isAlreadyOpen = activeDropdown.element === dropdownToOpen;
+    if (!dropdownToOpen) return;
 
-    // Luôn đóng menu đang mở trước khi thực hiện hành động mới
-    closeActiveDropdown();
+    const isAlreadyOpen = dropdownToOpen.classList.contains('show');
 
-    // Nếu menu vừa đóng không phải là menu được click, thì ta sẽ mở menu mới
-    if (!isAlreadyOpen && dropdownToOpen) {
-        // Lưu lại menu và vị trí gốc của nó
-        activeDropdown = { 
-            element: dropdownToOpen, 
-            originalParent: dropdownToOpen.parentElement 
-        };
+    // Luôn đóng tất cả menu khác trước
+    closeAllActionMenus(dropdownToOpen);
 
-        // Nhấc menu ra và gắn vào body để thoát khỏi các giới hạn của bảng
-        document.body.appendChild(dropdownToOpen);
-        
-        // Hiển thị menu. Lớp 'show' sẽ đổi position thành 'fixed'
+    // Bật/tắt menu hiện tại
+    if (isAlreadyOpen) {
+        dropdownToOpen.classList.remove('show', 'show-upwards');
+    } else {
         dropdownToOpen.classList.add('show');
 
-        // Sử dụng requestAnimationFrame để đảm bảo trình duyệt đã tính toán kích thước của menu
-        requestAnimationFrame(() => {
-            if (!dropdownToOpen.classList.contains('show')) return;
-
-            const buttonRect = buttonElement.getBoundingClientRect();
-            const menuRect = dropdownToOpen.getBoundingClientRect();
-
-            let top, left;
-
-            // Xử lý vị trí theo chiều dọc (Top/Bottom)
-            if (buttonRect.bottom + menuRect.height > window.innerHeight - 10) {
-                // Không đủ không gian ở dưới -> Bung lên trên
-                top = buttonRect.top - menuRect.height - 2;
-                dropdownToOpen.classList.add('show-upwards');
-            } else {
-                // Đủ không gian -> Bung xuống dưới (mặc định)
-                top = buttonRect.bottom + 2;
-                dropdownToOpen.classList.remove('show-upwards');
-            }
-
-            // Xử lý vị trí theo chiều ngang (Left/Right)
-            if (buttonRect.left + menuRect.width > window.innerWidth - 10) {
-                // Bị tràn lề phải -> Căn theo lề phải của nút
-                left = buttonRect.right - menuRect.width;
-            } else {
-                // Mặc định -> Căn theo lề trái của nút
-                left = buttonRect.left;
-            }
-
-            // Gán vị trí cuối cùng cho menu
-            dropdownToOpen.style.top = `${top}px`;
-            dropdownToOpen.style.left = `${left}px`;
-        });
+        // KIỂM TRA VỊ TRÍ ĐỂ MỞ LÊN TRÊN NẾU CẦN
+        // Đây là chìa khóa để menu không bị khuất ở cuối bảng
+        const menuRect = dropdownToOpen.getBoundingClientRect();
+        const wrapper = dropdownToOpen.closest('.table-wrapper');
+        const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : { bottom: window.innerHeight };
+        
+        // Nếu đáy của menu vượt quá đáy của vùng cuộn
+        if (menuRect.bottom > wrapperRect.bottom) {
+            dropdownToOpen.classList.add('show-upwards');
+        } else {
+            dropdownToOpen.classList.remove('show-upwards');
+        }
     }
 }
+
+// Gắn sự kiện để đóng menu khi click ra ngoài
 window.addEventListener('click', function(event) {
-    // Nếu click vào một phần tử không nằm trong menu đang mở, hãy đóng nó
-    if (activeDropdown.element && !activeDropdown.element.contains(event.target)) {
-        closeActiveDropdown();
+    const target = event.target;
+    // Nếu click ra ngoài một nút toggle VÀ ngoài một menu đang mở
+    if (!target.closest('.action-menu-toggle') && !target.closest('.action-menu-dropdown')) {
+        closeAllActionMenus();
     }
 });
 
-function closeActiveDropdown() {
-    if (activeDropdown.element && activeDropdown.originalParent) {
-        // Ẩn menu trước khi trả về
-        activeDropdown.element.classList.remove('show', 'show-upwards');
-        
-        // Reset các style inline đã gán bởi JS
-        activeDropdown.element.style.top = '';
-        activeDropdown.element.style.left = '';
-        
-        // Trả dropdown về lại vị trí ban đầu trong cây DOM
-        activeDropdown.originalParent.appendChild(activeDropdown.element);
-    }
-    // Reset biến trạng thái
-    activeDropdown = { element: null, originalParent: null };
-}
 function pollForUpdates() {
     // Chỉ thực hiện nếu trang không ở trong trạng thái loading
     const loadingModal = document.getElementById('loading-modal');
@@ -5730,10 +5788,9 @@ function startPolling() {
     pollingInterval = setInterval(pollForUpdates, POLLING_RATE_MS);
     console.log(`Đã bắt đầu cơ chế polling mỗi ${POLLING_RATE_MS / 1000} giây.`);
 }
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
-    const tableWrapper = tbody ? tbody.closest('.table-wrapper') : null; // Tìm vùng bọc bảng
+    const tableWrapper = tbody ? tbody.closest('.table-wrapper') : null;
     const table = document.getElementById('history-table');
 
     if (!tbody || !tableWrapper || !table) {
@@ -5741,111 +5798,80 @@ function renderHistoryTable(dataToRender) {
         return;
     }
 
-    // Luôn xóa placeholder cũ trước khi làm bất cứ điều gì
     const oldPlaceholder = tableWrapper.querySelector('.table-placeholder-pro');
-    if (oldPlaceholder) {
-        oldPlaceholder.remove();
-    }
+    if (oldPlaceholder) oldPlaceholder.remove();
     
-    // Xử lý trường hợp không có dữ liệu
     if (!dataToRender || dataToRender.length === 0) {
-        tbody.innerHTML = ''; // Dọn sạch bảng
-        table.style.display = ''; // Đảm bảo thẻ table vẫn hiển thị để giữ cấu trúc a-header
-        
-        // Tạo và chèn placeholder mới vào wrapper
-        const placeholderHTML = `
-            <div class="table-placeholder-pro">
-                <i class="fas fa-folder-open"></i>
-                <span>Chưa có yêu cầu nào trong danh sách.</span>
-            </div>
-        `;
-        // Chèn placeholder vào ngay sau thẻ table
+        tbody.innerHTML = '';
+        table.style.display = 'table';
+        const placeholderHTML = `<div class="table-placeholder-pro"><i class="fas fa-folder-open"></i><span>Chưa có yêu cầu nào trong danh sách.</span></div>`;
         table.insertAdjacentHTML('afterend', placeholderHTML);
-
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
 
-    // Nếu có dữ liệu, đảm bảo bảng được hiển thị
-    table.style.display = '';
+    table.style.display = 'table';
+
+    const currentUser = sessionStorage.getItem("currentConsultant");
+    const isAdmin = currentUser === ADMIN_USER;
 
     tbody.innerHTML = dataToRender.map((row, i) => {
         const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
-        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
         const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
-        const statusClass = getStatusClass(statusTextOriginal);
         const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
 
-        const customerInfoHtml = `
-            <div class="font-semibold text-gray-800 dark:text-gray-100">${row["Tên khách hàng"] || "N/A"}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">${orderNumber}</div>
-        `;
-
-        const carInfoHtml = `
-            <div class="font-medium text-gray-800 dark:text-gray-200">${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</div>
-            <div class="text-xs flex items-center gap-2">
-                <span class="car-exterior-color" style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span>
-                <span class="text-gray-400 dark:text-gray-500">/</span>
-                <span>${row["Nội thất"] || "N/A"}</span>
-            </div>
-        `;
-
-        let primaryActionHtml = '';
-        let dropdownItemsHtml = '';
-        let hasDropdownActions = false;
-
         const canDownloadInvoice = !!row.LinkHoaDonDaXuat;
-
-        if (canDownloadInvoice) {
-            primaryActionHtml = `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>`;
-        } else if (normalizedStatusText === 'đã ghép') {
-            primaryActionHtml = `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')">Xuất Hóa Đơn</button>`;
-        }
-
+        const canRequestInvoice = normalizedStatusText === 'đã ghép';
         const canUpdateFiles = normalizedStatusText === 'yêu cầu bổ sung';
         const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
+        const canAdminUploadInvoice = isAdmin && ['chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn'].includes(normalizedStatusText);
+        
+        let primaryActionHtml = '';
+        let dropdownItemsHtml = '';
 
-        if (canUpdateFiles) {
-            dropdownItemsHtml += `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>`;
-            hasDropdownActions = true;
+        // Xây dựng hành động chính
+        if (canDownloadInvoice) {
+            primaryActionHtml = `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>`;
+        } else if (canAdminUploadInvoice) {
+            primaryActionHtml = `<button class="btn btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>`;
+        } else if (canRequestInvoice) {
+            primaryActionHtml = `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>`;
+        } else if (canUpdateFiles) {
+            primaryActionHtml = `<button class="btn btn-sm" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit"></i> Bổ Sung File</button>`;
         }
-        
-        if (canCancel && hasDropdownActions) {
-            dropdownItemsHtml += `<div class="divider"></div>`;
+
+        // Xây dựng các hành động phụ cho menu
+        if (canUpdateFiles && !primaryActionHtml.includes('openSupplementaryFileModal')) {
+             dropdownItemsHtml += `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>`;
         }
-        
         if (canCancel) {
+            if (dropdownItemsHtml !== '') {
+                dropdownItemsHtml += `<div class="divider"></div>`;
+            }
             dropdownItemsHtml += `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>`;
-            hasDropdownActions = true;
         }
 
+        // Ghép nối HTML cuối cùng cho ô hành động
         let finalActionCellHtml = '<div class="primary-action-group">';
         finalActionCellHtml += primaryActionHtml;
-
-        if (hasDropdownActions) {
+        if (dropdownItemsHtml !== '') {
             finalActionCellHtml += `
                 <button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác">
                     <i class="fas fa-ellipsis-v"></i>
                 </button>
-                <div class="action-menu-dropdown">
-                    ${dropdownItemsHtml}
-                </div>
+                <div class="action-menu-dropdown">${dropdownItemsHtml}</div>
             `;
         }
-        
         finalActionCellHtml += '</div>';
-        
-        return `
-            <tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
-               <td data-label="STT"><span>${i + 1}</span></td>
-               <td data-label="Khách Hàng / Số Đơn Hàng">${customerInfoHtml}</td>
-               <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || "N/A"}</td>
-               <td data-label="Thông Tin Xe">${carInfoHtml}</td>
-               <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
-               <td class="actions-cell" onclick="event.stopPropagation();">
-                    ${finalActionCellHtml}
-               </td>
-            </tr>`;
+
+        // Tạo HTML cho các ô còn lại
+        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
+        const statusClass = getStatusClass(statusTextOriginal);
+        const customerInfoHtml = `<div class="font-semibold text-gray-800 dark:text-gray-100">${row["Tên khách hàng"] || "N/A"}</div><div class="text-xs text-gray-500 dark:text-gray-400 font-mono">${orderNumber}</div>`;
+        const carInfoHtml = `<div class="font-medium text-gray-800 dark:text-gray-200">${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</div><div class="text-xs flex items-center gap-2"><span class="car-exterior-color" style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span><span class="text-gray-400 dark:text-gray-500">/</span><span>${row["Nội thất"] || "N/A"}</span></div>`;
+
+        // Trả về toàn bộ dòng <tr>
+        return `<tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}"><td data-label="STT"><span>${i + 1}</span></td><td data-label="Khách Hàng / Số Đơn Hàng">${customerInfoHtml}</td><td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || "N/A"}</td><td data-label="Thông Tin Xe">${carInfoHtml}</td><td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td><td class="actions-cell" onclick="event.stopPropagation();">${finalActionCellHtml}</td></tr>`;
     }).join("");
 
     document.getElementById("total-don-count").textContent = dataToRender.length;
