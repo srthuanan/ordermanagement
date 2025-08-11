@@ -845,7 +845,93 @@ body.dark-mode .total-vehicles {
 
 /* Áp dụng cho các màn hình nhỏ hơn 768px (máy tính bảng và điện thoại) */
 @media (max-width: 768px) {
+/* ================================================= */
+/* === GIAO DIỆN THẺ (CARD VIEW) CHO BẢNG DỮ LIỆU === */
+/* ================================================= */
 
+/* Ẩn bảng và tiêu đề gốc trên di động */
+.data-table thead,
+.data-table tr {
+    display: none;
+}
+
+/* Hiển thị container cho các thẻ */
+.data-table tbody.card-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Khoảng cách giữa các thẻ */
+}
+
+/* Định dạng cho mỗi thẻ xe */
+.vehicle-card {
+    display: block; /* Ghi đè lên display: none của tr */
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast) ease;
+}
+body.dark-mode .vehicle-card {
+    background-color: var(--card-bg-dark);
+    border-color: var(--border-dark);
+}
+
+/* Phần đầu của thẻ, chứa thông tin chính */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+body.dark-mode .card-header {
+    border-bottom-color: var(--border-dark);
+}
+
+.card-header .car-model {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-light);
+}
+body.dark-mode .card-header .car-model {
+    color: var(--text-dark);
+}
+
+/* Phần thân thẻ, chứa các chi tiết */
+.card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia thành 2 cột */
+    gap: 12px; /* Khoảng cách giữa các chi tiết */
+}
+
+/* Mỗi dòng thông tin (VD: Ngoại thất: Đỏ) */
+.card-row {
+    font-size: 13px;
+}
+
+/* Nhãn (VD: Ngoại thất) */
+.card-row .card-label {
+    display: block;
+    color: var(--text-muted-light);
+    font-size: 11px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+body.dark-mode .card-row .card-label {
+    color: var(--text-muted-dark);
+}
+
+/* Giá trị (VD: Đỏ) */
+.card-row .card-value {
+    font-weight: 600;
+}
+
+/* Dòng VIN và Mã DMS sẽ chiếm trọn 2 cột cho nổi bật */
+.card-row.full-width {
+    grid-column: 1 / -1;
+}
     /* 1. Điều chỉnh lại phần nội dung chính */
     .main-content {
         padding: 15px; /* Giảm padding để có nhiều không gian hơn */
@@ -1268,44 +1354,114 @@ body.dark-mode .total-vehicles {
             }
         }
 
-        function renderTable() {
-            const headers = document.querySelectorAll("#data-table th");
-            headers.forEach((th, index) => {
-                th.innerHTML = th.textContent.replace(/▲|▼/g, '').trim();
-                if (sortColumn === index) {
-                    th.innerHTML += ` <span style="font-size: 10px;">${sortDirection === 'asc' ? '▲' : '▼'}</span>`;
-                }
+        // === HÀM RENDER ĐÃ NÂNG CẤP VỚI GIAO DIỆN THẺ TỰ ĐỘNG ===
+function renderTable() {
+    const tbody = document.getElementById("table-body");
+    if (!tbody) return;
+
+    // Lấy dữ liệu cho trang hiện tại
+    const paginatedData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+    // Kiểm tra kích thước màn hình
+    const isMobileView = window.innerWidth <= 768;
+
+    if (isMobileView) {
+        // --- GIAO DIỆN THẺ (CARD VIEW) CHO DI ĐỘNG ---
+        tbody.className = 'card-view-container'; // Áp dụng class để CSS hoạt động
+        tbody.innerHTML = ""; 
+
+        if (paginatedData.length === 0) {
+            // Hiển thị thông báo khi không có dữ liệu
+            const emptyCard = document.createElement('div');
+            emptyCard.className = 'vehicle-card';
+            emptyCard.innerHTML = 'Không tìm thấy xe nào.';
+            tbody.appendChild(emptyCard);
+        } else {
+            paginatedData.forEach(row => {
+                const card = document.createElement('div');
+                card.className = 'vehicle-card';
+
+                // Dữ liệu từ mảng `row`:
+                // 0: Dòng xe, 1: Phiên bản, 2: Ngoại thất, 3: Nội thất,
+                // 4: VIN, 5: Mã DMS, 6: Trạng thái, 7: Ngày nhập
+                
+                const carModel = `${row[0] || ''} ${row[1] || ''}`;
+                const statusContent = row[6] || 'N/A';
+                const exteriorContent = row[2] || 'N/A';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="car-model">${carModel}</span>
+                        <span class="status-badge ${getStatusClassForKhoXe(statusContent)}">${statusContent}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-row">
+                            <span class="card-label">Ngoại thất</span>
+                            <span class="card-value" style="${getExteriorColorStyle(exteriorContent)}">${exteriorContent}</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">Nội thất</span>
+                            <span class="card-value">${row[3] || 'N/A'}</span>
+                        </div>
+                        <div class="card-row full-width">
+                            <span class="card-label">Số VIN</span>
+                            <span class="card-value">${row[4] || 'N/A'}</span>
+                        </div>
+                        <div class="card-row full-width">
+                            <span class="card-label">Mã DMS</span>
+                            <span class="card-value">${row[5] || 'N/A'}</span>
+                        </div>
+                         <div class="card-row full-width">
+                            <span class="card-label">Ngày nhập kho</span>
+                            <span class="card-value">${row[7] || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+                tbody.appendChild(card);
             });
-
-            const tbody = document.getElementById("table-body");
-            if (!tbody) return;
-            tbody.innerHTML = ""; 
-            const paginatedData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-
-            if (paginatedData.length === 0) {
-                tbody.innerHTML = `<tr class="table-placeholder"><td colspan="9">Không tìm thấy xe nào.</td></tr>`;
-            } else {
-                paginatedData.forEach((row, index) => {
-                    const tr = document.createElement("tr");
-                    // No onclick event anymore
-
-                    let cellHtml = `<td>${(currentPage - 1) * rowsPerPage + index + 1}</td>`;
-                    row.forEach((cellData, cellIndex) => {
-                        let content = cellData || 'N/A';
-                        if (cellIndex === 2) { // Exterior
-                            content = `<span style="${getExteriorColorStyle(content)}">${content}</span>`;
-                        } else if (cellIndex === 6) { // Status
-                            content = `<span class="status-badge ${getStatusClassForKhoXe(content)}">${content}</span>`;
-                        }
-                        cellHtml += `<td>${content}</td>`;
-                    });
-                    tr.innerHTML = cellHtml;
-                    tbody.appendChild(tr);
-                });
-            }
-            updatePagination();
-            updateTotalVehicles();
         }
+
+    } else {
+        // --- GIAO DIỆN BẢNG TRUYỀN THỐNG CHO DESKTOP ---
+        tbody.className = ''; // Xóa class của card view
+        
+        // Cập nhật tiêu đề bảng với icon sắp xếp
+        const headers = document.querySelectorAll("#data-table th");
+        headers.forEach((th, index) => {
+            th.innerHTML = th.textContent.replace(/▲|▼/g, '').trim();
+            if (sortColumn === index) {
+                th.innerHTML += ` <span style="font-size: 10px;">${sortDirection === 'asc' ? '▲' : '▼'}</span>`;
+            }
+        });
+        
+        tbody.innerHTML = ""; // Xóa nội dung cũ
+        if (paginatedData.length === 0) {
+            tbody.innerHTML = `<tr class="table-placeholder" style="display: table-row;"><td colspan="9">Không tìm thấy xe nào.</td></tr>`;
+        } else {
+            paginatedData.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.style.display = 'table-row';
+
+                let cellHtml = `<td>${(currentPage - 1) * rowsPerPage + index + 1}</td>`;
+                row.forEach((cellData, cellIndex) => {
+                    let content = cellData || 'N/A';
+                    if (cellIndex === 2) { // Ngoại thất
+                        content = `<span style="${getExteriorColorStyle(content)}">${content}</span>`;
+                    } else if (cellIndex === 6) { // Trạng thái
+                        content = `<span class="status-badge ${getStatusClassForKhoXe(content)}">${content}</span>`;
+                    }
+                    cellHtml += `<td>${content}</td>`;
+                });
+                tr.innerHTML = cellHtml;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    // Cập nhật phân trang và tổng số xe (dùng chung cho cả 2 giao diện)
+    updatePagination();
+    updateTotalVehicles();
+}
         
         function sortTable(columnIndex) {
             sortDirection = sortColumn === columnIndex && sortDirection === 'asc' ? 'desc' : 'asc';
