@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kho Xe - VinFast Thuận An</title>
+    <title>Kho Xe</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -24,7 +24,6 @@
             --text-muted-light: #6c757d; /* Text phụ */
             --border-light: #e9ecef; /* Viền siêu nhạt */
             /* Dán vào trong thẻ :root */
---exterior-red-text: #c0392b;
 --exterior-orange-text: #f39c12;
 --exterior-blue-text: #2980b9;
 --exterior-yellow-text: #b8860b;
@@ -32,7 +31,6 @@
 --exterior-green-text: #27ae60;
 --exterior-grey-text: #7f8c8d;
 --exterior-white-text: #2c3e50;
---exterior-bronze-text: #a1662f;
             /* Bảng màu Dark Mode */
             --background-dark: #121212; /* Nền đen sâu */
             --card-bg-dark: #1e1e1e; /* Nền card tối */
@@ -136,15 +134,26 @@ body.dark-mode .navbar {
 }
 
 .navbar .logo-title {
-    font-size: 16px;         /* Thay đổi từ 16px thành 13px */
-    font-weight: 400;        /* Thay đổi từ 700 thành 500 */
-    color: var(--text-muted-light); /* Thay đổi màu chữ */
-    flex-grow: 1;
-    text-align: center;
-    margin: 0 10px;
+    font-size: 16px;          /* Trả lại kích thước to hơn một chút */
+    font-weight: 700;         /* Đậm hơn cho rõ ràng */
+    color: var(--text-light); /* Màu chữ chính */
+
+    /* Căn giữa tuyệt đối cho đẹp */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
 }
+
 body.dark-mode .navbar .logo-title {
-    color: var(--text-muted-dark); /* Thay đổi để khớp với màu chữ chân trang ở chế độ tối */
+    color: var(--text-dark); /* Màu chữ chính cho dark mode */
+}
+
+/* Ẩn tiêu đề trên màn hình quá nhỏ để nhường chỗ cho nút */
+@media (max-width: 420px) {
+    .navbar .logo-title {
+        display: none;
+    }
 }
 
 .navbar .tabs {
@@ -731,7 +740,6 @@ body.dark-mode .total-vehicles {
         }
         body.dark-mode .close-suggestion-btn:hover { color: var(--text-dark); }
 /* Dán vào trong body.dark-mode */
---exterior-red-text: #e74c3c;
 --exterior-orange-text: #f5b041;
 --exterior-blue-text: #5dade2;
 --exterior-yellow-text: #f4d03f;
@@ -739,7 +747,6 @@ body.dark-mode .total-vehicles {
 --exterior-green-text: #2ecc71;
 --exterior-grey-text: #bdc3c7;
 --exterior-white-text: #ecf0f1;
---exterior-bronze-text: #d38d5f;
         /* === AI CHATBOT (ĐỒNG BỘ) === */
         #ai-chat-toggle {
             position: fixed; bottom: 70px; right: 25px; width: 60px; height: 60px; border-radius: 50%;
@@ -832,7 +839,97 @@ body.dark-mode .total-vehicles {
             color: var(--text-dark);
             border-color: var(--border-dark);
         }
+/* ================================================= */
+/* === MÃ CSS TỐI ƯU HÓA CHO THIẾT BỊ DI ĐỘNG === */
+/* ================================================= */
 
+/* Áp dụng cho các màn hình nhỏ hơn 768px (máy tính bảng và điện thoại) */
+@media (max-width: 768px) {
+
+    /* 1. Điều chỉnh lại phần nội dung chính */
+    .main-content {
+        padding: 15px; /* Giảm padding để có nhiều không gian hơn */
+    }
+
+    /* 2. Sắp xếp lại khu vực bộ lọc cho gọn gàng */
+    .filter-section {
+        grid-template-columns: 1fr; /* Chuyển thành 1 cột duy nhất */
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .filter-group {
+        flex-direction: column; /* Xếp các bộ lọc theo chiều dọc */
+        align-items: stretch;   /* Kéo dãn các bộ lọc cho bằng nhau */
+    }
+
+    .button-group {
+        justify-self: start; /* Căn các nút về bên trái trên di động */
+        flex-wrap: wrap;     /* Cho phép các nút xuống dòng nếu không đủ chỗ */
+    }
+    
+    .total-vehicles {
+        width: 100%; /* Cho huy hiệu tổng số xe chiếm toàn bộ chiều rộng */
+        text-align: center;
+        padding: 10px;
+    }
+
+    /* 3. Tinh chỉnh lại thẻ chứa bảng */
+    .data-card {
+        padding: 15px;
+        /* Cho phép chiều cao tự động thay vì cố định */
+        height: auto; 
+        min-height: 60vh; /* Đặt chiều cao tối thiểu */
+    }
+    
+    .data-table {
+        font-size: 12px; /* Giảm cỡ chữ trong bảng một chút */
+    }
+
+    /* 4. Cho phép Bảng dữ liệu có thể cuộn ngang (QUAN TRỌNG NHẤT) */
+    .table-container {
+        overflow-x: auto; /* Thêm thanh cuộn ngang khi cần */
+        -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt hơn trên iOS */
+    }
+
+    /* Thêm một chỉ dẫn trực quan cho người dùng biết bảng có thể cuộn */
+    .table-container::after {
+        content: 'Trượt ngang để xem thêm ->';
+        display: block;
+        text-align: right;
+        font-size: 11px;
+        color: var(--text-muted-light);
+        padding: 8px 5px 0 0;
+        font-style: italic;
+    }
+    body.dark-mode .table-container::after {
+        color: var(--text-muted-dark);
+    }
+    
+    /* 5. Điều chỉnh bảng phân trang */
+    .pagination button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    /* 6. Tinh chỉnh modal gợi ý */
+    .modal-suggestion-content {
+        padding: 20px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    /* 7. Điều chỉnh cửa sổ AI Chat */
+    #ai-chat-window {
+        width: 95vw;
+        height: 70vh;
+    }
+
+    #ai-chat-toggle {
+        bottom: 60px; /* Di chuyển nút AI lên một chút để không bị footer che */
+        right: 15px;
+    }
+}
     </style>
 </head>
 <body>
@@ -867,11 +964,6 @@ body.dark-mode .total-vehicles {
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
     </div>
-    
-    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu">
-        <i class="fas fa-bars"></i>
-    </button>
-
 
     <div class="main-content" id="main-content">
         <div class="filter-section" data-aos="fade-up">
