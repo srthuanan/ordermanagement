@@ -2459,7 +2459,7 @@ async function login(e) {
             showToast(translations[language]["login-success"], 'success');
             
             const userDisplayNameForWelcome = consultantName || result.username;
-            displayInteractiveWelcomeMessage(userDisplayNameForWelcome); 
+            // displayInteractiveWelcomeMessage(userDisplayNameForWelcome); 
             
             updateUIBasedOnLogin();
             fetchDashboardData();
