@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kho Xe</title>
+    <title>Kho Xe - VinFast Thuận An</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -945,9 +945,10 @@ body.dark-mode .card-row .card-label {
     }
 
     .filter-group {
-        flex-direction: column; /* Xếp các bộ lọc theo chiều dọc */
-        align-items: stretch;   /* Kéo dãn các bộ lọc cho bằng nhau */
-    }
+    flex-direction: column; /* Xếp các bộ lọc theo chiều dọc */
+    align-items: stretch;   /* Kéo dãn các bộ lọc cho bằng nhau */
+    gap: 8px;               /* <-- THÊM DÒNG NÀY VÀO */
+}
 
     .button-group {
         justify-self: start; /* Căn các nút về bên trái trên di động */
@@ -955,10 +956,11 @@ body.dark-mode .card-row .card-label {
     }
     
     .total-vehicles {
-        width: 100%; /* Cho huy hiệu tổng số xe chiếm toàn bộ chiều rộng */
-        text-align: center;
-        padding: 10px;
-    }
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    order: -1;  /* <-- THÊM DÒNG NÀY VÀO */
+}
 
     /* 3. Tinh chỉnh lại thẻ chứa bảng */
     .data-card {
