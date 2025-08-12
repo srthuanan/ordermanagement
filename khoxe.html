@@ -638,7 +638,13 @@ body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--
                 display: none;
             }
         }
-        
+        footer {
+    left: 0;       /* Đặt lại vị trí bên trái về 0 */
+    width: 100%;   /* Cho chiều rộng full màn hình */
+}
+.mobile-menu-btn {
+        display: flex; /* Dùng flex để căn giữa icon bên trong nút */
+    }
         @media (max-width: 500px) {
             .filter-actions {
                 flex-direction: column;
@@ -918,25 +924,7 @@ body.dark-mode .pagination button:disabled {
             }
             .toggle-btn { display: none; } /* Hide desktop toggle button on mobile */
         }
-        .mobile-menu-btn {
-            display: none; /* Hide by default */
-            position: fixed;
-            top: 10px;
-            left: 15px;
-            z-index: 1002;
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            border: 1px solid var(--border-light);
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-medium) ease;
-        }
+
         @media (max-width: 900px) {
     .action-btn .btn-text {
        display: none;
