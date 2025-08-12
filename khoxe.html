@@ -3,832 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kho Xe - VinFast Thuận An</title>
+    <title>Kho Xe - VinFast Thuận An (Tối ưu)</title>
+    
+    <!-- Thư viện ngoài -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Fonts và Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
     <style>
+        /* ==========================================================================
+           1. Biến màu và thiết lập cơ bản (CSS Variables & Root)
+           ========================================================================== */
         :root {
-    /* === FONT CHỦ ĐẠO === */
-    --font-main: 'Plus Jakarta Sans', sans-serif;
+            /* Font */
+            --font-main: 'Plus Jakarta Sans', sans-serif;
 
-    /* === BẢNG MÀU CHUNG === */
-    --gradient-start: #4f46e5; /* Indigo */
-    --gradient-end: #14b8a6; /* Teal */
-    --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
-    
-    /* === BẢNG MÀU GIAO DIỆN SÁNG (LIGHT MODE) === */
-    --background-light: #f8f9fa;
-    --card-bg-light: #ffffff;
-    --text-light: #212529;
-    --text-muted-light: #6c757d;
-    --border-light: #e9ecef;
+            /* Colors */
+            --gradient-start: #4f46e5;
+            --gradient-end: #14b8a6;
+            --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            
+            /* Light Mode Palette */
+            --bg-light: #f8f9fa;
+            --card-bg-light: #ffffff;
+            --text-light: #212529;
+            --text-muted-light: #6c757d;
+            --border-light: #e9ecef;
 
-    /* === BẢNG MÀU GIAO DIỆN TỐI (DARK MODE) === */
-    --background-dark: #121212;
-    --card-bg-dark: #1e1e1e;
-    --text-dark: #e9ecef;
-    --text-muted-dark: #adb5bd;
-    --border-dark: #343a40;
-    
-    /* === MÀU CHỮ CHO NGOẠI THẤT (LIGHT MODE) === */
-    --exterior-orange-text: #f39c12;
-    --exterior-blue-text: #2980b9;
-    --exterior-yellow-text: #b8860b;
-    --exterior-pink-text: #d354aa;
-    --exterior-green-text: #27ae60;
-    --exterior-grey-text: #7f8c8d;
-    --exterior-white-text: #2c3e50; /* Dùng cho xe màu trắng để có độ tương phản */
-    --exterior-red-text: #c0392b; /* Thêm màu đỏ cho đầy đủ */
-    --exterior-bronze-text: #a1794b; /* Thêm màu đồng */
+            /* Dark Mode Palette */
+            --bg-dark: #121212;
+            --card-bg-dark: #1e1e1e;
+            --text-dark: #e9ecef;
+            --text-muted-dark: #adb5bd;
+            --border-dark: #343a40;
+            
+            /* Exterior Text Colors */
+            --exterior-orange-text: #f39c12;
+            --exterior-blue-text: #2980b9;
+            --exterior-yellow-text: #b8860b;
+            --exterior-pink-text: #d354aa;
+            --exterior-green-text: #27ae60;
+            --exterior-grey-text: #7f8c8d;
+            --exterior-white-text-on-light: #2c3e50;
+            --exterior-red-text: #c0392b;
+            --exterior-bronze-text: #a1794b;
 
-    /* === MÀU CHO TRẠNG THÁI (LIGHT MODE) === */
-    --status-san-sang-bg-light: #e0f2f1;
-    --status-san-sang-text-light: #00796b;
-    --status-da-ghep-bg-light: #e3f2fd;
-    --status-da-ghep-text-light: #1e88e5;
-    --status-chua-ghep-bg-light: #fff8e1;
-    --status-chua-ghep-text-light: #f57c00;
-    --status-da-ban-bg-light: #f1f2f6;
-    --status-da-ban-text-light: #57606f;
-    --status-cho-vbc-bg-light: #e8eaf6;
-    --status-cho-vbc-text-light: #3f51b5;
-    --status-default-bg-light: #eceff1;
-    --status-default-text-light: #546e7a;
+            /* Status Colors (Light) */
+            --status-san-sang-bg-light: #e0f2f1; --status-san-sang-text-light: #00796b;
+            --status-da-ghep-bg-light: #e3f2fd; --status-da-ghep-text-light: #1e88e5;
+            --status-chua-ghep-bg-light: #fff8e1; --status-chua-ghep-text-light: #f57c00;
+            --status-da-ban-bg-light: #f1f2f6; --status-da-ban-text-light: #57606f;
+            --status-cho-vbc-bg-light: #e8eaf6; --status-cho-vbc-text-light: #3f51b5;
+            --status-default-bg-light: #eceff1; --status-default-text-light: #546e7a;
 
-    /* === MÀU CHO TRẠNG THÁI (DARK MODE) === */
-    --status-san-sang-bg-dark: #1a3c3a;
-    --status-san-sang-text-dark: #80cbc4;
-    --status-da-ghep-bg-dark: #1c3a56;
-    --status-da-ghep-text-dark: #90caf9;
-    --status-chua-ghep-bg-dark: #4b3c1c;
-    --status-chua-ghep-text-dark: #ffe082;
-    --status-da-ban-bg-dark: #393e46;
-    --status-da-ban-text-dark: #a6acb3;
-    --status-cho-vbc-bg-dark: #2c304d;
-    --status-cho-vbc-text-dark: #b3bcf5;
-    --status-default-bg-dark: #37474f;
-    --status-default-text-dark: #b0bec5;
+            /* Status Colors (Dark) */
+            --status-san-sang-bg-dark: #1a3c3a; --status-san-sang-text-dark: #80cbc4;
+            --status-da-ghep-bg-dark: #1c3a56; --status-da-ghep-text-dark: #90caf9;
+            --status-chua-ghep-bg-dark: #4b3c1c; --status-chua-ghep-text-dark: #ffe082;
+            --status-da-ban-bg-dark: #393e46; --status-da-ban-text-dark: #a6acb3;
+            --status-cho-vbc-bg-dark: #2c304d; --status-cho-vbc-text-dark: #b3bcf5;
+            --status-default-bg-dark: #37474f; --status-default-text-dark: #b0bec5;
 
-    /* === BÓNG ĐỔ & HIỆU ỨNG === */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1);
-    --shadow-glow-dark: 0 0 0 4px rgb(20 184 166 / 0.2);
+            /* Shadows & Effects */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1);
+            --shadow-glow-dark: 0 0 0 4px rgb(20 184 166 / 0.2);
 
-    /* === TỐC ĐỘ CHUYỂN ĐỘNG === */
-    --transition-fast: 0.2s;
-    --transition-medium: 0.3s;
-    --transition-slow: 0.5s;
-}
+            /* Transitions */
+            --transition-fast: 0.2s;
+            --transition-medium: 0.3s;
+            --transition-slow: 0.5s;
+        }
 
-        /* === THIẾT LẬP CƠ BẢN & THANH CUỘN === */
+        /* ==========================================================================
+           2. Layout & Global Styles
+           ========================================================================== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: var(--font-main);
-            background: var(--background-light);
+            background: var(--bg-light);
             color: var(--text-light);
             min-height: 100vh;
             overflow-x: hidden;
             transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
         }
-        body.dark-mode {
-    background: var(--background-dark);
-    color: var(--text-dark);
 
-    /* === MÀU CHỮ CHO NGOẠI THẤT (DARK MODE) === */
-    --exterior-orange-text: #f5b041;
-    --exterior-blue-text: #5dade2;
-    --exterior-yellow-text: #f4d03f;
-    --exterior-pink-text: #e573e0;
-    --exterior-green-text: #2ecc71;
-    --exterior-grey-text: #bdc3c7;
-    --exterior-white-text: #ecf0f1;
-    --exterior-red-text: #e74c3c;
-    --exterior-bronze-text: #c5a37f;
-}
+        body.dark-mode {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            --exterior-orange-text: #f5b041;
+            --exterior-blue-text: #5dade2;
+            --exterior-yellow-text: #f4d03f;
+            --exterior-pink-text: #e573e0;
+            --exterior-green-text: #2ecc71;
+            --exterior-grey-text: #bdc3c7;
+            --exterior-white-text-on-light: #ecf0f1;
+            --exterior-red-text: #e74c3c;
+            --exterior-bronze-text: #c5a37f;
+        }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-light);
-            border-radius: 4px;
-            transition: background var(--transition-medium) ease;
-        }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-light); }
         body.dark-mode ::-webkit-scrollbar-thumb { background: var(--border-dark); }
         body.dark-mode ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-dark); }
-        
-        /* === HEADER & FOOTER - ĐỒNG BỘ VỚI INDEX === */
-    
-       /* === NAVBAR (HEADER) ĐỒNG BỘ === */
-.navbar {
-    position: fixed;
-    top: 0;
-    width: 100%; /* Sẽ được điều chỉnh bởi JS */
-    height: 50px;
-    background-color: rgba(255, 255, 255, 0.75);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    padding: 0 20px;
-    z-index: 1000;
-    box-shadow: var(--shadow-sm);
-    border-bottom: 1px solid var(--border-light);
-    transition: all var(--transition-medium) ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-body.dark-mode .navbar {
-    background-color: rgba(30, 30, 30, 0.75);
-    border-color: var(--border-dark);
-}
 
-.navbar .logo-title {
-    font-size: 16px;          /* Trả lại kích thước to hơn một chút */
-    font-weight: 700;         /* Đậm hơn cho rõ ràng */
-    color: var(--text-light); /* Màu chữ chính */
-
-    /* Căn giữa tuyệt đối cho đẹp */
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-}
-
-body.dark-mode .navbar .logo-title {
-    color: var(--text-dark); /* Màu chữ chính cho dark mode */
-}
-
-/* Ẩn tiêu đề trên màn hình quá nhỏ để nhường chỗ cho nút */
-@media (max-width: 420px) {
-    .navbar .logo-title {
-        display: none;
-    }
-}
-
-.navbar .tabs {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-}
-.navbar .tabs::-webkit-scrollbar { display: none; }
-.navbar .tabs a {
-    padding: 8px 12px;
-    text-decoration: none;
-    color: var(--text-muted-light);
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: all var(--transition-fast) ease-out;
-    white-space: nowrap;
-    position: relative;
-}
-.navbar .tabs a:hover {
-    color: var(--text-light);
-    background: var(--background-light);
-}
-.navbar .tabs a.active {
-    background: var(--gradient);
-    color: white;
-    box-shadow: var(--shadow-md);
-}
-body.dark-mode .navbar .tabs a { color: var(--text-muted-dark); }
-body.dark-mode .navbar .tabs a:hover {
-    color: var(--text-dark);
-    background: var(--background-dark);
-}
-body.dark-mode .navbar .tabs a.active { color: white; }
-
-.navbar-controls { display: flex; align-items: center; gap: 10px; }
-.nav-btn, .theme-toggle-btn {
-    border: none;
-    border-radius: 50%;
-    background: var(--card-bg-light);
-    color: var(--text-muted-light);
-    transition: all var(--transition-medium) ease;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: 1px solid var(--border-light);
-    font-size: 16px;
-}
-.nav-btn:hover, .theme-toggle-btn:hover {
-    color: var(--text-light);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
-    background: var(--card-bg-dark);
-    color: var(--text-muted-dark);
-    border-color: var(--border-dark);
-}
-body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover {
-    color: var(--text-dark);
-}
-
-/* === FOOTER ĐỒNG BỘ (ĐÃ CỐ ĐỊNH) === */
-footer {
-    position: fixed;
-    bottom: 0;
-    z-index: 998; /* Nằm dưới sidebar nhưng trên nội dung chính */
-
-    /* Các thuộc tính cũ được giữ lại và thêm mới */
-    padding: 10px 0; /* Giảm padding một chút cho gọn hơn */
-    text-align: center;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted-light);
-    border-top: 1px solid var(--border-light);
-    background: var(--background-light); /* Thêm nền để không bị trong suốt */
-
-    /* Các thuộc tính sẽ được JS điều khiển */
-    left: 220px; /* Vị trí mặc định */
-    width: calc(100% - 220px); /* Chiều rộng mặc định */
-    transition: all var(--transition-medium) ease; /* Thêm hiệu ứng chuyển động */
-}
-
-body.dark-mode footer {
-    color: var(--text-muted-dark);
-    border-top-color: var(--border-dark);
-    background: var(--background-dark);
-}
-
-/* === CSS bổ sung cho nút menu mobile === */
-.mobile-menu-btn {
-    display: none; /* Hiển thị qua media query */
-    background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-light);
-    border-radius: 50%; width: 38px; height: 38px; font-size: 16px; cursor: pointer;
-    box-shadow: var(--shadow-sm); align-items: center; justify-content: center; transition: all var(--transition-medium) ease;
-}
-body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--text-dark); border-color: var(--border-dark); }
-
-        /* === SIDEBAR - GIAO DIỆN MỚI, ĐỒNG BỘ VỚI INDEX === */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 220px;
-            height: 100vh;
-            background-color: rgba(248, 249, 250, 0.75);
-            -webkit-backdrop-filter: blur(8px);
+        .navbar {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 60px;
+            padding: 0 20px;
+            background-color: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(8px);
-            padding: 15px;
-            padding-top: 80px; 
-            transition: width var(--transition-medium) ease, transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
-            z-index: 1000;
-            border-right: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-light);
+            transition: all var(--transition-medium) ease;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+            gap: 15px;
         }
-        .sidebar.collapsed { width: 70px; }
-        body.dark-mode .sidebar {
+        body.dark-mode .navbar {
             background-color: rgba(30, 30, 30, 0.75);
+            border-color: var(--border-dark);
+        }
+
+        .navbar .logo-title {
+            font-size: 18px; font-weight: 800;
+            color: var(--text-light);
+            position: absolute; left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        body.dark-mode .navbar .logo-title { color: var(--text-dark); }
+
+        .navbar-controls {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .nav-btn, .theme-toggle-btn {
+            border: 1px solid var(--border-light);
+            border-radius: 50%;
+            background: var(--card-bg-light);
+            color: var(--text-muted-light);
+            transition: all var(--transition-medium) ease;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+        }
+        .nav-btn:hover, .theme-toggle-btn:hover {
+            color: var(--text-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn {
+            background: var(--card-bg-dark);
+            color: var(--text-muted-dark);
+            border-color: var(--border-dark);
+        }
+        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover { color: var(--text-dark); }
+
+        .mobile-menu-btn { display: none; }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 240px; height: 100vh;
+            background-color: rgba(248, 249, 250, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 15px; padding-top: 80px; 
+            transition: width var(--transition-medium) ease, transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
+            z-index: 999;
+            border-right: 1px solid var(--border-light);
+            display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 80px; }
+        body.dark-mode .sidebar {
+            background-color: rgba(30, 30, 30, 0.85);
             border-right: 1px solid var(--border-dark);
         }
+
         .sidebar .logo { text-align: center; margin-bottom: 30px; }
         .sidebar .logo h1 {
-            font-size: 18px;
-            font-weight: 800;
-            background: var(--gradient);
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
+            font-size: 18px; font-weight: 800;
+            background: var(--gradient); color: transparent;
+            -webkit-background-clip: text; background-clip: text;
             transition: opacity var(--transition-medium) ease;
         }
         .sidebar.collapsed .logo h1 { opacity: 0; }
+
         .sidebar .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
+            display: flex; flex-direction: column; gap: 8px; flex-grow: 1;
         }
         .sidebar .menu a {
-            padding: 10px 12px;
-            text-decoration: none;
-            color: var(--text-muted-light);
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: all var(--transition-fast) ease-out;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 12px 15px; text-decoration: none;
+            color: var(--text-muted-light); font-size: 14px; font-weight: 600;
+            border-radius: 10px; transition: all var(--transition-fast) ease-out;
+            display: flex; align-items: center; gap: 15px;
         }
         .sidebar .menu a i {
-            font-size: 16px;
+            font-size: 18px;
             width: 24px;
             text-align: center;
             transition: transform var(--transition-medium) ease;
         }
-        .sidebar .menu a span {
-            transition: opacity 0.2s ease, max-width var(--transition-medium) ease;
-            white-space: nowrap;
-            overflow: hidden;
-            max-width: 100px;
-        }
+        .sidebar .menu a span { transition: opacity 0.2s ease, max-width var(--transition-medium) ease; white-space: nowrap; overflow: hidden; max-width: 120px; }
         .sidebar.collapsed .menu a { justify-content: center; }
         .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
-        .sidebar .menu a:hover {
-            color: var(--text-light);
-            background: var(--background-light);
-        }
-        body.dark-mode .sidebar .menu a { color: var(--text-muted-dark); }
-        body.dark-mode .sidebar .menu a:hover {
-            color: var(--text-dark);
-            background: var(--background-dark);
-        }
-        .sidebar .menu a.active {
-            background: var(--gradient);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
+        .sidebar .menu a:hover { color: var(--text-light); background: var(--bg-light); }
+        .sidebar .menu a.active { background: var(--gradient); color: white; box-shadow: var(--shadow-md); }
         .sidebar .menu a.active i { transform: scale(1.1); }
+        body.dark-mode .sidebar .menu a { color: var(--text-muted-dark); }
+        body.dark-mode .sidebar .menu a:hover { color: var(--text-dark); background: var(--bg-dark); }
         body.dark-mode .sidebar .menu a.active { color: white; }
 
-        /* === NÚT TOGGLE SIDEBAR - ĐỒNG BỘ === */
         .toggle-btn {
-            margin-top: auto; /* Đẩy nút xuống cuối */
-            width: calc(100% - 10px);
-            margin-left: 5px;
-            height: 40px;
-            background: var(--background-light);
-            border: 1px solid var(--border-light);
-            border-radius: 12px;
-            color: var(--text-muted-light);
-            font-size: 16px;
-            cursor: pointer;
+            margin-top: auto;
+            width: 100%; height: 44px;
+            background: var(--bg-light); border: 1px solid var(--border-light);
+            border-radius: 12px; color: var(--text-muted-light);
+            font-size: 16px; cursor: pointer;
             transition: all var(--transition-medium) ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .sidebar.collapsed .toggle-btn { width: 40px; margin-left: 0;}
-        .toggle-btn:hover {
-            border-color: var(--gradient-start);
-            color: var(--gradient-start);
-            transform: scale(1.05);
-        }
-        body.dark-mode .toggle-btn {
-            background: var(--background-dark);
-            border-color: var(--border-dark);
-            color: var(--text-muted-dark);
-        }
-         body.dark-mode .toggle-btn:hover {
-            border-color: var(--gradient-end);
-            color: var(--gradient-end);
-        }
+        .sidebar.collapsed .toggle-btn { width: 44px; margin: auto auto 0; }
+        .toggle-btn:hover { border-color: var(--gradient-start); color: var(--gradient-start); transform: scale(1.05); }
+        body.dark-mode .toggle-btn { background: var(--bg-dark); border-color: var(--border-dark); color: var(--text-muted-dark); }
+        body.dark-mode .toggle-btn:hover { border-color: var(--gradient-end); color: var(--gradient-end); }
         .toggle-btn i { transition: transform var(--transition-slow) cubic-bezier(0.19, 1, 0.22, 1); }
         .sidebar.collapsed .toggle-btn i { transform: rotate(180deg); }
 
-        /* === NÚT ĐIỀU KHIỂN HEADER - ĐỒNG BỘ === */
-        .navbar-controls {
-            position: fixed;
-            top: 10px;
-            right: 15px;
-            display: flex;
-            gap: 10px;
-            z-index: 1001;
-        }
-        .nav-btn, .theme-toggle {
-            border: none;
-            border-radius: 50%;
-            background: var(--card-bg-light);
-            color: var(--text-muted-light);
-            transition: all var(--transition-medium) ease;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: 1px solid var(--border-light);
-        }
-        .nav-btn:hover, .theme-toggle:hover {
-            color: var(--text-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle {
-            background: var(--card-bg-dark);
-            color: var(--text-muted-dark);
-            border-color: var(--border-dark);
-        }
-        body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle:hover {
-             color: var(--text-dark);
-        }
-
-        /* === NỘI DUNG CHÍNH (MAIN CONTENT) === */
         .main-content {
-            margin-left: 220px;
-            margin-top: 35px;
-            margin-bottom: 30px;
-            padding: 25px;
+            margin-left: 240px; padding-top: 60px; padding-bottom: 60px;
+            height: 100vh;
             transition: margin-left var(--transition-medium) ease;
+            display: flex; flex-direction: column;
         }
-        .main-content.collapsed {
-            margin-left: 70px;
-        }
+        .main-content.collapsed { margin-left: 80px; }
 
-       /* === KHU VỰC BỘ LỌC (FILTER SECTION) - BỐ CỤC MỚI CÓ THỂ THU GỌN === */
+        footer {
+            position: fixed; bottom: 0;
+            height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-muted-light);
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-light);
+            z-index: 998;
+            left: 240px; width: calc(100% - 240px);
+            transition: all var(--transition-medium) ease;
+        }
+        body.dark-mode footer { color: var(--text-muted-dark); border-top-color: var(--border-dark); background: var(--bg-dark); }
+        .main-content.collapsed + footer { left: 80px; width: calc(100% - 80px); }
+
+        /* ==========================================================================
+           3. Components (Filter, Table, Cards, Pagination)
+           ========================================================================== */
         .filter-section {
-            padding: 20px;
-            margin-bottom: 25px;
+            padding: 20px; margin: 20px; margin-bottom: 0;
             background: var(--card-bg-light);
-            border-radius: 16px;
-            box-shadow: var(--shadow-md);
+            border-radius: 16px; box-shadow: var(--shadow-md);
             border: 1px solid var(--border-light);
             transition: all var(--transition-medium) ease;
+            flex-shrink: 0;
         }
-        body.dark-mode .filter-section {
-            background: var(--card-bg-dark);
-            border-color: var(--border-dark);
-        }
+        body.dark-mode .filter-section { background: var(--card-bg-dark); border-color: var(--border-dark); }
 
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .search-container {
-            flex: 1 1 300px; /* Linh hoạt co giãn, chiều rộng cơ bản 300px */
-            position: relative;
-        }
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted-light);
-        }
-        body.dark-mode .search-container i {
-            color: var(--text-muted-dark);
-        }
-
+        .filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .search-container { flex: 1 1 300px; position: relative; }
+        .search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted-light); }
+        body.dark-mode .search-container i { color: var(--text-muted-dark); }
         #search-input {
-            width: 100%;
-            padding: 10px 15px 10px 40px; /* Thêm padding trái cho icon */
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            font-size: 14px;
-            background: var(--background-light);
-            color: var(--text-light);
+            width: 100%; padding: 12px 15px 12px 45px;
+            border: 1px solid var(--border-light); border-radius: 10px;
+            font-size: 14px; background: var(--bg-light); color: var(--text-light);
             transition: all var(--transition-medium) ease;
         }
-        body.dark-mode #search-input {
-            background: var(--background-dark);
-            color: var(--text-dark);
-            border-color: var(--border-dark);
-        }
-        #search-input:focus {
-            outline: none;
-            border-color: var(--gradient-start);
-            box-shadow: var(--shadow-glow-light);
-        }
-        body.dark-mode #search-input:focus {
-            border-color: var(--gradient-end);
-            box-shadow: var(--shadow-glow-dark);
-        }
+        body.dark-mode #search-input { background: var(--bg-dark); color: var(--text-dark); border-color: var(--border-dark); }
+        #search-input:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
+        body.dark-mode #search-input:focus { border-color: var(--gradient-end); box-shadow: var(--shadow-glow-dark); }
 
-        .filter-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-left: auto; /* Đẩy nhóm này về bên phải */
-        }
-        
+        .filter-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
         .total-vehicles {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-muted-light);
-            background-color: var(--background-light);
-            border: 1px solid var(--border-light);
-            padding: 8px 12px;
-            border-radius: 8px;
-            white-space: nowrap;
+            font-size: 14px; font-weight: 500; color: var(--text-muted-light);
+            background-color: var(--bg-light); border: 1px solid var(--border-light);
+            padding: 10px 15px; border-radius: 10px; white-space: nowrap;
         }
-        body.dark-mode .total-vehicles {
-            color: var(--text-muted-dark);
-            background-color: var(--background-dark);
-            border-color: var(--border-dark);
-        }
-        .total-vehicles strong {
-            font-weight: 700;
-            color: var(--text-light);
-        }
-        body.dark-mode .total-vehicles strong {
-             color: var(--text-dark);
-        }
-
+        body.dark-mode .total-vehicles { color: var(--text-muted-dark); background-color: var(--bg-dark); border-color: var(--border-dark); }
+        .total-vehicles strong { font-weight: 700; color: var(--text-light); }
+        body.dark-mode .total-vehicles strong { color: var(--text-dark); }
 
         .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-light);
-            background-color: var(--card-bg-light);
-            cursor: pointer;
-            transition: all var(--transition-fast) ease;
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 15px; border: 1px solid var(--border-light);
+            border-radius: 10px; font-size: 14px; font-weight: 600;
+            color: var(--text-light); background-color: var(--card-bg-light);
+            cursor: pointer; transition: all var(--transition-fast) ease;
             white-space: nowrap;
         }
-        body.dark-mode .action-btn {
-            background-color: var(--card-bg-dark);
-            color: var(--text-dark);
-            border-color: var(--border-dark);
-        }
-        .action-btn:hover {
-            border-color: var(--gradient-start);
-            color: var(--gradient-start);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-        body.dark-mode .action-btn:hover {
-            border-color: var(--gradient-end);
-            color: var(--gradient-end);
-        }
-        .action-btn .btn-text {
-            display: inline;
-        }
-        .action-btn i {
-             transition: transform var(--transition-medium) ease;
-        }
-        .action-btn.toggle-filter-btn.active i {
-            transform: rotate(180deg);
-        }
+        body.dark-mode .action-btn { background-color: var(--card-bg-dark); color: var(--text-dark); border-color: var(--border-dark); }
+        .action-btn:hover { border-color: var(--gradient-start); color: var(--gradient-start); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        body.dark-mode .action-btn:hover { border-color: var(--gradient-end); color: var(--gradient-end); }
+        .action-btn i { transition: transform var(--transition-medium) ease; }
+        .action-btn.toggle-filter-btn.active i { transform: rotate(180deg); }
 
         .collapsible-filters {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height var(--transition-medium) ease-out;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            padding-top: 0;
-            margin-top: 0;
-            border-top: 1px solid transparent;
+            max-height: 0; overflow: hidden;
+            transition: max-height var(--transition-medium) ease-out, padding-top var(--transition-medium) ease-out, margin-top var(--transition-medium) ease-out;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; border-top: 1px solid transparent;
         }
-
         .collapsible-filters.open {
-            margin-top: 20px;
-            padding-top: 20px;
+            margin-top: 20px; padding-top: 20px;
             border-top: 1px solid var(--border-light);
         }
-        body.dark-mode .collapsible-filters.open {
-            border-top-color: var(--border-dark);
-        }
+        body.dark-mode .collapsible-filters.open { border-top-color: var(--border-dark); }
 
         .collapsible-filters select {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            font-size: 14px;
-            background: var(--background-light);
-            color: var(--text-light);
+            width: 100%; padding: 12px 15px;
+            border: 1px solid var(--border-light); border-radius: 10px;
+            font-size: 14px; background: var(--bg-light); color: var(--text-light);
             transition: all var(--transition-medium) ease;
-             -webkit-appearance: none;
-            appearance: none;
+            -webkit-appearance: none; appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.7rem center;
-            background-repeat: no-repeat;
-            background-size: 1.2em 1.2em;
-            padding-right: 2.5rem;
+            background-position: right 0.8rem center; background-repeat: no-repeat; background-size: 1.25em 1.25em;
+            padding-right: 2.8rem;
         }
         body.dark-mode .collapsible-filters select {
-            background-color: var(--background-dark);
-            color: var(--text-dark);
-            border-color: var(--border-dark);
+            background-color: var(--bg-dark); color: var(--text-dark); border-color: var(--border-dark);
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
         }
-         .collapsible-filters select:focus {
-            outline: none;
-            border-color: var(--gradient-start);
-            box-shadow: var(--shadow-glow-light);
-        }
-        body.dark-mode  .collapsible-filters select:focus {
-            border-color: var(--gradient-end);
-            box-shadow: var(--shadow-glow-dark);
-        }
+        .collapsible-filters select:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
+        body.dark-mode .collapsible-filters select:focus { border-color: var(--gradient-end); box-shadow: var(--shadow-glow-dark); }
 
-        @media (max-width: 900px) {
-            .filter-actions {
-                margin-left: 0;
-                width: 100%;
-                justify-content: space-between;
-            }
-             .action-btn .btn-text {
-                display: none;
-            }
-        }
-        footer {
-    left: 0;       /* Đặt lại vị trí bên trái về 0 */
-    width: 100%;   /* Cho chiều rộng full màn hình */
-}
-.mobile-menu-btn {
-        display: flex; /* Dùng flex để căn giữa icon bên trong nút */
-    }
-        @media (max-width: 500px) {
-            .filter-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .total-vehicles {
-                text-align: center;
-            }
-        }
-
-        /* === KHU VỰC BẢNG DỮ LIỆU === */
         .content-grid {
-            display: grid;
-            grid-template-columns: 1fr; /* Thay đổi: Chỉ còn 1 cột */
-            gap: 25px;
-        }
-
-        /* === CONTAINER CHO BẢNG DỮ LIỆU === */
-        .data-card {
-            background: var(--card-bg-light);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border-light);
+            flex-grow: 1; min-height: 0;
+            margin: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            height: calc(100vh - 280px); /* Điều chỉnh chiều cao linh hoạt để phù hợp với bộ lọc mới */
         }
-        body.dark-mode .data-card {
-            background: var(--card-bg-dark);
-            border-color: var(--border-dark);
+        .data-card {
+            background: var(--card-bg-light); padding: 25px;
+            border-radius: 16px; box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            display: flex; flex-direction: column; gap: 20px;
+            width: 100%; height: 100%; min-height: 0;
         }
+        body.dark-mode .data-card { background: var(--card-bg-dark); border-color: var(--border-dark); }
 
-        /* === BẢNG DỮ LIỆU - HIỆN ĐẠI & DỄ ĐỌC === */
-        .table-container {
-            flex-grow: 1;
-            overflow: auto;
-            position: relative;
+        .table-container { flex-grow: 1; overflow: auto; position: relative; min-height: 0; }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .data-table th, .data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+        body.dark-mode .data-table th, body.dark-mode .data-table td { border-bottom-color: var(--border-dark); }
+        .data-table th {
+            position: sticky; top: 0; z-index: 2;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            border-bottom: 2px solid var(--border-light);
+            text-align: center; text-transform: uppercase;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+            cursor: pointer;
         }
-        .data-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 13px;
-        }
-        .data-table th, .data-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-light);
-            white-space: nowrap;
-        }
-        body.dark-mode .data-table th, body.dark-mode .data-table td {
+        body.dark-mode .data-table th {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
             border-bottom-color: var(--border-dark);
         }
-.data-table th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-color: var(--border-light); /* THAY ĐỔI: Dùng màu đậm hơn */
-    color: var(--text-light);
-    border-bottom: 2px solid var(--gradient-start);
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    padding: 12px 15px;
-}
-
-body.dark-mode .data-table th {
-    background-color: var(--border-dark); /* THAY ĐỔI: Dùng màu đậm hơn cho giao diện tối */
-    color: var(--text-dark);
-    border-bottom-color: var(--gradient-end);
-}
-        .data-table th .fas { margin-left: 5px; opacity: 0.7; }
-        .data-table tr:last-child td { border-bottom: none; }
-        .data-table tbody tr { transition: background-color var(--transition-fast) ease; }
-        .data-table tbody tr:hover {
-            background-color: var(--background-light);
-        }
-        body.dark-mode .data-table tbody tr:hover { background-color: var(--background-dark); }
-        .table-placeholder td { text-align: center !important; color: var(--text-muted-light); }
+        .data-table tbody tr:hover { background-color: var(--bg-light); }
+        body.dark-mode .data-table tbody tr:hover { background-color: var(--bg-dark); }
+        .table-placeholder td { text-align: center !important; color: var(--text-muted-light); padding: 40px 0; }
         body.dark-mode .table-placeholder td { color: var(--text-muted-dark); }
         
-        /* Loading overlay */
         .loading-overlay {
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             background: rgba(255, 255, 255, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            border-radius: 16px;
+            display: none; justify-content: center; align-items: center;
+            z-index: 100; border-radius: 16px;
         }
         .loading-overlay.active { display: flex; }
         .loading-spinner {
-            border: 4px solid var(--border-light); 
-            border-top: 4px solid var(--gradient-start); 
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            border: 4px solid var(--border-light); border-top: 4px solid var(--gradient-start); 
+            border-radius: 50%; width: 40px; height: 40px;
             animation: spin 1s linear infinite;
         }
         body.dark-mode .loading-overlay { background: rgba(18, 18, 18, 0.8); }
-        body.dark-mode .loading-spinner {
-            border: 4px solid var(--border-dark); 
-            border-top: 4px solid var(--gradient-end); 
-        }
+        body.dark-mode .loading-spinner { border: 4px solid var(--border-dark); border-top: 4px solid var(--gradient-end); }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        
-        /* === NÚT & PAGINATION === */
-.pagination button {
-    border: none;
-    padding: 10px;
-    font-size: 12px;
-    font-weight: 600; /* Chữ đậm */
-    border-radius: 10px; /* Bo góc */
-    cursor: pointer;
-    transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt mà */
-}
-.pagination button.active {
-    background: linear-gradient(135deg, #4f46e5, #14b8a6); /* Màu gradient */
-    color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
-}
-.pagination button.active:hover {
-    transform: translateY(-2px); /* Nhấc nút lên một chút */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 8px; flex-shrink: 0; }
+        .pagination button {
+            border: 1px solid var(--border-light);
+            background: var(--card-bg-light); color: var(--text-light);
+            padding: 8px 12px; font-size: 13px; font-weight: 600;
+            border-radius: 8px; cursor: pointer; transition: all var(--transition-fast) ease;
+        }
+        .pagination button:hover:not(:disabled) { border-color: var(--gradient-start); color: var(--gradient-start); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        body.dark-mode .pagination button { background: var(--card-bg-dark); color: var(--text-dark); border-color: var(--border-dark); }
+        body.dark-mode .pagination button:hover:not(:disabled) { border-color: var(--gradient-end); color: var(--gradient-end); }
+        .pagination button:disabled { background-color: var(--bg-light); color: var(--text-muted-light); cursor: not-allowed; }
+        body.dark-mode .pagination button:disabled { background-color: var(--bg-dark); color: var(--text-muted-dark); }
+        .pagination span { font-size: 14px; font-weight: 500; color: var(--text-muted-light); }
+        body.dark-mode .pagination span { color: var(--text-muted-dark); }
 
-.pagination button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-/* === BẮT ĐẦU: MÃ CSS SỬA KHOẢNG CÁCH PHÂN TRANG (PHIÊN BẢN 2) === */
-
-/* Dùng !important để buộc trình duyệt phải áp dụng */
-.pagination {
-    display: flex;
-    justify-content: center; /* Căn giữa các mục */
-    align-items: center;    /* Căn đều theo chiều dọc */
-    gap: 4px;              /* Khoảng cách giữa các mục, ví dụ: 12px */
-    font-family: 'Plus Jakarta Sans', sans-serif; /* Font chữ */
-}
-
-
-
-
-/* === KẾT THÚC: MÃ CSS SỬA KHOẢNG CÁCH PHÂN TRANG === */
-.pagination button:disabled {
-    background-color: #f1f2f6; /* Màu nền xám nhạt */
-    color: #a6acb3;           /* Màu chữ xám mờ */
-    cursor: not-allowed;      /* Đổi con trỏ chuột */
-    box-shadow: none;         /* Bỏ đổ bóng */
-}
-.pagination .page-info {
-    font-size: 14px;
-    font-weight: 500;
-    color: #6c757d; /* Màu chữ xám */
-}
-body.dark-mode .pagination button:disabled {
-    background: var(--border-dark);
-    color: var(--text-muted-dark);
-}
-.pagination span {
-    font-size: 13px; /* Giảm cỡ chữ */
-    font-weight: 500;
-}
-
-        /* === TRẠNG THÁI & MÀU SẮC === */
         .status-badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-            display: inline-block;
-            min-width: 90px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-align: center;
+            display: inline-block; min-width: 90px;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
         .status-san-sang { background-color: var(--status-san-sang-bg-light); color: var(--status-san-sang-text-light); }
         .status-da-ghep { background-color: var(--status-da-ghep-bg-light); color: var(--status-da-ghep-text-light); }
@@ -836,7 +426,6 @@ body.dark-mode .pagination button:disabled {
         .status-da-ban { background-color: var(--status-da-ban-bg-light); color: var(--status-da-ban-text-light); }
         .status-cho-vbc { background-color: var(--status-cho-vbc-bg-light); color: var(--status-cho-vbc-text-light); }
         .status-default { background-color: var(--status-default-bg-light); color: var(--status-default-text-light); }
-
         body.dark-mode .status-san-sang { background-color: var(--status-san-sang-bg-dark); color: var(--status-san-sang-text-dark); }
         body.dark-mode .status-da-ghep { background-color: var(--status-da-ghep-bg-dark); color: var(--status-da-ghep-text-dark); }
         body.dark-mode .status-chua-ghep { background-color: var(--status-chua-ghep-bg-dark); color: var(--status-chua-ghep-text-dark); }
@@ -844,348 +433,90 @@ body.dark-mode .pagination button:disabled {
         body.dark-mode .status-cho-vbc { background-color: var(--status-cho-vbc-bg-dark); color: var(--status-cho-vbc-text-dark); }
         body.dark-mode .status-default { background-color: var(--status-default-bg-dark); color: var(--status-default-text-dark); }
         
-        /* === MODAL GỢI Ý (ĐỒNG BỘ) === */
-        .modal-suggestion {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1002;
-            align-items: center; justify-content: center; padding: 10px;
-            backdrop-filter: blur(8px);
+        /* ==========================================================================
+           4. Responsive Design
+           ========================================================================== */
+        @media (max-width: 992px) {
+            .action-btn .btn-text { display: none; }
+            .filter-actions { margin-left: 0; }
+            .filter-bar { justify-content: space-between; }
         }
-        .modal-suggestion-content {
-            background: rgba(248, 249, 250, 0.85);
-            padding: 30px;
-            border-radius: 18px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-light);
-            transform: translateY(-20px) scale(0.95);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), opacity var(--transition-medium) ease-out;
-            position: relative;
-        }
-        .modal-suggestion.show .modal-suggestion-content { transform: translateY(0) scale(1); opacity: 1; }
-        body.dark-mode .modal-suggestion-content {
-            background: rgba(30, 30, 30, 0.85);
-            border-color: var(--border-dark);
-        }
-        .close-suggestion-btn {
-            position: absolute; top: 15px; right: 15px;
-            width: 30px; height: 30px;
-            background: var(--background-light);
-            border-radius: 50%;
-            color: var(--text-muted-light);
-            cursor: pointer;
-            transition: all var(--transition-medium) ease;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid var(--border-light);
-        }
-        .close-suggestion-btn:hover {
-            color: var(--text-light);
-            transform: rotate(90deg) scale(1.1);
-        }
-        body.dark-mode .close-suggestion-btn {
-            background: var(--background-dark);
-            color: var(--text-muted-dark);
-            border-color: var(--border-dark);
-        }
-        body.dark-mode .close-suggestion-btn:hover { color: var(--text-dark); }
-/* Dán vào trong body.dark-mode */
---exterior-orange-text: #f5b041;
---exterior-blue-text: #5dade2;
---exterior-yellow-text: #f4d03f;
---exterior-pink-text: #e573e0;
---exterior-green-text: #2ecc71;
---exterior-grey-text: #bdc3c7;
---exterior-white-text: #ecf0f1;
-                /* === RESPONSIVE === */
-        @media (max-width: 1200px) {
-            .data-card {
-                height: auto;
-                max-height: 70vh;
-            }
-        }
-        @media (max-width: 900px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 250px;
-                z-index: 1001; /* Ensure sidebar is above main content */
-            }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 260px; z-index: 1001; }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { transform: translateX(-100%); }
-            .main-content, .main-content.collapsed { 
-                margin-left: 0; 
-                padding: 15px;
-                margin-top: 60px;
-                margin-bottom: 50px;
+            .main-content, .main-content.collapsed { margin-left: 0; }
+            footer, .main-content.collapsed + footer { left: 0; width: 100%; }
+            .toggle-btn { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .navbar .logo-title { display: none; }
+            .filter-actions { display: none; }
+            .filter-section, .content-grid { margin: 15px; }
+            .data-card { padding: 15px; }
+
+            /* Mobile Card View */
+            .data-table thead, .data-table tbody tr { display: none; }
+            .data-table tbody.card-view-container { display: flex; flex-direction: column; gap: 15px; }
+            .vehicle-card {
+                display: block;
+                background-color: var(--card-bg-light);
+                border: 1px solid var(--border-light);
+                border-radius: 12px; padding: 15px;
+                box-shadow: var(--shadow-sm);
             }
-            .toggle-btn { display: none; } /* Hide desktop toggle button on mobile */
+            body.dark-mode .vehicle-card { background-color: var(--card-bg-dark); border-color: var(--border-dark); }
+            .card-header {
+                display: flex; justify-content: space-between; align-items: flex-start;
+                padding-bottom: 10px; margin-bottom: 10px;
+                border-bottom: 1px solid var(--border-light);
+            }
+            body.dark-mode .card-header { border-bottom-color: var(--border-dark); }
+            .card-header .car-model { font-size: 16px; font-weight: 700; color: var(--text-light); }
+            body.dark-mode .card-header .car-model { color: var(--text-dark); }
+            .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .card-row { font-size: 13px; }
+            .card-row .card-label { display: block; color: var(--text-muted-light); font-size: 11px; margin-bottom: 2px; text-transform: uppercase; }
+            body.dark-mode .card-row .card-label { color: var(--text-muted-dark); }
+            .card-row .card-value { font-weight: 600; }
+            .card-row.full-width { grid-column: 1 / -1; }
         }
-
-        @media (max-width: 900px) {
-    .action-btn .btn-text {
-       display: none;
-   }
-   /* Ẩn toàn bộ khu vực nút chức năng trên di động */
-   .filter-actions {
-        display: none;
-    }
-}
-        body.dark-mode .mobile-menu-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            border-color: var(--border-dark);
-        }
-/* ================================================= */
-/* === MÃ CSS TỐI ƯU HÓA CHO THIẾT BỊ DI ĐỘNG === */
-/* ================================================= */
-
-/* Áp dụng cho các màn hình nhỏ hơn 768px (máy tính bảng và điện thoại) */
-@media (max-width: 768px) {
-/* ================================================= */
-/* === SỬA LỖI HIỂN THỊ CHO BỘ LỌC TRÊN DI ĐỘNG === */
-/* ================================================= */
-.filter-section input, .filter-section select {
-    height: auto; /* Yêu cầu trình duyệt tự tính chiều cao vừa đủ */
-    min-height: unset; /* Gỡ bỏ mọi quy tắc chiều cao tối thiểu bị thừa */
-    padding: 12px 15px; /* Thiết lập lại khoảng đệm bên trong cho hợp lý */
-    font-size: 14px; /* Đảm bảo cỡ chữ không quá to */
-    margin-bottom: 5px; /* Thêm một chút khoảng cách dưới mỗi ô */
-}
-/* Ẩn bảng và tiêu đề gốc trên di động, TRỪ DÒNG THÔNG BÁO */
-.data-table thead,
-.data-table tbody tr:not(.table-placeholder) {
-    display: none;
-}
-
-/* Định dạng cho dòng thông báo tải dữ liệu trên di động */
-.data-table tr.table-placeholder {
-    display: table-row; /* Bắt buộc hiển thị dòng này */
-}
-.data-table tr.table-placeholder td {
-    text-align: center !important;
-    padding: 50px 20px; /* Tăng khoảng đệm cho đẹp hơn */
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-muted-light);
-}
-.data-table tr.table-placeholder i {
-    margin-right: 8px;
-}
-body.dark-mode .data-table tr.table-placeholder td {
-    color: var(--text-muted-dark);
-}
-
-/* Hiển thị container cho các thẻ */
-.data-table tbody.card-view-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Khoảng cách giữa các thẻ */
-}
-
-/* Định dạng cho mỗi thẻ xe */
-.vehicle-card {
-    display: block; /* Ghi đè lên display: none của tr */
-    background-color: var(--card-bg-light);
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: var(--shadow-sm);
-    transition: all var(--transition-fast) ease;
-}
-body.dark-mode .vehicle-card {
-    background-color: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
-
-/* Phần đầu của thẻ, chứa thông tin chính */
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-light);
-}
-body.dark-mode .card-header {
-    border-bottom-color: var(--border-dark);
-}
-
-.card-header .car-model {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-light);
-}
-body.dark-mode .card-header .car-model {
-    color: var(--text-dark);
-}
-
-/* Phần thân thẻ, chứa các chi tiết */
-.card-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Chia thành 2 cột */
-    gap: 12px; /* Khoảng cách giữa các chi tiết */
-}
-
-/* Mỗi dòng thông tin (VD: Ngoại thất: Đỏ) */
-.card-row {
-    font-size: 13px;
-}
-
-/* Nhãn (VD: Ngoại thất) */
-.card-row .card-label {
-    display: block;
-    color: var(--text-muted-light);
-    font-size: 11px;
-    margin-bottom: 2px;
-    text-transform: uppercase;
-}
-body.dark-mode .card-row .card-label {
-    color: var(--text-muted-dark);
-}
-
-/* Giá trị (VD: Đỏ) */
-.card-row .card-value {
-    font-weight: 600;
-}
-
-/* Dòng VIN và Mã DMS sẽ chiếm trọn 2 cột cho nổi bật */
-.card-row.full-width {
-    grid-column: 1 / -1;
-}
-    /* 1. Điều chỉnh lại phần nội dung chính */
-    .main-content {
-        padding: 15px; /* Giảm padding để có nhiều không gian hơn */
-    }
-    
-    .total-vehicles {
-    width: 100%;
-    text-align: center;
-    padding: 10px;
-    order: -1;  /* <-- THÊM DÒNG NÀY VÀO */
-}
-
-    /* 3. Tinh chỉnh lại thẻ chứa bảng */
-    .data-card {
-        padding: 15px;
-        /* Cho phép chiều cao tự động thay vì cố định */
-        height: auto; 
-        min-height: 60vh; /* Đặt chiều cao tối thiểu */
-    }
-    
-    .data-table {
-        font-size: 12px; /* Giảm cỡ chữ trong bảng một chút */
-    }
-
-    /* 4. Cho phép Bảng dữ liệu có thể cuộn ngang (QUAN TRỌNG NHẤT) */
-    .table-container {
-        overflow-x: auto; /* Thêm thanh cuộn ngang khi cần */
-        -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt hơn trên iOS */
-    }
-
-
-    
-  
-
-    /* 6. Tinh chỉnh modal gợi ý */
-    .modal-suggestion-content {
-        padding: 20px;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-
-    /* 7. Điều chỉnh cửa sổ AI Chat */
-    #ai-chat-window {
-        width: 95vw;
-        height: 70vh;
-    }
-
-    #ai-chat-toggle {
-        bottom: 60px; /* Di chuyển nút AI lên một chút để không bị footer che */
-        right: 15px;
-    }
-}
-/* === BẮT ĐẦU: MÃ CSS ĐỂ CỐ ĐỊNH LAYOUT VÀ CUỘN BẢNG === */
-
-/* 1. Thiết lập chiều cao và layout flex cho nội dung chính */
-.main-content {
-    display: flex;
-    flex-direction: column; /* Sắp xếp các phần tử con theo chiều dọc */
-    height: calc(100vh - 65px - 45px); /* Chiều cao viewport - chiều cao navbar - chiều cao footer */
-    padding-bottom: 0; /* Bỏ padding dưới để footer vừa vặn */
-}
-
-/* 2. Bộ lọc sẽ không co giãn */
-.filter-section {
-    flex-shrink: 0;
-    margin-bottom: 15px; /* Giảm khoảng cách dưới một chút */
-}
-
-/* 3. Thẻ chứa bảng sẽ giãn ra để lấp đầy không gian còn lại */
-.content-grid {
-    flex-grow: 1; /* Cho phép phần tử này phát triển */
-    display: flex;
-    min-height: 0; /* Quan trọng để flexbox hoạt động đúng trong các container lồng nhau */
-}
-
-.data-card {
-    display: flex;
-    flex-direction: column; /* Sắp xếp bảng và phân trang theo chiều dọc */
-    width: 100%;
-    height: 100%; /* Lấp đầy không gian của .content-grid */
-    min-height: 0; /* Quan trọng cho flexbox */
-}
-
-/* 4. Đây là phần QUAN TRỌNG NHẤT: Cho phép cuộn cho vùng chứa bảng */
-.table-container {
-    flex-grow: 1; /* Vùng chứa bảng sẽ giãn ra tối đa */
-    overflow-y: auto; /* Thêm thanh cuộn dọc khi nội dung vượt quá chiều cao */
-    min-height: 0; /* Quan trọng cho flexbox */
-}
-
-
-
-/* === KẾT THÚC: MÃ CSS ĐỂ CỐ ĐỊNH LAYOUT === */
     </style>
 </head>
 <body>
-    <div class="navbar" id="page-navbar"> 
-    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu sidebar" data-tooltip="Mở/Đóng menu sidebar">
-        <i class="fas fa-bars"></i>
-    </button>
 
-    <div class="logo-title">KHO XE</div> 
-
-    <div class="navbar-controls">
-        <button class="theme-toggle-btn" id="theme-toggle-button" onclick="toggleDarkMode()" data-tooltip="Chuyển đổi giao diện Sáng/Tối" aria-label="Chuyển đổi giao diện">
-            <i class="fas fa-moon" id="theme-icon"></i>
+    <header class="navbar"> 
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Mở menu">
+            <i class="fas fa-bars"></i>
         </button>
-        <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ" aria-label="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
-        <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-</div>
+        <div class="logo-title">KHO XE</div> 
+        <div class="navbar-controls">
+            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Đổi giao diện">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="nav-btn" id="back-btn" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" id="logout-btn" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </header>
 
-    <div class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo">
             <h1>VINFAST MINH ĐẠO</h1>
         </div>
-        <div class="menu" id="navMenu">
-            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
-            <a href="khoxe.html" data-lang="stock" class="active"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
-            <a href="kpi-tvbh.html" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
-            <a href="chinh_sach_vinfast.html" data-tooltip="Tổng hợp chính sách VinFast"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
-            <a href="gia_styled_html.html" data-tooltip="Công cụ tính giá xe VinFast"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
-        </div>
-        <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
-    </div>
+        <nav class="menu" id="nav-menu">
+            <a href="index.html"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html" class="active"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="kpi-tvbh.html"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+            <a href="chinh_sach_vinfast.html"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
+            <a href="gia_styled_html.html"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
+        </nav>
+        <button class="toggle-btn" id="sidebar-toggle-btn" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </aside>
 
-    <div class="main-content" id="main-content">
-        <div class="filter-section" data-aos="fade-up">
+    <main class="main-content" id="main-content">
+        <section class="filter-section" data-aos="fade-up">
             <div class="filter-bar">
                 <button class="action-btn toggle-filter-btn" id="toggle-filters-btn">
                     <i class="fas fa-filter"></i>
@@ -1193,569 +524,553 @@ body.dark-mode .card-row .card-label {
                 </button>
                 <div class="search-container">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="search-input" placeholder="Tìm kiếm nhanh...">
+                    <input type="text" id="search-input" placeholder="Tìm kiếm nhanh theo VIN, tên xe...">
                 </div>
                 <div class="filter-actions">
                     <span class="total-vehicles" id="total-vehicles">Tổng: <strong>0</strong></span>
-                    <button class="action-btn" onclick="refreshData()" data-tooltip="Làm mới">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button class="action-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel">
-                        <i class="fas fa-file-excel"></i>
-                    </button>
-                     <button class="action-btn" onclick="printTable()" data-tooltip="In">
-                        <i class="fas fa-print"></i>
-                    </button>
+                    <button class="action-btn" id="refresh-btn" aria-label="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                    <button class="action-btn" id="export-btn" aria-label="Xuất Excel"><i class="fas fa-file-excel"></i></button>
+                    <button class="action-btn" id="print-btn" aria-label="In"><i class="fas fa-print"></i></button>
                 </div>
             </div>
             <div class="collapsible-filters" id="collapsible-filters-panel">
-                <select id="filter-line" onchange="applyFilters()">
-                    <option value="">Tất cả dòng xe</option>
-                </select>
-                <select id="filter-version" onchange="applyFilters()">
-                    <option value="">Tất cả phiên bản</option>
-                </select>
-                <select id="filter-exterior" onchange="applyFilters()">
-                    <option value="">Tất cả ngoại thất</option>
-                </select>
-                <select id="filter-status" onchange="applyFilters()">
-                    <option value="">Tất cả trạng thái</option>
-                </select>
+                <select id="filter-line"><option value="">Tất cả dòng xe</option></select>
+                <select id="filter-version"><option value="">Tất cả phiên bản</option></select>
+                <select id="filter-exterior"><option value="">Tất cả ngoại thất</option></select>
+                <select id="filter-status"><option value="">Tất cả trạng thái</option></select>
             </div>
-        </div>
+        </section>
 
-        <div class="content-grid" data-aos="fade-up" data-aos-delay="100">
-            <div class="data-card" id="table-card">
-                 <div class="table-container">
-                    
-                    <table id="data-table" class="data-table">
+        <section class="content-grid" data-aos="fade-up" data-aos-delay="100">
+            <div class="data-card">
+                <div class="table-container">
+                    <div class="loading-overlay" id="loading-overlay">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <table class="data-table" id="data-table">
                         <thead>
                             <tr>
-                                <th onclick="sortTable(0)">SỐ TT</th>
-                                <th onclick="sortTable(1)">DÒNG XE</th>
-                                <th onclick="sortTable(2)">PHIÊN BẢN</th>
-                                <th onclick="sortTable(3)">NGOẠI THẤT</th>
-                                <th onclick="sortTable(4)">NỘI THẤT</th>
-                                <th onclick="sortTable(5)">SỐ VIN</th>
-                                <th onclick="sortTable(6)">MÃ DMS</th>
-                                <th onclick="sortTable(7)">TRẠNG THÁI</th>
-                                <th id="th-ngay-nhap" onclick="sortTable(8)">NGÀY NHẬP</th>
+                                <th data-sort-key="index">STT</th>
+                                <th data-sort-key="line">Dòng Xe</th>
+                                <th data-sort-key="version">Phiên Bản</th>
+                                <th data-sort-key="exterior">Ngoại Thất</th>
+                                <th data-sort-key="interior">Nội Thất</th>
+                                <th data-sort-key="vin">Số VIN</th>
+                                <th data-sort-key="dms">Mã DMS</th>
+                                <th data-sort-key="status">Trạng Thái</th>
+                                <th data-sort-key="dateAdded">Ngày Nhập</th>
                             </tr>
                         </thead>
                         <tbody id="table-body">
-                             <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</td></tr>
+                             <!-- Dữ liệu sẽ được chèn vào đây bởi JavaScript -->
                         </tbody>
                     </table>
                 </div>
                  <div class="pagination" id="pagination">
-                    <button onclick="changePage(-1)" id="prev-btn">Trước</button>
-                    <span id="page-info">Trang 1</span>
-                    <button onclick="changePage(1)" id="next-btn">Sau</button>
+                    <button id="prev-btn">Trước</button>
+                    <span id="page-info">Trang 1 / 1</span>
+                    <button id="next-btn">Sau</button>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <footer><p>VinFast Thuận An - Dĩ An</p></footer>
-    <div id="notification"></div>
-
+    <footer id="footer"><p>VinFast Thuận An - Dĩ An</p></footer>
+    
     <script>
-        // --- KHAI BÁO BIẾN TOÀN CỤC ---
-        let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-        let tableData = [];
-        let filteredData = [];
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        // ==========================================================================
+        // 1. Quản lý Trạng thái & Biến Toàn cục
+        // ==========================================================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbzvpU_xD38IiwMWgHdq6-pL7VwgsoaEnKek1JEXvtsiQig4tFZtp0N8ig-nCc3HZv7q2g/exec";
+        let allCars = [];
+        let filteredCars = [];
         let currentPage = 1;
-        const rowsPerPage = 20; // Increased rows per page
-        let sortColumn = 8;
-        let sortDirection = 'desc'; 
+        const ROWS_PER_PAGE = 25;
+        let sortState = { key: 'dateAdded', direction: 'desc' };
 
-        // --- CÁC HÀM XỬ LÝ GIAO DIỆN (SIDEBAR, THEME, v.v.) ---
-        function toggleDarkMode() {
-            const body = document.body;
-            body.classList.toggle('dark-mode');
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (body.classList.contains('dark-mode')) {
-                if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
-                localStorage.setItem('theme', 'light');
-            }
-        }
+        // ==========================================================================
+        // 2. Tham chiếu đến các Phần tử DOM
+        // ==========================================================================
+        const DOMElements = {
+            body: document.body,
+            sidebar: document.getElementById('sidebar'),
+            mainContent: document.getElementById('main-content'),
+            footer: document.getElementById('footer'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            tableBody: document.getElementById('table-body'),
+            searchInput: document.getElementById('search-input'),
+            filterLine: document.getElementById('filter-line'),
+            filterVersion: document.getElementById('filter-version'),
+            filterExterior: document.getElementById('filter-exterior'),
+            filterStatus: document.getElementById('filter-status'),
+            totalVehicles: document.getElementById('total-vehicles'),
+            pageInfo: document.getElementById('page-info'),
+            prevBtn: document.getElementById('prev-btn'),
+            nextBtn: document.getElementById('next-btn'),
+        };
 
-        function toggleSidebarDesktop() {
-            if (window.innerWidth > 900) {
-                const sidebar = document.getElementById("sidebar");
-                const mainContent = document.getElementById("main-content");
-                sidebar.classList.toggle("collapsed");
-                mainContent.classList.toggle("collapsed");
-                localStorage.setItem('sidebarState', sidebar.classList.contains("collapsed") ? 'collapsed' : 'expanded');
-            }
-        }
-        
-        function toggleMobileSidebar() {
-            document.getElementById("sidebar").classList.toggle("open");
-        }
+        // ==========================================================================
+        // 3. Đối tượng quản lý Giao diện & Tương tác (UIManager)
+        // ==========================================================================
+        const UIManager = {
+            init: function() {
+                this.setupEventListeners();
+                this.applyInitialSettings();
+                AOS.init({ duration: 600, once: true });
+            },
 
-        function setActiveSidebarLink() {
-            document.querySelectorAll("#navMenu a").forEach(link => {
-                link.classList.remove("active");
-                if (link.getAttribute('href') === (window.location.pathname.split("/").pop() || "index.html")) {
-                    link.classList.add("active");
-                }
-            });
-        }
-        
-        function updateUIOnLoad() {
-            // Theme
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                const themeIcon = document.querySelector('.theme-toggle i');
-                if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
-            }
-            // Sidebar state for desktop
-            if (window.innerWidth > 900 && localStorage.getItem('sidebarState') === 'collapsed') {
-                document.getElementById("sidebar").classList.add("collapsed");
-                document.getElementById("main-content").classList.add("collapsed");
-            }
-            AOS.init({ duration: 600, once: true });
-            setActiveSidebarLink();
-        }
-
-        // --- BỘ LỌC CÓ THỂ THU GỌN ---
-        function setupCollapsibleFilters() {
-            const toggleBtn = document.getElementById('toggle-filters-btn');
-            const panel = document.getElementById('collapsible-filters-panel');
-
-            if (toggleBtn && panel) {
-                toggleBtn.addEventListener('click', () => {
-                    toggleBtn.classList.toggle('active');
-                    panel.classList.toggle('open');
-                    if (panel.style.maxHeight) {
-                        panel.style.maxHeight = null;
-                    } else {
-                        panel.style.maxHeight = panel.scrollHeight + "px";
+            setupEventListeners: function() {
+                document.getElementById('theme-toggle-btn')?.addEventListener('click', () => this.toggleDarkMode());
+                document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => this.toggleSidebarDesktop());
+                document.getElementById('mobile-menu-btn')?.addEventListener('click', () => this.toggleMobileSidebar());
+                document.getElementById('back-btn')?.addEventListener('click', () => window.location.href = "index.html");
+                document.getElementById('logout-btn')?.addEventListener('click', () => {
+                    sessionStorage.clear();
+                    window.location.href = "index.html";
+                });
+                document.getElementById('toggle-filters-btn')?.addEventListener('click', this.toggleCollapsibleFilters);
+                DOMElements.searchInput?.addEventListener('input', debounce(App.applyFiltersAndRender, 300));
+                [DOMElements.filterLine, DOMElements.filterVersion, DOMElements.filterExterior, DOMElements.filterStatus].forEach(el => {
+                    el?.addEventListener('change', App.applyFiltersAndRender);
+                });
+                document.getElementById('refresh-btn')?.addEventListener('click', () => App.refreshData());
+                document.getElementById('export-btn')?.addEventListener('click', () => Exporter.exportToExcel());
+                document.getElementById('print-btn')?.addEventListener('click', () => window.print());
+                DOMElements.prevBtn?.addEventListener('click', () => App.changePage(-1));
+                DOMElements.nextBtn?.addEventListener('click', () => App.changePage(1));
+                document.querySelector('#data-table thead')?.addEventListener('click', (e) => {
+                    const header = e.target.closest('th');
+                    if (header && header.dataset.sortKey) {
+                        App.handleSort(header.dataset.sortKey);
                     }
                 });
-            }
-        }
+                window.addEventListener('resize', debounce(() => {
+                    this.handleResize();
+                    App.render();
+                }, 200));
+                 document.addEventListener('click', (event) => {
+                    const sidebar = DOMElements.sidebar;
+                    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                    if (window.innerWidth <= 768 && sidebar?.classList.contains('open')) {
+                        if (!sidebar.contains(event.target) && (!mobileMenuBtn || !mobileMenuBtn.contains(event.target))) {
+                            this.toggleMobileSidebar();
+                        }
+                    }
+                });
+            },
 
-        document.addEventListener("DOMContentLoaded", function () {
-            if (!isLoggedIn) {
-                window.location.href = "index.html";
-                return;
-            }
-            loadInitialData();
-            setupSearch();
-            setupCollapsibleFilters(); // Kích hoạt bộ lọc mới
-            updateUIOnLoad();
+            applyInitialSettings: function() {
+                if (localStorage.getItem('theme') === 'dark') {
+                    DOMElements.body.classList.add('dark-mode');
+                    document.getElementById('theme-icon')?.classList.replace('fa-moon', 'fa-sun');
+                }
+                if (window.innerWidth > 768 && localStorage.getItem('sidebarState') === 'collapsed') {
+                    DOMElements.sidebar?.classList.add('collapsed');
+                    DOMElements.mainContent?.classList.add('collapsed');
+                    DOMElements.footer?.classList.add('collapsed');
+                }
+                const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
+                document.querySelectorAll("#nav-menu a").forEach(link => {
+                    link.classList.remove("active");
+                    if (link.getAttribute('href') === currentPageFile) {
+                        link.classList.add("active");
+                    }
+                });
+            },
+
+            toggleDarkMode: function() {
+                DOMElements.body.classList.toggle('dark-mode');
+                const isDark = DOMElements.body.classList.contains('dark-mode');
+                document.getElementById('theme-icon')?.classList.toggle('fa-sun', isDark);
+                document.getElementById('theme-icon')?.classList.toggle('fa-moon', !isDark);
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                App.render();
+            },
+
+            toggleSidebarDesktop: function() {
+                if (window.innerWidth > 768) {
+                    const isCollapsed = DOMElements.sidebar.classList.toggle("collapsed");
+                    DOMElements.mainContent.classList.toggle("collapsed");
+                    DOMElements.footer.classList.toggle("collapsed");
+                    localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+                }
+            },
             
-            // Close mobile sidebar when clicking outside
-            document.addEventListener('click', function(event) {
-                const sidebar = document.getElementById('sidebar');
-                const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-                    if (!sidebar.contains(event.target) && (!mobileMenuBtn || !mobileMenuBtn.contains(event.target))) {
-                        toggleMobileSidebar();
+            toggleMobileSidebar: function() {
+                DOMElements.sidebar.classList.toggle("open");
+            },
+
+            toggleCollapsibleFilters: function() {
+                const btn = document.getElementById('toggle-filters-btn');
+                const panel = document.getElementById('collapsible-filters-panel');
+                btn.classList.toggle('active');
+                panel.classList.toggle('open');
+                panel.style.maxHeight = panel.classList.contains('open') ? panel.scrollHeight + "px" : null;
+            },
+
+            handleResize: function() {
+                if (window.innerWidth > 768) {
+                    DOMElements.sidebar.classList.remove('open');
+                }
+            },
+            
+            showLoading: function(show) {
+                DOMElements.loadingOverlay?.classList.toggle('active', show);
+            },
+
+            updateTotalVehicles: function() {
+                if (DOMElements.totalVehicles) {
+                    DOMElements.totalVehicles.innerHTML = `Tổng: <strong>${filteredCars.length}</strong>`;
+                }
+            },
+
+            updatePagination: function() {
+                const totalPages = Math.ceil(filteredCars.length / ROWS_PER_PAGE) || 1;
+                DOMElements.pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
+                DOMElements.prevBtn.disabled = currentPage === 1;
+                DOMElements.nextBtn.disabled = currentPage === totalPages;
+            },
+
+            updateSortHeaders: function() {
+                document.querySelectorAll("#data-table th").forEach(th => {
+                    th.innerHTML = th.textContent.replace(/▲|▼/g, '').trim();
+                    if (th.dataset.sortKey === sortState.key) {
+                        th.innerHTML += ` <span style="font-size: 10px;">${sortState.direction === 'asc' ? '▲' : '▼'}</span>`;
                     }
-                }
-            });
-        });
-
-        window.addEventListener('resize', debounce(() => {
-            if (window.innerWidth > 900) {
-                document.getElementById('sidebar').classList.remove('open');
-                if (localStorage.getItem('sidebarState') === 'collapsed') {
-                    document.getElementById("sidebar").classList.add("collapsed");
-                    document.getElementById("main-content").classList.add("collapsed");
-                } else {
-                    document.getElementById("sidebar").classList.remove("collapsed");
-                    document.getElementById("main-content").classList.remove("collapsed");
-                }
-            }
-        }, 200));
-
-        function getExteriorColorStyle(exteriorValue) {
-    const specificFontWeight = 'font-weight: 700;';
-    // Style để tạo viền cho chữ màu trắng trên nền sáng, giúp dễ đọc
-    const outlineStyle = 'text-shadow: 0 0 4px rgba(0,0,0,0.8);';
-    const isDarkMode = document.body.classList.contains('dark-mode');
-
-    if (!exteriorValue) return ''; // Trả về chuỗi rỗng để dùng màu mặc định
-    
-    const lowerExteriorValue = exteriorValue.toLowerCase();
-
-    // --- LOGIC CHI TIẾT DỰA TRÊN MÃ BẠN CUNG CẤP ---
-
-    // Các trường hợp đặc biệt, kiểm tra mã màu cụ thể trước
-    if (lowerExteriorValue === "brahminy white (ce18)") return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("sunset orb (ce1a)")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("crimson red (ce1m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("vinfast blue (ce1n)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? `color: #aebcc5; ${specificFontWeight}` : `color: #778899; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: black; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("electric blue (ce1j)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? `color: #d4e0f2; ${specificFontWeight}` : `color: #B0C4DE; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("brahminy white roof- rose pink body (1821)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("brahminy white roof - iris berry body (181x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("urbant mint (ce1w)")) return isDarkMode ? `color: #6ee6a0; ${specificFontWeight}` : `color: #3CB371; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("vinbus green (ce2b)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("deep ocean (ce1h)")) return isDarkMode ? `color: #2e8b57; ${specificFontWeight}` : `color: #006400; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("iris berry (ce1x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("zenith grey-desat silver roof (171v)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("urbant mint green - desat silv (171w)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("ivy green-desat silver roof (1722)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("atlantic blue-aquatic azure ro (1y26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black-champagne creme roof (2311)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("infinity blanc _ silky white r (2418)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("champagne creme - matte champa (2523)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black - graphite roof (2811)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("crimson velvet - mystery bronz (2927)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("ivy_green_gne (ce22)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("champagne_creme_ylg (ce23)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("crimson red - jet black roof (111m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("infinity blanc_zenith grey roof (1v18)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("deep ocean_jet black roof (111h)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-
-    // Các trường hợp chung chung hơn, sẽ được kiểm tra sau các trường hợp cụ thể ở trên
-    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
-
-    // Nếu không khớp, không áp dụng style đặc biệt
-    return '';
-}
-
-        function getStatusClassForKhoXe(statusText) {
-            if (!statusText) return 'status-default';
-            const lowerStatus = statusText.toLowerCase();
-            if (lowerStatus.includes('sẵn sàng')) return 'status-san-sang';
-            if (lowerStatus.includes('đã ghép')) return 'status-da-ghep';
-            if (lowerStatus.includes('chưa ghép')) return 'status-chua-ghep';
-            if (lowerStatus.includes('đã bán')) return 'status-da-ban';
-            if (lowerStatus.includes('chờ vbc') || lowerStatus.includes('chờ vb c')) return 'status-cho-vbc';
-            return 'status-default';
-        }
-        
-        function showLoading() {
-            document.getElementById("loading-overlay")?.classList.add("active");
-        }
-
-        function hideLoading() {
-            document.getElementById("loading-overlay")?.classList.remove("active");
-        }
-
-        async function loadInitialData() {
-            showLoading();
-            const apiURL = "https://script.google.com/macros/s/AKfycbzvpU_xD38IiwMWgHdq6-pL7VwgsoaEnKek1JEXvtsiQig4tFZtp0N8ig-nCc3HZv7q2g/exec";
-            try {
-                const response = await axios.get(apiURL);
-                if (!response.data || !Array.isArray(response.data.khoxe)) {
-                    throw new Error("Dữ liệu không hợp lệ từ API");
-                }
-                tableData = response.data.khoxe.map(row => [
-                    row["Dòng xe"] || "", row["Phiên bản"] || "", row["Ngoại thất"] || "",
-                    row["Nội thất"] || "", row["VIN"] || "", row["Mã DMS"] || "",
-                    row["Trạng thái"] || "",
-                    row["Ngày nhập"] ? new Date(row["Ngày nhập"]).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ""
-                ]);
-                sessionStorage.setItem('KhoXe', JSON.stringify(tableData));
-                applyFilters();
-                populateFilters();
-                showNewUnpairedCarSuggestions();
-            } catch (error) {
-                console.error("Lỗi tải dữ liệu:", error);
-                const tableBody = document.getElementById("table-body");
-                if(tableBody) tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="9">⚠️ Lỗi tải dữ liệu. Vui lòng thử lại.</td></tr>`;
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // === HÀM RENDER ĐÃ NÂNG CẤP VỚI GIAO DIỆN THẺ TỰ ĐỘNG ===
-function renderTable() {
-    const tbody = document.getElementById("table-body");
-    if (!tbody) return;
-
-    // Lấy dữ liệu cho trang hiện tại
-    const paginatedData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-
-    // Kiểm tra kích thước màn hình
-    const isMobileView = window.innerWidth <= 768;
-
-    if (isMobileView) {
-        // --- GIAO DIỆN THẺ (CARD VIEW) CHO DI ĐỘNG ---
-        tbody.className = 'card-view-container'; // Áp dụng class để CSS hoạt động
-        tbody.innerHTML = ""; 
-
-        if (paginatedData.length === 0) {
-            // Hiển thị thông báo khi không có dữ liệu
-            const emptyCard = document.createElement('div');
-            emptyCard.className = 'vehicle-card';
-            emptyCard.innerHTML = 'Không tìm thấy xe nào.';
-            tbody.appendChild(emptyCard);
-        } else {
-            paginatedData.forEach(row => {
-                const card = document.createElement('div');
-                card.className = 'vehicle-card';
-
-                // Dữ liệu từ mảng `row`:
-                // 0: Dòng xe, 1: Phiên bản, 2: Ngoại thất, 3: Nội thất,
-                // 4: VIN, 5: Mã DMS, 6: Trạng thái, 7: Ngày nhập
-                
-                const carModel = `${row[0] || ''} ${row[1] || ''}`;
-                const statusContent = row[6] || 'N/A';
-                const exteriorContent = row[2] || 'N/A';
-
-                card.innerHTML = `
-                    <div class="card-header">
-                        <span class="car-model">${carModel}</span>
-                        <span class="status-badge ${getStatusClassForKhoXe(statusContent)}">${statusContent}</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-row">
-                            <span class="card-label">Ngoại thất</span>
-                            <span class="card-value" style="${getExteriorColorStyle(exteriorContent)}">${exteriorContent}</span>
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">Nội thất</span>
-                            <span class="card-value">${row[3] || 'N/A'}</span>
-                        </div>
-                        <div class="card-row full-width">
-                            <span class="card-label">Số VIN</span>
-                            <span class="card-value">${row[4] || 'N/A'}</span>
-                        </div>
-                        <div class="card-row full-width">
-                            <span class="card-label">Mã DMS</span>
-                            <span class="card-value">${row[5] || 'N/A'}</span>
-                        </div>
-                         <div class="card-row full-width">
-                            <span class="card-label">Ngày nhập kho</span>
-                            <span class="card-value">${row[7] || 'N/A'}</span>
-                        </div>
-                    </div>
-                `;
-                tbody.appendChild(card);
-            });
-        }
-
-    } else {
-        // --- GIAO DIỆN BẢNG TRUYỀN THỐNG CHO DESKTOP ---
-        tbody.className = ''; // Xóa class của card view
-        
-        // Cập nhật tiêu đề bảng với icon sắp xếp
-        const headers = document.querySelectorAll("#data-table th");
-        headers.forEach((th, index) => {
-            th.innerHTML = th.textContent.replace(/▲|▼/g, '').trim();
-            if (sortColumn === index) {
-                th.innerHTML += ` <span style="font-size: 10px;">${sortDirection === 'asc' ? '▲' : '▼'}</span>`;
-            }
-        });
-        
-        tbody.innerHTML = ""; // Xóa nội dung cũ
-        if (paginatedData.length === 0) {
-            tbody.innerHTML = `<tr class="table-placeholder" style="display: table-row;"><td colspan="9">Không tìm thấy xe nào.</td></tr>`;
-        } else {
-            paginatedData.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                tr.style.display = 'table-row';
-
-                let cellHtml = `<td>${(currentPage - 1) * rowsPerPage + index + 1}</td>`;
-                row.forEach((cellData, cellIndex) => {
-                    let content = cellData || 'N/A';
-                    if (cellIndex === 2) { // Ngoại thất
-                        content = `<span style="${getExteriorColorStyle(content)}">${content}</span>`;
-                    } else if (cellIndex === 6) { // Trạng thái
-                        content = `<span class="status-badge ${getStatusClassForKhoXe(content)}">${content}</span>`;
-                    }
-                    cellHtml += `<td>${content}</td>`;
                 });
-                tr.innerHTML = cellHtml;
-                tbody.appendChild(tr);
-            });
-        }
-    }
+            }
+        };
 
-    // Cập nhật phân trang và tổng số xe (dùng chung cho cả 2 giao diện)
-    updatePagination();
-    updateTotalVehicles();
-}
-        
-        function sortTable(columnIndex) {
-            sortDirection = sortColumn === columnIndex && sortDirection === 'asc' ? 'desc' : 'asc';
-            sortColumn = columnIndex;
-            performSort();
-            currentPage = 1;
-            renderTable();
-        }
+        // ==========================================================================
+        // 4. Đối tượng điều hành chính (App)
+        // ==========================================================================
+        const App = {
+            init: async function() {
+                UIManager.init();
+                await this.fetchData();
+            },
 
-        function performSort() {
-             filteredData.sort((a, b) => {
-                let valA = a[sortColumn - 1] || '';
-                let valB = b[sortColumn - 1] || '';
-                if(sortColumn === 0) { // STT
-                     valA = filteredData.indexOf(a);
-                     valB = filteredData.indexOf(b);
+            fetchData: async function() {
+                UIManager.showLoading(true);
+                try {
+                    const response = await axios.get(API_URL);
+                    if (!response.data || !Array.isArray(response.data.khoxe)) {
+                        throw new Error("Dữ liệu không hợp lệ từ API");
+                    }
+                    allCars = DataProcessor.parseApiData(response.data.khoxe);
+                    this.populateFilters();
+                    this.applyFiltersAndRender();
+                } catch (error) {
+                    console.error("Lỗi tải dữ liệu:", error);
+                    DOMElements.tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="9">⚠️ Lỗi tải dữ liệu. Vui lòng làm mới trang.</td></tr>`;
+                } finally {
+                    UIManager.showLoading(false);
                 }
-                if (sortColumn === 8) { // Date sorting
-                    const parseDate = str => str ? new Date(str.split('/').reverse().join('-')) : new Date(0);
-                    valA = parseDate(a[7]);
-                    valB = parseDate(b[7]);
+            },
+
+            applyFiltersAndRender: function() {
+                App.filterData();
+                App.sortData();
+                currentPage = 1;
+                App.render();
+            },
+
+            filterData: function() {
+                const filters = {
+                    search: DOMElements.searchInput.value.trim().toLowerCase(),
+                    line: DOMElements.filterLine.value,
+                    version: DOMElements.filterVersion.value,
+                    exterior: DOMElements.filterExterior.value,
+                    status: DOMElements.filterStatus.value,
+                };
+
+                filteredCars = allCars.filter(car => {
+                    const searchMatch = filters.search === "" || 
+                        car.vin.toLowerCase().includes(filters.search) ||
+                        car.line.toLowerCase().includes(filters.search) ||
+                        car.version.toLowerCase().includes(filters.search);
+
+                    return (filters.line === "" || car.line === filters.line) &&
+                           (filters.version === "" || car.version === filters.version) &&
+                           (filters.exterior === "" || car.exterior === filters.exterior) &&
+                           (filters.status === "" || car.status === filters.status) &&
+                           searchMatch;
+                });
+            },
+
+            sortData: function() {
+                const { key, direction } = sortState;
+                filteredCars.sort((a, b) => {
+                    let valA = a[key] ?? '';
+                    let valB = b[key] ?? '';
+                    
+                    if (key === 'dateAdded') {
+                        valA = valA || new Date(0);
+                        valB = valB || new Date(0);
+                    }
+
+                    let comparison = 0;
+                    if (valA > valB) comparison = 1;
+                    else if (valA < valB) comparison = -1;
+                    
+                    return direction === 'asc' ? comparison : -comparison;
+                });
+            },
+            
+            handleSort: function(key) {
+                if (sortState.key === key) {
+                    sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortState.key = key;
+                    sortState.direction = 'asc';
                 }
-                let comparison = valA > valB ? 1 : (valA < valB ? -1 : 0);
-                return sortDirection === 'asc' ? comparison : -comparison;
-            });
-        }
+                this.sortData();
+                currentPage = 1;
+                this.render();
+            },
+
+            populateFilters: function() {
+                const createOptions = (items) => items.map(item => `<option value="${item}">${item}</option>`).join('');
+                
+                const unique = {
+                    line: [...new Set(allCars.map(c => c.line).filter(Boolean))].sort(),
+                    version: [...new Set(allCars.map(c => c.version).filter(Boolean))].sort(),
+                    exterior: [...new Set(allCars.map(c => c.exterior).filter(Boolean))].sort(),
+                    status: [...new Set(allCars.map(c => c.status).filter(Boolean))].sort(),
+                };
+
+                DOMElements.filterLine.innerHTML = '<option value="">Tất cả dòng xe</option>' + createOptions(unique.line);
+                DOMElements.filterVersion.innerHTML = '<option value="">Tất cả phiên bản</option>' + createOptions(unique.version);
+                DOMElements.filterExterior.innerHTML = '<option value="">Tất cả ngoại thất</option>' + createOptions(unique.exterior);
+                DOMElements.filterStatus.innerHTML = '<option value="">Tất cả trạng thái</option>' + createOptions(unique.status);
+            },
+
+            render: function() {
+                DOMElements.tableBody.innerHTML = "";
+                const paginatedData = filteredCars.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+
+                if (paginatedData.length === 0) {
+                    DOMElements.tableBody.innerHTML = `<tr class="table-placeholder"><td colspan="9">Không tìm thấy xe nào phù hợp.</td></tr>`;
+                } else {
+                    const isMobile = window.innerWidth <= 768;
+                    if (isMobile) {
+                        Renderer.renderCards(paginatedData);
+                    } else {
+                        Renderer.renderTableRows(paginatedData);
+                    }
+                }
+                
+                UIManager.updateTotalVehicles();
+                UIManager.updatePagination();
+                if(window.innerWidth > 768) UIManager.updateSortHeaders();
+            },
+            
+            changePage: function(delta) {
+                const totalPages = Math.ceil(filteredCars.length / ROWS_PER_PAGE) || 1;
+                const newPage = currentPage + delta;
+                if (newPage >= 1 && newPage <= totalPages) {
+                    currentPage = newPage;
+                    this.render();
+                }
+            },
+
+            refreshData: async function() {
+                [DOMElements.searchInput, DOMElements.filterLine, DOMElements.filterVersion, DOMElements.filterExterior, DOMElements.filterStatus].forEach(el => { if(el) el.value = ""; });
+                currentPage = 1;
+                sortState = { key: 'dateAdded', direction: 'desc' };
+                await this.fetchData();
+            }
+        };
+
+        // ==========================================================================
+        // 5. Đối tượng hiển thị (Renderer)
+        // ==========================================================================
+        const Renderer = {
+            renderTableRows: function(data) {
+                const fragment = document.createDocumentFragment();
+                data.forEach((car, index) => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${(currentPage - 1) * ROWS_PER_PAGE + index + 1}</td>
+                        <td>${car.line}</td>
+                        <td>${car.version}</td>
+                        <td style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</td>
+                        <td>${car.interior}</td>
+                        <td>${car.vin}</td>
+                        <td>${car.dms}</td>
+                        <td><span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span></td>
+                        <td>${car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : 'N/A'}</td>
+                    `;
+                    fragment.appendChild(tr);
+                });
+                DOMElements.tableBody.className = '';
+                DOMElements.tableBody.appendChild(fragment);
+            },
+
+            renderCards: function(data) {
+                const fragment = document.createDocumentFragment();
+                data.forEach(car => {
+                    const card = document.createElement('div');
+                    card.className = 'vehicle-card';
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="car-model">${car.line} ${car.version}</span>
+                            <span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-row">
+                                <span class="card-label">Ngoại thất</span>
+                                <span class="card-value" style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">Nội thất</span>
+                                <span class="card-value">${car.interior}</span>
+                            </div>
+                            <div class="card-row full-width">
+                                <span class="card-label">Số VIN</span>
+                                <span class="card-value">${car.vin}</span>
+                            </div>
+                            <div class="card-row full-width">
+                                <span class="card-label">Ngày nhập kho</span>
+                                <span class="card-value">${car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                    fragment.appendChild(card);
+                });
+                DOMElements.tableBody.className = 'card-view-container';
+                DOMElements.tableBody.appendChild(fragment);
+            }
+        };
+
+        // ==========================================================================
+        // 6. Đối tượng xử lý dữ liệu (DataProcessor) & Các Tiện ích khác
+        // ==========================================================================
+        const DataProcessor = {
+            parseApiData: function(apiData) {
+                return apiData.map((row, index) => ({
+                    index: index + 1,
+                    line: row["Dòng xe"] || "N/A",
+                    version: row["Phiên bản"] || "N/A",
+                    exterior: row["Ngoại thất"] || "N/A",
+                    interior: row["Nội thất"] || "N/A",
+                    vin: row["VIN"] || "N/A",
+                    dms: row["Mã DMS"] || "N/A",
+                    status: row["Trạng thái"] || "N/A",
+                    dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
+                }));
+            },
+
+            getStatusClass: function(statusText) {
+                if (!statusText) return 'status-default';
+                const lowerStatus = statusText.toLowerCase();
+                if (lowerStatus.includes('sẵn sàng')) return 'status-san-sang';
+                if (lowerStatus.includes('đã ghép')) return 'status-da-ghep';
+                if (lowerStatus.includes('chưa ghép')) return 'status-chua-ghep';
+                if (lowerStatus.includes('đã bán')) return 'status-da-ban';
+                if (lowerStatus.includes('chờ vbc')) return 'status-cho-vbc';
+                return 'status-default';
+            },
+
+            getExteriorColorStyle: function(exteriorValue) {
+                const specificFontWeight = 'font-weight: 700;';
+                const outlineStyle = 'text-shadow: 0 0 4px rgba(0,0,0,0.8);';
+                const isDarkMode = document.body.classList.contains('dark-mode');
+
+                if (!exteriorValue) return '';
+                
+                const lowerExteriorValue = exteriorValue.toLowerCase();
+
+                // Các trường hợp đặc biệt, kiểm tra mã màu cụ thể trước
+                if (lowerExteriorValue === "brahminy white (ce18)") return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("sunset orb (ce1a)")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("crimson red (ce1m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("vinfast blue (ce1n)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? `color: #aebcc5; ${specificFontWeight}` : `color: #778899; ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: black; ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("electric blue (ce1j)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? `color: #d4e0f2; ${specificFontWeight}` : `color: #B0C4DE; ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("brahminy white roof- rose pink body (1821)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("brahminy white roof - iris berry body (181x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("urbant mint (ce1w)")) return isDarkMode ? `color: #6ee6a0; ${specificFontWeight}` : `color: #3CB371; ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("vinbus green (ce2b)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("deep ocean (ce1h)")) return isDarkMode ? `color: #2e8b57; ${specificFontWeight}` : `color: #006400; ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("iris berry (ce1x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("zenith grey-desat silver roof (171v)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("urbant mint green - desat silv (171w)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("ivy green-desat silver roof (1722)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("atlantic blue-aquatic azure ro (1y26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black-champagne creme roof (2311)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("infinity blanc _ silky white r (2418)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("champagne creme - matte champa (2523)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black - graphite roof (2811)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("crimson velvet - mystery bronz (2927)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("ivy_green_gne (ce22)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("champagne_creme_ylg (ce23)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("crimson red - jet black roof (111m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("infinity blanc_zenith grey roof (1v18)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("deep ocean_jet black roof (111h)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+
+                // Các trường hợp chung chung hơn
+                if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("jet black")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+                if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
+
+                return '';
+            }
+        };
         
-        function applyFilters() {
-            const filters = {
-                search: document.getElementById("search-input")?.value.trim().toLowerCase() || "",
-                line: document.getElementById("filter-line")?.value || "",
-                version: document.getElementById("filter-version")?.value || "",
-                exterior: document.getElementById("filter-exterior")?.value || "",
-                status: document.getElementById("filter-status")?.value || ""
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
             };
-            filteredData = tableData.filter(row => 
-                (filters.line === "" || row[0] === filters.line) &&
-                (filters.version === "" || row[1] === filters.version) &&
-                (filters.exterior === "" || row[2] === filters.exterior) &&
-                (filters.status === "" || row[6] === filters.status) &&
-                (filters.search === "" || row.some(cell => cell.toString().toLowerCase().includes(filters.search)))
-            );
-            performSort();
-            currentPage = 1;
-            renderTable();
         }
 
-        function populateFilters() {
-    // TẠO BẢN ĐỒ DỊCH: Ánh xạ từ khóa Tiếng Anh sang Tiếng Việt
-    const translationMap = {
-        line: "dòng xe",
-        version: "phiên bản",
-        exterior: "ngoại thất",
-        status: "trạng thái"
-    };
+        const Exporter = {
+            exportToExcel: function() {
+                const dataToExport = filteredCars.map((car, index) => ({
+                    'STT': index + 1,
+                    'Dòng Xe': car.line,
+                    'Phiên Bản': car.version,
+                    'Ngoại Thất': car.exterior,
+                    'Nội Thất': car.interior,
+                    'Số VIN': car.vin,
+                    'Mã DMS': car.dms,
+                    'Trạng Thái': car.status,
+                    'Ngày Nhập': car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : '',
+                }));
 
-    const selects = {
-        line: document.getElementById("filter-line"),
-        version: document.getElementById("filter-version"),
-        exterior: document.getElementById("filter-exterior"),
-        status: document.getElementById("filter-status")
-    };
-    
-    const uniqueValues = {
-        line: [...new Set(tableData.map(row => row[0]))].filter(Boolean).sort(),
-        version: [...new Set(tableData.map(row => row[1]))].filter(Boolean).sort(),
-        exterior: [...new Set(tableData.map(row => row[2]))].filter(Boolean).sort(),
-        status: [...new Set(tableData.map(row => row[6]))].filter(Boolean).sort()
-    };
-
-    for (const key in selects) {
-        if (selects[key]) {
-            const currentVal = selects[key].value;
-            // SỬA LỖI: Sử dụng translationMap để lấy đúng tên Tiếng Việt
-            const translatedKey = translationMap[key] || key;
-            selects[key].innerHTML = `<option value="">Tất cả ${translatedKey}</option>` +
-                uniqueValues[key].map(val => `<option value="${val}" ${val === currentVal ? 'selected' : ''}>${val}</option>`).join('');
-        }
-    }
-}
-        
-        function updatePagination() {
-            const pageInfo = document.getElementById("page-info");
-            const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
-            pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
-            document.getElementById("prev-btn").disabled = currentPage === 1;
-            document.getElementById("next-btn").disabled = currentPage === totalPages;
-        }
-
-        function updateTotalVehicles() {
-            const totalEl = document.getElementById("total-vehicles");
-            if (totalEl) {
-                totalEl.innerHTML = `Tổng: <strong>${filteredData.length}</strong>`;
+                const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "KhoXe");
+                XLSX.writeFile(workbook, "KhoXeVinFast.xlsx");
             }
-        }
-        
-        function changePage(delta) {
-            currentPage += delta;
-            renderTable();
-        }
+        };
 
-        async function refreshData() {
-            ['search-input', 'filter-line', 'filter-version', 'filter-exterior', 'filter-status'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-            });
-            currentPage = 1;
-            sortColumn = 8;
-            sortDirection = 'desc';
-            await loadInitialData(); 
-        }
+        // ==========================================================================
+        // 8. Khởi chạy Ứng dụng
+        // ==========================================================================
+        App.init();
 
-        // --- UTILITY & NAVIGATION ---
-        function debounce(func, wait) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => func.apply(this, a), wait) } }
-        function goBack() { window.location.href = "index.html"; }
-        function logout() { sessionStorage.clear(); window.location.href = "index.html"; }
-        function setupSearch() {
-            document.getElementById("search-input")?.addEventListener("input", debounce(applyFilters, 300));
-        }
-        
-        // --- MODAL & AI CHAT ---
-        function showNewUnpairedCarSuggestions() {
-             const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-             const newCars = tableData.filter(row => {
-                const status = (row[6] || "").toLowerCase();
-                const dateAdded = row[7] ? new Date(row[7].split('/').reverse().join('-')) : null;
-                return dateAdded && dateAdded >= sevenDaysAgo && status.includes("sẵn sàng");
-            });
-            const modal = document.getElementById('suggestionModal');
-            if (newCars.length > 0 && modal) {
-                document.getElementById('suggestionList').innerHTML = newCars.slice(0, 5).map(car => `
-                    <div class="suggestion-item">
-                        <div><strong>Dòng xe:</strong><span>${car[0]}</span></div>
-                        <div><strong>Ngoại thất:</strong><span style="${getExteriorColorStyle(car[2])}">${car[2]}</span></div>
-                        <div><strong>VIN:</strong><span>${car[4]}</span></div>
-                    </div>`).join('');
-                modal.style.display = 'flex';
-                setTimeout(() => modal.classList.add('show'), 10);
-            }
-        }
-        function closeSuggestionModal() {
-            const modal = document.getElementById('suggestionModal');
-            if (modal) {
-                modal.classList.remove('show');
-                setTimeout(() => modal.style.display = 'none', 300);
-            }
-        }
-        
-        const chatToggleButton = document.getElementById('ai-chat-toggle');
-        const chatWindow = document.getElementById('ai-chat-window');
-        const chatCloseButton = document.getElementById('ai-chat-close');
-        const chatSendButton = document.getElementById('ai-chat-send');
-        const chatInput = document.getElementById('ai-chat-input');
-        
-        if (chatToggleButton) chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
-        if (chatCloseButton) chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
-        if (chatSendButton) chatSendButton.addEventListener('click', () => sendGlobalAIChatMessage());
-        if (chatInput) chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) {e.preventDefault(); sendGlobalAIChatMessage()}; });
-        
-        function sendGlobalAIChatMessage(){ /* Logic for AI chat would go here */ }
-        function exportToExcel() { /* Logic for excel export */ }
-        function printTable() { /* Logic for printing */ }
+    });
     </script>
 </body>
 </html>
