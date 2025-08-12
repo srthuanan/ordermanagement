@@ -432,8 +432,8 @@ body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--
         /* === NỘI DUNG CHÍNH (MAIN CONTENT) === */
         .main-content {
             margin-left: 220px;
-            margin-top: 65px;
-            margin-bottom: 60px;
+            margin-top: 35px;
+            margin-bottom: 30px;
             padding: 25px;
             transition: margin-left var(--transition-medium) ease;
         }
@@ -441,107 +441,213 @@ body.dark-mode .mobile-menu-btn { background: var(--card-bg-dark); color: var(--
             margin-left: 70px;
         }
 
-        /* === KHU VỰC BỘ LỌC (FILTER SECTION) - ĐÃ ĐƯỢC CẬP NHẬT === */
-.filter-section {
-    display: grid;
-    /* Chia layout thành 2 cột: Cột trái cho filter, cột phải cho actions */
-    grid-template-columns: 1fr auto;
-    gap: 20px;
-    align-items: center;
-    padding: 20px;
-    margin-bottom: 25px;
-    background: var(--card-bg-light);
-    border-radius: 16px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-light);
-}
+       /* === KHU VỰC BỘ LỌC (FILTER SECTION) - BỐ CỤC MỚI CÓ THỂ THU GỌN === */
+        .filter-section {
+            padding: 20px;
+            margin-bottom: 25px;
+            background: var(--card-bg-light);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition-medium) ease;
+        }
+        body.dark-mode .filter-section {
+            background: var(--card-bg-dark);
+            border-color: var(--border-dark);
+        }
 
-body.dark-mode .filter-section {
-    background: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-.filter-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-}
+        .search-container {
+            flex: 1 1 300px; /* Linh hoạt co giãn, chiều rộng cơ bản 300px */
+            position: relative;
+        }
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted-light);
+        }
+        body.dark-mode .search-container i {
+            color: var(--text-muted-dark);
+        }
 
-/* Cho phép ô tìm kiếm chiếm nhiều không gian hơn */
-.filter-group #search-input {
-    flex: 1 1 250px; /* Linh hoạt co giãn, chiều rộng cơ bản 250px */
-}
+        #search-input {
+            width: 100%;
+            padding: 10px 15px 10px 40px; /* Thêm padding trái cho icon */
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--background-light);
+            color: var(--text-light);
+            transition: all var(--transition-medium) ease;
+        }
+        body.dark-mode #search-input {
+            background: var(--background-dark);
+            color: var(--text-dark);
+            border-color: var(--border-dark);
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--gradient-start);
+            box-shadow: var(--shadow-glow-light);
+        }
+        body.dark-mode #search-input:focus {
+            border-color: var(--gradient-end);
+            box-shadow: var(--shadow-glow-dark);
+        }
 
-.filter-group select {
-    flex: 1 1 180px; /* Linh hoạt co giãn, chiều rộng cơ bản 180px */
-}
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto; /* Đẩy nhóm này về bên phải */
+        }
+        
+        .total-vehicles {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted-light);
+            background-color: var(--background-light);
+            border: 1px solid var(--border-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+        body.dark-mode .total-vehicles {
+            color: var(--text-muted-dark);
+            background-color: var(--background-dark);
+            border-color: var(--border-dark);
+        }
+        .total-vehicles strong {
+            font-weight: 700;
+            color: var(--text-light);
+        }
+        body.dark-mode .total-vehicles strong {
+             color: var(--text-dark);
+        }
 
-.filter-section input, .filter-section select {
-    padding: 10px 15px;
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    font-size: 14px;
-    background: var(--background-light);
-    color: var(--text-light);
-    transition: all var(--transition-medium) ease;
-}
 
-body.dark-mode .filter-section input, body.dark-mode .filter-section select {
-    background: var(--background-dark);
-    color: var(--text-dark);
-    border-color: var(--border-dark);
-}
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            background-color: var(--card-bg-light);
+            cursor: pointer;
+            transition: all var(--transition-fast) ease;
+            white-space: nowrap;
+        }
+        body.dark-mode .action-btn {
+            background-color: var(--card-bg-dark);
+            color: var(--text-dark);
+            border-color: var(--border-dark);
+        }
+        .action-btn:hover {
+            border-color: var(--gradient-start);
+            color: var(--gradient-start);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        body.dark-mode .action-btn:hover {
+            border-color: var(--gradient-end);
+            color: var(--gradient-end);
+        }
+        .action-btn .btn-text {
+            display: inline;
+        }
+        .action-btn i {
+             transition: transform var(--transition-medium) ease;
+        }
+        .action-btn.toggle-filter-btn.active i {
+            transform: rotate(180deg);
+        }
 
-.filter-section input:focus, .filter-section select:focus {
-    outline: none;
-    border-color: var(--gradient-start);
-    box-shadow: var(--shadow-glow-light);
-}
+        .collapsible-filters {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-medium) ease-out;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding-top: 0;
+            margin-top: 0;
+            border-top: 1px solid transparent;
+        }
 
-body.dark-mode .filter-section input:focus, body.dark-mode .filter-section select:focus {
-    border-color: var(--gradient-end);
-    box-shadow: var(--shadow-glow-dark);
-}
+        .collapsible-filters.open {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-light);
+        }
+        body.dark-mode .collapsible-filters.open {
+            border-top-color: var(--border-dark);
+        }
 
-/* Nhóm các nút hành động và tổng số xe */
-.button-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .collapsible-filters select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--background-light);
+            color: var(--text-light);
+            transition: all var(--transition-medium) ease;
+             -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.7rem center;
+            background-repeat: no-repeat;
+            background-size: 1.2em 1.2em;
+            padding-right: 2.5rem;
+        }
+        body.dark-mode .collapsible-filters select {
+            background-color: var(--background-dark);
+            color: var(--text-dark);
+            border-color: var(--border-dark);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        }
+         .collapsible-filters select:focus {
+            outline: none;
+            border-color: var(--gradient-start);
+            box-shadow: var(--shadow-glow-light);
+        }
+        body.dark-mode  .collapsible-filters select:focus {
+            border-color: var(--gradient-end);
+            box-shadow: var(--shadow-glow-dark);
+        }
 
-/* Biến text "Tổng số xe" thành một huy hiệu (badge) */
-.total-vehicles {
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted-light);
-    background-color: var(--background-light);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    white-space: nowrap;
-}
-
-body.dark-mode .total-vehicles {
-    color: var(--text-muted-dark);
-    background-color: var(--background-dark);
-    border-color: var(--border-dark);
-}
-
-/* Điều chỉnh cho màn hình nhỏ hơn */
-@media (max-width: 1024px) {
-    .filter-section {
-        /* Chuyển về layout 1 cột, các mục sẽ tự xuống dòng */
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .button-group {
-        /* Đặt các nút ở bên phải khi xuống dòng */
-        justify-self: end;
-    }
-}
+        @media (max-width: 900px) {
+            .filter-actions {
+                margin-left: 0;
+                width: 100%;
+                justify-content: space-between;
+            }
+             .action-btn .btn-text {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 500px) {
+            .filter-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .total-vehicles {
+                text-align: center;
+            }
+        }
 
         /* === KHU VỰC BẢNG DỮ LIỆU === */
         .content-grid {
@@ -560,7 +666,7 @@ body.dark-mode .total-vehicles {
             display: flex;
             flex-direction: column;
             gap: 20px;
-            height: calc(100vh - 280px); /* Chiều cao linh hoạt */
+            height: calc(100vh - 280px); /* Điều chỉnh chiều cao linh hoạt để phù hợp với bộ lọc mới */
         }
         body.dark-mode .data-card {
             background: var(--card-bg-dark);
@@ -588,22 +694,27 @@ body.dark-mode .total-vehicles {
         body.dark-mode .data-table th, body.dark-mode .data-table td {
             border-bottom-color: var(--border-dark);
         }
-        .data-table th {
-            background: var(--background-light);
-            color: var(--text-muted-light);
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-        }
-        body.dark-mode .data-table th {
-            background: var(--background-dark);
-            color: var(--text-muted-dark);
-        }
+.data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--border-light); /* THAY ĐỔI: Dùng màu đậm hơn */
+    color: var(--text-light);
+    border-bottom: 2px solid var(--gradient-start);
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    padding: 12px 15px;
+}
+
+body.dark-mode .data-table th {
+    background-color: var(--border-dark); /* THAY ĐỔI: Dùng màu đậm hơn cho giao diện tối */
+    color: var(--text-dark);
+    border-bottom-color: var(--gradient-end);
+}
         .data-table th .fas { margin-left: 5px; opacity: 0.7; }
         .data-table tr:last-child td { border-bottom: none; }
         .data-table tbody tr { transition: background-color var(--transition-fast) ease; }
@@ -643,43 +754,63 @@ body.dark-mode .total-vehicles {
 
         
         /* === NÚT & PAGINATION === */
-        .pagination button {
-            padding: 12px 14px;
-            background: var(--gradient);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all var(--transition-medium) ease;
-            box-shadow: var(--shadow-md);
-        }
-        .pagination button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        .pagination button:disabled {
-            background: var(--border-light);
-            color: var(--text-muted-light);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        body.dark-mode .pagination button:disabled {
-            background: var(--border-dark);
-            color: var(--text-muted-dark);
-        }
-        .pagination span {
-            font-size: 14px;
-            font-weight: 600;
-        }
+.pagination button {
+    border: none;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 600; /* Chữ đậm */
+    border-radius: 10px; /* Bo góc */
+    cursor: pointer;
+    transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt mà */
+}
+.pagination button.active {
+    background: linear-gradient(135deg, #4f46e5, #14b8a6); /* Màu gradient */
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+}
+.pagination button.active:hover {
+    transform: translateY(-2px); /* Nhấc nút lên một chút */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.pagination button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+/* === BẮT ĐẦU: MÃ CSS SỬA KHOẢNG CÁCH PHÂN TRANG (PHIÊN BẢN 2) === */
+
+/* Dùng !important để buộc trình duyệt phải áp dụng */
+.pagination {
+    display: flex;
+    justify-content: center; /* Căn giữa các mục */
+    align-items: center;    /* Căn đều theo chiều dọc */
+    gap: 4px;              /* Khoảng cách giữa các mục, ví dụ: 12px */
+    font-family: 'Plus Jakarta Sans', sans-serif; /* Font chữ */
+}
+
+
+
+
+/* === KẾT THÚC: MÃ CSS SỬA KHOẢNG CÁCH PHÂN TRANG === */
+.pagination button:disabled {
+    background-color: #f1f2f6; /* Màu nền xám nhạt */
+    color: #a6acb3;           /* Màu chữ xám mờ */
+    cursor: not-allowed;      /* Đổi con trỏ chuột */
+    box-shadow: none;         /* Bỏ đổ bóng */
+}
+.pagination .page-info {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d; /* Màu chữ xám */
+}
+body.dark-mode .pagination button:disabled {
+    background: var(--border-dark);
+    color: var(--text-muted-dark);
+}
+.pagination span {
+    font-size: 13px; /* Giảm cỡ chữ */
+    font-weight: 500;
+}
 
         /* === TRẠNG THÁI & MÀU SẮC === */
         .status-badge {
@@ -764,49 +895,7 @@ body.dark-mode .total-vehicles {
 --exterior-green-text: #2ecc71;
 --exterior-grey-text: #bdc3c7;
 --exterior-white-text: #ecf0f1;
-        /* === AI CHATBOT (ĐỒNG BỘ) === */
-        #ai-chat-toggle {
-            position: fixed; bottom: 70px; right: 25px; width: 60px; height: 60px; border-radius: 50%;
-            background: var(--gradient); color: white; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-lg); font-size: 28px;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1011;
-        }
-        #ai-chat-toggle:hover { transform: scale(1.1); }
-        #ai-chat-window {
-            position: fixed; bottom: 140px; right: 25px; width: 370px; max-width: 90vw; height: 500px;
-            background: rgba(248, 249, 250, 0.75); backdrop-filter: blur(8px);
-            border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-light);
-            display: flex; flex-direction: column; overflow: hidden;
-            visibility: hidden; opacity: 0; transform: translateY(20px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1010;
-        }
-        body.dark-mode #ai-chat-window {
-            background: rgba(30, 30, 30, 0.75); border-color: var(--border-dark);
-        }
-        #ai-chat-window.visible { visibility: visible; opacity: 1; transform: translateY(0); }
-        /* Các style khác cho AI chat giữ nguyên từ file gốc index.html */
-         .ai-chat-header { flex-shrink: 0; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--gradient); color: white; }
-        .ai-chat-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; }
-        #ai-chat-close { background: none; border: none; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.8); transition: color 0.2s ease, transform 0.2s ease; }
-        #ai-chat-close:hover { color: white; transform: rotate(90deg); }
-        #ai-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: transparent; }
-        .user-message, .ai-message { margin-bottom: 15px; display: flex; max-width: 90%; }
-        .user-message { margin-left: auto; flex-direction: row-reverse; }
-        .message-content { padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
-        .user-message .message-content { background: var(--gradient); color: white; border-bottom-right-radius: 5px; }
-        .ai-message .message-content { background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-light); border-bottom-left-radius: 5px; box-shadow: var(--shadow-sm); }
-        body.dark-mode .ai-message .message-content { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-dark); }
-        .ai-chat-input-area { flex-shrink: 0; padding: 15px; border-top: 1px solid var(--border-light); display: flex; gap: 10px; background-color: transparent; }
-        body.dark-mode .ai-chat-input-area { border-top-color: var(--border-dark); }
-        #ai-chat-input { flex-grow: 1; border: 1px solid var(--border-light); border-radius: 20px; padding: 10px 15px; font-size: 14px; resize: none; background: var(--background-light); color: var(--text-light); transition: all 0.2s ease; }
-        body.dark-mode #ai-chat-input { border-color: var(--border-dark); background: var(--background-dark); color: var(--text-dark); }
-        #ai-chat-input:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
-        body.dark-mode #ai-chat-input:focus { border-color: var(--gradient-end); box-shadow: var(--shadow-glow-dark); }
-        #ai-chat-send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--gradient); color: white; font-size: 16px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
-        #ai-chat-send:hover:not(:disabled) { transform: scale(1.1); box-shadow: var(--shadow-md); }
-        
-        /* === RESPONSIVE === */
+                /* === RESPONSIVE === */
         @media (max-width: 1200px) {
             .data-card {
                 height: auto;
@@ -849,8 +938,14 @@ body.dark-mode .total-vehicles {
             transition: all var(--transition-medium) ease;
         }
         @media (max-width: 900px) {
-            .mobile-menu-btn { display: flex; }
-        }
+    .action-btn .btn-text {
+       display: none;
+   }
+   /* Ẩn toàn bộ khu vực nút chức năng trên di động */
+   .filter-actions {
+        display: none;
+    }
+}
         body.dark-mode .mobile-menu-btn {
             background: var(--card-bg-dark);
             color: var(--text-dark);
@@ -872,10 +967,28 @@ body.dark-mode .total-vehicles {
     font-size: 14px; /* Đảm bảo cỡ chữ không quá to */
     margin-bottom: 5px; /* Thêm một chút khoảng cách dưới mỗi ô */
 }
-/* Ẩn bảng và tiêu đề gốc trên di động */
+/* Ẩn bảng và tiêu đề gốc trên di động, TRỪ DÒNG THÔNG BÁO */
 .data-table thead,
-.data-table tr {
+.data-table tbody tr:not(.table-placeholder) {
     display: none;
+}
+
+/* Định dạng cho dòng thông báo tải dữ liệu trên di động */
+.data-table tr.table-placeholder {
+    display: table-row; /* Bắt buộc hiển thị dòng này */
+}
+.data-table tr.table-placeholder td {
+    text-align: center !important;
+    padding: 50px 20px; /* Tăng khoảng đệm cho đẹp hơn */
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-muted-light);
+}
+.data-table tr.table-placeholder i {
+    margin-right: 8px;
+}
+body.dark-mode .data-table tr.table-placeholder td {
+    color: var(--text-muted-dark);
 }
 
 /* Hiển thị container cho các thẻ */
@@ -959,24 +1072,6 @@ body.dark-mode .card-row .card-label {
     .main-content {
         padding: 15px; /* Giảm padding để có nhiều không gian hơn */
     }
-
-    /* 2. Sắp xếp lại khu vực bộ lọc cho gọn gàng */
-    .filter-section {
-        grid-template-columns: 1fr; /* Chuyển thành 1 cột duy nhất */
-        gap: 15px;
-        padding: 15px;
-    }
-
-    .filter-group {
-    flex-direction: column; /* Xếp các bộ lọc theo chiều dọc */
-    align-items: stretch;   /* Kéo dãn các bộ lọc cho bằng nhau */
-    gap: 8px;               /* <-- THÊM DÒNG NÀY VÀO */
-}
-
-    .button-group {
-        justify-self: start; /* Căn các nút về bên trái trên di động */
-        flex-wrap: wrap;     /* Cho phép các nút xuống dòng nếu không đủ chỗ */
-    }
     
     .total-vehicles {
     width: 100%;
@@ -1003,25 +1098,9 @@ body.dark-mode .card-row .card-label {
         -webkit-overflow-scrolling: touch; /* Giúp cuộn mượt hơn trên iOS */
     }
 
-    /* Thêm một chỉ dẫn trực quan cho người dùng biết bảng có thể cuộn */
-    .table-container::after {
-        content: 'Trượt ngang để xem thêm ->';
-        display: block;
-        text-align: right;
-        font-size: 11px;
-        color: var(--text-muted-light);
-        padding: 8px 5px 0 0;
-        font-style: italic;
-    }
-    body.dark-mode .table-container::after {
-        color: var(--text-muted-dark);
-    }
+
     
-    /* 5. Điều chỉnh bảng phân trang */
-    .pagination button {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
+  
 
     /* 6. Tinh chỉnh modal gợi ý */
     .modal-suggestion-content {
@@ -1041,6 +1120,47 @@ body.dark-mode .card-row .card-label {
         right: 15px;
     }
 }
+/* === BẮT ĐẦU: MÃ CSS ĐỂ CỐ ĐỊNH LAYOUT VÀ CUỘN BẢNG === */
+
+/* 1. Thiết lập chiều cao và layout flex cho nội dung chính */
+.main-content {
+    display: flex;
+    flex-direction: column; /* Sắp xếp các phần tử con theo chiều dọc */
+    height: calc(100vh - 65px - 45px); /* Chiều cao viewport - chiều cao navbar - chiều cao footer */
+    padding-bottom: 0; /* Bỏ padding dưới để footer vừa vặn */
+}
+
+/* 2. Bộ lọc sẽ không co giãn */
+.filter-section {
+    flex-shrink: 0;
+    margin-bottom: 15px; /* Giảm khoảng cách dưới một chút */
+}
+
+/* 3. Thẻ chứa bảng sẽ giãn ra để lấp đầy không gian còn lại */
+.content-grid {
+    flex-grow: 1; /* Cho phép phần tử này phát triển */
+    display: flex;
+    min-height: 0; /* Quan trọng để flexbox hoạt động đúng trong các container lồng nhau */
+}
+
+.data-card {
+    display: flex;
+    flex-direction: column; /* Sắp xếp bảng và phân trang theo chiều dọc */
+    width: 100%;
+    height: 100%; /* Lấp đầy không gian của .content-grid */
+    min-height: 0; /* Quan trọng cho flexbox */
+}
+
+/* 4. Đây là phần QUAN TRỌNG NHẤT: Cho phép cuộn cho vùng chứa bảng */
+.table-container {
+    flex-grow: 1; /* Vùng chứa bảng sẽ giãn ra tối đa */
+    overflow-y: auto; /* Thêm thanh cuộn dọc khi nội dung vượt quá chiều cao */
+    min-height: 0; /* Quan trọng cho flexbox */
+}
+
+
+
+/* === KẾT THÚC: MÃ CSS ĐỂ CỐ ĐỊNH LAYOUT === */
     </style>
 </head>
 <body>
@@ -1078,35 +1198,48 @@ body.dark-mode .card-row .card-label {
 
     <div class="main-content" id="main-content">
         <div class="filter-section" data-aos="fade-up">
-    <div class="filter-group">
-        <input type="text" id="search-input" placeholder="Tìm kiếm Số VIN, Dòng xe...">
-        <select id="filter-line" onchange="applyFilters()">
-            <option value="">Tất cả dòng xe</option>
-        </select>
-        <select id="filter-version" onchange="applyFilters()">
-            <option value="">Tất cả phiên bản</option>
-        </select>
-        <select id="filter-exterior" onchange="applyFilters()">
-            <option value="">Tất cả ngoại thất</option>
-        </select>
-        <select id="filter-status" onchange="applyFilters()">
-            <option value="">Tất cả trạng thái</option>
-        </select>
-    </div>
-    <div class="button-group">
-         <span class="total-vehicles" id="total-vehicles">Tổng số xe: 0</span>
-         <button class="nav-btn" onclick="refreshData()" data-tooltip="Làm mới"><i class="fas fa-sync-alt"></i></button>
-         <button class="nav-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel"><i class="fas fa-file-excel"></i></button>
-         <button class="nav-btn" onclick="printTable()" data-tooltip="In"><i class="fas fa-print"></i></button>
-    </div>
-</div>
+            <div class="filter-bar">
+                <button class="action-btn toggle-filter-btn" id="toggle-filters-btn">
+                    <i class="fas fa-filter"></i>
+                    <span class="btn-text">Bộ lọc</span>
+                </button>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm nhanh...">
+                </div>
+                <div class="filter-actions">
+                    <span class="total-vehicles" id="total-vehicles">Tổng: <strong>0</strong></span>
+                    <button class="action-btn" onclick="refreshData()" data-tooltip="Làm mới">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <button class="action-btn" onclick="exportToExcel()" data-tooltip="Xuất Excel">
+                        <i class="fas fa-file-excel"></i>
+                    </button>
+                     <button class="action-btn" onclick="printTable()" data-tooltip="In">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapsible-filters" id="collapsible-filters-panel">
+                <select id="filter-line" onchange="applyFilters()">
+                    <option value="">Tất cả dòng xe</option>
+                </select>
+                <select id="filter-version" onchange="applyFilters()">
+                    <option value="">Tất cả phiên bản</option>
+                </select>
+                <select id="filter-exterior" onchange="applyFilters()">
+                    <option value="">Tất cả ngoại thất</option>
+                </select>
+                <select id="filter-status" onchange="applyFilters()">
+                    <option value="">Tất cả trạng thái</option>
+                </select>
+            </div>
+        </div>
 
         <div class="content-grid" data-aos="fade-up" data-aos-delay="100">
             <div class="data-card" id="table-card">
                  <div class="table-container">
-                    <div class="loading-overlay" id="loading-overlay">
-                        <div class="loading-spinner"></div>
-                    </div>
+                    
                     <table id="data-table" class="data-table">
                         <thead>
                             <tr>
@@ -1122,7 +1255,7 @@ body.dark-mode .card-row .card-label {
                             </tr>
                         </thead>
                         <tbody id="table-body">
-                             <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr>
+                             <tr class="table-placeholder"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1134,39 +1267,6 @@ body.dark-mode .card-row .card-label {
             </div>
         </div>
     </div>
-
-    <div id="suggestionModal" class="modal-suggestion">
-        <div class="modal-suggestion-content">
-            <button class="close-suggestion-btn" onclick="closeSuggestionModal()" aria-label="Đóng gợi ý">&times;</button>
-            <h2 class="modal-suggestion-title"><i class="fas fa-lightbulb"></i> Gợi Ý Xe Mới Sẵn Sàng</h2>
-            <p class="modal-suggestion-subtitle">Đây là những xe mới về (trong 7 ngày) và đang <strong style="color: var(--gradient-end);">Sẵn sàng</strong> để tư vấn:</p>
-            <div id="suggestionList" class="suggestion-list-container">
-                </div>
-            <button onclick="closeSuggestionModal()" class="request-pairing-btn" style="width:100%;">Đã xem</button>
-        </div>
-    </div>
-    
-<button id="ai-chat-toggle">
-    <i class="fas fa-robot"></i>
-</button>
-
-<div id="ai-chat-window">
-    <div class="ai-chat-header">
-        <h3><i class="fas fa-brain"></i> Trợ lý</h3>
-        <button id="ai-chat-close" aria-label="Đóng chat">&times;</button>
-    </div>
-    <div id="ai-chat-messages">
-        <div class="ai-message">
-            <div class="message-content">Xin chào! Tôi có thể giúp bạn tìm kiếm thông tin xe trong kho không?</div>
-        </div>
-    </div>
-    <div class="ai-chat-input-area">
-        <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
-        <button id="ai-chat-send" aria-label="Gửi tin nhắn">
-            <i class="fas fa-paper-plane"></i>
-        </button>
-    </div>
-</div>
 
     <footer><p>VinFast Thuận An - Dĩ An</p></footer>
     <div id="notification"></div>
@@ -1234,6 +1334,24 @@ body.dark-mode .card-row .card-label {
             setActiveSidebarLink();
         }
 
+        // --- BỘ LỌC CÓ THỂ THU GỌN ---
+        function setupCollapsibleFilters() {
+            const toggleBtn = document.getElementById('toggle-filters-btn');
+            const panel = document.getElementById('collapsible-filters-panel');
+
+            if (toggleBtn && panel) {
+                toggleBtn.addEventListener('click', () => {
+                    toggleBtn.classList.toggle('active');
+                    panel.classList.toggle('open');
+                    if (panel.style.maxHeight) {
+                        panel.style.maxHeight = null;
+                    } else {
+                        panel.style.maxHeight = panel.scrollHeight + "px";
+                    }
+                });
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             if (!isLoggedIn) {
                 window.location.href = "index.html";
@@ -1241,6 +1359,7 @@ body.dark-mode .card-row .card-label {
             }
             loadInitialData();
             setupSearch();
+            setupCollapsibleFilters(); // Kích hoạt bộ lọc mới
             updateUIOnLoad();
             
             // Close mobile sidebar when clicking outside
@@ -1577,7 +1696,10 @@ function renderTable() {
         }
 
         function updateTotalVehicles() {
-            document.getElementById("total-vehicles").textContent = `Tổng số xe: ${filteredData.length}`;
+            const totalEl = document.getElementById("total-vehicles");
+            if (totalEl) {
+                totalEl.innerHTML = `Tổng: <strong>${filteredData.length}</strong>`;
+            }
         }
         
         function changePage(delta) {
