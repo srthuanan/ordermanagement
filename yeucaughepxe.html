@@ -20,6 +20,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+/* =================================================================== */
+/* 1. CÀI ĐẶT BIẾN TOÀN CỤC (VARIABLES) & KIỂU CƠ BẢN
+/* =================================================================== */
+
 :root {
     --font-main: 'Plus Jakarta Sans', sans-serif;
     
@@ -30,7 +34,7 @@
     --text-muted-light: #6c757d; /* Text phụ */
     --border-light: #e9ecef; /* Viền siêu nhạt */
 
-    /* Bảng màu ngoại thất (Light Mode) */
+    /* Bảng màu ngoại thất */
     --exterior-red-text: #c0392b;
     --exterior-orange-text: #f39c12;
     --exterior-blue-text: #2980b9;
@@ -40,13 +44,6 @@
     --exterior-grey-text: #7f8c8d;
     --exterior-white-text: #2c3e50;
     --exterior-bronze-text: #a1662f;
-
-    /* Bảng màu Dark Mode */
-    --background-dark: #121212; /* Nền đen sâu */
-    --card-bg-dark: #1e1e1e; /* Nền card tối */
-    --text-dark: #e9ecef; /* Text trắng ngà */
-    --text-muted-dark: #adb5bd; /* Text phụ tối */
-    --border-dark: #343a40; /* Viền tối */
 
     /* Accent Gradient - Dải màu nhấn chủ đạo */
     --gradient-start: #4f46e5; /* Indigo */
@@ -58,7 +55,6 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1); /* Glow cho focus */
-    --shadow-glow-dark: 0 0 0 4px rgb(20 184 166 / 0.2);
 
     /* Tốc độ chuyển động */
     --transition-fast: 0.2s;
@@ -78,49 +74,16 @@
     --status-cho-vbc-text-light: #3f51b5;
     --status-default-bg-light: #eceff1;
     --status-default-text-light: #546e7a;
-    
-    --status-san-sang-bg-dark: #1a3c3a;
-    --status-san-sang-text-dark: #80cbc4;
-    --status-da-ghep-bg-dark: #1c3a56;
-    --status-da-ghep-text-dark: #90caf9;
-    --status-chua-ghep-bg-dark: #4b3c1c;
-    --status-chua-ghep-text-dark: #ffe082;
-    --status-da-ban-bg-dark: #393e46;
-    --status-da-ban-text-dark: #a6acb3;
-    --status-cho-vbc-bg-dark: #2c304d;
-    --status-cho-vbc-text-dark: #b3bcf5;
-    --status-default-bg-dark: #37474f;
-    --status-default-text-dark: #b0bec5;
-}
-
-body.dark-mode {
-    /* Bảng màu ngoại thất (Dark Mode) */
-    --exterior-red-text: #e74c3c;
-    --exterior-orange-text: #f5b041;
-    --exterior-blue-text: #5dade2;
-    --exterior-yellow-text: #f4d03f;
-    --exterior-pink-text: #e573e0;
-    --exterior-green-text: #2ecc71;
-    --exterior-grey-text: #bdc3c7;
-    --exterior-white-text: #ecf0f1;
-    --exterior-bronze-text: #d38d5f;
-
-    /* Cập nhật lại các biến cũ để tương thích dark mode nếu cần */
-    --background-light: var(--background-dark);
-    --text-light: var(--text-dark);
-    --card-bg-light: var(--card-bg-dark);
-    --border-color-light: var(--border-dark);
-    --shadow-light-outer: var(--shadow-dark-outer);
-    --shadow-light-inner: var(--shadow-dark-inner);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
     font-family: var(--font-main);
     background: var(--background-light);
     color: var(--text-light);
     min-height: 100vh;
-    overflow: hidden; /* Ngăn cả hai thanh cuộn dọc và ngang */
+    overflow-y: hidden !important;
     transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
     font-size: 14px;
 }
@@ -133,10 +96,12 @@ body {
     transition: background var(--transition-medium) ease;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-light); }
-body.dark-mode ::-webkit-scrollbar-thumb { background: var(--border-dark); }
-body.dark-mode ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-dark); }
 
+/* =================================================================== */
+/* 2. BỐ CỤC CHÍNH (LAYOUT)
+/* =================================================================== */
 
+/* --- Navbar --- */
 .navbar {
     position: fixed;
     top: 0;
@@ -155,10 +120,7 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-da
     align-items: center;
     gap: 10px;
 }
-body.dark-mode .navbar {
-    background-color: rgba(30, 30, 30, 0.75);
-    border-color: var(--border-dark);
-}
+
 .navbar .logo h1 {
     font-size: 16px;
     font-weight: 800;
@@ -166,9 +128,8 @@ body.dark-mode .navbar {
     color: transparent;
     -webkit-background-clip: text;
     background-clip: text;
-    animation: none;
-    text-shadow: none;
 }
+
 .navbar .tabs {
     display: flex;
     position: absolute;
@@ -195,50 +156,29 @@ body.dark-mode .navbar {
     color: white;
     box-shadow: var(--shadow-md);
 }
-body.dark-mode .navbar .tabs a { color: var(--text-muted-dark); }
-body.dark-mode .navbar .tabs a:hover {
-    color: var(--text-dark);
-    background: var(--background-dark);
-}
-body.dark-mode .navbar .tabs a.active { color: white; }
 
-.navbar-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-.nav-btn, .theme-toggle-btn, .mobile-menu-btn {
-    border: none;
-    border-radius: 50%;
-    background: var(--card-bg-light);
-    color: var(--text-muted-light);
-    transition: all var(--transition-medium) ease;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: 1px solid var(--border-light);
-    font-size: 16px;
+.navbar-controls { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    margin-left: auto; 
 }
-.nav-btn:hover, .theme-toggle-btn:hover, .mobile-menu-btn:hover {
-    color: var(--text-light);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn, body.dark-mode .mobile-menu-btn {
-    background: var(--card-bg-dark);
-    color: var(--text-muted-dark);
-    border-color: var(--border-dark);
-}
-body.dark-mode .nav-btn:hover, body.dark-mode .theme-toggle-btn:hover, body.dark-mode .mobile-menu-btn:hover {
-    color: var(--text-dark);
-}
-.hamburger { display: none; background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; margin-right: 10px; transition: transform var(--transition-fast) ease-out; }
-body.dark-mode .hamburger { color: var(--text-dark); }
-.hamburger.active { transform: rotate(90deg); }
 
+.hamburger { 
+    display: none; 
+    background: none; 
+    border: none; 
+    color: var(--text-light); 
+    font-size: 20px; 
+    cursor: pointer; 
+    margin-right: 10px; 
+    transition: transform var(--transition-fast) ease-out; 
+}
+.hamburger.active { 
+    transform: rotate(90deg); 
+}
 
-/* Dán đoạn mã này vào file yeucaughepxe.html để thay thế CSS sidebar cũ */
-
-/* === SIDEBAR - GIAO DIỆN MỚI, ĐỒNG BỘ VỚI INDEX === */
+/* --- Sidebar --- */
 .sidebar {
     position: fixed;
     top: 0;
@@ -251,16 +191,13 @@ body.dark-mode .hamburger { color: var(--text-dark); }
     padding: 15px;
     padding-top: 80px; 
     transition: width var(--transition-medium) ease, transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
-    z-index: 1007; /* Đảm bảo z-index cao hơn navbar */
+    z-index: 1007;
     border-right: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
 }
 .sidebar.collapsed { width: 70px; }
-body.dark-mode .sidebar {
-    background-color: rgba(30, 30, 30, 0.75);
-    border-right: 1px solid var(--border-dark);
-}
+
 .sidebar .logo { text-align: center; margin-bottom: 30px; }
 .sidebar .logo h1 {
     font-size: 18px;
@@ -308,20 +245,14 @@ body.dark-mode .sidebar {
     color: var(--text-light);
     background: var(--background-light);
 }
-body.dark-mode .sidebar .menu a { color: var(--text-muted-dark); }
-body.dark-mode .sidebar .menu a:hover {
-    color: var(--text-dark);
-    background: var(--background-dark);
-}
 .sidebar .menu a.active {
     background: var(--gradient);
     color: white;
     box-shadow: var(--shadow-md);
 }
 .sidebar .menu a.active i { transform: scale(1.1); }
-body.dark-mode .sidebar .menu a.active { color: white; }
 
-/* === NÚT TOGGLE SIDEBAR === */
+/* --- Nút Toggle Sidebar --- */
 .toggle-btn {
     position: static;
     margin-top: auto;
@@ -345,159 +276,140 @@ body.dark-mode .sidebar .menu a.active { color: white; }
     color: var(--gradient-start);
     transform: scale(1.05);
 }
-body.dark-mode .toggle-btn {
-    background: var(--background-dark);
-    border-color: var(--border-dark);
-    color: var(--text-muted-dark);
-}
- body.dark-mode .toggle-btn:hover {
-    border-color: var(--gradient-end);
-    color: var(--gradient-end);
-}
 .toggle-btn i { transition: transform var(--transition-slow) cubic-bezier(0.19, 1, 0.22, 1); }
 .sidebar.collapsed .toggle-btn i { transform: rotate(180deg); }
 
-/* === RESPONSIVE CHO SIDEBAR VÀ MAIN CONTAINER === */
-@media (max-width: 900px) {
-    .sidebar { transform: translateX(-100%); width: 250px; }
-    .sidebar.open { transform: translateX(0); }
-    .sidebar.collapsed { transform: translateX(-100%); }
-    .main-container, .main-container.collapsed {
-        margin-left: 0;
-        padding: 15px;
-        margin-top: 60px;
-    }
-    footer, .main-container.collapsed + footer, .main-container.collapsed ~ footer {
-        left: 0;
-        width: 100%;
-    }
-    .toggle-btn { display: none; }
-    .mobile-menu-btn { display: flex !important; }
-}
 
-[data-tooltip] { position: relative; }
-[data-tooltip]::after {
-    content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
-    transform: translateX(-50%) translateY(5px);
-    background-color: #333; color: #fff;
-    padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
-    opacity: 0; visibility: hidden; transition: opacity 0.2s ease-out, visibility 0.2s ease-out, transform 0.2s ease-out; z-index: 999;
-}
-[data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
-
+/* --- Main Container & Footer --- */
 .main-container {
     margin-left: 220px;
-    margin-top: 50px;      /* Sửa: Lề trên bằng đúng chiều cao navbar */
-    margin-bottom: 30px;   /* Lề dưới cho footer */
-    padding: 20px;         /* Sửa: Giảm khoảng đệm bên trong một chút */
+    margin-top: 50px;
+    margin-bottom: 30px;
+    padding: 20px;
     transition: margin-left var(--transition-medium) ease;
     display: flex;
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
-    /* Xóa hoàn toàn thuộc tính height: calc(...) để trình duyệt tự tính toán */
+    height: calc(100vh - 60px); 
 }
 .main-container.collapsed {
     margin-left: 70px;
 }
 
+/* Layout đặc biệt cho chế độ xem Form */
+.main-container.layout-form-view {
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    gap: 20px;
+    align-items: stretch;
+}
+.main-container.layout-form-view #form-section,
+.main-container.layout-form-view #history-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.main-container.layout-form-view #form-section .form-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.main-container.layout-form-view #form-section form {
+    overflow-y: auto; 
+    padding-right: 10px; 
+    flex-grow: 1; 
+}
+.main-container.layout-form-view #history-section .table-wrapper {
+    flex-grow: 1;
+    max-height: none;
+    height: auto;
+}
+.main-container.layout-form-view #history-section #history-table th:nth-child(5),
+.main-container.layout-form-view #history-section #history-table td:nth-child(5),
+.main-container.layout-form-view #history-section #history-table th:nth-child(6),
+.main-container.layout-form-view #history-section #history-table td:nth-child(6) {
+    display: none;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 220px;
+    width: calc(100% - 220px);
+    padding: 10px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted-light);
+    border-top: 1px solid var(--border-light);
+    background: var(--background-light);
+    z-index: 998;
+    transition: all var(--transition-medium) ease;
+}
+
+.main-content.collapsed + footer {
+    left: 30px;
+    width: calc(100% - 30px);
+}
+
+/* =================================================================== */
+/* 3. CÁC THÀNH PHẦN CHUNG (COMPONENTS)
+/* =================================================================== */
+
+/* --- Card & Container chung --- */
 .form-container, .grid-container {
     background: var(--card-bg-light);
-    padding: 20px; /* THAY ĐỔI: Giảm khoảng đệm chung */
+    padding: 20px;
     border-radius: 16px;
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-light);
-    animation: none;
 }
 .form-container.hidden, .grid-container.hidden {
     display: none !important;
 }
-body.dark-mode .form-container, body.dark-mode .grid-container {
-    background: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
+
 .form-container h2, .grid-container h3 {
     font-size: 18px;
     color: var(--text-light);
-    margin-bottom: 15px; /* THAY ĐỔI: Giảm lề dưới */
+    margin-bottom: 15px;
     font-weight: 700;
     border-bottom: 1px solid var(--border-light);
-    padding-bottom: 10px; /* THAY ĐỔI: Giảm đệm dưới */
-}
-body.dark-mode .form-container h2, body.dark-mode .grid-container h3 {
-    color: var(--text-dark);
-    border-color: var(--border-dark);
+    padding-bottom: 10px;
 }
 
-.form-container form { display: grid; gap: 3px; } /* THAY ĐỔI: Giảm khoảng cách giữa các mục */
-.form-container label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-light);
-    margin-bottom: 5px;
+.grid-container#history-section {
+    flex-grow: 1; 
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
-body.dark-mode .form-container label { color: var(--text-dark); }
 
-.form-container input:not([type='file']), .form-container select, .form-container textarea {
-    padding: 8px 15px; /* THAY ĐỔI: Giảm đệm trên-dưới để làm lùn các ô input */
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    font-size: 14px;
-    background: var(--background-light);
-    color: var(--text-light);
+/* --- Buttons --- */
+.nav-btn, .theme-toggle-btn, .mobile-menu-btn {
+    border: none;
+    border-radius: 50%;
+    background: var(--card-bg-light);
+    color: var(--text-muted-light);
     transition: all var(--transition-medium) ease;
-    width: 100%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid var(--border-light);
+    font-size: 16px;
 }
-body.dark-mode .form-container input:not([type='file']), 
-body.dark-mode .form-container select, 
-body.dark-mode .form-container textarea {
-    background: var(--background-dark);
-    color: var(--text-dark);
-    border-color: var(--border-dark);
-}
-.form-container input:not([type='file']):focus, 
-.form-container select:focus, 
-.form-container textarea:focus {
-    outline: none;
-    border-color: var(--gradient-start);
-    box-shadow: var(--shadow-glow-light);
-}
-body.dark-mode .form-container input:not([type='file']):focus, 
-body.dark-mode .form-container select:focus,
-body.dark-mode .form-container textarea:focus {
-    border-color: var(--gradient-end);
-    box-shadow: var(--shadow-glow-dark);
-}
-/* === [THÊM MỚI] CSS cho nút hành động thành công (VD: Xuất Hóa Đơn) === */
-
-/* Giao diện SÁNG (Light Mode) */
-.btn.btn-success {
-    background: var(--status-san-sang-text-light); /* Màu nền xanh lá cây */
-    color: white;
-    border: 1px solid var(--status-san-sang-text-light);
-}
-
-.btn.btn-success:hover:not(:disabled) {
-    background: #00695c; /* Màu xanh đậm hơn khi di chuột */
-    border-color: #00695c;
-    box-shadow: var(--shadow-lg);
+.nav-btn:hover, .theme-toggle-btn:hover, .mobile-menu-btn:hover {
+    color: var(--text-light);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-/* Giao diện TỐI (Dark Mode) */
-body.dark-mode .btn.btn-success {
-    background: var(--status-san-sang-text-dark); /* Màu xanh ngọc cho giao diện tối */
-    color: var(--status-san-sang-bg-dark); /* Màu text tối để tương phản */
-    border-color: var(--status-san-sang-text-dark);
-}
-
-body.dark-mode .btn.btn-success:hover:not(:disabled) {
-    background: #a6e4d9; /* Màu xanh nhạt hơn khi di chuột */
-    border-color: #a6e4d9;
-}
 .form-container .form-buttons { display: flex; gap: 10px; margin-top: 10px; }
+
 .form-container button, .modal-btn, .btn {
     padding: 12px 16px;
     background: var(--gradient);
@@ -519,23 +431,35 @@ body.dark-mode .btn.btn-success:hover:not(:disabled) {
     box-shadow: var(--shadow-lg);
 }
 .form-container button.danger, .modal-btn.danger { background: #e74c3c; }
-.modal-btn.secondary {
-    background: transparent;
-    border: 1px solid var(--border-light);
-    color: var(--text-light);
-    box-shadow: var(--shadow-sm);
-}
-body.dark-mode .modal-btn.secondary {
-    border-color: var(--border-dark);
-    color: var(--text-dark);
-}
-.modal-btn.secondary:hover {
-    background: var(--background-light);
-    border-color: var(--text-muted-light);
-}
 
-.grid-container .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
-.export-btn-container { display: flex; gap: 10px; align-items: center; }
+.btn.btn-success {
+    background: var(--status-san-sang-text-light);
+    color: white;
+    border: 1px solid var(--status-san-sang-text-light);
+}
+.btn.btn-success:hover:not(:disabled) {
+    background: #00695c; 
+    border-color: #00695c;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+.btn-icon-danger {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background-color: transparent;
+    border: none;
+    color: var(--text-muted-light);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon-danger i { font-size: 14px; }
+.btn-icon-danger:hover { background-color: #fee2e2; color: #ef4444; }
+
+
 .export-btn, .refresh-btn {
     padding: 8px; border: none; border-radius: 50%;
     background: var(--card-bg-light); color: var(--text-muted-light);
@@ -544,24 +468,202 @@ body.dark-mode .modal-btn.secondary {
     border: 1px solid var(--border-light);
     transition: all var(--transition-medium) ease;
 }
-body.dark-mode .export-btn, body.dark-mode .refresh-btn {
-    background: var(--card-bg-dark); color: var(--text-muted-dark); border-color: var(--border-dark);
-}
 .export-btn:hover, .refresh-btn:hover {
     color: var(--text-light);
     transform: scale(1.1);
     box-shadow: var(--shadow-md);
 }
 
+#scrollToTopBtn {
+    background-color: var(--card-bg-light);
+    color: var(--text-light);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-md);
+}
+
+
+/* --- Forms & Inputs --- */
+.form-container form { display: grid; gap: 3px; }
+.form-container label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.form-container input:not([type='file']), .form-container select, .form-container textarea {
+    padding: 8px 15px;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    font-size: 14px;
+    background: var(--background-light);
+    color: var(--text-light);
+    transition: all var(--transition-medium) ease;
+    width: 100%;
+}
+
+.form-container input:not([type='file']):focus, 
+.form-container select:focus, 
+.form-container textarea:focus {
+    outline: none;
+    border-color: var(--gradient-start);
+    box-shadow: var(--shadow-glow-light);
+}
+
+/* File Upload Area */
+.file-upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.file-upload-area {
+    display: flex;
+    flex-direction: column;
+}
+.file-upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted-light);
+    margin-bottom: 5px;
+}
+.required-star {
+    color: #e74c3c;
+}
+.file-upload-wrapper {
+    position: relative;
+    width: 100%;
+    height: 90px;
+    border: 2px dashed var(--border-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    overflow: hidden;
+    background-color: var(--background-light);
+}
+.file-upload-wrapper:hover {
+    border-color: var(--gradient-start);
+    background-color: #f8f9fa;
+}
+.file-upload-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+.file-upload-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted-light);
+    transition: opacity var(--transition-fast) ease;
+}
+.file-upload-icon {
+    font-size: 24px;
+    color: var(--gradient-start);
+}
+.file-upload-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+.file-upload-wrapper.file-selected {
+    border-style: solid;
+    border-color: var(--status-san-sang-text-light);
+    background-color: var(--status-san-sang-bg-light);
+}
+.file-upload-wrapper.file-selected .file-upload-prompt {
+    opacity: 0;
+}
+.file-upload-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease;
+    pointer-events: none;
+    min-width: 0; 
+}
+.file-upload-wrapper.file-selected .file-upload-preview {
+    opacity: 1;
+}
+.file-preview-icon {
+    font-size: 28px;
+    color: var(--status-san-sang-text-light);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+.file-preview-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+/* Vinclub Checkbox */
+.vinclub-confirmation-wrapper {
+    margin-top: 20px;
+}
+.vinclub-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 10px;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-fast) ease;
+}
+.vinclub-label:hover {
+    border-color: var(--gradient-start);
+}
+.vinclub-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    accent-color: var(--gradient-start);
+}
+.vinclub-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-light);
+}
+
+/* --- Tables --- */
 .table-wrapper {
     flex-grow: 1;
     overflow: auto;
     position: relative;
     border: 1px solid var(--border-light);
     border-radius: 12px;
-    max-height: 70vh; /* << THÊM DÒNG NÀY */
 }
-body.dark-mode .table-wrapper { border-color: var(--border-dark); }
+#history-section .table-wrapper {
+    flex-grow: 1; 
+    max-height: none; 
+    overflow-y: auto; 
+}
+
 table {
     width: 100%;
     border-collapse: separate;
@@ -572,9 +674,10 @@ th, td {
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-light);
 }
-body.dark-mode th, body.dark-mode td {
-    border-bottom-color: var(--border-dark);
+th:last-child, td:last-child {
+    border-right: none;
 }
 th {
     background: var(--background-light);
@@ -588,28 +691,24 @@ th {
     letter-spacing: 0.5px;
     cursor: pointer;
 }
-body.dark-mode th {
-    background: var(--background-dark);
-    color: var(--text-muted-dark);
+tbody tr { 
+    transition: background-color var(--transition-fast) ease; 
 }
-tbody tr { transition: background-color var(--transition-fast) ease; }
 tbody tr:hover {
     background-color: var(--background-light);
 }
-body.dark-mode tbody tr:hover { background-color: var(--background-dark); }
-.table-placeholder td { text-align: center; padding: 20px; color: var(--text-muted-light); }
-body.dark-mode .table-placeholder td { color: var(--text-muted-dark); }
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS MỚI CHO THÔNG BÁO KHI BẢNG TRỐNG ("PRO") === */
-/* ===================================================================== */
-
+.table-placeholder td { 
+    text-align: center; 
+    padding: 20px; 
+    color: var(--text-muted-light); 
+}
 .table-placeholder-pro {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
-    min-height: 200px; /* Đảm bảo có chiều cao tối thiểu */
+    min-height: 200px;
     text-align: center;
     color: var(--text-muted-light);
     border: 2px dashed var(--border-light);
@@ -617,132 +716,155 @@ body.dark-mode .table-placeholder td { color: var(--text-muted-dark); }
     margin: 10px;
     transition: all var(--transition-medium) ease;
 }
-
-body.dark-mode .table-placeholder-pro {
-    color: var(--text-muted-dark);
-    border-color: var(--border-dark);
-}
-
 .table-placeholder-pro i {
     font-size: 32px;
     margin-bottom: 15px;
     opacity: 0.7;
 }
-
 .table-placeholder-pro span {
     font-size: 15px;
     font-weight: 500;
 }
-/* ===================================================================== */
-/* === [THAY THẾ] CSS CHO THẺ TRẠNG THÁI (GIAO DIỆN PRO) === */
-/* ===================================================================== */
 
-/* 1. Định dạng cơ bản cho tất cả thẻ trạng thái */
+/* Specific Table Column Widths */
+#history-table {
+    table-layout: fixed;
+    width: 100%;
+}
+#history-table th, 
+#history-table td {
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word; 
+}
+#history-table th:nth-child(1), #history-table td:nth-child(1) { width: 6%; text-align: center; } /* STT */
+#history-table th:nth-child(2), #history-table td:nth-child(2) { width: 23%; } /* Khách Hàng / Số Đơn */
+#history-table th:nth-child(3), #history-table td:nth-child(3) { width: 15%; word-break: break-word; } /* TVBH */
+#history-table th:nth-child(4), #history-table td:nth-child(4) { width: 23%; word-break: break-word; } /* Thông Tin Xe */
+#history-table td:nth-child(4) .car-exterior-color { word-break: break-all; }
+#history-table th:nth-child(5), #history-table td:nth-child(5) { width: 14%; text-align: center; } /* Trạng Thái */
+#history-table th:nth-child(6), #history-table td:nth-child(6) { width: 16%; text-align: center; } /* Hành Động */
+
+/* --- MÃ CSS - PHIÊN BẢN ĐÃ SỬA LỖI MÀU SẮC (ĐÃ TỐI ƯU) --- */
+
+/* 1. Kích thước và cấu trúc thẻ trạng thái (giữ nguyên) */
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 8px; /* Giảm bo góc để tạo hình chữ nhật mềm mại */
+    padding: 6px 10px;
+    border-radius: 8px;
     font-size: 11px;
     font-weight: 700;
-    text-align: left; /* Căn chữ về bên trái */
-    display: inline-block;
-    min-width: 120px; /* Tăng chiều rộng tối thiểu */
+    display: inline-flex;
+    align-items: center;
+    justify-content: left;
+    width: 160px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: all 0.2s ease;
-
-    /* Nền và màu chữ sẽ được định nghĩa bằng biến */
     background-color: var(--status-color-bg);
     color: var(--status-color-main);
-    
-    /* Đường kẻ màu đặc trưng bên trái */
     border-left: 4px solid var(--status-color-main);
+    box-sizing: border-box;
 }
 
-/* 2. Định nghĩa màu cho TỪNG LOẠI TRẠNG THÁI cụ thể */
+/* 2. Bảng màu mới được phân chia theo mức độ và logic */
 
-/* --- Trạng thái: Đã Xuất Hóa Đơn (Thành công mỹ mãn) --- */
+/* === NHÓM TÍCH CỰC === */
+
+/* Xanh lá: Trạng thái thành công cuối cùng */
 .status-invoice-issued {
-    --status-color-main: #16a34a; /* Xanh lá cây đậm */
-    --status-color-bg: #f0fdf4;   /* Xanh lá cây rất nhạt */
-}
-body.dark-mode .status-invoice-issued {
-    --status-color-main: #4ade80; /* Xanh lá cây sáng */
-    --status-color-bg: #162a22;   /* Nền tối của xanh lá */
+    --status-color-main: #22c55e; /* green-500 */
+    --status-color-bg: #f0fdf4;   /* green-50 */
 }
 
-/* --- Trạng thái: Đã Ghép (Hoàn tất một bước) --- */
-.status-vin-matched {
-    --status-color-main: #2563eb; /* Xanh dương đậm */
-    --status-color-bg: #eff6ff;   /* Xanh dương rất nhạt */
-}
-body.dark-mode .status-vin-matched {
-    --status-color-main: #60a5fa; /* Xanh dương sáng */
-    --status-color-bg: #1e293b;   /* Nền tối của xanh dương */
-}
-
-/* --- Trạng thái: Chờ Phê Duyệt / Chờ Ký Hóa Đơn (Đang chờ) --- */
-.status-pending-approval,
-.status-approved {
-    --status-color-main: #c2410c; /* Cam đậm */
-    --status-color-bg: #fff7ed;   /* Cam rất nhạt */
-}
-body.dark-mode .status-pending-approval,
-body.dark-mode .status-approved {
-    --status-color-main: #fb923c; /* Cam sáng */
-    --status-color-bg: #43200e;   /* Nền tối của cam */
-}
-
-/* --- Trạng thái: Yêu Cầu Bổ Sung (Cần hành động) --- */
-.status-supplement-required {
-    --status-color-main: #dc2626; /* Đỏ đậm */
-    --status-color-bg: #fef2f2;   /* Đỏ rất nhạt */
-}
-body.dark-mode .status-supplement-required {
-    --status-color-main: #f87171; /* Đỏ sáng */
-    --status-color-bg: #450a0a;   /* Nền tối của đỏ */
-}
-
-/* --- Trạng thái: Đã Bổ Sung (Đã xử lý) --- */
+/* Tím: Trạng thái đã giải quyết xong một vấn đề */
 .status-supplemented {
-    --status-color-main: #6d28d9; /* Tím đậm */
-    --status-color-bg: #f5f3ff;   /* Tím rất nhạt */
-}
-body.dark-mode .status-supplemented {
-    --status-color-main: #a78bfa; /* Tím sáng */
-    --status-color-bg: #2b1c4a;   /* Nền tối của tím */
+    --status-color-main: #8b5cf6; /* violet-500 */
+    --status-color-bg: #f5f3ff;   /* violet-50 */
 }
 
-/* --- Trạng thái: Đã Hủy (Không hoạt động) --- */
-.status-cancelled {
-    --status-color-main: #64748b; /* Xám đậm */
-    --status-color-bg: #f8fafc;   /* Xám rất nhạt */
+/* Xanh dương: Các bước xử lý thành công trong quy trình */
+.status-vin-matched {
+    --status-color-main: #3b82f6; /* blue-500 */
+    --status-color-bg: #eff6ff;   /* blue-50 */
 }
-body.dark-mode .status-cancelled {
-    --status-color-main: #94a3b8; /* Xám sáng */
-    --status-color-bg: #1e293b;   /* Nền tối của xám */
+.status-approved {
+    --status-color-main: #14b8a6; /* teal-500 */
+    --status-color-bg: #f0fdfa;   /* teal-50 */
 }
 
-/* --- Trạng thái: Chưa Ghép & Mặc Định (Trung tính) --- */
+
+/* === NHÓM CẦN CHÚ Ý === */
+
+/* Vàng cam: Trạng thái đang chờ xử lý, cần chú ý */
+.status-pending-approval {
+    --status-color-main: #f59e0b; /* amber-500 */
+    --status-color-bg: #fffbeb;   /* amber-50 */
+}
+.status-pending-signature {
+    --status-color-main: #f97316; /* orange-500 */
+    --status-color-bg: #fff7ed;   /* orange-50 */
+}
+
+/* Đỏ: Trạng thái có lỗi, cần hành động ngay */
+.status-supplement-required {
+    --status-color-main: #ef4444; /* red-500 */
+    --status-color-bg: #fef2f2;   /* red-50 */
+}
+
+
+/* === NHÓM TRUNG TÍNH / KẾT THÚC === */
+
+/* Xám: Trạng thái chờ hoặc chưa có thông tin */
+.status-unmatched,
 .status-vin-not-found,
-.status-default,
-.status-pending-invoice {
-    --status-color-main: #71717a; /* Xám trung bình */
-    --status-color-bg: #f4f4f5;   /* Xám nhạt */
+.status-default {
+    --status-color-main: #6b7280; /* gray-500 */
+    --status-color-bg: #f3f4f6;   /* gray-100 */
 }
-body.dark-mode .status-vin-not-found,
-body.dark-mode .status-default,
-body.dark-mode .status-pending-invoice {
-    --status-color-main: #a1a1aa; /* Xám sáng hơn */
-    --status-color-bg: #27272a;   /* Nền tối của xám */
+
+/* Xám đen: Trạng thái đã kết thúc (hủy) */
+.status-cancelled {
+    --status-color-main: #374151; /* gray-700 */
+    --status-color-bg: #e5e7eb;   /* gray-200 */
 }
 
 
-/* Giữ lại các style cho modal và các thành phần khác, chỉ cần đảm bảo chúng dùng biến mới */
+/* --- Tooltips --- */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+    content: attr(data-tooltip); 
+    position: absolute; 
+    bottom: 125%; 
+    left: 50%;
+    transform: translateX(-50%) translateY(5px);
+    background-color: #333; 
+    color: #fff;
+    padding: 4px 8px; 
+    border-radius: 4px; 
+    font-size: 12px; 
+    white-space: nowrap;
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 0.2s ease-out, visibility 0.2s ease-out, transform 0.2s ease-out; 
+    z-index: 999;
+}
+[data-tooltip]:hover::after { 
+    opacity: 1; 
+    visibility: visible; 
+    transform: translateX(-50%) translateY(0); 
+}
+
+
+/* =================================================================== */
+/* 4. OVERLAYS & POPUPS (MODALS, TOASTS)
+/* =================================================================== */
+
+/* --- Modals --- */
 .modal {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Nền tối hơn 1 chút */
+    background: rgba(0, 0, 0, 0.5);
     z-index: 1002;
     align-items: center;
     justify-content: center;
@@ -751,6 +873,7 @@ body.dark-mode .status-pending-invoice {
     transition: opacity var(--transition-medium) ease-out;
 }
 .modal.active { display: flex; opacity: 1; }
+
 .modal-content {
     background: var(--card-bg-light);
     padding: 25px;
@@ -758,28 +881,28 @@ body.dark-mode .status-pending-invoice {
     max-width: 500px;
     width: 90%;
     box-shadow: var(--shadow-lg);
-    transform: translateY(-20px) scale(0.95); opacity: 0;
+    transform: translateY(-20px) scale(0.95); 
+    opacity: 0;
     transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), opacity var(--transition-medium) ease-out;
     position: relative;
     border: 1px solid var(--border-light);
     max-height: 90vh;
     overflow-y: auto;
 }
-.modal.active .modal-content { transform: translateY(0) scale(1); opacity: 1; }
-body.dark-mode .modal-content {
-    background: var(--card-bg-dark);
-    border: 1px solid var(--border-dark);
+.modal.active .modal-content { 
+    transform: translateY(0) scale(1); 
+    opacity: 1; 
 }
+
 .modal-header {
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--border-light);
     padding-bottom: 15px; margin-bottom: 15px;
 }
-body.dark-mode .modal-header { border-bottom-color: var(--border-dark); }
 .modal-header h2 {
     font-size: 18px; font-weight: 700; color: var(--text-light); margin: 0;
 }
-body.dark-mode .modal-header h2 { color: var(--text-dark); }
+
 .modal-close-btn {
     background: var(--background-light);
     border: 1px solid var(--border-light);
@@ -791,519 +914,32 @@ body.dark-mode .modal-header h2 { color: var(--text-dark); }
     display: flex; align-items: center; justify-content: center;
 }
 .modal-close-btn:hover { transform: rotate(90deg) scale(1.1); color: var(--text-light); }
-body.dark-mode .modal-close-btn {
-    background: var(--background-dark);
-    border-color: var(--border-dark);
-    color: var(--text-muted-dark);
-}
+
 .modal-body {
-    font-size: 14px; line-height: 1.6; color: var(--text-light);
+    font-size: 14px; 
+    line-height: 1.6; 
+    color: var(--text-light);
 }
-body.dark-mode .modal-body { color: var(--text-dark); }
+
 .modal-footer {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding-top: 15px; border-top: 1px solid var(--border-light); margin-top: 20px;
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px;
+    padding-top: 15px; 
+    border-top: 1px solid var(--border-light); 
+    margin-top: 20px;
 }
-body.dark-mode .modal-footer { border-top-color: var(--border-dark); }
-
-/* Các style modal cụ thể (loading, success, warning) cần cập nhật lại màu */
-.success-modal-content { background: var(--status-san-sang-bg-light); }
-body.dark-mode .success-modal-content { background: var(--status-san-sang-bg-dark); }
-.success-modal-content .modal-header h2 { color: var(--status-san-sang-text-light); }
-body.dark-mode .success-modal-content .modal-header h2 { color: var(--status-san-sang-text-dark); }
-.success-modal-content .fas.fa-check-circle { color: var(--status-san-sang-text-light); }
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS CHO MODAL CẢNH BÁO KIỂU TOAST MỚI === */
-/* ===================================================================== */
-
-#warning-toast {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    z-index: 9997; /* Đặt dưới các toast khác */
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    
-    /* Giao diện SÁNG */
-    background: var(--status-chua-ghep-bg-light);
-    color: var(--status-chua-ghep-text-light);
-    border: 1px solid #ffecb3; 
-    
-    border-radius: 12px;
-    padding: 12px 40px 12px 12px; /* Thêm padding phải cho nút đóng */
-    box-shadow: var(--shadow-lg);
-    width: 380px; /* Chiều rộng cố định */
-    max-width: 90vw;
-
-    /* Hiệu ứng */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
-}
-
-#warning-toast.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-/* Giao diện TỐI */
-body.dark-mode #warning-toast {
-    background: var(--status-chua-ghep-bg-dark);
-    color: var(--status-chua-ghep-text-dark);
-    border-color: #f57c00; 
-}
-
-.warning-toast-animation {
-    flex-shrink: 0;
-}
-
-.warning-toast-content h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--status-chua-ghep-text-light);
-    margin: 0;
-}
-body.dark-mode .warning-toast-content h3 {
-    color: var(--status-chua-ghep-text-dark);
-}
-
-.warning-toast-content p {
-    font-size: 13px;
-    line-height: 1.5;
+.modal-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border-light);
     color: var(--text-light);
-    margin: 2px 0 0 0;
+    box-shadow: var(--shadow-sm);
 }
-body.dark-mode .warning-toast-content p {
-    color: var(--text-dark);
-}
-
-.warning-toast-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    line-height: 1;
-    color: var(--text-muted-light);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.warning-toast-close:hover {
-    color: var(--text-light);
-    transform: scale(1.2);
-}
-body.dark-mode .warning-toast-close {
-    color: var(--text-muted-dark);
-}
-body.dark-mode .warning-toast-close:hover {
-    color: var(--text-dark);
-}
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 220px;
-    width: calc(100% - 220px);
-    padding: 10px 0;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted-light);
-    border-top: 1px solid var(--border-light);
+.modal-btn.secondary:hover {
     background: var(--background-light);
-    z-index: 998;
-    transition: all var(--transition-medium) ease;
+    border-color: var(--text-muted-light);
 }
-
-.main-content.collapsed + footer {
-    left: 30px;
-    width: calc(100% - 30px);
-}
-body.dark-mode footer {
-    color: var(--text-muted-dark);
-    border-top-color: var(--border-dark);
-    background: var(--background-dark);
-}
-
-#notification-container, #scrollToTopBtn { /* Giữ nguyên style cũ */
-    /* ... Các style này không cần thay đổi nhiều, chỉ cần đảm bảo biến màu đúng ... */
-}
-#scrollToTopBtn {
-    background-color: var(--card-bg-light);
-    color: var(--text-light);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-md);
-}
-
-/* AI Chat Window - Đồng bộ giao diện */
-#ai-chat-bubble {
-    width: 60px; height: 60px;
-    background: var(--gradient);
-    box-shadow: var(--shadow-lg);
-    font-size: 28px;
-    z-index: 1011;
-}
-#ai-chat-window {
-    background: rgba(248, 249, 250, 0.75);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-lg);
-    z-index: 1010;
-}
-body.dark-mode #ai-chat-window {
-    background: rgba(30, 30, 30, 0.75);
-    border-color: var(--border-dark);
-}
-.ai-chat-header { background: var(--gradient); }
-.user-message .message-content { background: var(--gradient); }
-.ai-message .message-content { background: var(--card-bg-light); color: var(--text-light); border-color: var(--border-light); }
-body.dark-mode .ai-message .message-content { background: var(--card-bg-dark); color: var(--text-dark); border-color: var(--border-dark); }
-.ai-chat-input-area { border-top-color: var(--border-light); }
-body.dark-mode .ai-chat-input-area { border-top-color: var(--border-dark); }
-#ai-chat-input { background: var(--background-light); border-color: var(--border-light); color: var(--text-light); }
-body.dark-mode #ai-chat-input { background: var(--background-dark); border-color: var(--border-dark); color: var(--text-dark); }
-#ai-chat-input:focus { border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
-body.dark-mode #ai-chat-input:focus { border-color: var(--gradient-end); box-shadow: var(--shadow-glow-dark); }
-#ai-chat-send-btn { background: var(--gradient); }
-
-
-/* Giữ lại toàn bộ các media query và các style phức tạp khác */
-/* Chỉ đảm bảo các biến màu và bóng đổ được cập nhật */
-@media (max-width: 900px) {
-    .sidebar { transform: translateX(-100%); width: 250px; }
-    .sidebar.open { transform: translateX(0); }
-    .sidebar.collapsed { transform: translateX(-100%); }
-    .main-container, .main-container.collapsed {
-        margin-left: 0;
-        padding: 15px;
-        margin-top: 60px;
-    }
-    footer, .main-container.collapsed + footer, .main-container.collapsed ~ footer {
-        left: 0;
-        width: 100%;
-    }
-    .toggle-btn { display: none; }
-    .mobile-menu-btn { display: flex !important; }
-}
-
-@media (max-width: 767px) {
-    .navbar .tabs { display: none; }
-    .hamburger { display: block; }
-    .main-container {
-        flex-direction: column;
-    }
-    .main-container, #cho-xe-section {
-        flex-direction: column;
-    }
-    /* Các style responsive khác được giữ nguyên */
-    table { display: block; }
-    thead { display: none; }
-    tbody, tr { display: block; }
-    tr {
-        margin-bottom: 10px; border-radius: 12px;
-        background: var(--card-bg-light); padding: 15px;
-        box-shadow: var(--shadow-md); border: 1px solid var(--border-light);
-    }
-    body.dark-mode tr { background: var(--card-bg-dark); border-color: var(--border-dark); }
-    td {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 8px 0; border: none; font-size: 14px;
-    }
-    td:before {
-        content: attr(data-label); font-weight: 600; color: var(--text-muted-light);
-        padding-right: 15px;
-    }
-    body.dark-mode td:before { color: var(--text-muted-dark); }
-}
-
-/* Các style còn lại từ yeucaughepxe.html không cần thay đổi lớn */
-/* Chúng sẽ tự động thừa hưởng màu sắc và font chữ mới từ :root và body */
-.summary-section, .chart-card, #bulk-entry-table-section, /* ... etc */ {
-    /* Các thuộc tính này đã được định nghĩa lại ở trên */
-    /* Không cần thay đổi ở đây, chúng sẽ tự động cập nhật */
-}
-/* === AI CHATBOT (ĐỒNG BỘ) === */
-#ai-chat-toggle {
-    position: fixed; bottom: 70px; right: 25px; width: 60px; height: 60px; border-radius: 50%;
-    background: var(--gradient); color: white; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-lg); font-size: 28px;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1011;
-}
-#ai-chat-toggle:hover { transform: scale(1.1); }
-#ai-chat-window {
-    position: fixed; bottom: 140px; right: 25px; width: 370px; max-width: 90vw; height: 500px;
-    background: rgba(248, 249, 250, 0.75); backdrop-filter: blur(8px);
-    border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-light);
-    display: flex; flex-direction: column; overflow: hidden;
-    visibility: hidden; opacity: 0; transform: translateY(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1010;
-}
-body.dark-mode #ai-chat-window {
-    background: rgba(30, 30, 30, 0.75); border-color: var(--border-dark);
-}
-#ai-chat-window.visible { visibility: visible; opacity: 1; transform: translateY(0); }
- .ai-chat-header { flex-shrink: 0; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--gradient); color: white; }
-.ai-chat-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; }
-#ai-chat-close { background: none; border: none; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.8); transition: color 0.2s ease, transform 0.2s ease; }
-#ai-chat-close:hover { color: white; transform: rotate(90deg); }
-#ai-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: transparent; }
-.user-message, .ai-message { margin-bottom: 15px; display: flex; max-width: 90%; }
-.user-message { margin-left: auto; flex-direction: row-reverse; }
-.message-content { padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
-.user-message .message-content { background: var(--gradient); color: white; border-bottom-right-radius: 5px; }
-.ai-message .message-content { background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-light); border-bottom-left-radius: 5px; box-shadow: var(--shadow-sm); }
-body.dark-mode .ai-message .message-content { background: var(--card-bg-dark); color: var(--text-dark); border: 1px solid var(--border-dark); }
-.ai-chat-input-area { flex-shrink: 0; padding: 15px; border-top: 1px solid var(--border-light); display: flex; gap: 10px; background-color: transparent; }
-body.dark-mode .ai-chat-input-area { border-top-color: var(--border-dark); }
-#ai-chat-input { flex-grow: 1; border: 1px solid var(--border-light); border-radius: 20px; padding: 10px 15px; font-size: 14px; resize: none; background: var(--background-light); color: var(--text-light); transition: all 0.2s ease; }
-body.dark-mode #ai-chat-input { border-color: var(--border-dark); background: var(--background-dark); color: var(--text-dark); }
-#ai-chat-input:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
-body.dark-mode #ai-chat-input:focus { border-color: var(--gradient-end); box-shadow: var(--shadow-glow-dark); }
-#ai-chat-send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--gradient); color: white; font-size: 16px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
-#ai-chat-send:hover:not(:disabled) { transform: scale(1.1); box-shadow: var(--shadow-md); }
-/* [THÊM MỚI] CSS cho hiệu ứng AI đang gõ */
-.typing-indicator {
-    display: flex;
-    align-items: center;
-    padding: 10px 0; /* Thêm chút khoảng đệm */
-}
-
-.typing-indicator span {
-    height: 8px;
-    width: 8px;
-    background-color: var(--text-muted-light);
-    border-radius: 50%;
-    display: inline-block;
-    margin: 0 2px;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-
-body.dark-mode .typing-indicator span {
-    background-color: var(--text-muted-dark);
-}
-
-.typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
-
-@keyframes bounce {
-    0%, 80%, 100% { transform: scale(0); }
-    40% { transform: scale(1.0); }
-}
-/* ================================================================= */
-/* === [THAY THẾ] TÙY CHỈNH KÍCH THƯỚC & XỬ LÝ TRÀN CỘT BẢNG === */
-/* ================================================================= */
-#history-table {
-    table-layout: fixed; /* BẮT BUỘC: Ép bảng tuân thủ chiều rộng đã định */
-    width: 100%;
-}
-
-#history-table th, 
-#history-table td {
-    vertical-align: middle; /* Căn giữa nội dung theo chiều dọc */
-    overflow-wrap: break-word;
-    word-wrap: break-word; 
-}
-
-/* --- Định nghĩa chiều rộng cho từng cột --- */
-
-/* Cột 1: STT */
-#history-table th:nth-child(1),
-#history-table td:nth-child(1) {
-    width: 6%;
-    text-align: center;
-}
-
-/* Cột 2: Khách Hàng / Số Đơn */
-#history-table th:nth-child(2),
-#history-table td:nth-child(2) {
-    width: 23%;
-}
-
-/* Cột 3: Tư Vấn Bán Hàng */
-#history-table th:nth-child(3),
-#history-table td:nth-child(3) {
-    width: 15%;
-    word-break: break-word;
-}
-
-/* Cột 4: Thông Tin Xe */
-#history-table th:nth-child(4),
-#history-table td:nth-child(4) {
-    width: 23%;
-    /* Mặc định cho toàn bộ ô: ngắt chữ thông minh */
-    word-break: break-word; 
-}
-
-/* [THÊM MỚI] Chỉ áp dụng ngắt chữ quyết liệt cho tên ngoại thất dài */
-#history-table td:nth-child(4) .car-exterior-color {
-    word-break: break-all;
-}
-
-/* Cột 5: Trạng Thái */
-#history-table th:nth-child(5),
-#history-table td:nth-child(5) {
-    width: 14%;
-    text-align: center;
-}
-
-/* Cột 6: Hành Động */
-#history-table th:nth-child(6),
-#history-table td:nth-child(6) {
-    width: 16%;
-    text-align: center;
-}
-/* === MÃ SỬA LỖI THANH CUỘN (THÊM VÀO CUỐI) === */
-
-/* 1. Ẩn thanh cuộn của toàn bộ trang */
-body {
-    overflow-y: hidden !important; /* Ghi đè để ẩn thanh cuộn dọc của trình duyệt */
-}
-
-
-/* 3. Cho section chứa bảng co giãn để lấp đầy không gian */
-.grid-container#history-section {
-    flex-grow: 1; /* Quan trọng: Cho phép co giãn theo chiều dọc */
-    display: flex;
-    flex-direction: column;
-    min-height: 0; /* Ngăn co giãn ngoài ý muốn */
-}
-
-/* 4. Cho vùng bọc bảng (table-wrapper) co giãn và có thanh cuộn riêng */
-#history-section .table-wrapper {
-    flex-grow: 1; /* Co giãn để lấp đầy không gian trong .grid-container */
-    max-height: none; /* Bỏ giới hạn chiều cao cũ để nó tự lấp đầy */
-    overflow-y: auto; /* Luôn có thanh cuộn dọc khi cần */
-}
-#notification-panel {
-    z-index: 1012 !important; /* Tăng z-index để cao hơn cả chat AI */
-}
-/* [THAY THẾ TOÀN BỘ KHỐI CŨ BẰNG KHỐI NÀY] */
-
-/* 1. Thiết lập cho container chính và section bảng */
-.main-container {
-    height: calc(100vh - 60px); /* Tăng 40px chiều cao */
-    display: flex;
-    flex-direction: column;
-}
-
-.grid-container#history-section {
-    flex-grow: 1; /* Cho phép co giãn */
-    display: flex; /* Bật flexbox để quản lý layout bên trong */
-    flex-direction: column;
-    min-height: 0; /* Ngăn co giãn ngoài ý muốn */
-}
-
-.table-wrapper {
-    flex-grow: 1;
-    overflow-y: auto; /* Chỉ cuộn dọc */
-    position: relative;
-}
-
-/* [SỬA LỖI TRIỆT ĐỂ] THAY THẾ TOÀN BỘ KHỐI CSS CŨ BẰNG KHỐI NÀY */
-
-/* 1. Nâng toàn bộ khối a header (thead) lên một lớp cao hơn */
-#history-table > thead#table-header {
-    position: relative; /* BẮT BUỘC: Tạo một "lớp" (stacking context) mới */
-    z-index: 30;      /* QUAN TRỌNG: Đặt z-index cao hơn hẳn menu con (z-index: 10) */
-}
-
-/* 2. Giữ nguyên thuộc tính sticky cho từng ô tiêu đề (th) để chúng ghim lại khi cuộn */
-#history-table th,
-#waiting-list-table th {
-    position: sticky; 
-    top: 0;
-    /* z-index ở đây không còn quan trọng bằng z-index của a nữa, nhưng giữ lại cũng không sao */
-    background-color: #f3f4f6;
-    color: var(--text-light);
-    border-bottom: 2px solid var(--gradient-start);
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-}
-
-/* 3. Style cho giao diện tối (không đổi) */
-body.dark-mode #history-table th,
-body.dark-mode #waiting-list-table th {
-    background-color: #1f2937;
-    color: var(--text-dark);
-    border-bottom-color: var(--gradient-end);
-}
-
-/* 3. Tùy chỉnh cho GIAO DIỆN TỐI (DARK MODE) */
-body.dark-mode #history-table th,
-body.dark-mode #waiting-list-table th {
-    background-color: #1f2937;
-    color: var(--text-dark);
-    border-bottom-color: var(--gradient-end);
-}
-/* ================================================================= */
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS CHO BỐ CỤC MỚI CỦA TAB "YÊU CẦU GHÉP XE" === */
-/* ===================================================================== */
-
-/* Kích hoạt layout dạng lưới khi ở chế độ xem form */
-.main-container.layout-form-view {
-    display: grid;
-    grid-template-columns: minmax(320px, 400px) 1fr;
-    gap: 20px;
-    align-items: stretch;
-}
-
-/* Cấu hình chung cho cả 2 cột (form và bảng) */
-.main-container.layout-form-view #form-section,
-.main-container.layout-form-view #history-section {
-    display: flex;
-    flex-direction: column;
-    min-height: 0; /* Quan trọng để flexbox hoạt động đúng trong grid */
-}
-
-/* [THAY ĐỔI QUAN TRỌNG] Cấu hình cho thẻ form để quản lý thanh cuộn */
-.main-container.layout-form-view #form-section .form-container {
-    flex-grow: 1; /* Cho phép thẻ form co giãn để lấp đầy không gian */
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.main-container.layout-form-view #form-section form {
-    overflow-y: auto; /* Đây là chìa khóa: Tự động thêm thanh cuộn dọc khi cần */
-    padding-right: 10px; /* Thêm khoảng đệm nhỏ để thanh cuộn không che nội dung */
-    flex-grow: 1; /* Đảm bảo form lấp đầy không gian trong .form-container */
-}
-
-/* Cấu hình cho bảng lịch sử (giữ nguyên) */
-.main-container.layout-form-view #history-section .table-wrapper {
-    flex-grow: 1;
-    max-height: none;
-    height: auto;
-}
-
-/* --- Responsive cho màn hình nhỏ hơn --- */
-@media (max-width: 1200px) {
-    .main-container.layout-form-view {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Ẩn các cột không cần thiết trong chế độ xem này để tiết kiệm không gian */
-.main-container.layout-form-view #history-section #history-table th:nth-child(5),
-.main-container.layout-form-view #history-section #history-table td:nth-child(5),
-.main-container.layout-form-view #history-section #history-table th:nth-child(6),
-.main-container.layout-form-view #history-section #history-table td:nth-child(6) {
-    display: none;
-}
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS ĐỒNG BỘ CHO TẤT CẢ MODAL TƯƠNG TÁC ("PRO") === */
-/* ===================================================================== */
-
-/* 1. Tiêu đề (Header) chung */
+/* Pro Modal Styles */
 .modal-header-pro {
     display: flex;
     flex-direction: column;
@@ -1312,16 +948,10 @@ body.dark-mode #waiting-list-table th {
     padding: 20px 25px;
     border-bottom: 1px solid var(--border-light);
     position: relative;
-    background-color: var(--background-light); /* Thêm nền nhẹ */
+    background-color: var(--background-light);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
 }
-body.dark-mode .modal-header-pro {
-    border-bottom-color: var(--border-dark);
-    background-color: var(--background-dark);
-}
-
-/* 2. Vòng tròn chứa icon */
 .header-icon-pro {
     width: 50px;
     height: 50px;
@@ -1333,35 +963,19 @@ body.dark-mode .modal-header-pro {
     color: white;
     font-size: 20px;
     margin-bottom: 15px;
-    border: 4px solid var(--card-bg-light); /* Tạo hiệu ứng nổi bật */
+    border: 4px solid var(--card-bg-light);
     box-shadow: var(--shadow-md);
 }
-body.dark-mode .header-icon-pro {
-    border-color: var(--card-bg-dark);
-}
-
-/* Icon màu Vàng cho Cảnh báo */
 .header-icon-pro.icon-warning {
     background: linear-gradient(135deg, #fff8e1, #ffecb3);
     color: #f57c00;
 }
-body.dark-mode .header-icon-pro.icon-warning {
-    background: linear-gradient(135deg, #4b3c1c, #a1887f);
-    color: #ffe082;
-}
-
-/* 3. Tiêu đề chữ (H2) */
 .modal-header-pro h2 {
     font-size: 1.25rem; /* 20px */
     font-weight: 700;
     color: var(--text-light);
     margin: 0;
 }
-body.dark-mode .modal-header-pro h2 {
-    color: var(--text-dark);
-}
-
-/* 4. Nút đóng (X) */
 .modal-close-btn-pro {
     position: absolute;
     top: 15px;
@@ -1383,13 +997,6 @@ body.dark-mode .modal-header-pro h2 {
     color: var(--text-light);
     border-color: var(--text-muted-light);
 }
-body.dark-mode .modal-close-btn-pro {
-    background: var(--background-dark);
-    border-color: var(--border-dark);
-    color: var(--text-muted-dark);
-}
-
-/* 5. Căn chỉnh lại Thân (Body) và Chân (Footer) cho đồng bộ */
 .modal-body-pro {
     padding: 20px 25px;
 }
@@ -1399,626 +1006,209 @@ body.dark-mode .modal-close-btn-pro {
     background-color: var(--background-light);
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
-    display: flex; /* Bật flexbox để căn chỉnh nút */
-    justify-content: flex-end; /* Căn nút về bên phải mặc định */
+    display: flex;
+    justify-content: flex-end;
     gap: 10px;
 }
-body.dark-mode .modal-footer-pro {
-    border-top-color: var(--border-dark);
-    background-color: var(--background-dark);
+
+/* Success Modal Styles */
+.success-modal-content { 
+    background: var(--status-san-sang-bg-light); 
 }
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS CHO MODAL THÀNH CÔNG KIỂU TOAST MỚI === */
-/* ===================================================================== */
-
-#success-toast {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    z-index: 9998; /* Đặt dưới loading toast một chút */
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    
-    /* Giao diện SÁNG */
-    background: var(--status-san-sang-bg-light);
-    color: var(--status-san-sang-text-light);
-    border: 1px solid #b2dfdb; /* Màu viền nhạt hơn */
-    
-    border-radius: 12px;
-    padding: 12px 20px 12px 12px;
-    box-shadow: var(--shadow-lg);
-
-    /* Hiệu ứng */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
+.success-modal-content .modal-header h2 { 
+    color: var(--status-san-sang-text-light); 
+}
+.success-modal-content .fas.fa-check-circle { 
+    color: var(--status-san-sang-text-light); 
 }
 
-#success-toast.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-/* Giao diện TỐI */
-body.dark-mode #success-toast {
-    background: var(--status-san-sang-bg-dark);
-    color: var(--status-san-sang-text-dark);
-    border-color: #26a69a; /* Màu viền đậm hơn */
-}
-
-.success-toast-animation {
-    flex-shrink: 0;
-}
-
-.success-toast-content h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--status-san-sang-text-light); /* Màu text đậm hơn */
-    margin: 0;
-}
-body.dark-mode .success-toast-content h3 {
-    color: var(--status-san-sang-text-dark);
-}
-
-.success-toast-content p {
-    font-size: 13px;
-    color: var(--text-light);
-    margin: 2px 0 0 0;
-}
-body.dark-mode .success-toast-content p {
-    color: var(--text-dark);
-}
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS CHO MODAL LOADING KIỂU TOAST MỚI === */
-/* ===================================================================== */
-
-#loading-toast {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    z-index: 9999;
-    background: var(--card-bg-light);
-    color: var(--text-light);
-    border-radius: 12px;
-    padding: 12px 20px; /* Căn lề trái/phải đều nhau */
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-lg);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
-    text-align: center; /* Căn giữa chữ */
-}
-
-#loading-toast.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-/* Giao diện Dark Mode */
-body.dark-mode #loading-toast {
-    background: var(--card-bg-dark);
-    color: var(--text-dark);
-    border-color: var(--border-dark);
-}
-
-/* Căn chỉnh Lottie animation */
-.loading-toast-animation {
-    flex-shrink: 0;
-}
-
-/* Nội dung text */
-.loading-toast-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.loading-toast-content h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-light);
-    margin: 0;
-}
-
-.loading-toast-content p {
-    font-size: 13px;
-    color: var(--text-muted-light);
-    margin: 2px 0 0 0;
-}
-
-/* Giao diện Dark Mode cho text */
-body.dark-mode .loading-toast-content h3 {
-    color: var(--text-dark);
-}
-body.dark-mode .loading-toast-content p {
-    color: var(--text-muted-dark);
-}
-/* CSS cho vùng tải file đẹp hơn */
-.file-upload-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.file-upload-area {
-    display: flex;
-    flex-direction: column;
-}
-
-.file-upload-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted-light);
-    margin-bottom: 5px;
-}
-body.dark-mode .file-upload-label {
-    color: var(--text-muted-dark);
-}
-
-.required-star {
-    color: #e74c3c;
-}
-
-.file-upload-wrapper {
-    position: relative;
-    width: 100%;
-    height: 90px;
-    border: 2px dashed var(--border-light);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-    overflow: hidden;
-    background-color: var(--background-light);
-}
-
-.file-upload-wrapper:hover {
-    border-color: var(--gradient-start);
-    background-color: #f8f9fa;
-}
-
-body.dark-mode .file-upload-wrapper {
-    border-color: var(--border-dark);
-    background-color: var(--background-dark);
-}
-body.dark-mode .file-upload-wrapper:hover {
-    border-color: var(--gradient-end);
-    background-color: #1e1e1e;
-}
-
-.file-upload-input {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.file-upload-prompt {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted-light);
-    transition: opacity var(--transition-fast) ease;
-}
-body.dark-mode .file-upload-prompt {
-    color: var(--text-muted-dark);
-}
-
-.file-upload-icon {
-    font-size: 24px;
-    color: var(--gradient-start);
-}
-body.dark-mode .file-upload-icon {
-    color: var(--gradient-end);
-}
-
-.file-upload-text {
-    font-size: 12px;
-    font-weight: 500;
-}
-
-/* ============================================================= */
-/* === THAY THẾ TOÀN BỘ KHỐI NÀY ĐỂ SỬA LỖI GIÃN Ô TẢI FILE === */
-/* ============================================================= */
-
-/* Kiểu khi đã chọn file */
-.file-upload-wrapper.file-selected .file-upload-prompt {
-    opacity: 0;
-}
-
-.file-upload-wrapper.file-selected {
-    border-style: solid;
-    border-color: var(--status-san-sang-text-light);
-    background-color: var(--status-san-sang-bg-light);
-}
-body.dark-mode .file-upload-wrapper.file-selected {
-    border-color: var(--status-san-sang-text-dark);
-    background-color: var(--status-san-sang-bg-dark);
-}
-
-.file-upload-preview {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    opacity: 0;
-    transition: opacity var(--transition-fast) ease;
-    pointer-events: none;
-    min-width: 0; 
-}
-
-.file-upload-wrapper.file-selected .file-upload-preview {
-    opacity: 1;
-}
-
-.file-preview-icon {
-    font-size: 28px;
-    color: var(--status-san-sang-text-light);
-    margin-bottom: 8px;
-    flex-shrink: 0;
-}
-body.dark-mode .file-preview-icon {
-    color: var(--status-san-sang-text-dark);
-}
-
-/* [SỬA LỖI TRIỆT ĐỂ] CSS CHO TÊN FILE */
-.file-preview-name {
-    display: block; /* Quan trọng: Đảm bảo hoạt động như một khối */
-    width: 100%;    /* Chiếm toàn bộ chiều rộng */
-    padding: 0 5px; /* Thêm chút đệm để không bị sát lề */
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center; /* Căn giữa cho đẹp mắt */
-    color: var(--text-light);
-
-    /* Bộ ba thuộc tính cốt lõi để chống tràn và hiển thị "..." */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-body.dark-mode .file-preview-name {
-    color: var(--text-dark);
-}
-
-/* Thay thế đoạn CSS cũ cho .file-preview-name bằng đoạn này */
-.file-preview-name {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-light);
-    
-    /* --- Các thuộc tính cũ giữ nguyên --- */
-    width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    /* --- THÊM MỚI: Để xử lý co giãn trong flexbox --- */
-    min-width: 0;     /* Cho phép phần tử co lại nhỏ hơn nội dung */
-    flex-shrink: 1;   /* Cho phép co lại khi không đủ không gian */
-}
-
-body.dark-mode .file-preview-name {
-    color: var(--text-dark);
-}
-/* Checkbox xác nhận Vinclub */
-.vinclub-confirmation-wrapper {
-    margin-top: 20px;
-}
-.vinclub-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 12px;
-    border-radius: 10px;
-    background-color: var(--background-light);
-    border: 1px solid var(--border-light);
-    transition: all var(--transition-fast) ease;
-}
-body.dark-mode .vinclub-label {
-    background-color: var(--background-dark);
-    border-color: var(--border-dark);
-}
-.vinclub-label:hover {
-    border-color: var(--gradient-start);
-}
-.vinclub-checkbox {
-    width: 18px;
-    height: 18px;
-    margin-right: 12px;
-    flex-shrink: 0;
-    accent-color: var(--gradient-start);
-}
-.vinclub-text {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-light);
-}
-body.dark-mode .vinclub-text {
-    color: var(--text-dark);
-}
-/* ===================================================================== */
-/* === CSS TỐI ƯU CHO BẢNG XÁC NHẬN THÔNG TIN (PREVIEW TABLE) === */
-/* ===================================================================== */
-
+/* Preview Table in Modal */
 .preview-table {
     width: 100%;
-    /* THÊM MỚI: Ép bảng tuân thủ độ rộng cột đã định */
     table-layout: fixed; 
     border-collapse: separate;
     border-spacing: 0;
     font-size: 14px;
 }
-
 .preview-table tr:last-child td {
     border-bottom: none;
 }
-
 .preview-table td {
     padding: 8px;
     border-bottom: 1px solid var(--border-light);
     transition: background-color var(--transition-fast) ease;
-    /* THÊM MỚI: Đảm bảo nội dung không bị cắt ngang */
     vertical-align: middle;
 }
-
 .preview-table tr:nth-child(even) {
     background-color: var(--background-light);
 }
-
-body.dark-mode .preview-table tr:nth-child(even) {
-    background-color: var(--background-dark);
-}
-
-body.dark-mode .preview-table td {
-    border-bottom-color: var(--border-dark);
-}
-
-/* Cột Tiêu đề (bên trái) */
 .preview-table td:first-child {
     font-weight: 600;
     color: var(--text-muted-light);
-    width: 39%; /* Giảm độ rộng một chút */
+    width: 39%;
 }
-body.dark-mode .preview-table td:first-child {
-    color: var(--text-muted-dark);
-}
-
-/* Cột Giá trị (bên phải) */
 .preview-table td:last-child {
     font-weight: 500;
     text-align: right;
     color: var(--text-light);
-    /* THÊM MỚI: Tự động ngắt các từ dài như tên file, mã VIN */
     word-break: break-all; 
 }
-body.dark-mode .preview-table td:last-child {
-    color: var(--text-dark);
-}
-
 .preview-table .highlight-value {
     font-weight: 700;
     color: var(--gradient-start);
 }
-body.dark-mode .preview-table .highlight-value {
-    color: var(--gradient-end);
-}
-/* ===================================================================== */
-/* === BẮT ĐẦU: CSS MỚI CHO PANEL THÔNG BÁO CHUYÊN NGHIỆP ("PRO") === */
-/* ===================================================================== */
 
-/* 1. Khung Panel chính */
-.notification-panel-pro {
-    position: absolute;
-    right: 0;
-    margin-top: 8px;
-    width: 380px; /* Rộng hơn một chút */
-    max-width: 90vw;
-    background: var(--card-bg-light);
+/* --- Toasts (Notifications) --- */
+#success-toast {
+    position: fixed; bottom: 25px; right: 25px; z-index: 9998;
+    display: flex; align-items: center; gap: 15px;
+    background: var(--status-san-sang-bg-light);
+    color: var(--status-san-sang-text-light);
+    border: 1px solid #b2dfdb; 
     border-radius: 12px;
+    padding: 12px 20px 12px 12px;
     box-shadow: var(--shadow-lg);
+    opacity: 0; visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+#success-toast.show { opacity: 1; visibility: visible; transform: translateY(0); }
+.success-toast-animation { flex-shrink: 0; }
+.success-toast-content h3 { font-size: 15px; font-weight: 700; color: var(--status-san-sang-text-light); margin: 0; }
+.success-toast-content p { font-size: 13px; color: var(--text-light); margin: 2px 0 0 0; }
+
+#loading-toast {
+    position: fixed; bottom: 25px; right: 25px; z-index: 9999;
+    background: var(--card-bg-light);
+    color: var(--text-light);
+    border-radius: 12px;
+    padding: 12px 20px;
     border: 1px solid var(--border-light);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    z-index: 1012; /* Đảm bảo nó nổi lên trên */
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    box-shadow: var(--shadow-lg);
+    opacity: 0; visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
+    text-align: center;
+}
+#loading-toast.show { opacity: 1; visibility: visible; transform: translateY(0); }
+.loading-toast-animation { flex-shrink: 0; }
+.loading-toast-content { display: flex; flex-direction: column; }
+.loading-toast-content h3 { font-size: 15px; font-weight: 700; color: var(--text-light); margin: 0; }
+.loading-toast-content p { font-size: 13px; color: var(--text-muted-light); margin: 2px 0 0 0; }
+
+#warning-toast {
+    position: fixed; bottom: 25px; right: 25px; z-index: 9997;
+    display: flex; align-items: center; gap: 15px;
+    background: var(--status-chua-ghep-bg-light);
+    color: var(--status-chua-ghep-text-light);
+    border: 1px solid #ffecb3; 
+    border-radius: 12px;
+    padding: 12px 40px 12px 12px;
+    box-shadow: var(--shadow-lg);
+    width: 380px;
+    max-width: 90vw;
+    opacity: 0; visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.4s cubic-bezier(0.215, 0.610, 0.355, 1);
+}
+#warning-toast.show { opacity: 1; visibility: visible; transform: translateY(0); }
+.warning-toast-animation { flex-shrink: 0; }
+.warning-toast-content h3 { font-size: 15px; font-weight: 700; color: var(--status-chua-ghep-text-light); margin: 0; }
+.warning-toast-content p { font-size: 13px; line-height: 1.5; color: var(--text-light); margin: 2px 0 0 0; }
+.warning-toast-close {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: none; font-size: 24px; line-height: 1;
+    color: var(--text-muted-light); cursor: pointer; transition: all 0.2s ease;
+}
+.warning-toast-close:hover { color: var(--text-light); transform: scale(1.2); }
+
+#notification-container { /* Style kept for compatibility */ }
+
+/* =================================================================== */
+/* 5. CÁC THÀNH PHẦN NÂNG CAO (ADVANCED COMPONENTS)
+/* =================================================================== */
+
+/* --- AI Chatbot --- */
+#ai-chat-toggle {
+    position: fixed; bottom: 70px; right: 25px; width: 60px; height: 60px; border-radius: 50%;
+    background: var(--gradient); color: white; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-lg); font-size: 28px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1011;
+}
+#ai-chat-toggle:hover { transform: scale(1.1); }
+#ai-chat-window {
+    position: fixed; bottom: 140px; right: 25px; width: 370px; max-width: 90vw; height: 500px;
+    background: rgba(248, 249, 250, 0.75); backdrop-filter: blur(8px);
+    border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-light);
+    display: flex; flex-direction: column; overflow: hidden;
+    visibility: hidden; opacity: 0; transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1010;
+}
+#ai-chat-window.visible { visibility: visible; opacity: 1; transform: translateY(0); }
+.ai-chat-header { flex-shrink: 0; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--gradient); color: white; }
+.ai-chat-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; }
+#ai-chat-close { background: none; border: none; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.8); transition: color 0.2s ease, transform 0.2s ease; }
+#ai-chat-close:hover { color: white; transform: rotate(90deg); }
+#ai-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: transparent; }
+.user-message, .ai-message { margin-bottom: 15px; display: flex; max-width: 90%; }
+.user-message { margin-left: auto; flex-direction: row-reverse; }
+.message-content { padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+.user-message .message-content { background: var(--gradient); color: white; border-bottom-right-radius: 5px; }
+.ai-message .message-content { background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-light); border-bottom-left-radius: 5px; box-shadow: var(--shadow-sm); }
+.ai-chat-input-area { flex-shrink: 0; padding: 15px; border-top: 1px solid var(--border-light); display: flex; gap: 10px; background-color: transparent; }
+#ai-chat-input { flex-grow: 1; border: 1px solid var(--border-light); border-radius: 20px; padding: 10px 15px; font-size: 14px; resize: none; background: var(--background-light); color: var(--text-light); transition: all 0.2s ease; }
+#ai-chat-input:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
+#ai-chat-send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--gradient); color: white; font-size: 16px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+#ai-chat-send:hover:not(:disabled) { transform: scale(1.1); box-shadow: var(--shadow-md); }
+.typing-indicator { display: flex; align-items: center; padding: 10px 0; }
+.typing-indicator span { height: 8px; width: 8px; background-color: var(--text-muted-light); border-radius: 50%; display: inline-block; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+.typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+
+/* --- Notification Panel --- */
+.notification-panel-pro {
+    position: absolute; right: 0; margin-top: 8px; width: 380px; max-width: 90vw;
+    background: var(--card-bg-light); border-radius: 12px; box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light); overflow: hidden; display: flex;
+    flex-direction: column; z-index: 1012;
+    opacity: 0; transform: translateY(10px) scale(0.95);
     transition: opacity 0.2s ease, transform 0.2s ease;
     transform-origin: top right;
 }
-
-.notification-panel-pro:not(.hidden) {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
-
-body.dark-mode .notification-panel-pro {
-    background: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
-
-/* 2. Tiêu đề (Header) của Panel */
-.notification-panel-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-light);
-    flex-shrink: 0;
-}
-body.dark-mode .notification-panel-header {
-    border-bottom-color: var(--border-dark);
-}
-.notification-panel-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-light);
-}
-body.dark-mode .notification-panel-header h3 {
-    color: var(--text-dark);
-}
-
-/* 3. Vùng chứa danh sách thông báo (có thể cuộn) */
-.notification-panel-list {
-    max-height: 400px;
-    overflow-y: auto;
-    flex-grow: 1;
-}
-
-/* 4. Chân (Footer) của Panel */
-.notification-panel-footer {
-    padding: 10px 16px;
-    border-top: 1px solid var(--border-light);
-    text-align: center;
-    flex-shrink: 0;
-    background-color: var(--background-light);
-}
-body.dark-mode .notification-panel-footer {
-    border-top-color: var(--border-dark);
-    background-color: var(--background-dark);
-}
-.notification-panel-footer a {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--gradient-start);
-    text-decoration: none;
-    transition: color var(--transition-fast);
-}
-.notification-panel-footer a:hover {
-    color: var(--gradient-end);
-}
-body.dark-mode .notification-panel-footer a {
-    color: var(--gradient-end);
-}
-
-/* 5. Giao diện cho mỗi mục thông báo (Item) */
-.notification-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-light);
-    transition: background-color var(--transition-fast) ease;
-    position: relative;
-    cursor: pointer;
-}
-.notification-item:last-child {
-    border-bottom: none;
-}
-.notification-item:hover {
-    background-color: var(--background-light);
-}
-body.dark-mode .notification-item {
-    border-bottom-color: var(--border-dark);
-}
-body.dark-mode .notification-item:hover {
-    background-color: var(--background-dark);
-}
-
-/* 6. Trạng thái CHƯA ĐỌC */
-.notification-item.unread {
-    background-color: rgba(79, 70, 229, 0.05); /* Màu chàm rất nhạt */
-}
-body.dark-mode .notification-item.unread {
-    background-color: rgba(20, 184, 166, 0.08); /* Màu teal rất nhạt */
-}
-
-/* Dấu chấm tròn cho tin chưa đọc */
+.notification-panel-pro:not(.hidden) { opacity: 1; transform: translateY(0) scale(1); }
+#notification-panel { z-index: 1012 !important; }
+.notification-panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border-light); flex-shrink: 0; }
+.notification-panel-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-light); }
+.notification-panel-list { max-height: 400px; overflow-y: auto; flex-grow: 1; }
+.notification-panel-footer { padding: 10px 16px; border-top: 1px solid var(--border-light); text-align: center; flex-shrink: 0; background-color: var(--background-light); }
+.notification-panel-footer a { font-size: 13px; font-weight: 600; color: var(--gradient-start); text-decoration: none; transition: color var(--transition-fast); }
+.notification-panel-footer a:hover { color: var(--gradient-end); }
+.notification-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border-light); transition: background-color var(--transition-fast) ease; position: relative; cursor: pointer; }
+.notification-item:last-child { border-bottom: none; }
+.notification-item:hover { background-color: var(--background-light); }
+.notification-item.unread { background-color: rgba(79, 70, 229, 0.05); }
 .notification-item.unread::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--gradient-start);
+    content: ''; position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+    width: 6px; height: 6px; border-radius: 50%; background-color: var(--gradient-start);
 }
-body.dark-mode .notification-item.unread::before {
-    background-color: var(--gradient-end);
-}
-
-/* 7. Icon của thông báo */
-.notification-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 16px;
-}
+.notification-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
 .notification-icon.type-success { background-color: #e0f2f1; color: #00796b; }
 .notification-icon.type-danger  { background-color: #fee2e2; color: #b91c1c; }
 .notification-icon.type-warning { background-color: #fff8e1; color: #f57c00; }
 .notification-icon.type-info    { background-color: #e3f2fd; color: #1e88e5; }
+.notification-content { flex-grow: 1; }
+.notification-message { font-size: 14px; line-height: 1.5; color: var(--text-light); margin: 0; }
+.notification-time { font-size: 12px; color: var(--text-muted-light); margin-top: 4px; }
+.no-notifications { text-align: center; padding: 40px 20px; font-size: 14px; color: var(--text-muted-light); }
 
-body.dark-mode .notification-icon.type-success { background-color: #1a3c3a; color: #80cbc4; }
-body.dark-mode .notification-icon.type-danger  { background-color: #450a0a; color: #fca5a5; }
-body.dark-mode .notification-icon.type-warning { background-color: #4b3c1c; color: #ffe082; }
-body.dark-mode .notification-icon.type-info    { background-color: #1c3a56; color: #90caf9; }
 
-/* 8. Nội dung text và thời gian */
-.notification-content {
-    flex-grow: 1;
-}
-.notification-message {
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-light);
-    margin: 0;
-}
-body.dark-mode .notification-message {
-    color: var(--text-dark);
-}
-.notification-time {
-    font-size: 12px;
-    color: var(--text-muted-light);
-    margin-top: 4px;
-}
-body.dark-mode .notification-time {
-    color: var(--text-muted-dark);
-}
-
-/* 9. Thông báo khi không có tin */
-.no-notifications {
-    text-align: center;
-    padding: 40px 20px;
-    font-size: 14px;
-    color: var(--text-muted-light);
-}
-body.dark-mode .no-notifications {
-    color: var(--text-muted-dark);
-}
-/* ===================================================================== */
-/* === [TỐI ƯU] Giao diện tiêu đề và cột cho bảng YÊU CẦU HÀNG LOẠT === */
-/* ===================================================================== */
-
-/* [THÊM MỚI] Ép bảng tuân thủ chiều rộng cột đã định */
+/* --- Bulk Order Table --- */
 #bulk-order-editable-table {
     table-layout: fixed;
     width: 100%;
 }
-
-/* [SỬA] Giao diện chung cho các ô tiêu đề (th) */
 #bulk-order-editable-table th {
     background-color: #EEEEEE;
     color: var(--text-light);
@@ -2029,198 +1219,79 @@ body.dark-mode .no-notifications {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.5px;
-    vertical-align: middle; /* Căn giữa theo chiều dọc */
-    
-    /* [SỬA] Giảm đệm và cho phép xuống dòng */
+    vertical-align: middle;
     padding: 8px 6px;
     white-space: normal;
     word-break: break-word;
 }
-
-/* [THÊM MỚI] Định nghĩa chiều rộng cho từng cột cụ thể */
-#bulk-order-editable-table th:nth-child(1) { width: 3%; text-align: center; } /* STT */
-#bulk-order-editable-table th:nth-child(2) { width: 13%; } /* Tên Khách Hàng */
-#bulk-order-editable-table th:nth-child(3) { width: 9%; }  /* Dòng Xe */
-#bulk-order-editable-table th:nth-child(4) { width: 10%; } /* Phiên Bản */
-#bulk-order-editable-table th:nth-child(5) { width: 10%; } /* Ngoại Thất */
-#bulk-order-editable-table th:nth-child(6) { width: 7%; }  /* Nội Thất */
-#bulk-order-editable-table th:nth-child(7) { width: 13%; } /* Số Đơn Hàng */
-#bulk-order-editable-table th:nth-child(8) { width: 20%; } /* Ngày Cọc (rộng nhất) */
-#bulk-order-editable-table th:nth-child(9) { width: 3%; text-align: center; } /* Xóa */
-#bulk-order-editable-table th:nth-child(10){ width: 12%; } /* Trạng Thái / Lỗi */
-
-/* Giao diện Dark Mode (không đổi) */
-body.dark-mode #bulk-order-editable-table th {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-dark);
-    border-bottom-color: var(--gradient-end);
-    border-right-color: var(--border-dark);
-}
-
-#bulk-order-editable-table th:last-child,
-#bulk-order-editable-table td:last-child {
-    border-right: none;
-}
-/* ===================================================================== */
-/* === [FINAL UPDATE V2] CSS Hoàn Thiện Giao Diện Bảng Yêu Cầu Hàng Loạt === */
-/* ===================================================================== */
-
-/* Căn giữa và điều chỉnh padding chung cho các ô */
+#bulk-order-editable-table th:nth-child(1), #bulk-order-editable-table td:nth-child(1) { width: 4%; }
+#bulk-order-editable-table th:nth-child(2), #bulk-order-editable-table td:nth-child(2) { width: 14%; }
+#bulk-order-editable-table th:nth-child(3), #bulk-order-editable-table td:nth-child(3) { width: 10%; }
+#bulk-order-editable-table th:nth-child(4), #bulk-order-editable-table td:nth-child(4) { width: 10%; }
+#bulk-order-editable-table th:nth-child(5), #bulk-order-editable-table td:nth-child(5) { width: 12%; }
+#bulk-order-editable-table th:nth-child(6), #bulk-order-editable-table td:nth-child(6) { width: 8%; }
+#bulk-order-editable-table th:nth-child(7), #bulk-order-editable-table td:nth-child(7) { width: 13%; }
+#bulk-order-editable-table th:nth-child(8), #bulk-order-editable-table td:nth-child(8) { width: 18%; position: relative; }
+#bulk-order-editable-table th:nth-child(9), #bulk-order-editable-table td:nth-child(9) { width: 4%; text-align: center; }
+#bulk-order-editable-table th:nth-child(10),#bulk-order-editable-table td:nth-child(10){ width: 11%; }
 #bulk-order-editable-table td {
     vertical-align: middle;
-    padding: 14px 4px; /* Tăng padding dọc để có thêm không gian cho dòng trạng thái */
+    padding: 14px 4px;
 }
-
-/* Áp dụng chiều rộng cột đã định cho cả ô dữ liệu (td) */
-#bulk-order-editable-table td:nth-child(1),
-#bulk-order-editable-table td:nth-child(9) { text-align: center; }
-
-#bulk-order-editable-table th:nth-child(1), #bulk-order-editable-table td:nth-child(1) { width: 4%; }  /* STT */
-#bulk-order-editable-table th:nth-child(2), #bulk-order-editable-table td:nth-child(2) { width: 14%; } /* Tên KH */
-#bulk-order-editable-table th:nth-child(3), #bulk-order-editable-table td:nth-child(3) { width: 10%; } /* Dòng Xe */
-#bulk-order-editable-table th:nth-child(4), #bulk-order-editable-table td:nth-child(4) { width: 10%; } /* Phiên Bản */
-#bulk-order-editable-table th:nth-child(5), #bulk-order-editable-table td:nth-child(5) { width: 12%; } /* Ngoại Thất */
-#bulk-order-editable-table th:nth-child(6), #bulk-order-editable-table td:nth-child(6) { width: 8%; }  /* Nội Thất */
-#bulk-order-editable-table th:nth-child(7), #bulk-order-editable-table td:nth-child(7) { width: 13%; } /* Số Đơn */
-#bulk-order-editable-table th:nth-child(8), #bulk-order-editable-table td:nth-child(8) { width: 18%; position: relative; } /* Ngày Cọc */
-#bulk-order-editable-table th:nth-child(9), #bulk-order-editable-table td:nth-child(9) { width: 4%; text-align: center; } /* Xóa */
-#bulk-order-editable-table th:nth-child(10),#bulk-order-editable-table td:nth-child(10){ width: 11%; } /* Trạng Thái */
-
-/* Container cho cột Ngày Cọc/UNC */
-.bulk-date-file-container {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* Điều chỉnh các ô input/select để gọn hơn */
 #bulk-order-editable-table .form-input,
 #bulk-order-editable-table .form-select {
     font-size: 13px;
     padding: 6px 8px;
     width: 100%;
 }
-
-/* Giảm chiều rộng tối thiểu của ô ngày cọc */
+.bulk-date-file-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
 .bulk-date-file-container .form-input[type="date"] {
     min-width: 130px;
     padding-right: 5px;
 }
-
-/* Nút tải file UNC nhỏ gọn */
 .compact-file-upload-wrapper {
-    position: relative;
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 6px 8px; border: 1px solid var(--border-light); border-radius: 8px;
+    background: var(--background-light); color: var(--text-muted-light);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: all var(--transition-fast) ease; white-space: nowrap; flex-shrink: 0;
+}
+.compact-file-upload-wrapper:hover { border-color: var(--gradient-start); color: var(--gradient-start); }
+.compact-file-upload-wrapper .file-name-display { display: none; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compact-file-upload-wrapper .chic-file-input-bulk { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.compact-file-upload-wrapper .file-prompt { display: flex; align-items: center; gap: 6px; }
+.compact-file-upload-wrapper.file-selected-bulk { border-color: var(--status-san-sang-text-light); color: var(--status-san-sang-text-light); background-color: var(--status-san-sang-bg-light); }
+#bulk-order-editable-table td:nth-child(8) { position: relative; }
+.chic-ocr-status-bulk {
+    font-size: 10px; font-style: italic; white-space: nowrap; position: absolute;
+    bottom: -5px; left: 4px; color: var(--status-san-sang-text-light);
+}
+.bulk-order-row.valid-row { background-color: rgba(224, 242, 241, 0.5); border-left: 3px solid var(--status-san-sang-text-light); }
+.bulk-order-row.invalid-row { background-color: rgba(254, 226, 226, 0.5); border-left: 3px solid #ef4444; }
+.row-status { font-size: 11px; font-style: italic; color: var(--text-muted-light); white-space: normal; max-width: 200px; line-height: 1.3; }
+.row-status.error { color: #b91c1c; font-weight: 500; }
+.row-status.success { color: #00796b; font-weight: 500; }
+
+
+/* --- In-Table Action Buttons & Menu --- */
+.primary-action-group {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 6px 8px;
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    background: var(--background-light);
-    color: var(--text-muted-light);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-    white-space: nowrap;
-    flex-shrink: 0;
+    position: relative;
 }
-
-/* Tên file đã chọn */
-.compact-file-upload-wrapper .file-name-display {
-    display: none;
-    max-width: 60px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Các style khác giữ nguyên như cũ... */
-.compact-file-upload-wrapper:hover { border-color: var(--gradient-start); color: var(--gradient-start); }
-body.dark-mode .compact-file-upload-wrapper { border-color: var(--border-dark); background: var(--background-dark); color: var(--text-muted-dark); }
-body.dark-mode .compact-file-upload-wrapper:hover { border-color: var(--gradient-end); color: var(--gradient-end); }
-.compact-file-upload-wrapper .chic-file-input-bulk { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.compact-file-upload-wrapper .file-prompt { display: flex; align-items: center; gap: 6px; }
-.compact-file-upload-wrapper.file-selected-bulk { border-color: var(--status-san-sang-text-light); color: var(--status-san-sang-text-light); background-color: var(--status-san-sang-bg-light); }
-body.dark-mode .compact-file-upload-wrapper.file-selected-bulk { border-color: var(--status-san-sang-text-dark); color: var(--status-san-sang-text-dark); background-color: var(--status-san-sang-bg-dark); }
-
-/*
- ******************************************************
- * [CRITICAL FIX] Correct positioning for OCR status  *
- ******************************************************
-*/
-#bulk-order-editable-table td:nth-child(8) {
-    position: relative; /* This is the key fix! */
-}
-
-.chic-ocr-status-bulk {
-    font-size: 10px;
-    font-style: italic;
-    white-space: nowrap;
-    position: absolute;
-    bottom: -5px; /* Adjust position to be just below the inputs */
-    left: 4px;
-    color: var(--status-san-sang-text-light);
-}
-
-body.dark-mode .chic-ocr-status-bulk {
-    color: var(--status-san-sang-text-dark);
-}
-
-/* Nút xóa dòng */
-.btn-icon-danger {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background-color: transparent;
-    border: none;
-    color: var(--text-muted-light);
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.btn-icon-danger i { font-size: 14px; }
-.btn-icon-danger:hover { background-color: #fee2e2; color: #ef4444; }
-body.dark-mode .btn-icon-danger:hover { background-color: #450a0a; }
-
-/* Đánh dấu dòng hợp lệ/không hợp lệ */
-.bulk-order-row.valid-row { background-color: rgba(224, 242, 241, 0.5); border-left: 3px solid var(--status-san-sang-text-light); }
-body.dark-mode .bulk-order-row.valid-row { background-color: rgba(26, 60, 58, 0.5); border-left-color: var(--status-san-sang-text-dark); }
-.bulk-order-row.invalid-row { background-color: rgba(254, 226, 226, 0.5); border-left: 3px solid #ef4444; }
-body.dark-mode .bulk-order-row.invalid-row { background-color: rgba(69, 10, 10, 0.5); border-left-color: #fca5a5; }
-
-/* Trạng thái của dòng */
-.row-status { font-size: 11px; font-style: italic; color: var(--text-muted-light); white-space: normal; max-width: 200px; line-height: 1.3; }
-.row-status.error { color: #b91c1c; font-weight: 500; }
-body.dark-mode .row-status.error { color: #fca5a5; }
-.row-status.success { color: #00796b; font-weight: 500; }
-body.dark-mode .row-status.success { color: #80cbc4; }
-/* ================================================================== */
-/* === [NÂNG CẤP] GIAO DIỆN CỤM NÚT HÀNH ĐỘNG TRONG BẢNG (PRO) === */
-/* ================================================================== */
-
-/* 1. Container chính cho nhóm hành động */
-.primary-action-group {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Căn giữa các nút */
-    gap: 4px; /* Khoảng cách nhỏ giữa nút chính và menu */
-    position: relative; /* Cần cho menu con */
-}
-
-/* 2. Style chung cho các nút trong bảng để nhỏ gọn hơn */
 .primary-action-group .btn-sm {
-    padding: 6px 12px; /* Giảm padding */
-    font-size: 12px;   /* Giảm cỡ chữ */
+    padding: 6px 12px;
+    font-size: 12px;
     font-weight: 600;
-    border-radius: 8px; /* Bo góc nhẹ nhàng */
+    border-radius: 8px;
     flex-shrink: 0;
 }
-
-/* 3. Nút hành động chính (màu gradient) */
 .primary-action-group .btn-pro-gradient {
     background: var(--gradient);
     color: white;
@@ -2230,20 +1301,13 @@ body.dark-mode .row-status.success { color: #80cbc4; }
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
-
-/* 4. Nút Menu "..." */
 .action-menu-toggle {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 28px; height: 28px; border-radius: 8px;
     background-color: var(--background-light);
     border: 1px solid var(--border-light);
     color: var(--text-muted-light);
-    cursor: pointer;
-    transition: all var(--transition-fast) ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    cursor: pointer; transition: all var(--transition-fast) ease;
+    display: inline-flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
 .action-menu-toggle:hover {
@@ -2251,80 +1315,32 @@ body.dark-mode .row-status.success { color: #80cbc4; }
     border-color: var(--gradient-start);
     color: var(--gradient-start);
 }
-body.dark-mode .action-menu-toggle {
-    background-color: var(--background-dark);
-    border-color: var(--border-dark);
-    color: var(--text-muted-dark);
-}
-body.dark-mode .action-menu-toggle:hover {
-    border-color: var(--gradient-end);
-    color: var(--gradient-end);
-}
-
-/* 5. Khung menu xổ xuống */
 .action-menu-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 5px); /* Vị trí mặc định: dưới nút toggle */
-    z-index: 10;
-    width: 220px;
-    background: var(--card-bg-light);
-    border: 1px solid var(--border-light);
-    border-radius: 10px;
-    box-shadow: var(--shadow-lg);
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    /* Hiệu ứng */
-    opacity: 0;
-    visibility: hidden;
+    position: absolute; right: 0; top: calc(100% + 5px); z-index: 10;
+    width: 220px; background: var(--card-bg-light); border: 1px solid var(--border-light);
+    border-radius: 10px; box-shadow: var(--shadow-lg); padding: 6px;
+    display: flex; flex-direction: column; gap: 4px;
+    opacity: 0; visibility: hidden;
     transform: translateY(10px) scale(0.95);
     transform-origin: top right;
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
 }
-
-/* Trạng thái hiển thị menu */
 .action-menu-dropdown.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
 }
-
-/* [QUAN TRỌNG] Style để menu mở lên trên khi ở gần cuối bảng */
 .action-menu-dropdown.show-upwards {
-    top: auto;
-    bottom: calc(100% + 5px);
-    transform-origin: bottom right;
+    top: auto; bottom: calc(100% + 5px); transform-origin: bottom right;
 }
-
-body.dark-mode .action-menu-dropdown {
-    background: var(--card-bg-dark);
-    border-color: var(--border-dark);
-}
-
-/* 6. Các mục trong menu (action-item) */
 .action-menu-dropdown .action-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    background: none;
-    font-size: 13px;
-    font-weight: 500;
-    text-align: left;
-    color: var(--text-light);
-    cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px; border: none; background: none;
+    font-size: 13px; font-weight: 500; text-align: left;
+    color: var(--text-light); cursor: pointer;
     transition: background-color var(--transition-fast) ease, color var(--transition-fast) ease;
     width: 100%;
 }
 .action-menu-dropdown .action-item i {
-    font-size: 14px;
-    width: 16px; /* Cố định chiều rộng icon */
-    text-align: center;
+    font-size: 14px; width: 16px; text-align: center;
     color: var(--text-muted-light);
     transition: color var(--transition-fast) ease;
 }
@@ -2335,8 +1351,6 @@ body.dark-mode .action-menu-dropdown {
 .action-menu-dropdown .action-item:hover i {
     color: var(--gradient-start);
 }
-
-/* Style cho mục nguy hiểm (Hủy) */
 .action-menu-dropdown .action-item.danger:hover {
     background-color: #fee2e2;
     color: #b91c1c;
@@ -2344,74 +1358,34 @@ body.dark-mode .action-menu-dropdown {
 .action-menu-dropdown .action-item.danger:hover i {
     color: #b91c1c;
 }
-
-body.dark-mode .action-menu-dropdown .action-item {
-    color: var(--text-dark);
-}
-body.dark-mode .action-menu-dropdown .action-item i {
-    color: var(--text-muted-dark);
-}
-body.dark-mode .action-menu-dropdown .action-item:hover {
-    background-color: var(--background-dark);
-}
-body.dark-mode .action-menu-dropdown .action-item:hover i {
-    color: var(--gradient-end);
-}
-body.dark-mode .action-menu-dropdown .action-item.danger:hover {
-    background-color: #450a0a;
-    color: #fca5a5;
-}
-body.dark-mode .action-menu-dropdown .action-item.danger:hover i {
-    color: #fca5a5;
-}
-
-/* 7. Dải phân cách trong menu */
 .action-menu-dropdown .divider {
-    height: 1px;
-    background-color: var(--border-light);
-    margin: 4px 6px;
+    height: 1px; background-color: var(--border-light); margin: 4px 6px;
 }
-body.dark-mode .action-menu-dropdown .divider {
-    background-color: var(--border-dark);
-}
-
-/* 8. Căn chỉnh lại ô chứa hành động */
 #history-table .actions-cell {
-    text-align: center;
-    vertical-align: middle;
+    text-align: center; vertical-align: middle;
 }
-/* === BỔ SUNG KẺ BẢNG DỮ LIỆU (THÊM VÀO CUỐI) === */
-
-/* 1. Áp dụng cho các bảng chính */
-#history-table th, #history-table td,
-#waiting-list-table th, #waiting-list-table td,
-#bulk-order-editable-table th, #bulk-order-editable-table td {
-    /* Thêm đường kẻ bên phải cho mỗi ô */
-    border-right: 1px solid var(--border-light);
+#history-table > thead#table-header {
+    position: relative; 
+    z-index: 30;     
 }
-
-/* 2. Bỏ đường kẻ thừa ở cột cuối cùng cho gọn */
-#history-table th:last-child, #history-table td:last-child,
-#waiting-list-table th:last-child, #waiting-list-table td:last-child,
-#bulk-order-editable-table th:last-child, #bulk-order-editable-table td:last-child {
-    border-right: none;
+#history-table th,
+#waiting-list-table th {
+    position: sticky; top: 0;
+    background-color: #f3f4f6;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--gradient-start);
+    text-align: center; text-transform: uppercase;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.5px; cursor: pointer;
 }
 
-/* 3. Đảm bảo màu đường kẻ đúng với giao diện tối (Dark Mode) */
-body.dark-mode #history-table th, body.dark-mode #history-table td,
-body.dark-mode #waiting-list-table th, body.dark-mode #waiting-list-table td,
-body.dark-mode #bulk-order-editable-table th, body.dark-mode #bulk-order-editable-table td {
-    border-right-color: var(--border-dark);
-}
+
     </style>
 </head>
 <body data-theme="light">
     
 <div class="navbar">
-    
-    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu" style="display: none;">
-        <i class="fas fa-bars"></i>
-    </button>
+
 
     <div class="sidebar" id="sidebar">
         <div class="logo"> <h1>VINFAST MINH ĐẠO</h1> </div>
@@ -2435,8 +1409,6 @@ body.dark-mode #bulk-order-editable-table th, body.dark-mode #bulk-order-editabl
         <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
     </div>
 
-    <button class="hamburger" onclick="toggleMenu()"> <i class="fas fa-bars"></i></button>
-
     <div class="navbar-controls">
         <div class="relative" id="notification-bell-container">
     <button class="nav-btn" onclick="handleNotificationBellClick()" data-tooltip="Thông báo" aria-label="Thông báo">
@@ -2456,10 +1428,6 @@ body.dark-mode #bulk-order-editable-table th, body.dark-mode #bulk-order-editabl
         </div>
     </div>
 </div>
-
-        <button class="theme-toggle-btn" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
-            <i class="fas fa-moon" id="theme-icon"></i>
-        </button>
        
         <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
         <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
@@ -2645,12 +1613,12 @@ body.dark-mode #bulk-order-editable-table th, body.dark-mode #bulk-order-editabl
     
     <div class="bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-center flex flex-col justify-center">
         <dt class="text-[9px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Xe Phổ Biến</dt>
-        <dd class="mt-0.3 text-sm font-semibold text-gray-800 dark:text-gray-200" id="summary-top-car-history">N/A</dd>
+        <dd class="mt-0.3 text-sm font-semibold text-gray-800 dark:text-gray-200" id="summary-top-car-history"></dd>
     </div>
     
     <div class="bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-center flex flex-col justify-center">
         <dt class="text-[9px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">TVBH Tích Cực</dt>
-        <dd class="mt-0.3 text-sm font-semibold text-gray-800 dark:text-gray-200" id="summary-top-advisor-history">N/A</dd>
+        <dd class="mt-0.3 text-sm font-semibold text-gray-800 dark:text-gray-200" id="summary-top-advisor-history"></dd>
     </div>
 
 </div>
@@ -3104,16 +2072,6 @@ function toggleSidebarDesktop() {
     }
 }
 
-function toggleMobileSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    if (sidebar) {
-        sidebar.classList.toggle("open");
-        if (sidebar.classList.contains("open")) {
-            sidebar.classList.remove("collapsed"); 
-        }
-    }
-}
-
 function setActiveSidebarLink() {
     const navLinks = document.querySelectorAll("#navMenu a");
     const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
@@ -3173,7 +2131,6 @@ document.addEventListener("DOMContentLoaded", function() {
         bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true);
     }
     setupScrollSync();
-    applyInitialTheme();
     initScrollToTopButton();
 
     // --- KHỞI TẠO SIDEBAR ---
@@ -3189,17 +2146,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
     }
-    
-    // --- XỬ LÝ CLICK BÊN NGOÀI ĐỂ ĐÓNG SIDEBAR TRÊN MOBILE ---
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-            if (!sidebar.contains(event.target) && mobileMenuBtn && !mobileMenuBtn.contains(event.target)) {
-                sidebar.classList.remove('open');
-            }
-        }
-    });
+
     
     // 5. Thiết lập các vùng tải tệp (Upload)
     const chicWrapper = document.getElementById('chic-upload-wrapper');
@@ -3275,28 +2222,9 @@ document.addEventListener("DOMContentLoaded", function() {
     fetchVehicleAnalytics();
 });
 
-function applyInitialTheme() {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.classList.toggle("dark-mode", savedTheme === "dark");
-    const themeIcon = document.getElementById("theme-icon");
-    if (themeIcon) {
-        themeIcon.className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
-    }
 
-}
 
-function toggleTheme() {
-    document.body.classList.toggle("dark-mode");
-    const isDarkMode = document.body.classList.contains("dark-mode");
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-    const themeIcon = document.getElementById("theme-icon");
-    if (themeIcon) {
-        themeIcon.className = isDarkMode ? "fas fa-sun" : "fas fa-moon";
-    }
-    if (typeof Chart !== "undefined" && (carChart || carVersionChart || advisorChart)) {
-        updateChartColors();
-    }
-}
+
 
 function logout() {
     sessionStorage.clear();
@@ -3710,60 +2638,52 @@ function getExteriorColorStyle(exteriorValue) {
     return colorStyle;
 }
 
-// [HÀM ĐÃ ĐƯỢC NÂNG CẤP]
+// --- HÀM JAVASCRIPT - PHIÊN BẢN HOÀN CHỈNH ---
 function getStatusClass(statusText) {
     if (!statusText || typeof statusText !== 'string') {
-        return 'status-vin-not-found'; // Trạng thái mặc định nếu không có text
+        return 'status-default'; // Trạng thái mặc định nếu không có text
     }
 
-    // Chuẩn hóa chuỗi trạng thái: chuyển về chữ thường, bỏ khoảng trắng thừa
-    const lowerStatus = statusText.toLowerCase().trim();
+    // Chuẩn hóa chuỗi trạng thái: chuyển về chữ thường, bỏ dấu, bỏ khoảng trắng thừa
+    const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
 
-    // Sử dụng switch-case để dễ dàng quản lý các trạng thái
     switch (lowerStatus) {
-        // --- Nhóm Hoàn Thành (Màu Xanh Lá) ---
+        // CÁC TRẠNG THÁI TÍCH CỰC
         case 'đã xuất hóa đơn':
-            return 'status-invoice-issued';
-
-        // --- Nhóm Đã Ghép/Sẵn Sàng (Màu Xanh Dương) ---
-        case 'đã ghép':
-            return 'status-vin-matched';
-        
-        // --- Nhóm Chờ Xử Lý (Màu Cam) ---
-        case 'chờ phê duyệt':
-            return 'status-pending-approval';
-            
-        // --- Nhóm Cần Hành Động (Màu Đỏ) ---
-        case 'yêu cầu bổ sung':
-            return 'status-supplement-required';
-
-        // --- Nhóm Đang Xử Lý (Màu Tím & Xanh Mòng Két) ---
-        case 'đã bổ sung':
-            return 'status-supplemented';
+            return 'status-invoice-issued'; // Xanh lá cây
         case 'đã phê duyệt':
-        case 'chờ ký hóa đơn': // Gộp chung 2 trạng thái này
-            return 'status-approved';
+            return 'status-approved'; // Xanh mòng két (Teal)
+        case 'chờ ký hóa đơn':
+        case 'chờ ký hóa đơn': // Bao gồm cả biến thể cũ
+            return 'status-pending-signature'; // Xanh dương
+        case 'đã bổ sung':
+            return 'status-supplemented'; // Tím
+        case 'đã ghép':
+            return 'status-vin-matched'; // Chàm (Indigo)
 
-        // --- Nhóm Đã Hủy (Màu Xám) ---
+        // CÁC TRẠNG THÁI CẦN CHÚ Ý
+        case 'chờ phê duyệt':
+            return 'status-pending-approval'; // Cam
+        case 'yêu cầu bổ sung':
+            return 'status-supplement-required'; // Đỏ
+
+        // CÁC TRẠNG THÁI CHỜ & TRUNG TÍNH
+        case 'chưa ghép':
+            return 'status-unmatched'; // Xám
+        case 'chưa tìm thấy vin':
+            return 'status-vin-not-found'; // Xám đậm hơn
+        
+        // CÁC TRẠNG THÁI KHÁC
         case 'đã hủy':
         case 'đã hủy (ui)':
-            return 'status-cancelled';
+            return 'status-cancelled'; // Xám đen
 
-        // --- Nhóm Chờ Ghép (Màu Xám Nhạt - Trung tính) ---
-        case 'chưa ghép':
-        case 'chưa tìm thấy vin':
-        case 'chờ ghép (bulk)':
-        case 'chờ ghép (vin cũ không hợp lệ)':
-        case 'chưa có':
-            return 'status-vin-not-found';
-        
-        // --- Trạng thái mặc định cho các trường hợp khác ---
+        // TRẠNG THÁI DỰ PHÒNG
         default:
-            // Xử lý trường hợp chỉ có Số VIN trong cột kết quả
             if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
                 return 'status-vin-matched';
             }
-            return 'status-default'; // Fallback cuối cùng
+            return 'status-default';
     }
 }
 
@@ -4210,12 +3130,6 @@ function switchTab(tabName, element) {
     if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger");
     if (hamburger) hamburger.classList.remove("active");
-}
-function toggleMenu() {
-    const mobileMenu = document.querySelector(".navbar .tabs");
-    const hamburger = document.querySelector(".hamburger");
-    if (mobileMenu) mobileMenu.classList.toggle("active");
-    if (hamburger) hamburger.classList.toggle("active");
 }
 
 
