@@ -389,12 +389,12 @@ body.dark-mode [data-tooltip]::after { background-color: #f0f0f0; color: #333; }
 .main-container {
     margin-left: 220px;
     margin-top: 50px;      /* Sửa: Lề trên bằng đúng chiều cao navbar */
-    margin-bottom: 50px;   /* Lề dưới cho footer */
+    margin-bottom: 30px;   /* Lề dưới cho footer */
     padding: 20px;         /* Sửa: Giảm khoảng đệm bên trong một chút */
     transition: margin-left var(--transition-medium) ease;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     align-items: stretch;
     /* Xóa hoàn toàn thuộc tính height: calc(...) để trình duyệt tự tính toán */
 }
@@ -917,9 +917,10 @@ footer {
     z-index: 998;
     transition: all var(--transition-medium) ease;
 }
+
 .main-content.collapsed + footer {
-    left: 70px;
-    width: calc(100% - 70px);
+    left: 30px;
+    width: calc(100% - 30px);
 }
 body.dark-mode footer {
     color: var(--text-muted-dark);
@@ -1184,7 +1185,7 @@ body {
 
 /* 1. Thiết lập cho container chính và section bảng */
 .main-container {
-    height: calc(100vh - 100px); /* Điều chỉnh lại chiều cao */
+    height: calc(100vh - 60px); /* Tăng 40px chiều cao */
     display: flex;
     flex-direction: column;
 }
