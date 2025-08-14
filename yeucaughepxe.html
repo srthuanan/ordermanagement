@@ -1378,16 +1378,432 @@ tbody tr:hover {
     font-size: 12px; font-weight: 700;
     letter-spacing: 0.5px; cursor: pointer;
 }
+/* =================================================================== */
+/* 6. RESPONSIVE CHO DI ĐỘNG
+/* =================================================================== */
+@media (max-width: 900px) {
+    body {
+        overflow-y: auto !important; /* Cho phép cuộn trên di động */
+        font-size: 10px; /* Giảm cỡ chữ một chút */
+    }
+
+    /* --- 1. Tùy chỉnh Navbar cho di động --- */
+    .navbar .logo {
+        display: none; /* Ẩn logo Vinfast Minh Đạo trên navbar */
+    }
+
+    .navbar .tabs {
+        display: none;
+        position: absolute;
+        top: 45px;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+        box-shadow: var(--shadow-lg);
+        border-bottom: 1px solid var(--border-light);
+        z-index: 1007;
+        
+        /* DÒNG SỬA LỖI QUAN TRỌNG: */
+        /* Reset lại thuộc tính transform để menu không bị đẩy lệch sang trái */
+        transform: none;
+    }
+    .navbar .tabs.active {
+        display: flex; /* Hiện các tab khi nhấn nút */
+    }
+/* Đảm bảo các link trong menu hiện đúng màu */
+.navbar .tabs a {
+        color: var(--text-light);      /* Đổi màu chữ thành đen đậm (#212529) để dễ đọc */
+        display: block;                /* Đảm bảo mỗi mục chiếm một hàng */
+        width: 100%;
+        padding: 12px 15px;            /* Tăng khoảng đệm cho dễ bấm hơn */
+        border-radius: 6px;
+    }
+
+.navbar .tabs a:hover {
+        background-color: var(--background-light); /* Nền đổi thành màu xám rất nhạt */
+        color: var(--text-light);                  /* Giữ nguyên màu chữ đen */
+    }
+.navbar .tabs a.active {
+        background: var(--gradient); /* Dùng nền gradient đã định nghĩa */
+        color: white;                /* Chữ màu trắng để nổi bật trên nền gradient */
+    }
+    .hamburger {
+        display: flex; /* Hiện nút hamburger */
+        font-size: 18px;
+        margin-right: auto; /* Đẩy các nút control sang phải */
+    }
+    
+    .navbar-controls {
+        margin-left: 0; /* Reset margin */
+    }
+
+    /* --- 2. Tùy chỉnh Sidebar cho di động --- */
+    .sidebar {
+        transform: translateX(-100%); /* Ẩn sidebar ra khỏi màn hình */
+        z-index: 1008;
+        background-color: rgba(248, 249, 250, 0.95);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        transition: transform var(--transition-medium) ease;
+        width: 260px; /* Đặt chiều rộng phù hợp cho di động */
+    }
+    .sidebar.active {
+        transform: translateX(0); /* Hiện sidebar khi có class 'active' */
+    }
+    .sidebar.collapsed {
+        width: 260px; /* Bỏ trạng thái thu gọn trên di động */
+    }
+    .sidebar.collapsed .menu a span {
+        opacity: 1;
+        max-width: 100px;
+    }
+    .sidebar.collapsed .toggle-btn {
+        display: none; /* Ẩn nút gập của desktop */
+    }
 
 
+    /* --- 3. Tùy chỉnh Nội dung chính và Footer --- */
+    .main-container,
+    .main-container.collapsed {
+        margin-left: 0; /* Nội dung chiếm toàn bộ chiều rộng */
+        padding: 10px;
+        height: auto; /* Chiều cao tự động */
+    }
+    footer,
+    .main-content.collapsed + footer {
+        left: 0;
+        width: 100%;
+        padding: 8px 0;
+    }
+
+    /* --- 4. Tùy chỉnh bố cục 2 cột --- */
+    .main-container.layout-form-view {
+        grid-template-columns: 1fr; /* Chuyển thành 1 cột duy nhất */
+        gap: 15px;
+    }
+    .main-container.layout-form-view #form-section form {
+        overflow-y: visible; /* Tắt cuộn riêng của form */
+    }
+    
+    
+
+
+    /* --- 6. Overlay mờ khi mở sidebar --- */
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1007;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .mobile-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+#history-table thead {
+    display: none;
+}
+/* 7. [BỔ SUNG] Thanh hành động cho thẻ trên di động */
+.history-card .card-actions {
+    display: flex;
+    justify-content: flex-end; /* Căn các nút về phía bên phải */
+    align-items: center;
+    gap: 8px; /* Khoảng cách giữa các nút */
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border-light, #e9ecef); /* Đường kẻ phân cách */
+}
+
+.card-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* Nút hình tròn */
+    border: 1px solid var(--border-light);
+    background-color: var(--background-light);
+    color: var(--text-muted-light);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast) ease;
+}
+
+.card-action-btn:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-md);
+}
+
+/* Các biến thể màu của nút */
+.card-action-btn.primary {
+    background: var(--gradient);
+    color: white;
+    border: none;
+}
+
+.card-action-btn.success {
+    background-color: var(--status-san-sang-text-light);
+    color: white;
+    border: none;
+}
+
+.card-action-btn.danger {
+    background-color: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+.card-action-btn.danger:hover {
+    background-color: #ef4444;
+    color: white;
+}
+/* 3. Loại bỏ các style mặc định của dòng và ô trong bảng */
+#history-table tr.history-card-row {
+    margin-bottom: 15px; /* Khoảng cách giữa các thẻ */
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+}
+
+#history-table tr.history-card-row:last-child {
+    margin-bottom: 0;
+}
+
+#history-table td {
+    padding: 0;
+    border: none;
+    border-bottom: none !important; /* Ghi đè các border cũ */
+}
+
+#history-table tr:hover {
+    background-color: transparent; /* Tắt hiệu ứng hover của dòng <tr> */
+}
+
+/* 4. Định dạng cho chính thẻ .history-card */
+.history-card {
+    background: var(--card-bg-light, #ffffff);
+    border: 1px solid var(--border-light, #e9ecef);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Khoảng cách giữa các phần header, body, timeline */
+    transition: box-shadow var(--transition-fast) ease;
+}
+.history-card:hover {
+     box-shadow: var(--shadow-lg);
+}
+
+/* 5. Định dạng các thành phần bên trong thẻ */
+.history-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    gap: 10px;
+}
+
+.history-card .customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* Giảm khoảng cách giữa tên và số đơn */
+}
+
+.history-card .customer-name {
+    font-weight: 700;
+    font-size: 14px; /* Giảm cỡ chữ tên khách hàng */
+    color: var(--text-light, #212529);
+    line-height: 1.3;
+}
+
+.history-card .order-number {
+    font-family: monospace;
+    font-size: 11px; /* Giảm cỡ chữ số đơn hàng */
+    color: var(--text-muted-light, #6c757d);
+}
+
+.history-card .status-badge-container {
+    flex-shrink: 0;
+}
+
+/* Style cho thẻ trạng thái để khớp với ảnh */
+.history-card .status-badge {
+    width: auto; 
+    padding: 5px 8px; /* Giảm padding của thẻ trạng thái */
+    font-size: 10px;  /* Giảm cỡ chữ trạng thái */
+    font-weight: 600;
+    border-left-width: 3px; /* Làm viền trái mỏng hơn */
+    text-transform: none; 
+    letter-spacing: 0;
+}
+
+.history-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Giảm khoảng cách giữa các nhóm thông tin */
+}
+
+.history-card .info-group {
+    display: flex;
+    align-items: flex-start; 
+    gap: 10px; /* Giảm khoảng cách giữa icon và chữ */
+    font-size: 13px; /* Giảm cỡ chữ thông tin xe, TVBH, VIN */
+}
+
+.history-card .info-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px; /* Giảm cỡ icon */
+    color: var(--gradient-start, #4f46e5); 
+    margin-top: 2px; 
+}
+
+.history-card .info-content {
+    line-height: 1.4; /* Điều chỉnh lại dòng cho dễ đọc */
+    word-break: break-word;
+    color: var(--text-light);
+}
+
+.history-card .info-content strong {
+    font-weight: 600;
+}
+
+.history-card .card-timeline {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between; 
+    gap: 10px 15px; /* Giảm khoảng cách dòng thời gian */
+    font-size: 12px; /* Giảm cỡ chữ dòng thời gian */
+    color: var(--text-muted-light, #6c757d);
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border-light, #e9ecef);
+}
+
+.history-card .card-timeline span {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Giảm khoảng cách icon và chữ trong timeline */
+}
+/* Ghi đè màu icon trong timeline về màu xám */
+.history-card .card-timeline .info-icon {
+    color: var(--text-muted-light, #6c757d);
+    font-size: 14px;
+    margin-top: 0;
+}
+
+/* [SỬA LẠI] Chỉ ẩn các thẻ thống kê trên di động */
+#summary-section-history-view .grid > div:first-child {
+    display: none;
+}
+/* 6. Ghi đè các quy tắc cũ không cần thiết nữa */
+#history-table th:nth-child(3),
+#history-table td:nth-child(3),
+#history-table th:nth-child(1), #history-table td:nth-child(1),
+#history-table th:nth-child(2), #history-table td:nth-child(2),
+#history-table th:nth-child(4), #history-table td:nth-child(4),
+#history-table th:nth-child(5), #history-table td:nth-child(5),
+#history-table th:nth-child(6), #history-table td:nth-child(6) {
+    display: block;
+    width: 100%;
+}
+/* 8. [NÂNG CẤP] Giao diện Bảng điều khiển (Lọc & Hành động) cho Di động */
+
+/* a. Biến div bao quanh thành một card điều khiển */
+#summary-section-history-view .md\:col-span-2 {
+    background: var(--card-bg-light);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    margin-top: 15px; /* Khoảng cách với các thẻ thống kê ở trên */
+}
+
+/* b. Ẩn các nhãn label "Dòng xe", "Trạng thái", "Tìm kiếm" không cần thiết */
+#filter-container label {
+    display: none;
+}
+
+/* c. Sắp xếp lại lưới bộ lọc */
+#filter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Tạo lưới 2 cột */
+    gap: 10px; /* Khoảng cách giữa các bộ lọc */
+}
+
+/* d. Cho ô tìm kiếm chiếm toàn bộ chiều rộng (2 cột) */
+#filter-container > div:first-child {
+    grid-column: 1 / -1;
+}
+
+/* e. Reset lại margin của các input/select sau khi đã ẩn label */
+#filter-container select, #filter-container input {
+    margin-top: 0;
+    width: 100%;
+}
+
+/* f. Tinh chỉnh lại các nút điều khiển (Hiển thị, Refresh, Export) */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Đẩy mục "Hiển thị" và các nút ra 2 bên */
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-light);
+}
+
+/* g. Điều chỉnh kích thước các nút hành động nhỏ hơn */
+.export-btn, .refresh-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+}
+}
+
+/* =================================================================== */
+/* 7. CSS BỔ SUNG ĐỂ SỬA LỖI HIỂN THỊ DESKTOP/MOBILE
+/* =================================================================== */
+
+/* --- Mặc định (Desktop View) --- */
+/* Ẩn dòng của mobile card và chỉ hiện dòng của desktop table */
+.mobile-view-row {
+    display: none;
+}
+.desktop-view-row {
+    display: table-row; /* Kiểu hiển thị mặc định của dòng trong bảng */
+}
+
+/* --- Khi chuyển sang màn hình nhỏ (Mobile View) --- */
+@media (max-width: 900px) {
+    /* Ẩn dòng của desktop và chỉ hiện dòng chứa mobile card */
+    .desktop-view-row {
+        display: none;
+    }
+    .mobile-view-row {
+        display: block; /* Hiển thị như một khối riêng biệt */
+        margin-bottom: 15px; /* Tạo khoảng cách giữa các thẻ */
+    }
+
+    /* Ghi đè các style mặc định để dòng mobile hiển thị đúng */
+    .mobile-view-row td {
+        display: block;
+        padding: 0;
+        border: none;
+        width: 100%;
+    }
+}
     </style>
 </head>
 <body data-theme="light">
-    
-<div class="navbar">
-
-
-    <div class="sidebar" id="sidebar">
+<div class="sidebar" id="sidebar">
         <div class="logo"> <h1>VINFAST MINH ĐẠO</h1> </div>
         <div class="menu" id="navMenu">
             <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
@@ -1400,6 +1816,13 @@ tbody tr:hover {
         </div>
         <button class="toggle-btn" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
     </div>
+<div class="navbar">
+
+
+    <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="Mở menu">
+        <i class="fas fa-bars"></i>
+    </button>
+    
 
 
     <div class="tabs">
@@ -1410,6 +1833,9 @@ tbody tr:hover {
     </div>
 
     <div class="navbar-controls">
+<button class="hamburger" onclick="toggleMobileTabs()" aria-label="Mở các mục">
+        <i class="fas fa-ellipsis-h"></i>
+    </button>
         <div class="relative" id="notification-bell-container">
     <button class="nav-btn" onclick="handleNotificationBellClick()" data-tooltip="Thông báo" aria-label="Thông báo">
         <i class="fas fa-bell"></i>
@@ -1455,6 +1881,7 @@ tbody tr:hover {
         </button>
     </div>
 </div>
+<div class="mobile-overlay" id="mobile-overlay" onclick="closeAllMobileMenus()"></div>
 <div id="ai-context-manual" hidden>
   <h3>Sổ Tay Hướng Dẫn Chức Năng Website Ghép Xe</h3>
 
@@ -2576,66 +3003,79 @@ function normalizeName(str) {
         .trim();            // Loại bỏ khoảng trắng thừa
 }
 function getExteriorColorStyle(exteriorValue) {
+    // [NÂNG CẤP] Tự động kiểm tra xem giao diện đang ở chế độ Tối (Dark Mode) hay không.
+    const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+    
+    // Giữ lại các biến cũ cần thiết
     const specificFontWeight = `font-weight: 600;`;
-    const defaultFontWeight = `font-weight: normal;`;
-    let colorStyle = `color: var(--exterior-default-text); ${defaultFontWeight}`;
+    
+    // [NÂNG CẤP] Tạo style viền chữ để chữ màu trắng nổi bật trên nền sáng.
+    const outlineStyle = `text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555;`;
+
+    // Màu mặc định
+    let colorStyle = `color: var(--text-light); font-weight: normal;`;
 
     if (!exteriorValue) return colorStyle;
-    const lowerExteriorValue = exteriorValue.toLowerCase();
+    const lowerExteriorValue = exteriorValue.toLowerCase().trim();
 
-    const colorMap = {
-        "brahminy white (ce18)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
-        "sunset orb (ce1a)": `color: var(--exterior-orange-text); ${specificFontWeight}`,
-        "crimson red (ce1m)": `color: var(--exterior-red-text); ${specificFontWeight}`,
-        "vinfast blue (ce1n)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "neptune grey (ce14)": `color: #778899; ${specificFontWeight}`,
-        "jet black (ce11)": `color: var(--exterior-black-text); ${specificFontWeight}`,
-        "electric blue (ce1j)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "zenith grey (ce1v)": `color: #B0C4DE; ${specificFontWeight}`,
-        "jet black roof- summer yellow body (111u)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "brahminy white roof- aquatic azure body (181y)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "brahminy white roof- rose pink body (1821)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
-        "brahminy white roof - iris berry body (181x)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
-        "urbant mint (ce1w)": `color: #3CB371; ${specificFontWeight}`,
-        "vinbus green (ce2b)": `color: var(--exterior-green-text); ${specificFontWeight}`,
-        "deep ocean (ce1h)": `color: #005A9C; ${specificFontWeight}`,
-        "iris berry (ce1x)": `color: var(--exterior-pink-text); ${specificFontWeight}`,
-        "zenith grey-desat silver roof (171v)": `color: var(--exterior-grey-text); ${specificFontWeight}`,
-        "urbant mint green - desat silv (171w)": `color: var(--exterior-green-text); ${specificFontWeight}`,
-        "ivy green-desat silver roof (1722)": `color: var(--exterior-green-text); ${specificFontWeight}`,
-        "atlantic blue-aquatic azure ro (1y26)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "jet black-champagne creme roof (2311)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "infinity blanc _ silky white r (2418)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
-        "champagne creme - matte champa (2523)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "jet black - graphite roof (2811)": `color: var(--exterior-grey-text); ${specificFontWeight}`,
-        "crimson velvet - mystery bronz (2927)": `color: var(--exterior-red-text); ${specificFontWeight}`,
-        "ivy_green_gne (ce22)": `color: var(--exterior-green-text); ${specificFontWeight}`,
-        "champagne_creme_ylg (ce23)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "crimson red - jet black roof (111m)": `color: var(--exterior-red-text); ${specificFontWeight}`,
-        "infinity blanc_zenith grey roof (1v18)": `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`,
-        "deep ocean_jet black roof (111h)": `color: #005A9C; ${specificFontWeight}`,
-        "alantic blue_denim blue roof (2a26)": `color: var(--exterior-blue-text); ${specificFontWeight}`,
-        "jet black_mystery bronze roof (2911)": `color: var(--exterior-bronze-text); ${specificFontWeight}`,
-        "champagne creme_infinity blanc roof (1823)": `color: var(--exterior-yellow-text); ${specificFontWeight}`,
-        "de sat silver ind12007 (ce17)": `color: var(--exterior-grey-text); ${specificFontWeight}`
-    };
-    if (colorMap[lowerExteriorValue]) {
-        return colorMap[lowerExteriorValue];
-    }
+    // ==============================================================
+    // === BẮT ĐẦU KHỐI LOGIC MÀU MỚI BẠN CUNG CẤP ===
+    // ==============================================================
+    
+    // Các trường hợp đặc biệt và chính xác
+    if (lowerExteriorValue === "brahminy white (ce18)") return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("sunset orb (ce1a)")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("crimson red (ce1m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("vinfast blue (ce1n)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? `color: #aebcc5; ${specificFontWeight}` : `color: #778899; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: black; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("electric blue (ce1j)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? `color: #d4e0f2; ${specificFontWeight}` : `color: #B0C4DE; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("brahminy white roof- rose pink body (1821)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("brahminy white roof - iris berry body (181x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("urbant mint (ce1w)")) return isDarkMode ? `color: #6ee6a0; ${specificFontWeight}` : `color: #3CB371; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("vinbus green (ce2b)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("deep ocean (ce1h)")) return isDarkMode ? `color: #2e8b57; ${specificFontWeight}` : `color: #006400; ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("iris berry (ce1x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("zenith grey-desat silver roof (171v)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("urbant mint green - desat silv (171w)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("ivy green-desat silver roof (1722)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("atlantic blue-aquatic azure ro (1y26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black-champagne creme roof (2311)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("infinity blanc _ silky white r (2418)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("champagne creme - matte champa (2523)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black - graphite roof (2811)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("crimson velvet - mystery bronz (2927)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("ivy_green_gne (ce22)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("champagne_creme_ylg (ce23)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("crimson red - jet black roof (111m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("infinity blanc_zenith grey roof (1v18)")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("deep ocean_jet black roof (111h)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
 
-    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("red")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry") || lowerExteriorValue.includes("pink")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("deep ocean")) return `color: #005A9C; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("sunset orb") || lowerExteriorValue.includes("orange")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg") || lowerExteriorValue.includes("yellow")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne") || lowerExteriorValue.includes("green")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("jet black") || lowerExteriorValue.includes("black")) return `color: var(--exterior-black-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc") || lowerExteriorValue.includes("white")) return `color: white; text-shadow: -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 1px 1px 0 #333, 0 0 3px #555; ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite") || lowerExteriorValue.includes("grey") || lowerExteriorValue.includes("silver")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-    if (lowerExteriorValue.includes("mystery bronz") || lowerExteriorValue.includes("bronze")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
+    // Các trường hợp chung chung hơn
+    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("jet black")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+    if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
 
-    return colorStyle;
+    // ==============================================================
+    // === KẾT THÚC KHỐI LOGIC MÀU MỚI ===
+    // ==============================================================
+
+    return colorStyle; // Trả về màu mặc định nếu không khớp
 }
 
 // --- HÀM JAVASCRIPT - PHIÊN BẢN HOÀN CHỈNH ---
@@ -3130,6 +3570,7 @@ function switchTab(tabName, element) {
     if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger");
     if (hamburger) hamburger.classList.remove("active");
+document.querySelector('.navbar .tabs').classList.remove('active');
 }
 
 
@@ -4703,34 +5144,38 @@ function startPolling() {
     pollingInterval = setInterval(pollForUpdates, POLLING_RATE_MS);
     console.log(`Đã bắt đầu cơ chế polling mỗi ${POLLING_RATE_MS / 1000} giây.`);
 }
+
+
+// [PHIÊN BẢN ĐÃ TỐI ƯU VÀ SỬA LỖI]
+// [PHIÊN BẢN ĐÃ TỐI ƯU VÀ SỬA LỖI]
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     const tableWrapper = tbody ? tbody.closest('.table-wrapper') : null;
     const table = document.getElementById('history-table');
 
     if (!tbody || !tableWrapper || !table) {
-        console.error("Lỗi: Không tìm thấy các thành phần cần thiết của bảng lịch sử.");
+        console.error("Lỗi: Không tìm thấy các thành phần của bảng lịch sử.");
         return;
     }
 
     const oldPlaceholder = tableWrapper.querySelector('.table-placeholder-pro');
     if (oldPlaceholder) oldPlaceholder.remove();
-    
+
     if (!dataToRender || dataToRender.length === 0) {
         tbody.innerHTML = '';
-        table.style.display = 'table';
+        table.style.display = 'none';
         const placeholderHTML = `<div class="table-placeholder-pro"><i class="fas fa-folder-open"></i><span>Chưa có yêu cầu nào trong danh sách.</span></div>`;
-        table.insertAdjacentHTML('afterend', placeholderHTML);
+        tableWrapper.insertAdjacentHTML('beforeend', placeholderHTML);
         document.getElementById("total-don-count").textContent = 0;
         return;
     }
-
+    
     table.style.display = 'table';
-
+    
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
 
-    tbody.innerHTML = dataToRender.map((row, i) => {
+    const allRowsHtml = dataToRender.map((row, i) => {
         const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
         const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
         const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
@@ -4740,55 +5185,102 @@ function renderHistoryTable(dataToRender) {
         const canUpdateFiles = normalizedStatusText === 'yêu cầu bổ sung';
         const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
         const canAdminUploadInvoice = isAdmin && ['chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn'].includes(normalizedStatusText);
-        
+
+        // =======================================================================
+        // === 1. TẠO HTML CHO DESKTOP (LOGIC CŨ) ===
+        // =======================================================================
         let primaryActionHtml = '';
         let dropdownItemsHtml = '';
-
-        // Xây dựng hành động chính
-        if (canDownloadInvoice) {
-            primaryActionHtml = `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>`;
-        } else if (canAdminUploadInvoice) {
-            primaryActionHtml = `<button class="btn btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>`;
-        } else if (canRequestInvoice) {
-            primaryActionHtml = `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>`;
-        } else if (canUpdateFiles) {
-            primaryActionHtml = `<button class="btn btn-sm" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit"></i> Bổ Sung File</button>`;
-        }
-
-        // Xây dựng các hành động phụ cho menu
-        if (canUpdateFiles && !primaryActionHtml.includes('openSupplementaryFileModal')) {
-             dropdownItemsHtml += `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>`;
-        }
+        if (canDownloadInvoice) primaryActionHtml = `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>`;
+        else if (canAdminUploadInvoice) primaryActionHtml = `<button class="btn btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>`;
+        else if (canRequestInvoice) primaryActionHtml = `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>`;
+        else if (canUpdateFiles) primaryActionHtml = `<button class="btn btn-sm" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit"></i> Bổ Sung File</button>`;
+        
+        if (canUpdateFiles && !primaryActionHtml.includes('openSupplementaryFileModal')) dropdownItemsHtml += `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>`;
         if (canCancel) {
-            if (dropdownItemsHtml !== '') {
-                dropdownItemsHtml += `<div class="divider"></div>`;
-            }
+            if (dropdownItemsHtml) dropdownItemsHtml += `<div class="divider"></div>`;
             dropdownItemsHtml += `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>`;
         }
-
-        // Ghép nối HTML cuối cùng cho ô hành động
-        let finalActionCellHtml = '<div class="primary-action-group">';
-        finalActionCellHtml += primaryActionHtml;
-        if (dropdownItemsHtml !== '') {
-            finalActionCellHtml += `
-                <button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <div class="action-menu-dropdown">${dropdownItemsHtml}</div>
-            `;
+        
+        let finalActionCellHtml = '';
+        if (primaryActionHtml || dropdownItemsHtml) {
+            finalActionCellHtml = `<div class="primary-action-group">${primaryActionHtml}${dropdownItemsHtml ? `<button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác"><i class="fas fa-ellipsis-v"></i></button><div class="action-menu-dropdown">${dropdownItemsHtml}</div>` : ''}</div>`;
         }
-        finalActionCellHtml += '</div>';
 
-        // Tạo HTML cho các ô còn lại
-        const exteriorTextStyle = getExteriorColorStyle(row["Ngoại thất"]);
         const statusClass = getStatusClass(statusTextOriginal);
         const customerInfoHtml = `<div class="font-semibold text-gray-800 dark:text-gray-100">${row["Tên khách hàng"] || "N/A"}</div><div class="text-xs text-gray-500 dark:text-gray-400 font-mono">${orderNumber}</div>`;
-        const carInfoHtml = `<div class="font-medium text-gray-800 dark:text-gray-200">${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</div><div class="text-xs flex items-center gap-2"><span class="car-exterior-color" style="${exteriorTextStyle}">${row["Ngoại thất"] || "N/A"}</span><span class="text-gray-400 dark:text-gray-500">/</span><span>${row["Nội thất"] || "N/A"}</span></div>`;
+        const carInfoDesktopHtml = `<div class="font-medium text-gray-800 dark:text-gray-200">${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</div><div class="text-xs flex items-center gap-2"><span style="${getExteriorColorStyle(row["Ngoại thất"])}">${row["Ngoại thất"] || "N/A"}</span><span class="text-gray-400 dark:text-gray-500">/</span><span>${row["Nội thất"] || "N/A"}</span></div>`;
+        
+        const desktopRowHtml = `
+            <tr class="desktop-view-row" onclick="viewOrderDetail('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
+                <td data-label="STT"><span>${i + 1}</span></td>
+                <td data-label="Khách Hàng / Số Đơn Hàng">${customerInfoHtml}</td>
+                <td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || "N/A"}</td>
+                <td data-label="Thông Tin Xe">${carInfoDesktopHtml}</td>
+                <td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td>
+                <td class="actions-cell" onclick="event.stopPropagation();">${finalActionCellHtml}</td>
+            </tr>`;
 
-        // Trả về toàn bộ dòng <tr>
-        return `<tr onclick="viewOrderDetail('${orderNumber}')" style="cursor: pointer;" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}"><td data-label="STT"><span>${i + 1}</span></td><td data-label="Khách Hàng / Số Đơn Hàng">${customerInfoHtml}</td><td data-label="Tên TVBH" title="${row["Tên tư vấn bán hàng"] || ""}">${row["Tên tư vấn bán hàng"] || "N/A"}</td><td data-label="Thông Tin Xe">${carInfoHtml}</td><td data-label="Trạng Thái" title="${statusTextOriginal}"><span class="status-badge ${statusClass}">${statusTextOriginal}</span></td><td class="actions-cell" onclick="event.stopPropagation();">${finalActionCellHtml}</td></tr>`;
+        // =======================================================================
+        // === 2. [THÊM MỚI] TẠO HTML RIÊNG CHO CÁC NÚT TRÊN DI ĐỘNG ===
+        // =======================================================================
+        let mobileActionsHtml = '';
+        if (canDownloadInvoice) mobileActionsHtml += `<button class="card-action-btn success" onclick="event.stopPropagation(); downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" title="Tải Hóa Đơn"><i class="fas fa-download"></i></button>`;
+        if (canAdminUploadInvoice) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openAdminInvoiceUploadModal(event, '${orderNumber}')" title="Tải Lên Hóa Đơn"><i class="fas fa-upload"></i></button>`;
+        if (canRequestInvoice) mobileActionsHtml += `<button class="card-action-btn primary" onclick="event.stopPropagation(); requestInvoice(event, '${orderNumber}')" title="Yêu cầu Xuất Hóa Đơn"><i class="fas fa-file-invoice-dollar"></i></button>`;
+        if (canUpdateFiles) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openSupplementaryFileModal(event, '${orderNumber}')" title="Bổ Sung File"><i class="fas fa-edit"></i></button>`;
+        if (canCancel) mobileActionsHtml += `<button class="card-action-btn danger" onclick="event.stopPropagation(); confirmCancelRequest(event, '${orderNumber}')" title="Hủy Yêu cầu"><i class="fas fa-trash-alt"></i></button>`;
+
+        // =======================================================================
+        // === 3. [CẬP NHẬT] TẠO HTML CHO THẺ DI ĐỘNG, CHÈN THANH HÀNH ĐỘNG VÀO ===
+        // =======================================================================
+        const isVinLike = (text) => text && /^[A-Z0-9]{17}$/.test(text.toUpperCase());
+        const vin = row["VIN"] || (isVinLike(row["Kết quả"]) ? row["Kết quả"] : '');
+        let timelineHtml = '';
+        if (row["Thời gian nhập"]) timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
+        if (row["Thời gian ghép"]) timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
+        if (normalizedStatusText === 'đã xuất hóa đơn' && row["Thời gian xuất hóa đơn"]) timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Thời gian xuất hóa đơn"])}</span>`;
+        
+        const mobileCardHtml = `
+            <div class="history-card">
+                <div class="card-header">
+                    <div class="customer-info">
+                        <div class="customer-name">${row["Tên khách hàng"] || "N/A"}</div>
+                        <div class="order-number">${orderNumber}</div>
+                    </div>
+                    <div class="status-badge-container">
+                        <span class="status-badge ${statusClass}">${statusTextOriginal}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="info-group">
+                        <i class="fas fa-car info-icon"></i>
+                        <div class="info-content"><strong>${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</strong> / <span style="${getExteriorColorStyle(row['Ngoại thất'])}">${row['Ngoại thất'] || 'N/A'}</span> / ${row["Nội thất"] || "N/A"}</div>
+                    </div>
+                    <div class="info-group">
+                        <i class="fas fa-user-tie info-icon"></i>
+                        <div class="info-content">${row["Tên tư vấn bán hàng"] || "N/A"}</div>
+                    </div>
+                    ${vin ? `<div class="info-group">
+                        <i class="fas fa-barcode info-icon"></i>
+                        <div class="info-content"><strong>VIN:</strong> ${vin}</div>
+                    </div>` : ''}
+                </div>
+                ${timelineHtml ? `<div class="card-timeline">${timelineHtml}</div>` : ''}
+                
+                ${mobileActionsHtml ? `<div class="card-actions">${mobileActionsHtml}</div>` : ''}
+            </div>
+        `;
+        
+        const mobileRowHtml = `
+            <tr class="mobile-view-row" onclick="viewOrderDetail('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
+                <td colspan="6">${mobileCardHtml}</td>
+            </tr>`;
+
+        return desktopRowHtml + mobileRowHtml;
     }).join("");
 
+    tbody.innerHTML = allRowsHtml;
     document.getElementById("total-don-count").textContent = dataToRender.length;
 }
 
@@ -5374,6 +5866,28 @@ async function refreshData() {
     // Hàm này giờ đây chỉ tập trung vào việc tải lại dữ liệu
     // và trả về một promise để cho biết khi nào nó hoàn thành.
     await fetchHistory(false);
+}
+function toggleMobileSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('mobile-overlay').classList.toggle('active');
+    document.body.style.overflow = document.body.style.overflow === 'hidden' ? '' : 'hidden';
+}
+
+/**
+ * [HÀM MỚI] Mở/Đóng danh sách các Tab trên di động.
+ */
+function toggleMobileTabs() {
+    document.querySelector('.navbar .tabs').classList.toggle('active');
+}
+
+/**
+ * [HÀM MỚI] Đóng tất cả menu trên di động khi nhấn vào lớp phủ.
+ */
+function closeAllMobileMenus() {
+    document.getElementById('sidebar').classList.remove('active');
+    document.querySelector('.navbar .tabs').classList.remove('active');
+    document.getElementById('mobile-overlay').classList.remove('active');
+    document.body.style.overflow = '';
 }
 </script>
 </body>
