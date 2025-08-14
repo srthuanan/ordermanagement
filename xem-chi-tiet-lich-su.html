@@ -16,56 +16,76 @@
     <style>
         :root {
             --font-main: 'Plus Jakarta Sans', sans-serif;
-            --gradient-start: #4f46e5; --gradient-end: #14b8a6; --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
-            --bg-light: #f8f9fa; --card-bg-light: #ffffff; --text-light: #212529; --text-muted-light: #6c757d; --border-light: #e9ecef;
-            --bg-dark: #121212; --card-bg-dark: #1e1e1e; --text-dark: #e9ecef; --text-muted-dark: #adb5bd; --border-dark: #343a40;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            --transition-fast: 0.2s; --transition-medium: 0.3s; --transition-slow: 0.5s;
+            --gradient-start: #4f46e5; 
+            --gradient-end: #14b8a6; 
+            --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            --bg-light: #f8f9fa; 
+            --card-bg-light: #ffffff; 
+            --text-light: #212529; 
+            --text-muted-light: #6c757d; 
+            --border-light: #e9ecef;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); 
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); 
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --transition-fast: 0.2s; 
+            --transition-medium: 0.3s; 
+            --transition-slow: 0.5s;
+
+            /* === Nâng Cấp: Biến Màu Ngoại Thất === */
+            --exterior-red-text: #D32F2F;
+            --exterior-pink-text: #D81B60;
+            --exterior-blue-text: #1976D2;
+            --exterior-orange-text: #F57C00;
+            --exterior-yellow-text: #AF8402;
+            --exterior-green-text: #388E3C;
+            --exterior-white-text: #333333; /* Màu tối để dễ đọc trên nền trắng */
+            --exterior-grey-text: #616161;
+            --exterior-bronze-text: #8D6E63;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: var(--font-main); background: var(--bg-light); color: var(--text-light);
-            min-height: 100vh; overflow-x: hidden;
+            font-family: var(--font-main); 
+            background: var(--bg-light); 
+            color: var(--text-light);
+            min-height: 100vh; 
+            overflow-x: hidden;
             transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
         }
-        body.dark-mode { background: var(--bg-dark); color: var(--text-dark); }
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar { width: 8px; } 
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
-        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--border-dark); }
         
         .navbar {
             position: fixed; top: 0; left: 0; width: 100%; height: 50px; padding: 0 20px;
-            background-color: rgba(255, 255, 255, 0.75); backdrop-filter: blur(8px);
-            box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border-light);
+            background-color: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-sm); 
+            border-bottom: 1px solid var(--border-light);
             display: flex; align-items: center; gap: 15px; z-index: 1000;
         }
-        body.dark-mode .navbar { background-color: rgba(30, 30, 30, 0.75); border-color: var(--border-dark); }
         .navbar .logo-title {
             font-size: 18px; font-weight: 800; color: var(--text-light);
             position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap;
         }
-        body.dark-mode .navbar .logo-title { color: var(--text-dark); }
         .navbar-controls { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-        .nav-btn, .theme-toggle-btn {
+        .nav-btn {
             border: 1px solid var(--border-light); border-radius: 50%; background: var(--card-bg-light);
             color: var(--text-muted-light); width: 36px; height: 36px;
             display: flex; align-items: center; justify-content: center; cursor: pointer;
             transition: all var(--transition-medium) ease;
         }
-        .nav-btn:hover, .theme-toggle-btn:hover { color: var(--text-light); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        body.dark-mode .nav-btn, body.dark-mode .theme-toggle-btn { background: var(--card-bg-dark); color: var(--text-muted-dark); border-color: var(--border-dark); }
+        .nav-btn:hover { color: var(--text-light); transform: translateY(-2px); box-shadow: var(--shadow-md); }
         
         .sidebar {
             position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
             background-color: rgba(248, 249, 250, 0.85); backdrop-filter: blur(8px);
             padding: 15px; padding-top: 65px; 
-            z-index: 1001; /* <-- THAY ĐỔI 1: Tăng z-index để nằm trên navbar */
+            z-index: 1001;
             transition: width var(--transition-medium) ease, transform var(--transition-medium) ease;
             border-right: 1px solid var(--border-light); display: flex; flex-direction: column;
         }
         .sidebar.collapsed { width: 80px; }
-        body.dark-mode .sidebar { background-color: rgba(30, 30, 30, 0.85); border-right: 1px solid var(--border-dark); }
         .sidebar .logo { text-align: center; margin-bottom: 30px; }
         .sidebar .logo h1 { font-size: 18px; font-weight: 800; background: var(--gradient); color: transparent; -webkit-background-clip: text; background-clip: text; }
         .sidebar.collapsed .logo h1 { opacity: 0; }
@@ -77,8 +97,6 @@
         .sidebar.collapsed .menu a span { opacity: 0; width: 0; overflow: hidden; }
         .sidebar .menu a:hover { color: var(--text-light); background: var(--bg-light); }
         .sidebar .menu a.active { background: var(--gradient); color: white !important; box-shadow: var(--shadow-md); }
-        body.dark-mode .sidebar .menu a { color: var(--text-muted-dark); }
-        body.dark-mode .sidebar .menu a:hover { color: var(--text-dark); background: var(--bg-dark); }
 
         .toggle-btn { margin-top: auto; width: 100%; height: 44px; background: var(--bg-light); border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-muted-light); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition-medium) ease; }
         .sidebar.collapsed .toggle-btn { width: 44px; margin-left: auto; margin-right: auto; }
@@ -93,58 +111,307 @@
             position: fixed; bottom: 0; height: 45px; padding: 10px 0; text-align: center;
             font-size: 13px; font-weight: 500; color: var(--text-muted-light);
             border-top: 1px solid var(--border-light); background: var(--bg-light); z-index: 998;
-            left: 0; /* <-- THAY ĐỔI 2: Chỉnh left và width */
-            width: 100%; 
+            left: 0; width: 100%; 
             transition: all var(--transition-medium) ease;
         }
-        body.dark-mode footer { color: var(--text-muted-dark); border-top-color: var(--border-dark); background: var(--bg-dark); }
-        /* <-- THAY ĐỔI 3: Bỏ quy tắc footer cho sidebar collapsed */
         
-        .mobile-menu-btn { display: none; }
+        .mobile-menu-btn {
+            display: none; /* Ẩn trên màn hình lớn, sẽ được hiển thị lại trong media query */
+            z-index: 1002;
+            background: transparent;
+            color: var(--text-light);
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-medium) ease;
+        }
+        .mobile-menu-btn:hover {
+            background-color: var(--border-light);
+        }
+
         @media (max-width: 991px) {
             .sidebar { transform: translateX(-100%); z-index: 1001; }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { transform: translateX(-100%); }
             .main-content, .main-content.collapsed { margin-left: 0; }
-            /* Footer đã full-width nên không cần quy tắc riêng cho mobile nữa */
             .toggle-btn { display: none; }
-            .mobile-menu-btn { display: flex; }
-            .navbar .logo-title { display: none; }
+            .mobile-menu-btn { display: flex; } /* Hiển thị nút trên mobile */
+            
+            /* === Nâng Cấp: Hiển thị tiêu đề trên mobile navbar === */
+            .navbar .logo-title {
+                display: block;
+                position: static;
+                transform: none;
+                flex-grow: 1;
+                text-align: center;
+                font-size: 16px;
+                font-weight: 700;
+                padding: 0 10px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .navbar-controls {
+                margin-left: 0; /* Reset margin để layout cân đối */
+            }
         }
 
-        /* Luxurious Card Layout (from previous step) */
+        /* --- DESKTOP STYLES --- */
         .details-card-wrapper {
             background: var(--card-bg-light); border-radius: 16px; box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-light); max-width: 900px; margin: 0 auto; overflow: hidden;
         }
-        body.dark-mode .details-card-wrapper { background: var(--card-bg-dark); border: 1px solid var(--border-dark); }
         .details-card-header-gradient { padding: 25px 30px; background: var(--gradient); color: white; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; }
         .header-info h2 { font-size: 28px; font-weight: 800; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .header-info p { font-size: 16px; font-weight: 500; opacity: 0.9; margin-top: 4px; }
-        .order-status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(5px); }
+        
+        .order-status-badge { 
+            display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 12px; 
+            font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            border: 1px solid transparent;
+            transition: all var(--transition-medium) ease;
+        }
+        
+        .status-paired {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
+        }
+        .status-waiting {
+            background-color: #fffbeb;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+        .status-cancelled {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .status-unknown {
+            background-color: #f8fafc;
+            color: #475569;
+            border-color: #e2e8f0;
+        }
+
         .details-card-body { padding: 25px 30px; }
-        .vin-highlight-section { background: var(--bg-light); border-radius: 12px; padding: 20px; margin-bottom: 25px; }
-        body.dark-mode .vin-highlight-section { background: var(--bg-dark); }
-        .vin-highlight-section h3 { font-size: 14px; font-weight: 600; color: var(--text-muted-light); margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        body.dark-mode .vin-highlight-section h3 { color: var(--text-muted-dark); }
-        .vin-display { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
-        .vin-text { font-family: 'SF Mono', 'Consolas', monospace; font-size: 22px; font-weight: 700; color: var(--gradient-start); word-break: break-all; }
-        body.dark-mode .vin-text { color: var(--gradient-end); }
-        .vin-text.not-available { color: var(--text-muted-light); font-style: italic; font-weight: 500; font-size: 18px; }
-        .copy-btn { background: var(--border-light); color: var(--text-muted-light); border: none; border-radius: 8px; width: 36px; height: 36px; font-size: 15px; cursor: pointer; transition: all var(--transition-fast) ease; flex-shrink: 0; }
-        .copy-btn:hover { background: var(--gradient-start); color: white; transform: scale(1.1); }
-        body.dark-mode .copy-btn { background: var(--bg-dark); color: var(--text-muted-dark); }
+        
+        .vin-highlight-section {
+            background: #eef2ff;
+            border: 1px solid var(--gradient-start);
+            border-radius: 12px;
+            padding: 20px 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+        .vin-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.4;
+        }
+        .vin-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .vin-text {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--gradient-start);
+            text-shadow: 0 1px 2px rgba(79, 70, 229, 0.1);
+            word-break: break-all;
+        }
+        .vin-text.not-available {
+            color: var(--text-muted-light);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 18px;
+        }
+        .copy-btn {
+            background: var(--border-light);
+            color: var(--text-muted-light);
+            border: none;
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all var(--transition-fast) ease;
+            flex-shrink: 0;
+            margin-left: 15px;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        .copy-btn:hover {
+            background-color: var(--gradient-start);
+            color: white;
+            transform: scale(1.1);
+        }
+
         .details-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
         .detail-item { background-color: var(--bg-light); border: 1px solid var(--border-light); padding: 15px; border-radius: 12px; }
-        body.dark-mode .detail-item { background-color: var(--bg-dark); border-color: var(--border-dark); }
         .detail-item .detail-label { font-size: 13px; font-weight: 500; color: var(--text-muted-light); margin-bottom: 5px; display: block; }
         .detail-item .detail-value { font-size: 16px; font-weight: 600; color: var(--text-light); word-break: break-word; }
         .card-footer { text-align: center; padding-top: 25px; margin-top: 10px; border-top: 1px solid var(--border-light); }
-        body.dark-mode .card-footer { border-color: var(--border-dark); }
         .action-btn.back-btn { background: var(--card-bg-light); color: var(--text-muted-light); border: 1px solid var(--border-light); padding: 10px 30px; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; transition: all var(--transition-fast) ease; }
         .action-btn.back-btn:hover { background-color: var(--bg-light); color: var(--text-light); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
         .loading-message { text-align: center; padding: 50px; font-size: 16px; color: var(--text-muted-light); }
         .loading-message i { margin-right: 10px; }
+
+
+        /* === GIAO DIỆN DI ĐỘNG NÂNG CẤP === */
+        @media (max-width: 767px) {
+            .main-content {
+                padding: 0;
+                padding-top: 50px; 
+                padding-bottom: 20px;
+            }
+            .details-card-wrapper {
+                background: transparent;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                max-width: 100%;
+                margin: 0;
+                overflow: visible;
+            }
+            .details-card-header-gradient {
+                padding: 20px;
+                border-radius: 0;
+                box-shadow: var(--shadow-lg);
+                position: relative;
+                z-index: 2;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 12px;
+            }
+            .header-info h2 { font-size: 26px; }
+            .header-info p { font-size: 15px; font-weight: 500; }
+            
+            .order-status-badge { 
+                padding: 7px 14px; 
+                font-size: 12px; 
+                border-radius: 20px;
+                background-color: white;
+            }
+             .status-paired { color: #15803d; border-color: #bbf7d0; }
+             .status-waiting { color: #b45309; border-color: #fde68a; }
+             .status-cancelled { color: #b91c1c; border-color: #fecaca; }
+             .status-unknown { color: #475569; border-color: #e2e8f0; }
+
+            .details-card-body {
+                padding: 20px 15px;
+                background-color: transparent;
+            }
+            .mobile-card {
+                background-color: var(--card-bg-light);
+                border-radius: 12px;
+                border: 1px solid var(--border-light);
+                padding: 20px;
+                margin-bottom: 15px;
+                box-shadow: var(--shadow-md);
+            }
+
+            /* --- NÂNG CẤP: VIN NỔI BẬT THEO YÊU CẦU --- */
+            .vin-highlight-section {
+                padding: 10px 15px;
+                margin-bottom: 0;
+                background-color: transparent;
+                border: none;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                position: relative;
+                min-height: 110px;
+            }
+            .vin-info { 
+                align-items: center; 
+                text-align: center; 
+                width: 100%;
+            }
+            .vin-label { 
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-muted-light);
+            }
+            .vin-text { 
+                font-size: 26px;
+                line-height: 1.3;
+                font-weight: 800;
+                color: var(--gradient-start);
+                font-family: 'SF Mono', 'Consolas', monospace;
+                word-break: break-all;
+            }
+            .copy-btn {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                width: 38px;
+                height: 38px;
+                background: var(--bg-light);
+                border: 1px solid var(--border-light);
+                border-radius: 8px;
+            }
+
+            .details-grid-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+            .detail-item {
+                position: relative;
+                background-color: transparent;
+                border: none;
+                padding: 0;
+            }
+            .detail-item .detail-label {
+                 font-size: 12px;
+                 font-weight: 500;
+                 margin-bottom: 4px;
+            }
+            .detail-item .detail-value {
+                 font-size: 15px;
+                 font-weight: 600;
+            }
+            .card-footer {
+                border-top: none;
+                margin-top: 15px;
+                padding: 0;
+            }
+            .action-btn.back-btn {
+                width: 100%;
+                padding: 15px;
+                justify-content: center;
+                background: var(--gradient);
+                color: white;
+                border: none;
+                font-size: 16px;
+                font-weight: 700;
+                border-radius: 12px;
+                box-shadow: var(--shadow-md);
+            }
+             .action-btn.back-btn:hover {
+                filter: brightness(1.1);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-lg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -153,7 +420,6 @@
         <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Mở menu"><i class="fas fa-bars"></i></button>
         <div class="logo-title">CHI TIẾT ĐƠN HÀNG</div>
         <div class="navbar-controls">
-            <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Đổi giao diện"><i class="fas fa-moon"></i></button>
             <button class="nav-btn" onclick="goBackToMainPage()" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
         </div>
     </header>
@@ -181,17 +447,23 @@
 
     <script>
         const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
-        const labelMap = { "Tên tư vấn bán hàng": "Tư Vấn Bán Hàng", "Tên khách hàng": "Khách Hàng", "Số đơn hàng": "Số Đơn Hàng", "Dòng xe": "Dòng Xe", "Phiên bản": "Phiên Bản", "Ngoại thất": "Ngoại Thất", "Nội thất": "Nội Thất", "Ngày cọc": "Ngày Cọc", "Thời gian nhập": "Ngày Yêu Cầu", "Kết quả": "Kết Quả Ghép", "VIN": "Số Khung (VIN)", "Thời gian ghép": "Ngày Ghép", "Số ngày ghép": "Thời Gian Chờ Ghép" };
+        const labelMap = { "Tên tư vấn bán hàng": "Tư Vấn Bán Hàng", "Tên khách hàng": "Khách Hàng", "Số đơn hàng": "Số Đơn Hàng", "Dòng xe": "Dòng Xe", "Phiên bản": "Phiên Bản", "Ngoại thất": "Ngoại Thất", "Nội thất": "Nội Thất", "Ngày cọc": "Ngày Cọc", "Thời gian nhập": "Ngày Yêu Cầu", "Kết quả": "Trạng Thái", "VIN": "Số Khung (VIN)", "Thời gian ghép": "Ngày Ghép", "Số ngày ghép": "Số Ngày Đã Ghép" };
 
         /* === UI MANAGEMENT SCRIPT === */
         const UIManager = {
             init() {
-                this.DOMElements = { body: document.body, sidebar: document.getElementById('sidebar'), mainContent: document.getElementById('main-content'), footer: document.getElementById('footer'), themeToggleBtn: document.getElementById('theme-toggle-btn'), sidebarToggleBtn: document.getElementById('sidebar-toggle-btn'), mobileMenuBtn: document.getElementById('mobile-menu-btn') };
+                this.DOMElements = { 
+                    body: document.body, 
+                    sidebar: document.getElementById('sidebar'), 
+                    mainContent: document.getElementById('main-content'), 
+                    footer: document.getElementById('footer'), 
+                    sidebarToggleBtn: document.getElementById('sidebar-toggle-btn'), 
+                    mobileMenuBtn: document.getElementById('mobile-menu-btn') 
+                };
                 this.setupEventListeners();
                 this.applyInitialSettings();
             },
             setupEventListeners() {
-                this.DOMElements.themeToggleBtn?.addEventListener('click', () => this.toggleDarkMode());
                 this.DOMElements.sidebarToggleBtn?.addEventListener('click', () => this.toggleSidebarDesktop());
                 this.DOMElements.mobileMenuBtn?.addEventListener('click', () => this.toggleMobileSidebar());
                 document.addEventListener('click', (event) => {
@@ -201,22 +473,13 @@
                 });
             },
             applyInitialSettings() {
-                if (localStorage.getItem('theme') === 'dark') { this.DOMElements.body.classList.add('dark-mode'); document.querySelector('#theme-toggle-btn i').classList.replace('fa-moon', 'fa-sun'); }
                 if (window.innerWidth > 991 && localStorage.getItem('sidebarState') === 'collapsed') { this.toggleSidebarDesktop(true); }
                 document.querySelector(`.menu a[href="yeucaughepxe.html"]`)?.classList.add('active');
-            },
-            toggleDarkMode() {
-                this.DOMElements.body.classList.toggle('dark-mode');
-                const isDark = this.DOMElements.body.classList.contains('dark-mode');
-                document.querySelector('#theme-toggle-btn i').classList.toggle('fa-sun', isDark);
-                document.querySelector('#theme-toggle-btn i').classList.toggle('fa-moon', !isDark);
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
             },
             toggleSidebarDesktop(isInitial = false) {
                 if (window.innerWidth > 991) {
                     const isCollapsed = this.DOMElements.sidebar.classList.toggle("collapsed");
                     this.DOMElements.mainContent.classList.toggle("collapsed");
-                    // Footer is now full-width, no need to toggle its class
                     if(!isInitial) localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
                 }
             },
@@ -226,35 +489,194 @@
         /* === PAGE-SPECIFIC LOGIC === */
         function goBackToMainPage() { window.location.href = "yeucaughepxe.html#history-section"; }
         function getQueryParam(param) { return new URLSearchParams(window.location.search).get(param); }
-        function formatToLocalDate(date) { return date ? new Date(date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null; }
+        function formatDateTime(dateTimeString) {
+             if (!dateTimeString) return "N/A";
+             const date = new Date(dateTimeString);
+             if (isNaN(date.getTime())) return "N/A";
+             return new Intl.DateTimeFormat('vi-VN', {
+                 year: 'numeric', month: '2-digit', day: '2-digit',
+                 hour: '2-digit', minute: '2-digit'
+             }).format(date);
+        }
         
+        function getStatusInfo(statusText) {
+            const lowerStatus = statusText.toLowerCase();
+            if (lowerStatus.includes('ghép')) {
+                return { icon: 'fa-check-circle', className: 'status-paired' };
+            } else if (lowerStatus.includes('hủy')) {
+                return { icon: 'fa-times-circle', className: 'status-cancelled' };
+            } else if (lowerStatus.includes('chờ')) {
+                return { icon: 'fa-hourglass-half', className: 'status-waiting' };
+            } else {
+                return { icon: 'fa-question-circle', className: 'status-unknown' };
+            }
+        }
+        
+        // === Nâng Cấp: Hàm Lấy Màu Ngoại Thất ===
+        function getExteriorColorStyle(exteriorValue) {
+            const specificFontWeight = 'font-weight: 700;';
+            const outlineStyle = 'text-shadow: 0 0 1px rgba(0,0,0,0.4);'; // Viền nhẹ cho chữ trắng
+            const isDarkMode = document.body.classList.contains('dark-mode');
+
+            if (!exteriorValue) return '';
+            
+            const lowerExteriorValue = exteriorValue.toLowerCase();
+
+            // Các trường hợp đặc biệt
+            if (lowerExteriorValue === "brahminy white (ce18)") return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("sunset orb (ce1a)")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("crimson red (ce1m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("vinfast blue (ce1n)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? `color: #aebcc5; ${specificFontWeight}` : `color: #778899; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: black; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("electric blue (ce1j)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? `color: #d4e0f2; ${specificFontWeight}` : `color: #B0C4DE; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("brahminy white roof- rose pink body (1821)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("brahminy white roof - iris berry body (181x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("urbant mint (ce1w)")) return isDarkMode ? `color: #6ee6a0; ${specificFontWeight}` : `color: #3CB371; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("vinbus green (ce2b)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("deep ocean (ce1h)")) return isDarkMode ? `color: #2e8b57; ${specificFontWeight}` : `color: #006400; ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("iris berry (ce1x)")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("zenith grey-desat silver roof (171v)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("urbant mint green - desat silv (171w)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("ivy green-desat silver roof (1722)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("atlantic blue-aquatic azure ro (1y26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black-champagne creme roof (2311)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("infinity blanc _ silky white r (2418)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("champagne creme - matte champa (2523)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black - graphite roof (2811)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("crimson velvet - mystery bronz (2927)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("ivy_green_gne (ce22)")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("champagne_creme_ylg (ce23)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("crimson red - jet black roof (111m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("infinity blanc_zenith grey roof (1v18)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("deep ocean_jet black roof (111h)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+
+            // Các trường hợp chung
+            if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("deep ocean")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("sunset orb")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return `color: var(--exterior-green-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("jet black")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return `color: var(--exterior-white-text); ${outlineStyle} ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
+            if (lowerExteriorValue.includes("mystery bronz")) return `color: var(--exterior-bronze-text); ${specificFontWeight}`;
+
+            return '';
+        }
+
         function renderDetails(rowData) {
             const container = document.getElementById("details-container");
             let allData = {};
             Object.keys(labelMap).forEach(key => allData[key] = rowData[key] || null);
-            const requestDate = allData["Thời gian nhập"] ? new Date(allData["Thời gian nhập"]) : null;
+            
             const pairingDate = allData["Thời gian ghép"] ? new Date(allData["Thời gian ghép"]) : null;
-            if (requestDate && pairingDate && !isNaN(requestDate) && !isNaN(pairingDate)) { allData["Số ngày ghép"] = Math.ceil(Math.abs(pairingDate - requestDate) / (1000 * 60 * 60 * 24)) + " ngày"; }
+
+            if (pairingDate && !isNaN(pairingDate)) {
+                const currentDate = new Date();
+                const diffTime = Math.abs(currentDate - pairingDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays <= 1) {
+                    allData["Số ngày ghép"] = "Trong ngày";
+                } else {
+                    allData["Số ngày ghép"] = `${diffDays} ngày`;
+                }
+            } else {
+                allData["Số ngày ghép"] = null;
+            }
+
             const statusText = allData["Kết quả"] || "Chưa rõ";
-            const statusIcon = statusText.toLowerCase().includes('thành công') ? 'fa-check-circle' : statusText.toLowerCase().includes('chưa ghép') ? 'fa-hourglass-half' : 'fa-times-circle';
-            const createGridHTML = data => Object.keys(data).filter(key => data[key]).map(key => `<div class="detail-item" data-aos="fade-up" data-aos-delay="${Object.keys(data).indexOf(key) * 25}"><span class="detail-label">${labelMap[key]}</span><span class="detail-value">${data[key]}</span></div>`).join('');
+            const statusInfo = getStatusInfo(statusText);
+            
+            // === Nâng Cấp: Áp dụng màu cho Grid ===
+            const createGridHTML = data => Object.keys(data)
+                .filter(key => data[key])
+                .map((key, index) => {
+                    const label = labelMap[key];
+                    const value = data[key];
+                    let valueStyle = '';
+                    if (label === 'Ngoại Thất') {
+                        valueStyle = getExteriorColorStyle(value);
+                    }
+                    return `<div class="detail-item" data-aos="fade-up" data-aos-delay="${index * 50}">
+                                <span class="detail-label">${label}</span>
+                                <span class="detail-value" style="${valueStyle}">${value}</span>
+                            </div>`;
+                })
+                .join('');
+
             const { ["Số đơn hàng"]: orderId, ["Tên khách hàng"]: customer, ["VIN"]: vin } = allData;
+            
             container.innerHTML = `
                 <div class="details-card-wrapper" data-aos="fade-in" data-aos-duration="400">
-                    <div class="details-card-header-gradient"><div class="header-info"><h2>${orderId || "..."}</h2><p>${customer || "..."}</p></div><div class="order-status-badge"><i class="fas ${statusIcon}"></i><span>${statusText}</span></div></div>
-                    <div class="details-card-body">
-                        <div class="vin-highlight-section" data-aos="fade-up" data-aos-delay="100"><h3>Số Khung (VIN)</h3><div class="vin-display"><span class="vin-text ${!vin ? 'not-available' : ''}" id="vin-value">${vin || "Chưa có"}</span>${vin ? '<button class="copy-btn" id="copy-vin-btn" title="Sao chép VIN"><i class="far fa-copy"></i></button>' : ''}</div></div>
-                        <div class="details-grid-container" data-aos="fade-up" data-aos-delay="200">
-                            ${createGridHTML({ "Tên tư vấn bán hàng": allData["Tên tư vấn bán hàng"], "Dòng xe": allData["Dòng xe"], "Phiên bản": allData["Phiên bản"], "Ngoại thất": allData["Ngoại thất"], "Nội thất": allData["Nội thất"], "Thời gian nhập": formatToLocalDate(requestDate), "Ngày cọc": formatToLocalDate(allData["Ngày cọc"]), "Thời gian ghép": formatToLocalDate(pairingDate), "Số ngày ghép": allData["Số ngày ghép"] })}
+                    <header class="details-card-header-gradient">
+                        <div class="header-info">
+                            <h2>${orderId || "..."}</h2>
+                            <p>${customer || "..."}</p>
                         </div>
-                        <div class="card-footer" data-aos="fade-up" data-aos-delay="300"><button class="action-btn back-btn" onclick="goBackToMainPage()"><i class="fas fa-arrow-left"></i><span>Quay Lại</span></button></div>
+                        <div class="order-status-badge ${statusInfo.className}">
+                            <i class="fas ${statusInfo.icon}"></i>
+                            <span>${statusText}</span>
+                        </div>
+                    </header>
+                    <div class="details-card-body">
+                        
+                        ${vin ? `
+                        <div class="mobile-card" data-aos="fade-up" data-aos-delay="100">
+                            <div class="vin-highlight-section">
+                                <div class="vin-info">
+                                    <span class="vin-label">Số Khung (VIN)</span>
+                                    <span class="vin-text" id="vin-value">${vin}</span>
+                                </div>
+                                <button class="copy-btn" id="copy-vin-btn" title="Sao chép VIN"><i class="far fa-copy"></i></button>
+                            </div>
+                        </div>` : ''}
+
+                        <div class="mobile-card" data-aos="fade-up" data-aos-delay="200">
+                            <div class="details-grid-container">
+                                ${createGridHTML({ 
+                                    "Tên tư vấn bán hàng": allData["Tên tư vấn bán hàng"], 
+                                    "Dòng xe": allData["Dòng xe"], 
+                                    "Phiên bản": allData["Phiên Bản"], 
+                                    "Ngoại thất": allData["Ngoại thất"], 
+                                    "Nội thất": allData["Nội thất"], 
+                                    "Thời gian nhập": formatDateTime(allData["Thời gian nhập"]), 
+                                    "Ngày cọc": formatDateTime(allData["Ngày cọc"]), 
+                                    "Thời gian ghép": formatDateTime(allData["Thời gian ghép"]), 
+                                    "Số ngày ghép": allData["Số ngày ghép"] 
+                                })}
+                            </div>
+                        </div>
+
+                        <div class="card-footer" data-aos="fade-up" data-aos-delay="300">
+                            <button class="action-btn back-btn" onclick="goBackToMainPage()">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Back</span>
+                            </button>
+                        </div>
                     </div>
                 </div>`;
+            
             const copyBtn = document.getElementById('copy-vin-btn');
             if (copyBtn) {
-                copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(document.getElementById('vin-value').textContent).then(() => { copyBtn.innerHTML = '<i class="fas fa-check"></i>'; setTimeout(() => { copyBtn.innerHTML = '<i class="far fa-copy"></i>'; }, 2000); }); });
+                copyBtn.addEventListener('click', (e) => { 
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(document.getElementById('vin-value').textContent).then(() => { 
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i>'; 
+                        setTimeout(() => { copyBtn.innerHTML = '<i class="far fa-copy"></i>'; }, 2000); 
+                    }); 
+                });
             }
-            AOS.init({ once: true, duration: 500, easing: 'ease-out-cubic' });
+            AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic' });
         }
 
         /* === INITIALIZATION === */
@@ -262,15 +684,29 @@
             UIManager.init();
             const orderNumberParam = getQueryParam("orderNumber");
             const container = document.getElementById('details-container');
-            if (!orderNumberParam) { container.innerHTML = '<div class="loading-message"><i class="fas fa-exclamation-triangle"></i>Lỗi: Không tìm thấy số đơn hàng.</div>'; return; }
+            
+            if (!orderNumberParam) { 
+                container.innerHTML = '<div class="loading-message"><i class="fas fa-exclamation-triangle"></i>Lỗi: Không tìm thấy số đơn hàng.</div>'; 
+                return; 
+            }
+            
             const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
             if (storedData) {
                 try {
-                    const rowData = JSON.parse(storedData).find(r => r && r["Số đơn hàng"] === orderNumberParam);
-                    if (rowData) renderDetails(rowData);
-                    else container.innerHTML = `<div class="loading-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng: ${orderNumberParam}</div>`;
-                } catch (e) { container.innerHTML = '<div class="loading-message"><i class="fas fa-database"></i>Lỗi xử lý dữ liệu.</div>'; }
-            } else { container.innerHTML = '<div class="loading-message"><i class="fas fa-history"></i>Không có dữ liệu lịch sử. Vui lòng thử lại.</div>'; }
+                    const allHistory = JSON.parse(storedData);
+                    const rowData = allHistory.find(r => r && r["Số đơn hàng"] === orderNumberParam);
+                    
+                    if (rowData) {
+                        renderDetails(rowData);
+                    } else {
+                        container.innerHTML = `<div class="loading-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng: ${orderNumberParam}</div>`;
+                    }
+                } catch (e) { 
+                    container.innerHTML = '<div class="loading-message"><i class="fas fa-database"></i>Lỗi xử lý dữ liệu.</div>'; 
+                }
+            } else { 
+                container.innerHTML = '<div class="loading-message"><i class="fas fa-history"></i>Không có dữ liệu lịch sử. Vui lòng quay lại trang trước và thử lại.</div>'; 
+            }
         });
     </script>
 </body>
