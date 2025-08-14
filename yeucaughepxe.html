@@ -1638,7 +1638,7 @@ tbody tr:hover {
 .history-card .status-badge {
     width: auto; 
     padding: 5px 8px; /* Giảm padding của thẻ trạng thái */
-    font-size: 10px;  /* Giảm cỡ chữ trạng thái */
+    font-size: 12px;  /* Giảm cỡ chữ trạng thái */
     font-weight: 600;
     border-left-width: 3px; /* Làm viền trái mỏng hơn */
     text-transform: none; 
@@ -1766,6 +1766,17 @@ tbody tr:hover {
     height: 38px;
     font-size: 15px;
 }
+.mobile-tabs-toggle {
+    background: linear-gradient(145deg, #eef2ff, #f0f9ff); /* Nền gradient xanh-tím rất nhạt */
+    color: var(--gradient-start); /* Màu icon là màu gradient chính */
+    border: 1px solid #e0e7ff;
+    font-size: 16px; /* Tăng nhẹ kích thước icon */
+}
+
+.mobile-tabs-toggle:hover {
+    color: var(--gradient-end); /* Đổi màu khi di chuột */
+    border-color: #c7d2fe;
+}
 }
 
 /* =================================================================== */
@@ -1833,9 +1844,9 @@ tbody tr:hover {
     </div>
 
     <div class="navbar-controls">
-<button class="hamburger" onclick="toggleMobileTabs()" aria-label="Mở các mục">
-        <i class="fas fa-ellipsis-h"></i>
-    </button>
+<button class="hamburger mobile-tabs-toggle" onclick="toggleMobileTabs()" aria-label="Mở các mục">
+    <i class="fas fa-layer-group"></i>
+</button>
         <div class="relative" id="notification-bell-container">
     <button class="nav-btn" onclick="handleNotificationBellClick()" data-tooltip="Thông báo" aria-label="Thông báo">
         <i class="fas fa-bell"></i>
@@ -1844,8 +1855,11 @@ tbody tr:hover {
     
     <div id="notification-panel" class="notification-panel-pro hidden">
         <div class="notification-panel-header">
-            <h3>Thông Báo</h3>
-        </div>
+    <button class="notification-close-btn" onclick="handleNotificationBellClick()">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    <h3>Thông Báo</h3>
+</div>
         <div id="notification-list" class="notification-panel-list">
             <div class="no-notifications">Không có thông báo nào.</div>
         </div>
@@ -5146,8 +5160,6 @@ function startPolling() {
 }
 
 
-// [PHIÊN BẢN ĐÃ TỐI ƯU VÀ SỬA LỖI]
-// [PHIÊN BẢN ĐÃ TỐI ƯU VÀ SỬA LỖI]
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     const tableWrapper = tbody ? tbody.closest('.table-wrapper') : null;
@@ -5186,9 +5198,7 @@ function renderHistoryTable(dataToRender) {
         const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
         const canAdminUploadInvoice = isAdmin && ['chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn'].includes(normalizedStatusText);
 
-        // =======================================================================
-        // === 1. TẠO HTML CHO DESKTOP (LOGIC CŨ) ===
-        // =======================================================================
+        // --- 1. TẠO HTML CHO GIAO DIỆN DESKTOP ---
         let primaryActionHtml = '';
         let dropdownItemsHtml = '';
         if (canDownloadInvoice) primaryActionHtml = `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>`;
@@ -5221,9 +5231,7 @@ function renderHistoryTable(dataToRender) {
                 <td class="actions-cell" onclick="event.stopPropagation();">${finalActionCellHtml}</td>
             </tr>`;
 
-        // =======================================================================
-        // === 2. [THÊM MỚI] TẠO HTML RIÊNG CHO CÁC NÚT TRÊN DI ĐỘNG ===
-        // =======================================================================
+        // --- 2. TẠO HTML RIÊNG CHO CÁC NÚT TRÊN DI ĐỘNG ---
         let mobileActionsHtml = '';
         if (canDownloadInvoice) mobileActionsHtml += `<button class="card-action-btn success" onclick="event.stopPropagation(); downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" title="Tải Hóa Đơn"><i class="fas fa-download"></i></button>`;
         if (canAdminUploadInvoice) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openAdminInvoiceUploadModal(event, '${orderNumber}')" title="Tải Lên Hóa Đơn"><i class="fas fa-upload"></i></button>`;
@@ -5231,15 +5239,23 @@ function renderHistoryTable(dataToRender) {
         if (canUpdateFiles) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openSupplementaryFileModal(event, '${orderNumber}')" title="Bổ Sung File"><i class="fas fa-edit"></i></button>`;
         if (canCancel) mobileActionsHtml += `<button class="card-action-btn danger" onclick="event.stopPropagation(); confirmCancelRequest(event, '${orderNumber}')" title="Hủy Yêu cầu"><i class="fas fa-trash-alt"></i></button>`;
 
-        // =======================================================================
-        // === 3. [CẬP NHẬT] TẠO HTML CHO THẺ DI ĐỘNG, CHÈN THANH HÀNH ĐỘNG VÀO ===
-        // =======================================================================
+        // --- 3. TẠO HTML CHO THẺ (CARD) TRÊN DI ĐỘNG ---
         const isVinLike = (text) => text && /^[A-Z0-9]{17}$/.test(text.toUpperCase());
         const vin = row["VIN"] || (isVinLike(row["Kết quả"]) ? row["Kết quả"] : '');
+        
+        // Cập nhật logic hiển thị dòng thời gian trên thẻ di động
         let timelineHtml = '';
-        if (row["Thời gian nhập"]) timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
-        if (row["Thời gian ghép"]) timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
-        if (normalizedStatusText === 'đã xuất hóa đơn' && row["Thời gian xuất hóa đơn"]) timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Thời gian xuất hóa đơn"])}</span>`;
+        const hasInvoiceDate = normalizedStatusText === 'đã xuất hóa đơn' && row["Thời gian xuất hóa đơn"];
+
+        if (hasInvoiceDate) {
+            timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Thời gian xuất hóa đơn"])}</span>`;
+        } else if (row["Thời gian nhập"]) {
+            timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
+        }
+
+        if (row["Thời gian ghép"]) {
+            timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
+        }
         
         const mobileCardHtml = `
             <div class="history-card">
@@ -5267,7 +5283,6 @@ function renderHistoryTable(dataToRender) {
                     </div>` : ''}
                 </div>
                 ${timelineHtml ? `<div class="card-timeline">${timelineHtml}</div>` : ''}
-                
                 ${mobileActionsHtml ? `<div class="card-actions">${mobileActionsHtml}</div>` : ''}
             </div>
         `;
