@@ -3,862 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chính Sách VinFast</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Chính Sách VinFast - VinFast Thuận An</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
     <style>
+        /* ==========================================================================
+           1. Biến màu và thiết lập cơ bản
+           ========================================================================== */
         :root {
-            --primary-color: #003087;
-            --primary-color-darker: #00205b;
-            --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff;
-            --background-light: #f4f7fc;
-            --text-light: #2c3e50;
-            --background-dark: #161b22;
-            --text-dark: #c9d1d9;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --background-light: #f8f9fa;
             --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;
-            --border-color-light: #e1e4e8;
-            --border-color-dark: #30363d;
-            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
-            --transition-speed: 0.3s;
-            --transition-speed-fast: 0.2s;
-            --transition-easing: ease-in-out;
-            --header-height: 50px;
-            --footer-height: 40px;
-            --highlight-bg-light: #fff352; /* Yellow for light mode */
+            --text-light: #212529;
+            --text-muted-light: #6c757d;
+            --border-light: #e9ecef;
+            --gradient-start: #4f46e5;
+            --gradient-end: #14b8a6;
+            --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1);
+            --transition-fast: 0.2s;
+            --transition-medium: 0.3s;
+            --transition-slow: 0.5s;
+            --updated-policy-color: #28a745;
+            --highlight-bg-light: #fff352;
             --highlight-text-light: #333;
-            --highlight-bg-dark: #5f8b07;  /* A contrasting color for dark mode */
-            --highlight-text-dark: #f0f0f0;
-            --updated-policy-color: #28a745; /* Green for updated policies */
         }
 
-        html { scroll-behavior: smooth; }
-
-        body.dark-mode {
-            --background-light: var(--background-dark);
-            --text-light: var(--text-dark);
-            --card-bg-light: var(--card-bg-dark);
-            --border-color-light: var(--border-color-dark);
-            --shadow-light-outer: var(--shadow-dark-outer);
-            --footer-bg: var(--primary-color-darker);
-            --updated-policy-color: #38c172; /* Lighter green for dark mode */
-        }
-
+        /* ==========================================================================
+           2. Layout & Global Styles (Đồng bộ)
+           ========================================================================== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Roboto', sans-serif;
-            line-height: 1.6;
-            background-color: var(--background-light);
+            font-family: var(--font-main);
+            background: var(--background-light);
             color: var(--text-light);
             min-height: 100vh;
-            transition: background-color var(--transition-speed) var(--transition-easing), color var(--transition-speed) var(--transition-easing);
-            font-size: 14px;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
+            transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--background-light); border-radius: 4px; }
-        body.dark-mode ::-webkit-scrollbar-track { background: var(--card-bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; transition: background var(--transition-speed) ease; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color-lighter); }
-        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-light); }
 
-        /* Sidebar Styles */
+        .navbar {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 60px;
+            padding: 0 20px;
+            background-color: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-light);
+            transition: all var(--transition-medium) ease;
+            display: flex;
+            align-items: center;
+            z-index: 999;
+            gap: 15px;
+        }
+        .navbar .logo-title {
+            font-size: 18px; font-weight: 800;
+            color: var(--text-light);
+            position: absolute; left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .navbar-controls { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .nav-btn {
+            border: 1px solid var(--border-light); border-radius: 50%;
+            background: var(--card-bg-light); color: var(--text-muted-light);
+            transition: all var(--transition-medium) ease;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+        }
+        .nav-btn:hover { color: var(--text-light); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .mobile-menu-btn {
+            display: none; z-index: 1002; background: transparent; color: var(--text-light);
+            border: none; border-radius: 8px; width: 36px; height: 36px;
+            font-size: 18px; cursor: pointer; align-items: center; justify-content: center;
+            transition: all var(--transition-medium) ease;
+        }
+        .mobile-menu-btn:hover { background-color: var(--border-light); }
+        
         .sidebar {
-            position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
-            background: var(--primary-color-darker); padding: 15px;
-            padding-top: calc(var(--header-height) + 10px);
-            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 1007; box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+            background-color: rgba(248, 249, 250, 0.85); backdrop-filter: blur(8px);
+            padding: 15px; padding-top: 80px; 
+            transition: width var(--transition-medium) ease, transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
+            z-index: 1001; border-right: 1px solid var(--border-light);
             display: flex; flex-direction: column;
         }
-        .sidebar.collapsed { width: 60px; }
-        body.dark-mode .sidebar {
-            background: var(--background-dark); border-right: 1px solid var(--border-color-dark);
-            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
-        }
-        .sidebar .logo {
-            text-align: center; margin-bottom: 25px; position: relative;
-            overflow: visible;
-            height: auto;
-            min-height: 50px;
-            display: flex;
-            align-items: center; justify-content: center;
-        }
-        .sidebar .logo a { text-decoration: none; display: inline-block; }
+        .sidebar.collapsed { width: 80px; }
+        .sidebar .logo a { text-decoration: none; }
         .sidebar .logo h1 {
-            font-size: 25px;
-            color: #fff; font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative; display: inline-block; white-space: normal;
-            line-height: 1.1;
+            font-size: 18px; font-weight: 800; background: var(--gradient); color: transparent;
+            -webkit-background-clip: text; background-clip: text;
+            transition: opacity var(--transition-medium) ease;
         }
-         .sidebar .logo h1 .logo-line-2 {
-            color: #fff; font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative; display: inline-block; white-space: normal;
-            line-height: 1.1;
-        }
-        .sidebar:not(.collapsed) .logo h1::after {
-            content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg); animation: shimmer 3s infinite linear; animation-delay: 1s;
-        }
-        @keyframes shimmer { 0% { left: -150%; } 50% { left: 150%; } 100% { left: 150%; } }
-        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
-        .sidebar.collapsed .logo h1::after { display: none; }
-
-        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex-grow: 1; }
+        .sidebar.collapsed .logo h1 { opacity: 0; }
+        .sidebar .menu { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
         .sidebar .menu a {
-            padding: 10px 12px; text-decoration: none; color: rgba(255,255,255,0.8);
-            font-size: 13px; font-weight: 500; border-radius: 6px; background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
-            display: flex; align-items: center; gap: 10px; position: relative; overflow: hidden;
+            padding: 12px 15px; text-decoration: none; color: var(--text-muted-light);
+            font-size: 14px; font-weight: 600; border-radius: 10px;
+            transition: all var(--transition-fast) ease-out; display: flex;
+            align-items: center; gap: 15px;
         }
-        .sidebar .menu a::before {
-            content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
-            background-color: var(--secondary-color); transition: left var(--transition-speed) ease-out;
-        }
-        .sidebar .menu a:hover::before { left: 0; }
-        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
-        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
-        .sidebar.collapsed .menu a::before { display: none; }
-        .sidebar .menu a i { font-size: 16px; width: 20px; text-align: center; transition: transform var(--transition-speed) ease; }
-        .sidebar .menu a span {
-            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
-            white-space: nowrap; overflow: hidden; max-width: 100px;
-        }
+        .sidebar .menu a i { font-size: 18px; width: 24px; text-align: center; transition: transform var(--transition-medium) ease; }
+        .sidebar .menu a span { transition: opacity 0.2s ease, max-width var(--transition-medium) ease; white-space: nowrap; overflow: hidden; max-width: 120px; }
+        .sidebar.collapsed .menu a { justify-content: center; }
         .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
-       .sidebar .menu a:hover {
-    background: linear-gradient(90deg, rgba(0, 174, 255, 0.15) 0%, rgba(0, 174, 255, 0) 100%);
-    color: #fff;
-    padding-left: 12px; /* Giữ nguyên padding để không bị giật */
-    transform: none; /* Bỏ transform để ổn định hơn */
-}
-
-/* Định dạng cho tab đang được chọn */
-.sidebar .menu a.active {
-    background: linear-gradient(90deg, rgba(0, 174, 255, 0.25) 0%, rgba(0, 174, 255, 0) 100%);
-    color: #fff; /* Giữ màu chữ trắng */
-    font-weight: 600;
-    /* Thêm một đường viền trái để làm điểm nhấn */
-    border-left: 4px solid var(--secondary-color);
-    padding-left: 8px; /* Giảm padding trái để bù lại cho border */
-}
-
-/* Bỏ hiệu ứng gạch chân cũ */
-.sidebar .menu a.active::before, .sidebar .menu a:hover::before {
-    display: none;
-}
-.sidebar .menu a.active {
-    animation: activeLinkPulse 1.5s infinite ease-in-out;
-}
-        @keyframes activeLinkPulse { 0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); } 100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); } }
-        .sidebar .menu a.active::before { left: 0; background-color: #fff; }
-        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); animation-name: activeLinkPulseDark; }
-        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
-        @keyframes activeLinkPulseDark { 0% { box-shadow: 0 0 5px var(--secondary-color); } 50% { box-shadow: 0 0 15px var(--secondary-color); } 100% { box-shadow: 0 0 5px var(--secondary-color); } }
-
+        .sidebar .menu a:hover { color: var(--text-light); background: var(--background-light); }
+        .sidebar .menu a.active { background: var(--gradient); color: white; box-shadow: var(--shadow-md); }
+        .sidebar .menu a.active i { transform: scale(1.1); }
         .toggle-btn {
-            position: absolute; top: calc(var(--header-height) / 2 - 15px);
-            right: -15px; width: 30px; height: 30px;
-            background: var(--primary-color); border: none; border-radius: 50%; color: #fff;
-            font-size: 14px; cursor: pointer;
-            transition: all var(--transition-speed) ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex; align-items: center; justify-content: center; z-index: 1008;
+            margin-top: auto; width: 100%; height: 44px;
+            background: var(--background-light); border: 1px solid var(--border-light);
+            border-radius: 12px; color: var(--text-muted-light);
+            font-size: 16px; cursor: pointer; transition: all var(--transition-medium) ease;
+            display: flex; align-items: center; justify-content: center;
         }
-        .toggle-btn:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
-        body.dark-mode .toggle-btn { background: var(--primary-color-darker); }
+        .sidebar.collapsed .toggle-btn { width: 44px; margin: auto auto 0; }
+        .toggle-btn:hover { border-color: var(--gradient-start); color: var(--gradient-start); transform: scale(1.05); }
+        .toggle-btn i { transition: transform var(--transition-slow) cubic-bezier(0.19, 1, 0.22, 1); }
+        .sidebar.collapsed .toggle-btn i { transform: rotate(180deg); }
 
-        /* Header (Navbar) Styles */
-        .navbar {
-            position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
-            padding: 0 20px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: white; box-shadow: var(--shadow-light-outer);
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 1006; transition: margin-left var(--transition-speed) ease, width var(--transition-speed) ease;
+        .main-content {
+            margin-left: 240px; padding: 80px 20px 60px 20px;
+            transition: margin-left var(--transition-medium) ease;
+            display: flex; flex-direction: column; gap: 20px;
         }
-        body.dark-mode .navbar {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        .navbar.with-sidebar { margin-left: 200px; width: calc(100% - 200px); }
-        .navbar.with-sidebar-collapsed { margin-left: 60px; width: calc(100% - 60px); }
+        .main-content.collapsed { margin-left: 80px; }
 
-        .navbar .header-content { display: flex; align-items: center; }
-        .navbar .header-content h1 {
-            font-size: 1.5em; font-weight: 700; margin: 0; color: white;
-            animation: bounceGlow 2s infinite alternate;
+        footer {
+            position: fixed; bottom: 0; height: 40px; display: flex; align-items: center;
+            justify-content: center; font-size: 13px; font-weight: 500;
+            color: var(--text-muted-light); border-top: 1px solid var(--border-light);
+            background: var(--background-light); z-index: 998;
+            left: 240px; width: calc(100% - 240px);
+            transition: all var(--transition-medium) ease;
         }
-        @keyframes bounceGlow {
-            0%, 100% { transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 0 9px #00aeff, 0 0 12px #00aeff; }
-            50% { transform: translateY(-2px); text-shadow: 0 0 6px #fff, 0 0 12px #fff, 0 0 18px #0077cc, 0 0 24px #0077cc; }
-        }
-        .mobile-menu-btn {
-            background: transparent; color: #ffffff; border: none; border-radius: 50%;
-            width: 36px; height: 36px; font-size: 18px; cursor: pointer;
-            box-shadow: none; display: none; align-items: center; justify-content: center;
-            transition: transform 0.2s ease; margin-right: 10px;
-        }
-        .mobile-menu-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
-        .mobile-menu-btn:active { transform: scale(0.95); }
-
-        .theme-toggle-btn {
-            padding: 6px; border: none; border-radius: 50%;
-            background: rgba(255,255,255,0.15); color: #ffffff;
-            font-size: 14px; cursor: pointer;
-            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-            box-shadow: none; transition: all var(--transition-speed-fast) var(--transition-easing);
-        }
-        .theme-toggle-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px) scale(1.05); }
-        body.dark-mode .theme-toggle-btn { background: rgba(0,0,0,0.2); }
-        body.dark-mode .theme-toggle-btn:hover { background: rgba(0,0,0,0.4); }
-
-        .main-container {
-            margin-top: var(--header-height); margin-left: 200px; padding: 20px;
-            width: calc(100% - 200px);
-            transition: margin-left var(--transition-speed) ease, width var(--transition-speed) ease;
-            display: flex; justify-content: center; align-items: flex-start;
-            flex-grow: 1;
-            padding-bottom: calc(var(--footer-height) + 20px);
-            position: relative; /* Needed for on-page-nav positioning */
-        }
-        .main-container.collapsed { margin-left: 60px; width: calc(100% - 60px); }
-
-        .container {
-            width: 100%; max-width: 1100px; background: var(--card-bg-light);
-            padding: 25px; border-radius: 10px; box-shadow: var(--shadow-light-outer);
-            border: 1px solid var(--border-color-light);
-            animation: fadeInUp 0.5s var(--transition-easing) backwards;
-        }
-        body.dark-mode .container {
-            background: var(--card-bg-dark); box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
-        }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        h2, h3, h4 { color: var(--primary-color); margin-top: 0; }
-        body.dark-mode h2, body.dark-mode h3, body.dark-mode h4 { color: var(--secondary-color); }
-        h2 {
-            font-size: 1.5em; font-weight: 600; margin-bottom: 15px;
-            padding-bottom: 8px; border-bottom: 1px solid var(--border-color-light);
-        }
-        body.dark-mode h2 { border-bottom: 1px solid var(--border-color-dark); }
-        h3 { font-size: 1.2em; font-weight: 600; margin-bottom: 10px; }
-        h4 { font-size: 1.05em; font-weight: 600; margin-bottom: 8px; margin-top: 15px; }
+        .main-content.collapsed + footer { left: 80px; width: calc(100% - 80px); }
         
-        .policy-document p, .policy-document ul, .policy-document ol {
-            margin-bottom: 10px;
-            line-height: 1.7;
-        }
-        .policy-document ul, .policy-document ol {
-            margin-left: 20px;
-        }
-        .policy-document li {
-            margin-bottom: 5px;
-        }
-        .policy-document strong {
-            font-weight: 600;
-            color: var(--primary-color-darker);
-        }
-        body.dark-mode .policy-document strong {
-             color: var(--primary-color-lighter);
+        /* ==========================================================================
+           3. Components (Filter, Cards, Table, etc. for Policy Page)
+           ========================================================================== */
+        .content-card {
+            background: var(--card-bg-light); border-radius: 16px;
+            padding: 25px; box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
         }
         
-        /* Class for updated policy titles */
-        .policy-updated-title {
-            color: var(--updated-policy-color) !important; 
+        .search-filter-controls {
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
         }
-        /* Class for updated policy content */
-        .text-updated-highlight {
-            color: var(--updated-policy-color) !important;
-            font-weight: 500; /* Optional: make it slightly bolder */
+        .search-filter-controls input, .search-filter-controls select {
+            padding: 12px 15px; border: 1px solid var(--border-light);
+            border-radius: 10px; font-size: 14px;
+            background: var(--background-light); color: var(--text-light);
+            transition: all var(--transition-medium) ease;
+            flex-grow: 1; min-width: 200px;
         }
-        .policy-table .text-updated-highlight { /* Ensure table cell text is also green */
-             color: var(--updated-policy-color) !important;
+        .search-filter-controls input:focus, .search-filter-controls select:focus {
+            outline: none; border-color: var(--gradient-start);
+            box-shadow: var(--shadow-glow-light);
         }
-
-
-        /* Tab Styles */
-        .tab-container {
-            width: 100%;
+        .search-filter-controls button {
+            padding: 12px 18px; background: var(--background-light);
+            color: var(--text-muted-light); border: 1px solid var(--border-light);
+            border-radius: 10px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all var(--transition-medium) ease;
         }
+        .search-filter-controls button:hover {
+            color: var(--gradient-start); border-color: var(--gradient-start);
+        }
+        
+        /* --- [CẬP NHẬT] Tabs cố định khi cuộn --- */
         .tab-buttons {
-            display: flex;
-            flex-wrap: wrap; 
-            border-bottom: 2px solid var(--primary-color);
+            display: flex; flex-wrap: wrap;
+            border-bottom: 2px solid var(--border-light);
             margin-bottom: 20px;
+            /* Cố định */
+            position: sticky;
+            top: 60px; /* Chiều cao của navbar */
+            background-color: var(--card-bg-light);
+            z-index: 100;
+            padding-top: 10px; /* Tạo khoảng đệm */
         }
         .tab-button {
-            padding: 10px 18px;
-            cursor: pointer;
-            background-color: transparent;
-            border: none;
-            outline: none;
-            font-size: 0.95em;
-            font-weight: 500;
-            color: var(--text-light);
-            transition: background-color var(--transition-speed-fast) ease, color var(--transition-speed-fast) ease, border-bottom-color var(--transition-speed-fast) ease;
+            padding: 10px 20px; cursor: pointer; background-color: transparent;
+            border: none; outline: none; font-size: 14px; font-weight: 600;
+            color: var(--text-muted-light);
+            transition: all var(--transition-medium) ease;
             border-bottom: 3px solid transparent;
             margin-bottom: -2px; 
         }
-        body.dark-mode .tab-button {
-            color: var(--text-dark);
-        }
-        .tab-button:hover {
-            background-color: rgba(0, 48, 135, 0.05);
-            color: var(--primary-color);
-        }
-        body.dark-mode .tab-button:hover {
-            background-color: rgba(0, 174, 255, 0.1);
-            color: var(--secondary-color);
-        }
-        .tab-button.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-            font-weight: 700;
-        }
-        body.dark-mode .tab-button.active {
-            color: var(--secondary-color);
-            border-bottom-color: var(--secondary-color);
-        }
-        .tab-content {
-            display: none;
-            padding: 15px 5px; 
-            border-radius: 6px;
-            animation: fadeInContent 0.4s ease;
-            position: relative; 
-        }
-        @keyframes fadeInContent {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Updated Table Styles for Policies */
-        .policy-table-container {
-            overflow-x: auto; 
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color-light);
-            border-radius: 6px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07); 
-        }
-        body.dark-mode .policy-table-container {
-            border-color: var(--border-color-dark);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .policy-table {
-            width: 100%;
-            min-width: 550px; 
-            border-collapse: collapse;
-            font-size: 0.85em; 
-            line-height: 1.5; 
-        }
-        .policy-table th, .policy-table td {
-            border: 1px solid var(--border-color-light);
-            padding: 8px 10px; 
-            text-align: left;
-            vertical-align: top;
-        }
-        body.dark-mode .policy-table th, body.dark-mode .policy-table td {
-            border-color: var(--border-color-dark);
-        }
-        .policy-table th {
-            background-color: rgba(0, 48, 135, 0.04); 
-            font-weight: 500; 
-            color: var(--primary-color-darker);
-        }
-        body.dark-mode .policy-table th {
-            background-color: rgba(0, 174, 255, 0.08); 
-            color: var(--secondary-color);
-        }
-        .policy-table tr:nth-child(even) {
-            background-color: rgba(0,0,0,0.015); 
-        }
-        body.dark-mode .policy-table tr:nth-child(even) {
-            background-color: rgba(255,255,255,0.015); 
-        }
-        .policy-table td.text-center { text-align: center; }
-        .policy-table td.text-right { text-align: right; }
-        .policy-table .sub-header {
-            font-weight: 500;
-            background-color: rgba(0,0,0,0.025);
-        }
-        body.dark-mode .policy-table .sub-header {
-            background-color: rgba(255,255,255,0.025);
-        }
-
-        .policy-section {
-            margin-bottom: 25px;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: var(--card-bg-light);
-            border: 1px solid var(--border-color-light);
-        }
-        body.dark-mode .policy-section {
-            background-color: var(--card-bg-dark);
-            border: 1px solid var(--border-color-dark);
-        }
+        .tab-button:hover { color: var(--text-light); }
+        .tab-button.active { color: var(--gradient-start); border-image: var(--gradient) 1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeInDelayed 0.5s ease-out both; }
         
-        .no-results-message {
-            display: none; 
-            text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: var(--text-light);
-        }
-        body.dark-mode .no-results-message {
-            color: var(--text-dark);
-        }
-
-        /* Search Highlight Style */
-        .search-highlight {
-            background-color: var(--highlight-bg-light);
-            color: var(--highlight-text-light);
-            font-weight: bold;
-            padding: 0.5px 1px; 
-            border-radius: 2px;
-        }
-        body.dark-mode .search-highlight {
-            background-color: var(--highlight-bg-dark);
-            color: var(--highlight-text-dark);
+        /* --- Policy Content --- */
+        .policy-document h2, .policy-document h3, .policy-document h4 { color: var(--text-light); font-weight: 700; }
+        .policy-document h2 { font-size: 24px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+        .policy-document h3 { font-size: 18px; margin-bottom: 15px; margin-top: 25px; }
+        .policy-document h4 { font-size: 16px; margin-bottom: 10px; margin-top: 20px; }
+        .policy-document p, .policy-document ul, .policy-document ol { margin-bottom: 12px; line-height: 1.7; color: var(--text-muted-light); font-size: 14px;}
+        .policy-document ul, .policy-document ol { padding-left: 20px; }
+        .policy-document strong { color: var(--text-light); font-weight: 600; }
+        .policy-section {
+            margin-bottom: 30px; padding: 25px; border-radius: 12px;
+            background-color: var(--background-light); border: 1px solid var(--border-light);
         }
 
+        /* --- Policy Table --- */
+        .policy-table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-light); background: var(--background-light); }
+        .policy-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .policy-table th, .policy-table td {
+            padding: 12px 14px; text-align: left;
+            border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light);
+        }
+        .policy-table th:last-child, .policy-table td:last-child { border-right: none; }
+        .policy-table thead th {
+            background: var(--card-bg-light); color: var(--text-muted-light);
+            font-weight: 600; position: sticky; top: 0; z-index: 2;
+            text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
+        }
+        .policy-table tbody tr:last-child td { border-bottom: none; }
+        .policy-table tbody tr { transition: background-color var(--transition-fast) ease; }
+        .policy-table tbody tr:hover { background-color: var(--background-light); }
+        .text-right { text-align: right !important; }
 
-        footer {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #ffffff; text-align: center; padding: 10px 0; font-size: 12px;
-            z-index: 998; transition: background var(--transition-speed) var(--transition-easing);
-            height: var(--footer-height);
-            display: flex; align-items: center; justify-content: center;
-        }
-        body.dark-mode footer {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-        }
-
-        /* --- Tooltip Styles --- */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            border-bottom: 1px dotted var(--primary-color-darker);
-            cursor: help;
-        }
-        body.dark-mode .tooltip {
-             border-bottom: 1px dotted var(--primary-color-lighter);
-        }
+        /* --- Tooltip --- */
+        .tooltip { position: relative; cursor: help; border-bottom: 1px dotted var(--gradient-start); }
         .tooltip .tooltip-text {
-            visibility: hidden;
-            width: 240px;
-            background-color: var(--primary-color-darker);
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 8px;
-            position: absolute;
-            z-index: 10;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -120px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.85em;
-            font-weight: 400;
-            border-bottom: none;
+            visibility: hidden; width: 240px; background-color: var(--text-light); color: var(--background-light);
+            text-align: center; border-radius: 6px; padding: 8px; position: absolute;
+            z-index: 10; bottom: 125%; left: 50%; margin-left: -120px;
+            opacity: 0; transition: opacity 0.3s; font-size: 12px; font-weight: 500;
         }
-        body.dark-mode .tooltip .tooltip-text {
-            background-color: var(--card-bg-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-        }
-        .tooltip .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: var(--primary-color-darker) transparent transparent transparent;
-        }
-        body.dark-mode .tooltip .tooltip-text::after {
-             border-color: var(--card-bg-dark) transparent transparent transparent;
-        }
-        .tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
+        .tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
+        
+        /* --- Highlight & Updated Styles --- */
+        .policy-updated-title { color: var(--updated-policy-color) !important; }
+        .text-updated-highlight { color: var(--updated-policy-color) !important; font-weight: 500; }
+        .search-highlight {
+            background-color: var(--highlight-bg-light); color: var(--highlight-text-light);
+            font-weight: bold; padding: 0.5px 1px; border-radius: 2px;
         }
 
-        /* --- Back to Top Button Styles --- */
-        .back-to-top-btn {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 40px;
-            height: 40px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s, background-color 0.3s, transform 0.3s;
-        }
-        .back-to-top-btn.show {
-            display: flex;
-            opacity: 0.8;
-        }
-        .back-to-top-btn:hover {
-            opacity: 1;
-            background-color: var(--primary-color-lighter);
-            transform: scale(1.1);
-        }
-
-        /* --- On-page Nav Styles --- */
-        .on-page-nav {
-            position: sticky;
-            top: calc(var(--header-height) + 20px);
-            width: 200px;
-            margin-left: 20px;
-            padding: 15px;
-            background-color: var(--card-bg-light);
-            border-radius: 8px;
-            border: 1px solid var(--border-color-light);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            align-self: flex-start; /* Important for sticky positioning */
-            display: none; /* Hidden by default, shown on large screens */
-        }
-         body.dark-mode .on-page-nav {
-            background-color: var(--card-bg-dark);
-            border-color: var(--border-color-dark);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .on-page-nav h4 {
-            font-size: 0.9em;
-            font-weight: 600;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid var(--border-color-light);
-             body.dark-mode border-bottom: 1px solid var(--border-color-dark);
-        }
-        .on-page-nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: calc(100vh - 150px);
-            overflow-y: auto;
-        }
-        .on-page-nav li a {
-            display: block;
-            padding: 6px 10px;
-            font-size: 0.8em;
-            text-decoration: none;
-            color: var(--text-light);
-            border-radius: 4px;
-            transition: background-color 0.2s, color 0.2s, padding-left 0.2s;
-            border-left: 3px solid transparent;
-        }
-        body.dark-mode .on-page-nav li a {
-             color: var(--text-dark);
-        }
-        .on-page-nav li a:hover {
-            background-color: rgba(0,0,0,0.05);
-            color: var(--primary-color);
-        }
-         body.dark-mode .on-page-nav li a:hover {
-             background-color: rgba(255,255,255,0.05);
-             color: var(--secondary-color);
-         }
-        .on-page-nav li a.active-nav-link {
-            font-weight: 600;
-            color: var(--primary-color);
-            background-color: rgba(0, 174, 255, 0.1);
-            border-left: 3px solid var(--secondary-color);
-            padding-left: 15px;
-        }
-         body.dark-mode .on-page-nav li a.active-nav-link {
-            color: var(--secondary-color);
-            background-color: rgba(0, 174, 255, 0.15);
-         }
-
-
-        @media (min-width: 1400px) { /* Show on-page nav on larger screens */
-            .main-container {
-                justify-content: space-between; /* Allow nav to sit on the side */
-            }
-            .on-page-nav {
-                display: block;
-            }
-        }
-        @media (max-width: 900px) {
-            .sidebar { transform: translateX(-100%); width: 220px; box-shadow: 5px 0 15px rgba(0,0,0,0.2); z-index: 1007; }
+        /* ==========================================================================
+           4. Responsive Design (Đồng bộ)
+           ========================================================================== */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 260px; z-index: 1002; }
             .sidebar.open { transform: translateX(0); }
             .sidebar.collapsed { transform: translateX(-100%); }
-            .sidebar.open .logo h1, .sidebar.open .menu a span { opacity: 1; max-width: 100px; }
-            .sidebar.open .logo h1 { font-size: 16px; }
-            .main-container, .navbar.with-sidebar, .navbar.with-sidebar-collapsed { margin-left: 0; width: 100%; }
+            .main-content, .main-content.collapsed { margin-left: 0; padding-left: 15px; padding-right: 15px; padding-top: 80px; }
+            footer, .main-content.collapsed + footer { left: 0; width: 100%; }
             .toggle-btn { display: none; }
-            .mobile-menu-btn { display: flex !important; }
-            .navbar { border-radius: 0; }
+            .mobile-menu-btn { display: flex; }
+            .navbar .logo-title { display: none; }
+            .tab-buttons { top: 60px; } /* Đảm bảo tab dính đúng vị trí trên mobile */
         }
-        @media (max-width: 600px) {
-            body { padding: 0; }
-            .navbar { padding: 0 10px; height: 45px; }
-            .navbar .header-content h1 { font-size: 1.2em; }
-            .mobile-menu-btn { width: 30px; height: 30px; font-size: 16px; margin-right: 5px;}
-            .theme-toggle-btn { width: 30px; height: 30px; font-size: 13px;}
-            .main-container { margin-top: 45px; padding: 10px; padding-bottom: calc(var(--footer-height) + 10px); }
-            .container { padding: 15px; border-radius: 8px; }
-            h2 { font-size: 1.3em; }
-            h3 { font-size: 1.1em; }
-            h4 { font-size: 1em; }
-            .tab-button { padding: 8px 12px; font-size: 0.9em; }
-            .policy-table { font-size: 0.8em; } 
-            .policy-table th, .policy-table td { padding: 6px 8px; } 
-            footer { font-size: 11px; height: calc(var(--footer-height) - 5px); }
-            .search-filter-controls { flex-direction: column; align-items: stretch; }
-            .search-filter-controls > * { margin-bottom: 8px; }
-            .search-filter-controls button { width: 100%; }
-            .back-to-top-btn { width: 35px; height: 35px; font-size: 14px; bottom: 20px; right: 20px;}
-        }
+        @keyframes fadeInDelayed { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+/* === AI CHATBOT === */
+.global-ai-chat-container { 
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    z-index: 1010; 
+}
 
-        /* ======================================================= */
-        /* START: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME) */
-        /* ======================================================= */
-        
-        /* --- Nút bấm nổi --- */
-        #ai-chat-toggle {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: var(--shadow-light-outer);
-            transition: background-color var(--transition-speed-fast) ease, transform 0.2s ease;
-        }
-        #ai-chat-toggle:hover {
-            background: var(--primary-color-lighter);
-            transform: scale(1.1);
-        }
-        
-        /* --- Cửa sổ Chat --- */
-        #ai-chat-window {
-            background-color: var(--card-bg-light);
-            color: var(--text-light);
-            border: 1px solid var(--border-color-light);
-            box-shadow: var(--shadow-light-outer);
-        }
-        #ai-chat-window.visible {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-        }
+#ai-chat-bubble { 
+    width: 65px; 
+    height: 65px; 
+    border-radius: 50%; 
+    background: var(--gradient); 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: var(--shadow-lg); 
+    font-size: 28px; 
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
 
-        /* --- Header của Chat --- */
-        #ai-chat-window .rounded-t-lg {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: white;
-            border-bottom: 1px solid transparent;
-        }
-        #ai-chat-window h3 {
-            color: white;
-        }
-        #ai-chat-window #ai-chat-close {
-            color: rgba(255, 255, 255, 0.7);
-            transition: color 0.2s ease-in-out;
-        }
-        #ai-chat-window #ai-chat-close:hover {
-            color: white;
-        }
-        
-        /* --- Vùng tin nhắn --- */
-        #ai-chat-messages {
-            background-color: var(--background-light);
-        }
-        .chat-message {
-            display: flex;
-            margin-bottom: 15px;
-        }
-        .chat-message .message-bubble {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            line-height: 1.5;
-        }
+#ai-chat-bubble:hover { 
+    transform: scale(1.1); 
+}
 
-        /* --- Bong bóng tin nhắn --- */
-        .ai-message {
-            justify-content: flex-start;
-        }
-        .ai-message .message-bubble {
-            background-color: #e9ecef; /* Màu xám nhạt trung tính */
-            color: #333;
-            border-bottom-left-radius: 4px;
-        }
-        .user-message {
-            justify-content: flex-end;
-        }
-        .user-message .message-bubble {
-            background-color: var(--primary-color);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-        
-        /* --- Vùng nhập liệu --- */
-        #ai-chat-window .p-3.border-t {
-            background-color: var(--card-bg-light);
-            border-top-color: var(--border-color-light);
-        }
-        #ai-chat-input {
-            background: var(--background-light);
-            color: var(--text-light);
-            border: 1px solid var(--border-color-light);
-        }
-        #ai-chat-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
-        }
-        #ai-chat-send {
-            background-color: var(--primary-color);
-        }
-        #ai-chat-send:hover {
-            background-color: var(--primary-color-lighter);
-        }
-        
-        /* --- Chỉ báo "đang suy nghĩ" --- */
-        #ai-chat-messages .thinking-indicator {
-            display: flex;
-            align-items: center;
-        }
-        #ai-chat-messages .thinking-indicator .dot {
-            background-color: #a0a0a0;
-            height: 8px;
-            width: 8px;
-            margin: 0 3px;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-        #ai-chat-messages .thinking-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
-        #ai-chat-messages .thinking-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0); }
-          40% { transform: scale(1.0); }
-        }
+#ai-chat-window { 
+    position: absolute; 
+    bottom: calc(100% + 15px); 
+    right: 0; 
+    width: 370px; 
+    height: 500px; 
+    max-width: 90vw; 
+    background: rgba(248, 249, 250, 0.75); 
+    backdrop-filter: blur(8px); 
+    -webkit-backdrop-filter: blur(8px); 
+    border-radius: 12px; 
+    box-shadow: var(--shadow-lg); 
+    border: 1px solid var(--border-light); 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+    visibility: hidden; 
+    opacity: 0; 
+    transform: translateY(20px); 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+}
 
-        /* ======================================================= */
-        /* === DARK MODE OVERRIDES (TỰ ĐỘNG KHI CHUYỂN THEME) === */
-        /* ======================================================= */
-        body.dark-mode #ai-chat-toggle {
-            background: var(--secondary-color);
-            color: #111;
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode #ai-chat-toggle:hover {
-            background: #00beff; /* Sáng hơn một chút */
-        }
-        body.dark-mode #ai-chat-window {
-            background-color: var(--card-bg-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode #ai-chat-window .rounded-t-lg {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-        }
-        body.dark-mode #ai-chat-messages {
-            background-color: var(--background-dark);
-        }
-        body.dark-mode .ai-message .message-bubble {
-            background-color: var(--primary-color-darker);
-            color: var(--text-dark);
-        }
-        body.dark-mode .user-message .message-bubble {
-            background-color: var(--secondary-color);
-            color: #111;
-        }
-        body.dark-mode #ai-chat-window .p-3.border-t {
-            background-color: var(--card-bg-dark);
-            border-top-color: var(--border-color-dark);
-        }
-        body.dark-mode #ai-chat-input {
-            background: var(--background-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-        }
-        body.dark-mode #ai-chat-input:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
-        }
-        body.dark-mode #ai-chat-send {
-            background-color: var(--secondary-color);
-            color: #111;
-        }
-        body.dark-mode #ai-chat-send:hover {
-            background-color: #00beff;
-        }
-        body.dark-mode #ai-chat-messages .thinking-indicator .dot {
-            background-color: var(--border-color-dark);
-        }
-        /* ======================================================= */
-        /* END: GEMINI AI CHATBOT CSS (SYNC WITH WEB THEME) */
-        /* ======================================================= */
+#ai-chat-window.open { 
+    visibility: visible; 
+    opacity: 1; 
+    transform: translateY(0); 
+}
 
+.ai-chat-header { 
+    flex-shrink: 0; 
+    padding: 12px 15px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    background: var(--gradient); 
+    color: white; 
+}
+
+.ai-chat-header h3 { 
+    margin: 0; 
+    font-size: 16px; 
+    font-weight: 600; 
+    color: white; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+}
+
+.ai-chat-close-btn { 
+    background: none; 
+    border: none; 
+    font-size: 24px; 
+    cursor: pointer; 
+    color: rgba(255, 255, 255, 0.8); 
+    transition: color 0.2s ease, transform 0.2s ease; 
+}
+
+.ai-chat-close-btn:hover { 
+    color: white; 
+    transform: rotate(90deg); 
+}
+
+.ai-chat-messages { 
+    flex-grow: 1; 
+    padding: 20px; 
+    overflow-y: auto; 
+    background-color: transparent; 
+}
+
+.user-message, .ai-message { 
+    margin-bottom: 15px; 
+    display: flex; 
+    max-width: 90%; 
+}
+
+.user-message { 
+    margin-left: auto; 
+    flex-direction: row-reverse; 
+}
+
+.message-content { 
+    padding: 10px 15px; 
+    border-radius: 18px; 
+    font-size: 14px; 
+    line-height: 1.5; 
+}
+
+.user-message .message-content { 
+    background: var(--gradient); 
+    color: white; 
+    border-bottom-right-radius: 5px; 
+}
+
+.ai-message .message-content { 
+    background: var(--card-bg-light); 
+    color: var(--text-light); 
+    border: 1px solid var(--border-light); 
+    border-bottom-left-radius: 5px; 
+    box-shadow: var(--shadow-sm); 
+}
+
+.ai-chat-input-area { 
+    flex-shrink: 0; 
+    padding: 15px; 
+    border-top: 1px solid var(--border-light); 
+    display: flex; 
+    gap: 10px; 
+    background-color: transparent; 
+}
+
+.ai-chat-input-area textarea { 
+    flex-grow: 1; 
+    border: 1px solid var(--border-light); 
+    border-radius: 20px; 
+    padding: 10px 15px; 
+    font-size: 14px; 
+    resize: none; 
+    height: 40px; 
+    line-height: 20px; 
+    background: var(--background-light); 
+    color: var(--text-light); 
+    transition: all 0.2s ease; 
+    overflow-y: hidden; 
+}
+
+.ai-chat-input-area textarea:focus { 
+    outline: none; 
+    border-color: var(--gradient-start); 
+    box-shadow: var(--shadow-glow-light); 
+}
+
+.ai-chat-input-area button { 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    border: none; 
+    background: var(--gradient); 
+    color: white; 
+    font-size: 16px; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+    flex-shrink: 0; 
+}
+
+.ai-chat-input-area button:hover:not(:disabled) { 
+    transform: scale(1.1); 
+    box-shadow: var(--shadow-md); 
+}
+
+.ai-chat-input-area button:disabled { 
+    background: var(--border-light); 
+    color: var(--text-muted-light); 
+    cursor: not-allowed; 
+}
+
+.typing-indicator span { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    background-color: var(--text-muted-light); 
+    display: inline-block; 
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(2) { 
+    animation-delay: -0.16s; 
+}
+
+.typing-indicator span:nth-child(3) { 
+    animation-delay: -0.32s; 
+}
+
+@keyframes bounce { 
+    0%, 80%, 100% { transform: scale(0); } 
+    40% { transform: scale(1.0); } 
+}
     </style>
 </head>
-<body data-theme="light">
+<body>
 
-    <div class="sidebar" id="sidebar">
-        <div class="logo">
-            <a href="index.html" data-tooltip="Trang Chủ">
-                 <h1>VINFAST<span class="logo-line-2">THUẬN AN</span></h1>
-            </a>
-        </div>
-        <div class="menu" id="navMenu">
-              <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
-            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
-            <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
-            <a href="chinh_sach_vinfast.html" class="active" data-tooltip="Tổng hợp chính sách VinFast"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
-            <a href="gia_styled_html.html" class="active" data-tooltip="Công cụ tính giá xe VinFast"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
-        </div>
-        <button class="toggle-btn" id="sidebarToggleBtn" aria-label="Thu gọn/Mở rộng menu">
-            <i class="fas fa-chevron-left"></i></button>
-    </div>
-
-    <header class="navbar" id="pageNavbar">
-        <div class="header-content">
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1></h1>
-        </div>
+    <header class="navbar"> 
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Mở menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo-title">CHÍNH SÁCH BÁN HÀNG</div> 
         <div class="navbar-controls">
-            <button class="theme-toggle-btn" id="themeToggle" aria-label="Chuyển đổi giao diện">
-                <i class="fas fa-moon" id="theme-icon"></i>
-            </button>
+            <button class="nav-btn" id="back-btn" aria-label="Quay lại" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" id="logout-btn" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
-    <div class="main-container" id="mainContainer">
-        <div class="container">
-            <div class="search-filter-controls mb-5 flex flex-wrap items-center gap-3">
-                <input type="text" id="searchInput" placeholder="Tìm kiếm trong tab..." class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color flex-grow min-w-[180px] dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                <select id="filterCarModel" class="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-color focus:border-primary-color dark:bg-gray-700 dark:border-gray-600 dark:text-white min-w-[180px]">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+             <a href="index.html" title="Trang Chủ">
+                <h1>VINFAST MINH ĐẠO</h1>
+            </a>
+        </div>
+        <nav class="menu" id="nav-menu">
+            <a href="index.html"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="kpi-tvbh.html"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+            <a href="chinh_sach_vinfast.html" class="active"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
+            <a href="gia_styled_html.html"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
+        </nav>
+        <button class="toggle-btn" id="sidebar-toggle-btn" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </aside>
+
+    <main class="main-content" id="main-content">
+        <section class="content-card" data-aos="fade-up">
+            <div class="search-filter-controls">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm chính sách, dòng xe...">
+                <select id="filterCarModel">
                     <option value="">Tất cả dòng xe</option>
                     <option value="VF 3">VF 3</option>
                     <option value="VF 5">VF 5</option>
@@ -877,21 +538,22 @@
                     <option value="Nerio Green">Nerio Green</option>
                     <option value="Limo Green">Limo Green</option>
                 </select>
-                <button id="clearFilterBtn" class="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-md shadow-sm transition-colors duration-150 ease-in-out">
-                    <i class="fas fa-times mr-1"></i> Xóa bộ lọc
-                </button>
+                <button id="clearFilterBtn"><i class="fas fa-times"></i> Xóa Lọc</button>
             </div>
+        </section>
+
+        <section class="content-card" data-aos="fade-up" data-aos-delay="100">
             <div class="tab-container">
                 <div class="tab-buttons">
-                    <button class="tab-button active" onclick="openPolicyTab(event, 'changelog')">Lịch sử thay đổi</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy1')">CS Hỗ Trợ Chuyển Đổi Xe</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy2')">CS Giá Bán Xe Điện</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy3')">CS Thúc Đẩy Bán Hàng</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy4')">CS Xe Dừng Sản Xuất</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy5')">CS Chuyển Đổi Pin</button>
+                    <button class="tab-button active" onclick="openPolicyTab(event, 'changelog')">Lịch sử</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy1')">CS Chuyển Đổi</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy2')">CS Giá Bán</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy3')">CS Bán Hàng</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy4')">CS Xe Dừng SX</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy5')">CS Pin</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy6')">CS Sài Gòn Xanh</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy7')">CS Đặc Quyền VF8 & VF9</button>
-                    <button class="tab-button" onclick="openPolicyTab(event, 'policy8')">CS Vì Thủ Đô Xanh</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy7')">CS Đặc Quyền</button>
+                    <button class="tab-button" onclick="openPolicyTab(event, 'policy8')">CS Thủ Đô Xanh</button>
                     <button class="tab-button" onclick="openPolicyTab(event, 'policy9')">CS Corporate</button>
                 </div>
 
@@ -926,7 +588,6 @@
                 </div>
 
                 <div id="policy1" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2 class="policy-updated-title">Chính sách Hỗ trợ cho Khách hàng Chuyển đổi từ Xe Xăng sang Xe Điện (<span class="text-updated-highlight">05/07/2025</span>)</h2>
                     <div class="policy-section">
                         <h3>1. Nội dung chương trình:</h3>
@@ -1121,7 +782,6 @@
                 </div>
 
                 <div id="policy2" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Giá Bán Các Dòng Xe Ô Tô Điện VinFast (16/05/2025)</h2>
                     <p><em>Đơn vị tính: VNĐ (bao gồm VAT)</em></p>
                     <div class="policy-section">
@@ -1256,7 +916,6 @@
                 </div>
 
                 <div id="policy3" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2 class="policy-updated-title">Chính sách Thúc đẩy Bán hàng Ô tô Điện VinFast (<span class="text-updated-highlight">24/07/2025</span>)</h2>
                     <div class="policy-section">
                         <h3>I. CHÍNH SÁCH HỖ TRỢ BÁN HÀNG CHO VF 7 PLUS (bao gồm VAT)</h3>
@@ -1335,7 +994,6 @@
                 </div>
 
                 <div id="policy4" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2 class="policy-updated-title">Chính sách Bán hàng cho các Dòng Xe Ô tô Điện VinFast Đã Dừng Sản Xuất (<span class="text-updated-highlight">16/07/2025</span>)</h2>
                     <p><em>Đơn vị: VNĐ (bao gồm VAT)</em></p>
                     <div class="policy-section">
@@ -1453,7 +1111,6 @@
                 </div>
 
                 <div id="policy5" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Hỗ trợ Khách hàng Chuyển đổi Pin thuê sang Pin mua (18/04/2025)</h2>
                     <div class="policy-section">
                         <p>VinFast vẫn tiếp tục duy trì và hỗ trợ theo các chính sách hiện hành đối với khách hàng đang sử dụng dịch vụ thuê pin.</p>
@@ -1572,7 +1229,6 @@
                 </div>
 
                 <div id="policy6" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Ưu đãi “Sài Gòn Xanh” (18/04/2025)</h2>
                     <div class="policy-section">
                         <p>Dành cho khách hàng mua xe đăng ký mới biển TP. Hồ Chí Minh.</p>
@@ -1618,7 +1274,6 @@
                 </div>
 
                 <div id="policy7" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Đặc quyền dành cho Khách hàng VF8 và VF9 (21/04/2025)</h2>
                     <div class="policy-section">
                         <h3>I. CAM KẾT MUA LẠI XE VF 8 VÀ VF 9</h3>
@@ -1728,7 +1383,6 @@
                 </div>
 
                 <div id="policy8" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Ưu đãi “Vì Thủ Đô Trong Xanh” (18/04/2025)</h2>
                      <div class="policy-section">
                         <p>Dành cho khách hàng mua xe đăng ký mới biển Hà Nội.</p>
@@ -1778,7 +1432,6 @@
                 </div>
 
                 <div id="policy9" class="tab-content policy-document">
-                    <div class="no-results-message">Không tìm thấy chính sách nào phù hợp.</div>
                     <h2>Chính sách Corporate Ô tô điện VinFast (22/04/2025)</h2>
                     <div class="policy-section">
                         <h3>I. Dành cho Doanh nghiệp đối tác và <span class="tooltip">CQNN<span class="tooltip-text">Cơ quan Nhà nước</span></span></h3>
@@ -1887,658 +1540,307 @@
                         </ul>
                     </div>
                 </div>
+
                 </div>
-        </div>
-        <div id="onPageNav" class="on-page-nav">
-             <h4>Trong mục này</h4>
-             <ul id="onPageNavList"></ul>
-        </div>
-    </div>
+        </section>
+    </main>
+    
+    <footer id="footer"><p>VinFast Thuận An - Dĩ An</p></footer>
 
-    <button id="ai-chat-toggle" class="fixed bottom-16 right-5 h-14 w-14 rounded-full text-white flex items-center justify-center shadow-lg transition-transform transform hover:scale-110 z-[1011]">
-        <i class="fas fa-robot text-2xl"></i>
+    <div class="global-ai-chat-container">
+    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
+        <i class="fas fa-robot"></i>
     </button>
-    <div id="ai-chat-window" class="fixed bottom-28 right-5 w-full max-w-sm h-3/5 max-h-[600px] rounded-lg shadow-2xl flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-in-out pointer-events-none z-[1010]">
-        <div class="flex justify-between items-center p-3 text-white rounded-t-lg">
-            <h3 class="font-bold text-lg flex items-center"><i class="fas fa-brain mr-2"></i>Trợ lý</h3>
-            <button id="ai-chat-close" class="text-2xl hover:text-gray-200">&times;</button>
+    <div id="ai-chat-window" class="ai-chat-window">
+        <div class="ai-chat-header">
+            <h3><i class="fas fa-robot"></i> Trợ Lý </h3>
+            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
         </div>
-        <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto">
-            <div class="chat-message ai-message">
-                <div class="message-bubble">Xin chào! Tôi có thể giúp gì cho bạn về các chính sách của VinFast?</div>
+        <div id="ai-chat-messages" class="ai-chat-messages">
+            <div class="ai-message">
+                <div class="message-content">
+                    Xin chào! Tôi có thể giúp gì cho bạn về các chính sách của VinFast?
+                </div>
             </div>
         </div>
-        <div class="p-3 border-t">
-            <div class="flex items-center">
-                <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." class="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2">
-                <button id="ai-chat-send" class="ml-3 text-white rounded-full h-10 w-10 flex items-center justify-center transition">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
+        <div class="ai-chat-input-area">
+            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
+            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
-    <footer>
-        © 2025 VinFast Minh Đạo Thuận An
-    </footer>
-
-    <button id="backToTopBtn" class="back-to-top-btn" aria-label="Cuộn lên đầu trang">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-
+</div>
+    
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // ... (Phần code cũ của bạn cho sidebar, theme, search... giữ nguyên ở đây) ...
-            
-            // --- DOM Element References ---
-            const sidebar = document.getElementById('sidebar');
-            const mainContainer = document.getElementById('mainContainer');
-            const pageNavbar = document.getElementById('pageNavbar');
-            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const themeToggleButton = document.getElementById('themeToggle');
-            const themeIcon = document.getElementById('theme-icon');
-            const navMenu = document.getElementById('navMenu');
-            const searchInput = document.getElementById('searchInput');
-            const filterCarModelSelect = document.getElementById('filterCarModel');
-            const clearFilterBtn = document.getElementById('clearFilterBtn');
-            const backToTopBtn = document.getElementById('backToTopBtn');
-            const onPageNav = document.getElementById('onPageNav');
-            const onPageNavList = document.getElementById('onPageNavList');
+    document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "index.html";
+            return;
+        }
 
-            // --- Theme Management ---
-            function applyTheme(theme) {
-                if (theme === 'dark') {
-                    document.body.classList.add('dark-mode');
-                    if (themeIcon) themeIcon.className = 'fas fa-sun';
-                } else {
-                    document.body.classList.remove('dark-mode');
-                    if (themeIcon) themeIcon.className = 'fas fa-moon';
-                }
-            }
+        // --- Cấu trúc quản lý UI và Ứng dụng ---
+        const DOMElements = {
+            sidebar: document.getElementById('sidebar'),
+            mainContent: document.getElementById('main-content'),
+            footer: document.getElementById('footer'),
+            searchInput: document.getElementById('searchInput'),
+            filterCarModel: document.getElementById('filterCarModel'),
+            clearFilterBtn: document.getElementById('clearFilterBtn')
+        };
 
-            function toggleTheme() {
-                const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                applyTheme(newTheme);
-                localStorage.setItem('theme', newTheme);
-            }
-
-            if (themeToggleButton) {
-                themeToggleButton.addEventListener('click', toggleTheme);
-            }
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            applyTheme(savedTheme);
-
-            // --- Sidebar Layout Management ---
-            function updateLayoutForSidebar() {
-                if (!sidebar || !mainContainer || !pageNavbar) return;
-                const isDesktop = window.innerWidth > 900;
-                const isSidebarCollapsed = sidebar.classList.contains('collapsed');
-                const isSidebarOpenMobile = sidebar.classList.contains('open');
-
-                if (isDesktop) {
-                    sidebar.classList.remove('open');
-                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed');
-
-                    if (isSidebarCollapsed) {
-                        mainContainer.style.marginLeft = '60px';
-                        mainContainer.style.width = 'calc(100% - 60px)';
-                        pageNavbar.style.marginLeft = '60px';
-                        pageNavbar.style.width = 'calc(100% - 60px)';
-                        pageNavbar.classList.add('with-sidebar-collapsed');
-                    } else {
-                        mainContainer.style.marginLeft = '200px';
-                        mainContainer.style.width = 'calc(100% - 200px)';
-                        pageNavbar.style.marginLeft = '200px';
-                        pageNavbar.style.width = 'calc(100% - 200px)';
-                        pageNavbar.classList.add('with-sidebar');
-                    }
-                } else { 
-                    mainContainer.style.marginLeft = '0';
-                    mainContainer.style.width = '100%';
-                    pageNavbar.style.marginLeft = '0';
-                    pageNavbar.style.width = '100%';
-                    pageNavbar.classList.remove('with-sidebar', 'with-sidebar-collapsed');
-                    sidebar.style.transform = isSidebarOpenMobile ? 'translateX(0)' : 'translateX(-100%)';
-                }
-            }
-            
-            function toggleSidebarDesktop() {
-                if (window.innerWidth <= 900) return;
-                sidebar.classList.toggle('collapsed');
-                localStorage.setItem('sidebarState', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
-                updateLayoutForSidebar();
-                const toggleIcon = sidebarToggleBtn.querySelector('i');
-                if (toggleIcon) {
-                    toggleIcon.className = sidebar.classList.contains('collapsed') ? 'fas fa-bars' : 'fas fa-chevron-left';
-                }
-            }
-
-            function toggleMobileSidebar() {
-                sidebar.classList.toggle('open');
-                updateLayoutForSidebar();
-            }
-
-            if (sidebarToggleBtn) {
-                sidebarToggleBtn.addEventListener('click', toggleSidebarDesktop);
-                const initialToggleIcon = sidebarToggleBtn.querySelector('i');
-                if (initialToggleIcon) {
-                     initialToggleIcon.className = sidebar.classList.contains('collapsed') ? 'fas fa-bars' : 'fas fa-chevron-left';
-                }
-            }
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
-            }
-            
-            if (window.innerWidth > 900 && localStorage.getItem('sidebarState') === 'collapsed') {
-                sidebar.classList.add('collapsed');
-            }
-            updateLayoutForSidebar();
-            window.addEventListener('resize', updateLayoutForSidebar);
-
-            document.addEventListener('click', function(event) {
-                if (window.innerWidth <= 900 && sidebar && sidebar.classList.contains('open')) {
-                    if (!sidebar.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
-                        sidebar.classList.remove('open');
-                        updateLayoutForSidebar();
-                    }
-                }
-            });
-
-            // --- Back to Top Button ---
-            function handleScroll() {
-                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                    backToTopBtn.classList.add('show');
-                } else {
-                    backToTopBtn.classList.remove('show');
-                }
-            }
-            window.addEventListener('scroll', handleScroll);
-            backToTopBtn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-            
-            // --- On-page Navigation & Intersection Observer ---
-            let observer;
-            function updateOnPageNav() {
-                onPageNavList.innerHTML = ''; // Clear previous links
-                const activeTab = document.querySelector('.tab-content.active');
-                if (!activeTab) return;
-
-                const sections = activeTab.querySelectorAll('.policy-section');
-                if (sections.length < 2) { // Hide nav if not enough sections
-                    onPageNav.style.display = 'none';
-                    return;
-                }
-                
-                if (window.innerWidth >= 1400) {
-                    onPageNav.style.display = 'block';
-                }
-
-                if (observer) {
-                    observer.disconnect();
-                }
-
-                const observerOptions = {
-                    root: null,
-                    rootMargin: '0px 0px -60% 0px',
-                    threshold: 0
-                };
-
-                observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        const id = entry.target.id;
-                        const navLink = onPageNavList.querySelector(`a[href="#${id}"]`);
-                        if (entry.isIntersecting && navLink) {
-                            onPageNavList.querySelectorAll('a').forEach(link => link.classList.remove('active-nav-link'));
-                            navLink.classList.add('active-nav-link');
+        const UIManager = {
+            init: function() {
+                this.setupEventListeners();
+                this.applyInitialSettings();
+                AOS.init({ duration: 600, once: true });
+            },
+            setupEventListeners: function() {
+                document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => this.toggleSidebarDesktop());
+                document.getElementById('mobile-menu-btn')?.addEventListener('click', () => this.toggleMobileSidebar());
+                document.getElementById('logout-btn')?.addEventListener('click', () => {
+                    sessionStorage.clear();
+                    window.location.href = "index.html";
+                });
+                window.addEventListener('resize', () => this.handleResize());
+                document.addEventListener('click', (event) => {
+                    if (window.innerWidth <= 768 && DOMElements.sidebar?.classList.contains('open')) {
+                        if (!DOMElements.sidebar.contains(event.target) && !document.getElementById('mobile-menu-btn').contains(event.target)) {
+                            this.toggleMobileSidebar();
                         }
-                    });
-                }, observerOptions);
-
-                sections.forEach((section, index) => {
-                    const header = section.querySelector('h3');
-                    if (header) {
-                        const id = `section-${activeTab.id}-${index}`;
-                        section.id = id;
-                        
-                        const li = document.createElement('li');
-                        const a = document.createElement('a');
-                        a.href = `#${id}`;
-                        a.textContent = header.textContent;
-                        li.appendChild(a);
-                        onPageNavList.appendChild(li);
-
-                        observer.observe(section);
                     }
                 });
-            }
-
-            // --- Tab Functionality ---
-            window.openPolicyTab = function(evt, policyName) {
-                var i, tabcontent, tablinks;
-                tabcontent = document.getElementsByClassName("tab-content");
-                for (i = 0; i < tabcontent.length; i++) {
-                    tabcontent[i].style.display = "none";
-                    tabcontent[i].classList.remove("active");
+            },
+            applyInitialSettings: function() {
+                if (window.innerWidth > 768 && localStorage.getItem('sidebarState') === 'collapsed') {
+                    this.toggleSidebarDesktop(true);
                 }
-                tablinks = document.getElementsByClassName("tab-button");
-                for (i = 0; i < tablinks.length; i++) {
-                    tablinks[i].className = tablinks[i].className.replace(" active", "");
-                }
-                const currentTab = document.getElementById(policyName);
-                if (currentTab) {
-                    currentTab.style.display = "block";
-                    currentTab.classList.add("active");
-                }
-                
-                if (evt && evt.currentTarget) {
-                    evt.currentTarget.className += " active";
-                } else { 
-                    const buttons = document.querySelectorAll('.tab-button');
-                    buttons.forEach(button => {
-                        if(button.getAttribute('onclick').includes(`'${policyName}'`)){
-                            button.classList.add('active');
-                        }
-                    });
-                }
-                localStorage.setItem('activePolicyTab', policyName); 
-                updateOnPageNav(); 
-            }
-
-            // --- Active Sidebar Link ---
-             function setActiveSidebarLink() {
-                if (!navMenu) return;
-                const navLinks = navMenu.querySelectorAll("a");
-                const currentPageFilename = "chinh_sach_vinfast.html"; 
-                navLinks.forEach(link => {
+                const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
+                document.querySelectorAll("#nav-menu a").forEach(link => {
                     link.classList.remove("active");
-                    if (link.getAttribute('href') === currentPageFilename) {
+                    if (link.getAttribute('href') === currentPageFile) {
                         link.classList.add("active");
                     }
                 });
+            },
+            toggleSidebarDesktop: function(forceCollapse = false) {
+                if (window.innerWidth > 768) {
+                    const isCollapsed = forceCollapse || DOMElements.sidebar.classList.toggle("collapsed");
+                    DOMElements.mainContent.classList.toggle("collapsed", isCollapsed);
+                    DOMElements.footer.classList.toggle("collapsed", isCollapsed);
+                    if (!forceCollapse) {
+                        localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+                    }
+                }
+            },
+            toggleMobileSidebar: function() { DOMElements.sidebar.classList.toggle("open"); },
+            handleResize: function() {
+                if (window.innerWidth > 768) {
+                    DOMElements.sidebar.classList.remove('open');
+                }
             }
-            setActiveSidebarLink();
+        };
 
-            // --- Search and Filter Functionality ---
-            
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
-            }
-
-            function removeHighlights(container) {
+        const PolicyApp = {
+            init: function() {
+                this.setupTabs();
+                this.setupSearchAndFilter();
+            },
+            setupTabs: function() {
+                const savedTab = localStorage.getItem('activePolicyTab');
+                const firstTabButton = document.querySelector('.tab-buttons .tab-button');
+                if (savedTab && document.getElementById(savedTab)) {
+                    document.querySelector(`button[onclick*="'${savedTab}'"]`).click();
+                } else if(firstTabButton) {
+                    firstTabButton.click();
+                }
+            },
+            setupSearchAndFilter: function() {
+                DOMElements.searchInput.addEventListener('input', this.performSearchAndFilter);
+                DOMElements.filterCarModel.addEventListener('change', this.performSearchAndFilter);
+                DOMElements.clearFilterBtn.addEventListener('click', () => {
+                    DOMElements.searchInput.value = '';
+                    DOMElements.filterCarModel.value = '';
+                    this.performSearchAndFilter();
+                });
+            },
+            removeHighlights: function(container) {
                 const highlights = container.querySelectorAll('span.search-highlight');
                 highlights.forEach(span => {
                     const parent = span.parentNode;
-                    if (parent) { 
-                        while (span.firstChild) {
-                            parent.insertBefore(span.firstChild, span);
-                        }
-                        parent.removeChild(span);
-                        parent.normalize(); 
+                    if(parent) {
+                        parent.replaceChild(document.createTextNode(span.textContent), span);
+                        parent.normalize();
                     }
                 });
-            }
-
-            function applyHighlightsToElement(element, searchTermRegex) {
-                 if (!element || !element.childNodes || typeof element.childNodes.forEach !== 'function') {
-                    return; 
+            },
+            applyHighlights: function(element, regex) {
+                if (!element) return;
+                if (element.nodeType === 3) {
+                    const match = element.data.match(regex);
+                    if (match) {
+                        const span = document.createElement('span');
+                        const highlightedHTML = element.data.replace(regex, `<span class="search-highlight">${match[0]}</span>`);
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = highlightedHTML;
+                        
+                        const fragment = document.createDocumentFragment();
+                        while(tempDiv.firstChild) {
+                            fragment.appendChild(tempDiv.firstChild);
+                        }
+                        element.parentNode.replaceChild(fragment, element);
+                    }
+                } else if (element.nodeType === 1 && element.childNodes && !/(script|style|textarea)/i.test(element.tagName)) {
+                    Array.from(element.childNodes).forEach(child => this.applyHighlights(child, regex));
                 }
-                element.childNodes.forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const text = node.textContent;
-                        if (text && searchTermRegex.test(text)) { 
-                            const fragment = document.createDocumentFragment();
-                            let lastIndex = 0;
-                            text.replace(searchTermRegex, (match, ...args) => {
-                                const offset = args[args.length - 2]; 
-                                if (offset > lastIndex) {
-                                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
-                                }
-                                const highlightSpan = document.createElement('span');
-                                highlightSpan.className = 'search-highlight';
-                                highlightSpan.textContent = match;
-                                fragment.appendChild(highlightSpan);
-                                lastIndex = offset + match.length;
-                                return match; 
-                            });
-                            if (lastIndex < text.length) {
-                                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-                            }
-                            if (node.parentNode) {
-                                node.parentNode.replaceChild(fragment, node);
-                            }
-                        }
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (!node.classList.contains('search-highlight') && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
-                            applyHighlightsToElement(node, searchTermRegex); 
-                        }
-                    }
-                });
-            }
+            },
+            performSearchAndFilter: function() {
+                const searchTerm = DOMElements.searchInput.value.trim().toLowerCase();
+                const selectedCar = DOMElements.filterCarModel.value;
+                const activeTab = document.querySelector('.tab-content.active');
+                if (!activeTab) return;
 
+                PolicyApp.removeHighlights(activeTab);
+                
+                let hasResults = false;
 
-            function performSearchAndFilter() {
-                const searchTerm = searchInput.value.trim(); 
-                const selectedCarModel = filterCarModelSelect.value;
-                const activeTabContent = document.querySelector('.tab-content.active');
+                activeTab.querySelectorAll('.policy-section').forEach(section => {
+                    const sectionText = section.innerText.toLowerCase();
+                    const carMatch = !selectedCar || sectionText.includes(selectedCar.toLowerCase());
+                    const searchMatch = !searchTerm || sectionText.includes(searchTerm);
 
-                if (!activeTabContent) return;
-
-                removeHighlights(activeTabContent); 
-
-                const noResultsMessage = activeTabContent.querySelector('.no-results-message');
-                if (noResultsMessage) noResultsMessage.style.display = 'none';
-
-                activeTabContent.querySelectorAll('.policy-section, .policy-section p, .policy-section li, .policy-section h3, .policy-section h4, table.policy-table tbody tr, table.policy-table, h2').forEach(el => {
-                    el.style.removeProperty('display');
-                });
-
-                const tabTitleH2 = activeTabContent.querySelector('h2');
-                let overallTabHasVisibleContent = false; 
-                const searchTermLower = searchTerm.toLowerCase(); 
-
-                if (tabTitleH2) {
-                     if (searchTermLower === "" || tabTitleH2.textContent.toLowerCase().includes(searchTermLower)) {
-                        // Visibility handled later
-                     } else {
-                        tabTitleH2.style.display = 'none';
-                     }
-                }
-
-                activeTabContent.querySelectorAll('.policy-section').forEach(section => {
-                    let sectionHasVisibleContent = false;
-                    let sectionTitleMatchesSearch = false;
-
-                    const sectionHeader = section.querySelector('h3');
-                    if (sectionHeader) {
-                        if (searchTermLower === "" || sectionHeader.textContent.toLowerCase().includes(searchTermLower)) {
-                            sectionTitleMatchesSearch = true;
-                            sectionHeader.style.removeProperty('display');
-                        } else {
-                            sectionHeader.style.display = 'none';
-                        }
-                    }
-
-                    section.querySelectorAll('table.policy-table').forEach(table => {
-                        let tableHasVisibleRows = false;
-                        table.querySelectorAll('tbody tr').forEach(row => {
-                            let rowMatchesCar = true;
-                            let rowMatchesSearch = true;
-
-                            if (selectedCarModel && selectedCarModel !== "") {
-                                const firstCell = row.querySelector('td:first-child');
-                                const carModelInCell = firstCell ? firstCell.textContent.trim() : '';
-                                const carModelInCellLower = carModelInCell.toLowerCase();
-                                const selectedModelLower = selectedCarModel.toLowerCase();
-
-                                if (selectedModelLower === "vf 3" && carModelInCellLower.includes("vf 3")) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf 5" && (carModelInCellLower.includes("vf 5") || carModelInCellLower.includes("vf5"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf 6" && (carModelInCellLower.includes("vf 6") || carModelInCellLower.includes("vf6"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf 7" && (carModelInCellLower.includes("vf 7") || carModelInCellLower.includes("vf7"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf 8" && (carModelInCellLower.includes("vf 8") || carModelInCellLower.includes("vf8"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf 9" && (carModelInCellLower.includes("vf 9") || carModelInCellLower.includes("vf9"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "vf e34" && (carModelInCellLower.includes("vf e34") || carModelInCellLower.includes("vfe34"))) rowMatchesCar = true;
-                                else if (selectedModelLower === "lux a" && carModelInCellLower.includes("luxa")) rowMatchesCar = true;
-                                else if (selectedModelLower === "lux sa" && carModelInCellLower.includes("luxsa")) rowMatchesCar = true;
-                                else if (selectedModelLower === "fadil" && carModelInCellLower.includes("fadil")) rowMatchesCar = true;
-                                else if (selectedModelLower === "president" && carModelInCellLower.includes("president")) rowMatchesCar = true;
-                                else if (selectedModelLower === "minio green" && carModelInCellLower.includes("minio green")) rowMatchesCar = true;
-                                else if (selectedModelLower === "ec van" && carModelInCellLower.includes("ec van")) rowMatchesCar = true;
-                                else if (selectedModelLower === "herio green" && carModelInCellLower.includes("herio green")) rowMatchesCar = true;
-                                else if (selectedModelLower === "nerio green" && carModelInCellLower.includes("nerio green")) rowMatchesCar = true;
-                                else if (selectedModelLower === "limo green" && carModelInCellLower.includes("limo green")) rowMatchesCar = true;
-                                else if (carModelInCellLower.startsWith(selectedModelLower)) {
-                                     rowMatchesCar = true;
-                                } else {
-                                    rowMatchesCar = false;
-                                }
-                            }
-
-                            if (searchTermLower !== "") {
-                                rowMatchesSearch = row.textContent.toLowerCase().includes(searchTermLower);
-                            }
-
-                            if (rowMatchesCar && rowMatchesSearch) {
-                                row.style.removeProperty('display');
-                                tableHasVisibleRows = true;
-                                sectionHasVisibleContent = true; 
-                            } else {
-                                row.style.display = 'none';
-                            }
-                        });
-                    });
-
-                    section.querySelectorAll('p, li, h4').forEach(el => {
-                        if (el.closest('table.policy-table')) return; 
-
-                        if (searchTermLower !== "") {
-                            if (el.textContent.toLowerCase().includes(searchTermLower)) {
-                                el.style.removeProperty('display');
-                                sectionHasVisibleContent = true; 
-                            } else {
-                                el.style.display = 'none';
-                            }
-                        } else { 
-                            el.style.removeProperty('display');
-                            if (!selectedCarModel) sectionHasVisibleContent = true;
-                        }
-                    });
-                    
-                    if (sectionHasVisibleContent || sectionTitleMatchesSearch) {
-                        section.style.removeProperty('display');
-                        if (sectionHeader && sectionTitleMatchesSearch) sectionHeader.style.removeProperty('display');
-                        overallTabHasVisibleContent = true; 
+                    if (carMatch && searchMatch) {
+                        section.style.display = '';
+                        hasResults = true;
                     } else {
                         section.style.display = 'none';
                     }
                 });
 
-                if (tabTitleH2) {
-                    if (overallTabHasVisibleContent || (tabTitleH2.style.display !== 'none' && searchTermLower !== "" && tabTitleH2.textContent.toLowerCase().includes(searchTermLower))) {
-                         tabTitleH2.style.removeProperty('display');
-                    } else if (!overallTabHasVisibleContent && searchTermLower !== "" && !tabTitleH2.textContent.toLowerCase().includes(searchTermLower)) {
-                         tabTitleH2.style.display = 'none';
-                    } else if (!overallTabHasVisibleContent && searchTermLower === "") {
-                         tabTitleH2.style.display = 'none';
-                    }
-                }
-                
-                const isH2Visible = tabTitleH2 && tabTitleH2.style.display !== 'none';
-                if (!overallTabHasVisibleContent && !isH2Visible && noResultsMessage) {
-                    noResultsMessage.style.display = 'block';
-                }
-
-                if (searchTerm !== "") {
-                    const searchTermRegex = new RegExp(escapeRegExp(searchTerm), 'gi');
-                    activeTabContent.querySelectorAll('h2, h3, h4, p, li, td, th').forEach(el => {
-                        const parentSection = el.closest('.policy-section');
-                        const parentTable = el.closest('.policy-table');
-                        let isVisible = el.style.display !== 'none';
-
-                        if(parentSection && parentSection.style.display === 'none') isVisible = false;
-                        if(parentTable && parentTable.style.display === 'none') isVisible = false;
-                        if(el.tagName === 'TD' || el.tagName === 'TH'){
-                            const parentRow = el.closest('tr');
-                            if(parentRow && parentRow.style.display === 'none') isVisible = false;
-                        }
-                        if (isVisible) {
-                            applyHighlightsToElement(el, searchTermRegex);
-                        }
-                    });
+                if (searchTerm && hasResults) {
+                    const regex = new RegExp(searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                    PolicyApp.applyHighlights(activeTab, regex);
                 }
             }
+        };
 
-            if (searchInput && filterCarModelSelect) {
-                searchInput.addEventListener('input', performSearchAndFilter);
-                filterCarModelSelect.addEventListener('change', performSearchAndFilter);
-            }
+        // --- Khởi chạy ---
+        UIManager.init();
+        PolicyApp.init();
+    });
 
-            if (clearFilterBtn) {
-                clearFilterBtn.addEventListener('click', () => {
-                    searchInput.value = '';
-                    filterCarModelSelect.value = '';
-                    performSearchAndFilter(); 
-                });
-            }
+    // --- Hàm cho các nút inline ---
+    function openPolicyTab(evt, policyName) {
+        document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+        document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+        document.getElementById(policyName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+        localStorage.setItem('activePolicyTab', policyName);
+        
+        // Trigger search/filter again on tab change
+        document.getElementById('searchInput').dispatchEvent(new Event('input'));
+    }
 
-            const originalOpenPolicyTabFunction = window.openPolicyTab;
-            window.openPolicyTab = function(evt, policyName) {
-                originalOpenPolicyTabFunction(evt, policyName); 
-                setTimeout(() => { 
-                    performSearchAndFilter();
-                }, 50); 
-            };
+    // --- AI CHATBOT ---
+const chatbotApiURL = "https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec";
+let chatMessagesContainer;
 
-            const savedActiveTab = localStorage.getItem('activePolicyTab');
-            if (savedActiveTab && document.getElementById(savedActiveTab)) {
-                window.openPolicyTab(null, savedActiveTab);
-            } else if (document.querySelector('.tab-button')) {
-                const firstTabButton = document.querySelector('.tab-buttons .tab-button');
-                if (firstTabButton) {
-                     firstTabButton.click();
-                }
-            }
-            
-            const chatToggleButton = document.getElementById('ai-chat-toggle');
-            const chatWindow = document.getElementById('ai-chat-window');
-            const chatCloseButton = document.getElementById('ai-chat-close');
-            const chatMessagesContainer = document.getElementById('ai-chat-messages');
-            const chatInput = document.getElementById('ai-chat-input');
-            const chatSendButton = document.getElementById('ai-chat-send');
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec';
+document.addEventListener("DOMContentLoaded", function() {
+    // Chỉ khởi tạo biến này sau khi DOM đã tải xong
+    chatMessagesContainer = document.getElementById('ai-chat-messages');
+});
 
-            // --- TỐI ƯU #1: KHỞI TẠO BỘ NHỚ ĐỆM (CACHE) ---
-            const aiResponseCache = new Map();
+function toggleGlobalAIChat() {
+    document.getElementById('ai-chat-window').classList.toggle('open');
+}
 
-            chatToggleButton.addEventListener('click', () => chatWindow.classList.toggle('visible'));
-            chatCloseButton.addEventListener('click', () => chatWindow.classList.remove('visible'));
-            chatSendButton.addEventListener('click', sendMessageToAi);
-            chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessageToAi(); });
+function handleChatInputKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendGlobalAIChatMessage();
+    }
+}
 
-            function appendMessage(text, sender) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `chat-message ${sender}-message`;
-                
-                const bubbleDiv = document.createElement('div');
-                bubbleDiv.className = 'message-bubble';
-                
-                if(sender === 'ai' && text === 'thinking') {
-                    const thinkingIndicator = document.createElement('div');
-                    thinkingIndicator.className = 'thinking-indicator';
-                    thinkingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-                    bubbleDiv.appendChild(thinkingIndicator);
-                } else {
-                    bubbleDiv.textContent = text;
-                }
-                
-                messageDiv.appendChild(bubbleDiv);
-                chatMessagesContainer.appendChild(messageDiv);
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                return messageDiv;
-            }
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
 
-            async function sendMessageToAi() {
-                const message = chatInput.value.trim();
-                if (!message) return;
+function appendMessage(text, sender) {
+    if (!chatMessagesContainer) return;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `${sender}-message`;
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-content';
 
-                appendMessage(message, 'user');
-                chatInput.value = '';
-                chatInput.disabled = true;
-                chatSendButton.disabled = true;
+    if (sender === 'ai' && text === 'thinking') {
+        messageDiv.classList.add('loading');
+        const thinkingIndicator = document.createElement('div');
+        thinkingIndicator.className = 'typing-indicator';
+        thinkingIndicator.innerHTML = '<span></span><span></span><span></span>';
+        bubbleDiv.appendChild(thinkingIndicator);
+    } else {
+        // Chuyển đổi xuống dòng thành thẻ <br>
+        bubbleDiv.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+    }
 
-                // --- TỐI ƯU #2: KIỂM TRA CACHE TRƯỚC KHI GỌI AI ---
-                if (aiResponseCache.has(message.toLowerCase())) {
-                    const cachedResponse = aiResponseCache.get(message.toLowerCase());
-                    appendMessage(cachedResponse, 'ai');
-                    
-                    // Kích hoạt lại input sau khi lấy từ cache
-                    chatInput.disabled = false;
-                    chatSendButton.disabled = false;
-                    chatInput.focus();
-                    return; // Dừng tại đây, không gọi AI
-                }
-                
-                // Nếu không có trong cache, tiếp tục quy trình gọi AI
-                const thinkingMessageElement = appendMessage('thinking', 'ai');
+    messageDiv.appendChild(bubbleDiv);
+    chatMessagesContainer.appendChild(messageDiv);
+    // Tự động cuộn xuống tin nhắn mới nhất
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    return messageDiv;
+}
 
-                try {
-                    const responseText = await sendRequestWithBackoff(message, thinkingMessageElement);
-                    
-                    // --- TỐI ƯU #3: LƯU KẾT QUẢ VÀO CACHE ---
-                    aiResponseCache.set(message.toLowerCase(), responseText);
+async function sendGlobalAIChatMessage() {
+    const inputEl = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send-btn');
+    const userPrompt = inputEl.value.trim();
 
-                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
-                        chatMessagesContainer.removeChild(thinkingMessageElement);
-                    }
-                    appendMessage(responseText, 'ai');
+    if (!userPrompt) return;
 
-                } catch (error) {
-                    console.error('Lỗi sau nhiều lần thử lại:', error);
-                    if (thinkingMessageElement && chatMessagesContainer.contains(thinkingMessageElement)) {
-                        chatMessagesContainer.removeChild(thinkingMessageElement);
-                    }
-                    appendMessage('Rất tiếc, đã có lỗi kết nối nghiêm trọng. Vui lòng thử lại sau ít phút.', 'ai');
-                } finally {
-                    chatInput.disabled = false;
-                    chatSendButton.disabled = false;
-                    chatInput.focus();
-                }
-            }
-			
-			// Hàm sendRequestWithBackoff giữ nguyên như cũ, không cần thay đổi
-            async function sendRequestWithBackoff(userPrompt, thinkingMessageElement, maxRetries = 4, initialDelay = 1000) {
-                let delay = initialDelay;
+    appendMessage(userPrompt, 'user');
+    inputEl.value = '';
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
 
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        const formData = new FormData();
-                        formData.append('action', 'getGlobalAiResponse');
-                        formData.append('userPrompt', userPrompt);
-                        formData.append('pageContext', document.body.innerText);
+    const thinkingMessageElement = appendMessage('thinking', 'ai');
 
-                        const response = await fetch(SCRIPT_URL, {
-                            method: 'POST',
-                            body: formData
-                        });
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'getGlobalAiResponse');
+        formData.append('userPrompt', userPrompt);
+        // Lấy ngữ cảnh từ nội dung trang hiện tại
+        formData.append('pageContext', document.body.innerText);
 
-                        if (response.status === 429) {
-                            const retryAfter = response.headers.get('Retry-After');
-                            let waitTime = delay;
-                            if (retryAfter) {
-                                const retryAfterSeconds = parseInt(retryAfter, 10);
-                                if (!isNaN(retryAfterSeconds)) {
-                                    waitTime = retryAfterSeconds * 1000;
-                                }
-                            }
-                            const error = new Error('429 Too Many Requests');
-                            error.waitTime = waitTime;
-                            throw error;
-                        }
-
-                        if (!response.ok) {
-                            throw new Error(`Lỗi mạng: ${response.statusText}`);
-                        }
-
-                        return await response.text();
-
-                    } catch (error) {
-                        if (error.message.includes('429') && i < maxRetries - 1) {
-                            const waitTime = error.waitTime || delay;
-                            if (thinkingMessageElement) {
-                                const bubble = thinkingMessageElement.querySelector('.message-bubble');
-                                bubble.innerHTML = `Máy chủ đang bận. Sẽ thử lại sau ${Math.round(waitTime / 1000)} giây...`;
-                            }
-                            const jitter = Math.random() * 500;
-                            await new Promise(resolve => setTimeout(resolve, waitTime + jitter));
-                            delay *= 2;
-                        } else {
-                            throw error;
-                        }
-                    }
-                }
-            }
+        const response = await fetch(chatbotApiURL, {
+            method: 'POST',
+            body: formData
         });
+
+        if (!response.ok) {
+            throw new Error(`Lỗi mạng: ${response.statusText}`);
+        }
+
+        const aiResponseText = await response.text();
+        
+        // Xóa thông báo "đang suy nghĩ"
+        if (thinkingMessageElement) {
+            thinkingMessageElement.remove();
+        }
+        
+        appendMessage(aiResponseText, 'ai');
+
+    } catch (error) {
+        if (thinkingMessageElement) {
+            thinkingMessageElement.remove();
+        }
+        appendMessage(`Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`, 'ai');
+    } finally {
+        inputEl.disabled = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
+    }
+}
     </script>
 </body>
 </html>
