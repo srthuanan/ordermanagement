@@ -2,2033 +2,857 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KPIs VinFast Thuận An</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉ Tiêu Hoàn Thành</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
     <style>
+        /* ==========================================================================
+           1. Biến màu và thiết lập cơ bản (CSS Variables & Root)
+           ========================================================================== */
         :root {
-            --primary-color: #003087;
-            --primary-color-darker: #00205b;
-            --primary-color-lighter: #0040c1;
-            --secondary-color: #00aeff;
-            --accent-color: #ffc107;
+            /* Font */
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+
+            /* Colors */
+            --gradient-start: #4f46e5;
+            --gradient-end: #14b8a6;
+            --gradient: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            
+            /* Light Mode Palette */
+            --bg-light: #f8f9fa;
+            --card-bg-light: #ffffff;
+            --text-light: #212529;
+            --text-muted-light: #6c757d;
+            --border-light: #e9ecef;
+            
+            /* Status & Chart Colors */
             --success-color: #28a745;
             --danger-color: #dc3545;
-            --warning-color: #ffc107; /* Vàng/Cam cho mức cảnh báo */
+            --warning-color: #ffc107;
             --info-color: #17a2b8;
-            --background-light: #f4f7fc;
-            --text-light: #2c3e50;
-            --background-dark: #161b22;
-            --text-dark: #c9d1d9;
-            --card-bg-light: #ffffff;
-            --card-bg-dark: #1e242e;
-            --border-color-light: #e1e4e8;
-            --border-color-dark: #30363d;
-            --shadow-light-outer: 0 4px 15px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            --shadow-dark-outer: 0 4px 15px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.15);
-            --shadow-light-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
-            --shadow-dark-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
-            --transition-speed: 0.3s;
-            --transition-speed-fast: 0.2s;
             --skeleton-bg-light: #e0e0e0;
-            --skeleton-bg-dark: #3a3a4a;
-            --transition-easing: ease-in-out;
-            --exterior-default-text: #333;
-            --exterior-orange-text: orange;
-            --exterior-red-text: red;
-            --exterior-blue-text: blue;
-            --exterior-yellow-text: #B8860B;
-            --exterior-pink-text: hotpink;
-            --exterior-green-text: green;
-            --exterior-white-text: #333;
-            --exterior-grey-text: dimgray;
-            --exterior-bronze-text: peru;
-            --status-san-sang-bg-light: #d4edda;
-            --status-san-sang-text-light: #155724;
-            --status-san-sang-border-light: #b6dcc3;
-            --status-san-sang-bg-dark: #1e4620;
-            --status-san-sang-text-dark: #d4edda;
-            --status-san-sang-border-dark: #347c50;
-            --status-da-ghep-bg-light: #cfe2ff;
-            --status-da-ghep-text-light: #0a367e;
-            --status-da-ghep-border-light: #a9c7ff;
-            --status-da-ghep-bg-dark: #0e2a4f;
-            --status-da-ghep-text-dark: #cfe2ff;
-            --status-da-ghep-border-dark: #2958a0;
-            --status-chua-ghep-bg-light: #fff3cd;
-            --status-chua-ghep-text-light: #856404;
-            --status-chua-ghep-border-light: #ffecb5;
-            --status-chua-ghep-bg-dark: #533f03;
-            --status-chua-ghep-text-dark: #ffeeba;
-            --status-chua-ghep-border-dark: #a5850c;
-            --status-da-ban-bg-light: #e9ecef;
-            --status-da-ban-text-light: #495057;
-            --status-da-ban-border-light: #d6d8db;
-            --status-da-ban-bg-dark: #343a40;
-            --status-da-ban-text-dark: #adb5bd;
-            --status-da-ban-border-dark: #545b62;
-            --status-cho-vbc-bg-light: #d1ecf1;
-            --status-cho-vbc-text-light: #0c5460;
-            --status-cho-vbc-border-light: #bee5eb;
-            --status-cho-vbc-bg-dark: #0c3c44;
-            --status-cho-vbc-text-dark: #d1ecf1;
-            --status-cho-vbc-border-dark: #2b7a7f;
-            --status-default-bg-light: #f8f9fa;
-            --status-default-text-light: #343a40;
-            --status-default-border-light: #ced4da;
-            --status-default-bg-dark: #212529;
-            --status-default-text-dark: #e9ecef;
-            --status-default-border-dark: #495057;
+            
+            /* Shadows & Effects */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-glow-light: 0 0 0 4px rgb(79 70 229 / 0.1);
+
+            /* Transitions */
+            --transition-fast: 0.2s;
+            --transition-medium: 0.3s;
+            --transition-slow: 0.5s;
         }
+
+        /* ==========================================================================
+           2. Layout & Global Styles (Đồng bộ từ khoxe.html)
+           ========================================================================== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Roboto', sans-serif;
-            background: var(--background-light);
+            font-family: var(--font-main);
+            background: var(--bg-light);
             color: var(--text-light);
             min-height: 100vh;
             overflow-x: hidden;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
-            width: 100vw;
-            font-size: 14px;
+            transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
         }
-        body.dark-mode {
-            background: var(--background-dark);
-            color: var(--text-dark);
-            --exterior-default-text: #ccc;
-            --exterior-orange-text: #FFA500;
-            --exterior-red-text: #FF4747;
-            --exterior-blue-text: #5CADFF;
-            --exterior-yellow-text: #FFD700;
-            --exterior-pink-text: #FF69B4;
-            --exterior-green-text: #32CD32;
-            --exterior-white-text: #E0E0E0;
-            --exterior-grey-text: #A9A9A9;
-            --exterior-bronze-text: #CD7F32;
-            --status-san-sang-bg-light: var(--status-san-sang-bg-dark);
-            --status-san-sang-text-light: var(--status-san-sang-text-dark);
-            --status-san-sang-border-light: var(--status-san-sang-border-dark);
-            --status-da-ghep-bg-light: var(--status-da-ghep-bg-dark);
-            --status-da-ghep-text-light: var(--status-da-ghep-text-dark);
-            --status-da-ghep-border-light: var(--status-da-ghep-border-dark);
-            --status-chua-ghep-bg-light: var(--status-chua-ghep-bg-dark);
-            --status-chua-ghep-text-light: var(--status-chua-ghep-text-dark);
-            --status-chua-ghep-border-light: var(--status-chua-ghep-border-dark);
-            --status-da-ban-bg-light: var(--status-da-ban-bg-dark);
-            --status-da-ban-text-light: var(--status-da-ban-text-dark);
-            --status-da-ban-border-light: var(--status-da-ban-border-dark);
-            --status-cho-vbc-bg-light: var(--status-cho-vbc-bg-dark);
-            --status-cho-vbc-text-light: var(--status-cho-vbc-text-dark);
-            --status-cho-vbc-border-light: var(--status-cho-vbc-border-dark);
-            --status-default-bg-light: var(--status-default-bg-dark);
-            --status-default-text-light: var(--status-default-text-dark);
-            --status-default-border-light: var(--status-default-border-dark);
-        }
+
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track {
-            background: var(--card-bg-light);
-            border-radius: 4px;
-        }
-        body.dark-mode ::-webkit-scrollbar-track {
-            background: var(--card-bg-dark);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-            transition: background var(--transition-speed) ease;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color-lighter);
-        }
-        body.dark-mode ::-webkit-scrollbar-thumb { background: var(--primary-color-lighter); }
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            padding: 10px 20px;
-            height: 50px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted-light); }
+
+        .navbar {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 50px;
+            padding: 0 20px;
+            background-color: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 1px solid var(--border-light);
+            transition: all var(--transition-medium) ease;
+            display: flex;
+            align-items: center;
             z-index: 999;
-            box-shadow: var(--shadow-light-outer);
-            transition: background var(--transition-speed) ease, width var(--transition-speed) ease, left var(--transition-speed) ease;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            gap: 15px;
         }
-        body.dark-mode header {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-            box-shadow: var(--shadow-dark-outer);
+
+        .navbar .logo-title {
+            font-size: 18px; font-weight: 800;
+            color: var(--text-light);
+            position: absolute; left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
         }
-        .header-title {
-            text-align: center;
-            flex-grow: 1;
-        }
+
         .navbar-controls {
-            display: flex;
-            gap: 8px;
-            z-index: 1001;
             margin-left: auto;
+            display: flex; align-items: center; gap: 10px;
         }
-        .nav-btn, .theme-toggle, .theme-toggle-btn {
-            border: none;
+
+        .nav-btn {
+            border: 1px solid var(--border-light);
             border-radius: 50%;
             background: var(--card-bg-light);
+            color: var(--text-muted-light);
+            transition: all var(--transition-medium) ease;
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 16px;
+        }
+        .nav-btn:hover {
             color: var(--text-light);
-            font-size: 14px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-light-outer);
-            transition: all var(--transition-speed) ease;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
-        .nav-btn:hover, .theme-toggle:hover, .theme-toggle-btn:hover {
-            background: #e9ecef;
-            transform: translateY(-2px) scale(1.1);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-        body.dark-mode .nav-btn,
-        body.dark-mode .theme-toggle,
-        body.dark-mode .theme-toggle-btn {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            box-shadow: var(--shadow-dark-outer);
-        }
-        body.dark-mode .nav-btn:hover,
-        body.dark-mode .theme-toggle:hover,
-        body.dark-mode .theme-toggle-btn:hover {
-            background: var(--primary-color-darker);
-            color: #fff;
-        }
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 200px;
-            height: 100vh;
-            background: var(--primary-color-darker);
-            padding: 15px;
-            padding-top: 60px;
-            transition: width var(--transition-speed) ease, transform var(--transition-speed) ease, background var(--transition-speed) ease;
-            z-index: 998;
-            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-        }
-        .sidebar.collapsed {
-            width: 60px;
-        }
-        body.dark-mode .sidebar {
-            background: var(--background-dark);
-            border-right: 1px solid var(--border-color-dark);
-            box-shadow: 3px 0 10px rgba(0,0,0,0.2);
-        }
-        .sidebar .logo {
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-        }
-        .sidebar .logo h1 {
-            font-size: 25px;
-            color: #fff;
-            font-weight: 600;
-            transition: opacity var(--transition-speed) ease, font-size var(--transition-speed) ease;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative;
-            display: inline-block;
-        }
-        .sidebar:not(.collapsed) .logo h1::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -150%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            animation: shimmer 3s infinite linear;
-            animation-delay: 1s;
-        }
-        @keyframes shimmer {
-            0% { left: -150%; }
-            50% { left: 150%; }
-            100% { left: 150%; }
-        }
-        .sidebar.collapsed .logo h1 { opacity: 0; font-size: 0; }
-        .sidebar.collapsed .logo h1::after { display: none; }
-        .sidebar .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-        .sidebar .menu a {
-            padding: 10px 12px;
-            text-decoration: none;
-            color: rgba(255,255,255,0.8);
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 6px;
-            background: transparent;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease, padding-left var(--transition-speed) ease, transform var(--transition-speed) ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        .sidebar .menu a::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background-color: var(--secondary-color);
-            transition: left var(--transition-speed) ease-out;
-        }
-        .sidebar .menu a:hover::before { left: 0; }
-        body.dark-mode .sidebar .menu a { color: var(--text-dark); }
-        .sidebar.collapsed .menu a { padding: 10px; justify-content: center; }
-        .sidebar.collapsed .menu a::before { display: none; }
-        .sidebar .menu a i {
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-            transition: transform var(--transition-speed) ease;
-        }
-        .sidebar .menu a span {
-            transition: opacity 0.2s ease, max-width var(--transition-speed) ease;
-            white-space: nowrap;
-            overflow: hidden;
-            max-width: 100px;
-        }
-        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
-        .sidebar .menu a:hover {
-    background: linear-gradient(90deg, rgba(0, 174, 255, 0.15) 0%, rgba(0, 174, 255, 0) 100%);
-    color: #fff;
-    padding-left: 12px; /* Giữ nguyên padding để không bị giật */
-    transform: none; /* Bỏ transform để ổn định hơn */
-}
-
-/* Định dạng cho tab đang được chọn */
-.sidebar .menu a.active {
-    background: linear-gradient(90deg, rgba(0, 174, 255, 0.25) 0%, rgba(0, 174, 255, 0) 100%);
-    color: #fff; /* Giữ màu chữ trắng */
-    font-weight: 600;
-    /* Thêm một đường viền trái để làm điểm nhấn */
-    border-left: 4px solid var(--secondary-color);
-    padding-left: 8px; /* Giảm padding trái để bù lại cho border */
-}
-
-/* Bỏ hiệu ứng gạch chân cũ */
-.sidebar .menu a.active::before, .sidebar .menu a:hover::before {
-    display: none;
-}
-.sidebar .menu a.active {
-    animation: activeLinkPulse 1.5s infinite ease-in-out;
-}
-        @keyframes activeLinkPulse {
-            0% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
-            50% { box-shadow: 0 0 15px rgba(255,255,255,0.7); }
-            100% { box-shadow: 0 0 5px rgba(255,255,255,0.3); }
-        }
-        body.dark-mode .sidebar .menu a.active { background: var(--primary-color); animation-name: activeLinkPulseDark; }
-        body.dark-mode .sidebar .menu a.active::before { background-color: var(--secondary-color); }
-        @keyframes activeLinkPulseDark {
-            0% { box-shadow: 0 0 5px var(--secondary-color); }
-            50% { box-shadow: 0 0 15px var(--secondary-color); }
-            100% { box-shadow: 0 0 5px var(--secondary-color); }
-        }
-        .toggle-btn-sidebar {
-            position: absolute;
-            top: 12px;
-            right: -15px;
-            width: 30px;
-            height: 30px;
-            background: var(--primary-color);
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-speed) ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1001;
-        }
-        .toggle-btn-sidebar:hover { background: var(--primary-color-lighter); transform: scale(1.1) rotate(180deg); }
-        body.dark-mode .toggle-btn-sidebar { background: var(--primary-color-darker); }
+        
         .mobile-menu-btn {
             display: none;
-            position: fixed;
-            top: 8px;
-            left: 10px;
             z-index: 1002;
-            background: var(--card-bg-light);
+            background: transparent;
             color: var(--text-light);
-            border: 1px solid var(--border-color-light);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
             cursor: pointer;
-            box-shadow: var(--shadow-light-outer);
             align-items: center;
             justify-content: center;
-            transition: all var(--transition-speed) ease;
+            transition: all var(--transition-medium) ease;
         }
-        .mobile-menu-btn:hover { background: #e9ecef; transform: scale(1.1); }
-        body.dark-mode .mobile-menu-btn {
-            background: var(--card-bg-dark); color: var(--text-dark);
-            border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark-outer);
+        .mobile-menu-btn:hover { background-color: var(--border-light); }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 240px; height: 100vh;
+            background-color: rgba(248, 249, 250, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 15px; padding-top: 80px; 
+            transition: width var(--transition-medium) ease, transform var(--transition-medium) ease, background-color var(--transition-medium) ease;
+            z-index: 999;
+            border-right: 1px solid var(--border-light);
+            display: flex; flex-direction: column;
         }
-        body.dark-mode .mobile-menu-btn:hover { background: var(--primary-color-darker); color: #fff; }
-        [data-tooltip] { position: relative; }
-        [data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%) translateY(5px);
-            background-color: #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-            z-index: 10000;
+        .sidebar.collapsed { width: 80px; }
+
+        .sidebar .logo { text-align: center; margin-bottom: 30px; }
+        .sidebar .logo h1 {
+            font-size: 18px; font-weight: 800;
+            background: var(--gradient); color: transparent;
+            -webkit-background-clip: text; background-clip: text;
+            transition: opacity var(--transition-medium) ease;
         }
-        [data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
+        .sidebar.collapsed .logo h1 { opacity: 0; }
+
+        .sidebar .menu {
+            display: flex; flex-direction: column; gap: 8px; flex-grow: 1;
         }
-        body.dark-mode [data-tooltip]::after {
-            background-color: #f0f0f0;
-            color: #333;
+        .sidebar .menu a {
+            padding: 12px 15px; text-decoration: none;
+            color: var(--text-muted-light); font-size: 14px; font-weight: 600;
+            border-radius: 10px; transition: all var(--transition-fast) ease-out;
+            display: flex; align-items: center; gap: 15px;
         }
-        .main-container {
-            background: var(--background-light);
-            padding: 20px;
-            margin-left: 200px;
-            padding-top: 70px;
-            min-height: calc(100vh - 50px - 30px);
-            display: flex;
-            flex-direction: column;
+        .sidebar .menu a i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            transition: transform var(--transition-medium) ease;
+        }
+        .sidebar .menu a span { transition: opacity 0.2s ease, max-width var(--transition-medium) ease; white-space: nowrap; overflow: hidden; max-width: 120px; }
+        .sidebar.collapsed .menu a { justify-content: center; }
+        .sidebar.collapsed .menu a span { opacity: 0; max-width: 0; }
+        .sidebar .menu a:hover { color: var(--text-light); background: var(--bg-light); }
+        .sidebar .menu a.active { background: var(--gradient); color: white; box-shadow: var(--shadow-md); }
+        .sidebar .menu a.active i { transform: scale(1.1); }
+        
+        .toggle-btn {
+            margin-top: auto;
+            width: 100%; height: 44px;
+            background: var(--bg-light); border: 1px solid var(--border-light);
+            border-radius: 12px; color: var(--text-muted-light);
+            font-size: 16px; cursor: pointer;
+            transition: all var(--transition-medium) ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar.collapsed .toggle-btn { width: 44px; margin: auto auto 0; }
+        .toggle-btn:hover { border-color: var(--gradient-start); color: var(--gradient-start); transform: scale(1.05); }
+        .toggle-btn i { transition: transform var(--transition-slow) cubic-bezier(0.19, 1, 0.22, 1); }
+        .sidebar.collapsed .toggle-btn i { transform: rotate(180deg); }
+
+        .main-content {
+            margin-left: 240px; padding-top: 80px; padding-bottom: 60px;
+            transition: margin-left var(--transition-medium) ease;
+            display: flex; flex-direction: column;
             gap: 20px;
-            transition: margin-left var(--transition-speed) ease, padding-top var(--transition-speed) ease;
-            padding-bottom: 50px;
+            padding-left: 20px;
+            padding-right: 20px;
         }
-        .main-container.collapsed {
-            margin-left: 60px;
+        .main-content.collapsed { margin-left: 80px; }
+
+        footer {
+            position: fixed; bottom: 0;
+            height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-muted-light);
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-light);
+            z-index: 998;
+            left: 240px; width: calc(100% - 240px);
+            transition: all var(--transition-medium) ease;
         }
-        body.dark-mode .main-container {
-            background: var(--background-dark);
-        }
-        .filter-bar {
+        .main-content.collapsed + footer { left: 80px; width: calc(100% - 80px); }
+        
+        /* ==========================================================================
+           3. Components (Filter, Cards, Table, etc. for KPI Page)
+           ========================================================================== */
+
+        .filter-section {
+            padding: 25px;
             background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 15px 20px;
-            box-shadow: var(--shadow-light-outer);
-            border: 1px solid var(--border-color-light);
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
+            border-radius: 16px; box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            transition: all var(--transition-medium) ease;
+            flex-shrink: 0;
         }
-        body.dark-mode .filter-bar {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
-        }
-        .filter-bar label { font-weight: 500; margin-right: 5px; color: var(--text-light); }
-        body.dark-mode .filter-bar label { color: var(--text-dark); }
+
+        .filter-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .filter-group { flex: 1 1 200px; display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-weight: 600; font-size: 13px; color: var(--text-muted-light); }
         .filter-bar select, .filter-bar input[type="month"] {
-            padding: 8px 10px;
-            border: 1px solid var(--border-color-light);
-            border-radius: 6px;
-            font-size: 14px;
-            background: var(--background-light);
-            color: var(--text-light);
-            min-width: 150px;
-            box-shadow: var(--shadow-light-inner);
+            width: 100%; padding: 12px 15px;
+            border: 1px solid var(--border-light); border-radius: 10px;
+            font-size: 14px; background: var(--bg-light); color: var(--text-light);
+            transition: all var(--transition-medium) ease;
         }
         .filter-bar select:focus, .filter-bar input[type="month"]:focus {
-             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
+            outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light);
         }
-        body.dark-mode .filter-bar select, body.dark-mode .filter-bar input[type="month"] {
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color-dark);
-            box-shadow: var(--shadow-dark-inner);
+        .filter-actions { margin-left: auto; }
+        .action-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 20px; border: none;
+            border-radius: 10px; font-size: 14px; font-weight: 600;
+            color: white; background: var(--gradient);
+            cursor: pointer; transition: all var(--transition-fast) ease;
+            box-shadow: var(--shadow-sm);
         }
-        body.dark-mode .filter-bar select:focus, body.dark-mode .filter-bar input[type="month"]:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
-        }
-        .filter-bar button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
-            box-shadow: var(--shadow-light-outer);
-        }
-        .filter-bar button:hover {
-            background-color: var(--primary-color-lighter);
-            transform: translateY(-1px);
-        }
-        .filter-bar button:disabled {
-            background-color: var(--border-color-light);
-            cursor: not-allowed;
-            box-shadow: none; transform: none;
-        }
-        body.dark-mode .filter-bar button {
-             background-color: var(--primary-color-darker);
-        }
-        body.dark-mode .filter-bar button:hover {
-            background-color: var(--primary-color);
-        }
-        body.dark-mode .filter-bar button:disabled { background-color: var(--border-color-dark); }
-
+        .action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .action-btn:disabled { background: var(--border-light); color: var(--text-muted-light); cursor: not-allowed; transform: none; box-shadow: none; }
+        
         .kpi-consultant-grid {
-            position: relative; /* Quan trọng cho loader */
+            position: relative;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 20px;
-            min-height: 150px; /* Để loader có không gian hiển thị ban đầu */
+            min-height: 150px;
         }
         .kpi-consultant-card {
             background: var(--card-bg-light);
-            border-radius: 10px;
+            border-radius: 16px;
             padding: 20px;
-            box-shadow: var(--shadow-light-outer);
-            border: 1px solid var(--border-color-light);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
             transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            display: flex; /* Cho layout bên trong card */
-            flex-direction: column; /* Sắp xếp item theo chiều dọc */
+            display: flex;
+            flex-direction: column;
         }
         .kpi-consultant-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        }
-        body.dark-mode .kpi-consultant-card {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
-        }
-        body.dark-mode .kpi-consultant-card:hover {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: var(--shadow-lg);
         }
         .kpi-consultant-card h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-light);
             margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color-light);
+            border-bottom: 1px solid var(--border-light);
             padding-bottom: 10px;
         }
-        body.dark-mode .kpi-consultant-card h3 {
-            color: var(--secondary-color);
-            border-bottom-color: var(--border-color-dark);
-        }
-        .kpi-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.95rem; }
-        .kpi-item strong { font-weight: 500; color: var(--text-light); }
-        body.dark-mode .kpi-item strong { color: var(--text-dark); }
-        .kpi-item .value { font-weight: 600; color: var(--primary-color); }
-        body.dark-mode .kpi-item .value { color: var(--secondary-color); }
+        .kpi-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }
+        .kpi-item strong { font-weight: 500; color: var(--text-muted-light); }
+        .kpi-item .value { font-weight: 700; color: var(--text-light); }
         .kpi-item .value.positive { color: var(--success-color) !important; }
         .kpi-item .value.negative { color: var(--danger-color) !important; }
         .kpi-item .value.neutral { color: var(--info-color) !important; }
-        .kpi-item input[type="number"].target-input-readonly {
-            background-color: var(--background-light);
-            color: var(--text-light);
-            border: 1px dashed var(--border-color-light);
-            cursor: default;
-            text-align: right;
-            width: 80px;
-            padding: 5px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        body.dark-mode .kpi-item input[type="number"].target-input-readonly {
-            background-color: var(--card-bg-dark);
-            color: var(--text-dark);
-            border-color: var(--border-color-dark);
-        }
 
-        /* CSS cho Donut Chart Container */
         .donut-chart-kpi-container {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 5px; /* Khoảng cách giữa tiêu đề "Tiến độ" và chart */
+            justify-content: space-between;
+            gap: 15px;
             margin-top: 10px;
-            margin-bottom: 10px;
         }
-        .donut-chart-kpi-container strong {
-            font-weight: 500;
-            color: var(--text-light);
-            font-size: 0.95rem; /* Giống .kpi-item strong */
-        }
-        body.dark-mode .donut-chart-kpi-container strong {
-            color: var(--text-dark);
-        }
-        .donut-canvas-wrapper { /* Div bao bọc canvas */
-            width: 100px; /* Kích thước mong muốn cho donut */
-            height: 100px;
-            position: relative; /* Cho việc hiển thị text ở giữa (nếu không dùng plugin) */
-        }
-        .donut-canvas-wrapper canvas {
-            max-width: 100%;
-            max-height: 100%;
-        }
+        .donut-chart-kpi-container strong { font-size: 14px; font-weight: 500; color: var(--text-muted-light); }
+        .donut-canvas-wrapper { width: 100px; height: 100px; position: relative; }
+        .donut-canvas-wrapper canvas { max-width: 100%; max-height: 100%; }
 
-
-        .summary-table-container {
+        .content-card {
             background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: var(--shadow-light-outer);
-            border: 1px solid var(--border-color-light);
-            margin-top: 20px;
+            border-radius: 16px; padding: 25px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
         }
-        body.dark-mode .summary-table-container {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
+        .content-card h2 {
+            font-size: 20px; color: var(--text-light);
+            margin-bottom: 20px; font-weight: 700;
         }
-        .summary-table-container h2 {
-            font-size: 1.4rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        body.dark-mode .summary-table-container h2 { color: var(--secondary-color); }
-        .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .summary-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
         .summary-table th, .summary-table td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color-light);
+            padding: 12px 15px; text-align: left;
+            border-bottom: 1px solid var(--border-light);
         }
-        body.dark-mode .summary-table th, body.dark-mode .summary-table td { border-bottom-color: var(--border-color-dark); }
         .summary-table th {
-            background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--primary-color) 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            position: sticky; top: 0;
-            z-index: 1;
+            background-color: var(--bg-light); color: var(--text-light);
+            border-bottom: 2px solid var(--border-light);
+            text-align: center; text-transform: uppercase;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
         }
-        body.dark-mode .summary-table th {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
-        }
-        .summary-table tbody tr {
-             transition: background-color var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease, box-shadow var(--transition-speed-fast) ease;
-        }
-        .summary-table tbody tr:hover {
-            background: rgba(0, 48, 135, 0.08);
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-        }
-        body.dark-mode .summary-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-        }
+        .summary-table tbody tr:hover { background-color: var(--bg-light); }
         .summary-table td.positive { color: var(--success-color); font-weight: bold; }
         .summary-table td.negative { color: var(--danger-color); font-weight: bold; }
         .summary-table td.neutral { color: var(--info-color); font-weight: bold; }
-        .chart-container-wrapper {
-            background: var(--card-bg-light);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: var(--shadow-light-outer);
-            border: 1px solid var(--border-color-light);
-            margin-top: 20px;
-        }
-        body.dark-mode .chart-container-wrapper {
-            background: var(--card-bg-dark);
-            box-shadow: var(--shadow-dark-outer);
-            border: 1px solid var(--border-color-dark);
-        }
-        .chart-container-wrapper h2 {
-            font-size: 1.4rem;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-weight: 600;
-            text-align: center;
-        }
-        body.dark-mode .chart-container-wrapper h2 { color: var(--secondary-color); }
-        .chart-container {
-            height: 300px;
-        }
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-            color: #fff;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 12px;
-            z-index: 997;
-            transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
-        }
-        body.dark-mode footer {
-            background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-        }
-        #notification {
-            position: fixed;
-            bottom: 50px;
-            right: 20px;
-            padding: 12px 18px;
-            background: var(--card-bg-dark);
-            color: var(--text-dark);
-            border-radius: 8px;
-            display: none;
-            z-index: 10001;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        #notification.show {
-            display: block;
-            opacity: 1;
-            transform: translateX(0);
-        }
-        body.dark-mode #notification {
-            background: var(--card-bg-light);
-            color: var(--text-light);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        #notification.error { background-color: #dc3545; color: white; }
-        body.dark-mode #notification.error { background-color: #f8d7da; color: #721c24;}
-        #notification.warning { background-color: var(--accent-color); color: #333; }
-        body.dark-mode #notification.warning { background-color: #ffca2c; color: #333; }
 
+        .chart-container { height: 350px; }
+        
         .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            border-radius: 10px;
+            position: absolute; inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: none; justify-content: center; align-items: center;
+            z-index: 100; border-radius: 16px;
         }
-        .loading-overlay.active { opacity: 1; visibility: visible; }
+        .loading-overlay.active { display: flex; }
         .loading-spinner {
-            border: 4px solid #f0f0f0;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 30px; height: 30px;
+            border: 4px solid var(--border-light); border-top: 4px solid var(--gradient-start); 
+            border-radius: 50%; width: 40px; height: 40px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-overlay span {
-            margin-top: 10px;
-            font-size: 14px;
-            color: var(--text-light);
+
+        #notification {
+            position: fixed;
+            bottom: 60px; right: 20px;
+            padding: 12px 18px;
+            background: var(--text-light);
+            color: var(--card-bg-light);
+            border-radius: 8px;
+            z-index: 10001; font-size: 14px;
+            box-shadow: var(--shadow-lg);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            opacity: 0; visibility: hidden;
+            transform: translateY(20px);
         }
-        body.dark-mode .loading-overlay { background: rgba(30, 36, 46, 0.9); }
-        body.dark-mode .loading-spinner { border: 4px solid var(--card-bg-dark); border-top: 4px solid var(--primary-color-lighter); }
-        body.dark-mode .loading-overlay span { color: var(--text-dark); }
-        .hidden { display: none !important; }
-        @media (max-width: 900px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 220px;
-                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
-                padding-top: 50px;
-                z-index: 1005;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .sidebar.collapsed {
-                transform: translateX(-100%);
-            }
-            .sidebar.open .logo h1, .sidebar.open .menu a span {
-                opacity: 1;
-                max-width: 100px;
-            }
-             .sidebar.open .logo h1 {
-                font-size: 18px;
-            }
-            .toggle-btn-sidebar { display: none; }
-            .mobile-menu-btn { display: flex !important; }
-            header {
-                padding-left: 20px;
-                left: 0 !important;
-                width: 100% !important;
-            }
-            .main-container {
-                margin-left: 0 !important;
-                padding: 15px;
-                padding-top: 60px;
-            }
-            .main-container.collapsed { margin-left: 0 !important; }
-            .filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
-            .filter-bar > div { display: flex; flex-direction: column; width: 100%; gap: 8px; }
-            .filter-bar select, .filter-bar input[type="month"] { width: 100%; }
-        }
+        #notification.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+        /* ==========================================================================
+           4. Responsive Design (Đồng bộ từ khoxe.html)
+           ========================================================================== */
         @media (max-width: 768px) {
-            header {
-                padding: 12px 10px;
-                height: auto;
-                font-size: 13px;
-                flex-wrap: nowrap;
-            }
-            .header-title {
-                font-size: 13px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                margin: 0 5px;
-            }
-            .navbar-controls {
-                gap: 5px;
-            }
-            .nav-btn, .theme-toggle, .theme-toggle-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
-            .mobile-menu-btn {
-                top: 9px; left: 8px; width: 30px; height: 30px; font-size: 14px;
-            }
-            .sidebar { padding-top: 50px; }
-            .sidebar.open .logo h1 { font-size: 16px; }
-            .main-container {
-                padding-top: 60px;
-                min-height: calc(100vh - 50px - 34px);
-                padding: 10px;
-                gap: 10px;
-            }
-            .kpi-consultant-card h3 { font-size: 1.1rem; }
-            .summary-table-container h2 { font-size: 1.2rem; }
-            .summary-table { font-size: 0.85rem; }
-            .summary-table th, .summary-table td { padding: 8px; }
-            .chart-container { height: 250px; }
-            #notification {
-                bottom: 50px;
-                left: 10px;
-                right: 10px;
-                width: auto;
-                text-align: center;
-                font-size: 13px;
-                padding: 10px 15px;
-            }
-            footer {
-                font-size: 11px;
-                padding: 10px 0;
-            }
-            .donut-canvas-wrapper { /* Điều chỉnh kích thước donut cho mobile nếu cần */
-                width: 80px;
-                height: 80px;
-            }
+            .sidebar { transform: translateX(-100%); width: 260px; z-index: 1001; }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar.collapsed { transform: translateX(-100%); }
+            .main-content, .main-content.collapsed { margin-left: 0; padding-left: 15px; padding-right: 15px; padding-top: 80px; }
+            footer, .main-content.collapsed + footer { left: 0; width: 100%; }
+            .toggle-btn { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .navbar .logo-title { display: none; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-actions { margin-left: 0; width: 100%; }
+            .action-btn { justify-content: center; }
         }
-:root {
-    /* Màu gradient cho bong bóng AI (Light Mode) */
-    --ai-bubble-gradient-start-light: #6a11cb; /* Tím */
-    --ai-bubble-gradient-end-light: #2575fc; /* Xanh */
---text-muted-light: #b0b0b5;
-    /* Màu gradient cho bong bóng AI (Dark Mode) */
-    --ai-bubble-gradient-start-dark: #00c6ff; /* Xanh sáng */
-    --ai-bubble-gradient-end-dark: #0072ff; /* Xanh đậm */
-}
-
-.global-ai-chat-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1010;
-}
-
-#ai-chat-bubble {
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--ai-bubble-gradient-start-light) 0%, var(--ai-bubble-gradient-end-light) 100%);
-    color: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-light-outer);
-    font-size: 28px;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-#ai-chat-bubble:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-#ai-chat-window {
-    position: absolute;
-    bottom: calc(100% + 15px);
-    right: 0;
-    width: 370px;
-    height: 500px;
-    max-width: 90vw;
-    background: var(--card-bg-light);
-    border-radius: 12px;
-    box-shadow: var(--shadow-light-outer);
-    border: 1px solid var(--border-color-light);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-#ai-chat-window.open {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.ai-chat-header {
-    flex-shrink: 0;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-lighter) 100%);
-    color: white;
-}
-.ai-chat-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.ai-chat-close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.8);
-    transition: color 0.2s ease, transform 0.2s ease;
-}
-.ai-chat-close-btn:hover {
-    color: white;
-    transform: rotate(90deg);
-}
-
-.ai-chat-messages {
-    flex-grow: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: var(--background-light);
-}
-
-.user-message, .ai-message {
-    margin-bottom: 15px;
-    display: flex;
-    max-width: 90%;
-}
-.user-message {
-    margin-left: auto;
-    flex-direction: row-reverse;
-}
-.message-content {
-    padding: 10px 15px;
-    border-radius: 18px;
-    font-size: 14px;
-    line-height: 1.5;
-}
-.user-message .message-content {
-    background: var(--primary-color);
-    color: white;
-    border-bottom-right-radius: 5px;
-}
-.ai-message .message-content {
-    background: var(--card-bg-light);
-    color: var(--text-light);
-    border: 1px solid var(--border-color-light);
-    border-bottom-left-radius: 5px;
-}
-
-.ai-message.loading .message-content { display: flex; gap: 5px; align-items: center; }
-.typing-indicator span {
-    width: 8px; height: 8px;
-    background-color: var(--text-muted-light);
-    border-radius: 50%; display: inline-block;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-.typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-.ai-chat-input-area {
-    flex-shrink: 0;
-    padding: 15px;
-    border-top: 1px solid var(--border-color-light);
-    display: flex;
-    gap: 10px;
-    background-color: var(--card-bg-light);
-}
-.ai-chat-input-area textarea {
-    flex-grow: 1;
-    border: 1px solid var(--border-color-light);
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 14px;
-    resize: none;
-    height: 40px;
-    line-height: 20px;
-    background: var(--background-light);
-    color: var(--text-light);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    overflow-y: hidden; /* <-- Thêm dòng này để ẩn thanh cuộn dọc */
-}
-.ai-chat-input-area textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.2);
-}
-.ai-chat-input-area button {
-    width: 40px; height: 40px;
-    border-radius: 50%; border: none;
-    background: var(--primary-color);
-    color: white;
-    font-size: 16px; cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.ai-chat-input-area button:hover:not(:disabled) { background: var(--primary-color-lighter); }
-.ai-chat-input-area button:disabled {
-    background-color: var(--border-color-light);
-    color: var(--text-muted-light);
-    cursor: not-allowed;
-}
-
-/* Tự động đồng bộ với Dark Mode */
-body.dark-mode #ai-chat-bubble {
-    background: linear-gradient(135deg, var(--ai-bubble-gradient-start-dark) 0%, var(--ai-bubble-gradient-end-dark) 100%);
-    box-shadow: var(--shadow-dark-outer);
-}
-body.dark-mode .ai-chat-header {
-    background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-}
-body.dark-mode .ai-chat-header h3,
-body.dark-mode .ai-chat-close-btn {
-    color: var(--text-dark);
-}
-body.dark-mode .user-message .message-content {
-    background: var(--primary-color);
-    color: #111;
-}
-body.dark-mode .ai-chat-input-area textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 174, 255, 0.25);
-}
-body.dark-mode .ai-chat-input-area button {
-    background: var(--primary-color);
-    color: #111;
-}
-body.dark-mode .ai-chat-input-area button:hover:not(:disabled) {
-    background: var(--primary-color-lighter);
-}
-body.dark-mode .ai-chat-input-area button:disabled {
-    background-color: var(--border-color-dark);
-    color: var(--text-muted-dark);
-}
-.ai-message.loading .message-content {
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    background: var(--card-bg-light);
-    color: var(--text-light);
-    border: 1px solid var(--border-color-light);
-}
-
-/* Kiểu dáng của chỉ báo (ba dấu chấm) */
-.typing-indicator span {
-    width: 8px;
-    height: 8px;
-    background-color: #999; /* Màu của dấu chấm ở light mode */
-    border-radius: 50%;
-    display: inline-block;
-    animation: bounce 1.4s infinite ease-in-out both;
-}
-
-/* Chuyển màu dấu chấm ở dark mode */
-body.dark-mode .typing-indicator span {
-    background-color: #777;
-}
-
-/* Tạo độ trễ khác nhau cho mỗi dấu chấm để có hiệu ứng lượn sóng */
-.typing-indicator span:nth-child(1) {
-    animation-delay: -0.32s;
-}
-
-.typing-indicator span:nth-child(2) {
-    animation-delay: -0.16s;
-}
-
-/* Định nghĩa hoạt ảnh 'bounce' */
-@keyframes bounce {
-    0%, 80%, 100% {
-        transform: scale(0);
-    }
-    40% {
-        transform: scale(1.0);
-    }
-}
-
     </style>
 </head>
-<body data-theme="light">
+<body>
 
-    <header id="page-header">
-        <div class="header-title">TIẾN ĐỘ CHỈ TIÊU</div>
+    <header class="navbar"> 
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Mở menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo-title">KPI TVBH</div> 
         <div class="navbar-controls">
-            <button class="theme-toggle-btn" id="theme-toggle-button" onclick="toggleTheme()" data-tooltip="Chuyển đổi giao diện Sáng/Tối">
-                <i class="fas fa-moon" id="theme-icon"></i>
-            </button>
-            <button class="nav-btn" onclick="goBack()" data-tooltip="Quay lại trang chủ"><i class="fas fa-arrow-left"></i></button>
-            <button class="nav-btn" onclick="logout()" data-tooltip="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
+            <button class="nav-btn" id="back-btn" aria-label="Quay lại"><i class="fas fa-arrow-left"></i></button>
+            <button class="nav-btn" id="logout-btn" aria-label="Đăng xuất"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
-    <div class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <h1>VINFAST THUẬN AN</h1>
+            <h1>VINFAST MINH ĐẠO</h1>
         </div>
-        <div class="menu" id="navMenu">
-            <a href="index.html" data-lang="homepage" data-tooltip="Trang Chủ"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
-            <a href="khoxe.html" data-lang="stock"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
-            <a href="xedaban.html" data-lang="sold-cars"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
-            <a href="yeucaughepxe.html" data-lang="pairing-request"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
-            <a href="kpi-tvbh.html" class="active" data-tooltip="Chỉ Tiêu KPI TVBH"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
-            <a href="chinh_sach_vinfast.html" class="active" data-tooltip="Tổng hợp chính sách VinFast"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
-            <a href="gia_styled_html.html" class="active" data-tooltip="Công cụ tính giá xe VinFast"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
-        </div>
-        <button class="toggle-btn-sidebar" onclick="toggleSidebarDesktop()" aria-label="Thu gọn menu"><i class="fas fa-bars"></i></button>
-    </div>
+        <nav class="menu" id="nav-menu">
+            <a href="index.html"><i class="fas fa-home fa-fw"></i><span>Trang Chủ</span></a>
+            <a href="khoxe.html"><i class="fas fa-warehouse fa-fw"></i><span>Kho Xe</span></a>
+            <a href="xedaban.html"><i class="fas fa-car-side fa-fw"></i><span>Xe Đã Bán</span></a>
+            <a href="yeucaughepxe.html"><i class="fas fa-exchange-alt fa-fw"></i><span>Ghép Xe</span></a>
+            <a href="kpi-tvbh.html" class="active"><i class="fas fa-chart-bar fa-fw"></i><span>KPI TVBH</span></a>
+            <a href="chinh_sach_vinfast.html"><i class="fas fa-file-alt fa-fw"></i><span>Chính Sách</span></a>
+            <a href="gia_styled_html.html"><i class="fas fa-calculator fa-fw"></i><span>Tính Giá Xe</span></a>
+        </nav>
+        <button class="toggle-btn" id="sidebar-toggle-btn" aria-label="Thu gọn menu"><i class="fas fa-chevron-left"></i></button>
+    </aside>
 
-    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Mở menu" data-tooltip="Mở/Đóng menu">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <div class="main-container" id="main-container">
-        <div class="filter-bar">
-            <div>
-                <label for="month-filter">Chọn Tháng:</label>
-                <input type="month" id="month-filter" name="month-filter">
+    <main class="main-content" id="main-content">
+        <section class="filter-section" data-aos="fade-up">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label for="month-filter">Chọn Tháng</label>
+                    <input type="month" id="month-filter" name="month-filter">
+                </div>
+                <div class="filter-group">
+                    <label for="consultant-filter">Tư Vấn Viên</label>
+                    <select id="consultant-filter" name="consultant-filter">
+                        <option value="all">Tất cả TVBH</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button id="view-kpi-btn" class="action-btn">
+                        <i class="fas fa-eye"></i> Xem KPI
+                    </button>
+                </div>
             </div>
-            <div>
-                <label for="consultant-filter">Tư Vấn Viên:</label>
-                <select id="consultant-filter" name="consultant-filter">
-                    <option value="all">Tất cả TVBH</option>
-                </select>
-            </div>
-            <button id="view-kpi-btn" onclick="loadKpiData()"><i class="fas fa-eye"></i> Xem KPI</button>
-        </div>
+        </section>
 
-        <div class="kpi-consultant-grid" id="kpi-consultant-grid">
-            <div class="loading-overlay" id="kpi-loader-overlay">
+        <section class="kpi-consultant-grid" id="kpi-consultant-grid" data-aos="fade-up" data-aos-delay="100">
+             <div class="loading-overlay" id="kpi-loader-overlay">
                 <div class="loading-spinner"></div>
-                <span>Đang tải dữ liệu...</span>
             </div>
-            <div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;">
-                <h3>Vui lòng chọn tháng và nhấn "Xem KPI"</h3>
-                <p style="color: var(--text-light); opacity: 0.7;">Dữ liệu KPI của Tư vấn viên sẽ được hiển thị ở đây.</p>
-            </div>
-        </div>
+        </section>
 
-        <div class="summary-table-container hidden" id="summary-table-container">
+        <section class="content-card hidden" id="summary-table-container" data-aos="fade-up" data-aos-delay="200">
             <h2>Tổng Kết KPI Tháng <span id="summary-month-year"></span></h2>
-            <table class="summary-table">
-                <thead>
-                    <tr>
-                        <th>Tư Vấn Viên</th>
-                        <th>Chỉ Tiêu (Số xe)</th>
-                        <th>Thực Đạt (Số xe)</th>
-                        <th>Tỷ Lệ Hoàn Thành</th>
-                        <th>Chênh Lệch</th>
-                    </tr>
-                </thead>
-                <tbody id="summary-table-body">
-                </tbody>
-            </table>
-        </div>
+            <div style="overflow-x: auto;">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Tư Vấn Viên</th>
+                            <th>Chỉ Tiêu</th>
+                            <th>Thực Đạt</th>
+                            <th>Hoàn Thành</th>
+                            <th>Chênh Lệch</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-table-body"></tbody>
+                </table>
+            </div>
+        </section>
 
-         <div class="chart-container-wrapper hidden" id="consultant-progress-chart-container">
-            <h2>Biểu Đồ Tiến Độ Hoàn Thành Chỉ Tiêu (Top TVBH)</h2>
+         <section class="content-card hidden" id="consultant-progress-chart-container" data-aos="fade-up" data-aos-delay="300">
+            <h2>Biểu Đồ Tiến Độ Hoàn Thành (Top 5 TVBH)</h2>
             <div class="chart-container">
                 <canvas id="consultantProgressChart"></canvas>
             </div>
-        </div>
-    </div>
-<div class="global-ai-chat-container">
-    <button id="ai-chat-bubble" class="ai-chat-bubble" onclick="toggleGlobalAIChat()" title="Hỏi Trợ Lý Ảo">
-        <i class="fas fa-robot"></i>
-    </button>
+        </section>
+    </main>
 
-    <div id="ai-chat-window" class="ai-chat-window">
-        <div class="ai-chat-header">
-            <h3><i class="fas fa-robot"></i> Trợ Lý </h3>
-            <button class="ai-chat-close-btn" onclick="toggleGlobalAIChat()">&times;</button>
-        </div>
-        <div id="ai-chat-messages" class="ai-chat-messages">
-            <div class="ai-message">
-                <div class="message-content">
-                    Xin chào! Tôi có thể giúp gì cho bạn?
-                </div>
-            </div>
-        </div>
-        <div class="ai-chat-input-area">
-            <textarea id="ai-chat-input" placeholder="Hỏi tôi bất cứ điều gì..." onkeydown="handleChatInputKey(event)"></textarea>
-            <button id="ai-chat-send-btn" onclick="sendGlobalAIChatMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-</div>
-    <footer><p>© 2025 VinFast Thuận An</p></footer>
+    <footer id="footer"><p>VinFast Thuận An - Dĩ An</p></footer>
     <div id="notification"></div>
 
 <script>
-        const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-
-    if (!isLoggedIn || isLoggedIn !== 'true') {
-        // Nếu chưa đăng nhập hoặc giá trị không đúng, chuyển về trang đăng nhập
-        window.location.href = 'index.html';
+document.addEventListener("DOMContentLoaded", function() {
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "index.html";
+        return;
     }
-const API_KPI_TARGET_URL = "https://script.google.com/macros/s/AKfycbzX83aFslavgB3nNOTMQqwN--hHOOECP2m5VnGDEaTz2KiWTBqf1GJBCUIvBWyuboJ21w/exec?sheet=ALL_KPI";
-const API_ANNUAL_SALES_URL = "https://script.google.com/macros/s/AKfycbzJkMDpnMvKTOQ0dN1QMyjoBHLkZw0yyr_8Al0KlAx0HEPTABTDxhrXo6Vquu7MEWel0w/exec?action=getannualinvoicecounts";
-const MONTH_ENGLISH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-let kpiTargetsData = null;
-let annualSalesData = null;
-let uniqueConsultantsOriginalList = [];
-let consultantProgressChartInstance = null;
-let activeDonutCharts = {};
 
-const doughnutLabelPlugin = {
-  id: 'doughnutLabel',
-  afterDraw: (chart, args, options) => {
-    const { ctx, chartArea: { top, bottom, left, right, width, height }, data } = chart;
-    if (data.datasets[0].data.length === 0) return;
+    // URLs and Global State
+    const API_KPI_TARGET_URL = "https://script.google.com/macros/s/AKfycbzX83aFslavgB3nNOTMQqwN--hHOOECP2m5VnGDEaTz2KiWTBqf1GJBCUIvBWyuboJ21w/exec?sheet=ALL_KPI";
+    const API_ANNUAL_SALES_URL = "https://script.google.com/macros/s/AKfycbzJkMDpnMvKTOQ0dN1QMyjoBHLkZw0yyr_8Al0KlAx0HEPTABTDxhrXo6Vquu7MEWel0w/exec?action=getannualinvoicecounts";
+    const MONTH_ENGLISH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let kpiTargetsData = null;
+    let annualSalesData = null;
+    let consultantProgressChartInstance = null;
+    let activeDonutCharts = {};
 
-    ctx.save();
-    const text = options.text || '';
-    const textX = (left + right) / 2;
-    const textY = (top + bottom) / 2; // Can adjust Y offset if needed for perfect centering
-
-    ctx.font = options.font || 'bold 16px Roboto, sans-serif';
-    // Determine text color based on options or theme for better contrast
-    let textColor = options.color;
-    if (!textColor) {
-        textColor = document.body.classList.contains('dark-mode') ? 
-                    getComputedStyle(document.documentElement).getPropertyValue('--text-dark').trim() : 
-                    getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim();
-    }
-    ctx.fillStyle = textColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, textX, textY);
-    ctx.restore();
-  }
-};
-Chart.register(doughnutLabelPlugin);
-
-
-function toggleTheme() {
-    const body = document.body;
-    body.classList.toggle('dark-mode');
-    const themeIcon = document.querySelector('.theme-toggle i, .theme-toggle-btn i');
-    const loadingText = document.querySelector("#kpi-loader-overlay span");
-    if (body.classList.contains('dark-mode')) {
-        if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.setItem('theme', 'dark');
-        if (loadingText) loadingText.style.color = "var(--text-dark)";
-        document.body.setAttribute('data-theme', 'dark');
-    } else {
-        if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.setItem('theme', 'light');
-        if (loadingText) loadingText.style.color = "var(--text-light)";
-        document.body.setAttribute('data-theme', 'light');
-    }
-    updateChartColors();
-}
-
-function toggleSidebarDesktop() {
-    if (window.innerWidth > 900) {
-        const sidebar = document.getElementById("sidebar");
-        const mainContainer = document.getElementById("main-container");
-        const header = document.getElementById("page-header");
-        if (sidebar && mainContainer && header) {
-            sidebar.classList.toggle("collapsed");
-            mainContainer.classList.toggle("collapsed");
-            const isCollapsed = sidebar.classList.contains("collapsed");
-            localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
-            header.style.left = isCollapsed ? '60px' : '200px';
-            header.style.width = `calc(100% - ${isCollapsed ? '60px' : '200px'})`;
-        }
-        updateSidebarToggleIcon();
-        resizeCharts();
-    }
-}
-
-function toggleMobileSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    if (sidebar) {
-        sidebar.classList.toggle("open");
-    }
-    updateSidebarToggleIcon();
-}
-
-function updateSidebarToggleIcon() {
-    const sidebar = document.getElementById("sidebar");
-    const toggleIconDesktop = document.querySelector(".toggle-btn-sidebar i");
-    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-    const mobileMenuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector("i") : null;
-    if (!sidebar) return;
-    const desktopToggleContainer = document.querySelector('.toggle-btn-sidebar');
-    if (window.innerWidth <= 900) {
-        if(desktopToggleContainer) desktopToggleContainer.style.display = 'none';
-        if(mobileMenuBtn) mobileMenuBtn.style.display = 'flex';
-        if (mobileMenuIcon) {
-            mobileMenuIcon.className = sidebar.classList.contains("open") ? "fas fa-times" : "fas fa-bars";
-        }
-    } else {
-        if(desktopToggleContainer) desktopToggleContainer.style.display = 'flex';
-        if(mobileMenuBtn) mobileMenuBtn.style.display = 'none';
-        if (toggleIconDesktop) {
-            toggleIconDesktop.className = sidebar.classList.contains("collapsed") ? "fas fa-bars" : "fas fa-times";
-        }
-    }
-}
-
-function setActiveSidebarLink() {
-    const navLinks = document.querySelectorAll("#navMenu a");
-    const kpiPageName = "kpi-tvbh.html";
-    const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
-
-    navLinks.forEach(link => {
-        link.classList.remove("active");
-        const linkHref = link.getAttribute('href');
-        if (linkHref && linkHref.toLowerCase().includes(kpiPageName)) {
-            if (currentPageFile.toLowerCase().includes(kpiPageName)) {
-                 link.classList.add("active");
-            }
-        } else if (linkHref === currentPageFile) {
-             link.classList.add("active");
-        }
-    });
-}
-
-function goBack() { window.location.href = "index.html"; }
-function logout() {
-    sessionStorage.clear();
-    localStorage.removeItem('sidebarState');
-    localStorage.removeItem('theme');
-    window.location.href = "index.html";
-}
-
-function showLoader(show) {
-    const loaderOverlay = document.getElementById('kpi-loader-overlay');
-    if (loaderOverlay) {
-         loaderOverlay.classList.toggle('active', show);
-    }
-    const viewKpiBtn = document.getElementById('view-kpi-btn');
-    if(viewKpiBtn) viewKpiBtn.disabled = show;
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
+    // DOM Element References
+    const DOMElements = {
+        sidebar: document.getElementById('sidebar'),
+        mainContent: document.getElementById('main-content'),
+        footer: document.getElementById('footer'),
+        kpiLoader: document.getElementById('kpi-loader-overlay'),
+        viewKpiBtn: document.getElementById('view-kpi-btn'),
+        monthFilter: document.getElementById('month-filter'),
+        consultantFilter: document.getElementById('consultant-filter'),
+        kpiGrid: document.getElementById('kpi-consultant-grid'),
+        summaryTableContainer: document.getElementById('summary-table-container'),
+        summaryTableBody: document.getElementById('summary-table-body'),
+        summaryMonthYear: document.getElementById('summary-month-year'),
+        chartContainer: document.getElementById('consultant-progress-chart-container'),
+        notification: document.getElementById('notification')
     };
-}
-
-function showNotification(message, type = "info", duration = 2000) {
-    const notif = document.getElementById("notification");
-    if (!notif) return;
-    notif.textContent = message;
-    notif.className = 'show';
-    let bgColor, textColor;
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    switch (type) {
-        case "success": bgColor = "var(--success-color)"; textColor = "#fff"; break;
-        case "error":
-            bgColor = isDarkMode ? "#f8d7da" : "var(--danger-color)";
-            textColor = isDarkMode ? "#721c24" : "#fff";
-            break;
-        case "warning":
-            bgColor = isDarkMode ? "#ffca2c" : "var(--accent-color)";
-            textColor = "#333"; // Warning text is often dark for better contrast on yellow
-            break;
-        default:
-            bgColor = isDarkMode ? "var(--card-bg-light)" : "var(--card-bg-dark)";
-            textColor = isDarkMode ? "var(--text-light)" : "var(--text-dark)";
-            break;
-    }
-    notif.style.backgroundColor = bgColor;
-    notif.style.color = textColor;
-    if (notif.timeout) clearTimeout(notif.timeout);
-    notif.timeout = setTimeout(() => {
-        notif.classList.remove("show");
-    }, duration);
-}
-
-function getCurrentYearMonth() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    return `${year}-${month}`;
-}
-function getMonthNameEnglish(monthNumber) {
-    return MONTH_ENGLISH_NAMES[monthNumber - 1] || null;
-}
-function getKpiMonthKey(monthNumber) {
-    return `KPI ${monthNumber}`;
-}
-function normalizeConsultantName(name) {
-    if (typeof name !== 'string') return '';
-    return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/Đ/g, 'D').replace(/đ/g, 'd').trim().toUpperCase().replace(/\s+/g, ' ');
-}
-
-async function fetchKpiTargetsFromAPI() {
-    console.log("Đang tải Chỉ tiêu KPI từ API...");
-    try {
-        const response = await fetch(API_KPI_TARGET_URL);
-        if (!response.ok) throw new Error(`Lỗi API Chỉ Tiêu: ${response.status}`);
-        kpiTargetsData = await response.json();
-        let tempUniqueConsultants = new Set();
-        Object.values(kpiTargetsData).forEach(monthArray => {
-            if(Array.isArray(monthArray)) {
-                monthArray.forEach(item => {
-                    if (Array.isArray(item) && item[0] && typeof item[0] === 'string') {
-                        const originalName = item[0].trim();
-                        if (originalName) tempUniqueConsultants.add(originalName);
-                    }
-                });
-            }
-        });
-        uniqueConsultantsOriginalList = Array.from(tempUniqueConsultants).sort();
-        populateConsultantFilterDropdown(uniqueConsultantsOriginalList);
-        return { targets: kpiTargetsData, consultants: uniqueConsultantsOriginalList };
-    } catch (error) {
-        console.error("Lỗi khi tải Chỉ tiêu KPI:", error);
-        showNotification(`Lỗi tải dữ liệu chỉ tiêu: ${error.message}. Vui lòng thử lại.`, "error", 3000);
-        populateConsultantFilterDropdown([]);
-        return { targets: null, consultants: [] };
-    }
-}
-
-async function fetchAnnualSalesData() {
-    if (annualSalesData && Object.keys(annualSalesData).length > 0) {
-        return annualSalesData;
-    }
-    console.log("Đang tải Số liệu bán hàng hàng năm từ API...");
-    try {
-        const response = await fetch(API_ANNUAL_SALES_URL);
-        if (!response.ok) throw new Error(`Lỗi API Số liệu bán hàng: ${response.status}`);
-        annualSalesData = await response.json();
-        return annualSalesData;
-    } catch (error) {
-        console.error("Lỗi khi tải số liệu bán hàng hàng năm:", error);
-        showNotification(`Lỗi tải dữ liệu số liệu bán hàng: ${error.message}. Vui lòng thử lại.`, "error", 3000);
-        annualSalesData = {};
-        return null;
-    }
-}
-
-function getConsultantTarget(consultantOriginalName, yearMonth) {
-    if (!kpiTargetsData) return 0;
-    const monthNumber = parseInt(yearMonth.split('-')[1], 10);
-    const kpiMonthKey = getKpiMonthKey(monthNumber);
-    const monthTargetData = kpiTargetsData[kpiMonthKey];
-    if (monthTargetData && Array.isArray(monthTargetData)) {
-        const consultantEntry = monthTargetData.find(entry =>
-            Array.isArray(entry) && entry[0] && entry[0].trim() === consultantOriginalName.trim()
-        );
-        if (consultantEntry && typeof consultantEntry[1] === 'number') return consultantEntry[1];
-    }
-    return 0;
-}
-
-function getActualSalesForConsultant(consultantOriginalName, yearMonth) {
-    if (!annualSalesData) return 0;
-    const monthNumber = parseInt(yearMonth.split('-')[1], 10);
-    const monthNameKeyEnglish = getMonthNameEnglish(monthNumber);
-    if (!monthNameKeyEnglish) return 0;
-    const normalizedSearchName = normalizeConsultantName(consultantOriginalName);
-    const monthDataFromApi = annualSalesData[monthNameKeyEnglish];
-    if (!monthDataFromApi || (monthDataFromApi.message && monthDataFromApi.message.toLowerCase().includes("sheet is empty"))) return 0;
-    if (monthDataFromApi.data && typeof monthDataFromApi.data === 'object' && Object.keys(monthDataFromApi.data).length > 0) {
-        const apiSalesKeysOriginal = Object.keys(monthDataFromApi.data);
-        for (const keyInApi_Original of apiSalesKeysOriginal) {
-            const normalizedKeyInApi = normalizeConsultantName(keyInApi_Original);
-            if (normalizedKeyInApi === normalizedSearchName) {
-                const salesCount = monthDataFromApi.data[keyInApi_Original];
-                return typeof salesCount === 'number' ? salesCount : 0;
-            }
+    
+    // Doughnut Chart Center Label Plugin
+    const doughnutLabelPlugin = {
+        id: 'doughnutLabel',
+        afterDraw: (chart) => {
+            const { ctx, chartArea: { top, bottom, left, right }, data } = chart;
+            if (data.datasets[0].data.length === 0) return;
+            ctx.save();
+            const text = chart.options.plugins.doughnutLabel.text || '';
+            ctx.font = 'bold 16px ' + getComputedStyle(document.documentElement).getPropertyValue('--font-main').trim();
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-light').trim();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, (left + right) / 2, (top + bottom) / 2);
+            ctx.restore();
         }
-    }
-    return 0;
-}
+    };
+    Chart.register(doughnutLabelPlugin);
 
-function renderDonutChart(canvasId, achievementPercentage) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-
-    const rootStyle = getComputedStyle(document.documentElement);
-    const isDarkMode = document.body.classList.contains('dark-mode');
-
-    let achievedColor;
-    let centerTextColor = isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim();
-
-    if (achievementPercentage < 50) {
-        achievedColor = rootStyle.getPropertyValue('--danger-color').trim();
-    } else if (achievementPercentage < 80) { // 50% to 79.9%
-        achievedColor = rootStyle.getPropertyValue('--warning-color').trim();
-        // For warning color (yellow), dark text is usually better for contrast
-        if (!isDarkMode) centerTextColor = '#333'; // Dark text on light theme with yellow
-        // On dark theme, default text-dark should be light enough for yellow
-    } else { // >= 80%
-        achievedColor = rootStyle.getPropertyValue('--success-color').trim();
-    }
-
-    const remainingColor = isDarkMode ? 
-        rootStyle.getPropertyValue('--skeleton-bg-dark').trim() : // Using skeleton for a more subtle remaining part
-        rootStyle.getPropertyValue('--skeleton-bg-light').trim();
-    
-    const achievedValue = Math.min(achievementPercentage, 100); 
-    const remainingValue = Math.max(0, 100 - achievedValue);
-
-    if (activeDonutCharts[canvasId]) {
-        activeDonutCharts[canvasId].destroy();
-    }
-    
-    const chartInstance = new Chart(canvas.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [achievedValue, remainingValue],
-                backgroundColor: [achievedColor, remainingColor],
-                borderColor: [achievedColor, remainingColor], 
-                borderWidth: 1,
-                circumference: 360,
-            }]
+    // UI Manager
+    const UIManager = {
+        init: function() {
+            this.setupEventListeners();
+            this.applyInitialSettings();
+            AOS.init({ duration: 600, once: true });
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%', 
-            animation: {
-                animateRotate: true,
-                animateScale: true
-            },
-            plugins: {
-                legend: {
-                    display: false
+        setupEventListeners: function() {
+            document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => this.toggleSidebarDesktop());
+            document.getElementById('mobile-menu-btn')?.addEventListener('click', () => this.toggleMobileSidebar());
+            document.getElementById('back-btn')?.addEventListener('click', () => window.location.href = "index.html");
+            document.getElementById('logout-btn')?.addEventListener('click', () => {
+                sessionStorage.clear();
+                window.location.href = "index.html";
+            });
+            window.addEventListener('resize', debounce(this.handleResize.bind(this), 200));
+            document.addEventListener('click', (event) => {
+                if (window.innerWidth <= 768 && DOMElements.sidebar?.classList.contains('open')) {
+                    if (!DOMElements.sidebar.contains(event.target) && !document.getElementById('mobile-menu-btn').contains(event.target)) {
+                        this.toggleMobileSidebar();
+                    }
+                }
+            });
+            DOMElements.viewKpiBtn.addEventListener('click', () => App.loadKpiData());
+        },
+        applyInitialSettings: function() {
+            if (window.innerWidth > 768 && localStorage.getItem('sidebarState') === 'collapsed') {
+                this.toggleSidebarDesktop(true); // Force collapse without toggling
+            }
+            const currentPageFile = window.location.pathname.split("/").pop() || "index.html";
+            document.querySelectorAll("#nav-menu a").forEach(link => {
+                link.classList.remove("active");
+                if (link.getAttribute('href') === currentPageFile) {
+                    link.classList.add("active");
+                }
+            });
+        },
+        toggleSidebarDesktop: function(forceCollapse = false) {
+            if (window.innerWidth > 768) {
+                const isCollapsed = forceCollapse || DOMElements.sidebar.classList.toggle("collapsed");
+                DOMElements.mainContent.classList.toggle("collapsed", isCollapsed);
+                DOMElements.footer.classList.toggle("collapsed", isCollapsed);
+                if (!forceCollapse) {
+                    localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+                }
+                setTimeout(() => App.resizeCharts(), 300); // Resize chart after transition
+            }
+        },
+        toggleMobileSidebar: function() {
+            DOMElements.sidebar.classList.toggle("open");
+        },
+        handleResize: function() {
+            if (window.innerWidth > 768) {
+                DOMElements.sidebar.classList.remove('open');
+            }
+            App.resizeCharts();
+        },
+        showLoader: function(show) {
+            DOMElements.kpiLoader?.classList.toggle('active', show);
+            DOMElements.viewKpiBtn.disabled = show;
+        },
+        showNotification: function(message, type = "info", duration = 3000) {
+            if (!DOMElements.notification) return;
+            DOMElements.notification.textContent = message;
+            DOMElements.notification.className = 'show';
+            let bgColor;
+            switch(type) {
+                case 'success': bgColor = 'var(--success-color)'; break;
+                case 'error': bgColor = 'var(--danger-color)'; break;
+                case 'warning': bgColor = 'var(--warning-color)'; break;
+                default: bgColor = 'var(--text-light)'; break;
+            }
+            DOMElements.notification.style.backgroundColor = bgColor;
+            DOMElements.notification.style.color = (type === 'warning' ? 'var(--text-light)' : 'var(--card-bg-light)');
+            
+            if (DOMElements.notification.timeout) clearTimeout(DOMElements.notification.timeout);
+            DOMElements.notification.timeout = setTimeout(() => {
+                DOMElements.notification.classList.remove("show");
+            }, duration);
+        }
+    };
+
+    // Main App Logic
+    const App = {
+        init: async function() {
+            UIManager.init();
+            this.setDefaultFilters();
+            UIManager.showLoader(true);
+            await this.fetchInitialData();
+            await this.loadKpiData(); // Load data for default month
+            UIManager.showLoader(false);
+        },
+        setDefaultFilters: function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            DOMElements.monthFilter.value = `${year}-${month}`;
+            DOMElements.consultantFilter.value = 'all';
+        },
+        fetchInitialData: async function() {
+            try {
+                const [targetsResponse, salesResponse] = await Promise.all([
+                    fetch(API_KPI_TARGET_URL),
+                    fetch(API_ANNUAL_SALES_URL)
+                ]);
+                if (!targetsResponse.ok || !salesResponse.ok) throw new Error('Network response was not ok.');
+                
+                kpiTargetsData = await targetsResponse.json();
+                annualSalesData = await salesResponse.json();
+
+                this.populateConsultantFilter();
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+                UIManager.showNotification('Lỗi tải dữ liệu ban đầu. Vui lòng thử lại.', 'error');
+            }
+        },
+        populateConsultantFilter: function() {
+            if (!kpiTargetsData) return;
+            let consultants = new Set();
+            Object.values(kpiTargetsData).forEach(monthArray => {
+                if (Array.isArray(monthArray)) {
+                    monthArray.forEach(item => {
+                        if (Array.isArray(item) && item[0]) consultants.add(item[0].trim());
+                    });
+                }
+            });
+            const sortedConsultants = Array.from(consultants).sort();
+            DOMElements.consultantFilter.innerHTML = '<option value="all">Tất cả TVBH</option>';
+            sortedConsultants.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                DOMElements.consultantFilter.appendChild(option);
+            });
+        },
+        loadKpiData: async function() {
+            const yearMonth = DOMElements.monthFilter.value;
+            if (!yearMonth) {
+                UIManager.showNotification("Vui lòng chọn tháng để xem KPI.", "warning");
+                return;
+            }
+            if (!kpiTargetsData || !annualSalesData) {
+                UIManager.showNotification("Dữ liệu chưa sẵn sàng, vui lòng đợi.", "warning");
+                return;
+            }
+
+            UIManager.showLoader(true);
+            this.clearPreviousData();
+            
+            const consultantFilterValue = DOMElements.consultantFilter.value;
+            const monthNumber = parseInt(yearMonth.split('-')[1], 10);
+            const kpiMonthKey = `KPI ${monthNumber}`;
+
+            let consultantsInMonth = [];
+            if (kpiTargetsData[kpiMonthKey] && Array.isArray(kpiTargetsData[kpiMonthKey])) {
+                consultantsInMonth = kpiTargetsData[kpiMonthKey]
+                    .map(entry => (Array.isArray(entry) && entry[0] ? entry[0].trim() : null))
+                    .filter(Boolean);
+            }
+            
+            let displayConsultants = (consultantFilterValue === 'all') 
+                ? consultantsInMonth 
+                : (consultantsInMonth.includes(consultantFilterValue) ? [consultantFilterValue] : []);
+            
+            if (displayConsultants.length === 0) {
+                this.renderNoDataMessage(yearMonth, consultantFilterValue);
+                UIManager.showLoader(false);
+                return;
+            }
+            
+            const kpiData = displayConsultants.map(name => {
+                const target = this.getConsultantTarget(name, yearMonth);
+                const actual = this.getActualSales(name, yearMonth);
+                const achievement = target > 0 ? (actual / target) * 100 : (actual > 0 ? 100 : 0);
+                const difference = actual - target;
+                return { name, target, actual, achievement, difference };
+            });
+            
+            this.renderKpiCards(kpiData);
+            this.renderSummaryTable(kpiData, yearMonth);
+            this.renderMainChart(kpiData);
+
+            DOMElements.summaryTableContainer.classList.remove('hidden');
+            DOMElements.chartContainer.classList.remove('hidden');
+            
+            UIManager.showLoader(false);
+        },
+        clearPreviousData: function() {
+            DOMElements.kpiGrid.innerHTML = '';
+            DOMElements.summaryTableBody.innerHTML = '';
+            Object.values(activeDonutCharts).forEach(chart => chart.destroy());
+            activeDonutCharts = {};
+            DOMElements.summaryTableContainer.classList.add('hidden');
+            DOMElements.chartContainer.classList.add('hidden');
+        },
+        renderNoDataMessage: function(yearMonth, consultant) {
+            const [year, month] = yearMonth.split('-');
+            const msg = consultant === 'all'
+                ? `Không có TVBH nào được gán chỉ tiêu trong tháng ${month}/${year}.`
+                : `TVBH "${consultant}" không có chỉ tiêu trong tháng ${month}/${year}.`;
+            DOMElements.kpiGrid.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted-light);">${msg}</p>`;
+        },
+        renderKpiCards: function(data) {
+            const fragment = document.createDocumentFragment();
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'kpi-consultant-card';
+                const canvasId = `donut-${item.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+                card.innerHTML = `
+                    <h3>${item.name}</h3>
+                    <div class="kpi-item"><strong>Chỉ Tiêu Tháng:</strong><span class="value">${item.target}</span></div>
+                    <div class="kpi-item"><strong>Số Xe Bán Được:</strong><span class="value">${item.actual}</span></div>
+                    <div class="donut-chart-kpi-container">
+                        <strong>Tiến Độ Hoàn Thành</strong>
+                        <div class="donut-canvas-wrapper"><canvas id="${canvasId}"></canvas></div>
+                    </div>
+                    <div class="kpi-item" style="margin-top: 10px;"><strong>Chênh Lệch:</strong><span class="value ${item.difference >= 0 ? 'positive' : 'negative'}">${item.difference} xe</span></div>
+                `;
+                fragment.appendChild(card);
+                // Defer chart rendering to avoid blocking UI
+                setTimeout(() => this.renderDonutChart(canvasId, item.achievement), 0);
+            });
+            DOMElements.kpiGrid.appendChild(fragment);
+        },
+        renderSummaryTable: function(data, yearMonth) {
+            const [year, month] = yearMonth.split('-');
+            DOMElements.summaryMonthYear.textContent = `${month}/${year}`;
+            const fragment = document.createDocumentFragment();
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td style="text-align: center;">${item.target}</td>
+                    <td style="text-align: center;">${item.actual}</td>
+                    <td class="${item.achievement >= 100 ? 'positive' : (item.achievement >= 70 ? 'neutral' : 'negative')}" style="text-align: center;">${item.achievement.toFixed(1)}%</td>
+                    <td class="${item.difference >= 0 ? 'positive' : 'negative'}" style="text-align: center;">${item.difference}</td>
+                `;
+                fragment.appendChild(row);
+            });
+            DOMElements.summaryTableBody.appendChild(fragment);
+        },
+        renderMainChart: function(kpiData) {
+            const ctx = document.getElementById('consultantProgressChart').getContext('2d');
+            const dataForChart = [...kpiData].sort((a, b) => b.achievement - a.achievement).slice(0, 5);
+            
+            const labels = dataForChart.map(item => item.name);
+            const targetData = dataForChart.map(item => item.target);
+            const actualData = dataForChart.map(item => item.actual);
+            
+            if (consultantProgressChartInstance) consultantProgressChartInstance.destroy();
+            
+            consultantProgressChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Chỉ Tiêu', data: targetData, backgroundColor: 'rgba(108, 117, 125, 0.7)', borderRadius: 4 },
+                        { label: 'Thực Đạt', data: actualData, backgroundColor: 'var(--success-color)', borderRadius: 4 }
+                    ]
                 },
-                tooltip: {
-                    enabled: false
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: 'var(--text-light)', stepSize: 1, precision: 0 }, grid: { color: 'var(--border-light)' }, title: { display: true, text: 'Số Lượng Xe', color: 'var(--text-light)' } },
+                        x: { ticks: { color: 'var(--text-light)' }, grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { position: 'top', labels: { color: 'var(--text-light)' } },
+                        tooltip: { mode: 'index', intersect: false }
+                    }
+                }
+            });
+        },
+        renderDonutChart: function(canvasId, achievement) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            let achievedColor = (achievement < 50) ? 'var(--danger-color)' : (achievement < 80) ? 'var(--warning-color)' : 'var(--success-color)';
+            const achievedValue = Math.min(achievement, 100);
+            
+            if (activeDonutCharts[canvasId]) activeDonutCharts[canvasId].destroy();
+
+            activeDonutCharts[canvasId] = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [achievedValue, Math.max(0, 100 - achievedValue)],
+                        backgroundColor: [getComputedStyle(document.documentElement).getPropertyValue(achievedColor.substring(4, achievedColor.length - 1)), 'var(--skeleton-bg-light)'],
+                        borderWidth: 0,
+                    }]
                 },
-                doughnutLabel: { 
-                    text: `${achievementPercentage.toFixed(0)}%`,
-                    font: 'bold 1em Roboto, sans-serif',
-                    color: centerTextColor // Use dynamically determined text color
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        doughnutLabel: { text: `${achievement.toFixed(0)}%` }
+                    }
+                }
+            });
+        },
+        getConsultantTarget: function(name, yearMonth) {
+            const monthNumber = parseInt(yearMonth.split('-')[1], 10);
+            const kpiMonthKey = `KPI ${monthNumber}`;
+            const monthData = kpiTargetsData[kpiMonthKey];
+            if (monthData && Array.isArray(monthData)) {
+                const entry = monthData.find(e => Array.isArray(e) && e[0] && e[0].trim() === name.trim());
+                return (entry && typeof entry[1] === 'number') ? entry[1] : 0;
+            }
+            return 0;
+        },
+        getActualSales: function(name, yearMonth) {
+            const monthNumber = parseInt(yearMonth.split('-')[1], 10);
+            const monthNameKey = MONTH_ENGLISH_NAMES[monthNumber - 1];
+            const monthData = annualSalesData[monthNameKey];
+            if (monthData && monthData.data) {
+                const normalizedName = name.trim().toUpperCase();
+                for (const [apiName, count] of Object.entries(monthData.data)) {
+                    if (apiName.trim().toUpperCase() === normalizedName) {
+                        return typeof count === 'number' ? count : 0;
+                    }
                 }
             }
-        }
-    });
-    activeDonutCharts[canvasId] = chartInstance;
-}
-
-
-async function loadKpiData() {
-    const monthFilterInput = document.getElementById('month-filter');
-    const yearMonth = monthFilterInput.value;
-    const consultantFilterValue = document.getElementById('consultant-filter').value;
-    if (!yearMonth) {
-        showNotification("Vui lòng chọn tháng để xem KPI.", "warning");
-        return;
-    }
-    showLoader(true);
-    if (!kpiTargetsData || Object.keys(kpiTargetsData).length === 0) {
-        await fetchKpiTargetsFromAPI();
-        if (!kpiTargetsData) { showLoader(false); return; }
-    }
-    if (!annualSalesData || Object.keys(annualSalesData).length === 0) {
-        await fetchAnnualSalesData();
-        if (!annualSalesData) { showLoader(false); return; }
-    }
-
-    const kpiGrid = document.getElementById('kpi-consultant-grid');
-    const summaryTableBody = document.getElementById('summary-table-body');
-    
-    kpiGrid.innerHTML = ''; 
-    const loaderHTML = `<div class="loading-overlay" id="kpi-loader-overlay"><div class="loading-spinner"></div><span>Đang tải dữ liệu...</span></div>`;
-    kpiGrid.insertAdjacentHTML('afterbegin', loaderHTML);
-    const loaderOverlay = document.getElementById('kpi-loader-overlay');
-    if(loaderOverlay) loaderOverlay.classList.add('active');
-
-    summaryTableBody.innerHTML = '';
-
-    const monthNumberSelected = parseInt(yearMonth.split('-')[1], 10);
-    const kpiMonthKeySelected = getKpiMonthKey(monthNumberSelected);
-    let consultantsInMonthKpiTargets = [];
-    if (kpiTargetsData && kpiTargetsData[kpiMonthKeySelected] && Array.isArray(kpiTargetsData[kpiMonthKeySelected])) {
-        consultantsInMonthKpiTargets = kpiTargetsData[kpiMonthKeySelected]
-            .map(entry => (Array.isArray(entry) && entry[0] ? entry[0].trim() : null))
-            .filter(Boolean);
-    }
-    let displayConsultantsOriginalNames = consultantFilterValue === 'all' ?
-        [...consultantsInMonthKpiTargets] :
-        (consultantsInMonthKpiTargets.map(c => c.trim()).includes(consultantFilterValue.trim()) ? [consultantFilterValue] : []);
-
-    if (displayConsultantsOriginalNames.length === 0) {
-         const msg = consultantFilterValue === 'all'
-            ? `Không có TVBH nào được gán chỉ tiêu trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.`
-            : `TVBH "${consultantFilterValue}" không có chỉ tiêu trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.`;
-         kpiGrid.innerHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>${msg}</h3></div>`;
-         document.getElementById('summary-table-container').classList.add('hidden');
-         document.getElementById('consultant-progress-chart-container').classList.add('hidden');
-         showLoader(false); 
-         return;
-    }
-
-    const consultantKpiData = [];
-    Object.values(activeDonutCharts).forEach(chart => chart.destroy());
-    activeDonutCharts = {};
-
-    for (const originalConsultantName of displayConsultantsOriginalNames) {
-        const target = getConsultantTarget(originalConsultantName, yearMonth);
-        const actualSold = getActualSalesForConsultant(originalConsultantName, yearMonth);
-        const achievement = target > 0 ? (actualSold / target) * 100 : (actualSold > 0 ? 100 : 0);
-        const difference = actualSold - target;
-        consultantKpiData.push({ name: originalConsultantName, target, actual: actualSold, achievement, difference });
-
-        const consultantIdSuffix = originalConsultantName.replace(/[^a-zA-Z0-9]/g, '') + Math.floor(Math.random()*1000);
-        const canvasId = `donut-${consultantIdSuffix}`;
-
-
-        const card = document.createElement('div');
-        card.className = 'kpi-consultant-card';
-        card.innerHTML = `
-            <h3>${originalConsultantName}</h3>
-            <div class="kpi-item">
-                <strong>Chỉ Tiêu Tháng:</strong>
-                <input type="number" value="${target}" class="target-input-readonly" readonly>
-            </div>
-            <div class="kpi-item"><strong>Số Xe Bán Được:</strong><span class="value">${actualSold}</span></div>
-            
-            <div class="donut-chart-kpi-container">
-                <strong>Tiến Độ Hoàn Thành</strong>
-                <div class="donut-canvas-wrapper">
-                    <canvas id="${canvasId}"></canvas>
-                </div>
-            </div>
-
-            <div class="kpi-item" style="margin-top: 10px;"><strong>Chênh Lệch (Đạt - CT):</strong><span class="value ${difference >= 0 ? 'positive' : 'negative'}">${difference} xe</span></div>
-        `;
-        kpiGrid.appendChild(card);
-        renderDonutChart(canvasId, achievement);
-
-        const summaryRow = summaryTableBody.insertRow();
-        summaryRow.innerHTML = `<td>${originalConsultantName}</td><td class="target-cell">${target}</td><td>${actualSold}</td><td class="${achievement >= 100 ? 'positive' : (achievement >= 70 ? 'neutral' : 'negative')}">${achievement.toFixed(1)}%</td><td class="${difference >= 0 ? 'positive' : 'negative'}">${difference}</td>`;
-    }
-    
-    const currentLoader = kpiGrid.querySelector('#kpi-loader-overlay');
-    if(currentLoader) currentLoader.remove();
-
-
-    if (consultantKpiData.length > 0) {
-        document.getElementById('summary-month-year').textContent = `${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}`;
-        document.getElementById('summary-table-container').classList.remove('hidden');
-        document.getElementById('consultant-progress-chart-container').classList.remove('hidden');
-        renderConsultantProgressChart(consultantKpiData);
-    } else {
-        const selectedConsultantNameMsg = consultantFilterValue === 'all' ? 'các TVBH' : `TVBH "${consultantFilterValue}"`;
-        kpiGrid.innerHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>Không tìm thấy dữ liệu KPI cho ${selectedConsultantNameMsg} trong tháng ${yearMonth.split('-')[1]}/${yearMonth.split('-')[0]}.</h3></div>`;
-        document.getElementById('summary-table-container').classList.add('hidden');
-        document.getElementById('consultant-progress-chart-container').classList.add('hidden');
-    }
-    showLoader(false);
-}
-
-async function populateConsultantFilterDropdown(consultantsList) {
-    const consultantSelect = document.getElementById('consultant-filter');
-    if (!consultantsList || consultantsList.length === 0) {
-        consultantSelect.innerHTML = '<option value="all">Tất cả TVBH</option><option value="" disabled>Không có TVBH</option>';
-        return;
-    }
-    consultantSelect.innerHTML = '<option value="all">Tất cả TVBH</option>';
-    consultantsList.forEach(consultantName => {
-        const option = document.createElement('option');
-        option.value = consultantName;
-        option.textContent = consultantName;
-        consultantSelect.appendChild(option);
-    });
-}
-
-function getChartBaseColors() {
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    const rootStyle = getComputedStyle(document.documentElement);
-    return {
-        textColor: isDarkMode ? rootStyle.getPropertyValue('--text-dark').trim() : rootStyle.getPropertyValue('--text-light').trim(),
-        gridColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        targetColor: isDarkMode ? 'rgba(0, 174, 255, 0.7)' : 'rgba(108, 117, 125, 0.7)',
-        actualColor: rootStyle.getPropertyValue('--success-color').trim()
-    };
-}
-function renderConsultantProgressChart(kpiData) {
-    const ctx = document.getElementById('consultantProgressChart').getContext('2d');
-    const chartColors = getChartBaseColors();
-    const consultantFilterVal = document.getElementById('consultant-filter').value;
-    let dataForChart = [...kpiData];
-    if (consultantFilterVal === 'all') {
-        dataForChart.sort((a,b) => b.achievement - a.achievement);
-        dataForChart = dataForChart.slice(0, Math.min(5, dataForChart.length));
-    }
-    const labels = dataForChart.map(item => item.name);
-    const targetData = dataForChart.map(item => item.target);
-    const actualData = dataForChart.map(item => item.actual);
-    if (consultantProgressChartInstance) consultantProgressChartInstance.destroy();
-    consultantProgressChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Chỉ Tiêu', data: targetData, backgroundColor: chartColors.targetColor, borderColor: chartColors.targetColor.replace(/[\d\.]+\)$/g, '1)'), borderWidth: 1, borderRadius: 3 },
-                { label: 'Thực Đạt', data: actualData, backgroundColor: chartColors.actualColor, borderColor: chartColors.actualColor.replace(/[\d\.]+\)$/g, '1)'), borderWidth: 1, borderRadius: 3 }
-            ]
+            return 0;
         },
-        options: {
-            responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-            scales: {
-                y: { beginAtZero: true, ticks: { color: chartColors.textColor, stepSize: 1, precision: 0 }, grid: { color: chartColors.gridColor }, title: { display: true, text: 'Số Lượng Xe', color: chartColors.textColor } },
-                x: { ticks: { color: chartColors.textColor, font: { size: labels.length > 3 ? 10 : 12 } }, grid: { display: false } }
-            },
-            plugins: {
-                legend: { position: 'top', labels: { color: chartColors.textColor, boxWidth: 12, padding: 15 } },
-                tooltip: { mode: 'index', intersect: false, callbacks: { label: function(context) { return `${context.dataset.label || ''}: ${context.parsed.y || 0} xe`; } } }
-            }
+        resizeCharts: function() {
+            if (consultantProgressChartInstance) consultantProgressChartInstance.resize();
         }
-    });
-}
-function updateChartColors() {
-     if (consultantProgressChartInstance && consultantProgressChartInstance.ctx) {
-         const monthFilterVal = document.getElementById('month-filter').value;
-         if (monthFilterVal && document.getElementById('kpi-consultant-grid').children.length > 0 && !document.querySelector('.placeholder-card')) {
-             loadKpiData(); 
-             return; 
-         }
-     }
-     const kpiGrid = document.getElementById('kpi-consultant-grid');
-     const cards = kpiGrid.querySelectorAll('.kpi-consultant-card:not(.placeholder-card)');
-     cards.forEach(card => {
-        const canvas = card.querySelector('canvas[id^="donut-"]');
-        if (canvas && activeDonutCharts[canvas.id]) {
-            const chart = activeDonutCharts[canvas.id];
-            const achievementText = chart.options.plugins.doughnutLabel.text;
-            const achievement = parseFloat(achievementText.replace('%', ''));
-            renderDonutChart(canvas.id, achievement);
-        }
-     });
-
-}
-function resizeCharts() {
-    if (consultantProgressChartInstance && consultantProgressChartInstance.ctx) {
-        consultantProgressChartInstance.resize();
-    }
-}
-
-document.addEventListener("DOMContentLoaded", async function() {
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
-        const themeIcon = document.querySelector('.theme-toggle i, .theme-toggle-btn i');
-        if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
-        document.body.setAttribute('data-theme', 'dark');
-    } else {
-        document.body.setAttribute('data-theme', 'light');
-    }
-
-    if (window.innerWidth > 900) {
-        const sidebar = document.getElementById("sidebar");
-        const mainContainer = document.getElementById("main-container");
-        const header = document.getElementById("page-header");
-        if (sidebar && mainContainer && header) {
-            if (localStorage.getItem('sidebarState') === 'collapsed') {
-                sidebar.classList.add("collapsed");
-                mainContainer.classList.add("collapsed");
-                header.style.left = '60px';
-                header.style.width = 'calc(100% - 60px)';
-            } else {
-                sidebar.classList.remove("collapsed");
-                mainContainer.classList.remove("collapsed");
-                header.style.left = '200px';
-                header.style.width = 'calc(100% - 200px)';
-            }
-        }
-    } else {
-        const header = document.getElementById("page-header");
-        const mainContainer = document.getElementById("main-container");
-        if (header) { header.style.left = '0px'; header.style.width = '100%';}
-        if (mainContainer) { mainContainer.classList.remove("collapsed"); mainContainer.style.marginLeft = '0px';}
-    }
-    setActiveSidebarLink();
-    updateSidebarToggleIcon();
-
-    showLoader(true);
-    document.getElementById('month-filter').value = getCurrentYearMonth();
-    document.getElementById('consultant-filter').value = 'all';
-
-    await fetchKpiTargetsFromAPI();
-    await fetchAnnualSalesData();
-
-    if (kpiTargetsData && Object.keys(kpiTargetsData).length > 0 &&
-        annualSalesData && Object.keys(annualSalesData).length > 0 &&
-        uniqueConsultantsOriginalList && uniqueConsultantsOriginalList.length > 0) {
-        await loadKpiData();
-    } else {
-        const kpiGrid = document.getElementById('kpi-consultant-grid');
-        const loaderInGrid = kpiGrid.querySelector('#kpi-loader-overlay');
-        const placeholderHTML = `<div class="kpi-consultant-card placeholder-card" style="grid-column: 1 / -1; text-align: center;"><h3>Không thể tải đủ dữ liệu ban đầu hoặc không có TVBH nào trong chỉ tiêu. Vui lòng kiểm tra console và thử lại.</h3></div>`;
-        if (loaderInGrid) { // Nếu loader vẫn còn trong grid (trường hợp grid trống)
-             loaderInGrid.classList.remove('active'); // Ẩn loader đi
-             if(!kpiGrid.querySelector('.placeholder-card')){ // Chỉ thêm placeholder nếu chưa có
-                kpiGrid.insertAdjacentHTML('beforeend', placeholderHTML);
-             }
-        } else { // Nếu grid đã bị clear hoàn toàn
-            kpiGrid.innerHTML = placeholderHTML;
-        }
-
-        document.getElementById('summary-table-container').classList.add('hidden');
-        document.getElementById('consultant-progress-chart-container').classList.add('hidden');
-        console.error("Lỗi DOMContentLoaded: Không thể tải đủ dữ liệu chỉ tiêu, dữ liệu bán hàng, hoặc không có TVBH nào trong danh sách chỉ tiêu ban đầu.");
-        showLoader(false); // Đảm bảo loader chung (nếu có) cũng bị ẩn
-    }
-
-    const viewKpiBtn = document.getElementById('view-kpi-btn');
-    if (viewKpiBtn) { viewKpiBtn.disabled = false; }
-
-    document.addEventListener('click', function(event) {
-        const sidebarElem = document.getElementById('sidebar');
-        const mobileMenuBtnElem = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 900 && sidebarElem?.classList.contains('open')) {
-            if (!sidebarElem.contains(event.target) && (!mobileMenuBtnElem || !mobileMenuBtnElem.contains(event.target))) {
-                toggleMobileSidebar();
-            }
-        }
-    });
-});
-
-window.addEventListener('resize', debounce(() => {
-    updateSidebarToggleIcon();
-    if (window.innerWidth > 900) {
-        const sidebar = document.getElementById("sidebar");
-        const mainContainer = document.getElementById("main-container");
-        const header = document.getElementById("page-header");
-        if (sidebar && mainContainer && header) {
-            sidebar.classList.remove("open");
-            const storedState = localStorage.getItem('sidebarState');
-            if (storedState === 'collapsed') {
-                sidebar.classList.add("collapsed"); mainContainer.classList.add("collapsed");
-                header.style.left = '60px'; header.style.width = 'calc(100% - 60px)';
-            } else {
-                sidebar.classList.remove("collapsed"); mainContainer.classList.remove("collapsed");
-                header.style.left = '200px'; header.style.width = 'calc(100% - 200px)';
-            }
-        }
-    } else {
-        const header = document.getElementById("page-header");
-        const mainContainer = document.getElementById("main-container");
-        if(header) { header.style.left = '0px'; header.style.width = '100%';}
-        if(mainContainer) { mainContainer.classList.remove("collapsed"); mainContainer.style.marginLeft = '0px';}
-    }
-    resizeCharts();
-}, 200));
-// ===============================================
-// === BẮT ĐẦU CÁC HÀM XỬ LÝ CHO TRỢ LÝ ẢO ===
-// ===============================================
-
-// URL của backend xử lý logic chat
-const chatbotApiURL = "https://script.google.com/macros/s/AKfycbx4ZJwfU8pSWo7_T41lpYaExlVzBUV_3GLl2gGucgqKlLcXmynXF04dTQ1aw5wWmwt6/exec";
-
-// Biến toàn cục để chứa phần tử hiển thị tin nhắn
-let chatMessagesContainer;
-
-// Gán biến chatMessagesContainer khi trang đã tải xong
-document.addEventListener("DOMContentLoaded", function() {
-    chatMessagesContainer = document.getElementById('ai-chat-messages');
-});
-
-/**
- * Mở hoặc đóng cửa sổ chat.
- */
-function toggleGlobalAIChat() {
-    const chatWindow = document.getElementById('ai-chat-window');
-    if(chatWindow) {
-        chatWindow.classList.toggle('open');
-    }
-}
-
-/**
- * Xử lý khi người dùng nhấn phím trong ô nhập liệu chat.
- * @param {KeyboardEvent} event - Sự kiện phím.
- */
-function handleChatInputKey(event) {
-    // Nếu nhấn Enter và không giữ Shift -> Gửi tin nhắn
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault(); // Ngăn việc xuống dòng trong textarea
-        sendGlobalAIChatMessage();
-    }
-}
-
-/**
- * Thoát các ký tự HTML đặc biệt để tránh lỗi XSS.
- * @param {string} unsafe - Chuỗi văn bản thô.
- * @returns {string} - Chuỗi văn bản an toàn để hiển thị.
- */
-function escapeHtml(unsafe) {
-    if (typeof unsafe !== 'string') return unsafe;
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
-function appendMessage(text, sender) {
-    if (!chatMessagesContainer) return;
-
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `${sender}-message`;
-
-    const bubbleDiv = document.createElement('div');
-    bubbleDiv.className = 'message-content';
-
-    // ✨ Đây là phần logic được thêm vào ✨
-    if (sender === 'ai' && text === 'thinking') {
-        // Nếu là AI và trạng thái là 'thinking', tạo hiệu ứng 3 chấm
-        messageDiv.classList.add('loading'); // Thêm class để CSS nhận diện
-        const thinkingIndicator = document.createElement('div');
-        thinkingIndicator.className = 'typing-indicator';
-        thinkingIndicator.innerHTML = '<span></span><span></span><span></span>';
-        bubbleDiv.appendChild(thinkingIndicator);
-    } else {
-        // Logic cũ để hiển thị tin nhắn văn bản thông thường
-        let formattedText = escapeHtml(text)
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/g, '<br>');
-        bubbleDiv.innerHTML = formattedText;
-    }
-
-    messageDiv.appendChild(bubbleDiv);
-    chatMessagesContainer.appendChild(messageDiv);
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    };
     
-    // Rất quan trọng: trả về phần tử để có thể xóa nó sau này
-    return messageDiv; 
-}
-
-async function sendGlobalAIChatMessage() {
-    const inputEl = document.getElementById('ai-chat-input');
-    const sendBtn = document.getElementById('ai-chat-send-btn');
-    if (!inputEl || !sendBtn) return;
-
-    const userPrompt = inputEl.value.trim();
-    if (!userPrompt) return;
-
-    appendMessage(userPrompt, 'user');
-    inputEl.value = '';
-    inputEl.disabled = true;
-    sendBtn.disabled = true;
-
-    // ✨ BƯỚC 3.1: HIỂN THỊ HIỆU ỨNG "ĐANG SOẠN..."
-    // Gọi hàm appendMessage với từ khóa 'thinking' và lưu lại phần tử
-    const thinkingMessageElement = appendMessage('thinking', 'ai');
-
-    try {
-        const formData = new URLSearchParams();
-        formData.append('action', 'getGlobalAiResponse');
-        formData.append('userPrompt', userPrompt);
-
-        const pageContextElement = document.getElementById('main-container');
-        const pageContextText = pageContextElement ? pageContextElement.innerText : document.body.innerText;
-        formData.append('pageContext', pageContextText);
-
-        const response = await fetch(chatbotApiURL, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error(`Lỗi mạng: ${response.statusText}`);
-        }
-
-        const aiResponseText = await response.text();
-
-        // ✨ BƯỚC 3.2: XÓA HIỆU ỨNG KHI CÓ KẾT QUẢ
-        // Nếu phần tử "đang soạn..." tồn tại, hãy xóa nó khỏi giao diện
-        if (thinkingMessageElement) {
-            thinkingMessageElement.remove();
-        }
-        
-        // Hiển thị câu trả lời thật của AI
-        appendMessage(aiResponseText, 'ai');
-
-    } catch (error) {
-        console.error("Lỗi khi gọi Trợ lý Ảo:", error);
-        
-        // ✨ BƯỚC 3.3: XÓA HIỆU ỨNG KHI GẶP LỖI
-        // Cũng phải xóa hiệu ứng nếu quá trình gọi API bị lỗi
-        if (thinkingMessageElement) {
-            thinkingMessageElement.remove();
-        }
-
-        appendMessage(`Đã xảy ra lỗi: ${error.message}. Vui lòng thử lại sau.`, 'ai');
-        
-    } finally {
-        inputEl.disabled = false;
-        sendBtn.disabled = false;
-        inputEl.focus();
-        if(chatMessagesContainer) {
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-        }
+    // Helper functions
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
     }
-}
+
+    // Initialize the application
+    App.init();
+});
 </script>
+
 </body>
 </html>
