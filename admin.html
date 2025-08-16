@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Trang Quản Trị - VinFast Minh Đạo</title>
+    <title>Quản Trị</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1217,9 +1217,9 @@ body.admin-logged-in #login-screen {
 
 /* --- Cột Showcase bên trái (ĐÃ CẬP NHẬT ẢNH NỀN) --- */
 .login-showcase {
-    flex-basis: 50%; /* Chiếm 50% chiều rộng */
+    flex-basis: 80%; /* Chiếm 50% chiều rộng */
     /* Thay đổi URL ảnh nền ở dòng dưới đây */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://vfxanh.vn/wp-content/uploads/2025/04/Loc-Blog-Xe-2.jpg');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
     background-size: cover;
     background-position: center;
     display: flex;
@@ -1246,13 +1246,45 @@ body.admin-logged-in #login-screen {
     margin-top: 10px;
 }
 
-/* --- Cột Form bên phải --- */
+/* --- Cột Form bên phải (ĐÃ NÂNG CẤP NỀN) --- */
 .login-form-wrapper {
     flex-basis: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--background-light);
+    
+    /* Sử dụng cùng ảnh nền với bên trái */
+    background-image: url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
+    background-size: cover;
+    background-position: center;
+    
+    /* Lớp phủ và hiệu ứng thủy tinh mờ */
+    position: relative; /* Cần có để lớp phủ hoạt động */
+}
+
+/* Thêm một lớp phủ để tạo hiệu ứng mờ */
+.login-form-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    /* Màu nền nhạt có độ trong suốt */
+    background-color: rgba(248, 249, 250, 0.1); /* Màu --background-light với 70% opacity */
+    
+    /* Hiệu ứng mờ chính */
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    
+    z-index: 1; /* Nằm dưới form */
+}
+
+/* Đảm bảo form nằm trên lớp phủ */
+.login-form-wrapper .modal-content {
+    position: relative;
+    z-index: 2;
 }
 
 /* Điều chỉnh lại form để vừa vặn trong cột mới */
