@@ -1124,65 +1124,195 @@ body {
     display: none; /* Mặc định ẩn card trên desktop */
 }
 /* =================================================================== */
-/* CSS BỔ SUNG CHO MÀN HÌNH ĐĂNG NHẬP ADMIN */
+/* NÂNG CẤP GIAO DIỆN ĐĂNG NHẬP (BỐ CỤC SPLIT-SCREEN)
 /* =================================================================== */
 
-/* 1. Màn hình khóa toàn trang */
 #login-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
+    /* Bỏ các thuộc tính cũ để layout mới chiếm toàn màn hình */
+    display: block; 
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.login-container {
+    display: flex;
     width: 100vw;
     height: 100vh;
-    background-color: var(--background-light);
-    z-index: 9999;
+    animation: fadeIn 0.8s ease-out; /* Thêm hiệu ứng xuất hiện mượt mà */
+}
+
+/* --- Cột Showcase bên trái --- */
+.login-showcase {
+    flex-basis: 80%; /* Chiếm 55% chiều rộng */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5)), url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Dồn nội dung xuống dưới */
+    padding: 50px;
+    color: white;
+}
+
+.showcase-content {
+    text-align: left;
+}
+
+.showcase-content .fa-car {
+    font-size: 40px; /* Tăng kích thước icon */
+    opacity: 0.9;
+}
+
+.showcase-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-top: 15px;
+    letter-spacing: 1px;
+}
+
+.showcase-content p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    margin-top: 10px;
+    max-width: 500px;
+}
+
+/* --- Cột Form bên phải (với hiệu ứng Glassmorphism) --- */
+.login-form-wrapper {
+    flex-basis: 45%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.3s ease;
+    background-image: url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
+    background-size: cover;
+    background-position: center;
+    position: relative; /* Cần có để lớp phủ hoạt động */
 }
 
-/* 2. Style cho form đăng nhập bên trong màn hình khóa */
-#login-screen .modal-content {
-    background: var(--card-bg-light);
+/* Lớp phủ để tạo hiệu ứng mờ */
+.login-form-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1); /* Màu nền trắng rất nhạt */
+    -webkit-backdrop-filter: blur(12px); /* Hiệu ứng mờ chính */
+    backdrop-filter: blur(12px);
+    z-index: 1; 
+}
+
+/* Đảm bảo form nằm trên lớp phủ */
+.login-form-wrapper .modal-content {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.8); /* Nền trắng mờ cho form */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-lg); /* Sử dụng shadow đã định nghĩa */
     padding: 30px 35px;
     border-radius: 18px;
     max-width: 420px;
     width: 90%;
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-light);
-    transform: none;
-    opacity: 1;
 }
-#login-screen .modal-content h2 {
+
+#loginForm h2 {
     text-align: center;
     margin-bottom: 10px;
     font-weight: 700;
     color: var(--text-light);
 }
-#login-screen .modal-content p.modal-subtitle {
+#loginForm .modal-subtitle {
     text-align: center;
     margin-bottom: 25px;
     color: var(--text-muted-light);
 }
-#login-screen .modal-content .input-group {
+/* CSS NÂNG CẤP CHO CÁC Ô INPUT ĐĂNG NHẬP */
+#loginForm .input-group {
     position: relative;
-    margin-bottom: 18px;
+    margin-bottom: 20px; /* Tăng khoảng cách một chút */
 }
-#login-screen .modal-content .input-icon {
+
+#loginForm .input-icon {
     position: absolute;
     top: 50%;
     left: 15px;
     transform: translateY(-50%);
-    color: var(--text-muted-light);
+    color: rgba(0,0,0, 0.8); /* Icon màu trắng mờ */
+    transition: color var(--transition-fast);
 }
-#login-screen .modal-content input {
-    width: 100%;
-    padding: 12px 15px 12px 45px;
-}
-#login-screen .modal-content .w-full { width: 100%; }
 
-/* 3. Logic ẩn/hiện nội dung */
+#loginForm .input-group input {
+    width: 100%;
+    padding: 14px 20px 14px 50px; /* Tăng padding cho thoáng hơn */
+    background-color: rgba(255, 255, 255, 0.2); /* Nền trắng trong suốt */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Viền trắng mờ */
+    border-radius: 12px; /* Bo tròn hơn một chút */
+    color: Black; /* Chữ khi nhập màu trắng */
+    font-size: 15px;
+    font-weight: 500;
+    transition: all var(--transition-medium) ease;
+}
+
+/* Hiệu ứng khi placeholder (chữ mờ) hiển thị */
+#loginForm .input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+/* Hiệu ứng khi click vào ô input */
+#loginForm .input-group input:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.8); /* Viền sáng hơn khi focus */
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1); /* Tạo vầng sáng mờ */
+}
+
+/* Icon cũng sáng lên khi focus vào input */
+#loginForm .input-group input:focus + .input-icon {
+    color: #ffffff;
+}
+#loginForm .w-full { width: 100%; }
+
+/* CSS cho tùy chọn "Duy trì đăng nhập" */
+.remember-me-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Căn lề trái */
+    gap: 8px; /* Khoảng cách giữa checkbox và chữ */
+    margin-bottom: 20px;
+}
+
+.remember-me-container input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    cursor: pointer;
+}
+
+.remember-me-container label {
+    font-size: 14px;
+    color: var(--text-muted-light);
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0; /* Ghi đè margin mặc định */
+}
+.login-form-wrapper .modal-content {
+    opacity: 1;
+    transform: none;
+}
+/* Responsive cho điện thoại */
+@media (max-width: 900px) {
+    .login-showcase {
+        display: none; /* Ẩn cột hình ảnh trên màn hình nhỏ */
+    }
+    .login-form-wrapper {
+        flex-basis: 100%; /* Form chiếm toàn bộ màn hình */
+    }
+    .login-form-wrapper .modal-content {
+         padding: 0 20px; /* Thêm chút padding cho đẹp */
+         background: rgba(255, 255, 255, 0.85); /* Tăng độ mờ cho dễ đọc trên mobile */
+    }
+}
+
+/* =================================================================== */
+/* LOGIC ẨN/HIỆN NỘI DUNG (GIỮ NGUYÊN)
+/* =================================================================== */
 
 /* Mặc định: Ẩn nội dung chính của trang admin */
 .page-container {
@@ -1198,116 +1328,27 @@ body.admin-logged-in .page-container {
 body.admin-logged-in #login-screen {
     display: none;
 }
-/* =================================================================== */
-/* NÂNG CẤP GIAO DIỆN ĐĂNG NHẬP (BỐ CỤC SPLIT-SCREEN)
-/* =================================================================== */
-
-#login-screen {
-    /* Bỏ padding và align-items cũ để layout mới chiếm toàn màn hình */
-    display: block; 
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-
-.login-container {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-    animation: fadeIn 0.8s ease-out;
-}
-
-/* --- Cột Showcase bên trái (ĐÃ CẬP NHẬT ẢNH NỀN) --- */
-.login-showcase {
-    flex-basis: 80%; /* Chiếm 50% chiều rộng */
-    /* Thay đổi URL ảnh nền ở dòng dưới đây */
-    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* Dồn nội dung xuống dưới */
-    padding: 50px;
-    color: white;
-}
-
-.showcase-content {
-    text-align: left;
-}
-
-.showcase-content h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-top: 15px;
-    letter-spacing: 1px;
-}
-
-.showcase-content p {
-    font-size: 1.1rem;
-    opacity: 0.8;
-    margin-top: 10px;
-}
-
-/* --- Cột Form bên phải (ĐÃ NÂNG CẤP NỀN) --- */
-.login-form-wrapper {
-    flex-basis: 50%;
+/* CSS cho tùy chọn "Duy trì đăng nhập" (ĐÃ SỬA LỖI ƯU TIÊN) */
+#loginForm .remember-me-container {
     display: flex;
     align-items: center;
-    justify-content: center;
-    
-    /* Sử dụng cùng ảnh nền với bên trái */
-    background-image: url('https://xevinfastvungtau.com/wp-content/uploads/2023/09/banner-vf-9-scaled.webp');
-    background-size: cover;
-    background-position: center;
-    
-    /* Lớp phủ và hiệu ứng thủy tinh mờ */
-    position: relative; /* Cần có để lớp phủ hoạt động */
+    justify-content: flex-start; /* Quan trọng: Căn các mục về bên trái */
+    gap: 8px; /* Khoảng cách giữa checkbox và chữ */
+    margin-bottom: 20px;
 }
 
-/* Thêm một lớp phủ để tạo hiệu ứng mờ */
-.login-form-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    
-    /* Màu nền nhạt có độ trong suốt */
-    background-color: rgba(248, 249, 250, 0.1); /* Màu --background-light với 70% opacity */
-    
-    /* Hiệu ứng mờ chính */
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    
-    z-index: 1; /* Nằm dưới form */
+#loginForm .remember-me-container input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    cursor: pointer;
 }
 
-/* Đảm bảo form nằm trên lớp phủ */
-.login-form-wrapper .modal-content {
-    position: relative;
-    z-index: 2;
-}
-
-/* Điều chỉnh lại form để vừa vặn trong cột mới */
-.login-form-wrapper .modal-content {
-    box-shadow: none; /* Bỏ bóng đổ vì đã có nền riêng */
-    border: none;
-    max-width: 420px; /* Giữ nguyên kích thước form */
-    width: 100%;
-    padding: 0; /* Bỏ padding ngoài */
-    background: transparent; /* Nền trong suốt */
-}
-
-/* Responsive cho điện thoại */
-@media (max-width: 900px) {
-    .login-showcase {
-        display: none; /* Ẩn cột hình ảnh trên màn hình nhỏ */
-    }
-    .login-form-wrapper {
-        flex-basis: 100%; /* Form chiếm toàn bộ màn hình */
-    }
-    .login-form-wrapper .modal-content {
-         padding: 0 20px; /* Thêm chút padding cho đẹp */
-    }
+#loginForm .remember-me-container label {
+    font-size: 14px;
+    color: var(--text-muted-light);
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0;
 }
     </style>
 </head>
@@ -1696,7 +1737,7 @@ body.admin-logged-in #login-screen {
     <div class="login-container">
         <div class="login-showcase">
             <div class="showcase-content">
-                <i class="fas fa-car fa-3x"></i>
+                <i class="fas fa-car"></i>
                 <h1>VINFAST MINH ĐẠO</h1>
                 <p>Hệ thống quản lý dành cho Quản trị viên</p>
             </div>
@@ -1704,58 +1745,31 @@ body.admin-logged-in #login-screen {
 
         <div class="login-form-wrapper">
             <div class="modal-content">
-                
                 <div id="loginForm">
                     <h2 data-lang="login-title">Đăng Nhập</h2>
-                    <p class="modal-subtitle" data-lang="login-subtitle"></p>
+                    <p class="modal-subtitle" data-lang="login-subtitle">Vui lòng nhập thông tin của bạn</p>
+                    
                     <form onsubmit="login(event)">
                         <div class="input-group">
                             <i class="fas fa-user input-icon"></i>
                             <input type="text" id="username" placeholder="Tên đăng nhập" required>
                         </div>
+                        
                         <div class="input-group">
                             <i class="fas fa-lock input-icon"></i>
                             <input type="password" id="password" placeholder="Mật khẩu" required onkeypress="if(event.key === 'Enter') login(event)">
                         </div>
-                        <button type="submit" id="loginButton" class="btn btn-primary w-full"><i class="fas fa-sign-in-alt"></i> <span class="button-text">Đăng Nhập</span></button>
-                    </form>
-                    <div class="modal-links" style="display: flex; justify-content: space-between; margin-top: 20px;">
-                        <span onclick="showForm('resetPasswordForm')" style="cursor: pointer; color: var(--gradient-start);">Đổi mật khẩu</span>
-                        <span onclick="showForm('forgotPasswordForm')" style="cursor: pointer; color: var(--gradient-start);">Quên mật khẩu?</span>
-                    </div>
-                </div>
+                        
+                        <div class="remember-me-container">
+                            <input type="checkbox" id="rememberMe">
+                            <label for="rememberMe">Duy trì đăng nhập</label>
+                        </div>
 
-                <div id="resetPasswordForm" style="display: none;">
-                    <h2>Đổi Mật Khẩu</h2>
-                    <form onsubmit="changePassword(event)">
-                        <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="changeUsername" placeholder="Tên đăng nhập" required></div>
-                        <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="oldPassword" placeholder="Mật khẩu cũ" required></div>
-                        <div class="input-group"><i class="fas fa-key input-icon"></i><input type="password" id="newPassword" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" required></div>
-                        <div class="input-group"><i class="fas fa-check-circle input-icon"></i><input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required></div>
-                        <button type="submit" id="changePasswordBtn" class="btn btn-primary w-full"><i class="fas fa-key"></i> <span class="button-text">Đổi Mật Khẩu</span></button>
+                        <button type="submit" id="loginButton" class="btn btn-primary w-full">
+                            <i class="fas fa-sign-in-alt"></i> 
+                            <span class="button-text">Đăng Nhập</span>
+                        </button>
                     </form>
-                    <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
-                </div>
-
-                <div id="forgotPasswordForm" style="display: none;">
-                    <h2>Quên Mật Khẩu</h2>
-                    <form onsubmit="forgotPassword(event)">
-                        <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="forgotEmail" placeholder="Email của bạn" required></div>
-                        <button type="submit" id="sendOtpBtn" class="btn btn-primary w-full"><i class="fas fa-paper-plane"></i> <span class="button-text">Gửi OTP</span></button>
-                    </form>
-                    <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
-                </div>
-
-                <div id="resetPasswordWithOTPForm" style="display: none;">
-                    <h2>Đặt Lại Mật Khẩu</h2>
-                    <form onsubmit="resetPasswordWithOTP(event)">
-                        <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="resetUsername" placeholder="Tên đăng nhập" required readonly></div>
-                        <div class="input-group"><i class="fas fa-shield-alt input-icon"></i><input type="text" id="resetOTP" placeholder="Nhập mã OTP" required></div>
-                        <div class="input-group"><i class="fas fa-key input-icon"></i><input type="password" id="resetNewPassword" placeholder="Mật khẩu mới" required></div>
-                        <div class="input-group"><i class="fas fa-check-circle input-icon"></i><input type="password" id="resetConfirmPassword" placeholder="Xác nhận mật khẩu mới" required></div>
-                        <button type="submit" id="resetWithOtpBtn" class="btn btn-primary w-full"><i class="fas fa-check"></i> <span class="button-text">Đặt Lại Mật Khẩu</span></button>
-                    </form>
-                     <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
                 </div>
             </div>
         </div>
@@ -1772,31 +1786,19 @@ body.admin-logged-in #login-screen {
 }
 
 // Hàm kiểm tra quyền truy cập khi tải trang
-function checkAuthentication() {
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-    // Giả sử vai trò 'admin' được lưu từ trang index.html
-    // Chúng ta cần một cách xác định admin tin cậy hơn, nhưng tạm thời dùng cách này
-    const isAdmin = sessionStorage.getItem('userRole') === 'admin';
 
-    if (isLoggedIn && isAdmin) {
-        document.body.classList.add('admin-logged-in');
-        initializeAdminPage();
-    } else {
-        document.body.classList.remove('admin-logged-in');
-        // Không làm gì cả, màn hình đăng nhập sẽ tự hiển thị theo CSS
-    }
-}
 
-// Hàm đăng xuất
 function logout() {
-    sessionStorage.clear();
-    location.reload(); // Tải lại trang để hiển thị màn hình đăng nhập
+    stopSessionTimeoutCheck();
+    authStorage.clear(); // Dùng authStorage để xóa
+    location.reload();
 }
 async function login(e) {
     e.preventDefault();
     const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value.trim();
-    const loginButton = document.getElementById("loginButton"); // Giả sử nút có id này
+    const rememberMe = document.getElementById('rememberMe').checked; // Lấy trạng thái checkbox "Duy trì đăng nhập"
+    const loginButton = document.getElementById("loginButton");
 
     if (!username || !password) {
         showToast("Vui lòng nhập đầy đủ thông tin!", 'error');
@@ -1814,20 +1816,21 @@ async function login(e) {
         const result = await response.json();
 
         if (result.success) {
-            // Lưu thông tin đăng nhập vào sessionStorage
-            sessionStorage.setItem("isLoggedIn", "true");
-            sessionStorage.setItem("currentUser", result.username);
-            
-            // QUAN TRỌNG: Kiểm tra quyền admin
-            // Giả sử script đăng nhập trả về vai trò người dùng
             if (result.role === "admin") {
-                sessionStorage.setItem("userRole", "admin");
+                // Sử dụng authStorage để lưu trữ, có xét đến tùy chọn "rememberMe"
+                authStorage.set("isLoggedIn", "true", rememberMe);
+                authStorage.set("currentUser", result.username, rememberMe);
+                authStorage.set("userRole", "admin", rememberMe);
+
+                // Reset và bắt đầu quản lý phiên đăng nhập
+                resetSessionTimeout(); 
+                startSessionTimeoutCheck();
+
                 showToast("Đăng nhập quản trị thành công!", 'success');
-                // Gọi lại hàm checkAuth để ẩn màn hình đăng nhập và hiển thị nội dung
                 checkAuthentication();
             } else {
                 // Nếu đăng nhập thành công nhưng không phải admin
-                sessionStorage.clear(); // Xóa session vừa tạo
+                authStorage.clear(); // Xóa session/storage
                 showToast("Bạn không có quyền truy cập trang này.", 'error');
             }
         } else {
@@ -1838,7 +1841,8 @@ async function login(e) {
         showToast("Không thể kết nối đến server!", 'error');
     } finally {
         loginButton.disabled = false;
-        loginButton.innerHTML = 'Đăng Nhập';
+        // Khôi phục lại nội dung gốc của nút, bao gồm cả icon và text
+        loginButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span class="button-text">Đăng Nhập</span>';
     }
 }
 function showForm(formName) { 
@@ -1913,7 +1917,94 @@ function toggleActionMenu(event) {
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
     const API_URL = 'https://script.google.com/macros/s/AKfycbwoNlBjleqYKNGs11QceA7Q3WO-MonGkBlyr_cf6ir_WAMSezydskVCzQlZyP7UEl7KxA/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
+// =================================================================
+// SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
+// =================================================================
+let sessionInterval; // Biến lưu trữ bộ đếm thời gian
+const SESSION_DURATION = 60 * 60 * 1000; // 1 giờ tính bằng mili-giây
 
+/**
+ * Reset lại thời gian hết hạn của phiên đăng nhập.
+ * Được gọi mỗi khi người dùng có hoạt động.
+ */
+function resetSessionTimeout() {
+    const rememberMe = !!localStorage.getItem('isLoggedIn'); // Kiểm tra xem có đang ở chế độ duy trì không
+    if (authStorage.get('isLoggedIn') === 'true') {
+        const expiryTime = new Date().getTime() + SESSION_DURATION;
+        authStorage.set('loginExpiry', expiryTime, rememberMe);
+    }
+}
+
+function checkAuthentication() {
+    const isLoggedIn = authStorage.get('isLoggedIn') === 'true';
+    const expiryTime = authStorage.get('loginExpiry');
+
+    if (isLoggedIn && expiryTime && new Date().getTime() > parseInt(expiryTime, 10)) {
+        logout();
+        return;
+    }
+
+    if (isLoggedIn) {
+        document.body.classList.add('admin-logged-in');
+        initializeAdminPage();
+        startSessionTimeoutCheck();
+    } else {
+        document.body.classList.remove('admin-logged-in');
+    }
+}
+
+function checkSessionExpiry() {
+    const expiryTime = authStorage.get('loginExpiry');
+    if (!expiryTime || authStorage.get('isLoggedIn') !== 'true') {
+         // Nếu không có thời gian hết hạn hoặc không có cờ isLoggedIn, đăng xuất
+        stopSessionTimeoutCheck();
+        logout();
+        return;
+    }
+
+    const isExpired = new Date().getTime() > parseInt(expiryTime, 10);
+    if (isExpired) {
+        showToast('Phiên đăng nhập đã hết hạn.', 'warning');
+        stopSessionTimeoutCheck();
+        logout();
+    }
+}
+function startSessionTimeoutCheck() {
+    // Dừng bộ đếm cũ nếu có để tránh trùng lặp
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+    }
+    // Chạy kiểm tra mỗi phút
+    sessionInterval = setInterval(checkSessionExpiry, 60 * 1000); 
+}
+
+/**
+ * Dừng bộ đếm thời gian khi đăng xuất.
+ */
+function stopSessionTimeoutCheck() {
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+    }
+}
+const authStorage = {
+    get: function(key) {
+        // Ưu tiên lấy từ localStorage trước, nếu không có thì lấy từ sessionStorage
+        return localStorage.getItem(key) || sessionStorage.getItem(key);
+    },
+    set: function(key, value, remember) {
+        // Nếu người dùng chọn "Duy trì", lưu vào localStorage
+        if (remember) {
+            localStorage.setItem(key, value);
+        } else { // Nếu không, lưu vào sessionStorage
+            sessionStorage.setItem(key, value);
+        }
+    },
+    clear: function() {
+        // Xóa ở cả hai nơi để đảm bảo đăng xuất hoàn toàn
+        localStorage.clear();
+        sessionStorage.clear();
+    }
+};
     // Thay thế toàn bộ đối tượng appState cũ bằng đối tượng này
 const appState = {
     data: null,
@@ -4611,6 +4702,12 @@ document.addEventListener('DOMContentLoaded', () => {
     applyInitialTheme();
     initScrollToTopButton();
     checkAuthentication();
+
+    // CẬP NHẬT: Gắn sự kiện để reset thời gian chờ khi người dùng hoạt động
+    document.addEventListener('click', resetSessionTimeout);
+    document.addEventListener('keypress', resetSessionTimeout);
+    document.addEventListener('mousemove', resetSessionTimeout);
+
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') stopPolling();
         else startPolling();
