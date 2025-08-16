@@ -1123,6 +1123,160 @@ body {
 .mobile-card-wrapper {
     display: none; /* Mặc định ẩn card trên desktop */
 }
+/* =================================================================== */
+/* CSS BỔ SUNG CHO MÀN HÌNH ĐĂNG NHẬP ADMIN */
+/* =================================================================== */
+
+/* 1. Màn hình khóa toàn trang */
+#login-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--background-light);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+/* 2. Style cho form đăng nhập bên trong màn hình khóa */
+#login-screen .modal-content {
+    background: var(--card-bg-light);
+    padding: 30px 35px;
+    border-radius: 18px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light);
+    transform: none;
+    opacity: 1;
+}
+#login-screen .modal-content h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: var(--text-light);
+}
+#login-screen .modal-content p.modal-subtitle {
+    text-align: center;
+    margin-bottom: 25px;
+    color: var(--text-muted-light);
+}
+#login-screen .modal-content .input-group {
+    position: relative;
+    margin-bottom: 18px;
+}
+#login-screen .modal-content .input-icon {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: var(--text-muted-light);
+}
+#login-screen .modal-content input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+}
+#login-screen .modal-content .w-full { width: 100%; }
+
+/* 3. Logic ẩn/hiện nội dung */
+
+/* Mặc định: Ẩn nội dung chính của trang admin */
+.page-container {
+    display: none;
+}
+
+/* Khi body có class 'admin-logged-in', hiển thị nội dung chính */
+body.admin-logged-in .page-container {
+    display: flex;
+}
+
+/* Khi body có class 'admin-logged-in', ẩn màn hình đăng nhập */
+body.admin-logged-in #login-screen {
+    display: none;
+}
+/* =================================================================== */
+/* NÂNG CẤP GIAO DIỆN ĐĂNG NHẬP (BỐ CỤC SPLIT-SCREEN)
+/* =================================================================== */
+
+#login-screen {
+    /* Bỏ padding và align-items cũ để layout mới chiếm toàn màn hình */
+    display: block; 
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.login-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    animation: fadeIn 0.8s ease-out;
+}
+
+/* --- Cột Showcase bên trái (ĐÃ CẬP NHẬT ẢNH NỀN) --- */
+.login-showcase {
+    flex-basis: 50%; /* Chiếm 50% chiều rộng */
+    /* Thay đổi URL ảnh nền ở dòng dưới đây */
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://vfxanh.vn/wp-content/uploads/2025/04/Loc-Blog-Xe-2.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Dồn nội dung xuống dưới */
+    padding: 50px;
+    color: white;
+}
+
+.showcase-content {
+    text-align: left;
+}
+
+.showcase-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-top: 15px;
+    letter-spacing: 1px;
+}
+
+.showcase-content p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+    margin-top: 10px;
+}
+
+/* --- Cột Form bên phải --- */
+.login-form-wrapper {
+    flex-basis: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-light);
+}
+
+/* Điều chỉnh lại form để vừa vặn trong cột mới */
+.login-form-wrapper .modal-content {
+    box-shadow: none; /* Bỏ bóng đổ vì đã có nền riêng */
+    border: none;
+    max-width: 420px; /* Giữ nguyên kích thước form */
+    width: 100%;
+    padding: 0; /* Bỏ padding ngoài */
+    background: transparent; /* Nền trong suốt */
+}
+
+/* Responsive cho điện thoại */
+@media (max-width: 900px) {
+    .login-showcase {
+        display: none; /* Ẩn cột hình ảnh trên màn hình nhỏ */
+    }
+    .login-form-wrapper {
+        flex-basis: 100%; /* Form chiếm toàn bộ màn hình */
+    }
+    .login-form-wrapper .modal-content {
+         padding: 0 20px; /* Thêm chút padding cho đẹp */
+    }
+}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1191,7 +1345,9 @@ body {
     </div>
 </div>
     </div>
-
+<button class="nav-btn" onclick="logout()" title="Đăng xuất">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
  
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
             <i class="fas fa-bars"></i>
@@ -1504,12 +1660,167 @@ body {
     </div>
 </div>
 
-<div id="connection-status" title="Trạng thái kết nối"></div>
+<div id="login-screen">
+    <div class="login-container">
+        <div class="login-showcase">
+            <div class="showcase-content">
+                <i class="fas fa-car fa-3x"></i>
+                <h1>VINFAST MINH ĐẠO</h1>
+                <p>Hệ thống quản lý dành cho Quản trị viên</p>
+            </div>
+        </div>
 
+        <div class="login-form-wrapper">
+            <div class="modal-content">
+                
+                <div id="loginForm">
+                    <h2 data-lang="login-title">Đăng Nhập</h2>
+                    <p class="modal-subtitle" data-lang="login-subtitle"></p>
+                    <form onsubmit="login(event)">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" placeholder="Tên đăng nhập" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" placeholder="Mật khẩu" required onkeypress="if(event.key === 'Enter') login(event)">
+                        </div>
+                        <button type="submit" id="loginButton" class="btn btn-primary w-full"><i class="fas fa-sign-in-alt"></i> <span class="button-text">Đăng Nhập</span></button>
+                    </form>
+                    <div class="modal-links" style="display: flex; justify-content: space-between; margin-top: 20px;">
+                        <span onclick="showForm('resetPasswordForm')" style="cursor: pointer; color: var(--gradient-start);">Đổi mật khẩu</span>
+                        <span onclick="showForm('forgotPasswordForm')" style="cursor: pointer; color: var(--gradient-start);">Quên mật khẩu?</span>
+                    </div>
+                </div>
+
+                <div id="resetPasswordForm" style="display: none;">
+                    <h2>Đổi Mật Khẩu</h2>
+                    <form onsubmit="changePassword(event)">
+                        <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="changeUsername" placeholder="Tên đăng nhập" required></div>
+                        <div class="input-group"><i class="fas fa-lock input-icon"></i><input type="password" id="oldPassword" placeholder="Mật khẩu cũ" required></div>
+                        <div class="input-group"><i class="fas fa-key input-icon"></i><input type="password" id="newPassword" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" required></div>
+                        <div class="input-group"><i class="fas fa-check-circle input-icon"></i><input type="password" id="confirmPassword" placeholder="Xác nhận mật khẩu mới" required></div>
+                        <button type="submit" id="changePasswordBtn" class="btn btn-primary w-full"><i class="fas fa-key"></i> <span class="button-text">Đổi Mật Khẩu</span></button>
+                    </form>
+                    <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
+                </div>
+
+                <div id="forgotPasswordForm" style="display: none;">
+                    <h2>Quên Mật Khẩu</h2>
+                    <form onsubmit="forgotPassword(event)">
+                        <div class="input-group"><i class="fas fa-envelope input-icon"></i><input type="email" id="forgotEmail" placeholder="Email của bạn" required></div>
+                        <button type="submit" id="sendOtpBtn" class="btn btn-primary w-full"><i class="fas fa-paper-plane"></i> <span class="button-text">Gửi OTP</span></button>
+                    </form>
+                    <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
+                </div>
+
+                <div id="resetPasswordWithOTPForm" style="display: none;">
+                    <h2>Đặt Lại Mật Khẩu</h2>
+                    <form onsubmit="resetPasswordWithOTP(event)">
+                        <div class="input-group"><i class="fas fa-user input-icon"></i><input type="text" id="resetUsername" placeholder="Tên đăng nhập" required readonly></div>
+                        <div class="input-group"><i class="fas fa-shield-alt input-icon"></i><input type="text" id="resetOTP" placeholder="Nhập mã OTP" required></div>
+                        <div class="input-group"><i class="fas fa-key input-icon"></i><input type="password" id="resetNewPassword" placeholder="Mật khẩu mới" required></div>
+                        <div class="input-group"><i class="fas fa-check-circle input-icon"></i><input type="password" id="resetConfirmPassword" placeholder="Xác nhận mật khẩu mới" required></div>
+                        <button type="submit" id="resetWithOtpBtn" class="btn btn-primary w-full"><i class="fas fa-check"></i> <span class="button-text">Đặt Lại Mật Khẩu</span></button>
+                    </form>
+                     <div class="modal-links" style="text-align: center; margin-top: 20px;"><span onclick="showForm('loginForm')" style="cursor: pointer; color: var(--gradient-start);">Quay lại đăng nhập</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
 <script>
-    // =================================================================
-    // UI HELPER FUNCTIONS
-    // =================================================================
+   function initializeAdminPage() {
+    console.log("Xác thực thành công. Đang khởi tạo trang quản trị...");
+    fetchInitialData();
+    startPolling();
+    // Các hàm khởi tạo khác nếu có
+}
+
+// Hàm kiểm tra quyền truy cập khi tải trang
+function checkAuthentication() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    // Giả sử vai trò 'admin' được lưu từ trang index.html
+    // Chúng ta cần một cách xác định admin tin cậy hơn, nhưng tạm thời dùng cách này
+    const isAdmin = sessionStorage.getItem('userRole') === 'admin';
+
+    if (isLoggedIn && isAdmin) {
+        document.body.classList.add('admin-logged-in');
+        initializeAdminPage();
+    } else {
+        document.body.classList.remove('admin-logged-in');
+        // Không làm gì cả, màn hình đăng nhập sẽ tự hiển thị theo CSS
+    }
+}
+
+// Hàm đăng xuất
+function logout() {
+    sessionStorage.clear();
+    location.reload(); // Tải lại trang để hiển thị màn hình đăng nhập
+}
+async function login(e) {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const loginButton = document.getElementById("loginButton"); // Giả sử nút có id này
+
+    if (!username || !password) {
+        showToast("Vui lòng nhập đầy đủ thông tin!", 'error');
+        return;
+    }
+
+    loginButton.disabled = true;
+    loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+    try {
+        const response = await fetch(API_LOGIN_URL, {
+            method: 'POST',
+            body: new URLSearchParams({ action: "login", username, password })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            // Lưu thông tin đăng nhập vào sessionStorage
+            sessionStorage.setItem("isLoggedIn", "true");
+            sessionStorage.setItem("currentUser", result.username);
+            
+            // QUAN TRỌNG: Kiểm tra quyền admin
+            // Giả sử script đăng nhập trả về vai trò người dùng
+            if (result.role === "admin") {
+                sessionStorage.setItem("userRole", "admin");
+                showToast("Đăng nhập quản trị thành công!", 'success');
+                // Gọi lại hàm checkAuth để ẩn màn hình đăng nhập và hiển thị nội dung
+                checkAuthentication();
+            } else {
+                // Nếu đăng nhập thành công nhưng không phải admin
+                sessionStorage.clear(); // Xóa session vừa tạo
+                showToast("Bạn không có quyền truy cập trang này.", 'error');
+            }
+        } else {
+            showToast(result.message || "Tên đăng nhập hoặc mật khẩu không đúng.", 'error');
+        }
+    } catch (error) {
+        console.error("Lỗi đăng nhập:", error);
+        showToast("Không thể kết nối đến server!", 'error');
+    } finally {
+        loginButton.disabled = false;
+        loginButton.innerHTML = 'Đăng Nhập';
+    }
+}
+function showForm(formName) { 
+     ["loginForm", "resetPasswordForm", "forgotPasswordForm", "resetPasswordWithOTPForm"].forEach(formId => {
+        const formElement = document.getElementById(formId);
+        if (formElement) {
+            formElement.style.display = "none";
+        }
+    });
+    const targetForm = document.getElementById(formName);
+    if (targetForm) {
+        targetForm.style.display = "block";
+    }
+}
     function applyInitialTheme() {
         const savedTheme = localStorage.getItem("theme") || "light";
         document.body.classList.toggle("dark-mode", savedTheme === "dark");
@@ -1567,7 +1878,7 @@ function toggleActionMenu(event) {
         if(contentArea) contentArea.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-
+const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
     const API_URL = 'https://script.google.com/macros/s/AKfycbwoNlBjleqYKNGs11QceA7Q3WO-MonGkBlyr_cf6ir_WAMSezydskVCzQlZyP7UEl7KxA/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 
@@ -4267,8 +4578,7 @@ async function executeBulkAction(action, orderNumbers, buttonElement, additional
 document.addEventListener('DOMContentLoaded', () => {
     applyInitialTheme();
     initScrollToTopButton();
-    fetchInitialData();
-    startPolling();
+    checkAuthentication();
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') stopPolling();
         else startPolling();
