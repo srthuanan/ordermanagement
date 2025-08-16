@@ -234,28 +234,27 @@ body {
     width: 100%;
 }
 .data-table th, .data-table td {
-    padding: 12px 15px;
+    padding: 8px 10px; /* << GIẢM PADDING */
     text-align: left;
     border-bottom: 1px solid var(--border-light);
     vertical-align: middle;
 }
 .data-table th {
-    background: var(--background-light); /* Nền xám nhạt */
-    color: var(--text-muted-light); /* Chữ xám */
-    font-weight: 600;
+    background: #C0C0C0; /* THAY ĐỔI: Nền xám đậm hơn một chút */
+    color: #000000;      /* THAY ĐỔI: Chữ đen đậm hơn cho dễ đọc */
+    font-weight: 700;              /* THAY ĐỔI: Chữ đậm hơn */
     position: sticky; top: 0; z-index: 10;
     text-transform: uppercase;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: 0.5px;
-    border-bottom: 2px solid var(--gradient-start); /* Gạch chân màu nhấn */
+    border-bottom: 2px solid var(--gradient-start); 
 }
 .data-table th[onclick] { cursor: pointer; }
 .data-table tbody tr:hover {
     background-color: var(--background-light) !important;
 }
-.data-table td .main-info { font-weight: 500; font-size: 13.5px; color: var(--text-light); display: block; }
-.data-table td .sub-info { font-size: 12px; color: var(--text-muted-light); display: block; margin-top: 4px; }
-
+.data-table td .main-info { font-weight: 500; font-size: 13px; color: var(--text-light); display: block; }
+.data-table td .sub-info { font-size: 11px; color: var(--text-muted-light); display: block; margin-top: 3px; }
 /* --- Nút Bấm --- */
 .btn {
     padding: 10px 18px; /* Tăng padding */
@@ -448,21 +447,42 @@ body {
 }
 .file-input-hidden { display: none; }
 
-/* =================================================================== */
-/* 4. CÁC STYLE ĐẶC TRƯNG CỦA ADMIN.HTML (ĐÃ GIỮ LẠI VÀ TINH CHỈNH)
-/* =================================================================== */
+.status-badge {
+    padding: 5px 8px; /* Giảm nhẹ padding */
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: left;
+    /* width: 130px; */ /* << XÓA HOẶC VÔ HIỆU HÓA DÒNG NÀY */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    background-color: var(--status-color-bg);
+    color: var(--status-color-main);
+    border-left: 4px solid var(--status-color-main);
+    box-sizing: border-box;
+}
 
-/* --- Status Badges --- */
-.status-badge{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;display:inline-block;border:1px solid transparent;line-height:1.4;width:130px; letter-spacing: 0.5px;}
-.status-daghep{background-color:#0284c7;color:white;}
-.status-daxuathoadon{background-color:#16a34a;color:white;}
-.status-dapheduyet{background-color:#4f46e5;color:white;}
-.status-chuaghep,.status-chuatimthayvin{background-color:#fefce8;color:#a16207;border-color:#fde68a}
-.status-chopheduyet{background-color:#fff7ed;color:#c2410c;border-color:#fed7aa}
-.status-chokyhoadon{background-color:#f5f3ff;color:#7c3aed;border-color:#ddd6fe}
-.status-dabosung{background-color:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
-.status-yeucaubosung{background-color:#fff1f2;color:#be123c;border-color:#fecdd3}
-.status-dahuy,.status-default{background-color:#e2e8f0;color:#475569}
+/* 2. Bảng màu mới được phân chia theo mức độ và logic */
+
+/* === NHÓM TÍCH CỰC === */
+.status-invoice-issued { --status-color-main: #22c55e; --status-color-bg: #f0fdf4; }
+.status-supplemented { --status-color-main: #8b5cf6; --status-color-bg: #f5f3ff; }
+.status-vin-matched { --status-color-main: #3b82f6; --status-color-bg: #eff6ff; }
+.status-approved { --status-color-main: #14b8a6; --status-color-bg: #f0fdfa; }
+
+/* === NHÓM CẦN CHÚ Ý === */
+.status-pending-approval { --status-color-main: #f59e0b; --status-color-bg: #fffbeb; }
+.status-pending-signature { --status-color-main: #f97316; --status-color-bg: #fff7ed; }
+.status-supplement-required { --status-color-main: #ef4444; --status-color-bg: #fef2f2; }
+
+/* === NHÓM TRUNG TÍNH / KẾT THÚC === */
+.status-unmatched,
+.status-vin-not-found,
+.status-default { --status-color-main: #6b7280; --status-color-bg: #f3f4f6; }
+.status-cancelled { --status-color-main: #374151; --status-color-bg: #e5e7eb; }
 
 /* --- Các thành phần khác --- */
 .copyable-field{position:relative;cursor:pointer;display:flex;align-items:center;width:100%;padding:2px 0}.copyable-field .copy-text{flex-grow:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.copyable-field .copy-icon{position:absolute;right:0;top:50%;transform:translateY(-50%);color:var(--gradient-start);opacity:0;transition:opacity .2s ease-in-out,color .2s ease-in-out;padding:5px;font-size:13px;background-color:var(--card-bg-light)}.copyable-field:hover .copy-icon{opacity:1}.dropdown-panel,.notification-panel{display:none;position:absolute;top:calc(100% + 12px);right:0;width:320px;z-index:1001;opacity:0;transform:translateY(-10px) scale(.98);transform-origin:top right;transition:opacity .2s ease,transform .2s ease}.dropdown-panel.active,.notification-panel.active{display:block;opacity:1;transform:translateY(0) scale(1)}.dropdown-header,.notification-header{padding:16px 20px;font-size:1rem;font-weight:600;border-bottom:1px solid var(--border-light);color:var(--text-light)}.dropdown-list,.notification-list{list-style:none;padding:8px 0;margin:0;max-height:400px;overflow-y:auto}.dropdown-list li a{display:flex;align-items:center;gap:15px;padding:12px 20px;text-decoration:none;color:var(--text-muted-light);font-size:14px;transition:all .2s ease; border-radius: 8px; margin: 0 8px;}.dropdown-list li a:hover{background-color:rgba(79,70,229,.05);color:var(--gradient-start)}.dropdown-list li a i{width:20px;text-align:center;font-size:16px;opacity:.8}.dropdown-divider{height:1px;background-color:var(--border-light);margin:8px 15px}.total-count-display{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--text-muted-light);flex-shrink:0}.total-count-display strong{color:var(--gradient-start);font-size:15px}.dual-panel-layout{display:flex;gap:20px;height:100%}.main-panel{flex-grow:1;display:flex;flex-direction:column}.side-panel{flex-shrink:0;width:380px}.suggestion-panel-header{padding:15px 20px;border-bottom:1px solid var(--border-light);font-size:1.1rem;font-weight:600;color:var(--gradient-start)}.suggestion-panel-header .fa-lightbulb{margin-right:8px}.suggestion-list{flex-grow:1;overflow-y:auto;padding:10px}.suggestion-card{background-color:var(--background-light);border:1px solid var(--border-light);border-radius:8px;margin-bottom:10px}
@@ -485,11 +505,12 @@ body {
     border-top: 2px solid var(--gradient-start) !important;
 }
 
-/* Khung chứa các thẻ thông tin */
+/* Khung chứa các thẻ thông tin - ĐÃ TỐI ƯU KÍCH THƯỚC */
 .details-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Tự động điều chỉnh số cột */
-    gap: 20px; /* Khoảng cách giữa các thẻ */
+    /* Bố cục mới: Cả 3 cột đều tự co lại theo nội dung */
+    grid-template-columns: auto auto auto;
+    gap: 16px;
 }
 
 /* Kiểu dáng của mỗi thẻ thông tin */
@@ -504,18 +525,18 @@ body {
     flex-direction: column;
 }
 
-/* Tiêu đề của mỗi thẻ */
+/* Tiêu đề của mỗi thẻ - ĐÃ TỐI ƯU */
 .details-section h4 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-light);
     margin: 0;
-    padding: 12px 16px;
+    padding: 8px 12px; /* << THAY ĐỔI Ở ĐÂY */
     border-bottom: 1px solid var(--border-light);
     background: var(--background-light);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 .details-section h4 i {
     color: var(--gradient-start);
@@ -528,37 +549,133 @@ body {
     flex-grow: 1;
 }
 
-/* Mỗi dòng thông tin */
-.detail-item {
+/* =================================================================== */
+/* NÂNG CẤP BỐ CỤC CHI TIẾT - ÁP DỤNG ĐỒNG BỘ
+/* =================================================================== */
+
+/* Thiết lập chung cho MỌI DÒNG thông tin chi tiết trong các thẻ */
+.details-section .detail-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    padding: 10px 8px; /* Padding cho mỗi dòng */
-    border-radius: 8px; /* Bo tròn nhẹ mỗi dòng */
-    transition: background-color var(--transition-fast);
-}
-.detail-item:hover {
-    background-color: rgba(79, 70, 229, 0.04); /* Hiệu ứng hover nhẹ */
+    gap: 15px;
+    font-size: 13px;   /* << GIẢM NHẸ CỠ CHỮ */
+    padding: 6px 8px;  /* << GIẢM PADDING */
+    border-radius: 6px;
 }
 
-/* Nhãn */
-.detail-item .label {
+/* Áp dụng cho MỌI NHÃN (label) bên trong các thẻ */
+.details-section .detail-item .label {
     color: var(--text-muted-light);
     font-weight: 500;
+    width: 110px; /* Giảm nhẹ chiều rộng label cho cân đối hơn */
+    flex-shrink: 0;
 }
 
-/* Giá trị */
-.detail-item .value {
+/* Áp dụng cho MỌI GIÁ TRỊ (value) bên trong các thẻ */
+.details-section .detail-item .value {
     font-weight: 600;
     color: var(--text-light);
-    text-align: right; /* Căn phải giá trị cho thẳng hàng */
+    text-align: left;
+    word-break: break-all;
 }
 
 .actions-cell-inline{display:flex;align-items:center;justify-content:center;gap:12px}.inline-buttons-container{display:flex;align-items:center;gap:6px}.btn-icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border-radius:50%;border:1px solid var(--border-light);background-color:var(--card-bg-light);color:var(--text-muted-light);font-size:13px;cursor:pointer;transition:all .2s ease;text-decoration:none}.btn-icon:hover{color:var(--gradient-start);border-color:var(--gradient-start);background-color:rgba(79,70,229,.05);transform:translateY(-2px)}.editable-field{cursor:text;padding:2px 6px;border-radius:4px;transition:background-color .2s,box-shadow .2s;min-width:100px;border:1px solid transparent}.editable-field:hover{background-color:rgba(79,70,229,.08);border-color:rgba(79,70,229,.2)}.editable-field:focus{background-color:var(--card-bg-light);outline:0;border-color:var(--gradient-start);box-shadow:0 0 0 2px rgba(79,70,229,.2)}.detail-item .value .copyable-field{justify-content:flex-end}.timeline-container{padding:10px 20px}.timeline{position:relative;list-style:none;padding:1rem 0;margin:0}.timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:2px;background:var(--border-light)}.timeline-item{position:relative;margin-bottom:25px;padding-left:50px}.timeline-icon{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:50%;background:var(--card-bg-light);border:2px solid var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--gradient-start);font-size:16px;z-index:1}.timeline-content{background:var(--background-light);border-radius:8px;padding:15px;position:relative}.timeline-content .action-title{font-size:1rem;font-weight:600;color:var(--text-light);margin-bottom:8px}.timeline-content .details{font-size:.9rem;color:var(--text-muted-light);margin:0;line-height:1.6}.timeline-footer{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border-light);display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-muted-light)}.timeline-footer span{display:flex;align-items:center;gap:6px}.table-loading-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;background-color:var(--card-bg-light);border-radius:8px;margin-top:1.25rem}.table-loading-container p{font-weight:500;color:var(--gradient-start);margin-top:-15px}.data-table tr.row-dimmed{opacity:.3;filter:blur(1.5px);transition:opacity .3s ease,filter .3s ease}.data-table tr.row-dimmed:hover{opacity:1;filter:none}
 .file-icon-bar{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:24px}.file-icon-link{position:relative;display:inline-block;color:var(--gradient-start)}.icon-display{font-size:18px;transition:transform .2s ease}.file-icon-link:hover .icon-display{transform:scale(1.2)}.file-icon-missing{font-size:18px;color:var(--text-muted-light);opacity:.4;cursor:not-allowed}.tooltip-text{visibility:hidden;opacity:0;width:max-content;max-width:200px;background-color:#333;color:#fff;text-align:center;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:500;position:absolute;z-index:10;bottom:140%;left:50%;transform:translateX(-50%);transition:opacity .2s ease,visibility .2s ease}.tooltip-text::after{content:"";position:absolute;top:100%;left:50%;margin-left:-5px;border-width:5px;border-style:solid;border-color:#333 transparent transparent transparent}.file-icon-link:hover .tooltip-text{visibility:visible;opacity:1}.no-files-text{font-size:12px;color:var(--text-muted-light);font-style:italic}.hdm-icon{color:#3b82f6}.dnxhd-icon{color:#8b5cf6}.issued-icon{color:#22c55e}.file-icon-link:hover .hdm-icon{color:#60a5fa}.file-icon-link:hover .dnxhd-icon{color:#a78bfa}.file-icon-link:hover .issued-icon{color:#4ade80}
-#toast-container{position:fixed;top:20px;right:20px;z-index:9999}.toast{padding:15px 20px;border-radius:8px;color:#fff;box-shadow:0 4px 15px rgba(0,0,0,.2);margin-bottom:10px;opacity:0;transition:opacity .5s,transform .5s;transform:translateX(100%);background-color:#334155}.toast.toast-success{background-color:#16a34a}.toast.toast-error{background-color:#dc2626}.toast.toast-warning{background-color:#f59e0b;color:#1e293b}.toast.toast-info{background-color:#3b82f6}.toast.toast-subtle{background-color:#334155;font-size:13px}.toast.show{opacity:1;transform:translateX(0)}
+/* =================================================================== */
+/* NÂNG CẤP GIAO DIỆN TOAST (THÔNG BÁO GÓC MÀN HÌNH)
+/* =================================================================== */
+#toast-container {
+    position: fixed;
+    bottom: 20px; /* << THAY ĐỔI Ở ĐÂY */
+    left: 20px;   /* << THAY ĐỔI Ở ĐÂY */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px; /* Bo tròn hơn */
+    color: var(--text-light); /* Dùng màu chữ của theme */
+    background-color: var(--card-bg-light); /* Dùng màu nền thẻ của theme */
+    box-shadow: var(--shadow-lg); /* Dùng bóng đổ của theme */
+    border: 1px solid var(--border-light);
+    border-left-width: 4px; /* Tạo dải màu nhấn bên trái */
+    width: 350px;
+    max-width: 90vw;
+    font-size: 14px;
+    font-weight: 500;
+    
+    /* Hiệu ứng chuyển động mới, mượt mà hơn */
+    opacity: 0;
+    transform: translateY(20px); /* << THAY ĐỔI TỪ translateX SANG translateY */
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0); /* << THAY ĐỔI Ở ĐÂY */
+}
+
+/* Kiểu dáng cho icon và message */
+.toast .toast-icon {
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+.toast .toast-message {
+    flex-grow: 1;
+    line-height: 1.5;
+}
+
+/* --- ĐỒNG BỘ MÀU SẮC THEO TỪNG LOẠI THÔNG BÁO --- */
+
+/* Sử dụng lại các biến màu từ Status Badge cho đồng bộ */
+.toast-success { 
+    --status-color-main: #22c55e; /* Green */
+    border-left-color: var(--status-color-main);
+}
+.toast-success .toast-icon {
+    color: var(--status-color-main);
+}
+
+.toast-error { 
+    --status-color-main: #ef4444; /* Red */
+    border-left-color: var(--status-color-main);
+}
+.toast-error .toast-icon {
+    color: var(--status-color-main);
+}
+
+.toast-warning { 
+    --status-color-main: #f59e0b; /* Amber */
+    border-left-color: var(--status-color-main);
+}
+.toast-warning .toast-icon {
+    color: var(--status-color-main);
+}
+
+.toast-info { 
+    --status-color-main: #3b82f6; /* Blue */
+    border-left-color: var(--status-color-main);
+}
+.toast-info .toast-icon {
+    color: var(--status-color-main);
+}
+
+/* Toast "subtle" cho các thông báo nhỏ, không quan trọng */
+.toast-subtle { 
+    --status-color-main: #6b7280; /* Gray */
+    border-left-color: var(--status-color-main);
+}
+.toast-subtle .toast-icon {
+    color: var(--status-color-main);
+}
 .notification-bell{position:relative}.notification-item{display:flex;padding:15px 20px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:background-color .2s ease-in-out}.notification-item:last-child{border-bottom:none}.notification-item:hover{background-color:rgba(79,70,229,.05)}.notification-item.unread{background-color:rgba(79,70,229,.05);border-left:3px solid var(--gradient-start);padding-left:17px}.notification-item .icon{flex-shrink:0;width:30px;font-size:16px;color:var(--text-muted-light);margin-right:15px;padding-top:2px}.notification-item .content{flex-grow:1}.notification-item .content .message{font-size:14px;color:var(--text-light);line-height:1.5}.notification-item .content .time{font-size:12px;color:var(--text-muted-light);margin-top:4px}.notification-footer{padding:10px 20px;text-align:center;border-top:1px solid var(--border-light)}.notification-footer-btn{background:0 0;border:none;color:var(--gradient-start);font-size:13px;font-weight:500;cursor:pointer;padding:8px;border-radius:6px;transition:background-color .2s}.notification-footer-btn:hover{background-color:rgba(79,70,229,.1)}.notification-badge{position:absolute;top:6px;right:6px;background-color:#dc2626;color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid var(--card-bg-light);transform:scale(1);transition:transform .2s ease;display:none}
 
 /* =================================================================== */
@@ -1350,6 +1467,242 @@ body.admin-logged-in #login-screen {
     cursor: pointer;
     margin-bottom: 0;
 }
+/* =================================================================== */
+/* NÂNG CẤP GIAO DIỆN: SIDE PANEL (THAY THẾ MODAL)
+/* =================================================================== */
+.side-panel-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1500;
+    visibility: hidden; /* Mặc định ẩn đi */
+    display: flex;
+    justify-content: flex-end; /* Căn panel về bên phải */
+}
+
+/* Lớp phủ mờ */
+.side-panel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity var(--transition-medium) ease;
+}
+
+/* Panel chính */
+.side-panel {
+    width: 500px; /* Chiều rộng của panel */
+    max-width: 95vw;
+    height: 100%;
+    background: var(--card-bg-light);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%); /* Ẩn về phía bên phải */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Trạng thái khi panel được kích hoạt */
+.side-panel-container.active {
+    visibility: visible;
+}
+.side-panel-container.active .side-panel-overlay {
+    opacity: 1;
+}
+.side-panel-container.active .side-panel {
+    transform: translateX(0); /* Trượt vào màn hình */
+}
+
+/* Ngăn cuộn trang nền khi panel mở */
+body.panel-open {
+    overflow: hidden;
+}
+
+/* Header, Body, Footer của panel */
+.side-panel-header {
+    flex-shrink: 0;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.side-panel-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+.side-panel-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--text-muted-light);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+}
+.side-panel-close:hover {
+    color: var(--gradient-start);
+    transform: rotate(90deg);
+}
+
+.side-panel-body {
+    overflow-y: auto; 
+    padding: 24px;
+}
+/* Kế thừa style của form modal để đồng bộ */
+.side-panel-body .form-group-horizontal { margin-bottom: 15px; }
+.side-panel-body .form-label-horizontal { flex-basis: 120px; }
+
+.side-panel-footer {
+    flex-shrink: 0;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-light);
+    background: var(--background-light);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+/* =================================================================== */
+/* NÂNG CẤP TOÀN DIỆN SIDE PANEL (KÍCH THƯỚC & CHỦ ĐỀ)
+/* =================================================================== */
+
+/* --- 1.1. Kích thước Panel --- */
+/* Mặc định là size vừa (md), chúng ta sẽ tăng nhẹ lên 550px */
+.side-panel {
+    width: 550px; 
+}
+/* Panel size nhỏ (sm) cho các xác nhận */
+.side-panel.panel-sm {
+    width: 420px;
+}
+/* Panel size lớn (lg) cho các bảng dữ liệu, AI... */
+.side-panel.panel-lg {
+    width: 700px;
+}
+@media (max-width: 767px) {
+    /* Trên mobile, tất cả panel đều chiếm gần hết màn hình */
+    .side-panel,
+    .side-panel.panel-sm,
+    .side-panel.panel-lg {
+        width: 95vw;
+    }
+}
+
+/* --- 1.2. Chủ đề cho Header --- */
+/* Thêm icon vào header */
+.side-panel-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+/* Thêm một đường viền trên cùng cho panel để tạo điểm nhấn màu */
+.side-panel {
+    border-top: 4px solid transparent;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.4s ease;
+}
+
+/* Chủ đề Nguy hiểm (Xóa, Hủy) */
+.side-panel.theme-danger { border-top-color: #ef4444; }
+.side-panel-header.header-danger .fas { color: #ef4444; }
+
+/* Chủ đề Thành công (Phê duyệt) */
+.side-panel.theme-success { border-top-color: #22c55e; }
+.side-panel-header.header-success .fas { color: #22c55e; }
+
+/* Chủ đề Cảnh báo */
+.side-panel.theme-warning { border-top-color: #f59e0b; }
+.side-panel-header.header-warning .fas { color: #f59e0b; }
+
+/* Chủ đề Thông tin (Mặc định) */
+.side-panel.theme-info { border-top-color: #3b82f6; }
+.side-panel-header.header-info .fas { color: #3b82f6; }
+
+/* --- 1.3. Cải thiện Bố cục Form --- */
+.form-section {
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    background-color: var(--background-light);
+}
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+/* =================================================================== */
+/* NÂNG CẤP RESPONSIVE: BIẾN SIDE PANEL THÀNH BOTTOM SHEET TRÊN MOBILE
+/* (PHIÊN BẢN GỌN HƠN)
+/* =================================================================== */
+@media (max-width: 767px) {
+
+    /* --- 1. Biến panel thành bottom sheet --- */
+    .side-panel {
+        width: 100vw; 
+        height: auto; 
+        max-height: 85vh; /* << GIẢM NHẸ CHIỀU CAO TỐI ĐA */
+        top: auto;
+        bottom: 0;
+        right: auto;
+        left: 0;
+        border-radius: 20px 20px 0 0; /* << GIẢM NHẸ BO GÓC */
+        border-top-width: 1px;
+    }
+
+    /* --- 2. Hiệu ứng trượt dọc (giữ nguyên) --- */
+    .side-panel {
+        transform: translateY(100%); 
+    }
+    .side-panel-container.active .side-panel {
+        transform: translateY(0); 
+    }
+
+    /* --- 3. Bố cục form dọc (giữ nguyên) --- */
+    .side-panel-body .form-group-horizontal {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px; /* << GIẢM KHOẢNG CÁCH */
+    }
+    .side-panel-body .form-label-horizontal {
+        text-align: left;
+        flex-basis: auto;
+    }
+
+    /* --- 4. Tinh chỉnh Header, Body, Footer cho GỌN HƠN --- */
+    .side-panel-header {
+        padding: 12px 16px; /* << GIẢM PADDING */
+    }
+    .side-panel-header h2 {
+        font-size: 1rem; /* << GIẢM CỠ CHỮ TIÊU ĐỀ */
+    }
+    .side-panel-body {
+        padding: 0 16px 12px 16px; /* << GIẢM PADDING */
+    }
+    .form-section {
+        padding: 12px; /* << GIẢM PADDING */
+        margin-bottom: 16px; /* << GIẢM MARGIN */
+    }
+    .form-section-title {
+        font-size: 0.9rem; /* << GIẢM CỠ CHỮ */
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+    .side-panel-footer {
+        padding: 12px 16px; /* << GIẢM PADDING */
+    }
+}
+.side-panel.panel-sm .side-panel-body {
+    flex-grow: 0;
+}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1375,17 +1728,13 @@ body.admin-logged-in #login-screen {
         <div id="action-dropdown-panel" class="dropdown-panel">
     <div class="dropdown-header">Thao Tác Nhanh</div>
     <ul class="dropdown-list">
-        <li class="dropdown-subheader">Thao tác chính</li>
-        <li><a href="#" onclick="handleAddCar()"><i class="fas fa-plus fa-fw"></i> Thêm Xe Mới</a></li>
-        <li><a href="#" onclick="openExcelImportModal()"><i class="fas fa-file-excel fa-fw"></i> Nhập Xe từ Excel</a></li>
-        <li><a href="#" onclick="handleAddDeposit()"><i class="fas fa-hand-holding-usd fa-fw"></i> Thêm Cọc Khách Hàng</a></li>
 
-        <li class="dropdown-subheader">Quản lý dữ liệu</li>
+        <li><a href="#" onclick="handleAddCar()"><i class="fas fa-plus fa-fw"></i> Thêm Xe Mới</a></li>
+
         <li><a href="#" onclick="handleDeleteCar()"><i class="fas fa-trash-alt fa-fw"></i> Xóa Xe Khỏi Kho</a></li>
         <li><a href="#" onclick="handleRestoreCar()"><i class="fas fa-undo fa-fw"></i> Phục Hồi Xe Đã Xóa</a></li>
         <li><a href="#" onclick="handleDeleteOrder()"><i class="fas fa-times-circle fa-fw"></i> Xóa Đơn Hàng</a></li>
 
-        <li class="dropdown-subheader">Tiện ích</li>
         <li><a href="#" onclick="handleShowTimeline()"><i class="fas fa-history fa-fw"></i> Tra cứu Lịch sử Đơn hàng</a></li>
         <li><a href="#" onclick="handleArchiveOrders()"><i class="fas fa-archive fa-fw"></i> Lưu Trữ Hóa Đơn</a></li>
     </ul>
@@ -1434,304 +1783,8 @@ body.admin-logged-in #login-screen {
         </main>
 </div>
 
-<div id="aiAssistantModal" class="modal">
-    <div class="modal-content" style="max-width: 700px;">
-        <div class="modal-header">
-            <h2 id="aiModalTitle"><i class="fas fa-magic" style="color: var(--gradient-start);"></i> Trợ lý AI</h2>
-            <button class="modal-close" onclick="closeModal('aiAssistantModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Gửi một yêu cầu tự do cho AI xử lý dựa trên dữ liệu của đơn hàng <strong id="aiOrderNumber" style="color: var(--gradient-start);"></strong>:</p>
-            <div class="form-group">
-                <label for="aiCustomPromptInput">Yêu cầu của bạn:</label>
-                <textarea id="aiCustomPromptInput" rows="4" class="w-full" placeholder="Ví dụ: Soạn một email thân thiện báo cho khách hàng xe đã về đến showroom và mời họ đến làm thủ tục nhận xe."></textarea>
-            </div>
-            <button id="aiSubmitBtn" class="btn btn-primary" onclick="submitAiCustomPrompt()">
-                <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
-            </button>
-            <hr style="border: none; border-top: 1px solid var(--border-light); margin: 20px 0;">
-            <div class="form-group">
-                <label for="aiSuggestionOutput">Kết quả từ AI:</label>
-                <textarea id="aiSuggestionOutput" rows="10" class="w-full" placeholder="Nội dung do AI tạo ra sẽ xuất hiện ở đây..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('aiAssistantModal')">Đóng</button>
-            <button class="btn btn-success" onclick="copyToClipboard(document.getElementById('aiSuggestionOutput').value)">
-                <i class="fas fa-copy"></i> Sao chép Nội dung
-            </button>
-        </div>
-    </div>
-</div>
 
-<div id="confirmationModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="confirmationModalTitle">Xác nhận</h2>
-            <button class="modal-close" onclick="closeModal('confirmationModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p id="confirmationModalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
-            <div id="confirmationModalInputContainer" style="display: none; margin-top: 15px;">
-                <div class="form-group-horizontal">
-                    <label id="confirmationModalInputLabel" for="confirmationModalInput" class="form-label-horizontal"></label>
-                    <input type="text" id="confirmationModalInput" class="form-input-horizontal">
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('confirmationModal')">Hủy</button>
-            <button id="confirmationModalConfirmBtn" class="btn btn-danger">Xác Nhận</button>
-        </div>
-    </div>
-</div>
 
-<div id="unmatchModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Xác Nhận Hủy Ghép Xe</h2>
-            <button class="modal-close" onclick="closeModal('unmatchModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Bạn sắp hủy ghép xe cho đơn hàng <b id="unmatchOrderNumber"></b>. Vui lòng nhập lý do:</p>
-            <div class="form-group">
-                <label for="unmatchReason">Lý do hủy ghép (bắt buộc):</label>
-                <textarea id="unmatchReason" rows="3" class="w-full" placeholder="Ví dụ: Sai thông tin xe, khách hàng đổi ý..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('unmatchModal')">Xem Lại</button>
-            <button id="confirmUnmatchBtn" class="btn btn-danger">Xác Nhận Hủy Ghép</button>
-        </div>
-    </div>
-</div>
-
-<div id="suggestionModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
-        <div class="modal-header">
-            <h2>Gợi Ý Ghép Xe Cho Đơn Hàng <span id="suggestionOrderNumber" style="color:var(--gradient-start)"></span></h2>
-            <button class="modal-close" onclick="closeModal('suggestionModal')">&times;</button>
-        </div>
-        <div class="modal-body" id="suggestionModalBody"></div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('suggestionModal')">Hủy</button>
-            <button id="confirmSuggestionMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button>
-        </div>
-    </div>
-</div>
-
-<div id="manualMatchModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Ghép Xe Thủ Công</h2>
-            <button class="modal-close" onclick="closeModal('manualMatchModal')">&times;</button>
-        </div>
-        <div class="modal-body" id="manualMatchModalBody"></div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('manualMatchModal')">Hủy</button>
-            <button id="confirmMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button>
-        </div>
-    </div>
-</div>
-
-<div id="cancelModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Xác Nhận Hủy Yêu Cầu</h2>
-            <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <b id="cancelOrderNumber"></b> không?</p>
-            <div class="form-group">
-                <label for="cancelReason">Lý do hủy (bắt buộc):</label>
-                <textarea id="cancelReason" rows="3" class="w-full" placeholder="Ví dụ: Khách hàng đổi ý, sai thông tin..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('cancelModal')">Xem Lại</button>
-            <button id="confirmCancelBtn" class="btn btn-danger">Xác Nhận Hủy</button>
-        </div>
-    </div>
-</div>
-
-<div id="supplementModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Yêu Cầu Bổ Sung Hồ Sơ</h2>
-            <button class="modal-close" onclick="closeModal('supplementModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Nhập nội dung cần TVBH bổ sung cho đơn hàng <b id="supplementOrderNumber"></b>:</p>
-            <div class="form-group">
-                <label for="supplementReason">Nội dung yêu cầu:</label>
-                <textarea id="supplementReason" rows="3" class="w-full" placeholder="Ví dụ: Ảnh HĐMB bị mờ, thiếu chữ ký..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('supplementModal')">Hủy</button>
-            <button id="confirmSupplementBtn" class="btn btn-primary">Gửi Yêu Cầu</button>
-        </div>
-    </div>
-</div>
-
-<div id="uploadInvoiceModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Tải Lên Hóa Đơn Đã Xuất</h2>
-            <button class="modal-close" onclick="closeModal('uploadInvoiceModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Tải lên file hóa đơn (PDF, ảnh...) cho đơn hàng <b id="uploadOrderNumber"></b>:</p>
-            <div class="form-group">
-                <div class="file-input-wrapper">
-                    <input type="file" id="issuedInvoiceFile" class="file-input-hidden" accept=".pdf,.jpeg,.png,.jpg,.xlsx,.xls" onchange="handleFileSelectForUploadModal(event)">
-                    <label for="issuedInvoiceFile" id="upload-file-label" class="file-input-label">
-                        <i class="fas fa-upload"></i> Chọn File Hóa Đơn...
-                    </label>
-                </div>
-                <p id="upload-file-name-display" class="file-name-display"></p>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('uploadInvoiceModal')">Hủy</button>
-            <button id="confirmUploadBtn" class="btn btn-primary" disabled>Tải Lên và Hoàn Tất</button>
-        </div>
-    </div>
-</div>
-
-<div id="addCarModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Thêm Xe Mới vào Kho</h2>
-            <button class="modal-close" onclick="closeModal('addCarModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="newCarVin">Số VIN (bắt buộc 17 ký tự)</label>
-                <input type="text" id="newCarVin" maxlength="17" placeholder="Nhập 17 ký tự VIN..." class="w-full">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('addCarModal')">Hủy</button>
-            <button class="btn btn-primary" onclick="submitNewCar()">Tra cứu và Thêm Xe</button>
-        </div>
-    </div>
-</div>
-
-<div id="editModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
-        <div class="modal-header">
-            <h2 id="editModalTitle">Chỉnh Sửa Dữ Liệu</h2>
-            <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
-        </div>
-        <div class="modal-body" id="editModalBody"></div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('editModal')">Hủy</button>
-            <button id="confirmEditBtn" class="btn btn-primary">Lưu Thay Đổi</button>
-        </div>
-    </div>
-</div>
-
-<div id="excelImportModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Nhập Xe Hàng Loạt từ Excel</h2>
-            <button class="modal-close" onclick="closeModal('excelImportModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Chọn file Excel (.xlsx, .xls). File phải có các cột với tiêu đề chính xác: <strong>SỐ VIN, Dòng xe, Phiên bản, Ngoại thất, Nội thất</strong>.</p>
-            <div class="form-group">
-                <div class="file-input-wrapper">
-                    <input type="file" id="excel-file-input-modal" class="file-input-hidden" accept=".xlsx, .xls" onchange="handleFileSelectForModal(event)">
-                    <label for="excel-file-input-modal" id="excel-file-label-modal" class="file-input-label">
-                        <i class="fas fa-file-excel"></i> Chọn File...
-                    </label>
-                </div>
-                <p id="file-name-display-modal" class="file-name-display"></p>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('excelImportModal')">Hủy</button>
-            <button id="import-excel-btn-modal" onclick="importFromExcelModal()" class="btn btn-primary" disabled>
-                <i id="import-modal-spinner" class="fas fa-spinner fa-spin" style="display: none; margin-right: 8px;"></i>
-                <span id="import-modal-btn-text">Nhập Dữ Liệu</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="timelineModal" class="modal">
-    <div class="modal-content" style="max-width: 650px;">
-        <div class="modal-header">
-            <h2 id="timelineModalTitle">Lịch sử Đơn hàng</h2>
-            <button class="modal-close" onclick="closeModal('timelineModal')">&times;</button>
-        </div>
-        <div class="modal-body" id="timelineModalBody"></div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('timelineModal')">Đóng</button>
-        </div>
-    </div>
-</div>
-
-<div id="lookupModal" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <div class="modal-header">
-            <h2 id="lookupModalTitle">Tra Cứu Lịch Sử Đơn Hàng</h2>
-            <button class="modal-close" onclick="closeModal('lookupModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p id="lookupModalMessage">Vui lòng nhập chính xác Số đơn hàng bạn muốn xem lịch sử chi tiết.</p>
-            <div class="form-group-horizontal">
-                <label id="lookupModalInputLabel" for="lookupModalInput" class="form-label-horizontal">Số đơn hàng:</label>
-                <input type="text" id="lookupModalInput" class="form-input-horizontal" placeholder="Ví dụ: SO-123456">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('lookupModal')">Hủy</button>
-            <button id="lookupModalConfirmBtn" class="btn btn-primary">Tra cứu</button>
-        </div>
-    </div>
-</div>
-
-<div id="addDepositModal" class="modal">
-    <div class="modal-content" style="max-width: 550px;">
-        <div class="modal-header">
-            <h2>Thêm Thông Tin Đặt Cọc</h2>
-            <button class="modal-close" onclick="closeModal('addDepositModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="tabs">
-                <button class="tab-link active" onclick="openTab(event, 'singleDeposit')">Nhập Lẻ</button>
-                <button class="tab-link" onclick="openTab(event, 'batchDeposit')">Nhập Hàng Loạt</button>
-            </div>
-            <div id="singleDeposit" class="tab-content active">
-                <p>Nhập thông tin của một khách hàng đã đặt cọc.</p>
-                <div class="form-group-horizontal">
-                    <label for="depositCustomerName" class="form-label-horizontal">Tên khách hàng:</label>
-                    <input type="text" id="depositCustomerName" class="form-input-horizontal" placeholder="Ví dụ: Nguyễn Văn A">
-                </div>
-                <div class="form-group-horizontal">
-                    <label for="depositDate" class="form-label-horizontal">Ngày cọc:</label>
-                    <input type="date" id="depositDate" class="form-input-horizontal">
-                </div>
-            </div>
-            <div id="batchDeposit" class="tab-content">
-                 <p>Dán danh sách khách hàng và ngày cọc vào ô bên dưới.</p>
-                 <p style="font-size: 12px; font-style: italic; color: var(--text-muted-light); margin-bottom: 15px;">
-                    <strong>Định dạng:</strong> Mỗi dòng là một khách hàng. Phân cách Tên và Ngày bằng dấu phẩy (,).<br>
-                    <strong>Ví dụ:</strong><br>
-                    Nguyễn Văn B, 22/06/2025<br>
-                    Trần Thị C, 23/06/2025
-                 </p>
-                <textarea id="batchDepositInput" rows="8" class="w-full" style="font-family: 'Roboto Mono', monospace; font-size: 13px;" placeholder="Dán danh sách vào đây..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('addDepositModal')">Hủy</button>
-            <button id="confirmAddDepositBtn" class="btn btn-primary" onclick="submitNewDeposit()">Lưu Thông Tin</button>
-        </div>
-    </div>
-</div>
 
 <div id="login-screen">
     <div class="login-container">
@@ -1775,7 +1828,22 @@ body.admin-logged-in #login-screen {
         </div>
     </div>
 </div>
-
+<div id="side-panel-container" class="side-panel-container">
+    <div class="side-panel-overlay" onclick="closeSidePanel()"></div>
+    
+    <div class="side-panel">
+        <div class="side-panel-header">
+            <h2 id="side-panel-title"></h2>
+            <button class="side-panel-close" onclick="closeSidePanel()" title="Đóng">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="side-panel-body" id="side-panel-body">
+            </div>
+        <div class="side-panel-footer" id="side-panel-footer">
+            </div>
+    </div>
+</div>
 <div id="toast-container"></div>
 <script>
    function initializeAdminPage() {
@@ -3134,60 +3202,100 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
         
     function handleManualMatch(order, btnElement) {
-        const orderNumber = order['Số đơn hàng'];
-        const modalBody = document.getElementById('manualMatchModalBody');
-        const confirmBtn = document.getElementById('confirmMatchBtn');
-        const availableCars = appState.data.khoxe.filter(car => 
-            String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
-            car['Dòng xe'] === order['Dòng xe'] &&
-            car['Phiên bản'] === order['Phiên bản'] &&
-            car['Ngoại thất'] === order['Ngoại thất'] &&
-            String(order['Nội thất']).includes(car['Nội thất'])
-        );
-        let carOptionsHTML = '<option value="">-- Chọn một xe từ kho --</option>';
-        if (availableCars.length > 0) {
-            carOptionsHTML += availableCars.map(car => `<option value="${car.VIN}">${car.VIN} - ${car['Dòng xe']} - ${car['Ngoại thất']}</option>`).join('');
-        } else {
-            carOptionsHTML = '<option value="" disabled>Không có xe phù hợp trong kho</option>';
-        }
-        modalBody.innerHTML = `
-            <div class="form-group"><label>Yêu cầu cho đơn hàng:</label><div>${orderNumber} - ${order['Tên khách hàng']}</div></div>
-            <div class="form-group"><label>Thông tin xe yêu cầu:</label><div>${order['Dòng xe']} / ${order['Phiên bản']} / ${order['Nội thất']}</div></div>
-            <div class="form-group"><label for="vinSelect">Chọn xe phù hợp để ghép:</label><select id="vinSelect" class="w-full">${carOptionsHTML}</select></div>`;
-        
-        confirmBtn.onclick = () => submitManualMatch(orderNumber, btnElement);
-        openModal('manualMatchModal');
+    const orderNumber = order['Số đơn hàng'];
+    
+    // Lọc những xe có sẵn và phù hợp trong kho
+    const availableCars = appState.data.khoxe.filter(car => 
+        String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
+        car['Dòng xe'] === order['Dòng xe'] &&
+        car['Phiên bản'] === order['Phiên bản'] &&
+        car['Ngoại thất'] === order['Ngoại thất'] &&
+        String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
+    );
+
+    let carOptionsHTML = '<option value="">-- Chọn một xe từ kho --</option>';
+    if (availableCars.length > 0) {
+        carOptionsHTML += availableCars.map(car => `<option value="${car.VIN}">${car.VIN} - ${car['Ngoại thất']} / ${car['Nội thất']}</option>`).join('');
+    } else {
+        carOptionsHTML = '<option value="" disabled>Không có xe phù hợp trong kho</option>';
     }
 
+    const title = 'Ghép Xe Thủ Công';
+
+    const bodyHtml = `
+        <div class="form-group-horizontal">
+            <label class="form-label-horizontal">Đơn hàng:</label>
+            <div class="value" style="font-weight: 600;">${escapeHtml(orderNumber)} - ${escapeHtml(order['Tên khách hàng'])}</div>
+        </div>
+        <div class="form-group-horizontal">
+            <label class="form-label-horizontal">Yêu cầu xe:</label>
+            <div class="value">${escapeHtml(order['Dòng xe'])} / ${escapeHtml(order['Phiên bản'])}</div>
+        </div>
+        <hr style="margin: 20px 0; border-color: var(--border-light);">
+        <div class="form-group">
+            <label for="vinSelect" style="font-weight: 600; margin-bottom: 10px; display: block;">Chọn xe phù hợp để ghép:</label>
+            <select id="vinSelect" class="form-input-horizontal w-full">${carOptionsHTML}</select>
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="confirmMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button>
+    `;
+
+    openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml });
+
+    // Gắn sự kiện cho nút xác nhận sau khi panel đã mở
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('confirmMatchBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => submitManualMatch(orderNumber, btnElement);
+        }
+    }, 10);
+}
+
     async function submitManualMatch(orderNumber, btnElement) {
-    const selectedVin = document.getElementById('vinSelect').value;
+    // Đọc giá trị từ select trong Side Panel
+    const selectedVin = document.getElementById('vinSelect')?.value;
     if (!selectedVin) {
         showToast('Vui lòng chọn một xe để ghép.', 'warning');
         return;
     }
-    const modalButton = document.getElementById('confirmMatchBtn');
+    
+    // Nút xác nhận nằm trong Side Panel
+    const panelButton = document.getElementById('confirmMatchBtn'); 
+    
     const { success } = await performActionOnRow({
         action: 'manualMatchCar',
         params: { orderNumber, vin: selectedVin },
-        buttonElement: modalButton
+        buttonElement: panelButton // Truyền đúng nút để hiển thị loading
     });
+
     if (success) {
-        closeModal('manualMatchModal');
+        closeSidePanel();
     }
 }
 
-    function handleCancelRequest(order, btnElement) {
-        const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
-        document.getElementById('cancelOrderNumber').textContent = orderNumber;
-        const reasonTextarea = document.getElementById('cancelReason');
-        reasonTextarea.value = '';
-        reasonTextarea.style.borderColor = '';
-
-        document.getElementById('confirmCancelBtn').onclick = () => {
-            submitCancellation(orderNumber, btnElement);
-        };
-        openModal('cancelModal');
-    }
+    /** [NÂNG CẤP] Dùng Side Panel để hủy yêu cầu. */
+function handleCancelRequest(order, btnElement) {
+    const orderNumber = order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'];
+    showConfirmationPanel({
+        title: 'Xác Nhận Hủy Yêu Cầu',
+        message: `Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <strong>${orderNumber}</strong> không?`,
+        inputLabel: 'Lý do hủy (bắt buộc)',
+        placeholder: 'Ví dụ: Khách hàng đổi ý, sai thông tin...',
+        confirmButtonText: 'Xác Nhận Hủy',
+        confirmButtonClass: 'btn-danger',
+        onConfirm: async (reason, modalButton) => {
+            const { success } = await performActionOnRow({
+                action: 'cancelRequest',
+                params: { orderNumber, reason, cancelledBy: 'Admin' },
+                buttonElement: modalButton
+            });
+            if (success) closeSidePanel();
+        }
+    });
+}
 
     async function submitCancellation(orderNumber, btnElement) {
     const reasonInput = document.getElementById('cancelReason');
@@ -3212,19 +3320,26 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 }
 
-    function handleUnmatchRequest(order, btnElement) {
-        const orderNumber = order['Số đơn hàng'];
-        document.getElementById('unmatchOrderNumber').textContent = orderNumber;
-        
-        const reasonTextarea = document.getElementById('unmatchReason');
-        reasonTextarea.value = '';
-        reasonTextarea.style.borderColor = '';
-
-        document.getElementById('confirmUnmatchBtn').onclick = () => {
-            submitUnmatchRequest(orderNumber, btnElement);
-        };
-        openModal('unmatchModal');
-    }
+    /** [NÂNG CẤP] Dùng Side Panel để xác nhận hủy ghép xe. */
+function handleUnmatchRequest(order, btnElement) {
+    const orderNumber = order['Số đơn hàng'];
+    showConfirmationPanel({
+        title: 'Xác Nhận Hủy Ghép Xe',
+        message: `Bạn sắp hủy ghép xe cho đơn hàng <strong>${orderNumber}</strong>. Hành động này sẽ gửi email thông báo cho TVBH.`,
+        inputLabel: 'Lý do hủy ghép (bắt buộc)',
+        placeholder: 'Ví dụ: Sai thông tin xe, khách hàng đổi ý...',
+        confirmButtonText: 'Xác Nhận Hủy Ghép',
+        confirmButtonClass: 'btn-danger',
+        onConfirm: async (reason, modalButton) => {
+            const { success } = await performActionOnRow({
+                action: 'unmatchOrder',
+                params: { orderNumber, reason },
+                buttonElement: modalButton
+            });
+            if (success) closeSidePanel();
+        }
+    });
+}
 
     async function submitUnmatchRequest(orderNumber, btnElement) {
     const reasonInput = document.getElementById('unmatchReason');
@@ -3249,62 +3364,89 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     }
 }
     
-    function handleApproveRequest(order, btnElement) {
+    /** [NÂNG CẤP] Dùng Side Panel để phê duyệt yêu cầu. */
+function handleApproveRequest(order, btnElement) {
     const orderNumber = order['SỐ ĐƠN HÀNG'];
-    showConfirmationModal(
-        'Phê Duyệt Yêu Cầu',
-        `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}?`,
-        async (modalButton) => {
+    showConfirmationPanel({
+        title: 'Phê Duyệt Yêu Cầu',
+        message: `Bạn có chắc chắn muốn PHÊ DUYỆT yêu cầu xuất hóa đơn cho đơn hàng <strong>${orderNumber}</strong>?`,
+        confirmButtonText: 'Phê Duyệt',
+        confirmButtonClass: 'btn-success',
+        onConfirm: async (inputValue, modalButton) => {
             const { success } = await performActionOnRow({
                 action: 'approveSelectedInvoiceRequest',
                 params: { orderNumber },
                 buttonElement: modalButton
             });
-            if (success) {
-                closeModal('confirmationModal');
-            }
-        },
-        'btn-success'
-    );
-}
-
-    function handleRequestSupplement(order, btnElement) {
-        const orderNumber = order['SỐ ĐƠN HÀNG'];
-        document.getElementById('supplementOrderNumber').textContent = orderNumber;
-        document.getElementById('supplementReason').value = '';
-
-        document.getElementById('confirmSupplementBtn').onclick = () => submitSupplementRequest(orderNumber, btnElement);
-        openModal('supplementModal');
-    }
-
-    async function submitSupplementRequest(orderNumber, btnElement) {
-    const reason = document.getElementById('supplementReason').value.trim();
-    if (!reason) {
-        showToast('Vui lòng nhập nội dung cần bổ sung.', 'warning');
-        return;
-    }
-    const modalButton = document.getElementById('confirmSupplementBtn');
-    const { success } = await performActionOnRow({
-        action: 'requestSupplementForInvoice',
-        params: { orderNumber, reason },
-        buttonElement: modalButton
+            if (success) closeSidePanel();
+        }
     });
-    if (success) {
-        closeModal('supplementModal');
-    }
 }
 
-    function handleUploadIssuedInvoice(order, btnElement) {
-        const orderNumber = order['SỐ ĐƠN HÀNG'];
-        const customerName = order['TÊN KHÁCH HÀNG'];
-        document.getElementById('uploadOrderNumber').textContent = orderNumber;
-        const fileInput = document.getElementById('issuedInvoiceFile');
-        fileInput.value = '';
-        const changeEvent = new Event('change');
-        fileInput.dispatchEvent(changeEvent);
-        document.getElementById('confirmUploadBtn').onclick = () => submitIssuedInvoice(orderNumber, customerName, btnElement);
-        openModal('uploadInvoiceModal');
-    }
+/** [NÂNG CẤP] Dùng Side Panel để yêu cầu bổ sung hồ sơ. */
+function handleRequestSupplement(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    showConfirmationPanel({
+        title: 'Yêu Cầu Bổ Sung Hồ Sơ',
+        message: `Nhập nội dung cần TVBH bổ sung cho đơn hàng <strong>${orderNumber}</strong>:`,
+        inputLabel: 'Nội dung yêu cầu',
+        placeholder: 'Ví dụ: Ảnh HĐMB bị mờ, thiếu chữ ký...',
+        confirmButtonText: 'Gửi Yêu Cầu',
+        confirmButtonClass: 'btn-primary',
+        onConfirm: async (reason, modalButton) => {
+            const { success } = await performActionOnRow({
+                action: 'requestSupplementForInvoice',
+                params: { orderNumber, reason },
+                buttonElement: modalButton
+            });
+            if (success) closeSidePanel();
+        }
+    });
+}
+
+    /**
+ * [NÂNG CẤP] Mở Side Panel để tải lên hóa đơn đã xuất.
+ */
+function handleUploadIssuedInvoice(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    const customerName = order['TÊN KHÁCH HÀNG'];
+
+    const title = 'Tải Lên Hóa Đơn Đã Xuất';
+
+    const bodyHtml = `
+        <p>Tải lên file hóa đơn (PDF, ảnh...) cho đơn hàng <strong>${escapeHtml(orderNumber)}</strong>:</p>
+        <div class="form-group" style="margin-top: 20px;">
+            <div class="file-input-wrapper">
+                <input type="file" id="issuedInvoiceFile" class="file-input-hidden" 
+                       accept=".pdf,.jpeg,.png,.jpg,.xlsx,.xls" 
+                       onchange="handleFileSelectForUploadModal(event)">
+                <label for="issuedInvoiceFile" id="upload-file-label" class="file-input-label">
+                    <i class="fas fa-upload"></i> Chọn File Hóa Đơn...
+                </label>
+            </div>
+            <p id="upload-file-name-display" class="file-name-display"></p>
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="confirmUploadBtn" class="btn btn-primary" disabled>Tải Lên và Hoàn Tất</button>
+    `;
+
+    openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml });
+
+    // Sau khi panel được mở, chúng ta cần gắn sự kiện onclick cho nút tải lên
+    // vì nó cần truyền tham số `orderNumber`, `customerName` và `btnElement`
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('confirmUploadBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => submitIssuedInvoice(orderNumber, customerName, btnElement);
+        }
+    }, 10);
+    
+    // Reset trạng thái hiển thị của việc chọn file
+    handleFileSelectForUploadModal({ target: { files: [] } }); 
+}
     function handleFileSelectForUploadModal(event) {
         const fileInput = event.target;
         const fileLabel = document.getElementById('upload-file-label');
@@ -3360,10 +3502,34 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
 }
 
     function handleAddCar() {
-        document.getElementById('action-dropdown-panel').classList.remove('active');
-        document.getElementById('newCarVin').value = '';
-        openModal('addCarModal');
-    }
+    // Đóng menu thao tác nhanh nếu đang mở
+    const actionPanel = document.getElementById('action-dropdown-panel');
+    if (actionPanel) actionPanel.classList.remove('active');
+
+    const title = 'Thêm Xe Mới vào Kho';
+
+    // Chuẩn bị nội dung HTML cho phần body của panel
+    const bodyHtml = `
+        <div class="form-group">
+            <label for="newCarVin" style="font-weight: 600;">Số VIN (bắt buộc 17 ký tự)</label>
+            <input type="text" id="newCarVin" maxlength="17" class="form-input-horizontal w-full" 
+                   placeholder="Nhập 17 ký tự VIN..." 
+                   onkeyup="this.value = this.value.toUpperCase()">
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted-light); margin-top: 15px;">
+            <i class="fas fa-info-circle"></i> Hệ thống sẽ tự động tra cứu thông tin chi tiết của xe (Dòng xe, Phiên bản, Màu sắc...) từ số VIN bạn cung cấp.
+        </p>
+    `;
+
+    // Chuẩn bị nội dung HTML cho phần footer (các nút bấm)
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button class="btn btn-primary" onclick="submitNewCar()">Tra cứu và Thêm Xe</button>
+    `;
+
+    // Gọi hàm openSidePanel với các nội dung đã chuẩn bị
+    openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml });
+}
 
     async function submitNewCar() {
     const vinInput = document.getElementById('newCarVin');
@@ -3387,78 +3553,93 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
 
     function handleDeleteCar() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
-    showPromptModal(
-        'Xóa Xe Khỏi Kho',
-        'Vui lòng nhập số VIN của xe cần xóa khỏi kho.',
-        'Số VIN',
-        async (vin, modalButton) => {
+    showConfirmationPanel({
+        title: 'Xóa Xe Khỏi Kho',
+        message: 'Hành động này sẽ đánh dấu xe là "đã xóa" và ẩn khỏi kho. Bạn có thể phục hồi lại sau. Vui lòng nhập số VIN của xe cần xóa.',
+        inputLabel: 'Số VIN cần xóa',
+        placeholder: 'Nhập chính xác 17 ký tự VIN...',
+        confirmButtonText: 'Xác Nhận Xóa Xe',
+        confirmButtonClass: 'btn-danger',
+        onConfirm: async (vin, modalButton) => {
+            if (!vin || vin.length !== 17) {
+                showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
+                return;
+            }
             const { success } = await performActionOnRow({
                 action: 'deleteCarFromStockLogic',
                 params: { vinToDelete: vin.toUpperCase() },
                 buttonElement: modalButton
             });
-            if (success) {
-                closeModal('confirmationModal');
-            }
+            if (success) closeSidePanel();
         }
-    );
+    });
 }
 
     function handleRestoreCar() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
-    showPromptModal(
-        'Phục Hồi Xe Vào Kho',
-        'Vui lòng nhập số VIN của xe cần phục hồi.',
-        'Số VIN',
-        async (vin, modalButton) => {
+    showConfirmationPanel({
+        title: 'Phục Hồi Xe Đã Xóa',
+        message: 'Hành động này sẽ chuyển trạng thái xe về "chưa ghép" và hiển thị lại trong kho. Vui lòng nhập số VIN của xe cần phục hồi.',
+        inputLabel: 'Số VIN cần phục hồi',
+        placeholder: 'Nhập chính xác 17 ký tự VIN...',
+        confirmButtonText: 'Phục Hồi Xe',
+        confirmButtonClass: 'btn-primary',
+        onConfirm: async (vin, modalButton) => {
+             if (!vin || vin.length !== 17) {
+                showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
+                return;
+            }
             const { success } = await performActionOnRow({
                 action: 'restoreCarToStockLogic',
                 params: { vinToRestore: vin.toUpperCase() },
                 buttonElement: modalButton
             });
-            if (success) {
-                closeModal('confirmationModal');
-            }
+            if (success) closeSidePanel();
         }
-    );
+    });
 }
 
     function handleDeleteOrder() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
-    showPromptModal(
-        'Xóa Đơn Hàng Vĩnh Viễn',
-        'CẢNH BÁO: Đơn hàng sẽ bị xóa và chuyển vào mục hủy. Vui lòng nhập số đơn hàng:',
-        'Số đơn hàng',
-        async (orderNumber, modalButton) => {
+    showConfirmationPanel({
+        title: 'Xóa Đơn Hàng Vĩnh Viễn',
+        message: '<strong>CẢNH BÁO:</strong> Hành động này không thể hoàn tác. Đơn hàng sẽ bị xóa khỏi bảng "Chờ ghép" hoặc "Đã ghép" và chuyển vào mục "Đã Hủy".',
+        inputLabel: 'Nhập Số đơn hàng để xác nhận',
+        placeholder: 'Ví dụ: SO-123456...',
+        confirmButtonText: 'Tôi hiểu, Xóa Đơn Hàng',
+        confirmButtonClass: 'btn-danger',
+        onConfirm: async (orderNumber, modalButton) => {
             const { success } = await performActionOnRow({
                 action: 'deleteOrderLogic',
                 params: { orderNumber: orderNumber },
                 buttonElement: modalButton
             });
-            if (success) {
-                closeModal('confirmationModal');
-            }
+            if (success) closeSidePanel();
         }
-    );
+    });
 }
     
-    function handleArchiveOrders() {
+    /**
+ * [NÂNG CẤP CUỐI CÙNG] Mở Side Panel để xác nhận Lưu trữ Hóa đơn.
+ */
+function handleArchiveOrders() {
     document.getElementById('action-dropdown-panel').classList.remove('active');
-    showConfirmationModal(
-        'Lưu Trữ Hóa Đơn',
-        'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.',
-        async (modalButton) => {
+    showConfirmationPanel({
+        title: 'Lưu Trữ Hóa Đơn',
+        message: 'Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.',
+        confirmButtonText: 'Xác Nhận Lưu Trữ',
+        confirmButtonClass: 'btn-primary',
+        onConfirm: async (inputValue, modalButton) => {
             const { success } = await performActionOnRow({
                 action: 'archiveInvoicedOrdersMonthly',
                 params: {},
                 buttonElement: modalButton
             });
             if (success) {
-                closeModal('confirmationModal');
+                closeSidePanel();
             }
-        },
-        'btn-primary'
-    );
+        }
+    });
 }
 
     function openModal(modalId) {
@@ -3514,54 +3695,95 @@ function renderDaGhepGroupedTable(id, rows, actionsCallback) {
     });
 }
 
-    function showConfirmationModal(title, message, onConfirmCallback, confirmButtonClass = 'btn-danger') {
-    document.getElementById('confirmationModalTitle').textContent = title;
-    document.getElementById('confirmationModalMessage').innerHTML = message;
+/**
+ * [NÂNG CẤP TOÀN DIỆN] Hiển thị Side Panel để xác nhận hành động.
+ * Tự động chọn kích thước nhỏ (sm) và chủ đề (theme) phù hợp.
+ * @param {object} options - Các tùy chọn cho panel.
+ * @param {string} options.title - Tiêu đề của panel.
+ * @param {string} options.message - Nội dung thông báo/câu hỏi.
+ * @param {string} [options.inputLabel] - (Tùy chọn) Nhãn cho ô nhập liệu. Nếu có, panel sẽ hiển thị textarea.
+ * @param {string} [options.placeholder] - (Tùy chọn) Chữ mờ cho ô nhập liệu.
+ * @param {function(string, HTMLElement)} options.onConfirm - Callback khi nhấn nút xác nhận. Trả về (giá trị input, element của nút).
+ * @param {string} [options.confirmButtonText='Xác Nhận'] - Chữ trên nút xác nhận.
+ * @param {string} [options.confirmButtonClass='btn-danger'] - Class màu cho nút xác nhận.
+ */
+function showConfirmationPanel(options) {
+    const { 
+        title, 
+        message, 
+        inputLabel,
+        placeholder = '',
+        onConfirm, 
+        confirmButtonText = 'Xác Nhận', 
+        confirmButtonClass = 'btn-danger' 
+    } = options;
 
-    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-    confirmBtn.className = `btn ${confirmButtonClass}`;
+    // Tự động chọn chủ đề (theme) dựa trên class của nút bấm
+    let theme = 'info';
+    if (confirmButtonClass.includes('danger')) theme = 'danger';
+    if (confirmButtonClass.includes('success')) theme = 'success';
+    if (confirmButtonClass.includes('primary')) theme = 'info';
 
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    // Tự động thêm icon tương ứng vào tiêu đề
+    const iconMap = { 
+        danger: 'fa-exclamation-triangle', 
+        success: 'fa-check-circle', 
+        info: 'fa-question-circle' 
+    };
+    const iconHtml = `<i class="fas ${iconMap[theme]}"></i>`;
 
-    newConfirmBtn.addEventListener('click', () => {
-        onConfirmCallback(newConfirmBtn);
+    // Tạo HTML cho ô nhập liệu nếu được yêu cầu
+    let inputHtml = '';
+    if (inputLabel) {
+        inputHtml = `
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="confirmation-input" style="font-weight: 600;">${inputLabel}:</label>
+                <textarea id="confirmation-input" rows="3" class="w-full" placeholder="${placeholder}"></textarea>
+            </div>
+        `;
+    }
+
+    const bodyHtml = `<p>${message}</p>${inputHtml}`;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="confirmation-panel-confirm-btn" class="btn ${confirmButtonClass}">${confirmButtonText}</button>
+    `;
+
+    // Gọi openSidePanel với các tùy chọn mới đã được tự động hóa
+    openSidePanel({
+        title: `${iconHtml} ${title}`,
+        bodyHtml: bodyHtml,
+        footerHtml: footerHtml,
+        size: 'sm', // Luôn sử dụng kích thước nhỏ cho panel xác nhận
+        theme: theme
     });
 
-    document.getElementById('confirmationModalInputContainer').style.display = 'none';
-    openModal('confirmationModal');
-}
-
-    function showPromptModal(title, message, inputLabel, onConfirmCallback) {
-    document.getElementById('confirmationModalTitle').textContent = title;
-    document.getElementById('confirmationModalMessage').innerHTML = message;
-    const inputContainer = document.getElementById('confirmationModalInputContainer');
-    const inputEl = document.getElementById('confirmationModalInput');
-    const labelEl = document.getElementById('confirmationModalInputLabel');
-    labelEl.textContent = inputLabel;
-    inputEl.value = '';
-    inputEl.placeholder = `Nhập ${inputLabel}...`;
-    inputContainer.style.display = 'block';
-
-    const confirmBtn = document.getElementById('confirmationModalConfirmBtn');
-    confirmBtn.className = 'btn btn-primary';
-
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-
-    newConfirmBtn.onclick = async () => {
-        const inputValue = inputEl.value.trim();
-        if (!inputValue) {
-            showToast(`Vui lòng nhập ${inputLabel}.`, 'warning');
-            return;
+    // Gắn sự kiện cho nút bấm sau khi panel đã được render
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('confirmation-panel-confirm-btn');
+        const inputEl = document.getElementById('confirmation-input');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                let inputValue = null;
+                if (inputEl) {
+                    inputValue = inputEl.value.trim();
+                    if (!inputValue) {
+                        showToast('Vui lòng nhập nội dung yêu cầu.', 'warning');
+                        inputEl.focus();
+                        return;
+                    }
+                }
+                if (typeof onConfirm === 'function') {
+                    onConfirm(inputValue, confirmBtn);
+                }
+            };
         }
-        await onConfirmCallback(inputValue, newConfirmBtn);
-    };
+        if (inputEl) inputEl.focus();
+    }, 450); // Đợi hiệu ứng trượt của panel hoàn tất
+}   
 
-    openModal('confirmationModal');
-    inputEl.focus();
-}
-
+    
     function updateNotifications(serverItems) {
     if (appState.notifications.isMarkingAsRead) return;
 
@@ -3749,24 +3971,53 @@ async function markAllAsReadFromButton(event) {
         });
     }
 
-    function getStatusBadgeClass(status) {
-    if (!status || typeof status !== 'string') return 'status-default';
-    const lowerStatus = status.toLowerCase().trim();
+    function getStatusBadgeClass(statusText) {
+    if (!statusText || typeof statusText !== 'string') {
+        return 'status-default'; // Trạng thái mặc định nếu không có text
+    }
+
+    // Chuẩn hóa chuỗi trạng thái: chuyển về chữ thường, bỏ dấu, bỏ khoảng trắng thừa
+    const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
+
     switch (lowerStatus) {
-        case 'đã ghép': return 'status-daghep';
+        // CÁC TRẠNG THÁI TÍCH CỰC
+        case 'đã xuất hóa đơn':
+            return 'status-invoice-issued';
+        case 'đã phê duyệt':
+            return 'status-approved';
+        case 'chờ ký hóa đơn':
+        case 'chờ ký hóa đơn': // Bao gồm cả biến thể cũ
+            return 'status-pending-signature';
+        case 'đã bổ sung':
+            return 'status-supplemented';
+        case 'đã ghép':
+            return 'status-vin-matched';
+
+        // CÁC TRẠNG THÁI CẦN CHÚ Ý
+        case 'chờ phê duyệt':
+            return 'status-pending-approval';
+        case 'yêu cầu bổ sung':
+            return 'status-supplement-required';
+
+        // CÁC TRẠNG THÁI CHỜ & TRUNG TÍNH
         case 'chưa ghép':
-        case 'chưa tìm thấy vin':
         case 'chờ ghép (bulk)':
-        case 'chờ ghép (vin cũ không hợp lệ)': return 'status-chuaghep';
-        case 'chờ phê duyệt': return 'status-chopheduyet';
-        case 'đã phê duyệt': return 'status-dapheduyet';
-        case 'chờ ký hóa đơn': return 'status-chokyhoadon';
-        case 'đã xuất hóa đơn': return 'status-daxuathoadon';
-        case 'yêu cầu bổ sung': return 'status-yeucaubosung';
-        case 'đã bổ sung': return 'status-dabosung';
+        case 'chờ ghép (vin cũ không hợp lệ)':
+            return 'status-unmatched';
+        case 'chưa tìm thấy vin':
+            return 'status-vin-not-found';
+
+        // CÁC TRẠNG THÁI KHÁC
         case 'đã hủy':
-        case 'đã hủy (ui)': return 'status-dahuy';
-        default: return 'status-default';
+        case 'đã hủy (ui)':
+            return 'status-cancelled';
+
+        // TRẠNG THÁI DỰ PHÒNG
+        default:
+            if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
+                return 'status-vin-matched';
+            }
+            return 'status-default';
     }
 }
 
@@ -3790,70 +4041,117 @@ function formatCustomDateTime(dateValue) {
     }
 }
     function showToast(message, type = 'info', duration = 4000) {
-        let toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            document.body.appendChild(toastContainer);
-        }
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toastContainer.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 10);
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    // Bản đồ icon tương ứng với từng loại thông báo
+    const iconMap = {
+        success: 'fa-check-circle',
+        error: 'fa-times-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle',
+        subtle: 'fa-bell'
+    };
+    const iconClass = iconMap[type] || 'fa-info-circle';
+
+    // Tạo cấu trúc HTML mới cho toast bao gồm icon và message
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas ${iconClass}"></i>
+        </div>
+        <div class="toast-message">
+            ${escapeHtml(message)}
+        </div>
+    `;
+
+    toastContainer.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        });
+    }, duration);
+}
+
+    /**
+ * [NÂNG CẤP] Mở Side Panel gợi ý với size lớn.
+ * @param {object} order - Dữ liệu của đơn hàng cần gợi ý
+ * @param {HTMLElement} btnElement - Nút đã được click
+ */
+function handleSuggestion(order, btnElement) {
+    const orderNumber = order['Số đơn hàng'];
+    
+    // Lọc và sắp xếp các xe được gợi ý
+    const suggestedCars = appState.data.khoxe.filter(car => 
+        String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
+        car['Dòng xe'] === order['Dòng xe'] &&
+        car['Phiên bản'] === order['Phiên bản'] &&
+        car['Ngoại thất'] === order['Ngoại thất'] &&
+        String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
+    ).sort((a, b) => new Date(a['Ngày nhập']) - new Date(b['Ngày nhập']));
+
+    const title = `Gợi Ý Ghép Xe Cho Đơn Hàng <span style="color: var(--gradient-start);">${escapeHtml(orderNumber)}</span>`;
+    
+    let bodyHtml = '';
+    if (suggestedCars.length > 0) {
+        let suggestionsTableRows = suggestedCars.map((car, index) => {
+            const ngayNhapFormatted = car['Ngày nhập'] ? formatCustomDateTime(car['Ngày nhập']).split(' ')[1] : 'N/A';
+            return `
+                <tr>
+                    <td><input type="radio" name="suggestedVin" value="${car.VIN}" id="vin_${index}" ${index === 0 ? 'checked' : ''}></td>
+                    <td><label for="vin_${index}">${car.VIN}</label></td>
+                    <td>${car['Mã DMS'] || 'N/A'}</td>
+                    <td>${car['Nội thất']}</td>
+                    <td>${ngayNhapFormatted}</td>
+                </tr>`;
+        }).join('');
+
+        bodyHtml = `
+            <p>Tìm thấy <strong>${suggestedCars.length}</strong> xe phù hợp trong kho. Vui lòng chọn một xe để ghép:</p>
+            <div class="table-wrapper" style="max-height: 60vh; margin-top: 15px;">
+                <table class="data-table">
+                    <thead><tr><th>Chọn</th><th>Số VIN</th><th>Mã DMS</th><th>Nội thất</th><th>Ngày nhập kho</th></tr></thead>
+                    <tbody>${suggestionsTableRows}</tbody>
+                </table>
+            </div>`;
+    } else {
+        bodyHtml = `<div class="empty-state-container" style="padding: 20px 0; text-align: center;">Không tìm thấy xe nào phù hợp trong kho.</div>`;
+    }
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        ${suggestedCars.length > 0 ? '<button id="confirmSuggestionMatchBtn" class="btn btn-primary">Xác Nhận Ghép Xe</button>' : ''}
+    `;
+
+    // Gọi hàm openSidePanel với các tùy chọn mới
+    openSidePanel({
+        title: `<i class="fas fa-lightbulb"></i> ${title}`,
+        bodyHtml: bodyHtml,
+        footerHtml: footerHtml,
+        size: 'lg', // Dùng size LỚN để hiển thị bảng
+        theme: 'info'
+    });
+
+    if (suggestedCars.length > 0) {
         setTimeout(() => {
-            toast.classList.remove('show');
-            toast.addEventListener('transitionend', () => toast.remove());
-        }, duration);
+            const confirmBtn = document.getElementById('confirmSuggestionMatchBtn');
+            if (confirmBtn) {
+                confirmBtn.onclick = () => submitSuggestedMatch(orderNumber, btnElement);
+            }
+        }, 10);
     }
-
-    function handleSuggestion(order, btnElement) {
-        const orderNumber = order['Số đơn hàng'];
-        const modalBody = document.getElementById('suggestionModalBody');
-        const confirmBtn = document.getElementById('confirmSuggestionMatchBtn');
-        
-        const suggestedCars = appState.data.khoxe.filter(car => 
-            String(car['Trạng thái']).toLowerCase().trim() === 'chưa ghép' &&
-            car['Dòng xe'] === order['Dòng xe'] &&
-            car['Phiên bản'] === order['Phiên bản'] &&
-            car['Ngoại thất'] === order['Ngoại thất'] &&
-            String(order['Nội thất']).toLowerCase().includes(String(car['Nội thất']).toLowerCase())
-        ).sort((a, b) => new Date(a['Ngày nhập']) - new Date(b['Ngày nhập']));
-
-        document.getElementById('suggestionOrderNumber').textContent = orderNumber;
-
-        if (suggestedCars.length > 0) {
-            let suggestionsHTML = `
-                <p>Tìm thấy <b>${suggestedCars.length}</b> xe phù hợp trong kho. Vui lòng chọn một xe để ghép:</p>
-                <div class="table-wrapper" style="max-height: 40vh; margin-top: 15px;">
-                    <table class="data-table">
-                        <thead><tr><th>Chọn</th><th>Số VIN</th><th>Mã DMS</th><th>Ngoại thất</th><th>Nội thất</th><th>Ngày nhập kho</th></tr></thead>
-                        <tbody>`;
-            
-            suggestedCars.forEach((car, index) => {
-                const ngayNhapFormatted = car['Ngày nhập'] ? new Date(car['Ngày nhập']).toLocaleString('vi-VN') : 'N/A';
-                suggestionsHTML += `
-                    <tr>
-                        <td><input type="radio" name="suggestedVin" value="${car.VIN}" id="vin_${index}" ${index === 0 ? 'checked' : ''}></td>
-                        <td><label for="vin_${index}">${car.VIN}</label></td>
-                        <td>${car['Mã DMS'] || 'N/A'}</td>
-                        <td>${car['Ngoại thất']}</td>
-                        <td>${car['Nội thất']}</td>
-                        <td>${ngayNhapFormatted}</td>
-                    </tr>`;
-            });
-
-            suggestionsHTML += `</tbody></table></div>`;
-            modalBody.innerHTML = suggestionsHTML;
-            confirmBtn.style.display = 'inline-block';
-        } else {
-            modalBody.innerHTML = `<div class="no-data-container" style="padding: 20px 0;">Không tìm thấy xe nào phù hợp trong kho.</div>`;
-            confirmBtn.style.display = 'none';
-        }
-
-        confirmBtn.onclick = () => submitSuggestedMatch(orderNumber, btnElement);
-        openModal('suggestionModal');
-    }
+}
 
     async function submitSuggestedMatch(orderNumber, btnElement) {
     const selectedVinInput = document.querySelector('input[name="suggestedVin"]:checked');
@@ -3862,14 +4160,16 @@ function formatCustomDateTime(dateValue) {
         return;
     }
     const selectedVin = selectedVinInput.value;
-    const modalButton = document.getElementById('confirmSuggestionMatchBtn');
+    const panelButton = document.getElementById('confirmSuggestionMatchBtn');
+    
     const { success } = await performActionOnRow({
         action: 'manualMatchCar',
         params: { orderNumber, vin: selectedVin },
-        buttonElement: modalButton
+        buttonElement: panelButton
     });
+
     if (success) {
-        closeModal('suggestionModal');
+        closeSidePanel();
     }
 }
 
@@ -3984,30 +4284,18 @@ function renderSuggestionPanel(suggestions) {
         });
     }
 
+/**
+ * [NÂNG CẤP] Mở Side Panel chỉnh sửa với bố cục form cải tiến.
+ * @param {object} rowData Dữ liệu của hàng
+ * @param {HTMLElement} btnElement Nút đã được click
+ */
 function handleEditRow(rowData, btnElement) {
     const view = appState.currentView;
-    const modalBody = document.getElementById('editModalBody');
-    const modalTitle = document.getElementById('editModalTitle');
-    const confirmBtn = document.getElementById('confirmEditBtn');
-    modalBody.innerHTML = '';
-
     const viewConfig = {
-        khoXe: {
-            sheetName: 'KhoXe', primaryKeyColumn: 'VIN', title: 'Chỉnh Sửa Thông Tin Xe',
-            fields: ['Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Mã DMS', 'Trạng thái']
-        },
-        daGhep: {
-            sheetName: 'DaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Đã Ghép',
-            fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc']
-        },
-        chuaGhep: {
-            sheetName: 'ChuaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Chờ Ghép',
-            fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc']
-        },
-        xuatHoaDon: {
-            sheetName: 'Xuathoadon', primaryKeyColumn: 'SỐ ĐƠN HÀNG', title: 'Chỉnh Sửa Thông Tin Hóa Đơn',
-            fields: ['TÊN KHÁCH HÀNG', 'TƯ VẤN BÁN HÀNG', 'PO PIN', 'CHÍNH SÁCH']
-        }
+        khoXe: { sheetName: 'KhoXe', primaryKeyColumn: 'VIN', title: 'Chỉnh Sửa Xe Trong Kho', fields: ['Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Mã DMS', 'Trạng thái'] },
+        daGhep: { sheetName: 'DaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Đã Ghép', fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc'] },
+        chuaGhep: { sheetName: 'ChuaGhep', primaryKeyColumn: 'Số đơn hàng', title: 'Chỉnh Sửa Đơn Hàng Chờ Ghép', fields: ['Tên tư vấn bán hàng', 'Tên khách hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc'] },
+        xuatHoaDon: { sheetName: 'Xuathoadon', primaryKeyColumn: 'SỐ ĐƠN HÀNG', title: 'Chỉnh Sửa Thông Tin Hóa Đơn', fields: ['TÊN KHÁCH HÀNG', 'TƯ VẤN BÁN HÀNG', 'PO PIN', 'CHÍNH SÁCH'] }
     };
     
     const config = viewConfig[view];
@@ -4016,16 +4304,12 @@ function handleEditRow(rowData, btnElement) {
         return;
     }
 
-    modalTitle.textContent = config.title;
     const primaryKeyValue = rowData[config.primaryKeyColumn];
     
+    // Xây dựng nội dung HTML cho body của panel với cấu trúc .form-section mới
     let formBodyHTML = `
-        <div class="form-group">
-            <label>${config.primaryKeyColumn} (Không thể sửa)</label>
-            <div>${primaryKeyValue}</div>
-        </div>
-        <hr style="margin: 20px 0;">
-    `;
+        <div class="form-section">
+            <div class="form-section-title">Thông tin cần chỉnh sửa</div>`;
 
     config.fields.forEach(field => {
         const value = rowData[field] || '';
@@ -4049,16 +4333,27 @@ function handleEditRow(rowData, btnElement) {
         
         formBodyHTML += `
             <div class="form-group-horizontal">
-                <label for="edit-${field}" class="form-label-horizontal">${field}</label>
+                <label for="edit-${field}" class="form-label-horizontal">${field}:</label>
                 <input type="${inputType}" id="edit-${field}" class="form-input-horizontal" data-field-name="${field}" value="${escapeHtml(fieldValueForInput)}">
-            </div>
-        `;
+            </div>`;
     });
 
-    modalBody.innerHTML = formBodyHTML;
+    formBodyHTML += `</div>`; // Đóng thẻ .form-section
 
-    confirmBtn.onclick = () => submitEditForm(config.sheetName, config.primaryKeyColumn, primaryKeyValue, btnElement);
-    openModal('editModal');
+    // Nội dung HTML cho footer (các nút bấm)
+    const footerHTML = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="confirmEditBtn" class="btn btn-primary" onclick="submitEditForm('${config.sheetName}', '${config.primaryKeyColumn}', '${primaryKeyValue}', this)">Lưu Thay Đổi</button>
+    `;
+
+    // Gọi hàm openSidePanel với các tùy chọn mới
+    openSidePanel({
+        title: `<i class="fas fa-pencil-alt"></i> ${config.title}`,
+        bodyHtml: formBodyHTML,
+        footerHtml: footerHTML,
+        size: 'md', // Kích thước vừa phải cho form
+        theme: 'info'
+    });
 }
 
 async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnElement) {
@@ -4091,26 +4386,6 @@ async function submitEditForm(sheetName, primaryKeyColumn, primaryKeyValue, btnE
 
 let modalSelectedFile = null;
 
-function openExcelImportModal() {
-    document.getElementById('action-dropdown-panel').classList.remove('active');
-    modalSelectedFile = null;
-    const fileInput = document.getElementById('excel-file-input-modal');
-    if (fileInput) fileInput.value = '';
-    
-    const fileNameDisplay = document.getElementById('file-name-display-modal');
-    if (fileNameDisplay) fileNameDisplay.textContent = '';
-
-    const fileLabel = document.getElementById('excel-file-label-modal');
-    if (fileLabel) {
-        fileLabel.innerHTML = '<i class="fas fa-file-excel"></i> Chọn File...';
-        fileLabel.style.borderColor = 'var(--gradient-start)';
-    }
-
-    const importBtn = document.getElementById('import-excel-btn-modal');
-    if (importBtn) importBtn.disabled = true;
-
-    openModal('excelImportModal');
-}
 
 function handleFileSelectForModal(event) {
     const fileInput = event.target;
@@ -4241,46 +4516,89 @@ function handleResendEmail(order, btnElement) {
     );
 }
 
+/**
+ * [NÂNG CẤP] Mở Side Panel để tra cứu lịch sử đơn hàng.
+ */
 async function handleShowTimeline() {
-    document.getElementById('action-dropdown-panel').classList.remove('active');
+    // Đóng menu thao tác nhanh nếu đang mở
+    const actionPanel = document.getElementById('action-dropdown-panel');
+    if (actionPanel) actionPanel.classList.remove('active');
+
+    const title = 'Tra Cứu Lịch Sử Đơn Hàng';
+
+    // Nội dung ban đầu để người dùng nhập liệu
+    const bodyHtml = `
+        <p>Vui lòng nhập chính xác Số đơn hàng bạn muốn xem lịch sử chi tiết.</p>
+        <div class="form-group-horizontal" style="margin-top: 15px;">
+            <label for="lookupModalInput" class="form-label-horizontal">Số đơn hàng:</label>
+            <input type="text" id="lookupModalInput" class="form-input-horizontal" placeholder="Ví dụ: SO-123456" 
+                   onkeypress="if(event.key === 'Enter') document.getElementById('lookupModalConfirmBtn').click()">
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="lookupModalConfirmBtn" class="btn btn-primary" onclick="executeTimelineLookup()">Tra cứu</button>
+    `;
+
+    openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml });
+
+    // Tự động focus vào ô input sau khi panel mở
+    setTimeout(() => {
+        const input = document.getElementById('lookupModalInput');
+        if (input) input.focus();
+    }, 450); // Đợi hiệu ứng trượt của panel hoàn tất
+}
+
+/**
+ * [HÀM MỚI] Xử lý việc tra cứu và hiển thị kết quả timeline.
+ */
+async function executeTimelineLookup() {
     const lookupInput = document.getElementById('lookupModalInput');
-    lookupInput.value = '';
+    const orderNumber = lookupInput.value.trim();
+    if (!orderNumber) {
+        showToast('Vui lòng nhập số đơn hàng.', 'warning');
+        return;
+    }
 
+    // Lấy các element của panel đang mở
+    const panelTitle = document.getElementById('side-panel-title');
+    const panelBody = document.getElementById('side-panel-body');
+    const panelFooter = document.getElementById('side-panel-footer');
     const confirmBtn = document.getElementById('lookupModalConfirmBtn');
-    confirmBtn.onclick = async () => {
-        const orderNumber = lookupInput.value.trim();
-        if (!orderNumber) {
-            showToast('Vui lòng nhập số đơn hàng.', 'warning');
-            return;
-        }
-        closeModal('lookupModal');
-        const timelineModalTitle = document.getElementById('timelineModalTitle');
-        const timelineModalBody = document.getElementById('timelineModalBody');
-        timelineModalTitle.textContent = `Lịch sử Đơn hàng: ${orderNumber}`;
-        timelineModalBody.innerHTML = '<div>Đang tải lịch sử...</div>';
-        openModal('timelineModal');
+    const originalBtnHtml = confirmBtn.innerHTML;
 
-        try {
-            const response = await fetch(`${API_URL}?action=getOrderHistory&orderNumber=${encodeURIComponent(orderNumber)}`);
-            if (!response.ok) throw new Error('Lỗi mạng khi tải lịch sử.');
+    // Cập nhật giao diện sang trạng thái đang tải
+    panelTitle.textContent = `Lịch sử Đơn hàng: ${orderNumber}`;
+    panelBody.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--gradient-start);"></i>
+        </div>
+    `;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
 
-            const result = await response.json();
-            if (result.status === "SUCCESS") {
-                if (result.history.length === 0) {
-                    timelineModalBody.innerHTML = `<div>Không tìm thấy lịch sử cho đơn hàng <strong>${orderNumber}</strong>.</div>`;
-                } else {
-                    renderTimeline(result.history, timelineModalBody);
-                }
+    try {
+        const response = await fetch(`${API_URL}?action=getOrderHistory&orderNumber=${encodeURIComponent(orderNumber)}`);
+        if (!response.ok) throw new Error('Lỗi mạng khi tải lịch sử.');
+
+        const result = await response.json();
+        if (result.status === "SUCCESS") {
+            if (result.history.length === 0) {
+                panelBody.innerHTML = `<div style="padding: 20px; text-align: center;">Không tìm thấy lịch sử cho đơn hàng <strong>${orderNumber}</strong>.</div>`;
             } else {
-                throw new Error(result.message || 'Không thể tải lịch sử từ server.');
+                // `renderTimeline` đã có sẵn, chỉ cần gọi và truyền vào panel body
+                renderTimeline(result.history, panelBody);
             }
-        } catch (error) {
-            timelineModalBody.innerHTML = `<div>${error.message}</div>`;
+        } else {
+            throw new Error(result.message || 'Không thể tải lịch sử từ server.');
         }
-    };
-
-    openModal('lookupModal');
-    lookupInput.focus();
+    } catch (error) {
+        panelBody.innerHTML = `<div style="padding: 20px; color: var(--status-color-main); --status-color-main: #ef4444;">${error.message}</div>`;
+    } finally {
+        // Cập nhật lại footer chỉ còn nút Đóng
+        panelFooter.innerHTML = `<button class="btn btn-secondary" onclick="closeSidePanel()">Đóng</button>`;
+    }
 }
 function renderTimeline(historyData, container) {
     if (!historyData || historyData.length === 0) {
@@ -4327,13 +4645,6 @@ function renderTimeline(historyData, container) {
     timelineHTML += '</div></div>';
 
     container.innerHTML = timelineHTML;
-}
-
-function handleAddDeposit() {
- document.getElementById('action-dropdown-panel').classList.remove('active');
-    document.getElementById('depositCustomerName').value = '';
-    document.getElementById('depositDate').value = new Date().toISOString().split('T')[0];
-    openModal('addDepositModal');
 }
 
 async function submitNewDeposit() {
@@ -4552,14 +4863,44 @@ async function handleInlineEdit(element) {
 }
 
 let currentOrderForAI = null;
+/**
+ * [NÂNG CẤP] Mở Side Panel cho chức năng Trợ lý AI.
+ */
 function handleAIAssistant(order, btnElement) {
-    currentOrderForAI = order;
+    currentOrderForAI = order; // Biến toàn cục để lưu thông tin đơn hàng
     const orderNumber = order['SỐ ĐƠN HÀNG'];
-    document.getElementById('aiOrderNumber').textContent = orderNumber;
-    document.getElementById('aiCustomPromptInput').value = '';
-    document.getElementById('aiSuggestionOutput').value = '';
-    document.getElementById('aiSuggestionOutput').placeholder = 'Nội dung do AI tạo ra sẽ xuất hiện ở đây...';
-    openModal('aiAssistantModal');
+
+    const title = `<i class="fas fa-magic" style="color: var(--gradient-start);"></i> Trợ lý AI`;
+
+    const bodyHtml = `
+        <p>Gửi một yêu cầu tự do cho AI xử lý dựa trên dữ liệu của đơn hàng <strong style="color: var(--gradient-start);">${escapeHtml(orderNumber)}</strong>:</p>
+        <div class="form-group" style="margin-top: 15px;">
+            <label for="aiCustomPromptInput" style="font-weight: 600;">Yêu cầu của bạn:</label>
+            <textarea id="aiCustomPromptInput" rows="4" class="w-full" placeholder="Ví dụ: Soạn một email thân thiện báo cho khách hàng xe đã về đến showroom và mời họ đến làm thủ tục nhận xe."></textarea>
+        </div>
+        <button id="aiSubmitBtn" class="btn btn-primary" onclick="submitAiCustomPrompt()">
+            <i class="fas fa-paper-plane"></i> Gửi Yêu Cầu
+        </button>
+        <hr style="border: none; border-top: 1px solid var(--border-light); margin: 20px 0;">
+        <div class="form-group">
+            <label for="aiSuggestionOutput" style="font-weight: 600;">Kết quả từ AI:</label>
+            <textarea id="aiSuggestionOutput" rows="10" class="w-full" placeholder="Nội dung do AI tạo ra sẽ xuất hiện ở đây..."></textarea>
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Đóng</button>
+        <button class="btn btn-success" onclick="copyToClipboard(document.getElementById('aiSuggestionOutput').value)">
+            <i class="fas fa-copy"></i> Sao chép Nội dung
+        </button>
+    `;
+
+    openSidePanel({ 
+    title: title, 
+    bodyHtml: bodyHtml, 
+    footerHtml: footerHtml,
+    size: 'lg' // Trợ lý AI nên dùng panel lớn
+});
 }
 
 async function submitAiCustomPrompt() {
@@ -4807,6 +5148,41 @@ function groupNotificationsByDate(notifications) {
     if (groups['Cũ hơn'].length === 0) delete groups['Cũ hơn'];
 
     return groups;
+}
+function openSidePanel(options) {
+    const { title, bodyHtml, footerHtml, size = 'md', theme = 'info' } = options;
+
+    const panelContainer = document.getElementById('side-panel-container');
+    const panel = panelContainer.querySelector('.side-panel');
+    const panelHeader = panelContainer.querySelector('.side-panel-header');
+    
+    // Xóa các class cũ trước khi thêm class mới
+    panel.className = 'side-panel';
+    panelHeader.className = 'side-panel-header';
+
+    // Thêm class kích thước và chủ đề mới
+    panel.classList.add(`panel-${size}`);
+    panel.classList.add(`theme-${theme}`);
+    panelHeader.classList.add(`header-${theme}`);
+
+    document.getElementById('side-panel-title').innerHTML = title;
+    document.getElementById('side-panel-body').innerHTML = bodyHtml;
+    document.getElementById('side-panel-footer').innerHTML = footerHtml;
+
+    panelContainer.classList.add('active');
+    document.body.classList.add('panel-open');
+}
+
+function closeSidePanel() {
+    document.getElementById('side-panel-container').classList.remove('active');
+    document.body.classList.remove('panel-open');
+    
+    // Xóa nội dung sau khi panel đã đóng hẳn để tránh bị "flash"
+    setTimeout(() => {
+        document.getElementById('side-panel-title').innerHTML = '';
+        document.getElementById('side-panel-body').innerHTML = '';
+        document.getElementById('side-panel-footer').innerHTML = '';
+    }, 400); // Phải khớp với thời gian transition trong CSS
 }
 </script>
 </body>
