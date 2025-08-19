@@ -4469,25 +4469,44 @@ function importFromExcelModal() {
     reader.readAsBinaryString(modalSelectedFile);
 }
 
-function handlePendingSignature(order, btnElement) {
-    const orderNumber = order['SỐ ĐƠN HÀNG'];
-    // SỬA: Gọi hàm showConfirmationPanel mới và truyền tham số dưới dạng object
-    showConfirmationPanel({
-        title: 'Xác Nhận Chuyển Trạng Thái',
-        message: `Bạn có chắc muốn chuyển đơn hàng <strong>${orderNumber}</strong> sang trạng thái "Chờ ký hóa đơn"?<br>Hành động này sẽ ghi nhận ngày xuất hóa đơn là hôm nay.`,
-        confirmButtonText: 'Xác Nhận',
-        confirmButtonClass: 'btn-primary',
-        onConfirm: async (inputValue, modalButton) => {
-            const { success } = await performActionOnRow({
-                action: 'markAsPendingSignature',
-                params: { orderNumber: orderNumber },
-                buttonElement: modalButton
-            });
-            if (success) {
-                closeSidePanel(); // SỬA: Gọi hàm đóng side panel mới
+async function handleBulkAction(action, actionName) {
+    const selectedOrderNumbers = Array.from(document.querySelectorAll('.invoice-checkbox:checked')).map(cb => cb.value);
+    if (selectedOrderNumbers.length === 0) {
+        showToast('Vui lòng chọn ít nhất một đơn hàng.', 'warning');
+        return;
+    }
+    const panel = document.getElementById('bulk-actions-panel');
+    if (panel) panel.classList.remove('active');
+
+    // Logic for actions requiring a reason input
+    if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
+        const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
+        const label = action === 'cancelRequest' ? 'Lý do hủy:' : 'Nội dung yêu cầu:';
+        
+        showConfirmationPanel({
+            title: title,
+            message: `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`,
+            inputLabel: label,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (reason, modalButton) => {
+                await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
+                closeSidePanel(); // Use the new function to close the panel
             }
-        }
-    });
+        });
+    } else {
+        // Logic for simple confirmation actions
+        showConfirmationPanel({
+            title: 'Xác Nhận Hành Động Hàng Loạt',
+            message: `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (inputValue, modalButton) => {
+                await executeBulkAction(action, selectedOrderNumbers, modalButton);
+                closeSidePanel(); // Use the new function to close the panel
+            }
+        });
+    }
 }
 function handleResendEmail(order, btnElement) {
     const emailType = btnElement.dataset.type;
@@ -4498,10 +4517,12 @@ function handleResendEmail(order, btnElement) {
     if (emailType === 'invoice_issued') emailTypeName = "HÓA ĐƠN ĐÃ PHÁT HÀNH";
     if (emailType === 'invoice_request_supplement') emailTypeName = "YÊU CẦU BỔ SUNG";
 
-    showConfirmationModal(
-        'Xác Nhận Gửi Lại Email',
-        `Bạn có chắc chắn muốn gửi lại ${emailTypeName} cho đơn hàng <strong>${orderNumber}</strong>?`,
-        async (modalButton) => {
+    showConfirmationPanel({
+        title: 'Xác Nhận Gửi Lại Email',
+        message: `Bạn có chắc chắn muốn gửi lại ${emailTypeName} cho đơn hàng <strong>${orderNumber}</strong>?`,
+        confirmButtonText: 'Gửi Lại',
+        confirmButtonClass: 'btn-primary',
+        onConfirm: async (inputValue, modalButton) => {
             const { success } = await performActionOnRow({
                 action: 'resendEmail',
                 params: {
@@ -4511,11 +4532,10 @@ function handleResendEmail(order, btnElement) {
                 buttonElement: modalButton
             });
             if (success) {
-                closeModal('confirmationModal');
+                closeSidePanel(); // Use the new function to close the panel
             }
-        },
-        'btn-primary'
-    );
+        }
+    });
 }
 
 /**
