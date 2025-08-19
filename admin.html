@@ -2625,6 +2625,7 @@ function renderXuatHoaDonView() {
             actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', handler: 'handleApproveRequest' });
             actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', handler: 'handleRequestSupplement' });
         } else if (status === 'đã phê duyệt') {
+            // === THAY ĐỔI NẰM Ở ĐÂY ===
             actions.push({ icon: 'fa-signature', label: 'Chờ Ký HĐ', handler: 'handlePendingSignature' });
         } else if (status === 'chờ ký hóa đơn') {
             actions.push({ icon: 'fa-upload', label: 'Tải Lên HĐ', handler: 'handleUploadIssuedInvoice' });
@@ -5220,6 +5221,35 @@ function closeSidePanel() {
         document.getElementById('side-panel-body').innerHTML = '';
         document.getElementById('side-panel-footer').innerHTML = '';
     }, 400); // Phải khớp với thời gian transition trong CSS
+}
+/**
+ * [CHỨC NĂNG MỚI] Mở Side Panel để xác nhận chuyển trạng thái sang "Chờ Ký Hóa Đơn".
+ */
+function handlePendingSignature(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    
+    // Sử dụng lại hàm showConfirmationPanel đã có để hiển thị bảng xác nhận
+    showConfirmationPanel({
+        title: 'Xác Nhận Chuyển Trạng Thái',
+        message: `Bạn có chắc chắn muốn chuyển đơn hàng <strong>${orderNumber}</strong> sang trạng thái "Chờ Ký Hóa Đơn" không?`,
+        confirmButtonText: 'Xác Nhận',
+        confirmButtonClass: 'btn-primary', // Sử dụng màu xanh dương cho hành động này
+        onConfirm: async (inputValue, modalButton) => {
+            // Gọi hàm performActionOnRow để gửi yêu cầu đến backend
+            const { success } = await performActionOnRow({
+                action: 'markAsPendingSignature', // Tên action này phải khớp với backend của bạn
+                params: { 
+                    orderNumber: orderNumber 
+                },
+                buttonElement: modalButton
+            });
+
+            // Nếu thành công, tự động đóng panel
+            if (success) {
+                closeSidePanel();
+            }
+        }
+    });
 }
 </script>
 </body>
