@@ -4478,11 +4478,12 @@ async function handleBulkAction(action, actionName) {
     const panel = document.getElementById('bulk-actions-panel');
     if (panel) panel.classList.remove('active');
 
-    // Logic for actions requiring a reason input
+    // Logic for actions requiring a reason (like 'cancel' or 'request supplement')
     if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
         const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
         const label = action === 'cancelRequest' ? 'Lý do hủy:' : 'Nội dung yêu cầu:';
         
+        // Use the new showConfirmationPanel with an input field
         showConfirmationPanel({
             title: title,
             message: `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`,
@@ -4491,11 +4492,12 @@ async function handleBulkAction(action, actionName) {
             confirmButtonClass: 'btn-primary',
             onConfirm: async (reason, modalButton) => {
                 await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
-                closeSidePanel(); // Use the new function to close the panel
+                closeSidePanel(); // Close the new side panel
             }
         });
     } else {
         // Logic for simple confirmation actions
+        // Use the new showConfirmationPanel for simple confirmation
         showConfirmationPanel({
             title: 'Xác Nhận Hành Động Hàng Loạt',
             message: `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
@@ -4503,7 +4505,7 @@ async function handleBulkAction(action, actionName) {
             confirmButtonClass: 'btn-primary',
             onConfirm: async (inputValue, modalButton) => {
                 await executeBulkAction(action, selectedOrderNumbers, modalButton);
-                closeSidePanel(); // Use the new function to close the panel
+                closeSidePanel(); // Close the new side panel
             }
         });
     }
@@ -4517,6 +4519,7 @@ function handleResendEmail(order, btnElement) {
     if (emailType === 'invoice_issued') emailTypeName = "HÓA ĐƠN ĐÃ PHÁT HÀNH";
     if (emailType === 'invoice_request_supplement') emailTypeName = "YÊU CẦU BỔ SUNG";
 
+    // Use the new showConfirmationPanel function
     showConfirmationPanel({
         title: 'Xác Nhận Gửi Lại Email',
         message: `Bạn có chắc chắn muốn gửi lại ${emailTypeName} cho đơn hàng <strong>${orderNumber}</strong>?`,
@@ -4532,12 +4535,11 @@ function handleResendEmail(order, btnElement) {
                 buttonElement: modalButton
             });
             if (success) {
-                closeSidePanel(); // Use the new function to close the panel
+                closeSidePanel(); // Close the new side panel
             }
         }
     });
 }
-
 /**
  * [NÂNG CẤP] Mở Side Panel để tra cứu lịch sử đơn hàng.
  */
@@ -5002,23 +5004,36 @@ async function handleBulkAction(action, actionName) {
     }
     const panel = document.getElementById('bulk-actions-panel');
     if (panel) panel.classList.remove('active');
+
+    // SỬA LỖI: Chuyển đổi logic để sử dụng hàm showConfirmationPanel mới
     if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
         const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
         const label = action === 'cancelRequest' ? 'Lý do hủy:' : 'Nội dung yêu cầu:';
-        showPromptModal(title, `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`, label, async (reason, modalButton) => {
-            await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
-            closeModal('confirmationModal');
+        
+        // SỬA: Gọi hàm showConfirmationPanel với tùy chọn nhập liệu
+        showConfirmationPanel({
+            title: title,
+            message: `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`,
+            inputLabel: label,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (reason, modalButton) => {
+                await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
+                closeSidePanel(); // SỬA: Đóng side panel thay vì modal cũ
+            }
         });
     } else {
-        showConfirmationModal(
-            'Xác Nhận Hành Động Hàng Loạt',
-            `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
-            async (modalButton) => {
+        // SỬA: Gọi hàm showConfirmationPanel cho xác nhận đơn giản
+        showConfirmationPanel({
+            title: 'Xác Nhận Hành Động Hàng Loạt',
+            message: `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (inputValue, modalButton) => {
                 await executeBulkAction(action, selectedOrderNumbers, modalButton);
-                closeModal('confirmationModal');
-            },
-            'btn-primary'
-        );
+                closeSidePanel(); // SỬA: Đóng side panel thay vì modal cũ
+            }
+        });
     }
 }
 
