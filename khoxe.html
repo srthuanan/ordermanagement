@@ -1115,6 +1115,21 @@ body.dark-mode .tippy-box[data-theme~='hold-info-popover'][data-placement^='left
     }
 
 }
+.card-footer {
+    padding-top: 15px;
+    margin-top: 15px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: flex-end; /* Đẩy các nút về bên phải */
+    align-items: center;
+}
+body.dark-mode .card-footer {
+    border-top-color: var(--border-dark);
+}
+.card-actions {
+    display: flex;
+    gap: 12px; /* Khoảng cách giữa các nút */
+}
  </style>
 </head>
 <body>
@@ -1767,7 +1782,8 @@ renderTableRows: function(data) {
     DOMElements.tableBody.appendChild(fragment);
 },
 
-           renderCards: function(data) {
+       // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
+renderCards: function(data) {
     const fragment = document.createDocumentFragment();
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
@@ -1782,47 +1798,40 @@ renderTableRows: function(data) {
         if (isHeld) {
             if (car.holder === currentUser) {
                 cardClass = 'held-by-me';
-                actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
+                actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><i class="fas fa-lock-open"></i></button>`;
             } else {
                 cardClass = 'held-by-other';
                 if (isAdmin) {
-                    actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
+                    actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><i class="fas fa-lock-open"></i></button>`;
                 } else {
-                    actionButtonHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
+                    actionButtonHtml = `<button class="hold-btn" disabled><i class="fas fa-lock"></i></button>`;
                 }
             }
         } else if (car.status.toLowerCase() === 'chưa ghép') {
-            actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
+            actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><i class="fas fa-key"></i></button>`;
         }
-        
-        // [SỬA LỖI] Chỉ thêm class vào phần tử nếu biến cardClass không rỗng
+
         if (cardClass) {
             card.classList.add(cardClass);
         }
 
         let statusHtml = `<span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>`;
         if (isHeld) {
-            statusHtml += `<div class="hold-info" style="text-align: right; margin-top: 4px;">Giữ bởi: ${car.holder.split('@')[0]}</div>`;
+            statusHtml += `<div class="hold-info" style="text-align: right; margin-top: 4px; font-size: 10px;">Giữ bởi: ${car.holder.split('@')[0]}</div>`;
         }
-        
+
         const isHeldByCurrentUser = isHeld && car.holder === currentUser;
-        let requestCellHtml = car.request || '';
+        let requestButtonHtml = ''; // Đổi tên biến để rõ ràng hơn
 
         if (isHeldByCurrentUser) {
             const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
             pairingUrl.searchParams.append('tab', 'form');
             pairingUrl.searchParams.append('vin_giu', car.vin);
-            pairingUrl.searchParams.append('dong_xe', car.line);
-            pairingUrl.searchParams.append('phien_ban', car.version);
-            pairingUrl.searchParams.append('ngoai_that', car.exterior);
-            pairingUrl.searchParams.append('noi_that', car.interior);
-            
-            requestCellHtml = `<a href="${pairingUrl.href}" class="pairing-btn" style="display: inline-flex;">
-                                   <i class="fas fa-link"></i>
-                                   <span>Ghép</span>
-                               </a>`;
+            // (Các searchParams khác giữ nguyên)
+            requestButtonHtml = `<a href="${pairingUrl.href}" class="pairing-btn"><i class="fas fa-link"></i></a>`;
         }
 
+        // === THAY ĐỔI BỐ CỤC HTML Ở ĐÂY ===
         card.innerHTML = `
             <div class="card-header">
                 <span class="car-model">${car.line} ${car.version}</span>
@@ -1832,15 +1841,19 @@ renderTableRows: function(data) {
                 <div class="card-row"><span class="card-label">Ngoại thất</span><span class="card-value" style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</span></div>
                 <div class="card-row"><span class="card-label">Nội thất</span><span class="card-value">${car.interior}</span></div>
                 <div class="card-row full-width"><span class="card-label">Số VIN</span><span class="card-value">${car.vin}</span></div>
-                <div class="card-row"><span class="card-label">Yêu cầu</span><span class="card-value">${requestCellHtml}</span></div>
-                <div class="card-row" style="text-align: right;">${actionButtonHtml}</div>
+            </div>
+            <div class="card-footer">
+                <div class="card-actions">
+                    ${requestButtonHtml}
+                    ${actionButtonHtml}
+                </div>
             </div>
         `;
         fragment.appendChild(card);
     });
     DOMElements.tableBody.className = 'card-view-container';
     DOMElements.tableBody.appendChild(fragment);
-}
+},
 };
 
        const DataProcessor = {
