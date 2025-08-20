@@ -680,34 +680,68 @@
         }
 
         /* === INITIALIZATION === */
-        document.addEventListener("DOMContentLoaded", function() {
-            UIManager.init();
-            const orderNumberParam = getQueryParam("orderNumber");
-            const container = document.getElementById('details-container');
-            
-            if (!orderNumberParam) { 
-                container.innerHTML = '<div class="loading-message"><i class="fas fa-exclamation-triangle"></i>Lỗi: Không tìm thấy số đơn hàng.</div>'; 
-                return; 
+        // TỆP: xem-chi-tiet-lich-su.html
+// THAY THẾ TOÀN BỘ HÀM document.addEventListener("DOMContentLoaded", ...) CŨ BẰNG HÀM NÀY
+
+document.addEventListener("DOMContentLoaded", function() {
+    UIManager.init();
+    const container = document.getElementById('details-container');
+    const apiURL = "https://script.google.com/macros/s/AKfycbwN7nRpE-KpZRBP7uw0-iryJI6xnkjU0q4ajuwcoonNrjdOv8sNnOYaBAvItWL6jPWBRA/exec";
+    const params = new URLSearchParams(window.location.search);
+    const orderNumberParam = params.get("orderNumber");
+
+    if (!orderNumberParam) {
+        container.innerHTML = '<div class="loading-message"><i class="fas fa-exclamation-triangle"></i>Lỗi: Không tìm thấy số đơn hàng.</div>';
+        return;
+    }
+
+    // ▼▼▼ BẮT ĐẦU LUỒNG LOGIC MỚI, ĐƠN GIẢN VÀ CHÍNH XÁC HƠN ▼▼▼
+
+    // ƯU TIÊN 1: Tìm trong cache (sessionStorage) trước.
+    // Đây là kịch bản chính cho cả yêu cầu mới tạo và xem lại lịch sử.
+    const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
+    if (storedData) {
+        try {
+            const allHistory = JSON.parse(storedData);
+            const rowData = allHistory.find(r => r && r["Số đơn hàng"] && r["Số đơn hàng"].trim() === orderNumberParam.trim());
+            if (rowData) {
+                console.log("Hiển thị dữ liệu từ cache (sessionStorage).");
+                renderDetails(rowData);
+                return; // Dừng lại, hoàn thành nhiệm vụ
             }
-            
-            const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
-            if (storedData) {
-                try {
-                    const allHistory = JSON.parse(storedData);
-                    const rowData = allHistory.find(r => r && r["Số đơn hàng"] === orderNumberParam);
-                    
-                    if (rowData) {
-                        renderDetails(rowData);
-                    } else {
-                        container.innerHTML = `<div class="loading-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng: ${orderNumberParam}</div>`;
-                    }
-                } catch (e) { 
-                    container.innerHTML = '<div class="loading-message"><i class="fas fa-database"></i>Lỗi xử lý dữ liệu.</div>'; 
+        } catch (e) {
+            console.warn("Lỗi xử lý cache, sẽ tải lại từ server.", e);
+        }
+    }
+
+    // ƯU TIÊN 2 (DỰ PHÒNG): Nếu không có trong cache, tải lại toàn bộ từ máy chủ.
+    console.log("Không tìm thấy trong cache. Đang tải lại từ máy chủ...");
+    container.innerHTML = `<div class="loading-message"><i class="fas fa-cloud-download-alt fa-spin"></i>Không tìm thấy trong cache, đang tìm lại trên máy chủ...</div>`;
+
+    fetch(apiURL)
+        .then(response => {
+            if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+            return response.json();
+        })
+        .then(serverData => {
+            if (serverData.status === "SUCCESS") {
+                const allServerHistory = [...(serverData.daghep || []), ...(serverData.chuaghep || [])];
+                sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(allServerHistory)); // Cập nhật lại cache
+                const rowDataFromServer = allServerHistory.find(r => r && r["Số đơn hàng"] && r["Số đơn hàng"].trim() === orderNumberParam.trim());
+                if (rowDataFromServer) {
+                    renderDetails(rowDataFromServer);
+                } else {
+                    container.innerHTML = `<div class="loading-message"><i class="fas fa-search-minus"></i>Không tìm thấy dữ liệu cho đơn hàng: ${orderNumberParam}</div>`;
                 }
-            } else { 
-                container.innerHTML = '<div class="loading-message"><i class="fas fa-history"></i>Không có dữ liệu lịch sử. Vui lòng quay lại trang trước và thử lại.</div>'; 
+            } else {
+                throw new Error(serverData.message || "Server trả về lỗi.");
             }
+        })
+        .catch(error => {
+            console.error("Lỗi khi tải lại dữ liệu chi tiết:", error);
+            container.innerHTML = `<div class="loading-message"><i class="fas fa-database"></i>Lỗi tải dữ liệu từ máy chủ: ${error.message}.</div>`;
         });
+});
     </script>
 </body>
 </html>
