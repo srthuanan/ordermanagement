@@ -447,24 +447,21 @@ body.dark-mode .mobile-menu-btn:hover {
 /* ===================================================================== */
 
 /* 1. Định dạng cơ bản cho tất cả thẻ trạng thái */
+/* THAY THẾ ĐOẠN NÀY */
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 8px; /* Giảm bo góc để tạo hình chữ nhật mềm mại */
-    font-size: 11px;
+    padding: 5px 8px;         /* Giảm đệm viền */
+    border-radius: 6px;
+    font-size: 10px;          /* Giảm cỡ chữ */
     font-weight: 700;
-    text-align: left; /* Căn chữ về bên trái */
+    text-align: left;
     display: inline-block;
-    min-width: 110px; /* Điều chỉnh chiều rộng tối thiểu */
+    min-width: 95px;          /* Giảm chiều rộng tối thiểu */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: all 0.2s ease;
-
-    /* Nền và màu chữ sẽ được định nghĩa bằng biến */
     background-color: var(--status-color-bg);
     color: var(--status-color-main);
-    
-    /* Đường kẻ màu đặc trưng bên trái */
-    border-left: 4px solid var(--status-color-main);
+    border-left: 3px solid var(--status-color-main);
 }
 
 /* 2. Định nghĩa màu cho từng loại trạng thái */
@@ -588,76 +585,75 @@ body.dark-mode .status-default {
 
 /* 1. Kiểu dáng nền tảng cho nút */
 .action-cell .hold-btn {
-    position: relative;
+    position: relative; /* Quan trọng để định vị cho span con */
     width: 28px;
     height: 28px;
     border-radius: 40%;
-    
     cursor: pointer;
-    border: none; /* Bỏ viền để có vẻ ngoài liền mạch hơn */
-    color: white; /* Chữ/icon màu trắng để nổi bật trên nền tối */
-
-    display: flex;
+    border: none;
+    color: white;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 2. Kiểu dáng cho icon và text */
-.action-cell .hold-btn span,
-.action-cell .hold-btn i {
-    display: inline-block;
-    vertical-align: middle;
-    transition: all 0.3s ease;
-}
-
+/* 2. Icon và Text */
 .action-cell .hold-btn i {
     font-size: 12px;
     flex-shrink: 0;
+    z-index: 2; /* Đảm bảo icon luôn ở trên */
 }
 
 .action-cell .hold-btn span {
+    position: absolute; /* Lấy span ra khỏi luồng layout */
+    left: 18px; /* Vị trí bắt đầu của span, ngay cạnh icon */
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px); /* Dịch sang trái để ẩn */
+
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.8px;
+    white-space: nowrap;
+    height: 28px;
+    line-height: 16px;
+    padding: 6px 12px 6px 20px;
+    border-radius: 10px;
+    box-sizing: border-box;
 
     opacity: 0;
-    max-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    margin-left: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1; /* Nằm dưới icon một chút */
 }
 
-/* 3. Màu sắc cho từng loại nút (ĐÃ CẬP NHẬT) */
+/* 3. Màu sắc cho từng loại nút */
 .hold-btn:not(.release-btn) {
-    /* Gradient từ xanh lá đậm sang gần như đen */
     background: linear-gradient(135deg, #10B981 0%, #064E3B 100%);
     box-shadow: 0 4px 15px -5px rgba(16, 185, 129, 0.4);
 }
+.hold-btn:not(.release-btn) span {
+    background: linear-gradient(135deg, #10B981 0%, #064E3B 100%);
+}
 .release-btn {
-    /* Gradient từ xám than chì sang đen */
     background: linear-gradient(135deg, #4B5565 0%, #1F2937 100%);
     box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.4);
 }
-
-/* 4. HIỆU ỨNG KHI DI CHUỘT */
-.hold-btn:hover:not(:disabled) {
-    width: 90px;
-    border-radius: 10px;
-    justify-content: flex-start;
-    padding-left: 12px;
+.release-btn span {
+    background: linear-gradient(135deg, #4B5565 0%, #1F2937 100%);
 }
 
+/* 4. HIỆU ỨNG KHI DI CHUỘT (QUAN TRỌNG) */
+.hold-btn:hover:not(:disabled) {
+    /* KHÔNG THAY ĐỔI width ở đây nữa */
+}
 .hold-btn:hover:not(:disabled) span {
     opacity: 1;
-    max-width: 80px;
-    margin-left: 8px;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0); /* Hiện span ra */
 }
-
-/* 5. Vô hiệu hóa */
 /* 5. Vô hiệu hóa */
 .hold-btn:disabled {
     background: var(--border-light);
@@ -692,23 +688,11 @@ body.dark-mode .hold-btn:disabled::before {
     color: var(--text-muted-dark);
 }
 
-        .data-table tbody tr.held-by-other {
-            background-color: #f1f2f6 !important;
-            opacity: 0.7;
-        }
-        body.dark-mode .data-table tbody tr.held-by-other {
-            background-color: #2d3436 !important;
-        }
-        .data-table tbody tr.held-by-me {
-            background-color: #e0f2f1 !important;
-        }
-        body.dark-mode .data-table tbody tr.held-by-me {
-            background-color: #1a3c3a !important;
-        }
-        .hold-info {
-            font-size: 11px;
-            color: var(--text-muted-light);
-        }
+.hold-info {
+    font-size: 10px;          /* Giảm cỡ chữ */
+    color: var(--text-muted-light);
+    line-height: 1.2;         /* Làm các dòng gần nhau hơn */
+}
         body.dark-mode .hold-info {
             color: var(--text-muted-dark);
         }
@@ -716,10 +700,15 @@ body.dark-mode .hold-btn:disabled::before {
    5. TÙY CHỈNH KÍCH THƯỚC CỘT BẢNG
    ========================================================================== */
 .data-table {
-    table-layout: fixed; /* Bắt buộc trình duyệt tuân thủ độ rộng cột đã đặt */
-    width: 100%;         /* Đảm bảo bảng sử dụng toàn bộ chiều rộng có sẵn */
+    table-layout: fixed; 
+    width: 100%;
+    box-sizing: border-box; /* << THÊM DÒNG NÀY VÀO */
 }
-
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+    white-space: normal; /* Cho phép chữ tự động xuống dòng */
+    word-break: break-word; /* Ngắt từ nếu cần để tránh tràn ô */
+}
 /* Cho phép cột "Ngoại Thất" được xuống dòng khi cần */
 .data-table th:nth-child(4),
 .data-table td:nth-child(4) {
@@ -727,16 +716,15 @@ body.dark-mode .hold-btn:disabled::before {
     word-break: break-word; /* Ngắt từ nếu cần để tránh tràn ô */
 }
 
-/* Thiết lập độ rộng tương đối cho từng cột */
-.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 8%; text-align: center; } /* Hành Động */
-.data-table th:nth-child(2), .data-table td:nth-child(2) { width: 8%; } /* Dòng Xe */
+/* Thiết lập độ rộng tương đối cho 8 cột (ĐÃ TỐI ƯU) */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 15%; text-align: center; } /* Hành động */
+.data-table th:nth-child(2), .data-table td:nth-child(2) { width: 8%; }  /* Dòng Xe */
 .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 14%; } /* Phiên Bản */
-.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 20%; } /* Ngoại Thất */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 18%; } /* Ngoại Thất */
 .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 8%; }  /* Nội Thất */
-.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 14%; } /* Số VIN */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 15%; } /* Số VIN */
 .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 8%; }  /* Mã DMS */
-.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 16%; text-align: center; } /* Trạng Thái */
-.data-table th:nth-child(9), .data-table td:nth-child(9) { width: 9%; } /* Ngày Nhập */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 14%; text-align: center; } /* Trạng Thái */
 /* ======================================================= */
 /* === CSS CHO POPOVER XÁC NHẬN HÀNH ĐỘNG (Giao diện mới) === */
 /* ======================================================= */
@@ -861,7 +849,272 @@ body:not(.dark-mode) .toast {
     font-size: 14px;
     font-weight: 500;
 }
+/* === [SỬA LẠI] CSS CHO NÚT YÊU CẦU GHÉP (LINH HOẠT HƠN) === */
+.pairing-btn {
+    position: relative; /* Quan trọng để định vị cho span con */
+    width: 28px;
+    height: 28px;
+    border-radius: 40%;
+    cursor: pointer;
+    border: none;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
 
+    background: linear-gradient(135deg, var(--gradient-start) 0%, #3B32B1 100%);
+    box-shadow: 0 4px 15px -5px rgba(79, 70, 229, 0.4);
+}
+
+.pairing-btn i {
+    font-size: 12px;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.pairing-btn span {
+    position: absolute; /* Lấy span ra khỏi luồng layout */
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px); /* Dịch để ẩn */
+
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+
+    background: linear-gradient(135deg, var(--gradient-start) 0%, #3B32B1 100%);
+    
+    /* === THAY ĐỔI Ở ĐÂY === */
+    min-width: 70px; /* Đặt chiều rộng tối thiểu để bằng nút dài hơn */
+    text-align: center; /* Căn giữa lại chữ */
+    padding: 6px 12px; /* Điều chỉnh lại padding trái một chút */
+    /* ======================= */
+
+    border-radius: 10px;
+    height: 28px;
+    box-sizing: border-box;
+    line-height: 16px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1;
+}
+
+/* HIỆU ỨNG KHI DI CHUỘT (QUAN TRỌNG) */
+.pairing-btn:hover {
+    /* KHÔNG THAY ĐỔI width ở đây nữa */
+}
+.pairing-btn:hover span {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0); /* Hiện span ra */
+}
+/* ==========================================================================
+   6. [NÂNG CẤP] GIAO DIỆN BẢNG DỮ LIỆU SANG TRỌNG
+   ========================================================================== */
+
+/* --- 1. Nền Gradient và Bo góc cho Tiêu đề --- */
+.data-table thead th {
+    background: linear-gradient(280deg, #f0f2f5, #f0f2f5); /* << Nền trắng xám nhẹ */
+    color: var(--text-light);                            /* << Chữ màu tối để dễ đọc */
+}
+
+/* Bo góc cho cột tiêu đề đầu tiên và cuối cùng */
+.data-table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+.data-table thead th:last-child {
+    border-top-right-radius: 12px;
+    border-right: none; /* Bỏ đường kẻ ở cạnh ngoài cùng */
+}
+
+/* --- 2. Đường kẻ và Hiệu ứng cho Dòng dữ liệu --- */
+.data-table tbody td {
+    border-right: 1px solid var(--border-light);
+    transition: background-color var(--transition-fast) ease;
+}
+
+/* Bỏ đường kẻ dọc cho cột cuối cùng */
+.data-table tbody td:last-child {
+    border-right: none;
+}
+
+/* Thêm hiệu ứng Zebra-striping (màu nền xen kẽ) cho các dòng chẵn */
+.data-table tbody tr:nth-child(even) {
+    background-color: var(--bg-light);
+}
+
+.data-table tbody tr:hover td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+.data-table tbody tr:hover td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* --- 3. Điều chỉnh cho Giao diện Tối (Dark Mode) --- */
+body.dark-mode .data-table tbody td {
+    border-right-color: var(--border-dark);
+}
+body.dark-mode .data-table tbody tr:nth-child(even) {
+    background-color: var(--bg-dark);
+}
+body.dark-mode .data-table tbody tr:hover {
+    background-color: #2c2c2c; /* Màu hover cho dark mode */
+}
+
+.data-card .table-container {
+    border: 1px solid var(--border-light);
+    border-radius: 13px;
+    overflow: auto; /* << SỬA LẠI THÀNH 'auto' */
+}
+body.dark-mode .data-card .table-container {
+    border-color: var(--border-dark);
+}
+
+/* ===================================================================== */
+/* === [NÂNG CẤP] HIỆU ỨNG 2 NÚT GIÃN RA NGƯỢC CHIỀU === */
+/* ===================================================================== */
+
+/* Khi có 2 nút, tùy chỉnh lại nút Hủy Giữ (release-btn) để giãn sang trái */
+.action-buttons-wrapper .release-btn span {
+    left: auto; /* Bỏ neo bên trái */
+    right: 18px; /* Neo chữ vào bên phải của icon */
+    
+    /* Đổi hướng padding để tạo khoảng trống cho icon bên phải */
+    padding: 6px 20px 6px 12px; 
+    
+    /* Ẩn chữ bằng cách đẩy nhẹ sang PHẢI (thay vì sang trái) */
+    transform: translateY(-50%) translateX(10px); 
+}
+
+/* Khi di chuột, đưa chữ về vị trí cũ để tạo hiệu ứng trượt sang trái */
+.action-buttons-wrapper .release-btn:hover span {
+    transform: translateY(-50%) translateX(0);
+}
+/* ===================================================================== */
+/* === [THIẾT KẾ MỚI] POPOVER THÔNG TIN XE GIỮ (SANG TRỌNG) === */
+/* ===================================================================== */
+
+/* Vỏ ngoài của Popover */
+.tippy-box[data-theme~='hold-info-popover'] {
+    background-color: transparent; /* Bỏ nền mặc định */
+    border: none;
+    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    font-family: var(--font-main);
+    overflow: visible; /* Cho phép các hiệu ứng vượt ra ngoài */
+}
+
+/* Phần nội dung bên trong tippy */
+.tippy-box[data-theme~='hold-info-popover'] .tippy-content {
+    padding: 0; /* Bỏ padding mặc định */
+    border-radius: 12px;
+    overflow: hidden; /* Bo góc nội dung bên trong */
+    transition: all var(--transition-fast) ease;
+}
+
+/* Tiêu đề Popover với nền Gradient */
+.popover-header {
+    background: linear-gradient(135deg, var(--gradient-start) 0%, #3B32B1 100%);
+    color: white;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 300;
+}
+
+/* Thân Popover */
+.popover-body {
+    background: var(--card-bg-light);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+body.dark-mode .popover-body {
+    background: var(--card-bg-dark);
+}
+
+/* Các hàng thông tin */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+}
+.info-row .label {
+    color: var(--text-muted-light);
+}
+body.dark-mode .info-row .label {
+    color: var(--text-muted-dark);
+}
+.info-row .value {
+    font-weight: 600;
+    color: var(--text-light);
+}
+body.dark-mode .info-row .value {
+    color: var(--text-dark);
+}
+
+/* Định dạng Mũi tên của Popover */
+.tippy-box[data-theme~='hold-info-popover'][data-placement^='right'] > .tippy-arrow::before {
+    border-right-color: var(--card-bg-light);
+}
+body.dark-mode .tippy-box[data-theme~='hold-info-popover'][data-placement^='right'] > .tippy-arrow::before {
+    border-right-color: var(--card-bg-dark);
+}
+
+.tippy-box[data-theme~='hold-info-popover'][data-placement^='left'] > .tippy-arrow::before {
+    border-left-color: var(--card-bg-light);
+}
+body.dark-mode .tippy-box[data-theme~='hold-info-popover'][data-placement^='left'] > .tippy-arrow::before {
+    border-left-color: var(--card-bg-dark);
+}
+/* ===================================================================== */
+/* === [NÂNG CẤP] GIAO DIỆN NÚT HÀNH ĐỘNG TRÊN DI ĐỘNG === */
+/* ===================================================================== */
+
+@media (max-width: 768px) {
+    /* Áp dụng chung cho các nút trong thẻ card */
+    .vehicle-card .hold-btn,
+    .vehicle-card .pairing-btn {
+        width: 30px; /* Kích thước nút */
+        height: 30px;
+        border-radius: 50%; /* Bo tròn nút */
+        min-width: 0; /* Bỏ qua min-width cũ */
+    }
+
+    /* Ẩn phần chữ của nút đi */
+    .vehicle-card .hold-btn span,
+    .vehicle-card .pairing-btn span {
+        display: none;
+    }
+
+    /* Điều chỉnh lại icon cho cân đối */
+    .vehicle-card .hold-btn i,
+    .vehicle-card .pairing-btn i {
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Căn chỉnh lại hàng chứa nút */
+    .card-row .card-value {
+        display: flex;
+        justify-content: flex-end; /* Đẩy nút về bên phải */
+        gap: 8px; /* Khoảng cách giữa các nút nếu có 2 nút */
+    }
+
+}
  </style>
 </head>
 <body>
@@ -929,9 +1182,9 @@ body:not(.dark-mode) .toast {
                         <div class="loading-spinner"></div>
                     </div>
                     <table class="data-table" id="data-table">
-                        <thead>
+                     <thead>
     <tr>
-        <th>Giữ/Hủy</th>
+        <th>Hành động</th>
         <th data-sort-key="line">Dòng Xe</th>
         <th data-sort-key="version">Phiên Bản</th>
         <th data-sort-key="exterior">Ngoại Thất</th>
@@ -939,7 +1192,6 @@ body:not(.dark-mode) .toast {
         <th data-sort-key="vin">Số VIN</th>
         <th data-sort-key="dms">Mã DMS</th>
         <th data-sort-key="status">Trạng Thái</th>
-        <th data-sort-key="dateAdded">Ngày Nhập</th>
     </tr>
 </thead>
                         <tbody id="table-body">
@@ -1129,49 +1381,56 @@ const HOLD_DURATION_HOURS = 8;
                 });
             },
             
-            // HÀM ĐƯỢC CHUYỂN VÀO ĐÚNG VỊ TRÍ
-            initializePopovers: function() {
-                tippy('.hold-btn:not(:disabled)', {
-                    content(reference) {
-                        const action = reference.dataset.action;
-                        const vin = reference.dataset.vin;
-                        
-                        const isHold = action === 'hold';
-                        const title = isHold ? 'Xác nhận giữ xe?' : 'Xác nhận hủy giữ?';
-                        const actionFunc = isHold ? `App.holdCar('${vin}')` : `App.releaseCar('${vin}')`;
+            // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
+initializePopovers: function() {
+    // Popover xác nhận hành động (giữ nguyên)
+    tippy('.hold-btn:not(:disabled)', {
+        content(reference) {
+            const action = reference.dataset.action;
+            const vin = reference.dataset.vin;
+            const isHold = action === 'hold';
+            const title = isHold ? 'Xác nhận giữ xe?' : 'Xác nhận hủy giữ?';
+            const actionFunc = isHold ? `App.holdCar('${vin}')` : `App.releaseCar('${vin}')`;
+            const template = document.createElement('div');
+            template.className = 'popover-content';
+            template.innerHTML = `
+                <div class="popover-title">${title}</div>
+                <div class="popover-buttons">
+                    <button class="popover-btn no">Không</button>
+                    <button class="popover-btn yes">Có</button>
+                </div>
+            `;
+            const yesBtn = template.querySelector('.yes');
+            const noBtn = template.querySelector('.no');
+            yesBtn.addEventListener('click', () => {
+                eval(actionFunc);
+                reference._tippy.hide();
+            });
+            noBtn.addEventListener('click', () => {
+                reference._tippy.hide();
+            });
+            return template;
+        },
+        allowHTML: true,
+        interactive: true,
+        trigger: 'click',
+        placement: 'right',
+        theme: 'confirm',
+        animation: 'scale-subtle',
+    });
 
-                        const template = document.createElement('div');
-                        template.className = 'popover-content';
-                        template.innerHTML = `
-                            <div class="popover-title">${title}</div>
-                            <div class="popover-buttons">
-                                <button class="popover-btn no">Không</button>
-                                <button class="popover-btn yes">Có</button>
-                            </div>
-                        `;
-                        
-                        const yesBtn = template.querySelector('.yes');
-                        const noBtn = template.querySelector('.no');
-                        
-                        yesBtn.addEventListener('click', () => {
-                            eval(actionFunc); // Thực thi hành động
-                            reference._tippy.hide(); // Ẩn popover
-                        });
-                        noBtn.addEventListener('click', () => {
-                            reference._tippy.hide(); // Ẩn popover
-                        });
-
-                        return template;
-                    },
-                    allowHTML: true,
-                    interactive: true,
-                    trigger: 'click',
-                    placement: 'right',
-                    theme: 'confirm',
-                    animation: 'scale-subtle',
-                });
-            }
-        };
+    // === THÊM MỚI: Popover hiển thị thông tin khi di chuột ===
+    tippy('.has-hold-info', {
+        allowHTML: true,
+        theme: 'hold-info-popover', // Giao diện mới sẽ được tạo ở CSS
+        placement: 'right',
+        animation: 'scale-subtle',
+        arrow: true,
+        trigger: 'mouseenter focus', // Hiện khi di chuột vào hoặc focus
+        delay: [100, 0], // Trễ 100ms khi hiện
+    });
+}
+};
 
         window.App = {
             init: async function() {
@@ -1422,42 +1681,76 @@ const HOLD_DURATION_HOURS = 8;
         // 5. Đối tượng hiển thị (Renderer)
         // ==========================================================================
         const Renderer = {
-    renderTableRows: function(data) {
+    // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
+renderTableRows: function(data) {
     const fragment = document.createDocumentFragment();
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
 
     data.forEach((car, index) => {
         const tr = document.createElement("tr");
-        let rowClass = '';
         let actionCellHtml = '';
         const isHeld = car.holder && car.expiry && car.expiry > new Date();
 
         if (isHeld) {
             if (car.holder === currentUser) {
-                rowClass = 'held-by-me';
-                // THAY ĐỔI Ở ĐÂY: Sử dụng data-* thay cho onclick
-                actionCellHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
+                const releaseButton = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
+                const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
+                pairingUrl.searchParams.append('tab', 'form');
+                pairingUrl.searchParams.append('vin_giu', car.vin);
+                // (Các dòng searchParams khác giữ nguyên)
+                const pairingButton = `<a href="${pairingUrl.href}" class="pairing-btn">
+                                           <i class="fas fa-link"></i>
+                                           <span>Ghép</span>
+                                       </a>`;
+                actionCellHtml = `<div class="action-buttons-wrapper">${releaseButton}${pairingButton}</div>`;
             } else {
-                rowClass = 'held-by-other';
                 if (isAdmin) {
-                    // THAY ĐỔI Ở ĐÂY
                     actionCellHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
                 } else {
                     actionCellHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
                 }
             }
         } else if (car.status.toLowerCase() === 'chưa ghép') {
-            // THAY ĐỔI Ở ĐÂY
             actionCellHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
         }
 
-        tr.className = rowClass;
-        let statusHtml = `<span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>`;
+        let statusBadgeClass = `status-badge ${DataProcessor.getStatusClass(car.status)}`;
+        let statusBadgeAttributes = '';
+
         if (isHeld) {
-            statusHtml += `<div class="hold-info">bởi ${car.holder.split('@')[0]}<br>đến ${car.expiry.toLocaleString('vi-VN')}</div>`;
+            statusBadgeClass += ' has-hold-info';
+            const holderName = car.holder.split('@')[0];
+            const expiryDate = car.expiry.toLocaleString('vi-VN');
+            
+            // === THAY ĐỔI CẤU TRÚC HTML CHO POPOVER MỚI ===
+            const popoverContent = `
+                <div class="hold-popover-container">
+                    <div class="popover-header">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Thông tin giữ xe</span>
+                    </div>
+                    <div class="popover-body">
+                        <div class="info-row">
+                            <span class="label">Người giữ:</span>
+                            <span class="value holder-name">${holderName}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Hết hạn:</span>
+                            <span class="value expiry-time">${expiryDate}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Nén và gán nội dung vào thuộc tính (loại bỏ khoảng trắng thừa)
+            const compactedPopoverContent = popoverContent.replace(/\s+/g, ' ').replace(/"/g, '&quot;').trim();
+            statusBadgeAttributes = `data-tippy-content="${compactedPopoverContent}"`;
         }
 
+        let statusHtml = `<span class="${statusBadgeClass}" ${statusBadgeAttributes}>${car.status}</span>`;
+
+        // (Phần tr.innerHTML giữ nguyên như cũ)
         tr.innerHTML = `
             <td class="action-cell">${actionCellHtml}</td>
             <td>${car.line}</td>
@@ -1467,7 +1760,6 @@ const HOLD_DURATION_HOURS = 8;
             <td>${car.vin}</td>
             <td>${car.dms}</td>
             <td>${statusHtml}</td>
-            <td>${car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : 'N/A'}</td>
         `;
         fragment.appendChild(tr);
     });
@@ -1488,27 +1780,47 @@ const HOLD_DURATION_HOURS = 8;
         const isHeld = car.holder && car.expiry && car.expiry > new Date();
 
         if (isHeld) {
-             if (car.holder === currentUser) {
+            if (car.holder === currentUser) {
                 cardClass = 'held-by-me';
-                // THAY ĐỔI Ở ĐÂY: Sử dụng data-* thay cho onclick
                 actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
             } else {
                 cardClass = 'held-by-other';
                 if (isAdmin) {
-                    // THAY ĐỔI Ở ĐÂY
-                    actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
+                    actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
                 } else {
                     actionButtonHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
                 }
             }
         } else if (car.status.toLowerCase() === 'chưa ghép') {
-            // THAY ĐỔI Ở ĐÂY
-             actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
+            actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
         }
-        card.classList.add(cardClass);
+        
+        // [SỬA LỖI] Chỉ thêm class vào phần tử nếu biến cardClass không rỗng
+        if (cardClass) {
+            card.classList.add(cardClass);
+        }
+
         let statusHtml = `<span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>`;
-         if (isHeld) {
+        if (isHeld) {
             statusHtml += `<div class="hold-info" style="text-align: right; margin-top: 4px;">Giữ bởi: ${car.holder.split('@')[0]}</div>`;
+        }
+        
+        const isHeldByCurrentUser = isHeld && car.holder === currentUser;
+        let requestCellHtml = car.request || '';
+
+        if (isHeldByCurrentUser) {
+            const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
+            pairingUrl.searchParams.append('tab', 'form');
+            pairingUrl.searchParams.append('vin_giu', car.vin);
+            pairingUrl.searchParams.append('dong_xe', car.line);
+            pairingUrl.searchParams.append('phien_ban', car.version);
+            pairingUrl.searchParams.append('ngoai_that', car.exterior);
+            pairingUrl.searchParams.append('noi_that', car.interior);
+            
+            requestCellHtml = `<a href="${pairingUrl.href}" class="pairing-btn" style="display: inline-flex;">
+                                   <i class="fas fa-link"></i>
+                                   <span>Ghép</span>
+                               </a>`;
         }
 
         card.innerHTML = `
@@ -1520,7 +1832,7 @@ const HOLD_DURATION_HOURS = 8;
                 <div class="card-row"><span class="card-label">Ngoại thất</span><span class="card-value" style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</span></div>
                 <div class="card-row"><span class="card-label">Nội thất</span><span class="card-value">${car.interior}</span></div>
                 <div class="card-row full-width"><span class="card-label">Số VIN</span><span class="card-value">${car.vin}</span></div>
-                <div class="card-row"><span class="card-label">Ngày nhập kho</span><span class="card-value">${car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : 'N/A'}</span></div>
+                <div class="card-row"><span class="card-label">Yêu cầu</span><span class="card-value">${requestCellHtml}</span></div>
                 <div class="card-row" style="text-align: right;">${actionButtonHtml}</div>
             </div>
         `;
@@ -1546,7 +1858,8 @@ const HOLD_DURATION_HOURS = 8;
                         vin: row["VIN"] || "N/A",
                         dms: row["Mã DMS"] || "N/A",
                         status: row["Trạng thái"] || "N/A",
-                        dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
+                        request: row["Yêu cầu"] || "", // Thêm dòng này
+dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                         
                         // DÒNG ĐÃ SỬA: Kiểm tra nếu giá trị là chữ "undefined" thì coi như trống (null)
                         holder: (holderValue && holderValue.toLowerCase() !== 'undefined') ? holderValue : null,
@@ -1648,7 +1961,7 @@ const HOLD_DURATION_HOURS = 8;
                     'Số VIN': car.vin,
                     'Mã DMS': car.dms,
                     'Trạng Thái': car.status,
-                    'Ngày Nhập': car.dateAdded ? car.dateAdded.toLocaleDateString('vi-VN') : '',
+                    'Yêu cầu': car.request || '',
                 }));
 
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
