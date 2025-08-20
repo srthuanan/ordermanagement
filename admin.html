@@ -1703,6 +1703,46 @@ body.panel-open {
 .side-panel.panel-sm .side-panel-body {
     flex-grow: 0;
 }
+/* [THÊM MỚI] CSS cho khu vực xem trước nhiều ảnh */
+#image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+.preview-image-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.preview-image-wrapper img {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    object-fit: cover;
+}
+.remove-image-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+.remove-image-btn:hover {
+    transform: scale(1.1);
+}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1983,7 +2023,7 @@ function toggleActionMenu(event) {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwoNlBjleqYKNGs11QceA7Q3WO-MonGkBlyr_cf6ir_WAMSezydskVCzQlZyP7UEl7KxA/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzCBValOC3ehlR8Oogfu1tXhtiJg9LqTXBcJfNZxdz7XzP_WBmUo3VXp-3MGeRnAb70tA/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -3384,7 +3424,8 @@ function handleApproveRequest(order, btnElement) {
     });
 }
 
-/** [NÂNG CẤP] Dùng Side Panel để yêu cầu bổ sung hồ sơ. */
+// [THAY THẾ]
+// [THAY THẾ]
 function handleRequestSupplement(order, btnElement) {
     const orderNumber = order['SỐ ĐƠN HÀNG'];
     showConfirmationPanel({
@@ -3394,10 +3435,30 @@ function handleRequestSupplement(order, btnElement) {
         placeholder: 'Ví dụ: Ảnh HĐMB bị mờ, thiếu chữ ký...',
         confirmButtonText: 'Gửi Yêu Cầu',
         confirmButtonClass: 'btn-primary',
-        onConfirm: async (reason, modalButton) => {
+        allowImagePaste: true,
+        onConfirm: async (reason, modalButton) => { // SỬA ĐỔI: Bỏ tham số imageBase64 vì sẽ lấy từ DOM
+            
+            // --- SỬA ĐỔI LOGIC LẤY DỮ LIỆU ẢNH ---
+            const imagePreviews = document.querySelectorAll('#image-preview-container .preview-image-wrapper img');
+            const imagesBase64Array = [];
+            imagePreviews.forEach(img => {
+                imagesBase64Array.push(img.dataset.base64);
+            });
+            
+            const params = {
+                orderNumber,
+                reason
+            };
+            
+            // Gửi mảng ảnh đi dưới dạng chuỗi JSON
+            if (imagesBase64Array.length > 0) {
+                params.pastedImagesBase64 = JSON.stringify(imagesBase64Array);
+            }
+            // --- KẾT THÚC SỬA ĐỔI ---
+
             const { success } = await performActionOnRow({
                 action: 'requestSupplementForInvoice',
-                params: { orderNumber, reason },
+                params: params, 
                 buttonElement: modalButton
             });
             if (success) closeSidePanel();
@@ -3696,18 +3757,7 @@ function handleArchiveOrders() {
     });
 }
 
-/**
- * [NÂNG CẤP TOÀN DIỆN] Hiển thị Side Panel để xác nhận hành động.
- * Tự động chọn kích thước nhỏ (sm) và chủ đề (theme) phù hợp.
- * @param {object} options - Các tùy chọn cho panel.
- * @param {string} options.title - Tiêu đề của panel.
- * @param {string} options.message - Nội dung thông báo/câu hỏi.
- * @param {string} [options.inputLabel] - (Tùy chọn) Nhãn cho ô nhập liệu. Nếu có, panel sẽ hiển thị textarea.
- * @param {string} [options.placeholder] - (Tùy chọn) Chữ mờ cho ô nhập liệu.
- * @param {function(string, HTMLElement)} options.onConfirm - Callback khi nhấn nút xác nhận. Trả về (giá trị input, element của nút).
- * @param {string} [options.confirmButtonText='Xác Nhận'] - Chữ trên nút xác nhận.
- * @param {string} [options.confirmButtonClass='btn-danger'] - Class màu cho nút xác nhận.
- */
+// [THAY THẾ]
 function showConfirmationPanel(options) {
     const { 
         title, 
@@ -3716,16 +3766,15 @@ function showConfirmationPanel(options) {
         placeholder = '',
         onConfirm, 
         confirmButtonText = 'Xác Nhận', 
-        confirmButtonClass = 'btn-danger' 
+        confirmButtonClass = 'btn-danger',
+        allowImagePaste = false
     } = options;
 
-    // Tự động chọn chủ đề (theme) dựa trên class của nút bấm
     let theme = 'info';
     if (confirmButtonClass.includes('danger')) theme = 'danger';
     if (confirmButtonClass.includes('success')) theme = 'success';
     if (confirmButtonClass.includes('primary')) theme = 'info';
 
-    // Tự động thêm icon tương ứng vào tiêu đề
     const iconMap = { 
         danger: 'fa-exclamation-triangle', 
         success: 'fa-check-circle', 
@@ -3733,7 +3782,6 @@ function showConfirmationPanel(options) {
     };
     const iconHtml = `<i class="fas ${iconMap[theme]}"></i>`;
 
-    // Tạo HTML cho ô nhập liệu nếu được yêu cầu
     let inputHtml = '';
     if (inputLabel) {
         inputHtml = `
@@ -3744,23 +3792,37 @@ function showConfirmationPanel(options) {
         `;
     }
 
-    const bodyHtml = `<p>${message}</p>${inputHtml}`;
+    let imagePasteHtml = '';
+    if (allowImagePaste) {
+        imagePasteHtml = `
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="font-weight: 600;">Dán ảnh minh họa (Tùy chọn):</label>
+                <div id="image-paste-area" 
+                     contenteditable="true" 
+                     style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; color: #888; margin-top: 5px; min-height: 80px;"
+                     onpaste="handleImagePaste(event)">
+                     Click vào đây và nhấn Ctrl+V để dán ảnh...
+                </div>
+                <div id="image-preview-container" style="margin-top: 10px; text-align: center;"></div>
+            </div>
+        `;
+    }
+
+    const bodyHtml = `<p>${message}</p>${inputHtml}${imagePasteHtml}`;
 
     const footerHtml = `
         <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
         <button id="confirmation-panel-confirm-btn" class="btn ${confirmButtonClass}">${confirmButtonText}</button>
     `;
 
-    // Gọi openSidePanel với các tùy chọn mới đã được tự động hóa
     openSidePanel({
         title: `${iconHtml} ${title}`,
         bodyHtml: bodyHtml,
         footerHtml: footerHtml,
-        size: 'sm', // Luôn sử dụng kích thước nhỏ cho panel xác nhận
+        size: 'sm',
         theme: theme
     });
 
-    // Gắn sự kiện cho nút bấm sau khi panel đã được render
     setTimeout(() => {
         const confirmBtn = document.getElementById('confirmation-panel-confirm-btn');
         const inputEl = document.getElementById('confirmation-input');
@@ -3769,21 +3831,18 @@ function showConfirmationPanel(options) {
                 let inputValue = null;
                 if (inputEl) {
                     inputValue = inputEl.value.trim();
-                    if (!inputValue) {
-                        showToast('Vui lòng nhập nội dung yêu cầu.', 'warning');
-                        inputEl.focus();
-                        return;
-                    }
                 }
                 if (typeof onConfirm === 'function') {
-                    onConfirm(inputValue, confirmBtn);
+                    // --- SỬA LỖI TẠI ĐÂY ---
+                    // Thay thế biến 'modalButton' không tồn tại bằng biến 'confirmBtn' đã có
+                    onConfirm(inputValue, confirmBtn); 
+                    // -----------------------
                 }
             };
         }
         if (inputEl) inputEl.focus();
-    }, 450); // Đợi hiệu ứng trượt của panel hoàn tất
-}   
-
+    }, 450);
+}
     
     function updateNotifications(serverItems) {
     if (appState.notifications.isMarkingAsRead) return;
@@ -5250,6 +5309,77 @@ function handlePendingSignature(order, btnElement) {
             }
         }
     });
+}
+// [THAY THẾ TOÀN BỘ KHỐI MÃ XỬ LÝ ẢNH BỊ LỖI]
+
+// Hàm xử lý khi người dùng dán (chỉ nhận MỘT ảnh mỗi lần dán)
+function handleImagePaste(event) {
+    event.preventDefault();
+    const items = (event.clipboardData || window.clipboardData).items;
+    
+    const imageItem = Array.from(items).find(item => item.type.indexOf("image") !== -1);
+
+    if (imageItem) {
+        const imageFile = imageItem.getAsFile();
+        if (imageFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                addPreviewImage(e.target.result);
+            };
+            reader.readAsDataURL(imageFile);
+        }
+    } else {
+        showToast("Dữ liệu dán vào không phải là hình ảnh.", "warning");
+    }
+}
+
+// Hàm phụ trợ để thêm từng ảnh vào khu vực xem trước
+function addPreviewImage(base64string) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const pasteArea = document.getElementById('image-paste-area');
+    
+    const wrapper = document.createElement('div');
+    wrapper.className = 'preview-image-wrapper';
+    
+    const img = document.createElement('img');
+    img.src = base64string;
+    img.dataset.base64 = base64string;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-image-btn';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.title = 'Xóa ảnh này';
+    removeBtn.onclick = function() { removePastedImage(wrapper); }; 
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    previewContainer.appendChild(wrapper);
+
+    // Thay vì ẩn đi, chúng ta thu nhỏ và thay đổi chữ của vùng dán
+    pasteArea.innerHTML = '<em>Tiếp tục dán ảnh khác tại đây...</em>';
+    pasteArea.style.minHeight = '40px';
+    pasteArea.style.padding = '10px';
+}
+
+// Hàm xóa ảnh (chỉ còn một phiên bản đúng)
+function removePastedImage(elementToRemove) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const pasteArea = document.getElementById('image-paste-area');
+
+    elementToRemove.remove();
+
+    // Nếu không còn ảnh nào, khôi phục lại vùng dán ảnh như ban đầu
+    if (previewContainer.children.length === 0) {
+        pasteArea.innerHTML = 'Click vào đây và nhấn Ctrl+V để dán ảnh...';
+        pasteArea.style.minHeight = '80px';
+        pasteArea.style.padding = '20px';
+    }
+}
+
+// [THÊM MỚI]
+function removePastedImage() {
+    document.getElementById('image-preview-container').innerHTML = '';
+    document.getElementById('image-paste-area').style.display = 'block';
 }
 </script>
 </body>
