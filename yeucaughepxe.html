@@ -2448,7 +2448,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbz2S4PL6rzO7tAYpkSrluNzXQy1_d1eUAyyfXZhTpBF5T7-oJIDFvnHieQqbrVcZRJU/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwN7nRpE-KpZRBP7uw0-iryJI6xnkjU0q4ajuwcoonNrjdOv8sNnOYaBAvItWL6jPWBRA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -2650,7 +2650,7 @@ document.addEventListener("DOMContentLoaded", function() {
             switchTab('history', historyTabLink);
         }
     }
-    
+    handleHeldCarRequest();
     // 8. Tải dữ liệu lần đầu, khởi động Polling và xử lý URL
     fetchHistory().then(() => {
         startPolling();
@@ -2916,6 +2916,7 @@ function setTablePlaceholder(tableBodyId, message, iconClass = "fas fa-info-circ
         const chuaghep = data.chuaghep || [];
         globalWaitingData = data.dangkycho || [];
         globalHistoryData = [...daghep, ...chuaghep].sort((a, b) => new Date(b["Thời gian nhập"] || 0) - new Date(a["Thời gian nhập"] || 0));
+sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
 
         // Lọc dữ liệu dựa trên người dùng (Admin hay TVBH)
         const currentUser = sessionStorage.getItem("currentConsultant");
@@ -3428,6 +3429,9 @@ function previewForm(e) {
 
 // THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
 
+// TỆP: yeucaughepxe.html
+// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
+
 async function confirmSubmit() {
     const submitButton = document.querySelector('#preview-modal .btn-success');
     if (submitButton && submitButton.disabled) return;
@@ -3441,11 +3445,11 @@ async function confirmSubmit() {
     showLoadingToast("Đang Gửi Yêu Cầu...", "Vui lòng chờ trong giây lát...");
     if (submitButton) submitButton.disabled = true;
 
-    // --- Giữ nguyên logic chuẩn bị FormData ---
     formData["thoi_gian_nhap"] = new Date().toISOString();
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => formDataToSend.append(key, value));
     formDataToSend.append('action', 'addRequest');
+    
     const chicFileInput = document.getElementById('chic_file_input');
     if (chicFileInput && chicFileInput.files.length > 0) {
         formDataToSend.append('chic_file_input', chicFileInput.files[0]);
@@ -3455,41 +3459,33 @@ async function confirmSubmit() {
         if (submitButton) submitButton.disabled = false;
         return;
     }
-
+    
     try {
         const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Lỗi từ máy chủ: ${response.status} - ${errorText || response.statusText}`);
-        }
         const result = await response.json();
         
         if (result.status === "SUCCESS") {
             hideLoadingToast();
-
+            showSuccessToast("Thành Công!", result.message || 'Yêu cầu của bạn đã được ghi nhận.');
+            
+            // Lấy Số Đơn Hàng từ kết quả trả về
+            const newOrderId = result.orderNumber || formData.so_don_hang;
+            
+            // Xóa các tác vụ cũ
+            clearFormDraft();
+            document.getElementById("vinfast-form").reset();
+            document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
+            
+            // Tải lại toàn bộ dữ liệu ở chế độ nền để đảm bảo cache là mới nhất
+            await fetchHistory(false);
+            
+            // ▼▼▼ THAY ĐỔI QUAN TRỌNG NHẤT ▼▼▼
+            // Chuyển trang chỉ với Số Đơn Hàng
             setTimeout(() => {
-                // Hiển thị toast thành công
-                showSuccessToast("Thành Công!", result.message || 'Yêu cầu của bạn đã được ghi nhận.');
-
-                // [THAY ĐỔI 1] Bắt đầu đếm ngược 2 giây ngay lập tức
-                setTimeout(closeModalAndRedirect, 2000);
-
-                // [THAY ĐỔI 2] Các tác vụ nền được thực thi mà không cần chờ đợi
-                orderId = result.orderNumber;
-                if (globalHistoryData && result.newRecord) {
-                    globalHistoryData.unshift(result.newRecord);
-                    sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
-                }
-                clearFormDraft();
-                document.getElementById("vinfast-form").reset();
-                document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
-                restrictVersion(document.getElementById('dong_xe'));
-                resetChicUploadUI();
-                
-                // [THAY ĐỔI 3] Bỏ `await` để hàm chạy ngầm, không chặn luồng chính
-                fetchHistory(false); 
-
-            }, 450); 
+                hideSuccessToast();
+                window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(newOrderId)}`;
+            }, 500);
+            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
 
         } else {
             hideLoadingToast();
@@ -3500,17 +3496,8 @@ async function confirmSubmit() {
         hideLoadingToast();
         console.error('Lỗi khi gửi yêu cầu:', error);
         showNotification(`Gửi yêu cầu thất bại: ${error.message}`, 'error', 5000);
-
     } finally {
         if (submitButton) submitButton.disabled = false;
-        pendingPairingData = null;
-        const form = document.getElementById('vinfast-form');
-        ['dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'].forEach(id => {
-            const el = form.querySelector(`#${id}`);
-            if(el) el.disabled = false;
-        });
-        let hiddenInput = form.querySelector('input[name="waitingRequestId"]');
-        if (hiddenInput) hiddenInput.value = "";
     }
 }
 
@@ -4928,24 +4915,23 @@ function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = f
         resetUI();
     }
 }
-/**
- * [HÀM MỚI] Chuyển hướng đến trang chi tiết đơn hàng khi nhấp vào một hàng.
- * @param {string} orderNumber - Số đơn hàng cần xem chi tiết.
- */
+// DÁN ĐOẠN MÃ NÀY ĐỂ THAY THẾ TOÀN BỘ HÀM viewOrderDetail CŨ
+
 function viewOrderDetail(orderNumber) {
-    // Ngăn chặn chuyển hướng nếu không có số đơn hàng
-    if (!orderNumber || orderNumber.startsWith('temp-id-')) {
-        console.error("Không thể xem chi tiết: Số đơn hàng không hợp lệ.", orderNumber);
-        showNotification("Đơn hàng này không có số đơn hàng hợp lệ để xem chi tiết.", "warning");
+    if (!orderNumber) {
+        console.error("Số đơn hàng không hợp lệ.");
         return;
     }
 
-    // *** PHẦN SỬA LỖI QUAN TRỌNG ***
-    // Trước khi chuyển trang, lưu toàn bộ dữ liệu lịch sử vào sessionStorage.
-    // Điều này đảm bảo trang chi tiết có dữ liệu cần thiết để tìm và hiển thị.
-    sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+    // 1. Đảm bảo dữ liệu mới nhất đã được lưu vào sessionStorage
+    //    Hàm renderHistoryTable và confirmSubmit đã thực hiện việc này,
+    //    nên ở đây chúng ta có thể tin rằng dữ liệu đã có sẵn.
+    const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
+    if (!storedData || !JSON.parse(storedData).find(row => row && row["Số đơn hàng"] === orderNumber)) {
+         console.warn(`Không tìm thấy đơn hàng ${orderNumber} trong sessionStorage. Trang chi tiết sẽ phải tải lại từ server.`);
+    }
 
-    // Chuyển hướng đến trang chi tiết
+    // 2. Chuyển hướng đến trang chi tiết và chỉ truyền Số đơn hàng
     window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
 }
 
@@ -5903,6 +5889,75 @@ function closeAllMobileMenus() {
     document.querySelector('.navbar .tabs').classList.remove('active');
     document.getElementById('mobile-overlay').classList.remove('active');
     document.body.style.overflow = '';
+}
+function handleHeldCarRequest() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const heldVin = urlParams.get('vin_giu');
+
+    if (heldVin) {
+        // Lấy các phần tử form
+        const form = document.getElementById('vinfast-form');
+        const dongXeSelect = form.querySelector('#dong_xe');
+        const phienBanSelect = form.querySelector('#phien_ban');
+        const ngoaiThatSelect = form.querySelector('#ngoai_that');
+        const noiThatSelect = form.querySelector('#noi_that');
+
+        // Lấy giá trị từ URL
+        const dongXe = urlParams.get('dong_xe');
+        const phienBan = urlParams.get('phien_ban');
+        const ngoaiThat = urlParams.get('ngoai_that');
+        const noiThat = urlParams.get('noi_that');
+
+        // Điền thông tin vào form
+        if (dongXeSelect && dongXe) dongXeSelect.value = dongXe;
+        if (phienBanSelect && phienBan) {
+            // Cần đảm bảo phiên bản có trong danh sách trước khi chọn
+             restrictVersion(dongXeSelect, phienBan); // Gọi lại hàm này để cập nhật danh sách phiên bản
+             phienBanSelect.value = phienBan;
+        }
+        if (ngoaiThatSelect && ngoaiThat) ngoaiThatSelect.value = ngoaiThat;
+        if (noiThatSelect && noiThat) noiThatSelect.value = noiThat;
+        
+        // Vô hiệu hóa các trường thông tin xe để người dùng không thể thay đổi
+        [dongXeSelect, phienBanSelect, ngoaiThatSelect, noiThatSelect].forEach(el => {
+            if (el) {
+                el.disabled = true;
+                // Thêm một lớp CSS để làm rõ là trường này bị khóa
+                el.style.backgroundColor = '#e9ecef';
+                el.style.cursor = 'not-allowed';
+            }
+        });
+        
+        let hiddenInput = form.querySelector('input[name="vin_giu_yeu_cau"]');
+
+        // 2. Nếu thẻ input chưa tồn tại, hãy TẠO MỚI NÓ
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'vin_giu_yeu_cau';
+            form.appendChild(hiddenInput);
+        }
+
+        // 3. GÁN giá trị VIN cho thẻ input (dù là thẻ cũ hay mới tạo)
+        hiddenInput.value = heldVin;
+        // === KẾT THÚC SỬA LỖI GHI NHẬN VIN ===
+
+        // === PHẦN THAY ĐỔI: Chuyển sang thông báo kiểu TOAST ===
+        // 1. Hiển thị toast thông báo đã tải thông tin xe thành công
+        showSuccessToast(
+            "Đã Tải Thông Tin Xe", 
+            `Các thông tin của xe VIN: ${heldVin} đã được tự động điền vào form.`
+        );
+
+        // 2. Tự động ẩn toast sau 4 giây
+        setTimeout(() => {
+            hideSuccessToast();
+        }, 4000);
+        // === KẾT THÚC THAY ĐỔI ===
+        
+        // Lưu lại bản nháp với thông tin đã điền
+        saveFormDraft();
+    }
 }
 </script>
 </body>
