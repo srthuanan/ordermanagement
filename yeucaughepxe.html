@@ -4654,7 +4654,6 @@ function fileToBase64(file) {
 }
 
 async function processInvoiceRequest(orderNumber) {
-async function processInvoiceRequest(orderNumber) {
     const confirmButton = document.getElementById('confirm-invoice-button');
     if (confirmButton.disabled) return; // Ngăn click liên tục
 
@@ -4714,8 +4713,7 @@ async function processInvoiceRequest(orderNumber) {
         const result = await response.json();
         
         if (result.status === 'SUCCESS') {
-            // Dòng showNotification đã được vô hiệu hóa theo yêu cầu
-            // showNotification(result.message, 'success', 3000); 
+            showNotification(result.message, 'success', 3000);
             await refreshData();
         } else {
             showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
