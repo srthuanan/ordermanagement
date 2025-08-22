@@ -487,7 +487,9 @@
         };
 
         /* === PAGE-SPECIFIC LOGIC === */
-        function goBackToMainPage() { window.location.href = "yeucaughepxe.html#history-section"; }
+        function goBackToMainPage() { 
+    window.location.href = "yeucaughepxe.html?tab=history"; 
+}
         function getQueryParam(param) { return new URLSearchParams(window.location.search).get(param); }
         function formatDateTime(dateTimeString) {
              if (!dateTimeString) return "N/A";
@@ -644,16 +646,16 @@
                         <div class="mobile-card" data-aos="fade-up" data-aos-delay="200">
                             <div class="details-grid-container">
                                 ${createGridHTML({ 
-                                    "Tên tư vấn bán hàng": allData["Tên tư vấn bán hàng"], 
-                                    "Dòng xe": allData["Dòng xe"], 
-                                    "Phiên bản": allData["Phiên Bản"], 
-                                    "Ngoại thất": allData["Ngoại thất"], 
-                                    "Nội thất": allData["Nội thất"], 
-                                    "Thời gian nhập": formatDateTime(allData["Thời gian nhập"]), 
-                                    "Ngày cọc": formatDateTime(allData["Ngày cọc"]), 
-                                    "Thời gian ghép": formatDateTime(allData["Thời gian ghép"]), 
-                                    "Số ngày ghép": allData["Số ngày ghép"] 
-                                })}
+    "Tên tư vấn bán hàng": rowData["Tên tư vấn bán hàng"], 
+    "Dòng xe": rowData["Dòng xe"], 
+    "Phiên bản": rowData["Phiên bản"], // Đã sửa lỗi viết hoa
+    "Ngoại thất": rowData["Ngoại thất"], 
+    "Nội thất": rowData["Nội thất"], 
+    "Thời gian nhập": formatDateTime(rowData["Thời gian nhập"]), 
+    "Ngày cọc": formatDateTime(rowData["Ngày cọc"]), 
+    "Thời gian ghép": formatDateTime(rowData["Thời gian ghép"]), 
+    "Số ngày ghép": allData["Số ngày ghép"] // Giữ nguyên allData ở đây vì nó được tính toán riêng
+})}
                             </div>
                         </div>
 
