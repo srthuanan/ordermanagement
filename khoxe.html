@@ -1717,18 +1717,23 @@ renderTableRows: function(data) {
         const tr = document.createElement("tr");
         let actionCellHtml = '';
         const isHeld = car.holder && car.expiry && car.expiry > new Date();
+        const currentStatus = car.status.toLowerCase(); // Lấy trạng thái đã được chuẩn hóa
 
-        if (isHeld) {
+        // === BẮT ĐẦU THAY ĐỔI LOGIC ===
+        if (currentStatus === 'đã ghép') {
+            // Nếu xe đã được ghép, không hiển thị hành động nào
+            actionCellHtml = ''; 
+        } else if (isHeld) {
+            // Logic cũ cho xe đang giữ (giữ nguyên)
             if (car.holder === currentUser) {
                 const releaseButton = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
                 const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
-pairingUrl.searchParams.append('tab', 'form');
-pairingUrl.searchParams.append('vin_giu', car.vin);
-pairingUrl.searchParams.append('dong_xe', car.line);
-pairingUrl.searchParams.append('phien_ban', car.version);
-pairingUrl.searchParams.append('ngoai_that', car.exterior);
-pairingUrl.searchParams.append('noi_that', car.interior);
-                // (Các dòng searchParams khác giữ nguyên)
+                pairingUrl.searchParams.append('tab', 'form');
+                pairingUrl.searchParams.append('vin_giu', car.vin);
+                pairingUrl.searchParams.append('dong_xe', car.line);
+                pairingUrl.searchParams.append('phien_ban', car.version);
+                pairingUrl.searchParams.append('ngoai_that', car.exterior);
+                pairingUrl.searchParams.append('noi_that', car.interior);
                 const pairingButton = `<a href="${pairingUrl.href}" class="pairing-btn">
                                            <i class="fas fa-link"></i>
                                            <span>Ghép</span>
@@ -1741,9 +1746,11 @@ pairingUrl.searchParams.append('noi_that', car.interior);
                     actionCellHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
                 }
             }
-        } else if (car.status.toLowerCase() === 'chưa ghép') {
+        } else if (currentStatus === 'chưa ghép') {
+            // Logic cũ cho xe chưa ghép (giữ nguyên)
             actionCellHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
         }
+        // === KẾT THÚC THAY ĐỔI LOGIC ===
 
         let statusBadgeClass = `status-badge ${DataProcessor.getStatusClass(car.status)}`;
         let statusBadgeAttributes = '';
