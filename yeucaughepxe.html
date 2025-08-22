@@ -2638,18 +2638,24 @@ document.addEventListener("DOMContentLoaded", function() {
     if (ngoaiThatSelect) ngoaiThatSelect.addEventListener('change', checkAndDisplayVehicleWarning);
 
     // 7. Xử lý tab khi tải trang
-    const requestedTab = getQueryParam('tab');
-    if (requestedTab === 'form') {
-        const formTabLink = document.querySelector('.tabs a[onclick*="form"]');
-        if (formTabLink) {
-            switchTab('form', formTabLink);
-        }
-    } else {
-        const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
-        if (historyTabLink) {
-            switchTab('history', historyTabLink);
-        }
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedTab = urlParams.get('tab');
+    const orderNumberFromUrl = urlParams.get('orderNumber'); // Kiểm tra nếu có orderNumber
+
+    // Ưu tiên tab được chỉ định, nếu không thì mặc định là 'form'
+    // Ngoại trừ trường hợp quay lại từ trang chi tiết (không có orderNumber) thì về 'history'
+    let defaultTab = 'form';
+    if (!orderNumberFromUrl && (requestedTab === 'history' || !requestedTab)) {
+        defaultTab = 'history';
     }
+    
+    const finalTab = requestedTab || defaultTab;
+    
+    const tabLink = document.querySelector(`.tabs a[onclick*="'${finalTab}'"]`);
+    if (tabLink) {
+        switchTab(finalTab, tabLink);
+    }
+
     handleHeldCarRequest();
     // 8. Tải dữ liệu lần đầu, khởi động Polling và xử lý URL
     fetchHistory().then(() => {
@@ -3323,7 +3329,7 @@ function exportToPDF() {
     const table = document.getElementById('history-table');
     if (!table) return showNotification("Không tìm thấy bảng dữ liệu.", "error", 3000);
 
-    showOldLoadingModal("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
+    showLoadingToast("Đang Xuất PDF...", "Quá trình này có thể mất vài giây.");
 
     const exteriorCells = table.querySelectorAll('td[data-label="Ngoại Thất"] span');
     const originalExteriorStyles = [];
@@ -3351,8 +3357,8 @@ function exportToPDF() {
         if (imgHeight > contentHeight) { imgHeight = contentHeight; imgWidth = imgHeight * ratio; }
         pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
         pdf.save('LichSuGhepXe_ThuanAn.pdf');
-        closeModal('loading-modal'); showNotification("Đã xuất PDF thành công!", "success", 2000);
-    }).catch(err => { closeModal('loading-modal'); showNotification(`Lỗi xuất PDF: ${err.message}`, "error", 4000);
+        hideLoadingToast(); showNotification("Đã xuất PDF thành công!", "success", 2000);
+    }).catch(err => { hideLoadingToast(); showNotification(`Lỗi xuất PDF: ${err.message}`, "error", 4000);
     }).finally(() => {
         exteriorCells.forEach((cell, index) => { cell.style.cssText = originalExteriorStyles[index]; });
     });
@@ -3584,17 +3590,30 @@ function setupScrollSync() {
 }
 
 function showNotification(message, type = "info", duration = 3000) {
-    const container = document.getElementById("notification-container") || document.body;
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    let iconClass = 'fas fa-info-circle';
-    if (type === 'success') iconClass = 'fas fa-check-circle';
-    if (type === 'error') iconClass = 'fas fa-times-circle';
-    if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
-    notification.innerHTML = `<i class="${iconClass}" style="margin-right: 8px;"></i> ${message}`;
-    container.appendChild(notification);
-    setTimeout(() => notification.classList.add('show'), 10);
-    setTimeout(() => { notification.classList.remove('show'); notification.addEventListener('transitionend', () => notification.remove()); }, duration);
+    // Ánh xạ 'type' sang hàm toast và tiêu đề tương ứng
+    switch (type) {
+        case 'success':
+            showSuccessToast("Thành Công!", message);
+            setTimeout(hideSuccessToast, duration); // Tự động ẩn sau khoảng thời gian
+            break;
+        case 'info':
+            showSuccessToast("Thông Báo", message); // Có thể dùng chung toast success cho 'info'
+            setTimeout(hideSuccessToast, duration);
+            break;
+        case 'error':
+            // Dùng chung toast warning cho 'error' và 'warning'
+            showWarningToast("Đã Xảy Ra Lỗi", message);
+            // Toast warning có nút tự đóng nên không cần tự động ẩn
+            break;
+        case 'warning':
+            showWarningToast("Cảnh Báo", message);
+            break;
+        default:
+            // Mặc định dùng toast success
+            showSuccessToast("Thông Báo", message);
+            setTimeout(hideSuccessToast, duration);
+            break;
+    }
 }
 
 function restrictVersion(dongXeSelectElement, savedPhienBanValue = null) {
@@ -5010,7 +5029,7 @@ async function processAdminInvoiceUpload(orderNumber) {
     }
 
     closeModal('admin-invoice-upload-modal');
-    showOldLoadingModal("Đang Gửi Tệp Hóa Đơn...", "Vui lòng chờ trong giây lát.");
+    showLoadingToast("Đang Gửi Tệp Hóa Đơn...", "Vui lòng chờ trong giây lát.");
 
     try {
         const file = fileInput.files[0];
@@ -5041,7 +5060,7 @@ async function processAdminInvoiceUpload(orderNumber) {
         console.error('Lỗi khi tải lên hóa đơn:', error);
         showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
     } finally {
-        closeModal('loading-modal');
+        hideLoadingToast();
     }
 }
 
@@ -5368,7 +5387,7 @@ async function submitWaitingRequest(event) {
         return;
     }
 
-    showOldLoadingModal("Đang Gửi Yêu Cầu Chờ...");
+    showLoadingToast("Đang Gửi Yêu Cầu Chờ...");
     const formData = new FormData(form);
     formData.append('action', 'addWaitingRequest');
 
@@ -5390,7 +5409,7 @@ async function submitWaitingRequest(event) {
     } catch (error) {
         showNotification(`Lỗi: ${error.message}`, 'error');
     } finally {
-        closeModal('loading-modal');
+        hideLoadingToast();
     }
 }
 function escapeHtml(unsafe) {
