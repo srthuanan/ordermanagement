@@ -62,6 +62,7 @@
             --status-chua-ghep-bg-light: #fff8e1; --status-chua-ghep-text-light: #f57c00;
             --status-da-ban-bg-light: #f1f2f6; --status-da-ban-text-light: #57606f;
             --status-cho-vbc-bg-light: #e8eaf6; --status-cho-vbc-text-light: #3f51b5;
+--status-dang-giu-bg-light: #ede7f6; --status-dang-giu-text-light: #673ab7;
             --status-default-bg-light: #eceff1; --status-default-text-light: #546e7a;
 
             /* Status Colors (Dark) */
@@ -70,6 +71,7 @@
             --status-chua-ghep-bg-dark: #4b3c1c; --status-chua-ghep-text-dark: #ffe082;
             --status-da-ban-bg-dark: #393e46; --status-da-ban-text-dark: #a6acb3;
             --status-cho-vbc-bg-dark: #2c304d; --status-cho-vbc-text-dark: #b3bcf5;
+--status-dang-giu-bg-dark: #2a243d; --status-dang-giu-text-dark: #d1c4e9;
             --status-default-bg-dark: #37474f; --status-default-text-dark: #b0bec5;
 
             /* Shadows & Effects */
@@ -515,7 +517,14 @@ body.dark-mode .status-cho-vbc {
     --status-color-main: var(--status-cho-vbc-text-dark);
     --status-color-bg: var(--status-cho-vbc-bg-dark);
 }
-
+.status-dang-giu {
+    --status-color-main: var(--status-dang-giu-text-light);
+    --status-color-bg: var(--status-dang-giu-bg-light);
+}
+body.dark-mode .status-dang-giu {
+    --status-color-main: var(--status-dang-giu-text-dark);
+    --status-color-bg: var(--status-dang-giu-bg-dark);
+}
 /* --- Trạng thái: Mặc định (Màu xám nhạt) --- */
 .status-default {
     --status-color-main: var(--status-default-text-light);
@@ -1236,7 +1245,7 @@ if (sessionStorage.getItem("isLoggedIn") !== "true") {
         // ==========================================================================
         // 1. Quản lý Trạng thái & Biến Toàn cục
         // ==========================================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbwY5DrJQYq17aQMWlAHJLHKd4aLYlL-sJX9p7K1DosFtfACF91SgyuqPH653hqQ1YOFWQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzj2pPEvcCpflk3XIkyV7yxnox-L9PcNqXviXqtgtrFwoIG_1P7OM1vDuqOKtVEH7jbPA/exec";
         let allCars = [];
         let filteredCars = [];
         let currentPage = 1;
@@ -1600,7 +1609,7 @@ initializePopovers: function() {
                 }
             },
             
-            // === HÀM ĐÃ CẬP NHẬT: KHÔNG GỌI FETCHDATA() ĐỂ TẢI LẠI TOÀN BỘ TRANG ===
+            // === [THAY THẾ] HÀM holdCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
             holdCar: async function(vin) {
                 const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
                 if (button) button.disabled = true;
@@ -1618,13 +1627,14 @@ initializePopovers: function() {
                     ToastManager.hideProcessing();
 
                     if (response.data.status === "SUCCESS") {
-                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngầm
+                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
                         const carToUpdate = allCars.find(car => car.vin === vin);
                         if (carToUpdate) {
                             carToUpdate.holder = sessionStorage.getItem("currentConsultant");
                             const expiryTime = new Date();
                             expiryTime.setHours(expiryTime.getHours() + HOLD_DURATION_HOURS);
                             carToUpdate.expiry = expiryTime;
+                            carToUpdate.status = "Đang giữ"; // Cập nhật trạng thái mới
                         }
                         this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
                         showToast(response.data.message || 'Giữ xe thành công!', 'success');
@@ -1641,7 +1651,7 @@ initializePopovers: function() {
                 }
             },
 
-            // === HÀM ĐÃ CẬP NHẬT: KHÔNG GỌI FETCHDATA() ĐỂ TẢI LẠI TOÀN BỘ TRANG ===
+            // === [THAY THẾ] HÀM releaseCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
             releaseCar: async function(vin) {
                 const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
                 if (button) button.disabled = true;
@@ -1659,11 +1669,12 @@ initializePopovers: function() {
                     ToastManager.hideProcessing();
 
                     if (response.data.status === "SUCCESS") {
-                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngầm
+                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
                         const carToUpdate = allCars.find(car => car.vin === vin);
                         if (carToUpdate) {
                             carToUpdate.holder = null;
                             carToUpdate.expiry = null;
+                            carToUpdate.status = "Chưa ghép"; // Trả về trạng thái cũ
                         }
                         this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
                         showToast(response.data.message || 'Hủy giữ thành công!', 'success');
@@ -1891,6 +1902,9 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                 const lowerStatus = statusText.toLowerCase();
                 if (lowerStatus.includes('sẵn sàng')) return 'status-san-sang';
                 if (lowerStatus.includes('đã ghép')) return 'status-da-ghep';
+                // === THAY ĐỔI BẮT ĐẦU TẠI ĐÂY ===
+                if (lowerStatus.includes('đang giữ')) return 'status-dang-giu'; // Thêm dòng này
+                // === KẾT THÚC THAY ĐỔI ===
                 if (lowerStatus.includes('chưa ghép')) return 'status-chua-ghep';
                 if (lowerStatus.includes('đã bán')) return 'status-da-ban';
                 if (lowerStatus.includes('chờ vbc')) return 'status-cho-vbc';
