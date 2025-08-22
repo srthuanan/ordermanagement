@@ -9,8 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    
-    <!-- Fonts và Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1610,46 +1610,51 @@ initializePopovers: function() {
             },
             
             // === [THAY THẾ] HÀM holdCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
-            holdCar: async function(vin) {
-                const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
-                if (button) button.disabled = true;
-                ToastManager.showProcessing('Đang xử lý...');
+            // === [THAY THẾ] HÀM holdCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
+holdCar: async function(vin) {
+    const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
+    if (button) button.disabled = true;
+    ToastManager.showProcessing('Đang xử lý...');
 
-                try {
-                    const response = await axios.post(API_URL, null, {
-                        params: {
-                            action: 'holdCar',
-                            vin: vin,
-                            updatedBy: sessionStorage.getItem("currentConsultant")
-                        }
-                    });
+    try {
+        const response = await axios.post(API_URL, null, {
+            params: {
+                action: 'holdCar',
+                vin: vin,
+                updatedBy: sessionStorage.getItem("currentConsultant")
+            }
+        });
 
-                    ToastManager.hideProcessing();
+        ToastManager.hideProcessing();
 
-                    if (response.data.status === "SUCCESS") {
-                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
-                        const carToUpdate = allCars.find(car => car.vin === vin);
-                        if (carToUpdate) {
-                            carToUpdate.holder = sessionStorage.getItem("currentConsultant");
-                            const expiryTime = new Date();
-                            expiryTime.setHours(expiryTime.getHours() + HOLD_DURATION_HOURS);
-                            carToUpdate.expiry = expiryTime;
-                            carToUpdate.status = "Đang giữ"; // Cập nhật trạng thái mới
-                        }
-                        this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
-                        showToast(response.data.message || 'Giữ xe thành công!', 'success');
-                    } else {
-                        throw new Error(response.data.message);
-                    }
-                } catch (error) {
-                    ToastManager.hideProcessing();
-                    console.error("Lỗi khi giữ xe:", error);
-                    const errorMessage = error.response?.data?.message || error.message;
-                    showToast(`Lỗi: ${errorMessage}`, 'error');
-                } finally {
-                    if (button) button.disabled = false;
-                }
-            },
+        if (response.data.status === "SUCCESS") {
+            // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
+            const carToUpdate = allCars.find(car => car.vin === vin);
+            if (carToUpdate) {
+                carToUpdate.holder = sessionStorage.getItem("currentConsultant");
+                const expiryTime = new Date();
+                expiryTime.setHours(expiryTime.getHours() + HOLD_DURATION_HOURS);
+                carToUpdate.expiry = expiryTime;
+                carToUpdate.status = "Đang giữ"; // Cập nhật trạng thái mới
+            }
+            this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
+            showToast(response.data.message || 'Giữ xe thành công!', 'success');
+            
+            // === GỌI HIỆU ỨNG TẠI ĐÂY ===
+            triggerConfetti(); 
+
+        } else {
+            throw new Error(response.data.message);
+        }
+    } catch (error) {
+        ToastManager.hideProcessing();
+        console.error("Lỗi khi giữ xe:", error);
+        const errorMessage = error.response?.data?.message || error.message;
+        showToast(`Lỗi: ${errorMessage}`, 'error');
+    } finally {
+        if (button) button.disabled = false;
+    }
+},
 
             // === [THAY THẾ] HÀM releaseCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
             releaseCar: async function(vin) {
@@ -1666,30 +1671,40 @@ initializePopovers: function() {
                         }
                     });
                     
-                    ToastManager.hideProcessing();
+                     ToastManager.hideProcessing();
 
-                    if (response.data.status === "SUCCESS") {
-                        // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
-                        const carToUpdate = allCars.find(car => car.vin === vin);
-                        if (carToUpdate) {
-                            carToUpdate.holder = null;
-                            carToUpdate.expiry = null;
-                            carToUpdate.status = "Chưa ghép"; // Trả về trạng thái cũ
-                        }
-                        this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
-                        showToast(response.data.message || 'Hủy giữ thành công!', 'success');
-                    } else {
-                        throw new Error(response.data.message);
-                    }
-                } catch (error) {
-                    ToastManager.hideProcessing();
-                    console.error("Lỗi khi hủy giữ xe:", error);
-                    const errorMessage = error.response?.data?.message || error.message;
-                    showToast(`Lỗi: ${errorMessage}`, 'error');
-                } finally {
-                    if (button) button.disabled = false;
+        if (response.data.status === "SUCCESS") {
+            showToast(response.data.message || 'Hủy giữ thành công!', 'success');
+            
+            // === GỌI HIỆU ỨNG MỚI TẠI ĐÂY ===
+            triggerDisintegration(button);
+            
+            // Đợi một chút để người dùng thấy hiệu ứng rồi mới cập nhật bảng
+            setTimeout(() => {
+                const carToUpdate = allCars.find(car => car.vin === vin);
+                if (carToUpdate) {
+                    carToUpdate.holder = null;
+                    carToUpdate.expiry = null;
+                    carToUpdate.status = "Chưa ghép"; 
                 }
-            },
+                this.applyFiltersAndRender();
+            }, 800); // Trì hoãn 0.8 giây
+
+        } else {
+            // Nếu lỗi, vẽ lại bảng ngay lập tức để nút hiện lại
+            this.applyFiltersAndRender();
+            throw new Error(response.data.message);
+        }
+    } catch (error) {
+        ToastManager.hideProcessing();
+        console.error("Lỗi khi hủy giữ xe:", error);
+        const errorMessage = error.response?.data?.message || error.message;
+        showToast(`Lỗi: ${errorMessage}`, 'error');
+        // Nếu có lỗi, cũng vẽ lại bảng để nút không bị "kẹt"
+        this.applyFiltersAndRender();
+    } 
+    // Bỏ khối finally đi để kiểm soát nút tốt hơn
+},
 
             refreshData: async function() {
                 // --- BỔ SUNG: Xóa cache trước khi làm mới ---
@@ -2064,12 +2079,58 @@ const ToastManager = {
         }
     }
 };
-        // ==========================================================================
-        // 8. Khởi chạy Ứng dụng
-        // ==========================================================================
+        function triggerConfetti() {
+ confetti({
+        particleCount: 150, // Số lượng mảnh pháo giấy
+        spread: 90,         // Độ tỏa rộng của pháo giấy
+        origin: { y: 0.8 }  // Vị trí bắt đầu (0.6 là hơi thấp hơn giữa màn hình)
+    });
+   
+}
+function triggerDisintegration(buttonElement) {
+    if (!buttonElement) return;
+
+    const rect = buttonElement.getBoundingClientRect();
+    const particles = [];
+    const particleCount = 20; // Số lượng hạt
+
+    // Tạo các hạt bụi
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.left = `${rect.left + rect.width / 2}px`;
+        particle.style.top = `${rect.top + rect.height / 2}px`;
+        particle.style.width = `${anime.random(3, 8)}px`;
+        particle.style.height = particle.style.width;
+        // Màu xám giống nút release
+        particle.style.backgroundColor = `hsl(220, 10%, ${anime.random(40, 70)}%)`; 
+        particle.style.borderRadius = '50%';
+        document.body.appendChild(particle);
+        particles.push(particle);
+    }
+
+    // Ẩn nút gốc đi
+    buttonElement.style.opacity = '0';
+
+    // Dùng anime.js để di chuyển các hạt
+    anime({
+        targets: particles,
+        translateX: () => anime.random(-40, 40),
+        translateY: () => anime.random(-40, 40),
+        scale: [1, 0],
+        opacity: [1, 0],
+        duration: anime.random(600, 1200),
+        easing: 'easeOutExpo',
+        delay: anime.stagger(20),
+        complete: () => {
+            particles.forEach(p => p.remove()); // Dọn dẹp các hạt sau khi xong
+        }
+    });
+}
         App.init();
 
     });
+
     </script>
 </body>
 </html>
