@@ -2473,7 +2473,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbziBL0Im5jJRKwsJWMjIRv0GAYjCrHExXt_CCKk6pRtG6szKYK6quo8Qfa74YLFmaA1AQ/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwN7nRpE-KpZRBP7uw0-iryJI6xnkjU0q4ajuwcoonNrjdOv8sNnOYaBAvItWL6jPWBRA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3646,16 +3646,23 @@ function showNotification(message, type = "info", duration = 3000) {
     switch (type) {
         case 'success':
             showSuccessToast("Thành Công!", message);
-            setTimeout(hideSuccessToast, duration); // Tự động ẩn sau khoảng thời gian
+            setTimeout(hideSuccessToast, duration);
             break;
         case 'info':
-            showSuccessToast("Thông Báo", message); // Có thể dùng chung toast success cho 'info'
+            showSuccessToast("Thông Báo", message);
             setTimeout(hideSuccessToast, duration);
             break;
         case 'error':
             // Dùng chung toast warning cho 'error' và 'warning'
             showWarningToast("Đã Xảy Ra Lỗi", message);
-            // Toast warning có nút tự đóng nên không cần tự động ẩn
+
+            // === PHẦN THÊM MỚI: TỰ ĐỘNG TẢI LẠI TRANG SAU KHI BÁO LỖI ===
+            // Đặt hẹn giờ để tải lại trang sau 4 giây để người dùng kịp đọc lỗi
+            setTimeout(() => {
+                console.log("Đã xảy ra lỗi, đang tải lại trang để làm mới trạng thái...");
+                window.location.reload();
+            }, 4000); // 4000 mili giây = 4 giây
+            // =============================================================
             break;
         case 'warning':
             showWarningToast("Cảnh Báo", message);
