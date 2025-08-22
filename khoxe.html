@@ -1711,8 +1711,12 @@ renderTableRows: function(data) {
             if (car.holder === currentUser) {
                 const releaseButton = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
                 const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
-                pairingUrl.searchParams.append('tab', 'form');
-                pairingUrl.searchParams.append('vin_giu', car.vin);
+pairingUrl.searchParams.append('tab', 'form');
+pairingUrl.searchParams.append('vin_giu', car.vin);
+pairingUrl.searchParams.append('dong_xe', car.line);
+pairingUrl.searchParams.append('phien_ban', car.version);
+pairingUrl.searchParams.append('ngoai_that', car.exterior);
+pairingUrl.searchParams.append('noi_that', car.interior);
                 // (Các dòng searchParams khác giữ nguyên)
                 const pairingButton = `<a href="${pairingUrl.href}" class="pairing-btn">
                                            <i class="fas fa-link"></i>
