@@ -909,6 +909,43 @@ body {
     100% { transform: scaleX(0.5); opacity: 0; }
 }
 @media (max-width: 767px) {
+#mobile-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1100; /* Phải cao hơn nội dung nhưng thấp hơn panel */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Khi có panel mở, hiển thị lớp phủ */
+body.mobile-panel-open #mobile-panel-overlay {
+    display: block; /* Phải là block để có thể click */
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ngăn cuộn trang nền khi panel mở */
+body.mobile-panel-open {
+    overflow: hidden;
+}
+
+/* --- 2. Biến đổi Dropdown thành Side Panel --- */
+/* Chúng ta sẽ nhắm đến cả hai panel: 
+   #action-dropdown-panel (Thao tác nhanh) và #notification-panel (Thông báo)
+*/
+
+
+/* --- 3. Tinh chỉnh nội dung bên trong panel --- */
+.dropdown-panel .dropdown-list,
+.notification-panel .notification-list {
+    flex-grow: 1; /* Cho phép danh sách tự dãn ra */
+    max-height: none !important; /* Bỏ giới hạn chiều cao cũ */
+}
 
 .main-content {
     padding: 10px; /* Giảm padding */
@@ -1869,6 +1906,7 @@ body.panel-open {
     <div class="popover-footer" id="popover-footer"></div>
 </div>
 <div id="toast-container"></div>
+
 <script>
    function initializeAdminPage() {
     console.log("Xác thực thành công. Đang khởi tạo trang quản trị...");
@@ -1977,18 +2015,7 @@ function toggleMobileMenu() {
         navLinks.classList.toggle('open');
     }
 }
-function toggleActionMenu(event) {
-    event.stopPropagation(); // Ngăn sự kiện click lan ra document
 
-    // Nếu bảng thông báo đang mở, hãy đóng nó trước
-    if (appState.notifications.isPanelOpen) {
-        toggleNotificationPanel(); 
-    }
-
-    // Sau đó mới bật/tắt menu thao tác nhanh
-    const panel = document.getElementById('action-dropdown-panel');
-    panel.classList.toggle('active');
-}
     function initScrollToTopButton() {
         const btn = document.getElementById("scrollToTopBtn"); if (!btn) return;
         const contentArea = document.querySelector('.main-content');
@@ -2007,7 +2034,7 @@ function toggleActionMenu(event) {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbykdQncEA6kCdQ7e8knJjp-qjyjwWXE34c3LVzHzWc_tuNa-hcDSER6BFOMZnu_OcSjiQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbznUGFgrykchIu9r0FsosiWZQySD-xOZEaf80Rc7a6LgfMnYMYyFKp99fWsuUdxo7JJMg/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -2044,7 +2071,46 @@ function checkAuthentication() {
         document.body.classList.remove('admin-logged-in');
     }
 }
+// THAY THẾ HÀM NÀY
+function handleArchiveOrders(event) {
+    if (event) event.preventDefault();
+    event.stopPropagation();
 
+    const title = 'Lưu Trữ Hóa Đơn';
+    const bodyHtml = `<p>Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.</p>`;
+    
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-archive" class="btn btn-primary">Xác Nhận Lưu Trữ</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'sm', theme: 'info' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-archive" class="btn btn-primary">Xác Nhận Lưu Trữ</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
+
+    // Gắn sự kiện
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('action-confirm-archive');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                const { success } = await performActionOnRow({
+                    action: 'archiveInvoicedOrdersMonthly',
+                    params: {},
+                    buttonElement: confirmBtn
+                });
+                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
+            };
+        }
+    }, 100);
+}
 function checkSessionExpiry() {
     const expiryTime = authStorage.get('loginExpiry');
     if (!expiryTime || authStorage.get('isLoggedIn') !== 'true') {
@@ -2170,34 +2236,45 @@ const appState = {
     }
 
     async function checkDataVersion() {
-        if (!appState.connection.isPolling) return;
-        updateConnectionStatus('connecting');
-        try {
-            const [versionResponse, notificationsResponse] = await Promise.all([
-                fetch(`${API_URL}?action=getVersion`),
-                fetch(`${API_URL}?action=getNotifications`)
-            ]);
-            if (!versionResponse.ok || !notificationsResponse.ok) throw new Error('Lỗi mạng khi kiểm tra cập nhật');
-            const versionResult = await versionResponse.json();
-            const notificationsResult = await notificationsResponse.json();
-            updateConnectionStatus('online');
-            appState.connection.currentDelay = appState.connection.baseDelay;
-            if (notificationsResult.status === "SUCCESS") {
-                updateNotifications(notificationsResult.notifications);
-            }
-            if (versionResult.status === "SUCCESS" && versionResult.version !== appState.currentDataVersion) {
-                await fetchInitialData(true); 
-            }
-        } catch (error) {
-            console.error("Lỗi khi kiểm tra phiên bản/thông báo:", error);
-            updateConnectionStatus('offline');
-            appState.connection.currentDelay = Math.min(appState.connection.currentDelay * 2, appState.connection.maxDelay);
-        } finally {
-            if (appState.connection.isPolling) {
-                appState.connection.pollController = setTimeout(checkDataVersion, appState.connection.currentDelay);
-            }
+    if (!appState.connection.isPolling) return;
+    updateConnectionStatus('connecting');
+    try {
+        // [SỬA] Lấy thông tin người dùng và vai trò
+        const currentUser = authStorage.get("currentUser");
+        const isAdmin = authStorage.get("userRole") === 'admin';
+
+        // [SỬA] Thêm `currentUser` và `isAdmin` vào URL để lấy đúng thông báo
+        const notificationsUrl = `${API_URL}?action=getNotifications&currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
+
+        const [versionResponse, notificationsResponse] = await Promise.all([
+            fetch(`${API_URL}?action=getVersion`),
+            fetch(notificationsUrl)
+        ]);
+        if (!versionResponse.ok || !notificationsResponse.ok) throw new Error('Lỗi mạng khi kiểm tra cập nhật');
+        
+        const versionResult = await versionResponse.json();
+        const notificationsResult = await notificationsResponse.json();
+        
+        updateConnectionStatus('online');
+        appState.connection.currentDelay = appState.connection.baseDelay;
+        
+        if (notificationsResult.status === "SUCCESS") {
+            updateNotifications(notificationsResult.notifications);
+        }
+        
+        if (versionResult.status === "SUCCESS" && versionResult.version !== appState.currentDataVersion) {
+            await fetchInitialData(true); 
+        }
+    } catch (error) {
+        console.error("Lỗi khi kiểm tra phiên bản/thông báo:", error);
+        updateConnectionStatus('offline');
+        appState.connection.currentDelay = Math.min(appState.connection.currentDelay * 2, appState.connection.maxDelay);
+    } finally {
+        if (appState.connection.isPolling) {
+            appState.connection.pollController = setTimeout(checkDataVersion, appState.connection.currentDelay);
         }
     }
+}
     
     function startPolling() {
         if (appState.connection.isPolling) return;
@@ -2706,7 +2783,13 @@ function renderXuatHoaDonView() {
     const getActionsForRow = (row) => {
     const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
     let actions = [];
-    // Dòng 'actions.push' cho Trợ lý AI đã được xóa
+    if (status === 'chờ phê duyệt') {
+        actions.push({ 
+            icon: 'fa-star', // Icon ngôi sao cho VinClub
+            label: 'Y/C VinClub', 
+            handler: 'handleRequestVinClub' 
+        });
+    }
     if (status === 'chờ phê duyệt' || status === 'đã bổ sung') {
             actions.push({ icon: 'fa-check-double', label: 'Phê Duyệt', handler: 'handleApproveRequest' });
             actions.push({ icon: 'fa-exclamation-triangle', label: 'Y/C Bổ Sung', handler: 'handleRequestSupplement' });
@@ -2724,7 +2807,74 @@ function renderXuatHoaDonView() {
 
     mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderXuatHoaDonGroupedTable('xuatHoaDonTable', dataWithDetails, getActionsForRow) + `</div>`;
 }
-    
+/**
+ * [HÀM MỚI] - Xử lý khi Admin click nút "Y/C VinClub".
+ */
+/**
+ * [HÀM NÂNG CẤP] - Xử lý khi Admin click nút "Y/C VinClub" (có dán ảnh).
+ */
+function handleRequestVinClub(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+
+    // THAY ĐỔI: Thêm ô nhập Ghi chú và khu vực dán ảnh
+    const bodyHtml = `
+        <p>Gửi yêu cầu TVBH xác thực VinClub cho đơn hàng <strong>${escapeHtml(orderNumber)}</strong>.</p>
+        <div class="form-group" style="margin-top: 10px;">
+            <label for="popover-vinclub-reason">Ghi chú (Tùy chọn):</label>
+            <textarea id="popover-vinclub-reason" rows="3" class="w-full" placeholder="Ví dụ: Yêu cầu khách hàng xác thực trước 5h chiều..."></textarea>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label style="font-weight: 600;">Dán ảnh minh họa (Tùy chọn):</label>
+            <div id="image-paste-area" 
+                 contenteditable="true" 
+                 style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; color: #888; margin-top: 5px; min-height: 80px;"
+                 onpaste="handleImagePaste(event)">
+                 Click vào đây và nhấn Ctrl+V để dán ảnh...
+            </div>
+            <div id="image-preview-container" style="margin-top: 10px; text-align: center;"></div>
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+        <button id="popover-confirm-vinclub" class="btn btn-primary">Gửi Yêu Cầu</button>
+    `;
+
+    openPopover(btnElement, {
+        title: 'Yêu Cầu Xác Thực VinClub',
+        bodyHtml: bodyHtml,
+        footerHtml: footerHtml,
+        placement: 'top-start'
+    });
+
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('popover-confirm-vinclub');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                // THAY ĐỔI: Lấy thêm dữ liệu từ các ô mới
+                const reason = document.getElementById('popover-vinclub-reason').value.trim();
+                const imagePreviews = document.querySelectorAll('#image-preview-container .preview-image-wrapper img');
+                const imagesBase64Array = Array.from(imagePreviews).map(img => img.dataset.base64);
+
+                const params = { orderNumber };
+                if (reason) {
+                    params.reason = reason;
+                }
+                if (imagesBase64Array.length > 0) {
+                    params.pastedImagesBase64 = JSON.stringify(imagesBase64Array);
+                }
+
+                const { success } = await performActionOnRow({
+                    action: 'requestVinClubVerification',
+                    params: params, // Gửi đi các tham số mới
+                    buttonElement: confirmBtn
+                });
+
+                if (success) closePopover();
+            };
+        }
+    }, 10);
+}    
 function renderHuyGhepView() {
     const data = appState.data.huyghep || [];
     const { searchTerm } = appState.huyGhep;
@@ -3703,15 +3853,16 @@ async function submitIssuedInvoice(order) {
     }
 }
 
-    // THAY THẾ HÀM NÀY
+   // THAY THẾ HÀM NÀY
 function handleAddCar(event) {
-    if(event) event.preventDefault();
-    const triggerElement = event.currentTarget;
+    if (event) event.preventDefault();
+    event.stopPropagation();
 
+    const title = 'Thêm Xe Mới vào Kho';
     const bodyHtml = `
         <div class="form-group">
-            <label for="popover-add-vin" style="font-weight: 600;">Số VIN (bắt buộc 17 ký tự):</label>
-            <input type="text" id="popover-add-vin" maxlength="17" class="w-full" 
+            <label for="action-add-vin" style="font-weight: 600;">Số VIN (bắt buộc 17 ký tự):</label>
+            <input type="text" id="action-add-vin" maxlength="17" class="w-full" 
                    placeholder="Nhập 17 ký tự VIN..." 
                    onkeyup="this.value = this.value.toUpperCase()">
         </div>
@@ -3720,25 +3871,30 @@ function handleAddCar(event) {
         </p>
     `;
 
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-add-car" class="btn btn-primary">Thêm Xe</button>
-    `;
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal (Side Panel)
+        closePopover(); // Đóng menu thao tác nhanh trước
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-add-car" class="btn btn-primary">Thêm Xe</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'info' });
+    } else {
+        // Desktop: Giữ nguyên Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-add-car" class="btn btn-primary">Thêm Xe</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
 
-    // Mở Popover trước
-    openPopover(triggerElement, { title: 'Thêm Xe Mới vào Kho', bodyHtml, footerHtml, placement: 'bottom-start' });
-    
-    // Sau đó mới đóng menu
-    document.getElementById('action-dropdown-panel')?.classList.remove('active');
-
-    // Gắn sự kiện cho nút xác nhận
+    // Gắn sự kiện cho nút xác nhận (hoạt động cho cả modal và popover)
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-add-car');
-        const vinInput = document.getElementById('popover-add-vin');
+        const confirmBtn = document.getElementById('action-confirm-add-car');
+        const vinInput = document.getElementById('action-add-vin');
         
         if (confirmBtn && vinInput) {
-            // Xử lý khi nhấn nút
-            confirmBtn.onclick = async () => {
+            const actionHandler = async () => {
                 const vin = vinInput.value.trim();
                 if (!vin || vin.length !== 17) {
                     showToast('Lỗi: Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
@@ -3749,189 +3905,180 @@ function handleAddCar(event) {
                     params: { vin },
                     buttonElement: confirmBtn
                 });
-                if (success) closePopover();
+                if (success) {
+                    window.innerWidth <= 767 ? closeSidePanel() : closePopover();
+                }
             };
-            
-            // Xử lý khi nhấn Enter trong ô input
+            confirmBtn.onclick = actionHandler;
             vinInput.onkeypress = (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    confirmBtn.click();
+                    actionHandler();
                 }
             };
         }
-    }, 10);
+    }, 100); // Tăng nhẹ timeout để đảm bảo DOM sẵn sàng
 }
 
-    // [THAY THẾ TOÀN BỘ HÀM CŨ]
+    // THAY THẾ HÀM NÀY
 function handleDeleteCar(event) {
-    const triggerElement = event.currentTarget;
+    if (event) event.preventDefault();
+    event.stopPropagation();
 
-    // THAY ĐỔI: Thêm textarea cho lý do
+    const title = 'Xóa Xe Khỏi Kho';
     const bodyHtml = `
         <p>Hành động này sẽ đánh dấu xe là "đã xóa" và ẩn khỏi kho. Bạn có thể phục hồi lại sau.</p>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-delete-vin">Số VIN cần xóa (bắt buộc 17 ký tự):</label>
-            <input type="text" id="popover-delete-vin" class="w-full" placeholder="Nhập chính xác 17 ký tự VIN..." maxlength="17" onkeyup="this.value = this.value.toUpperCase()">
+            <label for="action-delete-vin">Số VIN cần xóa (bắt buộc 17 ký tự):</label>
+            <input type="text" id="action-delete-vin" class="w-full" placeholder="Nhập chính xác 17 ký tự VIN..." maxlength="17" onkeyup="this.value = this.value.toUpperCase()">
         </div>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-delete-reason">Lý do xóa (bắt buộc):</label>
-            <textarea id="popover-delete-reason" class="w-full" rows="3" placeholder="Ví dụ: Xe bán lô, xe điều chuyển..."></textarea>
+            <label for="action-delete-reason">Lý do xóa (bắt buộc):</label>
+            <textarea id="action-delete-reason" class="w-full" rows="3" placeholder="Ví dụ: Xe bán lô, xe điều chuyển..."></textarea>
         </div>
     `;
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-delete-car" class="btn btn-danger">Xác Nhận Xóa</button>
-    `;
 
-    openPopover(triggerElement, { title: 'Xóa Xe Khỏi Kho', bodyHtml, footerHtml, placement: 'bottom-start' });
-    
-    document.getElementById('action-dropdown-panel').classList.remove('active');
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-delete-car" class="btn btn-danger">Xác Nhận Xóa</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'danger' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-delete-car" class="btn btn-danger">Xác Nhận Xóa</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
 
+    // Gắn sự kiện cho nút xác nhận
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-delete-car');
+        const confirmBtn = document.getElementById('action-confirm-delete-car');
         if (confirmBtn) {
             confirmBtn.onclick = async () => {
-                const vin = document.getElementById('popover-delete-vin').value.trim();
-                // THAY ĐỔI: Lấy và kiểm tra lý do
-                const reason = document.getElementById('popover-delete-reason').value.trim();
-
+                const vin = document.getElementById('action-delete-vin').value.trim();
+                const reason = document.getElementById('action-delete-reason').value.trim();
                 if (!vin || vin.length !== 17) {
-                    showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
-                    return;
+                    showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error'); return;
                 }
                 if (!reason) {
-                    showToast('Vui lòng nhập lý do xóa xe.', 'warning');
-                    return;
+                    showToast('Vui lòng nhập lý do xóa xe.', 'warning'); return;
                 }
-
-                // THAY ĐỔI: Truyền thêm `reason` vào params
                 const { success } = await performActionOnRow({
                     action: 'deleteCarFromStockLogic',
                     params: { vinToDelete: vin, reason: reason },
                     buttonElement: confirmBtn
                 });
-                if (success) closePopover();
+                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
             };
         }
-    }, 10);
+    }, 100);
 }
 
 // THAY THẾ HÀM NÀY
 function handleRestoreCar(event) {
-    const triggerElement = event.currentTarget;
+    if (event) event.preventDefault();
+    event.stopPropagation();
     
+    const title = 'Phục Hồi Xe Đã Xóa';
     const bodyHtml = `
         <p>Hành động này sẽ chuyển trạng thái xe về "chưa ghép" và hiển thị lại trong kho.</p>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-restore-vin">Số VIN cần phục hồi (17 ký tự):</label>
-            <input type="text" id="popover-restore-vin" class="w-full" placeholder="Nhập chính xác 17 ký tự VIN..." maxlength="17" onkeyup="this.value = this.value.toUpperCase()">
+            <label for="action-restore-vin">Số VIN cần phục hồi (17 ký tự):</label>
+            <input type="text" id="action-restore-vin" class="w-full" placeholder="Nhập chính xác 17 ký tự VIN..." maxlength="17" onkeyup="this.value = this.value.toUpperCase()">
         </div>
     `;
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-restore-car" class="btn btn-primary">Phục Hồi Xe</button>
-    `;
 
-    // [SỬA LỖI] Bước 1: Mở Popover trước
-    openPopover(triggerElement, { title: 'Phục Hồi Xe Đã Xóa', bodyHtml, footerHtml, placement: 'bottom-start' });
-    
-    // [SỬA LỖI] Bước 2: Đóng menu sau
-    document.getElementById('action-dropdown-panel').classList.remove('active');
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-restore-car" class="btn btn-primary">Phục Hồi Xe</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'info' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-restore-car" class="btn btn-primary">Phục Hồi Xe</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
 
+    // Gắn sự kiện
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-restore-car');
+        const confirmBtn = document.getElementById('action-confirm-restore-car');
         if (confirmBtn) {
             confirmBtn.onclick = async () => {
-                const vin = document.getElementById('popover-restore-vin').value.trim();
+                const vin = document.getElementById('action-restore-vin').value.trim();
                 if (!vin || vin.length !== 17) {
-                    showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error');
-                    return;
+                    showToast('Vui lòng nhập chính xác 17 ký tự VIN.', 'error'); return;
                 }
                 const { success } = await performActionOnRow({
                     action: 'restoreCarToStockLogic',
                     params: { vinToRestore: vin },
                     buttonElement: confirmBtn
                 });
-                if (success) closePopover();
+                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
             };
         }
-    }, 10);
+    }, 100);
 }
-
 // THAY THẾ HÀM NÀY
 function handleDeleteOrder(event) {
-    const triggerElement = event.currentTarget;
+    if (event) event.preventDefault();
+    event.stopPropagation();
 
+    const title = 'Xóa Đơn Hàng Vĩnh Viễn';
     const bodyHtml = `
         <p><strong>CẢNH BÁO:</strong> Hành động này không thể hoàn tác. Đơn hàng sẽ bị xóa và chuyển vào mục "Đã Hủy".</p>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-delete-order">Nhập Số đơn hàng để xác nhận:</label>
-            <input type="text" id="popover-delete-order" class="w-full" placeholder="Ví dụ: SO-123456...">
+            <label for="action-delete-order">Nhập Số đơn hàng để xác nhận:</label>
+            <input type="text" id="action-delete-order" class="w-full" placeholder="Ví dụ: SO-123456...">
         </div>
     `;
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-delete-order" class="btn btn-danger">Tôi hiểu, Xóa Đơn Hàng</button>
-    `;
 
-    // [SỬA LỖI] Bước 1: Mở Popover trước
-    openPopover(triggerElement, { title: 'Xóa Đơn Hàng Vĩnh Viễn', bodyHtml, footerHtml, placement: 'bottom-start' });
-    
-    // [SỬA LỖI] Bước 2: Đóng menu sau
-    document.getElementById('action-dropdown-panel').classList.remove('active');
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-delete-order" class="btn btn-danger">Tôi hiểu, Xóa Đơn Hàng</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'danger' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-delete-order" class="btn btn-danger">Tôi hiểu, Xóa Đơn Hàng</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
 
+    // Gắn sự kiện
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-delete-order');
+        const confirmBtn = document.getElementById('action-confirm-delete-order');
         if (confirmBtn) {
             confirmBtn.onclick = async () => {
-                const orderNumber = document.getElementById('popover-delete-order').value.trim();
-                 if (!orderNumber) {
-                    showToast('Vui lòng nhập số đơn hàng để xác nhận.', 'warning');
-                    return;
+                const orderNumber = document.getElementById('action-delete-order').value.trim();
+                if (!orderNumber) {
+                    showToast('Vui lòng nhập số đơn hàng để xác nhận.', 'warning'); return;
                 }
                 const { success } = await performActionOnRow({
                     action: 'deleteOrderLogic',
                     params: { orderNumber },
                     buttonElement: confirmBtn
                 });
-                if (success) closePopover();
+                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
             };
         }
-    }, 10);
+    }, 100);
 }
-// THAY THẾ HÀM NÀY
-function handleArchiveOrders(event) {
-    const triggerElement = event.currentTarget;
-
-    const bodyHtml = `<p>Bạn có chắc chắn muốn lưu trữ hóa đơn đã xuất của tháng trước không? Dữ liệu sẽ được di chuyển sang sheet lưu trữ.</p>`;
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-archive" class="btn btn-primary">Xác Nhận Lưu Trữ</button>
-    `;
-
-    // [SỬA LỖI] Bước 1: Mở Popover trước
-    openPopover(triggerElement, { title: 'Lưu Trữ Hóa Đơn', bodyHtml, footerHtml, placement: 'bottom-start' });
-    
-    // [SỬA LỖI] Bước 2: Đóng menu sau
-    document.getElementById('action-dropdown-panel').classList.remove('active');
-
-    setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-archive');
-        if (confirmBtn) {
-            confirmBtn.onclick = async () => {
-                const { success } = await performActionOnRow({
-                    action: 'archiveInvoicedOrdersMonthly',
-                    params: {},
-                    buttonElement: confirmBtn
-                });
-                if (success) closePopover();
-            };
-        }
-    }, 10);
-}
-
-    
     function updateConnectionStatus(status) {
         if(!connectionStatusEl) return;
         connectionStatusEl.className = status;
@@ -3980,7 +4127,9 @@ function handleArchiveOrders(event) {
     function updateNotifications(serverItems) {
     if (appState.notifications.isMarkingAsRead) return;
 
-    const itemsForAdmin = serverItems.filter(item => item && String(item.message || '').trim() && item.createdBy !== ADMIN_IDENTIFIER);
+    // [SỬA] Sử dụng trực tiếp `serverItems` mà không cần lọc lại.
+    // Dữ liệu đã được lọc chính xác cho Admin từ backend.
+    const itemsForAdmin = serverItems; 
     const newUnreadCount = itemsForAdmin.filter(item => !item.isRead).length;
 
     if (newUnreadCount > appState.notifications.unreadCount) {
@@ -4000,7 +4149,11 @@ function handleArchiveOrders(event) {
     }
 }
 
-    function renderNotifications() {
+    /**
+ * Render lại danh sách thông báo trong panel.
+ * [CẬP NHẬT] Thêm `data-timestamp` vào mỗi mục thông báo để làm định danh duy nhất.
+ */
+function renderNotifications() {
     // Cập nhật badge
     if (appState.notifications.unreadCount > 0) {
         notificationBadgeEl.textContent = appState.notifications.unreadCount;
@@ -4021,22 +4174,16 @@ function handleArchiveOrders(event) {
     emptyEl.style.display = 'none';
     if (footerEl) footerEl.style.display = 'none';
 
-    // === LOGIC HIỂN THỊ MỚI ===
-
-    // 1. Trạng thái đang tải (giả định)
-    // Bạn có thể thêm một biến appState.notifications.isLoading để điều khiển
-    // loadingEl.style.display = 'flex';
-    // return;
-
+    // Lọc ra các mục hợp lệ để hiển thị
     const visibleItems = appState.notifications.items.filter(item => item && item.message && String(item.message).trim() !== '');
 
-    // 2. Trạng thái rỗng
+    // Hiển thị trạng thái rỗng nếu không có thông báo
     if (visibleItems.length === 0) {
         emptyEl.style.display = 'block';
         return;
     }
 
-    // 3. Hiển thị danh sách thông báo đã được nhóm
+    // Hiển thị danh sách thông báo và footer
     listEl.style.display = 'block';
     if (footerEl) footerEl.style.display = 'flex';
 
@@ -4045,7 +4192,7 @@ function handleArchiveOrders(event) {
     for (const groupName in groupedNotifications) {
         const groupItems = groupedNotifications[groupName];
         if (groupItems.length > 0) {
-            // Tạo tiêu đề cho nhóm
+            // Tạo tiêu đề cho nhóm ngày
             const headerLi = document.createElement('li');
             headerLi.className = 'notification-group-header';
             headerLi.textContent = groupName;
@@ -4056,7 +4203,11 @@ function handleArchiveOrders(event) {
                 const li = document.createElement('li');
                 const isUnread = !item.isRead;
                 const type = item.type || 'info';
+                
                 li.className = `notification-item ${type} ${isUnread ? 'unread' : ''}`;
+                
+                // [THÊM MỚI] Gán timestamp làm định danh cho từng mục
+                li.setAttribute('data-timestamp', item.timestamp); 
 
                 if (item.targetView && item.targetId) {
                     li.dataset.view = item.targetView;
@@ -4067,7 +4218,7 @@ function handleArchiveOrders(event) {
                     success: 'fa-check-circle', 
                     warning: 'fa-exclamation-triangle', 
                     danger: 'fa-times-circle', 
-                    info: 'fa-bell' // Thay đổi icon mặc định
+                    info: 'fa-bell'
                 };
                 const iconClass = iconMap[type] || 'fa-bell';
 
@@ -4083,29 +4234,93 @@ function handleArchiveOrders(event) {
     }
 }
 
-    async function toggleNotificationPanel() {
-    const actionPanel = document.getElementById('action-dropdown-panel');
-    if (actionPanel.classList.contains('active')) {
+ // Đặt đoạn mã này vào trong thẻ <script> của bạn
+
+// BIẾN TOÀN CỤC ĐỂ DỄ QUẢN LÝ
+const actionPanel = document.getElementById('action-dropdown-panel');
+const notificationPanel = document.getElementById('notification-panel');
+const mobileOverlay = document.getElementById('mobile-panel-overlay');
+
+/**
+ * [HÀM NÂNG CẤP] Mở hoặc đóng một panel trên di động
+ * @param {HTMLElement} panel - Panel cần mở/đóng.
+ */
+function toggleMobilePanel(panel) {
+    const isOpen = panel.classList.contains('active');
+
+    // Đóng tất cả các panel khác trước
+    actionPanel.classList.remove('active');
+    notificationPanel.classList.remove('active');
+    
+    if (!isOpen) {
+        // Nếu đang đóng -> mở panel được chọn
+        panel.classList.add('active');
+        document.body.classList.add('mobile-panel-open');
+    } else {
+        // Nếu đang mở -> đóng lại
+        document.body.classList.remove('mobile-panel-open');
+    }
+}
+
+function toggleActionMenu(event) {
+    event.stopPropagation();
+    const triggerElement = event.currentTarget;
+
+    // Logic mới cho di động
+    if (window.innerWidth <= 767) {
+        // Nếu popover đang mở và được kích hoạt bởi chính nút này, hãy đóng nó lại
+        if (activePopover && popoverTrigger === triggerElement) {
+            closePopover();
+        } else {
+            // Nếu không, hãy mở popover mới
+            const actionPanelContent = document.getElementById('action-dropdown-panel').innerHTML;
+
+            openPopover(triggerElement, {
+                // Nội dung từ panel ẩn sẽ được đưa vào thân của popover
+                bodyHtml: actionPanelContent,
+                // Vị trí hiển thị popover: dưới và về phía cuối (bên phải) của nút
+                placement: 'bottom-end'
+            });
+        }
+    } else {
+        // Logic cũ cho desktop (giữ nguyên)
+        if(notificationPanel) notificationPanel.classList.remove('active');
+        if(actionPanel) actionPanel.classList.toggle('active');
+    }
+}
+
+// THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM MỚI NÀY
+async function toggleNotificationPanel(event) {
+    const triggerElement = event.currentTarget; // Lấy phần tử .notification-bell
+
+    // Logic mới cho di động
+    if (window.innerWidth <= 767) {
+        // Nếu popover đang mở và được kích hoạt bởi chính nút này, hãy đóng nó
+        if (activePopover && popoverTrigger === triggerElement) {
+            closePopover();
+        } else {
+            // Nếu không, hãy mở popover mới với nội dung thông báo
+            const notificationPanelContent = document.getElementById('notification-panel').innerHTML;
+            
+            openPopover(triggerElement, {
+                bodyHtml: notificationPanelContent,
+                placement: 'bottom-end' // Vị trí dưới-phải so với nút chuông
+            });
+        }
+    } else {
+        // Logic cũ cho desktop (giữ nguyên)
+        if(actionPanel) actionPanel.classList.remove('active');
+        if(notificationPanel) notificationPanel.classList.toggle('active');
+        appState.notifications.isPanelOpen = notificationPanel.classList.contains('active');
+    }
+}
+// Gắn sự kiện click cho lớp phủ để đóng panel
+if (mobileOverlay) {
+    mobileOverlay.addEventListener('click', () => {
         actionPanel.classList.remove('active');
-    }
-
-    appState.notifications.isPanelOpen = !appState.notifications.isPanelOpen;
-
-    const panel = document.getElementById('notification-panel');
-    if (panel) {
-        panel.classList.toggle('active', appState.notifications.isPanelOpen);
-    }
-
-    // DÒNG NÀY SẼ BỊ XÓA HOẶC GHI CHÚ
-    /*
-    if (appState.notifications.isPanelOpen && appState.notifications.unreadCount > 0) {
-        document.querySelectorAll('.notification-item.unread').forEach(item => {
-            item.classList.remove('unread');
-        });
-        notificationBadgeEl.style.display = 'none';
-        markAllAsReadFromButton();
-    }
-    */
+        notificationPanel.classList.remove('active');
+        document.body.classList.remove('mobile-panel-open');
+    });
 }
 async function markAllAsReadFromButton(event) {
     if(event) event.stopPropagation();
@@ -4121,9 +4336,18 @@ async function markAllAsReadFromButton(event) {
     renderNotifications();
 
     try {
+        // [SỬA] Lấy thông tin người dùng và vai trò từ authStorage
+        const currentUser = authStorage.get("currentUser");
+        const isAdmin = authStorage.get("userRole") === 'admin';
+
         const response = await fetch(API_URL, { 
             method: 'POST', 
-            body: new URLSearchParams({ action: 'markAllNotificationsAsRead' }) 
+            // [SỬA] Bổ sung các tham số cần thiết vào body
+            body: new URLSearchParams({ 
+                action: 'markAllNotificationsAsRead',
+                currentUser: currentUser,
+                isAdmin: isAdmin
+            }) 
         });
         const result = await response.json();
         if (!response.ok || result.status !== 'SUCCESS') {
@@ -4182,6 +4406,8 @@ async function markAllAsReadFromButton(event) {
         case 'chờ ký hóa đơn': // Bao gồm cả biến thể cũ
             return 'status-pending-signature';
         case 'đã bổ sung':
+            return 'status-supplemented';
+case 'yêu cầu vinclub':
             return 'status-supplemented';
         case 'đã ghép':
             return 'status-vin-matched';
@@ -4642,71 +4868,65 @@ function handleResendEmail(order, btnElement) {
         }
     }, 10);
 }
-// THAY THẾ HÀM NÀY
 async function handleShowTimeline(event) {
-    if(event) event.preventDefault();
-    const triggerElement = event.currentTarget;
-
+    if (event) event.preventDefault();
+    event.stopPropagation();
+    
+    const title = 'Tra Cứu Lịch Sử Đơn Hàng';
     const bodyHtml = `
         <p>Nhập Số đơn hàng bạn muốn xem lịch sử chi tiết.</p>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-timeline-input">Số đơn hàng:</label>
-            <input type="text" id="popover-timeline-input" class="w-full" placeholder="Ví dụ: SO-123456">
+            <label for="action-timeline-input">Số đơn hàng:</label>
+            <input type="text" id="action-timeline-input" class="w-full" placeholder="Ví dụ: SO-123456">
         </div>
     `;
 
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-timeline" class="btn btn-primary">Tra cứu</button>
-    `;
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-timeline" class="btn btn-primary">Tra cứu</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'info' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-timeline" class="btn btn-primary">Tra cứu</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
 
-    // Mở popover trước
-    openPopover(triggerElement, {
-        title: 'Tra Cứu Lịch Sử Đơn Hàng',
-        bodyHtml: bodyHtml,
-        footerHtml: footerHtml,
-        placement: 'bottom-start'
-    });
-    
-    // Sau đó mới đóng menu
-    document.getElementById('action-dropdown-panel')?.classList.remove('active');
-
-    // Gắn sự kiện
+    // Gắn sự kiện (hàm executeTimelineLookup đã được sửa để đóng popover/panel riêng)
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-timeline');
-        const inputEl = document.getElementById('popover-timeline-input');
-
+        const confirmBtn = document.getElementById('action-confirm-timeline');
+        const inputEl = document.getElementById('action-timeline-input');
         if (confirmBtn && inputEl) {
-            // Khi nhấn nút Tra cứu
-            confirmBtn.onclick = executeTimelineLookup;
-
-            // Khi nhấn Enter
-            inputEl.onkeypress = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    confirmBtn.click();
-                }
-            };
+            // Sửa lại hàm executeTimelineLookup để nó biết cần đóng cái gì
+            const lookupHandler = () => executeTimelineLookup(window.innerWidth <= 767 ? 'sidePanel' : 'popover');
+            confirmBtn.onclick = lookupHandler;
+            inputEl.onkeypress = (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); } };
             inputEl.focus();
         }
-    }, 10);
+    }, 100);
 }
 
-// THAY THẾ HÀM NÀY
-async function executeTimelineLookup() {
-    const lookupInput = document.getElementById('popover-timeline-input');
-    if (!lookupInput) return; // Thoát nếu không tìm thấy input (tránh lỗi)
-
+async function executeTimelineLookup(containerType) {
+    const lookupInput = document.getElementById('action-timeline-input');
+    if (!lookupInput) return;
     const orderNumber = lookupInput.value.trim();
     if (!orderNumber) {
         showToast('Vui lòng nhập số đơn hàng.', 'warning');
         return;
     }
 
-    // Đóng popover ngay lập tức
-    closePopover();
-
-    // Mở Side Panel với trạng thái đang tải
+    // Đóng container hiện tại (popover hoặc modal)
+    if (containerType === 'sidePanel') {
+        closeSidePanel();
+    } else {
+        closePopover();
+    }
     openSidePanel({
         title: `Lịch sử Đơn hàng: ${escapeHtml(orderNumber)}`,
         bodyHtml: `
@@ -5129,19 +5349,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     const notificationBellEl = document.querySelector('.notification-bell');
-    if (notificationBellEl) {
-        notificationBellEl.addEventListener('click', (event) => {
-             event.stopPropagation();
-             const item = event.target.closest('.notification-item[data-view]');
-             if (item) {
-                 appState.highlightedId = item.dataset.id;
-                 switchView(item.dataset.view);
-                 if (appState.notifications.isPanelOpen) toggleNotificationPanel();
-             } else {
-                 toggleNotificationPanel();
-             }
-        });
-    }
+if (notificationBellEl) {
+    notificationBellEl.addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        const item = event.target.closest('.notification-item');
+
+        if (item) {
+            // ... (code xử lý khi click vào một thông báo)
+        } else {
+            // Nếu click vào vùng trống (không phải 1 item) thì chỉ bật/tắt panel
+            toggleNotificationPanel(event); // << ĐÃ TRUYỀN `event` VÀO
+        }
+    });
+}
 });
 document.addEventListener('click', (event) => {
     const actionMenuPanel = document.getElementById('action-dropdown-panel');
@@ -5334,6 +5555,7 @@ function removePastedImage() {
 }
 // BIẾN TOÀN CỤC ĐỂ QUẢN LÝ POPOVER
 let activePopover = null;
+let popoverTrigger = null;
 
 /**
  * [THÊM MỚI] Hàm chính để mở một Popover
@@ -5368,28 +5590,25 @@ function openPopover(triggerElement, options) {
     // Kích hoạt hiệu ứng
     popover.classList.add('active');
     activePopover = popover;
-
+popoverTrigger = triggerElement;
     // Thêm sự kiện để đóng khi click ra ngoài
     setTimeout(() => {
         document.addEventListener('click', handleClickOutsidePopover, true);
     }, 10);
 }
 
-/**
- * [THÊM MỚI] Hàm đóng Popover
- */
 function closePopover() {
     if (!activePopover) return;
     activePopover.classList.remove('active');
-    
-    // Đợi hiệu ứng kết thúc rồi mới ẩn hoàn toàn
+
     setTimeout(() => {
         if(activePopover) {
             activePopover.style.display = 'none';
             activePopover = null;
         }
-    }, 200); // 200ms khớp với transition CSS
-    
+        popoverTrigger = null; // << THÊM DÒNG NÀY
+    }, 200); 
+
     document.removeEventListener('click', handleClickOutsidePopover, true);
 }
 
@@ -5473,79 +5692,63 @@ function positionPopover(trigger, popover, arrow, placement = 'bottom-start') {
     popover.style.top = `${top + window.scrollY}px`;
     popover.style.left = `${left + window.scrollX}px`;
 }
+// THAY THẾ HÀM NÀY
 async function handleRevertOrderStatus(event) {
-    if(event) event.preventDefault();
-    const triggerElement = event.currentTarget;
+    if (event) event.preventDefault();
+    event.stopPropagation();
 
+    const title = 'Hoàn Tác Trạng Thái Đơn Hàng';
     const bodyHtml = `
         <p>Hành động này sẽ tìm lại trạng thái cuối cùng của đơn hàng trong nhật ký và khôi phục lại nó.</p>
         <div class="form-group" style="margin-top: 10px;">
-            <label for="popover-revert-order-input">Nhập Số đơn hàng cần hoàn tác:</label>
-            <input type="text" id="popover-revert-order-input" class="w-full" placeholder="Ví dụ: N31913-VSO-25-08-0019">
+            <label for="action-revert-order-input">Nhập Số đơn hàng cần hoàn tác:</label>
+            <input type="text" id="action-revert-order-input" class="w-full" placeholder="Ví dụ: N31913-VSO-25-08-0019">
         </div>
     `;
 
-    const footerHtml = `
-        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-        <button id="popover-confirm-revert-order" class="btn btn-primary">Thực Hiện Hoàn Tác</button>
-    `;
+    // [LOGIC SỬA LỖI BẮT ĐẦU TẠI ĐÂY]
+    if (window.innerWidth <= 767) {
+        // Mobile: Dùng Modal (Side Panel)
+        closePopover();
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+            <button id="action-confirm-revert-order" class="btn btn-primary">Thực Hiện Hoàn Tác</button>
+        `;
+        openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'info' });
+    } else {
+        // Desktop: Dùng Popover
+        const footerHtml = `
+            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+            <button id="action-confirm-revert-order" class="btn btn-primary">Thực Hiện Hoàn Tác</button>
+        `;
+        openPopover(event.currentTarget, { title: title, bodyHtml: footerHtml, placement: 'bottom-start' });
+    }
+    // [LOGIC SỬA LỖI KẾT THÚC TẠI ĐÂY]
 
-    // Mở popover trước
-    openPopover(triggerElement, {
-        title: 'Hoàn Tác Trạng Thái Đơn Hàng',
-        bodyHtml: bodyHtml,
-        footerHtml: footerHtml,
-        placement: 'bottom-start'
-    });
-    
-    // Sau đó mới đóng menu
-    document.getElementById('action-dropdown-panel')?.classList.remove('active');
-
-    // Gắn sự kiện cho nút xác nhận
+    // Gắn sự kiện (phần này đã được cập nhật để hoạt động cho cả hai)
     setTimeout(() => {
-        const confirmBtn = document.getElementById('popover-confirm-revert-order');
-        const inputEl = document.getElementById('popover-revert-order-input');
-
+        const confirmBtn = document.getElementById('action-confirm-revert-order');
+        const inputEl = document.getElementById('action-revert-order-input');
         if (confirmBtn && inputEl) {
             const executeRevert = async () => {
                 const orderNumber = inputEl.value.trim();
                 if (!orderNumber) {
-                    showToast('Vui lòng nhập số đơn hàng.', 'warning');
-                    return;
+                    showToast('Vui lòng nhập số đơn hàng.', 'warning'); return;
                 }
-
                 const { success } = await performActionOnRow({
                     action: 'revertOrderStatus',
                     params: { orderNumber: orderNumber },
                     buttonElement: confirmBtn
                 });
-
-                if (success) {
-                    closePopover();
-                }
+                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
             };
-
-            // Khi nhấn nút
             confirmBtn.onclick = executeRevert;
-            
-            // Khi nhấn Enter
-            inputEl.onkeypress = (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    confirmBtn.click();
-                }
-            };
+            inputEl.onkeypress = (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); } };
             inputEl.focus();
         }
-    }, 10);
+    }, 100);
 }
-/**
- * [HÀM MỚI] - Mở Side Panel để hiển thị các gợi ý ghép xe cho một đơn hàng cụ thể.
- * Được gọi khi người dùng nhấp vào biểu tượng bóng đèn trong bảng "Chờ Ghép".
- * @param {Event} event - Đối tượng sự kiện click.
- * @param {string} orderJsonString - Chuỗi JSON chứa thông tin đơn hàng.
- * @param {string} matchingCarsJsonString - Chuỗi JSON chứa danh sách các xe phù hợp.
- */
+
 function showMatchingCarSuggestions(event, orderJsonString, matchingCarsJsonString) {
     event.preventDefault();
     event.stopPropagation();
@@ -5626,6 +5829,52 @@ function unescapeHtml(safe) {
                .replace(/&gt;/g, '>')
                .replace(/&quot;/g, '"')
                .replace(/&#039;/g, "'");
+}
+/**
+ * [HÀM MỚI] - Gửi yêu cầu đánh dấu một thông báo là đã đọc.
+ * @param {HTMLElement} notificationItem - Phần tử <li> của thông báo được nhấp vào.
+ */
+function markSingleNotificationAsRead(notificationItem) {
+    // Nếu thông báo đã được đọc rồi thì không làm gì cả
+    if (!notificationItem.classList.contains('unread')) {
+        return;
+    }
+
+    const timestamp = notificationItem.dataset.timestamp;
+    if (!timestamp) {
+        return;
+    }
+
+    // Cập nhật giao diện ngay lập tức để người dùng thấy phản hồi
+    notificationItem.classList.remove('unread');
+    
+    // Giảm số đếm trên badge (nếu có)
+    appState.notifications.unreadCount = Math.max(0, appState.notifications.unreadCount - 1);
+    renderNotifications(); // Cập nhật lại badge
+
+    // Gửi yêu cầu ngầm tới backend
+    fetch(API_URL, {
+        method: 'POST',
+        body: new URLSearchParams({
+            action: 'markNotificationAsRead',
+            timestamp: timestamp
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status !== 'SUCCESS') {
+            console.error('Lỗi khi đánh dấu đã đọc:', result.message);
+            // Có thể thêm logic để hiển thị lại trạng thái 'unread' nếu thất bại
+        } else {
+            console.log('Đã đánh dấu thông báo là đã đọc.');
+            // Cập nhật lại trạng thái trong appState
+            const itemInState = appState.notifications.items.find(i => i.timestamp === timestamp);
+            if(itemInState) itemInState.isRead = true;
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi mạng khi đánh dấu đã đọc:', error);
+    });
 }
 </script>
 </body>
