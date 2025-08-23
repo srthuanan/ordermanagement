@@ -2034,7 +2034,7 @@ function toggleMobileMenu() {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbznUGFgrykchIu9r0FsosiWZQySD-xOZEaf80Rc7a6LgfMnYMYyFKp99fWsuUdxo7JJMg/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxb6EpM-kxPQUyTkqTdn_La1E5UBvxoTYQGsq7ro3YzoVeq7druToqUuyMDL2p78Qa5BQ/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -4775,66 +4775,44 @@ function handleEditRow(rowData, btnElement) {
     });
 }
 
-async function handleBulkAction(action, actionName, event) {
+async function handleBulkAction(action, actionName, event) { // THÊM `event` VÀO ĐÂY
     const selectedOrderNumbers = Array.from(document.querySelectorAll('.invoice-checkbox:checked')).map(cb => cb.value);
     if (selectedOrderNumbers.length === 0) {
         showToast('Vui lòng chọn ít nhất một đơn hàng.', 'warning');
         return;
     }
     document.getElementById('bulk-actions-panel')?.classList.remove('active');
-    const triggerElement = event.currentTarget; // Nút bấm trong menu dropdown
-
+    
     if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
         const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
         const label = action === 'cancelRequest' ? 'Lý do hủy:' : 'Nội dung yêu cầu:';
         
-        const bodyHtml = `
-            <p>Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.</p>
-            <div class="form-group" style="margin-top: 10px;">
-                <label for="popover-bulk-reason">${label}</label>
-                <textarea id="popover-bulk-reason" rows="3" class="w-full"></textarea>
-            </div>
-        `;
-        const footerHtml = `
-            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-            <button id="popover-confirm-bulk-reason" class="btn btn-primary">Xác Nhận</button>
-        `;
-
-        openPopover(triggerElement, { title, bodyHtml, footerHtml, placement: 'bottom-start' });
-
-        setTimeout(() => {
-            const confirmBtn = document.getElementById('popover-confirm-bulk-reason');
-            if (confirmBtn) {
-                confirmBtn.onclick = async () => {
-                    const reason = document.getElementById('popover-bulk-reason').value.trim();
-                    if (!reason) {
-                        showToast('Vui lòng nhập lý do/nội dung.', 'warning');
-                        return;
-                    }
-                    await executeBulkAction(action, selectedOrderNumbers, confirmBtn, { reason });
-                    closePopover();
-                };
+        // THAY ĐỔI: Truyền `event` vào hàm showConfirmationPanel
+        showConfirmationPanel(event, {
+            title: title,
+            message: `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`,
+            inputLabel: label,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (reason, modalButton) => {
+                if (!reason) {
+                    showToast('Vui lòng nhập lý do/nội dung.', 'warning');
+                    return;
+                }
+                await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
             }
-        }, 10);
-
+        });
     } else {
-        const bodyHtml = `<p>Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?</p>`;
-        const footerHtml = `
-            <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
-            <button id="popover-confirm-bulk-simple" class="btn btn-primary">Xác Nhận</button>
-        `;
-
-        openPopover(triggerElement, { title: 'Xác Nhận Hành Động Hàng Loạt', bodyHtml, footerHtml, placement: 'bottom-start' });
-
-        setTimeout(() => {
-            const confirmBtn = document.getElementById('popover-confirm-bulk-simple');
-            if (confirmBtn) {
-                confirmBtn.onclick = async () => {
-                    await executeBulkAction(action, selectedOrderNumbers, confirmBtn);
-                    closePopover();
-                };
+        // THAY ĐỔI: Truyền `event` vào hàm showConfirmationPanel
+        showConfirmationPanel(event, {
+            title: 'Xác Nhận Hành Động Hàng Loạt',
+            message: `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
+            confirmButtonText: 'Xác Nhận',
+            confirmButtonClass: 'btn-primary',
+            onConfirm: async (inputValue, modalButton) => {
+                await executeBulkAction(action, selectedOrderNumbers, modalButton);
             }
-        }, 10);
+        });
     }
 }
 function handleResendEmail(order, btnElement) {
@@ -5228,47 +5206,6 @@ function updateBulkActionButtonState() {
     if (masterCheckbox) {
         const totalCheckboxes = document.querySelectorAll('.invoice-checkbox').length;
         masterCheckbox.checked = (count > 0 && count === totalCheckboxes);
-    }
-}
-
-async function handleBulkAction(action, actionName) {
-    const selectedOrderNumbers = Array.from(document.querySelectorAll('.invoice-checkbox:checked')).map(cb => cb.value);
-    if (selectedOrderNumbers.length === 0) {
-        showToast('Vui lòng chọn ít nhất một đơn hàng.', 'warning');
-        return;
-    }
-    const panel = document.getElementById('bulk-actions-panel');
-    if (panel) panel.classList.remove('active');
-
-    // SỬA LỖI: Chuyển đổi logic để sử dụng hàm showConfirmationPanel mới
-    if (action === 'requestSupplementForInvoice' || action === 'cancelRequest') {
-        const title = action === 'cancelRequest' ? 'Hủy Hàng Loạt' : 'Y/C Bổ Sung Hàng Loạt';
-        const label = action === 'cancelRequest' ? 'Lý do hủy:' : 'Nội dung yêu cầu:';
-        
-        // SỬA: Gọi hàm showConfirmationPanel với tùy chọn nhập liệu
-        showConfirmationPanel({
-            title: title,
-            message: `Bạn sắp thực hiện "${actionName}" cho ${selectedOrderNumbers.length} mục. Vui lòng nhập lý do.`,
-            inputLabel: label,
-            confirmButtonText: 'Xác Nhận',
-            confirmButtonClass: 'btn-primary',
-            onConfirm: async (reason, modalButton) => {
-                await executeBulkAction(action, selectedOrderNumbers, modalButton, { reason });
-                closeSidePanel(); // SỬA: Đóng side panel thay vì modal cũ
-            }
-        });
-    } else {
-        // SỬA: Gọi hàm showConfirmationPanel cho xác nhận đơn giản
-        showConfirmationPanel({
-            title: 'Xác Nhận Hành Động Hàng Loạt',
-            message: `Bạn có chắc chắn muốn thực hiện "${actionName}" cho <strong>${selectedOrderNumbers.length}</strong> đơn hàng đã chọn không?`,
-            confirmButtonText: 'Xác Nhận',
-            confirmButtonClass: 'btn-primary',
-            onConfirm: async (inputValue, modalButton) => {
-                await executeBulkAction(action, selectedOrderNumbers, modalButton);
-                closeSidePanel(); // SỬA: Đóng side panel thay vì modal cũ
-            }
-        });
     }
 }
 
@@ -5692,8 +5629,7 @@ function positionPopover(trigger, popover, arrow, placement = 'bottom-start') {
     popover.style.top = `${top + window.scrollY}px`;
     popover.style.left = `${left + window.scrollX}px`;
 }
-// THAY THẾ HÀM NÀY
-async function handleRevertOrderStatus(event) {
+function handleRevertOrderStatus(event) {
     if (event) event.preventDefault();
     event.stopPropagation();
 
@@ -5706,9 +5642,8 @@ async function handleRevertOrderStatus(event) {
         </div>
     `;
 
-    // [LOGIC SỬA LỖI BẮT ĐẦU TẠI ĐÂY]
     if (window.innerWidth <= 767) {
-        // Mobile: Dùng Modal (Side Panel)
+        // Logic cho giao diện di động (đã đúng)
         closePopover();
         const footerHtml = `
             <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
@@ -5716,16 +5651,17 @@ async function handleRevertOrderStatus(event) {
         `;
         openSidePanel({ title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, size: 'md', theme: 'info' });
     } else {
-        // Desktop: Dùng Popover
+        // Logic cho giao diện máy tính
+        // --- KHỐI LỆNH SỬA LỖI: Đảm bảo footerHtml được định nghĩa và truyền vào ---
         const footerHtml = `
             <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
             <button id="action-confirm-revert-order" class="btn btn-primary">Thực Hiện Hoàn Tác</button>
         `;
-        openPopover(event.currentTarget, { title: title, bodyHtml: footerHtml, placement: 'bottom-start' });
+        openPopover(event.currentTarget, { title: title, bodyHtml: bodyHtml, footerHtml: footerHtml, placement: 'bottom-start' });
+        // --- KẾT THÚC SỬA LỖI ---
     }
-    // [LOGIC SỬA LỖI KẾT THÚC TẠI ĐÂY]
 
-    // Gắn sự kiện (phần này đã được cập nhật để hoạt động cho cả hai)
+    // Logic xử lý sự kiện click nút xác nhận (đã đúng)
     setTimeout(() => {
         const confirmBtn = document.getElementById('action-confirm-revert-order');
         const inputEl = document.getElementById('action-revert-order-input');
@@ -5733,22 +5669,79 @@ async function handleRevertOrderStatus(event) {
             const executeRevert = async () => {
                 const orderNumber = inputEl.value.trim();
                 if (!orderNumber) {
-                    showToast('Vui lòng nhập số đơn hàng.', 'warning'); return;
+                    showToast('Vui lòng nhập số đơn hàng.', 'warning'); 
+                    return;
                 }
                 const { success } = await performActionOnRow({
                     action: 'revertOrderStatus',
                     params: { orderNumber: orderNumber },
                     buttonElement: confirmBtn
                 });
-                if (success) window.innerWidth <= 767 ? closeSidePanel() : closePopover();
+                if (success) {
+                    window.innerWidth <= 767 ? closeSidePanel() : closePopover();
+                }
             };
+            
             confirmBtn.onclick = executeRevert;
-            inputEl.onkeypress = (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmBtn.click(); } };
+            inputEl.onkeypress = (e) => { 
+                if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    confirmBtn.click(); 
+                } 
+            };
             inputEl.focus();
         }
     }, 100);
 }
+function showConfirmationPanel(event, options) {
+    const {
+        title,
+        message,
+        inputLabel = null,
+        confirmButtonText = 'Xác Nhận',
+        confirmButtonClass = 'btn-primary',
+        onConfirm
+    } = options;
 
+    let bodyHtml = `<p>${message}</p>`;
+    if (inputLabel) {
+        bodyHtml += `
+            <div class="form-group" style="margin-top: 10px;">
+                <label for="confirmation-input">${escapeHtml(inputLabel)}</label>
+                <textarea id="confirmation-input" rows="3" class="w-full"></textarea>
+            </div>
+        `;
+    }
+
+    const confirmButtonHtml = `<button id="confirmation-confirm-btn" class="btn ${confirmButtonClass}">${escapeHtml(confirmButtonText)}</button>`;
+
+    // === LOGIC MỚI: KIỂM TRA KÍCH THƯỚC MÀN HÌNH ===
+    if (window.innerWidth <= 767) {
+        // Trên di động, dùng Side Panel
+        const footerHtml = `<button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>${confirmButtonHtml}`;
+        openSidePanel({ title, bodyHtml, footerHtml, size: 'sm', theme: 'info' });
+    } else {
+        // Trên máy tính, dùng Popover
+        const footerHtml = `<button class="btn btn-secondary" onclick="closePopover()">Hủy</button>${confirmButtonHtml}`;
+        openPopover(event.currentTarget, { title, bodyHtml, footerHtml, placement: 'bottom-start' });
+    }
+    
+    // Gắn sự kiện cho nút xác nhận
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('confirmation-confirm-btn');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                const inputValue = inputLabel ? document.getElementById('confirmation-input').value.trim() : null;
+                if (typeof onConfirm === 'function') {
+                    // Gọi hàm callback và chờ nó thực thi xong
+                    await onConfirm(inputValue, confirmBtn);
+                    // Sau khi onConfirm chạy xong, tự động đóng pop-up/panel
+                    window.innerWidth <= 767 ? closeSidePanel() : closePopover();
+                }
+            };
+        }
+    }, 100);
+}
 function showMatchingCarSuggestions(event, orderJsonString, matchingCarsJsonString) {
     event.preventDefault();
     event.stopPropagation();
