@@ -367,7 +367,7 @@ body {
 /* === NHÓM TÍCH CỰC === */
 .status-invoice-issued { --status-color-main: #22c55e; --status-color-bg: #f0fdf4; }
 .status-supplemented { --status-color-main: #8b5cf6; --status-color-bg: #f5f3ff; }
-.status-vin-matched { --status-color-main: #3b82f6; --status-color-bg: #eff6ff; }
+.status-vin-matched { --status-color-main: #14b8a6; --status-color-bg: #f0fdfa; }
 .status-approved { --status-color-main: #14b8a6; --status-color-bg: #f0fdfa; }
 
 /* === NHÓM CẦN CHÚ Ý === */
@@ -376,9 +376,15 @@ body {
 .status-supplement-required { --status-color-main: #ef4444; --status-color-bg: #fef2f2; }
 
 /* === NHÓM TRUNG TÍNH / KẾT THÚC === */
-.status-unmatched,
+
+/* --- MÀU MỚI CHO TRẠNG THÁI "CHƯA GHÉP" --- */
+.status-unmatched { --status-color-main: #3b82f6; --status-color-bg: #eff6ff; } /* Xanh dương */
+
+/* --- Giữ lại màu cũ cho các trạng thái còn lại --- */
 .status-vin-not-found,
 .status-default { --status-color-main: #6b7280; --status-color-bg: #f3f4f6; }
+
+.status-cancelled { --status-color-main: #374151; --status-color-bg: #e5e7eb; }
 .status-cancelled { --status-color-main: #374151; --status-color-bg: #e5e7eb; }
 
 /* --- Các thành phần khác --- */
@@ -2034,7 +2040,7 @@ function toggleMobileMenu() {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxb6EpM-kxPQUyTkqTdn_La1E5UBvxoTYQGsq7ro3YzoVeq7druToqUuyMDL2p78Qa5BQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzcKw0ynMB8q3BfgjhPjN1PzhfjjFzHXrhCNo0jkdpRkNzF2wxXfueDn_ZlxAauxLxARQ/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -2487,7 +2493,7 @@ async function handleUndoLastAction() {
     const carVersions = [...new Set(data.map(item => item['Phiên bản']))].sort();
     const carStatuses = [...new Set(data.map(item => item['Trạng thái']))].sort();
 
-    let filteredData = data;
+    let filteredData = data.filter(row => row['VIN']); // Ensure row has a VIN
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
         filteredData = filteredData.filter(row => 
@@ -2514,7 +2520,9 @@ async function handleUndoLastAction() {
                 <div class="filter-group"><i class="fas fa-cogs filter-icon"></i><select onchange="handleFilterChange('khoXe', 'phienBan', this.value)"><option value="">Phiên Bản</option>${carVersions.map(version => `<option value="${version}" ${filters.phienBan === version ? 'selected' : ''}>${version}</option>`).join('')}</select></div>
                 <div class="filter-group"><i class="fas fa-tag filter-icon"></i><select onchange="handleFilterChange('khoXe', 'trangThai', this.value)"><option value="">Trạng Thái</option>${carStatuses.map(status => `<option value="${status}" ${filters.trangThai === status ? 'selected' : ''}>${status}</option>`).join('')}</select></div>
             </div>
-            <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+             <div class="mobile-actions-bar">
+                <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+            </div>
         </div>`;
     
     sortData(filteredData, sortKey, sortDir);
@@ -2525,22 +2533,120 @@ async function handleUndoLastAction() {
         const vin = car['VIN'];
         if (trangThai.toLowerCase() === 'đã ghép' && vinToSoDonHangMap.has(vin)) {
             const soDonHang = vinToSoDonHangMap.get(vin);
-            car['Trạng thái'] = `<a href="#" class="cross-view-link" data-target-view="daGhep" data-filter-value="${soDonHang}" data-highlight-id="${soDonHang}" title="Xem đơn hàng ${soDonHang}"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span></a>`;
+            car['Trạng thái Link'] = `<a href="#" class="cross-view-link" data-target-view="daGhep" data-filter-value="${soDonHang}" data-highlight-id="${soDonHang}" title="Xem đơn hàng ${soDonHang}">${trangThai}</a>`;
         } else {
-            car['Trạng thái'] = `<span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThai}</span>`;
+            car['Trạng thái Link'] = trangThai;
         }
     });
 
-    const tableHeaders = [
-        { key: 'VIN', label: 'Số VIN' }, { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản' },
-        { key: 'Ngoại thất', label: 'Ngoại Thất' }, { key: 'Nội thất', label: 'Nội Thất' }, { key: 'Trạng thái', label: 'Trạng Thái' },
-        { key: 'Ngày nhập', label: 'Ngày Nhập Kho' }, { key: 'Mã DMS', label: 'Mã DMS' }
+    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderKhoXeTable('khoXeTable', dataWithLinks, appState.khoXe) + `</div>`;
+}
+function renderKhoXeTable(id, rows, viewState) {
+    if (!rows || rows.length === 0) {
+        return `<div class="empty-state-container" style="text-align:center; padding: 40px;"><p>Không có dữ liệu để hiển thị</p></div>`;
+    }
+
+    const createCopyableHtml = (displayValue, copyValue) => {
+        const valueToCopy = copyValue || displayValue;
+        if (!valueToCopy || valueToCopy === 'N/A') return `<div class="copyable-field"><span class="copy-text">${escapeHtml(displayValue) || 'N/A'}</span></div>`;
+        const valueForJs = escapeHtml(String(valueToCopy)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        return `<div class="copyable-field" title="Click icon để sao chép"><span class="copy-text">${escapeHtml(displayValue)}</span><i class="fas fa-copy copy-icon" onclick="copyToClipboard('${valueForJs}', event)"></i></div>`;
+    };
+
+    const desktopHeaders = [
+        { key: 'STT', label: 'STT' }, { key: 'VIN', label: 'Số VIN' }, { key: 'Dòng xe', label: 'Dòng Xe' },
+        { key: 'Phiên bản', label: 'Phiên Bản' }, { key: 'Ngoại thất', label: 'Ngoại Thất' },
+        { key: 'Nội thất', label: 'Nội Thất' }, { key: 'Trạng thái', label: 'Trạng Thái' },
+        { key: 'Ngày nhập', label: 'Ngày Nhập Kho' }, { key: 'Mã DMS', label: 'Mã DMS' }, { key: 'actions', label: 'Hành động'}
     ];
+    
+    const headerHTML = desktopHeaders.map(header => {
+        let headerContent = header.label;
+        let headerOnClick = '';
+        if (viewState && viewState.sortKey && !['STT', 'actions'].includes(header.key)) {
+            const isSorted = viewState.sortKey === header.key;
+            const icon = isSorted ? (viewState.sortDir === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>') : '<i class="fas fa-sort" style="opacity: 0.4;"></i>';
+            headerContent += ` ${icon}`;
+            headerOnClick = `onclick="handleSort('${appState.currentView}', '${header.key}')"`;
+        }
+        return `<th ${headerOnClick}>${headerContent}</th>`;
+    }).join('');
 
-    const getActionsForRow = (row) => [{ icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
-    const copyableFieldsForKhoXe = ['VIN', 'Mã DMS'];
+    let rowsHTML = '';
+    rows.forEach((row, index) => {
+        const rowId = row['VIN'];
+        const trangThai = row['Trạng thái'];
+        const trangThaiLink = row['Trạng thái Link'];
+        const ngayNhap = formatCustomDateTime(row['Ngày nhập']).split(' ')[1] || 'N/A';
 
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('khoXeTable', tableHeaders, dataWithLinks, appState.khoXe, getActionsForRow, copyableFieldsForKhoXe) + `</div>`;
+        const actions = [{ icon: 'fa-pencil-alt', label: 'Chỉnh Sửa', class: 'btn-secondary', handler: 'handleEditRow' }];
+        const inlineActionsHTML = renderInlineRowActions(actions, row);
+
+        rowsHTML += `
+            <tr id="row-${rowId}">
+                <td class="desktop-cell" data-label="STT"><b>${index + 1}</b></td>
+                <td class="desktop-cell" data-label="Số VIN">${createCopyableHtml(row['VIN'])}</td>
+                <td class="desktop-cell" data-label="Dòng Xe">${escapeHtml(row['Dòng xe'])}</td>
+                <td class="desktop-cell" data-label="Phiên Bản">${escapeHtml(row['Phiên bản'])}</td>
+                <td class="desktop-cell" data-label="Ngoại Thất">${escapeHtml(row['Ngoại thất'])}</td>
+                <td class="desktop-cell" data-label="Nội Thất">${escapeHtml(row['Nội thất'])}</td>
+                <td class="desktop-cell" data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThaiLink}</span></td>
+                <td class="desktop-cell" data-label="Ngày Nhập Kho">${ngayNhap}</td>
+                <td class="desktop-cell" data-label="Mã DMS">${createCopyableHtml(row['Mã DMS'])}</td>
+                <td class="desktop-cell actions-cell-inline"><div class="inline-buttons-container">${inlineActionsHTML}</div></td>
+
+                <td class="mobile-card-wrapper">
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div>
+                                <div class="title">${escapeHtml(row['VIN'])}</div>
+                                <div class="subtitle">${escapeHtml(row['Dòng xe'])} - ${escapeHtml(row['Phiên bản'])}</div>
+                            </div>
+                            <span class="status-badge ${getStatusBadgeClass(trangThai)}">${trangThaiLink}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-item">
+                                <span class="label">Màu sắc:</span>
+                                <span class="value">${escapeHtml(row['Ngoại thất'])} / ${escapeHtml(row['Nội thất'])}</span>
+                            </div>
+                            <div class="mobile-card-item">
+                                <span class="label">Mã DMS:</span>
+                                <span class="value">${escapeHtml(row['Mã DMS'])}</span>
+                            </div>
+                            <div class="mobile-card-item">
+                                <span class="label">Ngày nhập kho:</span>
+                                <span class="value">${ngayNhap}</span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-footer">
+                           <div class="inline-buttons-container">${inlineActionsHTML}</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    setTimeout(() => {
+        const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function(event) {
+                const button = event.target.closest('a[data-action]');
+                if (button) {
+                    event.preventDefault();
+                    const handlerName = button.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') window[handlerName](rowData, button);
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
 }
 
 // Tìm hàm này và SỬA NÓ
@@ -2877,12 +2983,16 @@ function handleRequestVinClub(order, btnElement) {
 }    
 function renderHuyGhepView() {
     const data = appState.data.huyghep || [];
-    const { searchTerm } = appState.huyGhep;
+    const { searchTerm, sortKey, sortDir } = appState.huyGhep;
     
     let filteredData = data;
     if (searchTerm) {
         const lowercasedTerm = searchTerm.toLowerCase();
-        filteredData = filteredData.filter(row => (row['Số đơn hàng']?.toLowerCase().includes(lowercasedTerm)) || (row['Tên khách hàng']?.toLowerCase().includes(lowercasedTerm)) || (row['VIN']?.toLowerCase().includes(lowercasedTerm)));
+        filteredData = filteredData.filter(row => 
+            (row['Số đơn hàng']?.toLowerCase().includes(lowercasedTerm)) || 
+            (row['Tên khách hàng']?.toLowerCase().includes(lowercasedTerm)) || 
+            (row['VIN']?.toLowerCase().includes(lowercasedTerm))
+        );
     }
     
     const totalCount = filteredData.length;
@@ -2890,21 +3000,116 @@ function renderHuyGhepView() {
     const toolbarHTML = `
         <div class="view-toolbar">
             <div class="filter-container">
-                <div class="filter-group"><i class="fas fa-search filter-icon"></i><input type="text" placeholder="Tìm kiếm trong Đơn hàng đã hủy..." oninput="handleSearchInput('huyGhep', this.value)" value="${searchTerm || ''}" style="padding-left: 34px; min-width: 300px;"></div>
+                <div class="filter-group">
+                    <i class="fas fa-search filter-icon"></i>
+                    <input type="text" placeholder="Tìm kiếm trong Đơn hàng đã hủy..." 
+                           oninput="handleSearchInput('huyGhep', this.value)" 
+                           value="${searchTerm || ''}" 
+                           style="padding-left: 34px; min-width: 300px;">
+                </div>
             </div>
-            <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+             <div class="mobile-actions-bar">
+                <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+            </div>
         </div>`;
 
-    const { sortKey, sortDir } = appState.huyGhep;
     sortData(filteredData, sortKey, sortDir);
-    const tableHeaders = [
-        { key: 'Thời gian hủy', label: 'Thời Gian Hủy' }, { key: 'Số đơn hàng', label: 'Số Đơn Hàng' },
-        { key: 'Tên khách hàng', label: 'Tên Khách Hàng' }, { key: 'VIN', label: 'Số VIN' },
-        { key: 'Dòng xe', label: 'Dòng Xe' }, { key: 'Phiên bản', label: 'Phiên Bản'},
-        { key: 'Người hủy', label: 'Người Hủy' }, { key: 'Kết quả', label: 'Lý do' }
-    ];
     
-    mainContentEl.innerHTML = toolbarHTML + `<div class="table-wrapper">` + renderDataTable('huyGhepTable', tableHeaders, filteredData, null, null) + `</div>`;
+    // Gọi hàm render bảng mới
+    const tableHTML = `<div class="table-wrapper">` + renderHuyGhepTable('huyGhepTable', filteredData, appState.huyGhep) + `</div>`;
+
+    mainContentEl.innerHTML = toolbarHTML + tableHTML;
+}
+/**
+ * [HÀM MỚI] - Render bảng Đơn Đã Hủy với giao diện thẻ cho di động.
+ */
+function renderHuyGhepTable(id, rows, viewState) {
+    if (!rows || rows.length === 0) {
+        return `<div class="empty-state-container" style="text-align:center; padding: 40px;"><p>Không có dữ liệu để hiển thị</p></div>`;
+    }
+
+    const desktopHeaders = [
+        { key: 'STT', label: 'STT' },
+        { key: 'Thời gian hủy', label: 'Thời Gian Hủy' },
+        { key: 'Tên khách hàng', label: 'Khách Hàng' },
+        { key: 'Số đơn hàng', label: 'Số Đơn Hàng' },
+        { key: 'VIN', label: 'Số VIN Đã Ghép' },
+        { key: 'Dòng xe', label: 'Dòng Xe' },
+        { key: 'Người hủy', label: 'Người Hủy' },
+        { key: 'Kết quả', label: 'Lý do Hủy' }
+    ];
+
+    const headerHTML = desktopHeaders.map(header => {
+        let headerContent = header.label;
+        let headerOnClick = '';
+        if (viewState && viewState.sortKey && !['STT', 'Dòng xe'].includes(header.key)) {
+            const isSorted = viewState.sortKey === header.key;
+            const icon = isSorted ? (viewState.sortDir === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>') : '<i class="fas fa-sort" style="opacity: 0.4;"></i>';
+            headerContent += ` ${icon}`;
+            headerOnClick = `onclick="handleSort('${appState.currentView}', '${header.key}')"`;
+        }
+        return `<th ${headerOnClick}>${headerContent}</th>`;
+    }).join('');
+
+    let rowsHTML = '';
+    rows.forEach((row, index) => {
+        const rowId = row['Số đơn hàng'] || `huy-${index}`;
+        const thoiGianHuy = formatCustomDateTime(row['Thời gian hủy']);
+        const tenKH = row['Tên khách hàng'];
+        const soDH = row['Số đơn hàng'];
+        const soVin = row['VIN'];
+        const dongXe = `${row['Dòng xe']} - ${row['Phiên bản']}`;
+        const nguoiHuy = row['Người hủy'];
+        const lyDo = row['Kết quả']; // Cột 'Kết quả' chứa lý do hủy
+
+        rowsHTML += `
+            <tr id="row-${rowId}">
+                <td class="desktop-cell" data-label="STT"><b>${index + 1}</b></td>
+                <td class="desktop-cell" data-label="Thời Gian Hủy">${thoiGianHuy}</td>
+                <td class="desktop-cell" data-label="Khách Hàng">${escapeHtml(tenKH)}</td>
+                <td class="desktop-cell" data-label="Số Đơn Hàng">${escapeHtml(soDH)}</td>
+                <td class="desktop-cell" data-label="Số VIN Đã Ghép">${escapeHtml(soVin)}</td>
+                <td class="desktop-cell" data-label="Dòng Xe">${escapeHtml(dongXe)}</td>
+                <td class="desktop-cell" data-label="Người Hủy">${escapeHtml(nguoiHuy)}</td>
+                <td class="desktop-cell" data-label="Lý do Hủy"><span class="status-badge status-cancelled">${escapeHtml(lyDo)}</span></td>
+
+                <td class="mobile-card-wrapper">
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div>
+                                <div class="title">${escapeHtml(tenKH)}</div>
+                                <div class="subtitle">${escapeHtml(soDH)}</div>
+                            </div>
+                            <span class="status-badge status-cancelled" style="text-align: right;">${escapeHtml(lyDo)}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                             <div class="mobile-card-section">
+                                <div class="mobile-card-section-title"><i class="fas fa-car-crash"></i> Chi tiết đơn hủy</div>
+                                <div class="mobile-card-item">
+                                    <span class="label">Dòng xe:</span>
+                                    <span class="value">${escapeHtml(dongXe)}</span>
+                                </div>
+                                <div class="mobile-card-item">
+                                    <span class="label">Số VIN:</span>
+                                    <span class="value">${escapeHtml(soVin)}</span>
+                                </div>
+                                <div class="mobile-card-item">
+                                    <span class="label">Người hủy:</span>
+                                    <span class="value">${escapeHtml(nguoiHuy)}</span>
+                                </div>
+                                <div class="mobile-card-item">
+                                    <span class="label">Thời gian hủy:</span>
+                                    <span class="value">${thoiGianHuy}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
 }
 
     
@@ -4291,36 +4496,39 @@ function toggleActionMenu(event) {
 
 // THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM MỚI NÀY
 async function toggleNotificationPanel(event) {
-    const triggerElement = event.currentTarget; // Lấy phần tử .notification-bell
+    // Nếu `event` tồn tại, ngăn chặn các hành vi mặc định và lấy phần tử kích hoạt
+    if (event) {
+        event.stopPropagation();
+        const triggerElement = event.currentTarget; // Lấy phần tử .notification-bell
 
-    // Logic mới cho di động
-    if (window.innerWidth <= 767) {
-        // Nếu popover đang mở và được kích hoạt bởi chính nút này, hãy đóng nó
-        if (activePopover && popoverTrigger === triggerElement) {
-            closePopover();
+        // Logic mới cho di động
+        if (window.innerWidth <= 767) {
+            // Nếu popover đang mở và được kích hoạt bởi chính nút này, hãy đóng nó
+            if (activePopover && popoverTrigger === triggerElement) {
+                closePopover();
+            } else {
+                // Nếu không, hãy mở popover mới với nội dung thông báo
+                const notificationPanelContent = document.getElementById('notification-panel').innerHTML;
+
+                openPopover(triggerElement, {
+                    bodyHtml: notificationPanelContent,
+                    placement: 'bottom-end' // Vị trí dưới-phải so với nút chuông
+                });
+            }
         } else {
-            // Nếu không, hãy mở popover mới với nội dung thông báo
-            const notificationPanelContent = document.getElementById('notification-panel').innerHTML;
-            
-            openPopover(triggerElement, {
-                bodyHtml: notificationPanelContent,
-                placement: 'bottom-end' // Vị trí dưới-phải so với nút chuông
-            });
+            // Logic cũ cho desktop (giữ nguyên)
+            if(actionPanel) actionPanel.classList.remove('active');
+            if(notificationPanel) notificationPanel.classList.toggle('active');
+            appState.notifications.isPanelOpen = notificationPanel.classList.contains('active');
         }
     } else {
-        // Logic cũ cho desktop (giữ nguyên)
-        if(actionPanel) actionPanel.classList.remove('active');
-        if(notificationPanel) notificationPanel.classList.toggle('active');
-        appState.notifications.isPanelOpen = notificationPanel.classList.contains('active');
+        // Trường hợp hàm được gọi mà không có event (ví dụ: click ra ngoài để đóng)
+        // Chỉ cần đảm bảo panel trên desktop được đóng lại một cách an toàn
+        if (notificationPanel && notificationPanel.classList.contains('active')) {
+            notificationPanel.classList.remove('active');
+            appState.notifications.isPanelOpen = false;
+        }
     }
-}
-// Gắn sự kiện click cho lớp phủ để đóng panel
-if (mobileOverlay) {
-    mobileOverlay.addEventListener('click', () => {
-        actionPanel.classList.remove('active');
-        notificationPanel.classList.remove('active');
-        document.body.classList.remove('mobile-panel-open');
-    });
 }
 async function markAllAsReadFromButton(event) {
     if(event) event.stopPropagation();
@@ -4390,10 +4598,9 @@ async function markAllAsReadFromButton(event) {
 
     function getStatusBadgeClass(statusText) {
     if (!statusText || typeof statusText !== 'string') {
-        return 'status-default'; // Trạng thái mặc định nếu không có text
+        return 'status-default';
     }
 
-    // Chuẩn hóa chuỗi trạng thái: chuyển về chữ thường, bỏ dấu, bỏ khoảng trắng thừa
     const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
 
     switch (lowerStatus) {
@@ -4403,14 +4610,18 @@ async function markAllAsReadFromButton(event) {
         case 'đã phê duyệt':
             return 'status-approved';
         case 'chờ ký hóa đơn':
-        case 'chờ ký hóa đơn': // Bao gồm cả biến thể cũ
+        case 'chờ ký hóa đơn':
             return 'status-pending-signature';
         case 'đã bổ sung':
             return 'status-supplemented';
-case 'yêu cầu vinclub':
+        case 'yêu cầu vinclub':
             return 'status-supplemented';
+        // =======================================================
+        // === SỬA LỖI TẠI ĐÂY ===
+        // Trả về đúng class "status-vin-matched" cho "đã ghép"
+        // =======================================================
         case 'đã ghép':
-            return 'status-vin-matched';
+            return 'status-vin-matched'; 
 
         // CÁC TRẠNG THÁI CẦN CHÚ Ý
         case 'chờ phê duyệt':
@@ -5052,51 +5263,191 @@ function copyToClipboard(text, event) {
 function renderDangKyChoView() {
     const data = appState.data.dangkycho || [];
     const totalCount = data.length;
+
+    // Sắp xếp dữ liệu theo thời gian đăng ký mới nhất
+    const { sortKey, sortDir } = appState.dangKyCho;
+    sortData(data, sortKey, sortDir);
+    
     const toolbarHTML = `
         <div class="view-toolbar">
-            <div class="filter-container"></div>
-            <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+            <div class="filter-container">
+                </div>
+             <div class="mobile-actions-bar">
+                <div class="total-count-display"><i class="fas fa-list-ol"></i> Tổng: <strong>${totalCount}</strong></div>
+            </div>
         </div>`;
-    const tableHeaders = [
-        { key: 'STT', label: 'STT' }, { key: 'Thời gian đăng ký', label: 'Thời Gian ĐK' },
-        { key: 'Tên TVBH', label: 'Tên TVBH' }, { key: 'Tên khách hàng', label: 'Tên Khách Hàng' },
-        { key: 'Yêu cầu Xe', label: 'Yêu Cầu Xe' }, { key: 'Trạng thái', label: 'Trạng Thái' },
-        { key: 'Ghi chú', label: 'Ghi Chú / Phản Hồi' }
-    ];
-    const getRowsHTML = (rows) => {
-        if (!rows || rows.length === 0) {
-            return `<tr><td colspan="${tableHeaders.length}" style="text-align: center; padding: 20px;">Không có dữ liệu</td></tr>`;
-        }
-        return rows.map((row, index) => {
-            const requestId = escapeHtml(row['ID Yêu Cầu']);
-            const ghiChu = escapeHtml(row['Ghi chú']);
-            const yeuCauXe = `${escapeHtml(row['Dòng xe'])} ${escapeHtml(row['Phiên bản'])}<br><span class="sub-info">${escapeHtml(row['Ngoại thất'])} / ${escapeHtml(row['Nội thất'])}</span>`;
-            return `
-                <tr id="row-${requestId}">
-                    <td data-label="STT"><b>${index + 1}</b></td>
-                    <td data-label="Thời Gian ĐK">${formatCustomDateTime(row['Thời gian đăng ký'])}</td>
-                    <td data-label="Tên TVBH">${escapeHtml(row['Tên TVBH'])}</td>
-                    <td data-label="Tên Khách Hàng">${escapeHtml(row['Tên khách hàng'])}</td>
-                    <td data-label="Yêu Cầu Xe">${yeuCauXe}</td>
-                    <td data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(row['Trạng thái'])}">${escapeHtml(row['Trạng thái'])}</span></td>
-                    <td data-label="Ghi Chú / Phản Hồi">
-                        <div>
-                            <textarea rows="2" class="w-full" placeholder="Nhập phản hồi...">${ghiChu}</textarea>
-                            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;" onclick="saveNote(this, '${requestId}')"><i class="fas fa-save"></i> Lưu</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    };
-    const tableHTML = `
-        <div class="table-wrapper">
-            <table class="data-table" id="dangKyChoTable">
-                <thead><tr>${tableHeaders.map(h => `<th>${h.label}</th>`).join('')}</tr></thead>
-                <tbody>${getRowsHTML(data)}</tbody>
-            </table>
-        </div>`;
+    
+    // Gọi hàm render bảng mới
+    const tableHTML = `<div class="table-wrapper">` + renderDangKyChoTable('dangKyChoTable', data, appState.dangKyCho) + `</div>`;
+
     mainContentEl.innerHTML = toolbarHTML + tableHTML;
+}
+function renderDangKyChoTable(id, rows, viewState) {
+    if (!rows || rows.length === 0) {
+        return `<div class="empty-state-container" style="text-align:center; padding: 40px;"><p>Không có dữ liệu để hiển thị</p></div>`;
+    }
+
+    const desktopHeaders = [
+        { key: 'STT', label: 'STT' },
+        { key: 'Thời gian đăng ký', label: 'Thời Gian ĐK' },
+        { key: 'Tên TVBH', label: 'Tên TVBH' },
+        { key: 'Tên khách hàng', label: 'Tên Khách Hàng' },
+        { key: 'Yêu cầu Xe', label: 'Yêu Cầu Xe' },
+        { key: 'Trạng thái', label: 'Trạng Thái' },
+        { key: 'Ghi chú', label: 'Hành Động & Ghi Chú' }
+    ];
+
+    const headerHTML = desktopHeaders.map(header => {
+        let headerContent = header.label;
+        let headerOnClick = '';
+        if (viewState && viewState.sortKey && !['STT', 'Yêu cầu Xe', 'Ghi chú'].includes(header.key)) {
+            const isSorted = viewState.sortKey === header.key;
+            const icon = isSorted ? (viewState.sortDir === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>') : '<i class="fas fa-sort" style="opacity: 0.4;"></i>';
+            headerContent += ` ${icon}`;
+            headerOnClick = `onclick="handleSort('${appState.currentView}', '${header.key}')"`;
+        }
+        return `<th ${headerOnClick}>${headerContent}</th>`;
+    }).join('');
+
+    let rowsHTML = '';
+    rows.forEach((row, index) => {
+        const requestId = row['ID Yêu Cầu'];
+        const tenKH = row['Tên khách hàng'];
+        const tenTVBH = row['Tên TVBH'];
+        const trangThai = row['Trạng thái'];
+        const dongXe = row['Dòng xe'];
+        const phienBan = row['Phiên bản'];
+        const ngoaiThat = row['Ngoại thất'];
+        const noiThat = row['Nội thất'];
+        const thoiGianDK = formatCustomDateTime(row['Thời gian đăng ký']);
+        const ghiChu = row['Ghi chú'] || '';
+        
+        const yeuCauXeHTML = `${escapeHtml(dongXe)} ${escapeHtml(phienBan)}<br><span class="sub-info">${escapeHtml(ngoaiThat)} / ${escapeHtml(noiThat)}</span>`;
+        
+        const rowDataString = JSON.stringify(row).replace(/'/g, "&apos;");
+        const actionsHTML = `
+            <div class="note-container" style="margin-bottom: 8px;">
+                <textarea rows="2" class="w-full" placeholder="Nhập phản hồi...">${escapeHtml(ghiChu)}</textarea>
+                <button class="btn btn-primary" style="padding: 5px 10px; font-size: 12px; margin-top: 5px;" onclick="saveNote(this, '${escapeHtml(requestId)}')">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </div>
+            <div class="inline-buttons-container" style="justify-content: flex-end;">
+                 <a href="#" class="btn-icon" title="Xóa Yêu Cầu" 
+                   data-action="handleDeleteWaitingRequest" data-order='${rowDataString}' 
+                   style="color: #dc2626;">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </div>
+        `;
+        
+        rowsHTML += `
+            <tr id="row-${requestId}">
+                <td class="desktop-cell" data-label="STT"><b>${index + 1}</b></td>
+                <td class="desktop-cell" data-label="Thời Gian ĐK">${thoiGianDK}</td>
+                <td class="desktop-cell" data-label="Tên TVBH">${escapeHtml(tenTVBH)}</td>
+                <td class="desktop-cell" data-label="Tên Khách Hàng">${escapeHtml(tenKH)}</td>
+                <td class="desktop-cell" data-label="Yêu Cầu Xe">${yeuCauXeHTML}</td>
+                <td class="desktop-cell" data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${escapeHtml(trangThai)}</span></td>
+                <td class="desktop-cell" data-label="Hành Động & Ghi Chú">${actionsHTML}</td>
+
+                <td class="mobile-card-wrapper">
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div>
+                                <div class="title">${escapeHtml(tenKH)}</div>
+                                <div class="subtitle">${escapeHtml(tenTVBH)}</div>
+                            </div>
+                            <span class="status-badge ${getStatusBadgeClass(trangThai)}">${escapeHtml(trangThai)}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-item">
+                                <span class="label">Dòng xe:</span>
+                                <span class="value">${escapeHtml(dongXe)} - ${escapeHtml(phienBan)}</span>
+                            </div>
+                            <div class="mobile-card-item">
+                                <span class="label">Màu sắc:</span>
+                                <span class="value">${escapeHtml(ngoaiThat)} / ${escapeHtml(noiThat)}</span>
+                            </div>
+                            <div class="mobile-card-item">
+                                <span class="label">Thời gian ĐK:</span>
+                                <span class="value">${thoiGianDK}</span>
+                            </div>
+                        </div>
+                        <div class="mobile-card-footer">
+                           ${actionsHTML}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    // =================================================================
+    // === ĐOẠN MÃ SỬA LỖI ĐƯỢC THÊM VÀO ĐÂY ===
+    // =================================================================
+    // Đoạn mã này sẽ gắn "bộ lắng nghe" sự kiện vào bảng sau khi nó được vẽ ra,
+    // đảm bảo các nút bấm có `data-action` sẽ hoạt động.
+    setTimeout(() => {
+        const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function(event) {
+                const button = event.target.closest('a[data-action]');
+                if (button) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const handlerName = button.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(button.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') {
+                            window[handlerName](rowData, button);
+                        }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+    // =================================================================
+    // === KẾT THÚC SỬA LỖI ===
+    // =================================================================
+
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+}
+/**
+ * [HÀM MỚI] - Xử lý sự kiện click nút xóa yêu cầu chờ.
+ */
+function handleDeleteWaitingRequest(order, btnElement) {
+    const requestId = order['ID Yêu Cầu'];
+    const customerName = order['Tên khách hàng'];
+
+    const bodyHtml = `<p>Bạn có chắc chắn muốn xóa vĩnh viễn yêu cầu chờ của khách hàng <strong>${escapeHtml(customerName)}</strong> không? Hành động này không thể hoàn tác.</p>`;
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closePopover()">Không</button>
+        <button id="popover-confirm-delete-wait" class="btn btn-danger">Có, Xóa Ngay</button>
+    `;
+
+    openPopover(btnElement, {
+        title: 'Xác Nhận Xóa Yêu Cầu Chờ',
+        bodyHtml: bodyHtml,
+        footerHtml: footerHtml,
+        placement: 'top-start'
+    });
+
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('popover-confirm-delete-wait');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                const { success } = await performActionOnRow({
+                    action: 'deleteWaitingRequest',
+                    params: { requestId: requestId, deletedBy: 'Admin' },
+                    buttonElement: confirmBtn
+                });
+                if (success) closePopover();
+            };
+        }
+    }, 10);
 }
 async function saveNote(buttonElement, requestId) {
     const noteTextarea = buttonElement.previousElementSibling;
@@ -5309,8 +5660,8 @@ document.addEventListener('click', (event) => {
     }
     const notificationBellEl = document.querySelector('.notification-bell');
     if (appState.notifications.isPanelOpen && notificationBellEl && !notificationBellEl.contains(event.target)) {
-        toggleNotificationPanel();
-    }
+    toggleNotificationPanel(event); // << ĐÃ SỬA
+}
     const bulkActionPanel = document.getElementById('bulk-actions-panel');
     const bulkActionBtn = document.getElementById('bulk-actions-btn');
     if (bulkActionPanel && bulkActionBtn && bulkActionPanel.classList.contains('active') && !bulkActionBtn.contains(event.target) && !bulkActionPanel.contains(event.target)) {
