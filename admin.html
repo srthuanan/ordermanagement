@@ -2210,39 +2210,68 @@ const appState = {
     // =================================================================
     
     async function fetchInitialData(isSilent = false) {
-        if (!isSilent) {
-            appState.loading = true;
-            render();
-        }
-        updateConnectionStatus('connecting');
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`Lỗi mạng: ${response.status} ${response.statusText}`);
-            const result = await response.json();
-            
-            if (result.status === "SUCCESS") {
-                appState.data = result;
-                appState.currentDataVersion = result.version;
-                appState.error = null;
-                updateConnectionStatus('online');
-                appState.connection.currentDelay = appState.connection.baseDelay;
-                if (result.notifications) {
-                    updateNotifications(result.notifications);
-                }
-            } else {
-                throw new Error(result.message || 'Lỗi không xác định từ API');
-            }
-        } catch (error) {
-            console.error("Lỗi khi tải dữ liệu ban đầu:", error);
-            appState.error = error.message;
-            updateConnectionStatus('offline');
-        } finally {
-            if (!isSilent) {
-                appState.loading = false;
-            }
-            render();
-        }
+    if (!isSilent) {
+        appState.loading = true;
+        render();
     }
+    updateConnectionStatus('connecting');
+    try {
+        // Tạo URL mới với tham số timestamp để đảm bảo không dùng cache
+        const url = new URL(API_URL);
+        url.searchParams.append('timestamp', new Date().getTime());
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.status} ${response.statusText}`);
+        const result = await response.json();
+        
+        if (result.status === "SUCCESS") {
+            appState.data = result;
+            appState.currentDataVersion = result.version;
+            appState.error = null;
+            updateConnectionStatus('online');
+            appState.connection.currentDelay = appState.connection.baseDelay;
+            if (result.notifications) {
+                updateNotifications(result.notifications);
+            }
+        } else {
+            throw new Error(result.message || 'Lỗi không xác định từ API');
+        }
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu ban đầu:", error);
+        appState.error = error.message;
+        updateConnectionStatus('offline');
+    } finally {
+        if (!isSilent) {
+            appState.loading = false;
+        }
+        render();
+    }
+}
+/**
+ * Hàm định dạng ngày giờ chuẩn cho giao diện người dùng.
+ * @param {string | Date} dateValue - Giá trị ngày tháng cần định dạng.
+ * @returns {string} - Chuỗi có định dạng HH:mm DD/MM/YYYY hoặc 'N/A'.
+ */
+function formatCustomDateTime(dateValue) {
+    if (!dateValue) return 'N/A';
+    try {
+        const date = new Date(dateValue);
+        // Kiểm tra xem date có hợp lệ không
+        if (isNaN(date.getTime())) return 'N/A';
+
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        // Trả về định dạng thân thiện với người dùng
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (e) {
+        // Trả về N/A nếu có lỗi xảy ra
+        return 'N/A';
+    }
+}
 
     async function checkDataVersion() {
     if (!appState.connection.isPolling) return;
