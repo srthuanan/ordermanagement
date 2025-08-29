@@ -1776,6 +1776,9 @@ body.panel-open {
     <a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a>
 </nav>
         <div class="navbar-controls">
+<button class="nav-btn" onclick="fetchInitialData()" title="Tải lại toàn bộ dữ liệu">
+        <i class="fas fa-sync-alt"></i>
+    </button>
     <div class="action-dropdown-menu">
         <button class="nav-btn" onclick="toggleActionMenu(event)" title="Thao tác nhanh">
             <i class="fas fa-bolt"></i>
@@ -2040,7 +2043,7 @@ function toggleMobileMenu() {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxgy90Fbm5QgD1e-Aqhdq09V9FX8b0ozj7O9Vm56KRRK2BWt2HiikyrCofdQEj85_asEw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw89QhZyj3ox345o485Li5nxnUZVcMZ1ZKr7eNwjnMxh2UbyTosewp9OxWlz8OC3_Qqjw/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
