@@ -2473,7 +2473,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbxgy90Fbm5QgD1e-Aqhdq09V9FX8b0ozj7O9Vm56KRRK2BWt2HiikyrCofdQEj85_asEw/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzecCV8JTCqLVGODVH9jucLZYWFKMri4BZyCkrpJbv8zyf62BVAYBWncUDeGjzJxG8Iyw/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -6156,6 +6156,31 @@ function handleTvbhConfirmVinClub(event, orderNumber) {
         orderNumber: orderNumber,
         updatedBy: sessionStorage.getItem("currentConsultant")
     });
+}
+/**
+ * Hàm định dạng ngày giờ chuẩn cho giao diện người dùng.
+ * @param {string | Date} dateValue - Giá trị ngày tháng cần định dạng.
+ * @returns {string} - Chuỗi có định dạng HH:mm DD/MM/YYYY hoặc 'N/A'.
+ */
+function formatCustomDateTime(dateValue) {
+    if (!dateValue) return 'N/A';
+    try {
+        const date = new Date(dateValue);
+        // Kiểm tra xem date có hợp lệ không
+        if (isNaN(date.getTime())) return 'N/A';
+
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        // Trả về định dạng thân thiện với người dùng
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+    } catch (e) {
+        // Trả về N/A nếu có lỗi xảy ra
+        return 'N/A';
+    }
 }
 </script>
 </body>
