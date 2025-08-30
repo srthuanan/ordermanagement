@@ -1788,6 +1788,11 @@ body.panel-open {
     <ul class="dropdown-list">
 
         <li><a href="#" onclick="handleAddCar(event)"><i class="fas fa-plus fa-fw"></i> Thêm Xe Mới</a></li>
+<li>
+            <a href="#" onclick="showBulkInvoiceUploadPanel(event)">
+                <i class="fas fa-file-upload fa-fw"></i> Tải Lên Hóa Đơn Hàng Loạt
+            </a>
+        </li>
 
         <li><a href="#" onclick="handleDeleteCar(event)"><i class="fas fa-trash-alt fa-fw"></i> Xóa Xe Khỏi Kho</a></li>
         <li><a href="#" onclick="handleRestoreCar(event)"><i class="fas fa-undo fa-fw"></i> Phục Hồi Xe Đã Xóa</a></li>
@@ -2043,7 +2048,7 @@ function toggleMobileMenu() {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbw89QhZyj3ox345o485Li5nxnUZVcMZ1ZKr7eNwjnMxh2UbyTosewp9OxWlz8OC3_Qqjw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbw6KMLI2y69T1FUhDjPzxfWdCZi9nqjU-bcA62cHBEYLHZxhaTtyiJTIbRbhne9-Ju_sQ/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -6251,6 +6256,162 @@ function markSingleNotificationAsRead(notificationItem) {
     .catch(error => {
         console.error('Lỗi mạng khi đánh dấu đã đọc:', error);
     });
+}
+/**
+ * [HÀM MỚI] - Hiển thị Side Panel cho chức năng tải lên hóa đơn hàng loạt.
+ */
+function showBulkInvoiceUploadPanel(event) {
+    if (event) event.preventDefault();
+    closePopover(); // Đóng menu thao tác nhanh
+
+    const title = 'Tải Lên Hóa Đơn Hàng Loạt';
+    const bodyHtml = `
+        <p>Chọn hoặc kéo thả các tệp hóa đơn (PDF, ảnh...) vào khu vực bên dưới.
+        <br><strong>QUAN TRỌNG:</strong> Tên của mỗi tệp phải là <strong>Số Đơn Hàng</strong> tương ứng (ví dụ: <code>N31913-VSO-25-08-0161.pdf</code>).</p>
+        
+        <div class="form-group" style="margin-top: 20px;">
+            <div class="file-input-wrapper">
+                <input type="file" id="bulk-invoice-files-input" class="file-input-hidden" 
+                       accept=".pdf,.jpeg,.png,.jpg" 
+                       multiple 
+                       onchange="handleBulkFileSelection(event)">
+                <label for="bulk-invoice-files-input" id="bulk-upload-label" class="file-input-label" 
+                       ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                    <i class="fas fa-upload"></i> <span>Chọn Tệp hoặc Kéo Thả Tại Đây</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="bulk-file-preview-area" style="margin-top: 15px; max-height: 40vh; overflow-y: auto;">
+            </div>
+    `;
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closeSidePanel()">Hủy</button>
+        <button id="confirm-bulk-upload-btn" class="btn btn-primary" disabled>
+            Bắt Đầu Tải Lên (<span id="bulk-file-count">0</span> tệp)
+        </button>
+    `;
+
+    openSidePanel({ title, bodyHtml, footerHtml, size: 'lg', theme: 'info' });
+
+    // Gắn sự kiện cho nút xác nhận
+    setTimeout(() => {
+        document.getElementById('confirm-bulk-upload-btn').onclick = processBulkInvoiceUpload;
+    }, 100);
+}
+
+// CÁC HÀM PHỤ TRỢ CHO VIỆC XỬ LÝ FILE (Kéo/thả, chọn, hiển thị)
+let bulkFilesToUpload = [];
+
+function handleBulkFileSelection(event) {
+    const files = event.target.files;
+    addFilesToBulkList(files);
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.style.backgroundColor = '#f0f0f0';
+}
+
+function handleDragLeave(event) {
+    event.currentTarget.style.backgroundColor = 'var(--background-light)';
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.style.backgroundColor = 'var(--background-light)';
+    const files = event.dataTransfer.files;
+    addFilesToBulkList(files);
+}
+
+function addFilesToBulkList(files) {
+    const previewArea = document.getElementById('bulk-file-preview-area');
+    for (const file of files) {
+        // Kiểm tra trùng lặp
+        if (!bulkFilesToUpload.some(f => f.name === file.name && f.size === file.size)) {
+            bulkFilesToUpload.push(file);
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'bulk-file-item';
+            fileDiv.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid var(--border-light);';
+            fileDiv.innerHTML = `
+                <span><i class="fas fa-file-alt" style="margin-right: 8px;"></i>${escapeHtml(file.name)}</span>
+                <button onclick="removeFileFromBulkList(this, '${escapeHtml(file.name)}')" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>
+            `;
+            previewArea.appendChild(fileDiv);
+        }
+    }
+    updateBulkUploadButtonState();
+}
+
+function removeFileFromBulkList(buttonElement, fileName) {
+    bulkFilesToUpload = bulkFilesToUpload.filter(f => f.name !== fileName);
+    buttonElement.parentElement.remove();
+    updateBulkUploadButtonState();
+}
+
+function updateBulkUploadButtonState() {
+    const count = bulkFilesToUpload.length;
+    document.getElementById('bulk-file-count').textContent = count;
+    document.getElementById('confirm-bulk-upload-btn').disabled = count === 0;
+}
+
+/**
+ * [HÀM MỚI] - Xử lý và gửi dữ liệu tải lên hàng loạt.
+ */
+async function processBulkInvoiceUpload() {
+    if (bulkFilesToUpload.length === 0) {
+        showToast('Vui lòng chọn ít nhất một tệp hóa đơn.', 'warning');
+        return;
+    }
+
+    const uploadBtn = document.getElementById('confirm-bulk-upload-btn');
+    const originalBtnHtml = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang xử lý...`;
+
+    const filesData = [];
+
+    for (const file of bulkFilesToUpload) {
+        try {
+            const base64String = await fileToBase64(file);
+            const orderNumber = file.name.substring(0, file.name.lastIndexOf('.'));
+
+            filesData.push({
+                orderNumber: orderNumber,
+                fileName: file.name,
+                base64Data: base64String.split(',')[1],
+                mimeType: file.type
+            });
+        } catch (error) {
+            console.error('Lỗi khi đọc file:', error);
+            showToast(`Lỗi khi đọc file ${file.name}.`, 'error');
+        }
+    }
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'handleBulkUploadIssuedInvoices');
+        formData.append('filesData', JSON.stringify(filesData));
+        formData.append('uploadedBy', 'Admin');
+
+        const response = await fetch(API_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+
+        if (result.status === "SUCCESS") {
+            showToast(result.message, 'success', 8000); // Tăng thời gian hiển thị
+            closeSidePanel();
+            fetchInitialData(true); // Tải lại dữ liệu nền
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải lên hàng loạt:', error);
+        showToast(`Lỗi: ${error.message}`, 'error');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalBtnHtml;
+        bulkFilesToUpload = []; // Reset danh sách
+    }
 }
 </script>
 </body>
