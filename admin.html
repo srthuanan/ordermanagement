@@ -1758,6 +1758,128 @@ body.panel-open {
     border-radius: 0 0 12px 12px;
 }
 .popover-footer:empty { display: none; }
+ /* =================================================================== */
+/* [THAY THẾ TOÀN BỘ] CSS CHO MODAL XEM ẢNH VÀ NÚT TẢI VỀ
+/* =================================================================== */
+.modal {
+    display: none; /* Ẩn mặc định */
+    position: fixed;
+    z-index: 2000; /* Lớp hiển thị cao */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Cho phép cuộn nếu cần */
+    background-color: rgba(15, 23, 42, 0.6); /* Nền mờ tối */
+    backdrop-filter: blur(5px); /* Hiệu ứng mờ nền */
+
+    /* Dùng flexbox để căn giữa modal một cách hoàn hảo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Hiệu ứng */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: var(--card-bg-light);
+    padding: 0; /* Bỏ padding cũ */
+    border: 1px solid var(--border-light);
+    width: auto; /* Chiều rộng tự động */
+    max-width: 90vw; /* Chiều rộng tối đa 90% viewport */
+    max-height: 90vh; /* Chiều cao tối đa 90% viewport */
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Sắp xếp nội dung theo chiều dọc */
+    
+    /* Hiệu ứng */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-header-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-light);
+}
+
+.close-button {
+    color: var(--text-muted-light);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+.close-button:hover {
+    color: var(--text-light);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto; /* Cho phép cuộn nếu ảnh quá cao */
+    text-align: center; /* Căn giữa ảnh */
+}
+
+#modal-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%; /* Đảm bảo ảnh không tràn ra ngoài */
+    max-height: 70vh; /* Giới hạn chiều cao của ảnh */
+    border-radius: 8px;
+}
+
+.modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-light);
+    background-color: var(--background-light);
+    text-align: right; /* Căn nút về bên phải */
+    border-radius: 0 0 12px 12px;
+}
+
+/* Giữ nguyên style cho nút bấm */
+.modal-footer .button {
+    background-color: var(--gradient-start);
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.modal-footer .button:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-md);
+}
+.modal-footer .button i {
+    margin-right: 8px;
+}
     </style>
 </head>
 <body data-theme="light" class="vinfast-theme">
@@ -1773,6 +1895,7 @@ body.panel-open {
     <a href="#" onclick="switchView('chuaGhep')"><i class="fas fa-clock fa-fw"></i><span>Chờ Ghép</span></a>
     <a href="#" onclick="switchView('daGhep')"><i class="fas fa-check-circle fa-fw"></i><span>Đã Ghép</span></a>
     <a href="#" class="active" onclick="switchView('xuatHoaDon')"><i class="fas fa-file-invoice-dollar fa-fw"></i><span>Xử Lý Hóa Đơn</span></a>
+    <a href="#" onclick="switchView('xuLyVc')"><i class="fas fa-id-card fa-fw"></i><span>Xử Lý VC</span></a>
     <a href="#" onclick="switchView('huyGhep')"><i class="fas fa-ban fa-fw"></i><span>Đơn Đã Hủy</span></a>
 </nav>
         <div class="navbar-controls">
@@ -1919,6 +2042,22 @@ body.panel-open {
     <div class="popover-body" id="popover-body"></div>
     <div class="popover-footer" id="popover-footer"></div>
 </div>
+<div id="image-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modal-header-title" class="modal-header-title">Xem Hồ Sơ</span>
+            <span class="close-button" id="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <img id="modal-image" src="" alt="Xem trước ảnh">
+        </div>
+        <div class="modal-footer">
+            <a id="download-button" href="#" download class="button">
+                <i class="fas fa-download"></i> Tải về
+            </a>
+        </div>
+    </div>
+</div>
 <div id="toast-container"></div>
 
 <script>
@@ -2048,7 +2187,7 @@ function toggleMobileMenu() {
     }
 
 const API_LOGIN_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
-    const API_URL = 'https://script.google.com/macros/s/AKfycbw6KMLI2y69T1FUhDjPzxfWdCZi9nqjU-bcA62cHBEYLHZxhaTtyiJTIbRbhne9-Ju_sQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzE9TWCc1isqh0X1p33_5VNFmmeQr9QJ5a6kAEXZwT2BB3CXcRSp3r9yRcZXBX4Hk64oA/exec';
     const ADMIN_IDENTIFIER = 'Admin'; 
 // =================================================================
 // SECTION 1.5: QUẢN LÝ PHIÊN ĐĂNG NHẬP (SESSION TIMEOUT)
@@ -2506,6 +2645,9 @@ async function handleUndoLastAction() {
         case 'xuatHoaDon':
             renderXuatHoaDonView();
             break;
+        case 'xuLyVc':
+            renderXuLyVcView();
+            break;
         case 'huyGhep':
             renderHuyGhepView();
             break;
@@ -2513,7 +2655,278 @@ async function handleUndoLastAction() {
             mainContentEl.innerHTML = `<div class="no-data-container">Chức năng đang được phát triển.</div>`;
     }
 }
+/**
+ * [HÀM ĐÃ SỬA LỖI] - Ưu tiên lấy Số Đơn Hàng gốc từ YeuCauCapVC.
+ */
+function renderXuLyVcView() {
+    const vcRequests = appState.data.yeucauvc || [];
+    const allOrders = appState.data.daghep || [];
 
+    // BƯỚC 1: Tạo map tra cứu từ VIN -> Dữ liệu (giữ nguyên)
+    const vinToOrderDataMap = new Map();
+    allOrders.forEach(order => {
+        const vin = String(order.VIN || '').trim();
+        const orderNumber = String(order['Số đơn hàng'] || order['SỐ ĐƠN HÀNG'] || '').trim();
+        const status = order['Kết quả'];
+        if (vin && orderNumber) {
+            vinToOrderDataMap.set(vin, { orderNumber: orderNumber, status: status });
+        }
+    });
+
+    // BƯỚC 2: Xử lý dữ liệu yêu cầu VC
+    const dataWithStatus = vcRequests.map(req => {
+        const vinFromReq = String(req.VIN || '').trim();
+        const lookedUpData = vinToOrderDataMap.get(vinFromReq);
+        
+        // ===== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG =====
+        // Ưu tiên lấy Số Đơn Hàng gốc từ chính yêu cầu trong sheet YeuCauCapVC.
+        // Chỉ dùng số đơn hàng tra cứu được làm phương án dự phòng.
+        const finalOrderNumber = (req['Số đơn hàng'] || '').trim() || (lookedUpData ? lookedUpData.orderNumber : '');
+        // ===== KẾT THÚC THAY ĐỔI QUAN TRỌNG =====
+        
+        const finalStatus = lookedUpData ? lookedUpData.status : 'Chờ duyệt YCVC';
+
+        return {
+            ...req,
+            'Trạng thái xử lý': finalStatus,
+            'SỐ ĐƠN HÀNG': finalOrderNumber 
+        };
+    });
+
+    const { searchTerm } = appState.xuatHoaDon;
+    let filteredData = dataWithStatus;
+    if (searchTerm) {
+        const lowercasedTerm = searchTerm.toLowerCase();
+        filteredData = filteredData.filter(row => 
+            (row['Tên khách hàng']?.toLowerCase().includes(lowercasedTerm)) ||
+            (row['SỐ ĐƠN HÀNG']?.toLowerCase().includes(lowercasedTerm)) ||
+            (row['VIN']?.toLowerCase().includes(lowercasedTerm))
+        );
+    }
+    
+    const totalCount = filteredData.length;
+    const toolbarHTML = `...`; // Phần này giữ nguyên, không cần thay đổi
+    
+    sortData(filteredData, 'Thời gian YC', 'desc'); 
+    
+    const tableHTML = `<div class="table-wrapper">` + renderVcRequestTable('vcRequestTable', filteredData) + `</div>`;
+    mainContentEl.innerHTML = toolbarHTML + tableHTML;
+}
+
+function renderVcRequestTable(id, rows) {
+    if (!rows || rows.length === 0) {
+        return `<div class="empty-state-container"><p>Không có yêu cầu nào.</p></div>`;
+    }
+    
+    const getActionsForRow = (row) => {
+        const status = String(row['Trạng thái xử lý'] || '').toLowerCase().trim();
+        let actions = [];
+        if (status === 'chờ duyệt ycvc') {
+            actions.push({ icon: 'fa-check', label: 'Phê Duyệt', handler: 'handleApproveVcRequest' });
+            actions.push({ icon: 'fa-times', label: 'Từ Chối', handler: 'handleRejectVcRequest' });
+        }
+        return actions;
+    };
+
+    const mainHeaders = ['STT', 'Thông Tin Yêu Cầu', 'Số Đơn Hàng & VIN', 'Thời Gian YC', 'Hồ Sơ', 'Trạng Thái', 'Hành Động'];
+    const headerHTML = mainHeaders.map(label => `<th>${label}</th>`).join('');
+
+    let rowsHTML = '';
+    rows.forEach((row, index) => {
+        const requester = row['Người YC']; 
+const customerName = row['Tên khách hàng'];
+const orderNumber = row['SỐ ĐƠN HÀNG']; // <--- SỬA LỖI TẠI ĐÂY
+const vin = row['VIN'];
+        const requestTime = row['Thời gian YC'];
+        const trangThai = row['Trạng thái xử lý'];
+
+        const actionButtons = getActionsForRow(row);
+        const inlineActionsHTML = renderInlineRowActions(actionButtons, row);
+
+// [THAY THẾ TOÀN BỘ KHỐI MÃ NÀY]
+const hoSoHTML = [
+    { key: 'Link CCCD Mặt Trước', label: 'CCCD Mặt Trước', icon: 'fa-id-card' },
+    { key: 'Link CCCD Mặt Sau', label: 'CCCD Mặt Sau', icon: 'fa-address-card' },
+    { key: 'Link Cavet Xe Mặt Trước', label: 'Cavet Mặt Trước', icon: 'fa-car-side' },
+    { key: 'Link Cavet Xe Mặt Sau', label: 'Cavet Mặt Sau', icon: 'fa-car-alt' },
+    { key: 'Link GPKD', label: 'GPKD', icon: 'fa-building' }
+].map(doc => {
+    // Lấy tên khách hàng từ dữ liệu của hàng (row)
+    const customerName = row['Tên khách hàng']; 
+    const url = row?.[doc.key];
+
+    if (url && typeof url === 'string') {
+        const viewUrl = url;
+        const fileIdMatch = viewUrl.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+        const fileId = fileIdMatch ? (fileIdMatch?.[1] || fileIdMatch?.[2]) : null;
+        const imageUrl = fileId
+            ? `${API_URL}?action=serveImage&fileId=${fileId}`
+            : '';
+
+        // Thêm tham số customerName vào lời gọi hàm onclick
+        return `<a href="#"
+                   onclick="openImageModal(event, '${imageUrl}', '${viewUrl}', '${doc.label}', '${escapeHtml(customerName)}')"
+                   class="file-icon-link"
+                   title="Nhấn để xem ${doc.label}">
+                    <i class="fas ${doc.icon} icon-display"></i>
+                </a>`;
+    }
+    return '';
+}).join('');
+
+        rowsHTML += `
+            <tr id="row-${orderNumber || index}">
+                <td class="desktop-cell" data-label="STT"><b>${index + 1}</b></td>
+                
+                <td class="desktop-cell" data-label="Thông Tin Yêu Cầu">
+                    <div class="main-info">${escapeHtml(requester)}</div>
+                    <div class="sub-info">KH: ${escapeHtml(customerName)}</div>
+                </td>
+
+                <td class="desktop-cell" data-label="Số Đơn Hàng & VIN">
+                     <div class="main-info">${escapeHtml(orderNumber)}</div>
+                     <div class="sub-info">VIN: ${escapeHtml(vin)}</div>
+                </td>
+
+                <td class="desktop-cell" data-label="Thời Gian YC">${formatCustomDateTime(requestTime)}</td>
+                <td class="desktop-cell" data-label="Hồ Sơ"><div class="file-icon-bar">${hoSoHTML}</div></td>
+                <td class="desktop-cell" data-label="Trạng Thái"><span class="status-badge ${getStatusBadgeClass(trangThai)}">${escapeHtml(trangThai)}</span></td>
+                <td class="desktop-cell" data-label="Hành Động">
+                    <div class="actions-cell-inline">
+                        <div class="inline-buttons-container">${inlineActionsHTML}</div>
+                    </div>
+                </td>
+                
+                <td class="mobile-card-wrapper">
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div>
+                                <div class="title">${escapeHtml(requester)}</div>
+                                <div class="subtitle">KH: ${escapeHtml(customerName)}</div>
+                            </div>
+                            <span class="status-badge ${getStatusBadgeClass(trangThai)}">${escapeHtml(trangThai)}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            <div class="mobile-card-section">
+                                <div class="mobile-card-section-title"><i class="fas fa-info-circle"></i> Chi tiết yêu cầu</div>
+                                <div class="mobile-card-item"><span class="label">Số ĐH:</span><span class="value">${escapeHtml(orderNumber)}</span></div>
+                                <div class="mobile-card-item"><span class="label">Số VIN:</span><span class="value">${escapeHtml(vin)}</span></div>
+                                <div class="mobile-card-item"><span class="label">Thời gian YC:</span><span class="value">${formatCustomDateTime(requestTime)}</span></div>
+                            </div>
+                            <div class="mobile-card-section">
+                                <div class="mobile-card-section-title"><i class="fas fa-folder-open"></i> Hồ sơ</div>
+                                <div class="mobile-card-item">
+                                    <span class="label">Files:</span><span class="value"><div class="file-icon-bar">${hoSoHTML}</div></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mobile-card-footer">
+                            <div class="inline-buttons-container">${inlineActionsHTML}</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    // Phần gắn listener giữ nguyên...
+    setTimeout(() => {
+        const tableEl = document.getElementById(id);
+        if (tableEl && !tableEl.dataset.listenerAttached) {
+            tableEl.dataset.listenerAttached = 'true';
+            tableEl.addEventListener('click', function (event) {
+                const actionButton = event.target.closest('a[data-action]');
+                if (actionButton) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    const handlerName = actionButton.dataset.action;
+                    if (!handlerName) return;
+                    try {
+                        const rowData = JSON.parse(actionButton.dataset.order.replace(/&apos;/g, "'"));
+                        if (typeof window[handlerName] === 'function') {
+                            window[handlerName](rowData, actionButton);
+                        }
+                    } catch (e) { console.error("Lỗi parse data:", e); }
+                }
+            });
+        }
+    }, 100);
+
+    return `<table class="data-table" id="${id}"><thead><tr>${headerHTML}</tr></thead><tbody>${rowsHTML}</tbody></table>`;
+}
+/**
+ * [HÀM ĐÃ SỬA LỖI] - Hiển thị ảnh xem trước bằng cách fetch dữ liệu từ Apps Script.
+ */
+function showImagePreview(event, imageUrl, originalUrl, fileLabel) {
+    const triggerElement = event.currentTarget;
+    // Xác định xem có phải là ảnh hay không dựa trên nhãn
+    const isLikelyImage = fileLabel.toLowerCase().includes('cccd') || fileLabel.toLowerCase().includes('ảnh') || fileLabel.toLowerCase().includes('cavet');
+
+    let popoverBodyHtml = '';
+
+    if (isLikelyImage) {
+        // 1. Hiển thị popover với icon loading ngay lập tức
+        popoverBodyHtml = `
+            <div style="display: flex; justify-content: center; align-items: center; min-height: 100px; padding: 20px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: var(--gradient-start);"></i>
+            </div>
+        `;
+        openPopover(triggerElement, { bodyHtml: popoverBodyHtml, placement: 'top-start' });
+
+        // 2. Gọi fetch để lấy dữ liệu ảnh từ backend
+        fetch(imageUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // 3. Xây dựng Data URI từ dữ liệu Base64 nhận được
+                const dataUri = `data:${data.mimeType};base64,${data.base64Data}`;
+                
+                // Cập nhật lại nội dung của popover đang mở với ảnh thật
+                const popoverBody = document.getElementById('popover-body');
+                if (popoverBody) {
+                    popoverBody.innerHTML = `
+                        <a href="${escapeHtml(originalUrl)}" target="_blank" title="Nhấn để mở ảnh gốc trong tab mới">
+                            <img src="${dataUri}"
+                                 style="max-width: 350px; max-height: 350px; border-radius: 8px; display: block; box-shadow: var(--shadow-md);"
+                                 alt="Ảnh xem trước">
+                        </a>
+                    `;
+                    // Căn chỉnh lại vị trí popover sau khi ảnh được tải
+                    if(activePopover) {
+                       positionPopover(triggerElement, activePopover, document.getElementById('popover-arrow'), 'top-start');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi khi tải ảnh xem trước:", error);
+                // Hiển thị thông báo lỗi trong popover nếu có sự cố
+                const popoverBody = document.getElementById('popover-body');
+                if (popoverBody) {
+                    popoverBody.innerHTML = `
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted-light);">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                            <p>Không thể tải ảnh xem trước.</p>
+                        </div>
+                    `;
+                }
+            });
+
+    } else {
+        // Logic hiển thị icon cho các file không phải ảnh (PDF, etc.) giữ nguyên
+        popoverBodyHtml = `
+            <a href="${escapeHtml(originalUrl)}" target="_blank" style="text-decoration: none; color: inherit;">
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 20px; text-align: center;">
+                    <i class="fas fa-file-alt" style="font-size: 40px; color: var(--text-muted-light); margin-bottom: 15px;"></i>
+                    <span style="font-weight: 600;">${escapeHtml(fileLabel)}</span>
+                    <span style="font-size: 12px; color: var(--text-muted-light); margin-top: 5px;">Nhấn để mở trong tab mới</span>
+                </div>
+            </a>
+        `;
+        openPopover(triggerElement, { bodyHtml: popoverBodyHtml, placement: 'top-start' });
+    }
+}
     function renderKhoXeView() {
     const data = appState.data.khoxe || [];
     const daghepData = appState.data.daghep || [];
@@ -6412,6 +6825,171 @@ async function processBulkInvoiceUpload() {
         uploadBtn.innerHTML = originalBtnHtml;
         bulkFilesToUpload = []; // Reset danh sách
     }
+}
+function handleApproveVcRequest(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG']; // Sửa 'Số đơn hàng' thành 'SỐ ĐƠN HÀNG'
+    const bodyHtml = `<p>Bạn có chắc chắn muốn <strong>PHÊ DUYỆT</strong> yêu cầu cấp VinClub cho đơn hàng <strong>${escapeHtml(orderNumber)}</strong> không?</p>`;
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+        <button id="popover-confirm-approve-vc" class="btn btn-success">Phê Duyệt</button>
+    `;
+    openPopover(btnElement, { title: 'Phê Duyệt Yêu Cầu VC', bodyHtml, footerHtml, placement: 'top-start' });
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('popover-confirm-approve-vc');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                const { success } = await performActionOnRow({
+                    action: 'approveVcRequest',
+                    params: { orderNumber: orderNumber, approvedBy: 'Admin' },
+                    buttonElement: confirmBtn
+                });
+                if (success) closePopover();
+            };
+        }
+    }, 10);
+}
+/**
+ * [HÀM ĐÃ NÂNG CẤP] - Xử lý từ chối yêu cầu VC, có hỗ trợ dán ảnh.
+ */
+function handleRejectVcRequest(order, btnElement) {
+    const orderNumber = order['SỐ ĐƠN HÀNG'];
+    
+    // THAY ĐỔI: Thêm khu vực dán ảnh vào popover
+    const bodyHtml = `
+        <p>Nhập lý do từ chối yêu cầu cấp VC cho đơn hàng <strong>${escapeHtml(orderNumber)}</strong>:</p>
+        <div class="form-group" style="margin-top: 10px;">
+            <label for="popover-reject-vc-reason">Lý do từ chối (bắt buộc):</label>
+            <textarea id="popover-reject-vc-reason" rows="3" class="w-full" placeholder="Ví dụ: Thiếu ảnh cavet, ảnh CCCD bị mờ..."></textarea>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label style="font-weight: 600;">Dán ảnh minh họa (Tùy chọn):</label>
+            <div id="image-paste-area" 
+                 contenteditable="true" 
+                 style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; color: #888; margin-top: 5px; min-height: 80px;"
+                 onpaste="handleImagePaste(event)">
+                 Click vào đây và nhấn Ctrl+V để dán ảnh...
+            </div>
+            <div id="image-preview-container" style="margin-top: 10px; text-align: center;"></div>
+        </div>
+    `;
+
+    const footerHtml = `
+        <button class="btn btn-secondary" onclick="closePopover()">Hủy</button>
+        <button id="popover-confirm-reject-vc" class="btn btn-danger">Xác Nhận Từ Chối</button>
+    `;
+
+    openPopover(btnElement, { title: 'Từ Chối Yêu Cầu VC', bodyHtml, footerHtml, placement: 'top-start' });
+
+    setTimeout(() => {
+        const confirmBtn = document.getElementById('popover-confirm-reject-vc');
+        if (confirmBtn) {
+            confirmBtn.onclick = async () => {
+                const reason = document.getElementById('popover-reject-vc-reason').value.trim();
+                if (!reason) {
+                    showToast('Vui lòng nhập lý do từ chối.', 'warning');
+                    return;
+                }
+
+                // THAY ĐỔI: Lấy dữ liệu ảnh đã dán
+                const imagePreviews = document.querySelectorAll('#image-preview-container .preview-image-wrapper img');
+                const imagesBase64Array = Array.from(imagePreviews).map(img => img.dataset.base64);
+
+                // THAY ĐỔI: Gửi cả lý do và ảnh lên server
+                const params = { 
+                    orderNumber: orderNumber, 
+                    reason: reason, 
+                    rejectedBy: 'Admin' 
+                };
+                if (imagesBase64Array.length > 0) {
+                    params.pastedImagesBase64 = JSON.stringify(imagesBase64Array);
+                }
+
+                const { success } = await performActionOnRow({
+                    action: 'rejectVcRequest',
+                    params: params,
+                    buttonElement: confirmBtn
+                });
+
+                if (success) closePopover();
+            };
+        }
+    }, 10);
+}
+function openImageModal(event, imageUrl, originalUrl, fileLabel, customerName) {
+    event.preventDefault(); 
+
+    const modal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    const downloadButton = document.getElementById('download-button');
+    const closeModalButton = document.getElementById('close-modal');
+    const modalTitle = document.getElementById('modal-header-title');
+
+    const isLikelyImage = fileLabel.toLowerCase().includes('cccd') || fileLabel.toLowerCase().includes('cavet') || fileLabel.toLowerCase().includes('gpkd');
+    if (!isLikelyImage) {
+        window.open(originalUrl, '_blank');
+        return;
+    }
+
+    modalTitle.textContent = "Đang tải ảnh...";
+    modalImage.src = '';
+    modalImage.alt = 'Đang tải ảnh...';
+    downloadButton.style.display = 'none';
+    modal.classList.add('active');
+
+    fetch(imageUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) throw new Error(data.error);
+
+            const dataUri = `data:${data.mimeType};base64,${data.base64Data}`;
+            modalTitle.textContent = `${fileLabel} - ${customerName}`; // Cập nhật tiêu đề
+            modalImage.src = dataUri;
+            modalImage.alt = fileLabel;
+            downloadButton.href = dataUri;
+            // Sử dụng customerName để tạo tên file
+            downloadButton.download = getFilenameFromLabel(customerName, fileLabel, data.mimeType); 
+            downloadButton.style.display = 'inline-block';
+        })
+        .catch(error => {
+            modalTitle.textContent = "Lỗi";
+            modalImage.alt = 'Không thể tải ảnh.';
+            console.error("Lỗi fetch ảnh:", error);
+            showToast(`Lỗi tải ảnh: ${fileLabel}`, 'error');
+            setTimeout(() => modal.classList.remove('active'), 2000);
+        });
+
+    const closeModal = () => modal.classList.remove('active');
+    closeModalButton.onclick = closeModal;
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+}
+
+/**
+ * [HÀM ĐÃ NÂNG CẤP] - Tạo tên file tải về không dấu từ tên KH.
+ */
+function getFilenameFromLabel(customerName, fileTypeLabel, mimeType = 'image/png') {
+    // 1. Loại bỏ dấu khỏi tên khách hàng
+    const customerNameWithoutDiacritics = removeDiacritics(customerName);
+
+    // 2. Làm sạch tên khách hàng và loại hồ sơ để dùng làm tên file
+    const sanitizedCustomerName = customerNameWithoutDiacritics.replace(/ /g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    const sanitizedFileType = fileTypeLabel.replace(/ /g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    
+    // 3. Lấy đuôi file từ mimeType
+    const extension = mimeType.split('/')[1] || 'png';
+    
+    // 4. Kết hợp lại thành tên file cuối cùng
+    return `${sanitizedCustomerName}_${sanitizedFileType}.${extension}`;
+}
+function removeDiacritics(str) {
+    if (!str) return '';
+    return str.normalize("NFD") // Tách chữ và dấu
+              .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu
+              .replace(/Đ/g, "D") // Chuyển đổi Đ
+              .replace(/đ/g, "d"); // Chuyển đổi đ
 }
 </script>
 </body>
