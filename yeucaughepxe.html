@@ -1800,17 +1800,7 @@ tbody tr:hover {
         border: none;
         width: 100%;
     }
-/* This is the block of code you need to delete */
-#history-table th:nth-child(3),
-#history-table td:nth-child(3),
-#history-table th:nth-child(1), #history-table td:nth-child(1),
-#history-table th:nth-child(2), #history-table td:nth-child(2),
-#history-table th:nth-child(4), #history-table td:nth-child(4),
-#history-table th:nth-child(5), #history-table td:nth-child(5),
-#history-table th:nth-child(6), #history-table td:nth-child(6) {
-    display: block;
-    width: 100%;
-}
+
 }
 /* [THÊM MỚI] - Định nghĩa màu sắc cho các loại nút khác nhau */
 .primary-action-group .btn.secondary {
@@ -1839,6 +1829,50 @@ tbody tr:hover {
 .primary-action-group .btn.btn-danger:hover:not(:disabled) {
     background-color: #ef4444;
     color: white;
+}
+/* Thêm vào trong thẻ <style> */
+#vc-company-fields.hidden {
+    display: none;
+}
+.order-info-box {
+    padding: 12px;
+    background-color: var(--background-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+}
+/* ===== CSS MỚI CHO MODAL CẤP VC GỌN GÀNG ===== */
+.compact-order-info {
+    display: grid;
+    /* Tạo bố cục lưới 3 cột, tự động xuống hàng trên màn hình nhỏ */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px; /* Khoảng cách giữa các mục */
+    text-align: left; /* Căn chữ về bên trái */
+    padding: 12px 16px;
+    background-color: var(--background-light);
+    border-radius: 10px;
+    border: 1px solid var(--border-light);
+}
+
+.compact-order-info-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Giúp text xuống dòng nếu cần */
+}
+
+.compact-order-info-label {
+    font-size: 10px; /* Cỡ chữ nhỏ cho nhãn */
+    font-weight: 600;
+    color: var(--text-muted-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.compact-order-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-light);
+    word-break: break-all; /* Tự động ngắt chữ nếu quá dài */
 }
     </style>
 </head>
@@ -2460,7 +2494,100 @@ tbody tr:hover {
         </div>
     </div>
 
+<div class="modal" id="vc-request-modal">
+    <div class="modal-content" style="max-width: 550px; padding: 0;">
+        <div class="modal-header-pro !flex-row !items-center !text-left !py-3 !px-5">
+            <div class="header-icon-pro !w-10 !h-10 !text-xl !mb-0 !mr-4 !border-2">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h2 class="!text-lg">Yêu Cầu Cấp VC VinClub</h2>
+            <button class="modal-close-btn-pro !top-2 !right-2" onclick="cancelAndReloadCurrentView()"><i class="fas fa-times"></i></button>
+        </div>
 
+        <div class="modal-body-pro">
+            <div id="vc-modal-order-info" class="compact-order-info mb-4">
+                </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại khách hàng <span class="required-star">*</span></label>
+                <div class="flex items-center gap-6">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="customerType" value="Cá nhân" class="form-radio" checked onchange="toggleVcCustomerTypeFields()">
+                        <span class="ml-2 text-sm">Cá nhân</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="customerType" value="Công ty" class="form-radio" onchange="toggleVcCustomerTypeFields()">
+                        <span class="ml-2 text-sm">Công ty</span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="vc-individual-fields" class="space-y-4 mb-4">
+                <div class="file-upload-grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="file-upload-area">
+                        <label for="cccd_front_file_input" class="file-upload-label">CCCD/CMND (Mặt trước) <span class="required-star">*</span></label>
+                        <div id="cccd-front-upload-wrapper" class="file-upload-wrapper !h-20">
+                           <input type="file" id="cccd_front_file_input" class="file-upload-input" accept="image/*">
+                            <div class="file-upload-prompt"><i class="fas fa-id-card file-upload-icon !text-lg"></i><span class="file-upload-text">Chọn file</span></div>
+                            <div class="file-upload-preview"><i class="fas fa-file-alt file-preview-icon"></i><span id="cccd-front-prompt-text" class="file-preview-name"></span></div>
+                        </div>
+                    </div>
+                     <div class="file-upload-area">
+                        <label for="cccd_back_file_input" class="file-upload-label">CCCD/CMND (Mặt sau) <span class="required-star">*</span></label>
+                        <div id="cccd-back-upload-wrapper" class="file-upload-wrapper !h-20">
+                            <input type="file" id="cccd_back_file_input" class="file-upload-input" accept="image/*">
+                            <div class="file-upload-prompt"><i class="fas fa-id-card-alt file-upload-icon !text-lg"></i><span class="file-upload-text">Chọn file</span></div>
+                            <div class="file-upload-preview"><i class="fas fa-file-alt file-preview-icon"></i><span id="cccd-back-prompt-text" class="file-preview-name"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vc-company-fields" class="hidden space-y-4 mb-4">
+                <div>
+                    <label for="dms_customer_code_input" class="file-upload-label">Mã Khách Hàng DMS <span class="required-star">*</span></label>
+                    <input type="text" id="dms_customer_code_input" class="form-input" placeholder="N319-CT-000000000">
+                </div>
+                 <div class="file-upload-area">
+                    <label for="gpkd_file_input" class="file-upload-label">Giấy Phép Kinh Doanh <span class="required-star">*</span></label>
+                    <div id="gpkd-upload-wrapper" class="file-upload-wrapper !h-20">
+                        <input type="file" id="gpkd_file_input" class="file-upload-input" accept="image/*">
+                        <div class="file-upload-prompt"><i class="fas fa-building file-upload-icon !text-lg"></i><span class="file-upload-text">Chọn file</span></div>
+                        <div class="file-upload-preview"><i class="fas fa-file-alt file-preview-icon"></i><span id="gpkd-prompt-text" class="file-preview-name"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4 mt-4">
+                <div class="file-upload-grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="file-upload-area">
+                        <label for="cavet_front_file_input" class="file-upload-label">Cavet Xe (Mặt trước) <span class="required-star">*</span></label>
+                        <div id="cavet-front-upload-wrapper" class="file-upload-wrapper !h-20">
+                            <input type="file" id="cavet_front_file_input" class="file-upload-input" accept="image/*">
+                            <div class="file-upload-prompt"><i class="fas fa-car-side file-upload-icon !text-lg"></i><span class="file-upload-text">Chọn file</span></div>
+                            <div class="file-upload-preview"><i class="fas fa-file-alt file-preview-icon"></i><span id="cavet-front-prompt-text" class="file-preview-name"></span></div>
+                        </div>
+                    </div>
+                    <div class="file-upload-area">
+                        <label for="cavet_back_file_input" class="file-upload-label">Cavet Xe (Mặt sau) <span class="required-star">*</span></label>
+                        <div id="cavet-back-upload-wrapper" class="file-upload-wrapper !h-20">
+                            <input type="file" id="cavet_back_file_input" class="file-upload-input" accept="image/*">
+                            <div class="file-upload-prompt"><i class="fas fa-car-alt file-upload-icon !text-lg"></i><span class="file-upload-text">Chọn file</span></div>
+                            <div class="file-upload-preview"><i class="fas fa-file-alt file-preview-icon"></i><span id="cavet-back-prompt-text" class="file-preview-name"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer-pro">
+            <button class="btn modal-btn secondary" onclick="cancelAndReloadCurrentView()">Hủy Bỏ</button>
+            <button id="confirm-vc-request-button" class="btn modal-btn btn-primary">
+                <i class="fas fa-paper-plane"></i>
+                <span>Gửi Yêu Cầu Cấp VC</span>
+            </button>
+        </div>
+    </div>
+</div>
     <div id="notification-container"></div>
 </body>
 
@@ -2474,7 +2601,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbzecCV8JTCqLVGODVH9jucLZYWFKMri4BZyCkrpJbv8zyf62BVAYBWncUDeGjzJxG8Iyw/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbw_nZ-eUxpXosmPY-_QfT7GlZ3SoRNjqjh9pK-7gIoMBk3vdhLsFqwLF60dY8OU7UEb9w/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3152,48 +3279,44 @@ function getExteriorColorStyle(exteriorValue) {
     return colorStyle; // Trả về màu mặc định nếu không khớp
 }
 
-// --- HÀM JAVASCRIPT - PHIÊN BẢN HOÀN CHỈNH ---
 function getStatusClass(statusText) {
     if (!statusText || typeof statusText !== 'string') {
-        return 'status-default'; // Trạng thái mặc định nếu không có text
+        return 'status-default';
     }
-
-    // Chuẩn hóa chuỗi trạng thái: chuyển về chữ thường, bỏ dấu, bỏ khoảng trắng thừa
     const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
-
     switch (lowerStatus) {
-        // CÁC TRẠNG THÁI TÍCH CỰC
         case 'đã xuất hóa đơn':
-            return 'status-invoice-issued'; // Xanh lá cây
+            return 'status-invoice-issued';
         case 'đã phê duyệt':
-            return 'status-approved'; // Xanh mòng két (Teal)
+            return 'status-approved';
         case 'chờ ký hóa đơn':
-        case 'chờ ký hóa đơn': // Bao gồm cả biến thể cũ
-            return 'status-pending-signature'; // Xanh dương
+        case 'chờ ký hóa đơn':
+            return 'status-pending-signature';
         case 'đã bổ sung':
-            return 'status-supplemented'; // Tím
+            return 'status-supplemented';
+        case 'đã yêu cầu vc':
+            return 'status-supplemented';
         case 'đã ghép':
-            return 'status-vin-matched'; // Chàm (Indigo)
-
-        // CÁC TRẠNG THÁI CẦN CHÚ Ý
+            return 'status-vin-matched';
         case 'chờ phê duyệt':
-            return 'status-pending-approval'; // Cam
+            return 'status-pending-approval';
+        case 'chờ duyệt ycvc':
+             return 'status-pending-approval';
         case 'yêu cầu bổ sung':
-            return 'status-supplement-required'; // Đỏ
-
-        // CÁC TRẠNG THÁI CHỜ & TRUNG TÍNH
+            return 'status-supplement-required';
+        case 'yêu cầu vinclub':
+            return 'status-pending-signature';
         case 'chưa ghép':
-            return 'status-unmatched'; // Xám
+            return 'status-unmatched';
         case 'chưa tìm thấy vin':
-            return 'status-vin-not-found'; // Xám đậm hơn
-        
-        // CÁC TRẠNG THÁI KHÁC
+            return 'status-vin-not-found';
         case 'đã hủy':
         case 'đã hủy (ui)':
-            return 'status-cancelled'; // Xám đen
-
-        // TRẠNG THÁI DỰ PHÒNG
+            return 'status-cancelled';
         default:
+            if (lowerStatus.startsWith('từ chối ycvc:')) {
+                return 'status-supplement-required';
+            }
             if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
                 return 'status-vin-matched';
             }
@@ -4540,7 +4663,7 @@ function confirmCancelRequest(event, orderNumber) {
     if (typeof adjustModalScroll === 'function') adjustModalScroll(cancelModal);
 }
 
-// Thay thế toàn bộ hàm handleConfirmCancelClick cũ
+// THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY
 async function handleConfirmCancelClick() {
     const confirmButton = document.getElementById('confirm-cancel-button');
     if (!currentOrderNumberToCancel || confirmButton.disabled) return;
@@ -4554,10 +4677,18 @@ async function handleConfirmCancelClick() {
         return;
     }
     
-    confirmButton.disabled = true; // Vô hiệu hóa nút
+    confirmButton.disabled = true;
     closeModal('cancel-confirm-modal');
-    showLoadingToast("Đang Hủy Yêu Cầu...", "Hệ thống đang xử lý...");
+    
+    // 1. CẬP NHẬT LẠC QUAN
+    const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === currentOrderNumberToCancel) }; // Lưu lại trạng thái cũ
+    updateLocalOrderData(currentOrderNumberToCancel, {
+        'Kết quả': 'Đã hủy (UI)', // Trạng thái tạm thời trên UI
+        'Ghi chú hủy': reason
+    });
+    showLoadingToast("Đang Hủy Yêu Cầu...");
 
+    // 2. GỬI YÊU CẦU NỀN
     const payload = new FormData();
     payload.append('action', 'cancelRequest');
     payload.append('orderNumber', currentOrderNumberToCancel);
@@ -4567,31 +4698,28 @@ async function handleConfirmCancelClick() {
 
     try {
         const response = await fetch(apiURL, { method: 'POST', body: payload });
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Lỗi khi hủy: ${response.status} ${errorText || '(Không có thông điệp lỗi)'}`);
-        }
         const result = await response.json();
 
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
-            await fetchHistory(false); // Tải lại dữ liệu nền
+            // 3. THÀNH CÔNG: Đồng bộ hóa trong nền để lấy dữ liệu chính xác
+            fetchHistory(false);
         } else {
+            // 4. THẤT BẠI: Khôi phục lại giao diện
             showNotification(`Hủy thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
+            updateLocalOrderData(currentOrderNumberToCancel, originalData); // Khôi phục dữ liệu
         }
     } catch (error) {
+        // 4. THẤT BẠI: Khôi phục lại giao diện
         console.error('Lỗi khi gửi yêu cầu hủy:', error);
         showNotification(`Lỗi hệ thống khi hủy: ${error.message}`, 'error', 5000);
+        updateLocalOrderData(currentOrderNumberToCancel, originalData); // Khôi phục dữ liệu
     } finally {
         hideLoadingToast();
-        confirmButton.disabled = false; // Kích hoạt lại nút
+        confirmButton.disabled = false;
         currentOrderNumberToCancel = null;
     }
 }
-
-
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
 async function submitValidBulkTableOrders() {
     const submitButton = document.getElementById('submit-valid-bulk-table-orders-btn');
     if (!bulkTableBody || !submitButton || submitButton.disabled) return;
@@ -4721,33 +4849,16 @@ function fileToBase64(file) {
 
 async function processInvoiceRequest(orderNumber) {
     const confirmButton = document.getElementById('confirm-invoice-button');
-    if (confirmButton.disabled) return; // Ngăn click liên tục
+    if (confirmButton.disabled) return;
 
-    // --- BẮT ĐẦU PHẦN THÊM MỚI ---
-    // 1. Lấy và kiểm tra hộp kiểm Vinclub
+    // --- Validation (Kiểm tra dữ liệu đầu vào) ---
     const vinclubCheckbox = document.getElementById('vinclub-confirm-checkbox');
     if (!vinclubCheckbox || !vinclubCheckbox.checked) {
         showNotification("Bạn phải xác nhận khách hàng đã tạo tài khoản Vinclub.", "error", 4000);
-        
-        // Tạo hiệu ứng nhấp nháy để thu hút sự chú ý
-        const checkboxWrapper = vinclubCheckbox.closest('div');
-        if (checkboxWrapper) {
-            checkboxWrapper.style.transition = 'all 0.2s';
-            checkboxWrapper.style.transform = 'scale(1.03)';
-            checkboxWrapper.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.5)'; // Red glow
-            setTimeout(() => {
-                checkboxWrapper.style.transform = '';
-                checkboxWrapper.style.boxShadow = '';
-            }, 600);
-        }
-        return; // Dừng hàm nếu chưa xác nhận
+        return;
     }
-    // --- KẾT THÚC PHẦN THÊM MỚI ---
-
     const hopDongInput = document.getElementById('hop_dong_file_input');
     const deNghiInput = document.getElementById('denghi_xhd_file_input');
-
-    // 2. Kiểm tra các file đã được tải lên (logic cũ)
     if (!hopDongInput || hopDongInput.files.length === 0) {
         showNotification("Vui lòng tải lên file Hợp đồng mua bán.", "error", 4000);
         return;
@@ -4757,15 +4868,19 @@ async function processInvoiceRequest(orderNumber) {
         return;
     }
     
-    // 3. Tiến hành gửi yêu cầu (logic cũ)
-    confirmButton.disabled = true; // Vô hiệu hóa nút
+    confirmButton.disabled = true;
     closeModal('invoice-confirm-modal');
+
+    // 1. CẬP NHẬT LẠC QUAN: Thay đổi UI ngay lập tức
+    const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber) };
+    updateLocalOrderData(orderNumber, { 'Kết quả': 'Chờ phê duyệt' });
     showLoadingToast("Đang Gửi Tệp...", "Quá trình này có thể mất một lúc.");
 
     try {
         const hopDongBase64 = await fileToBase64(hopDongInput.files[0]);
         const deNghiBase64 = await fileToBase64(deNghiInput.files[0]);
 
+        // 2. GỬI YÊU CẦU NỀN
         const payload = new FormData();
         payload.append('action', 'requestInvoice');
         payload.append('orderNumber', orderNumber);
@@ -4780,16 +4895,21 @@ async function processInvoiceRequest(orderNumber) {
         
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
-            await refreshData();
+            // 3. THÀNH CÔNG: Đồng bộ hóa trong nền để lấy dữ liệu chính xác
+            fetchHistory(false);
         } else {
+            // 4. THẤT BẠI: Khôi phục lại giao diện về trạng thái cũ
             showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
+            updateLocalOrderData(orderNumber, originalData);
         }
     } catch (error) {
+        // 4. THẤT BẠI: Khôi phục lại giao diện về trạng thái cũ
         console.error('Lỗi khi gửi yêu cầu xuất hóa đơn:', error);
         showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+        updateLocalOrderData(orderNumber, originalData);
     } finally {
         hideLoadingToast();
-        confirmButton.disabled = false; // Kích hoạt lại nút
+        confirmButton.disabled = false;
     }
 }
 
@@ -4875,9 +4995,6 @@ function openSupplementaryFileModal(event, orderNumber) {
     adjustModalScroll(modal);
 }
 
-/**
- * [HÀM ĐÃ NÂNG CẤP] Xử lý việc gửi các file bổ sung lên server.
- */
 async function processSupplementaryFiles(orderNumber) {
     const hopDongInput = document.getElementById('supp_hop_dong_file_input');
     const deNghiInput = document.getElementById('supp_denghi_xhd_file_input');
@@ -4891,64 +5008,51 @@ async function processSupplementaryFiles(orderNumber) {
     if (confirmButton) confirmButton.disabled = true;
 
     closeModal('supplementary-file-modal');
-    // THAY ĐỔI 1: Sử dụng toast loading mới thay vì modal cũ
+    
+    // 1. CẬP NHẬT LẠC QUAN: Thay đổi UI ngay lập tức
+    const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber) };
+    updateLocalOrderData(orderNumber, { 'Kết quả': 'Chờ phê duyệt' });
     showLoadingToast("Đang Gửi File Bổ Sung...", "Hệ thống đang xử lý, vui lòng chờ...");
 
     try {
+        // 2. GỬI YÊU CẦU NỀN
         const payload = new FormData();
         payload.append('action', 'updateInvoiceFiles');
         payload.append('orderNumber', orderNumber);
         payload.append('updatedBy', sessionStorage.getItem("currentConsultant") || "Unknown User");
-
-        // Xử lý file Hợp đồng nếu có
         if (hopDongInput && hopDongInput.files.length > 0) {
-            const hopDongBase64 = await fileToBase64(hopDongInput.files[0]);
-            payload.append('hop_dong_file_base64', hopDongBase64);
+            payload.append('hop_dong_file_base64', await fileToBase64(hopDongInput.files[0]));
             payload.append('hop_dong_file_name', hopDongInput.files[0].name);
         }
-
-        // Xử lý file Đề nghị XHĐ nếu có
         if (deNghiInput && deNghiInput.files.length > 0) {
-            const deNghiBase64 = await fileToBase64(deNghiInput.files[0]);
-            payload.append('denghi_xhd_file_base64', deNghiBase64);
+            payload.append('denghi_xhd_file_base64', await fileToBase64(deNghiInput.files[0]));
             payload.append('denghi_xhd_file_name', deNghiInput.files[0].name);
         }
 
-        const response = await fetch(apiURL, {
-            method: 'POST',
-            body: payload
-        });
-
+        const response = await fetch(apiURL, { method: 'POST', body: payload });
         const result = await response.json();
         
-        // Ẩn toast loading ngay khi có kết quả
         hideLoadingToast();
 
         if (result.status === 'SUCCESS') {
-    // THAY ĐỔI 2: Sử dụng toast success mới
-    showSuccessToast("Gửi Thành Công!", result.message || 'File bổ sung đã được ghi nhận.');
-
-    // [THÊM MỚI] Tự động ẩn toast sau 2.5 giây
-    setTimeout(() => {
-        hideSuccessToast();
-    }, 2500); // Tự động tắt sau 2.5 giây
-
-    refreshData(); // Làm mới dữ liệu để cập nhật bảng
-} else {
-    throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
-}
+            showSuccessToast("Gửi Thành Công!", result.message || 'File bổ sung đã được ghi nhận.');
+            // 3. THÀNH CÔNG: Đồng bộ hóa
+            fetchHistory(false);
+            setTimeout(() => { hideSuccessToast(); }, 2500);
+        } else {
+            // 4. THẤT BẠI: Khôi phục lại giao diện
+            throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
+        }
 
     } catch (error) {
-        // THAY ĐỔI 3: Ẩn toast loading nếu có lỗi
         hideLoadingToast();
         console.error('Lỗi khi gửi file bổ sung:', error);
         showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+        updateLocalOrderData(orderNumber, originalData);
     } finally {
-        // Kích hoạt lại nút sau khi xử lý xong
         if (confirmButton) confirmButton.disabled = false;
     }
 }
-
 // [HÀM ĐÃ SỬA LỖI]
 function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = false) {
     const fileInput = document.getElementById(inputId);
@@ -5077,10 +5181,6 @@ function openAdminInvoiceUploadModal(event, orderNumber) {
     adjustModalScroll(modal);
 }
 
-/**
- * Xử lý quá trình tải tệp hóa đơn lên server.
- * @param {string} orderNumber - Số đơn hàng.
- */
 async function processAdminInvoiceUpload(orderNumber) {
     const fileInput = document.getElementById('admin_invoice_file_input');
     if (!fileInput || fileInput.files.length === 0) {
@@ -5089,36 +5189,38 @@ async function processAdminInvoiceUpload(orderNumber) {
     }
 
     closeModal('admin-invoice-upload-modal');
+    
+    // 1. CẬP NHẬT LẠC QUAN: Thay đổi UI ngay lập tức
+    const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber) };
+    updateLocalOrderData(orderNumber, { 'Kết quả': 'Đã xuất hóa đơn' });
     showLoadingToast("Đang Gửi Tệp Hóa Đơn...", "Vui lòng chờ trong giây lát.");
 
     try {
         const file = fileInput.files[0];
-        const fileBase64 = await fileToBase64(file);
-
+        // 2. GỬI YÊU CẦU NỀN
         const payload = new FormData();
         payload.append('action', 'uploadIssuedInvoice');
         payload.append('orderNumber', orderNumber);
         payload.append('uploadedBy', sessionStorage.getItem("currentConsultant") || "Admin");
         payload.append('invoiceFileName', file.name);
-        payload.append('invoiceFileBase64', fileBase64);
-
-        const response = await fetch(apiURL, {
-            method: 'POST',
-            body: payload
-        });
-
+        payload.append('invoiceFileBase64', await fileToBase64(file));
+        
+        const response = await fetch(apiURL, { method: 'POST', body: payload });
         const result = await response.json();
         
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
-            await refreshData(); // Tải lại dữ liệu để cập nhật bảng với nút tải xuống
+            // 3. THÀNH CÔNG: Đồng bộ hóa để lấy URL file chính xác
+            fetchHistory(false);
         } else {
+            // 4. THẤT BẠI: Khôi phục lại giao diện
             throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
         }
 
     } catch (error) {
         console.error('Lỗi khi tải lên hóa đơn:', error);
         showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
+        updateLocalOrderData(orderNumber, originalData);
     } finally {
         hideLoadingToast();
     }
@@ -5254,11 +5356,13 @@ function renderHistoryTable(dataToRender) {
 
     const allRowsHtml = dataToRender.map((row, i) => {
         const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
-        const statusTextOriginal = row["Kết quả"] || "Chưa ghép";
         
-        // SỬA LỖI: Định nghĩa `statusClass` ở đây để cả hai giao diện đều dùng được
+        // === LOGIC QUAN TRỌNG NHẤT ĐƯỢC SỬA TẠI ĐÂY ===
+        // Ưu tiên lấy trạng thái từ "Trạng thái VC" (dành cho đơn lưu trữ), 
+        // nếu không có thì mới lấy từ "Kết quả" (dành cho đơn ở DaGhep).
+        const statusTextOriginal = row["Trạng thái VC"] || row["Kết quả"] || "Chưa ghép";
+        
         const statusClass = getStatusClass(statusTextOriginal);
-        
         const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
 
         // Xác định các quyền hành động
@@ -5267,73 +5371,96 @@ function renderHistoryTable(dataToRender) {
         const canUpdateFiles = normalizedStatusText === 'yêu cầu bổ sung';
         const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
         const canAdminUploadInvoice = isAdmin && ['chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn'].includes(normalizedStatusText);
+        
+        const daYeuCauVC = statusTextOriginal === "Đã yêu cầu VC" || statusTextOriginal === "Chờ duyệt YCVC";
+        const biTuChoi = statusTextOriginal.toLowerCase().startsWith('từ chối ycvc:');
+        const canRequestVC = (normalizedStatusText === 'đã xuất hóa đơn' || biTuChoi) && !daYeuCauVC;
 
-        // --- BẮT ĐẦU LOGIC TẠO NÚT HÀNH ĐỘNG MỚI ---
-let allActions = [];
-if (statusTextOriginal === 'Yêu cầu VinClub') {
-    allActions.push({ 
-        id: 'confirmVinClub', 
-        type: 'primary', 
-        class: 'btn-success', // Màu xanh lá
-        html: `<button class="btn btn-success btn-sm" onclick="handleTvbhConfirmVinClub(event, '${orderNumber}')"><i class="fas fa-check"></i> Xác Nhận VinClub</button>` 
-    });
-}
-// 1. Xác định tất cả hành động có thể có
-if (canDownloadInvoice) {
-    allActions.push({ id: 'download', type: 'primary', class: 'btn-success', html: `<button class="btn btn-success btn-sm" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download"></i> Tải Hóa Đơn</button>` });
-} else if (canAdminUploadInvoice) {
-    allActions.push({ id: 'adminUpload', type: 'primary', class: 'secondary', html: `<button class="btn secondary btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>` });
-} else if (canRequestInvoice) {
-    allActions.push({ id: 'request', type: 'primary', class: 'btn-pro-gradient', html: `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>` });
-} else if (canUpdateFiles) {
-    // Nút Bổ Sung File giờ sẽ có màu vàng (warning)
-    allActions.push({ id: 'update', type: 'primary', class: 'warning', html: `<button class="btn warning btn-sm" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit"></i> Bổ Sung File</button>` });
-}
+        let allActions = [];
+        if (statusTextOriginal === 'Yêu cầu VinClub') {
+            allActions.push({ 
+                id: 'confirmVinClub', 
+                type: 'primary', 
+                class: 'btn-success',
+                html: `<button class="btn btn-success btn-sm" onclick="handleTvbhConfirmVinClub(event, '${orderNumber}')"><i class="fas fa-check"></i> Xác Nhận VinClub</button>` 
+            });
+        }
+        
+        if (canRequestVC) {
+            allActions.push({ 
+                id: 'requestVc',
+                type: 'primary',
+                class: 'btn-pro-gradient',
+                html: `<button class="btn btn-pro-gradient btn-sm" onclick="openVcRequestModal(event, '${orderNumber}')"><i class="fas fa-id-card"></i> Yêu cầu cấp VC</button>` 
+            });
+        }
+        else if (canAdminUploadInvoice) {
+            allActions.push({ id: 'adminUpload', type: 'primary', class: 'secondary', html: `<button class="btn secondary btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>` });
+        } else if (canRequestInvoice) {
+            allActions.push({ id: 'request', type: 'primary', class: 'btn-pro-gradient', html: `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>` });
+        } else if (canUpdateFiles) {
+            allActions.push({ id: 'update', type: 'primary', class: 'warning', html: `<button class="btn warning btn-sm" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit"></i> Bổ Sung File</button>` });
+        }
 
-// Thêm các hành động phụ
-if (canUpdateFiles && !allActions.some(a => a.id === 'update')) {
-    allActions.push({ type: 'secondary', html: `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>` });
-}
-if (canCancel) {
-    allActions.push({ type: 'secondary', html: `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>` });
-}
+        if (canDownloadInvoice) {
+            allActions.push({ 
+                id: 'download', 
+                type: 'secondary',
+                html: `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download fa-fw"></i><span>Tải Hóa Đơn</span></button>` 
+            });
+        }
+        
+        if (canUpdateFiles && !allActions.some(a => a.id === 'update')) {
+            allActions.push({ type: 'secondary', html: `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>` });
+        }
+        if (canCancel) {
+            allActions.push({ type: 'secondary', html: `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>` });
+        }
 
-let finalActionCellHtml = '';
+		let finalActionCellHtml = '';
+		if (allActions.length === 1) {
+		    const singleAction = allActions[0];
+		    let buttonHtml = singleAction.html;
+		    if (singleAction.type === 'secondary') {
+		        buttonHtml = buttonHtml.replace('class="action-item danger"', 'class="btn btn-sm btn-danger"')
+		                               .replace('class="action-item"', 'class="btn btn-sm secondary"')
+		                               .replace(/<span>(.*?)<\/span>/, '$1');
+		    }
+		    finalActionCellHtml = `<div class="primary-action-group">${buttonHtml}</div>`;
+		} else if (allActions.length > 1) {
+		    const primaryAction = allActions.find(a => a.type === 'primary');
+		    const secondaryActions = allActions.filter(a => a !== primaryAction);
+		    const primaryActionHtml = primaryAction ? primaryAction.html : '';
+		    const dropdownItemsHtml = secondaryActions.map(a => a.html).join('<div class="divider"></div>');
 
-// 2. Dựng HTML cuối cùng dựa trên số lượng hành động
-if (allActions.length === 1) {
-    const singleAction = allActions[0];
-    let buttonHtml = singleAction.html;
-    
-    // Nếu hành động duy nhất là loại "phụ", biến nó thành nút "chính"
-    if (singleAction.type === 'secondary') {
-        buttonHtml = buttonHtml.replace('class="action-item danger"', 'class="btn btn-sm btn-danger"')
-                               .replace('class="action-item"', 'class="btn btn-sm secondary"')
-                               .replace(/<span>(.*?)<\/span>/, '$1');
-    }
-    finalActionCellHtml = `<div class="primary-action-group">${buttonHtml}</div>`;
-
-} else if (allActions.length > 1) {
-    const primaryAction = allActions.find(a => a.type === 'primary');
-    const secondaryActions = allActions.filter(a => a !== primaryAction);
-    const primaryActionHtml = primaryAction ? primaryAction.html : '';
-    const dropdownItemsHtml = secondaryActions.map(a => a.html).join('<div class="divider"></div>');
-
-    let menuButtonHtml = '';
-    if (secondaryActions.length > 0) {
-        menuButtonHtml = `<button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác"><i class="fas fa-ellipsis-v"></i></button>
-                          <div class="action-menu-dropdown">${dropdownItemsHtml}</div>`;
-    }
-    
-    if (!primaryActionHtml && secondaryActions.length > 0) {
-         finalActionCellHtml = `<div class="primary-action-group">${menuButtonHtml}</div>`;
-    } else {
-         finalActionCellHtml = `<div class="primary-action-group">${primaryActionHtml}${menuButtonHtml}</div>`;
-    }
-}
-// --- KẾT THÚC LOGIC TẠO NÚT HÀNH ĐỘNG ---
-
-        // --- KHÔI PHỤC GIAO DIỆN DESKTOP ---
+		    let menuButtonHtml = '';
+		    if (secondaryActions.length > 0) {
+		        menuButtonHtml = `<button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác"><i class="fas fa-ellipsis-v"></i></button>
+		                          <div class="action-menu-dropdown">${dropdownItemsHtml}</div>`;
+		    }
+		    
+		    if (!primaryActionHtml && secondaryActions.length > 0) {
+		         finalActionCellHtml = `<div class="primary-action-group">${menuButtonHtml}</div>`;
+		    } else {
+		         finalActionCellHtml = `<div class="primary-action-group">${primaryActionHtml}${menuButtonHtml}</div>`;
+		    }
+		}
+        
+        const isVinLike = (text) => text && /^[A-Z0-9]{17}$/.test(text.toUpperCase());
+        const vin = row["VIN"] || (isVinLike(row["Kết quả"]) ? row["Kết quả"] : '');
+        
+        let timelineHtml = '';
+        const hasInvoiceDate = normalizedStatusText === 'đã xuất hóa đơn' && row["Ngày xuất hóa đơn"];
+        
+        if (hasInvoiceDate) {
+            timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Ngày xuất hóa đơn"])}</span>`;
+        } else if (row["Thời gian nhập"]) {
+            timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
+        }
+        if (row["Thời gian ghép"]) {
+            timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
+        }
+        
         const desktopRowHtml = `
             <tr class="desktop-view-row" onclick="viewOrderDetail('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
                 <td data-label="STT">${i + 1}</td>
@@ -5353,28 +5480,16 @@ if (allActions.length === 1) {
             </tr>
         `;
 
-        // --- TẠO GIAO DIỆN MOBILE ---
         let mobileActionsHtml = '';
-        if (canDownloadInvoice) mobileActionsHtml += `<button class="card-action-btn success" onclick="event.stopPropagation(); downloadInvoice(event, '${row.LinkHoaDonDaXuat}')" title="Tải Hóa Đơn"><i class="fas fa-download"></i></button>`;
-        if (canAdminUploadInvoice) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openAdminInvoiceUploadModal(event, '${orderNumber}')" title="Tải Lên Hóa Đơn"><i class="fas fa-upload"></i></button>`;
-        if (canRequestInvoice) mobileActionsHtml += `<button class="card-action-btn primary" onclick="event.stopPropagation(); requestInvoice(event, '${orderNumber}')" title="Yêu cầu Xuất Hóa Đơn"><i class="fas fa-file-invoice-dollar"></i></button>`;
-        if (canUpdateFiles) mobileActionsHtml += `<button class="card-action-btn" onclick="event.stopPropagation(); openSupplementaryFileModal(event, '${orderNumber}')" title="Bổ Sung File"><i class="fas fa-edit"></i></button>`;
-        if (canCancel) mobileActionsHtml += `<button class="card-action-btn danger" onclick="event.stopPropagation(); confirmCancelRequest(event, '${orderNumber}')" title="Hủy Yêu cầu"><i class="fas fa-trash-alt"></i></button>`;
+        if (allActions.length > 0) {
+            mobileActionsHtml += `<div class="card-actions">`;
+            const primaryAction = allActions.find(a => a.type === 'primary');
+            if (primaryAction) {
+                mobileActionsHtml += primaryAction.html.replace('btn-sm', 'btn-primary');
+            }
+            mobileActionsHtml += `</div>`;
+        }
 
-        const isVinLike = (text) => text && /^[A-Z0-9]{17}$/.test(text.toUpperCase());
-        const vin = row["VIN"] || (isVinLike(row["Kết quả"]) ? row["Kết quả"] : '');
-        
-        let timelineHtml = '';
-        const hasInvoiceDate = normalizedStatusText === 'đã xuất hóa đơn' && row["Thời gian xuất hóa đơn"];
-        if (hasInvoiceDate) {
-            timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Thời gian xuất hóa đơn"])}</span>`;
-        } else if (row["Thời gian nhập"]) {
-            timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
-        }
-        if (row["Thời gian ghép"]) {
-            timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
-        }
-        
         const mobileCardHtml = `
             <div class="history-card">
                 <div class="card-header">
@@ -5401,7 +5516,7 @@ if (allActions.length === 1) {
                     </div>` : ''}
                 </div>
                 ${timelineHtml ? `<div class="card-timeline">${timelineHtml}</div>` : ''}
-                ${mobileActionsHtml ? `<div class="card-actions">${mobileActionsHtml}</div>` : ''}
+                ${mobileActionsHtml || finalActionCellHtml ? `<div class="card-actions">${mobileActionsHtml || finalActionCellHtml}</div>` : ''}
             </div>
         `;
         
@@ -6182,6 +6297,168 @@ function formatCustomDateTime(dateValue) {
         // Trả về N/A nếu có lỗi xảy ra
         return 'N/A';
     }
+}
+// [MÃ ĐÃ CẬP NHẬT]
+function openVcRequestModal(event, orderNumber) {
+    event.stopPropagation();
+
+    const modal = document.getElementById('vc-request-modal');
+    const infoDiv = document.getElementById('vc-modal-order-info');
+    const confirmButton = document.getElementById('confirm-vc-request-button');
+    const orderData = globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber);
+
+    if (!modal || !infoDiv || !confirmButton || !orderData) {
+        showNotification("Lỗi: Không thể mở giao diện yêu cầu VC.", "error");
+        return;
+    }
+
+    // ===== BẮT ĐẦU THAY ĐỔI =====
+    // Điền dữ liệu vào cấu trúc info box mới
+    infoDiv.innerHTML = `
+        <div class="compact-order-info-item">
+            <span class="compact-order-info-label">Số Đơn Hàng</span>
+            <span class="compact-order-info-value">${escapeHtml(orderData["Số đơn hàng"])}</span>
+        </div>
+        <div class="compact-order-info-item">
+            <span class="compact-order-info-label">Khách Hàng</span>
+            <span class="compact-order-info-value">${escapeHtml(orderData["Tên khách hàng"])}</span>
+        </div>
+        <div class="compact-order-info-item">
+            <span class="compact-order-info-label">Số VIN</span>
+            <span class="compact-order-info-value">${escapeHtml(orderData["VIN"])}</span>
+        </div>
+    `;
+    // ===== KẾT THÚC THAY ĐỔI =====
+
+    // Reset giao diện modal về trạng thái mặc định
+    document.querySelector('input[name="customerType"][value="Cá nhân"]').checked = true;
+    toggleVcCustomerTypeFields();
+    
+    // Reset tất cả các ô tải file
+    setupSimpleFileUpload('cccd_front_file_input', 'cccd-front-upload-wrapper', 'cccd-front-prompt-text', true);
+    setupSimpleFileUpload('cccd_back_file_input', 'cccd-back-upload-wrapper', 'cccd-back-prompt-text', true);
+    setupSimpleFileUpload('cavet_front_file_input', 'cavet-front-upload-wrapper', 'cavet-front-prompt-text', true);
+    setupSimpleFileUpload('cavet_back_file_input', 'cavet-back-upload-wrapper', 'cavet-back-prompt-text', true);
+    setupSimpleFileUpload('gpkd_file_input', 'gpkd-upload-wrapper', 'gpkd-prompt-text', true);
+    document.getElementById('dms_customer_code_input').value = '';
+
+    confirmButton.onclick = function() {
+        processVcRequest(orderNumber);
+    };
+
+    modal.classList.add("active");
+    adjustModalScroll(modal);
+}
+
+function toggleVcCustomerTypeFields() {
+    const individualFields = document.getElementById('vc-individual-fields');
+    const companyFields = document.getElementById('vc-company-fields');
+    const isCompany = document.querySelector('input[name="customerType"]:checked').value === 'Công ty';
+    
+    if (isCompany) {
+        companyFields.classList.remove('hidden');
+        individualFields.classList.add('hidden');
+    } else {
+        companyFields.classList.add('hidden');
+        individualFields.classList.remove('hidden');
+    }
+}
+
+async function processVcRequest(orderNumber) {
+    const confirmButton = document.getElementById('confirm-vc-request-button');
+    if (confirmButton.disabled) return;
+
+    const customerType = document.querySelector('input[name="customerType"]:checked').value;
+    const cavetFrontInput = document.getElementById('cavet_front_file_input');
+    const cavetBackInput = document.getElementById('cavet_back_file_input');
+    if (!cavetFrontInput.files.length > 0 || !cavetBackInput.files.length > 0) return showNotification("Vui lòng tải đủ ảnh Cavet xe.", "warning");
+    if (customerType === 'Cá nhân') {
+        const cccdFrontInput = document.getElementById('cccd_front_file_input');
+        const cccdBackInput = document.getElementById('cccd_back_file_input');
+        if (!cccdFrontInput.files.length > 0 || !cccdBackInput.files.length > 0) return showNotification("Vui lòng tải đủ ảnh CCCD.", "warning");
+    } else if (customerType === 'Công ty') {
+        const dmsCodeInput = document.getElementById('dms_customer_code_input');
+        const gpkdInput = document.getElementById('gpkd_file_input');
+        if (!dmsCodeInput.value.trim() || !gpkdInput.files.length > 0) return showNotification("Vui lòng nhập Mã KH DMS và tải GPKD.", "warning");
+    }
+    
+    confirmButton.disabled = true;
+    closeModal('vc-request-modal');
+    
+    const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber) };
+    updateLocalOrderData(orderNumber, { 'Kết quả': 'Chờ duyệt YCVC' });
+    showLoadingToast("Đang Gửi Yêu Cầu...", "Hệ thống đang xử lý tệp...");
+
+    try {
+        const payload = new FormData();
+        payload.append('action', 'requestVcIssuance');
+        payload.append('orderNumber', orderNumber);
+        payload.append('requestedBy', sessionStorage.getItem("currentConsultant") || "Unknown");
+        payload.append('customerType', customerType);
+        payload.append('cavetFrontBase64', await fileToBase64(cavetFrontInput.files[0]));
+        payload.append('cavetFrontName', cavetFrontInput.files[0].name);
+        payload.append('cavetBackBase64', await fileToBase64(cavetBackInput.files[0]));
+        payload.append('cavetBackName', cavetBackInput.files[0].name);
+
+        if (customerType === 'Cá nhân') {
+            const cccdFrontInput = document.getElementById('cccd_front_file_input');
+            const cccdBackInput = document.getElementById('cccd_back_file_input');
+            payload.append('cccdFrontBase64', await fileToBase64(cccdFrontInput.files[0]));
+            payload.append('cccdFrontName', cccdFrontInput.files[0].name);
+            payload.append('cccdBackBase64', await fileToBase64(cccdBackInput.files[0]));
+            payload.append('cccdBackName', cccdBackInput.files[0].name);
+        } else if (customerType === 'Công ty') {
+            const dmsCodeInput = document.getElementById('dms_customer_code_input');
+            const gpkdInput = document.getElementById('gpkd_file_input');
+            payload.append('dmsCustomerCode', dmsCodeInput.value.trim());
+            payload.append('gpkdBase64', await fileToBase64(gpkdInput.files[0]));
+            payload.append('gpkdName', gpkdInput.files[0].name);
+        }
+        
+        const response = await fetch(apiURL, { method: 'POST', body: payload });
+        const result = await response.json();
+
+        if (result.status === 'SUCCESS') {
+            hideLoadingToast();
+            showNotification(result.message, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        hideLoadingToast();
+        console.error('Lỗi khi gửi Yêu cầu cấp VC:', error);
+        showNotification(`Lỗi hệ thống: ${error.message}`, 'error');
+        updateLocalOrderData(orderNumber, originalData);
+        confirmButton.disabled = false;
+    }
+}
+function updateLocalOrderData(orderNumber, updates) {
+    if (!globalHistoryData || !orderNumber || !updates) {
+        console.warn("updateLocalOrderData: Thiếu dữ liệu đầu vào.");
+        return false;
+    }
+
+    const orderIndex = globalHistoryData.findIndex(row => row && row["Số đơn hàng"] === orderNumber);
+
+    if (orderIndex === -1) {
+        console.warn(`Không tìm thấy đơn hàng ${orderNumber} trong dữ liệu cục bộ để cập nhật.`);
+        return false;
+    }
+
+    // Cập nhật đối tượng trong mảng dữ liệu toàn cục
+    globalHistoryData[orderIndex] = { ...globalHistoryData[orderIndex], ...updates };
+
+    // Lưu trạng thái mới vào sessionStorage để duy trì khi người dùng F5
+    sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData));
+
+    // Gọi lại hàm applyFilters() để vẽ lại bảng.
+    applyFilters();
+
+    console.log(`Đã cập nhật giao diện cho đơn hàng ${orderNumber} với:`, updates);
+    return true;
 }
 </script>
 </body>
