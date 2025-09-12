@@ -2602,7 +2602,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbw_nZ-eUxpXosmPY-_QfT7GlZ3SoRNjqjh9pK-7gIoMBk3vdhLsFqwLF60dY8OU7UEb9w/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxX13-YTQ0LNYmkt3kuumoy8AG0R9rRoX9GgRbvYxSeW1gX0j-HUQdhgMSRZ1KDl1yURA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -4852,7 +4852,29 @@ async function processInvoiceRequest(orderNumber) {
     const confirmButton = document.getElementById('confirm-invoice-button');
     if (confirmButton.disabled) return;
 
-    // --- Validation (Kiểm tra dữ liệu đầu vào) ---
+    const orderData = globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber);
+
+    if (!orderData) {
+        showNotification("Lỗi: Không tìm thấy dữ liệu cho đơn hàng này.", "error");
+        return;
+    }
+
+    const maDMS_Xe = (orderData["Mã DMS"] || "").trim().toUpperCase();
+    const maDMS_DonHang = orderNumber.substring(0, 6).toUpperCase();
+
+    if (!maDMS_Xe) {
+        showNotification(`Xe với VIN ${orderData.VIN} chưa có Mã DMS trong hệ thống. Không thể xuất hóa đơn.`, "error", 5000);
+        closeModal('invoice-confirm-modal');
+        return;
+    }
+
+    if (maDMS_Xe !== maDMS_DonHang) {
+        const errorMessage = `Không thể Yêu Cầu! Mã DMS của xe (${maDMS_Xe}) không khớp với Mã DMS của Đơn hàng (${maDMS_DonHang}).`;
+        showNotification(errorMessage, "error", 8000);
+        closeModal('invoice-confirm-modal');
+        return;
+    }
+
     const vinclubCheckbox = document.getElementById('vinclub-confirm-checkbox');
     if (!vinclubCheckbox || !vinclubCheckbox.checked) {
         showNotification("Bạn phải xác nhận khách hàng đã tạo tài khoản Vinclub.", "error", 4000);
@@ -4868,11 +4890,10 @@ async function processInvoiceRequest(orderNumber) {
         showNotification("Vui lòng tải lên file Đề nghị xuất hóa đơn.", "error", 4000);
         return;
     }
-    
+
     confirmButton.disabled = true;
     closeModal('invoice-confirm-modal');
 
-    // 1. CẬP NHẬT LẠC QUAN: Thay đổi UI ngay lập tức
     const originalData = { ...globalHistoryData.find(row => row["Số đơn hàng"] === orderNumber) };
     updateLocalOrderData(orderNumber, { 'Kết quả': 'Chờ phê duyệt' });
     showLoadingToast("Đang Gửi Tệp...", "Quá trình này có thể mất một lúc.");
@@ -4881,7 +4902,6 @@ async function processInvoiceRequest(orderNumber) {
         const hopDongBase64 = await fileToBase64(hopDongInput.files[0]);
         const deNghiBase64 = await fileToBase64(deNghiInput.files[0]);
 
-        // 2. GỬI YÊU CẦU NỀN
         const payload = new FormData();
         payload.append('action', 'requestInvoice');
         payload.append('orderNumber', orderNumber);
@@ -4893,18 +4913,15 @@ async function processInvoiceRequest(orderNumber) {
 
         const response = await fetch(apiURL, { method: 'POST', body: payload });
         const result = await response.json();
-        
+
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
-            // 3. THÀNH CÔNG: Đồng bộ hóa trong nền để lấy dữ liệu chính xác
             fetchHistory(false);
         } else {
-            // 4. THẤT BẠI: Khôi phục lại giao diện về trạng thái cũ
             showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
             updateLocalOrderData(orderNumber, originalData);
         }
     } catch (error) {
-        // 4. THẤT BẠI: Khôi phục lại giao diện về trạng thái cũ
         console.error('Lỗi khi gửi yêu cầu xuất hóa đơn:', error);
         showNotification(`Lỗi hệ thống: ${error.message}`, 'error', 5000);
         updateLocalOrderData(orderNumber, originalData);
