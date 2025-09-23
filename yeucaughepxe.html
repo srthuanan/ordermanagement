@@ -2602,7 +2602,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbxCNy-XqHiMou0rPmkHwAd8arsZKGQYLFre5gHYiip_tPusCbuiJPWb4EXOsPW2wUrByQ/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwyrbT5jh_uJyxhAZJksZUbCDsZeoGT6iUnF6PhR5xJRHJISINY8kJDL7ZPNMeny3p-DA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3628,11 +3628,6 @@ function previewForm(e) {
     adjustModalScroll(previewModal);
 }
 
-// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
-
-// TỆP: yeucaughepxe.html
-// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
-
 async function confirmSubmit() {
     const submitButton = document.querySelector('#preview-modal .btn-success');
     if (submitButton && submitButton.disabled) return;
@@ -3665,32 +3660,32 @@ async function confirmSubmit() {
         const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
         const result = await response.json();
         
-        if (result.status === "SUCCESS") {
+        if (result.status === "SUCCESS" && result.newRecord) { // KIỂM TRA THÊM newRecord
             hideLoadingToast();
             showSuccessToast("Thành Công!", result.message || 'Yêu cầu của bạn đã được ghi nhận.');
             
-            // Lấy Số Đơn Hàng từ kết quả trả về
-            const newOrderId = result.orderNumber || formData.so_don_hang;
+            const newOrderId = result.newRecord["Số đơn hàng"];
             
-            // Xóa các tác vụ cũ
+            // ▼▼▼ THAY ĐỔI QUAN TRỌNG ▼▼▼
+            // Bây giờ chúng ta sử dụng trực tiếp đối tượng newRecord từ server
+            sessionStorage.setItem('temp_new_order_details', JSON.stringify(result.newRecord));
+            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
+
             clearFormDraft();
             document.getElementById("vinfast-form").reset();
             document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
             
-            // Tải lại toàn bộ dữ liệu ở chế độ nền để đảm bảo cache là mới nhất
             await fetchHistory(false);
             
-            // ▼▼▼ THAY ĐỔI QUAN TRỌNG NHẤT ▼▼▼
-            // Chuyển trang chỉ với Số Đơn Hàng
             setTimeout(() => {
                 hideSuccessToast();
                 window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(newOrderId)}`;
             }, 500);
-            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
 
         } else {
+            // Xử lý lỗi nếu server không trả về newRecord hoặc status là ERROR
             hideLoadingToast();
-            showNotification(result.message || 'Gửi yêu cầu thất bại.', 'error', 5000);
+            showNotification(result.message || 'Gửi yêu cầu thất bại. Không nhận được dữ liệu trả về.', 'error', 5000);
         }
 
     } catch (error) {
