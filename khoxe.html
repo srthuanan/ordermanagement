@@ -1245,7 +1245,7 @@ if (sessionStorage.getItem("isLoggedIn") !== "true") {
         // ==========================================================================
         // 1. Quản lý Trạng thái & Biến Toàn cục
         // ==========================================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyT6cV0-vepFVEAdPGlgOpywuCwb9Bc1jbpaIKGCOKnMEW73g2WElBSoIdU7y7KhmIheg/exec";
         let allCars = [];
         let filteredCars = [];
         let currentPage = 1;
@@ -1494,11 +1494,15 @@ initializePopovers: function() {
                     const currentUser = sessionStorage.getItem("currentConsultant");
                     const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
                     const response = await axios.get(API_URL, {
-                        params: { currentUser: currentUser, isAdmin: isAdmin }
-                    });
-                    if (!response.data || !Array.isArray(response.data.khoxe)) {
-                        throw new Error("Dữ liệu không hợp lệ từ API");
-                    }
+    params: { 
+        action: 'getKhoXeData', // <--- THÊM DÒNG NÀY
+        currentUser: currentUser, 
+        isAdmin: isAdmin 
+    }
+});
+if (!response.data || !Array.isArray(response.data.khoxe)) {
+    throw new Error("Dữ liệu không hợp lệ từ API");
+}
                     allCars = DataProcessor.parseApiData(response.data.khoxe);
                     
                     // --- BỔ SUNG: Lưu dữ liệu mới vào cache ---
