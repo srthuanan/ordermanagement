@@ -499,15 +499,38 @@
     window.location.href = "yeucaughepxe.html?tab=history"; 
 }
         function getQueryParam(param) { return new URLSearchParams(window.location.search).get(param); }
-        function formatDateTime(dateTimeString) {
-             if (!dateTimeString) return "N/A";
-             const date = new Date(dateTimeString);
-             if (isNaN(date.getTime())) return "N/A";
-             return new Intl.DateTimeFormat('vi-VN', {
-                 year: 'numeric', month: '2-digit', day: '2-digit',
-                 hour: '2-digit', minute: '2-digit'
-             }).format(date);
+        // Thay thế hàm formatDateTime cũ bằng hàm này
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return "N/A";
+
+    let date;
+    // Thử tạo Date object trực tiếp (hoạt động tốt với ISO string như "2025-09-23T03:30:00.000Z")
+    const potentialDate = new Date(dateTimeString);
+
+    if (!isNaN(potentialDate.getTime())) {
+        date = potentialDate;
+    } 
+    // Nếu thất bại, thử phân tích chuỗi "dd/MM/yyyy HH:mm:ss"
+    else if (typeof dateTimeString === 'string' && dateTimeString.includes('/')) {
+        const parts = dateTimeString.split(/[\s/:]+/); // Tách theo khoảng trắng, /, hoặc :
+        // parts will be [dd, MM, yyyy, HH, mm, ss]
+        if (parts.length >= 3) {
+            // new Date(year, monthIndex, day, hours, minutes, seconds)
+            date = new Date(parts[2], parts[1] - 1, parts[0], parts[3] || 0, parts[4] || 0, parts[5] || 0);
         }
+    }
+
+    // Nếu sau tất cả các bước vẫn không tạo được date hợp lệ, trả về N/A
+    if (!date || isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+    // Nếu thành công, định dạng và trả về kết quả
+    return new Intl.DateTimeFormat('vi-VN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).format(date);
+}
         
         function getStatusInfo(statusText) {
             const lowerStatus = statusText.toLowerCase();
@@ -598,115 +621,112 @@
     return colorStyle; // Trả về màu mặc định nếu không khớp
 }
 
-        function renderDetails(rowData) {
-            const container = document.getElementById("details-container");
-            let allData = {};
-            Object.keys(labelMap).forEach(key => allData[key] = rowData[key] || null);
-            
-            const pairingDate = allData["Thời gian ghép"] ? new Date(allData["Thời gian ghép"]) : null;
+function renderDetails(rowData) {
+    const container = document.getElementById("details-container");
+    let allData = {};
+    // Đảm bảo tất cả các key từ labelMap đều tồn tại trong allData
+    Object.keys(labelMap).forEach(key => allData[key] = rowData[key] || null);
+    
+    // Tính toán "Số ngày đã ghép"
+    const pairingDate = allData["Thời gian ghép"] ? new Date(allData["Thời gian ghép"]) : null;
+    if (pairingDate && !isNaN(pairingDate)) {
+        const currentDate = new Date();
+        const diffTime = Math.abs(currentDate - pairingDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        allData["Số ngày ghép"] = diffDays <= 1 ? "Trong ngày" : `${diffDays} ngày`;
+    } else {
+        allData["Số ngày ghép"] = null; // Sẽ hiển thị là N/A
+    }
 
-            if (pairingDate && !isNaN(pairingDate)) {
-                const currentDate = new Date();
-                const diffTime = Math.abs(currentDate - pairingDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 1) {
-                    allData["Số ngày ghép"] = "Trong ngày";
-                } else {
-                    allData["Số ngày ghép"] = `${diffDays} ngày`;
-                }
-            } else {
-                allData["Số ngày ghép"] = null;
+    const statusText = allData["Kết quả"] || "Chưa rõ";
+    const statusInfo = getStatusInfo(statusText);
+    
+    // ▼▼▼ BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ▼▼▼
+    // Hàm createGridHTML đã được sửa lại để không ẩn trường bị trống
+    const createGridHTML = data => Object.keys(data)
+        // 1. Dòng .filter() GÂY LỖI đã được XÓA BỎ.
+        .map((key, index) => {
+            const label = labelMap[key] || key; // Lấy nhãn
+            
+            // 2. Nếu giá trị không tồn tại (null, undefined, ""), sẽ hiển thị là "N/A".
+            const value = data[key] || "N/A";
+            
+            let valueStyle = '';
+            if (label === 'Ngoại Thất' && value !== "N/A") {
+                valueStyle = getExteriorColorStyle(value);
             }
+            return `<div class="detail-item" data-aos="fade-up" data-aos-delay="${index * 50}">
+                        <span class="detail-label">${label}</span>
+                        <span class="detail-value" style="${valueStyle}">${value}</span>
+                    </div>`;
+        })
+        .join('');
+    // ▲▲▲ KẾT THÚC THAY ĐỔI QUAN TRỌNG ▲▲▲
 
-            const statusText = allData["Kết quả"] || "Chưa rõ";
-            const statusInfo = getStatusInfo(statusText);
-            
-            // === Nâng Cấp: Áp dụng màu cho Grid ===
-            const createGridHTML = data => Object.keys(data)
-                .filter(key => data[key])
-                .map((key, index) => {
-                    const label = labelMap[key];
-                    const value = data[key];
-                    let valueStyle = '';
-                    if (label === 'Ngoại Thất') {
-                        valueStyle = getExteriorColorStyle(value);
-                    }
-                    return `<div class="detail-item" data-aos="fade-up" data-aos-delay="${index * 50}">
-                                <span class="detail-label">${label}</span>
-                                <span class="detail-value" style="${valueStyle}">${value}</span>
-                            </div>`;
-                })
-                .join('');
-
-            const { ["Số đơn hàng"]: orderId, ["Tên khách hàng"]: customer, ["VIN"]: vin } = allData;
-            
-            container.innerHTML = `
-                <div class="details-card-wrapper" data-aos="fade-in" data-aos-duration="400">
-                    <header class="details-card-header-gradient">
-                        <div class="header-info">
-                            <h2>${orderId || "..."}</h2>
-                            <p>${customer || "..."}</p>
+    const { ["Số đơn hàng"]: orderId, ["Tên khách hàng"]: customer, ["VIN"]: vin } = allData;
+    
+    container.innerHTML = `
+        <div class="details-card-wrapper" data-aos="fade-in" data-aos-duration="400">
+            <header class="details-card-header-gradient">
+                <div class="header-info">
+                    <h2>${orderId || "..."}</h2>
+                    <p>${customer || "..."}</p>
+                </div>
+                <div class="order-status-badge ${statusInfo.className}">
+                    <i class="fas ${statusInfo.icon}"></i>
+                    <span>${statusText}</span>
+                </div>
+            </header>
+            <div class="details-card-body">
+                
+                ${vin ? `
+                <div class="mobile-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="vin-highlight-section">
+                        <div class="vin-info">
+                            <span class="vin-label">Số Khung (VIN)</span>
+                            <span class="vin-text" id="vin-value">${vin}</span>
                         </div>
-                        <div class="order-status-badge ${statusInfo.className}">
-                            <i class="fas ${statusInfo.icon}"></i>
-                            <span>${statusText}</span>
-                        </div>
-                    </header>
-                    <div class="details-card-body">
-                        
-                        ${vin ? `
-                        <div class="mobile-card" data-aos="fade-up" data-aos-delay="100">
-                            <div class="vin-highlight-section">
-                                <div class="vin-info">
-                                    <span class="vin-label">Số Khung (VIN)</span>
-                                    <span class="vin-text" id="vin-value">${vin}</span>
-                                </div>
-                                <button class="copy-btn" id="copy-vin-btn" title="Sao chép VIN"><i class="far fa-copy"></i></button>
-                            </div>
-                        </div>` : ''}
-
-                        <div class="mobile-card" data-aos="fade-up" data-aos-delay="200">
-                            <div class="details-grid-container">
-                                ${createGridHTML({ 
-    "Tên tư vấn bán hàng": rowData["Tên tư vấn bán hàng"], 
-    "Dòng xe": rowData["Dòng xe"], 
-    "Phiên bản": rowData["Phiên bản"], // Đã sửa lỗi viết hoa
-    "Ngoại thất": rowData["Ngoại thất"], 
-    "Nội thất": rowData["Nội thất"], 
-    "Thời gian nhập": formatDateTime(rowData["Thời gian nhập"]), 
-    "Ngày cọc": formatDateTime(rowData["Ngày cọc"]), 
-    "Thời gian ghép": formatDateTime(rowData["Thời gian ghép"]), 
-    "Số ngày ghép": allData["Số ngày ghép"] // Giữ nguyên allData ở đây vì nó được tính toán riêng
-})}
-                            </div>
-                        </div>
-
-                        <div class="card-footer" data-aos="fade-up" data-aos-delay="300">
-                            <button class="action-btn back-btn" onclick="goBackToMainPage()">
-                                <i class="fas fa-arrow-left"></i>
-                                <span>Back</span>
-                            </button>
-                        </div>
+                        <button class="copy-btn" id="copy-vin-btn" title="Sao chép VIN"><i class="far fa-copy"></i></button>
                     </div>
-                </div>`;
-            
-            const copyBtn = document.getElementById('copy-vin-btn');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', (e) => { 
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(document.getElementById('vin-value').textContent).then(() => { 
-                        copyBtn.innerHTML = '<i class="fas fa-check"></i>'; 
-                        setTimeout(() => { copyBtn.innerHTML = '<i class="far fa-copy"></i>'; }, 2000); 
-                    }); 
-                });
-            }
-            AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic' });
-        }
+                </div>` : ''}
 
-        /* === INITIALIZATION === */
-        // TỆP: xem-chi-tiet-lich-su.html
-// THAY THẾ TOÀN BỘ HÀM document.addEventListener("DOMContentLoaded", ...) CŨ BẰNG HÀM NÀY
+                <div class="mobile-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="details-grid-container">
+                        ${createGridHTML({ 
+                            "Tên tư vấn bán hàng": rowData["Tên tư vấn bán hàng"], 
+                            "Dòng xe": rowData["Dòng xe"], 
+                            "Phiên bản": rowData["Phiên bản"],
+                            "Ngoại thất": rowData["Ngoại thất"], 
+                            "Nội thất": rowData["Nội thất"], 
+                            "Thời gian nhập": formatDateTime(rowData["Thời gian nhập"]), 
+                            "Ngày cọc": formatDateTime(rowData["Ngày cọc"]), 
+                            "Thời gian ghép": formatDateTime(rowData["Thời gian ghép"]),
+                            "Số ngày ghép": allData["Số ngày ghép"]
+                        })}
+                    </div>
+                </div>
 
+                <div class="card-footer" data-aos="fade-up" data-aos-delay="300">
+                    <button class="action-btn back-btn" onclick="goBackToMainPage()">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Quay Lại Lịch Sử</span>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    
+    const copyBtn = document.getElementById('copy-vin-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => { 
+            e.stopPropagation();
+            navigator.clipboard.writeText(document.getElementById('vin-value').textContent).then(() => { 
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>'; 
+                setTimeout(() => { copyBtn.innerHTML = '<i class="far fa-copy"></i>'; }, 2000); 
+            }); 
+        });
+    }
+    AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic' });
+}
 document.addEventListener("DOMContentLoaded", function() {
     UIManager.init();
     const container = document.getElementById('details-container');
@@ -719,10 +739,32 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    // ▼▼▼ BẮT ĐẦU LUỒNG LOGIC MỚI, ĐƠN GIẢN VÀ CHÍNH XÁC HƠN ▼▼▼
+    // ▼▼▼ BẮT ĐẦU LUỒNG LOGIC MỚI, ƯU TIÊN HƠN ▼▼▼
 
-    // ƯU TIÊN 1: Tìm trong cache (sessionStorage) trước.
-    // Đây là kịch bản chính cho cả yêu cầu mới tạo và xem lại lịch sử.
+    // ƯU TIÊN 1: Kiểm tra dữ liệu tạm thời được gửi từ trang tạo yêu cầu.
+    const tempOrderDataJSON = sessionStorage.getItem('temp_new_order_details');
+    if (tempOrderDataJSON) {
+        try {
+            const tempOrderData = JSON.parse(tempOrderDataJSON);
+            // Đảm bảo dữ liệu tạm này là của đúng đơn hàng đang xem
+            if (tempOrderData["Số đơn hàng"] && tempOrderData["Số đơn hàng"].trim() === orderNumberParam.trim()) {
+                console.log("Hiển thị dữ liệu từ bộ nhớ tạm của yêu cầu mới.");
+                sessionStorage.removeItem('temp_new_order_details'); // Xóa key tạm sau khi sử dụng
+                renderDetails(tempOrderData); // Hiển thị chi tiết
+                return; // Hoàn thành, không chạy các bước sau
+            } else {
+                // Dữ liệu tạm không khớp, xóa đi để tránh lỗi
+                sessionStorage.removeItem('temp_new_order_details');
+            }
+        } catch (e) {
+            console.warn("Lỗi xử lý dữ liệu tạm, sẽ bỏ qua.", e);
+            sessionStorage.removeItem('temp_new_order_details'); // Dọn dẹp nếu có lỗi
+        }
+    }
+    
+    // ▲▲▲ KẾT THÚC LUỒNG LOGIC MỚI ▲▲▲
+
+    // ƯU TIÊN 2: Tìm trong cache (sessionStorage) chung - Logic cũ vẫn giữ nguyên.
     const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
     if (storedData) {
         try {
@@ -738,7 +780,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // ƯU TIÊN 2 (DỰ PHÒNG): Nếu không có trong cache, tải lại toàn bộ từ máy chủ.
+    // ƯU TIÊN 3 (DỰ PHÒNG): Nếu không có trong cache, tải lại toàn bộ từ máy chủ - Logic cũ vẫn giữ nguyên.
     console.log("Không tìm thấy trong cache. Đang tải lại từ máy chủ...");
     container.innerHTML = `<div class="loading-message"><i class="fas fa-cloud-download-alt fa-spin"></i>Không tìm thấy trong cache, đang tìm lại trên máy chủ...</div>`;
 
