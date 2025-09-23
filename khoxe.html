@@ -726,14 +726,13 @@ body.dark-mode .hold-btn:disabled::before {
 }
 
 /* Thiết lập độ rộng tương đối cho 8 cột (ĐÃ TỐI ƯU) */
-.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 15%; text-align: center; } /* Hành động */
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 14%; text-align: center; } /* Hành động */
 .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 8%; }  /* Dòng Xe */
 .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 14%; } /* Phiên Bản */
-.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 18%; } /* Ngoại Thất */
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 23%; } /* Ngoại Thất */
 .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 8%; }  /* Nội Thất */
-.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 15%; } /* Số VIN */
-.data-table th:nth-child(7), .data-table td:nth-child(7) { width: 8%; }  /* Mã DMS */
-.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 14%; text-align: center; } /* Trạng Thái */
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 18%; } /* Số VIN */
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 15%; text-align: center; } /* Trạng Thái */
 /* ======================================================= */
 /* === CSS CHO POPOVER XÁC NHẬN HÀNH ĐỘNG (Giao diện mới) === */
 /* ======================================================= */
@@ -1214,7 +1213,6 @@ body.dark-mode .card-footer {
         <th data-sort-key="exterior">Ngoại Thất</th>
         <th data-sort-key="interior">Nội Thất</th>
         <th data-sort-key="vin">Số VIN</th>
-        <th data-sort-key="dms">Mã DMS</th>
         <th data-sort-key="status">Trạng Thái</th>
     </tr>
 </thead>
@@ -1245,7 +1243,7 @@ if (sessionStorage.getItem("isLoggedIn") !== "true") {
         // ==========================================================================
         // 1. Quản lý Trạng thái & Biến Toàn cục
         // ==========================================================================
-        const API_URL = "https://script.google.com/macros/s/AKfycbyT6cV0-vepFVEAdPGlgOpywuCwb9Bc1jbpaIKGCOKnMEW73g2WElBSoIdU7y7KhmIheg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
         let allCars = [];
         let filteredCars = [];
         let currentPage = 1;
@@ -1494,15 +1492,11 @@ initializePopovers: function() {
                     const currentUser = sessionStorage.getItem("currentConsultant");
                     const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
                     const response = await axios.get(API_URL, {
-    params: { 
-        action: 'getKhoXeData', // <--- THÊM DÒNG NÀY
-        currentUser: currentUser, 
-        isAdmin: isAdmin 
-    }
-});
-if (!response.data || !Array.isArray(response.data.khoxe)) {
-    throw new Error("Dữ liệu không hợp lệ từ API");
-}
+                        params: { currentUser: currentUser, isAdmin: isAdmin }
+                    });
+                    if (!response.data || !Array.isArray(response.data.khoxe)) {
+                        throw new Error("Dữ liệu không hợp lệ từ API");
+                    }
                     allCars = DataProcessor.parseApiData(response.data.khoxe);
                     
                     // --- BỔ SUNG: Lưu dữ liệu mới vào cache ---
@@ -1814,7 +1808,7 @@ renderTableRows: function(data) {
             <td style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</td>
             <td>${car.interior}</td>
             <td>${car.vin}</td>
-            <td>${car.dms}</td>
+           
             <td>${statusHtml}</td>
         `;
         fragment.appendChild(tr);
