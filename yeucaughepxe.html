@@ -2602,7 +2602,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbxX13-YTQ0LNYmkt3kuumoy8AG0R9rRoX9GgRbvYxSeW1gX0j-HUQdhgMSRZ1KDl1yURA/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxCNy-XqHiMou0rPmkHwAd8arsZKGQYLFre5gHYiip_tPusCbuiJPWb4EXOsPW2wUrByQ/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3092,71 +3092,89 @@ renderNotifications(data.notifications, data.unreadCount);
     }
 
     async function fetchHistory(showLoadingPlaceholder = true) {
-        if (showLoadingPlaceholder) {
-            setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
-        }
-
-        // 1. Render ngay lập tức từ cache (nếu có) để có giao diện tức thì
-        const cachedDataJSON = sessionStorage.getItem(CACHED_DATA_KEY);
-        if (cachedDataJSON) {
-            console.log("Hiển thị dữ liệu ban đầu từ sessionStorage cache.");
-            processAndRenderData(JSON.parse(cachedDataJSON));
-        }
-
-        try {
-            // ==================== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ====================
-
-            // Lấy thông tin người dùng và vai trò để gửi lên backend
-            const currentUser = sessionStorage.getItem("currentConsultant") || "";
-            // Thay "PHẠM THÀNH NHÂN" bằng tên đăng nhập của Admin nếu khác
-            const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
-            
-            // Xây dựng URL có chứa thông tin người dùng
-            const userApiURL = `${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
-
-            // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
-            const versionResponse = await fetch(apiURL + "?action=getVersion");
-            if (!versionResponse.ok) {
-                throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
-            }
-            const serverVersionData = await versionResponse.json();
-            const serverVersion = serverVersionData.version;
-
-            const localVersion = cachedDataJSON ? JSON.parse(cachedDataJSON).version : '-1';
-
-            // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
-            if (serverVersion !== localVersion) {
-                console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
-                
-                // Sử dụng URL đã có thông tin người dùng để gọi
-                const fullResponse = await fetch(userApiURL); // Gọi doGet chính
-                if (!fullResponse.ok) {
-                    throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
-                }
-                const fullData = await fullResponse.json();
-
-                if (fullData.status === "SUCCESS") {
-                    processAndRenderData(fullData); // Cập nhật giao diện với dữ liệu mới
-                    sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData)); // Lưu cache mới
-                    console.log("Giao diện và cache đã được cập nhật lên phiên bản mới nhất.");
-                } else {
-                    throw new Error(fullData.message || "Lỗi không xác định từ server khi tải dữ liệu đầy đủ.");
-                }
-            } else {
-                console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
-                if (!cachedDataJSON && globalHistoryData.length === 0) {
-                    renderHistoryTable([]); 
-                    renderWaitingListTable();
-                }
-            }
-            // ==================== KẾT THÚC THAY ĐỔI QUAN TRỌNG ====================
-        } catch (error) {
-            console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
-            if (!cachedDataJSON) {
-                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
-            }
-        }
+    if (showLoadingPlaceholder) {
+        setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
     }
+
+    try {
+        // Lấy thông tin người dùng và vai trò để gửi lên backend
+        const currentUser = sessionStorage.getItem("currentConsultant") || "";
+        const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
+        
+        // Bước 1: Gọi doGet để lấy dữ liệu cơ bản và phiên bản
+        const initialResponse = await fetch(`${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`);
+        if (!initialResponse.ok) throw new Error(`Lỗi mạng khi tải dữ liệu cơ bản: ${initialResponse.statusText}`);
+        const initialData = await initialResponse.json();
+        
+        if (initialData.status !== "SUCCESS") throw new Error(initialData.message);
+
+        const serverVersion = initialData.version;
+        const cachedData = JSON.parse(sessionStorage.getItem(CACHED_DATA_KEY) || '{}');
+
+        // Bước 2: Chỉ tải dữ liệu đầy đủ nếu phiên bản đã thay đổi hoặc không có cache
+        if (serverVersion !== cachedData.version || !cachedData.data) {
+            console.log(`Phát hiện phiên bản mới hoặc cache trống. Đang tải dữ liệu đầy đủ...`);
+            
+            // Gọi song song tất cả các hàm lấy dữ liệu
+            const [
+                daghepRes, chuaghepRes, khoxeRes, xuathoadonRes, huyghepRes, dangkychoRes, yeucauvcRes
+            ] = await Promise.all([
+                fetchDataForApp('getDaGhepData'),
+                fetchDataForApp('getChuaGhepData'),
+                fetchDataForApp('getKhoXeData'),
+                fetchDataForApp('getXuathoadonData'),
+                fetchDataForApp('getHuyGhepData'),
+                fetchDataForApp('getDangKyChoData'),
+                fetchDataForApp('getYeuCauVcData')
+            ]);
+
+            // Tổng hợp lại tất cả dữ liệu
+            const fullData = {
+                ...initialData, // Bao gồm version, currentUser, notifications...
+                daghep: daghepRes,
+                chuaghep: chuaghepRes,
+                khoxe: khoxeRes,
+                xuathoadon: xuathoadonRes,
+                huyghep: huyghepRes,
+                dangkycho: dangkychoRes,
+                yeucauvc: yeucauvcRes,
+                data: true // Đánh dấu là đã có dữ liệu đầy đủ
+            };
+
+            processAndRenderData(fullData);
+            sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData));
+            console.log("Giao diện và cache đã được cập nhật.");
+
+        } else {
+             console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
+             processAndRenderData(cachedData); // Dùng lại dữ liệu từ cache
+        }
+
+    } catch (error) {
+        console.error("Lỗi nghiêm trọng khi đồng bộ dữ liệu:", error);
+        setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử lại.`, "fas fa-exclamation-triangle");
+    }
+}
+// Dán hàm này vào bên trong thẻ <script>
+async function fetchDataForApp(action) {
+    try {
+        const response = await fetch(`${apiURL}?action=${action}`);
+        if (!response.ok) {
+            console.error(`Lỗi khi tải dữ liệu cho '${action}': ${response.statusText}`);
+            return []; // Trả về mảng rỗng nếu lỗi
+        }
+        const result = await response.json();
+        if (result.status === "SUCCESS") {
+            return result.data || [];
+        } else {
+            console.error(`Lỗi logic từ server cho '${action}': ${result.message}`);
+            return [];
+        }
+    } catch (error) {
+        console.error(`Lỗi mạng khi gọi '${action}':`, error);
+        return [];
+    }
+}
 
 async function refreshData() {
     // Lấy tham chiếu đến nút bấm
