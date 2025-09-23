@@ -83,7 +83,6 @@ body {
     background: var(--background-light);
     color: var(--text-light);
     min-height: 100vh;
-    overflow-y: hidden !important;
     transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
     font-size: 14px;
 }
@@ -650,16 +649,14 @@ footer {
     color: var(--text-light);
 }
 
-/* --- Tables --- */
 .table-wrapper {
-    flex-grow: 1;
     overflow: auto;
     position: relative;
     border: 1px solid var(--border-light);
     border-radius: 12px;
 }
 #history-section .table-wrapper {
-    flex-grow: 1; 
+s
     max-height: none; 
     overflow-y: auto; 
 }
@@ -1874,6 +1871,16 @@ tbody tr:hover {
     color: var(--text-light);
     word-break: break-all; /* Tự động ngắt chữ nếu quá dài */
 }
+/* [THÊM MỚI] - Dán đoạn mã này vào cuối thẻ <style> */
+#history-section {
+    display: flex;
+    flex-direction: column;
+}
+
+#pagination-controls {
+    margin-top: auto; /* <<-- Phép màu nằm ở đây */
+    padding-top: 1rem; /* Thay thế cho margin-top cũ, tạo khoảng cách nhẹ với bảng */
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2183,7 +2190,9 @@ tbody tr:hover {
                 </table>
             </div>
         </div>
-
+<div id="pagination-controls" class="flex items-center justify-center gap-2 mt-2">
+    </div>
+    </div>
         <div class="grid-container hidden" id="bulk-entry-table-section">
 
     <div class="controls mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
@@ -2592,6 +2601,15 @@ tbody tr:hover {
 </body>
 
 <script>
+// [THÊM MỚI] - Các biến trạng thái cho Lazy Loading
+let currentArchiveSheet = null;
+let currentPageInArchive = 1;
+let isLastArchive = false;
+let isLoadingArchives = false; // Để ngăn người dùng nhấn nút nhiều lần
+let currentPage = 1;
+let totalPages = 0;
+let currentSort = { column: 'Thời gian nhập', order: 'desc' };
+let currentFilters = {};
 let vehicleAnalyticsData = null;
 let filtersPopulated = false; 
 let currentDataVersion = '0';
@@ -2601,7 +2619,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbw_nZ-eUxpXosmPY-_QfT7GlZ3SoRNjqjh9pK-7gIoMBk3vdhLsFqwLF60dY8OU7UEb9w/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbzgCswn43XiYAnrV7HfBK84iv3ERAc1k0fw0fXepCzD1uzN9Hunfs2cvpfXTsW1KLyEkg/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -2810,14 +2828,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     handleHeldCarRequest();
-    // 8. Tải dữ liệu lần đầu, khởi động Polling và xử lý URL
-    fetchHistory().then(() => {
-        startPolling();
-        handleUrlParameters(); // Gọi hàm xử lý link từ email
-    }).catch(error => {
-        console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
-        showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
-    });
+    fetchPaginatedData().then(() => {
+    startPolling();
+    handleUrlParameters();
+}).catch(error => {
+    console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
+    showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
+});
 
     fetchVehicleAnalytics();
 });
@@ -3090,72 +3107,166 @@ sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData
 renderNotifications(data.notifications, data.unreadCount);
     }
 
-    async function fetchHistory(showLoadingPlaceholder = true) {
-        if (showLoadingPlaceholder) {
-            setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
-        }
-
-        // 1. Render ngay lập tức từ cache (nếu có) để có giao diện tức thì
-        const cachedDataJSON = sessionStorage.getItem(CACHED_DATA_KEY);
-        if (cachedDataJSON) {
-            console.log("Hiển thị dữ liệu ban đầu từ sessionStorage cache.");
-            processAndRenderData(JSON.parse(cachedDataJSON));
-        }
-
-        try {
-            // ==================== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ====================
-
-            // Lấy thông tin người dùng và vai trò để gửi lên backend
-            const currentUser = sessionStorage.getItem("currentConsultant") || "";
-            // Thay "PHẠM THÀNH NHÂN" bằng tên đăng nhập của Admin nếu khác
-            const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
-            
-            // Xây dựng URL có chứa thông tin người dùng
-            const userApiURL = `${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
-
-            // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
-            const versionResponse = await fetch(apiURL + "?action=getVersion");
-            if (!versionResponse.ok) {
-                throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
-            }
-            const serverVersionData = await versionResponse.json();
-            const serverVersion = serverVersionData.version;
-
-            const localVersion = cachedDataJSON ? JSON.parse(cachedDataJSON).version : '-1';
-
-            // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
-            if (serverVersion !== localVersion) {
-                console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
-                
-                // Sử dụng URL đã có thông tin người dùng để gọi
-                const fullResponse = await fetch(userApiURL); // Gọi doGet chính
-                if (!fullResponse.ok) {
-                    throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
-                }
-                const fullData = await fullResponse.json();
-
-                if (fullData.status === "SUCCESS") {
-                    processAndRenderData(fullData); // Cập nhật giao diện với dữ liệu mới
-                    sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData)); // Lưu cache mới
-                    console.log("Giao diện và cache đã được cập nhật lên phiên bản mới nhất.");
-                } else {
-                    throw new Error(fullData.message || "Lỗi không xác định từ server khi tải dữ liệu đầy đủ.");
-                }
-            } else {
-                console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
-                if (!cachedDataJSON && globalHistoryData.length === 0) {
-                    renderHistoryTable([]); 
-                    renderWaitingListTable();
-                }
-            }
-            // ==================== KẾT THÚC THAY ĐỔI QUAN TRỌNG ====================
-        } catch (error) {
-            console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
-            if (!cachedDataJSON) {
-                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
-            }
-        }
+    // [THAY THẾ] - Toàn bộ hàm fetchPaginatedData cũ
+async function fetchPaginatedData(page = 1, showLoading = true) {
+    if (showLoading) {
+        setTablePlaceholder("table-body", "Đang tải dữ liệu trang " + page + "...", "fas fa-spinner fa-spin");
     }
+
+    currentPage = page;
+
+    // [NÂNG CẤP] - Thêm thông tin người dùng vào mỗi yêu cầu
+    const currentUser = sessionStorage.getItem("currentConsultant") || "";
+    const isAdmin = (currentUser === ADMIN_USER);
+
+    const params = new URLSearchParams({
+        action: 'getPaginatedData',
+        page: currentPage,
+        pageSize: 50,
+        sortBy: currentSort.column,
+        sortOrder: currentSort.order,
+        filters: JSON.stringify(currentFilters),
+        currentUser: currentUser, // Gửi tên người dùng
+        isAdmin: isAdmin          // Gửi vai trò
+    });
+
+    try {
+        const response = await fetch(`${apiURL}?${params.toString()}`);
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+        
+        const result = await response.json();
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        globalHistoryData = result.data;
+        totalPages = result.totalPages;
+        
+        renderHistoryTable(result.data);
+        renderPaginationControls();
+        
+        if (!filtersPopulated) {
+             populateFilterDropdowns();
+        }
+        
+        // Cập nhật summary với tổng số item từ server sau khi đã lọc theo user
+        const summaryData = {
+            length: result.totalItems 
+        };
+        renderSummary(result.totalItems, result.summary);
+
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu phân trang:", error);
+        setTablePlaceholder("table-body", `Lỗi tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
+    }
+}
+// [THAY THẾ] - Toàn bộ hàm fetchNextArchivePage cũ
+async function fetchNextArchivePage() {
+    if (isLoadingArchives) return; // Ngăn chặn click liên tục
+    isLoadingArchives = true;
+    
+    const loadMoreBtn = document.getElementById('load-more-archives-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
+        loadMoreBtn.disabled = true;
+    }
+
+    try {
+        // [NÂNG CẤP] - Thêm thông tin người dùng vào yêu cầu
+        const currentUser = sessionStorage.getItem("currentConsultant") || "";
+        const isAdmin = (currentUser === ADMIN_USER);
+
+        const params = new URLSearchParams({
+            action: 'getArchivedDataPage',
+            page: currentPageInArchive,
+            currentUser: currentUser, // Gửi tên người dùng
+            isAdmin: isAdmin          // Gửi vai trò (có phải admin không)
+        });
+        // [KẾT THÚC NÂNG CẤP]
+        
+        if (currentArchiveSheet) {
+            params.append('archiveSheetName', currentArchiveSheet);
+        }
+
+        const response = await fetch(`${apiURL}?${params.toString()}`);
+        const result = await response.json();
+
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        if (result.data && result.data.length > 0) {
+            globalHistoryData.push(...result.data);
+            renderHistoryTable(globalHistoryData);
+        }
+        
+        if (result.nextArchiveSheetName) {
+            currentArchiveSheet = result.nextArchiveSheetName;
+            currentPageInArchive = 1;
+        } else {
+            currentArchiveSheet = result.currentArchiveSheetName;
+            currentPageInArchive++;
+        }
+        
+        isLastArchive = result.isLastArchive;
+        
+        renderPaginationControls();
+        
+        if (isLastArchive) {
+             showNotification("Đã tải tất cả dữ liệu lưu trữ.", "info");
+        }
+
+    } catch (error) {
+        showNotification(`Lỗi khi tải dữ liệu lưu trữ: ${error.message}`, 'error');
+    } finally {
+        isLoadingArchives = false;
+    }
+}
+// [THAY THẾ] - Toàn bộ hàm renderPaginationControls cũ bằng hàm này
+function renderPaginationControls() {
+    const container = document.getElementById('pagination-controls');
+    if (!container) return;
+
+    // Nếu chỉ có 1 trang dữ liệu hiện tại VÀ không còn kho lưu trữ nào, thì không cần hiển thị gì cả
+    if (totalPages <= 1 && isLastArchive) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // 1. Nút "Trang Trước": Chỉ hiển thị khi không ở trang đầu tiên
+    if (currentPage > 1) {
+        html += `<button onclick="fetchPaginatedData(${currentPage - 1})" class="px-3 py-1 text-sm rounded-md border">&laquo; Trước</button>`;
+    }
+    
+    // 2. Hiển thị các nút số trang (logic giữ nguyên)
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    if (startPage > 1) {
+        html += `<button onclick="fetchPaginatedData(1)" class="px-3 py-1 text-sm rounded-md border">1</button>`;
+        if (startPage > 2) html += `<span class="px-3 py-1 text-sm">...</span>`;
+    }
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'border';
+        html += `<button onclick="fetchPaginatedData(${i})" class="px-3 py-1 text-sm rounded-md ${isActive}">${i}</button>`;
+    }
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="px-3 py-1 text-sm">...</span>`;
+        html += `<button onclick="fetchPaginatedData(${totalPages})" class="px-3 py-1 text-sm rounded-md border">${totalPages}</button>`;
+    }
+    
+    // 3. Logic hiển thị nút "Sau" hoặc "Tải thêm"
+    if (currentPage < totalPages) {
+        // Nếu CHƯA phải trang cuối của dữ liệu hiện tại, hiển thị nút "Sau" bình thường
+        html += `<button onclick="fetchPaginatedData(${currentPage + 1})" class="px-3 py-1 text-sm rounded-md border">Sau &raquo;</button>`;
+    } else if (!isLastArchive) {
+        // Nếu ĐÃ ở trang cuối VÀ VẪN CÒN dữ liệu lưu trữ, hiển thị nút "Tải thêm"
+        html += `<button id="load-more-archives-btn" onclick="fetchNextArchivePage()" class="px-3 py-1 text-sm rounded-md border bg-green-100 text-green-800 font-semibold hover:bg-green-200">Tải thêm &raquo;</button>`;
+    }
+
+    container.innerHTML = html;
+}
 
 async function refreshData() {
     // Lấy tham chiếu đến nút bấm
@@ -3324,90 +3435,37 @@ function getStatusClass(statusText) {
     }
 }
 
-function renderSummary(data) {
-    const totalElForm = document.getElementById("summary-total-form");
-    const topCarElForm = document.getElementById("summary-top-car-form");
-    const topAdvisorElForm = document.getElementById("summary-top-advisor-form");
+// [THAY THẾ] - Toàn bộ hàm renderSummary cũ
+function renderSummary(total, summary = {}) {
     const totalElHistory = document.getElementById("summary-total-history");
     const topCarElHistory = document.getElementById("summary-top-car-history");
     const topAdvisorElHistory = document.getElementById("summary-top-advisor-history");
 
-    if (!Array.isArray(data) || data.length === 0) {
-        const defaultText = { total: "0", car: "N/A", advisor: "N/A" };
-        if (totalElHistory) totalElHistory.textContent = defaultText.total;
-        if (topCarElHistory) topCarElHistory.textContent = defaultText.car;
-        if (topAdvisorElHistory) topAdvisorElHistory.textContent = defaultText.advisor;
-        
-        if (totalElForm) totalElForm.textContent = defaultText.total;
-        if (topCarElForm) topCarElForm.textContent = "Chưa có dữ liệu";
-        if (topAdvisorElForm) topAdvisorElForm.textContent = "Chưa có dữ liệu";
-        return;
-    }
+    if (!totalElHistory || !topCarElHistory || !topAdvisorElHistory) return;
 
-    const total = data.length;
-    const carCounts = data.reduce((acc, row) => { if (row["Dòng xe"]) acc[row["Dòng xe"]] = (acc[row["Dòng xe"]] || 0) + 1; return acc; }, {});
-    const advisorCounts = data.reduce((acc, row) => { if (row["Tên tư vấn bán hàng"]) acc[row["Tên tư vấn bán hàng"]] = (acc[row["Tên tư vấn bán hàng"]] || 0) + 1; return acc; }, {});
+    // Chỉ cần hiển thị dữ liệu đã được tính toán sẵn từ server
+    totalElHistory.textContent = total || 0;
+    topCarElHistory.textContent = summary.topCar || "N/A";
     
-    const topCar = Object.entries(carCounts).sort((a,b) => b[1] - a[1])[0];
-    const topAdvisor = Object.entries(advisorCounts).sort((a,b) => b[1] - a[1])[0];
-
-    // Tạo văn bản để hiển thị (không cần rút gọn)
-    const topCarText = topCar ? `${topCar[0]} (${topCar[1]})` : "N/A";
-    const topAdvisorText = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]})` : "N/A";
-    
-    // Cập nhật UI cho bố cục mới
-    if (totalElHistory) totalElHistory.textContent = total;
-    if (topCarElHistory) topCarElHistory.textContent = topCarText;
-    if (topAdvisorElHistory) topAdvisorElHistory.textContent = topAdvisorText;
-
-    // Cập nhật cho view cũ (nếu có) để không bị lỗi
-    const topCarTextFull = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
-    const topAdvisorTextFull = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
-    if (totalElForm) totalElForm.textContent = total;
-    if (topCarElForm) topCarElForm.textContent = topCarTextFull;
-    if (topAdvisorElForm) topAdvisorElForm.textContent = topAdvisorTextFull;
+    // Nếu là Admin, sẽ có topAdvisor, ngược lại hiển thị N/A
+    topAdvisorElHistory.textContent = summary.topAdvisor || "N/A";
 }
 
-// HÀM CẦN THAY THẾ: Xóa hàm filterHistory() cũ và dùng hàm này
-// HÀM ĐỂ THAY THẾ
 function applyFilters() {
-    if (!globalHistoryData) return;
+    // [THÊM MỚI] - Reset trạng thái lưu trữ
+    currentArchiveSheet = null;
+    currentPageInArchive = 1;
+    isLastArchive = false;
+    // [KẾT THÚC THÊM MỚI]
 
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = currentUser === ADMIN_USER;
-
-    let dataToDisplay = isAdmin 
-        ? globalHistoryData 
-        : globalHistoryData.filter(row => normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser));
-
-    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-    const carModel = document.getElementById('filter-car-model').value;
-    const status = document.getElementById('filter-status').value;
-
-    if (searchTerm) {
-        dataToDisplay = dataToDisplay.filter(row => {
-            const customerName = (row["Tên khách hàng"] || '').toLowerCase();
-            const orderNumber = (row["Số đơn hàng"] || '').toLowerCase();
-            const vin = (row["VIN"] || '').toLowerCase();
-            const resultText = (row["Kết quả"] || '').toLowerCase();
-            return customerName.includes(searchTerm) || 
-                   orderNumber.includes(searchTerm) || 
-                   vin.includes(searchTerm) ||
-                   resultText.includes(searchTerm);
-        });
-    }
-
-    if (carModel) {
-        dataToDisplay = dataToDisplay.filter(row => row["Dòng xe"] === carModel);
-    }
-
-    if (status) {
-        dataToDisplay = dataToDisplay.filter(row => (row["Kết quả"] || 'Chưa ghép') === status);
-    }
-
-    renderHistoryTable(dataToDisplay);
-    document.getElementById("total-don-count").textContent = dataToDisplay.length;
+    currentFilters = {
+        keyword: document.getElementById('search-input').value,
+        dong_xe: document.getElementById('filter-car-model').value,
+        status: document.getElementById('filter-status').value
+    };
+    fetchPaginatedData(1);
 }
+
 
 function resetFilters() {
     document.getElementById('search-input').value = '';
@@ -3444,37 +3502,21 @@ function populateFilterDropdowns() {
 let lastSortColumn = '';
 let lastSortDirection = 'asc';
 function sortTable(columnKey) {
-    const dataKey = columnKey;
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = currentUser === ADMIN_USER;
-    let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
-
-    if (lastSortColumn === dataKey) {
+currentArchiveSheet = null;
+    currentPageInArchive = 1;
+    isLastArchive = false;
+    if (lastSortColumn === columnKey) {
         lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
         lastSortDirection = 'asc';
     }
-    lastSortColumn = dataKey;
+    lastSortColumn = columnKey;
 
-    dataToSort.sort((a, b) => {
-        let valA = a[dataKey] ?? "";
-        let valB = b[dataKey] ?? "";
-        if (dataKey === "STT") {
-            const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
-            const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
-            return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
-        }
-        if (dataKey === "Kết quả") { valA = a["Kết quả"] || "Chưa có"; valB = b["Kết quả"] || "Chưa có"; }
-        if (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(dataKey)) {
-            valA = new Date(a[dataKey] || 0).getTime(); valB = new Date(b[dataKey] || 0).getTime();
-        }
-        if (typeof valA === 'number' && typeof valB === 'number') return lastSortDirection === 'asc' ? valA - valB : valB - valA;
-        valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase();
-        if (valA < valB) return lastSortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return lastSortDirection === 'asc' ? 1 : -1;
-        return 0;
-    });
-    renderHistoryTable(dataToSort);
+    // Cập nhật trạng thái sắp xếp hiện tại
+    currentSort = { column: columnKey, order: lastSortDirection };
+    
+    // Gọi tải lại dữ liệu từ trang 1 với cách sắp xếp mới
+    fetchPaginatedData(1);
 }
 
 function exportToExcel() {
