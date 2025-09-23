@@ -2602,7 +2602,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbwyrbT5jh_uJyxhAZJksZUbCDsZeoGT6iUnF6PhR5xJRHJISINY8kJDL7ZPNMeny3p-DA/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbwpS3wpojA3qi5SM5aCdo-f0XRLMjSwf08s5ywG5b2XsUQFaEWfabtA4RIJ0GO5MJJorQ/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -3092,89 +3092,71 @@ renderNotifications(data.notifications, data.unreadCount);
     }
 
     async function fetchHistory(showLoadingPlaceholder = true) {
-    if (showLoadingPlaceholder) {
-        setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
-    }
+        if (showLoadingPlaceholder) {
+            setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
+        }
 
-    try {
-        // Lấy thông tin người dùng và vai trò để gửi lên backend
-        const currentUser = sessionStorage.getItem("currentConsultant") || "";
-        const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
-        
-        // Bước 1: Gọi doGet để lấy dữ liệu cơ bản và phiên bản
-        const initialResponse = await fetch(`${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`);
-        if (!initialResponse.ok) throw new Error(`Lỗi mạng khi tải dữ liệu cơ bản: ${initialResponse.statusText}`);
-        const initialData = await initialResponse.json();
-        
-        if (initialData.status !== "SUCCESS") throw new Error(initialData.message);
+        // 1. Render ngay lập tức từ cache (nếu có) để có giao diện tức thì
+        const cachedDataJSON = sessionStorage.getItem(CACHED_DATA_KEY);
+        if (cachedDataJSON) {
+            console.log("Hiển thị dữ liệu ban đầu từ sessionStorage cache.");
+            processAndRenderData(JSON.parse(cachedDataJSON));
+        }
 
-        const serverVersion = initialData.version;
-        const cachedData = JSON.parse(sessionStorage.getItem(CACHED_DATA_KEY) || '{}');
+        try {
+            // ==================== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ====================
 
-        // Bước 2: Chỉ tải dữ liệu đầy đủ nếu phiên bản đã thay đổi hoặc không có cache
-        if (serverVersion !== cachedData.version || !cachedData.data) {
-            console.log(`Phát hiện phiên bản mới hoặc cache trống. Đang tải dữ liệu đầy đủ...`);
+            // Lấy thông tin người dùng và vai trò để gửi lên backend
+            const currentUser = sessionStorage.getItem("currentConsultant") || "";
+            // Thay "PHẠM THÀNH NHÂN" bằng tên đăng nhập của Admin nếu khác
+            const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
             
-            // Gọi song song tất cả các hàm lấy dữ liệu
-            const [
-                daghepRes, chuaghepRes, khoxeRes, xuathoadonRes, huyghepRes, dangkychoRes, yeucauvcRes
-            ] = await Promise.all([
-                fetchDataForApp('getDaGhepData'),
-                fetchDataForApp('getChuaGhepData'),
-                fetchDataForApp('getKhoXeData'),
-                fetchDataForApp('getXuathoadonData'),
-                fetchDataForApp('getHuyGhepData'),
-                fetchDataForApp('getDangKyChoData'),
-                fetchDataForApp('getYeuCauVcData')
-            ]);
+            // Xây dựng URL có chứa thông tin người dùng
+            const userApiURL = `${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
 
-            // Tổng hợp lại tất cả dữ liệu
-            const fullData = {
-                ...initialData, // Bao gồm version, currentUser, notifications...
-                daghep: daghepRes,
-                chuaghep: chuaghepRes,
-                khoxe: khoxeRes,
-                xuathoadon: xuathoadonRes,
-                huyghep: huyghepRes,
-                dangkycho: dangkychoRes,
-                yeucauvc: yeucauvcRes,
-                data: true // Đánh dấu là đã có dữ liệu đầy đủ
-            };
+            // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
+            const versionResponse = await fetch(apiURL + "?action=getVersion");
+            if (!versionResponse.ok) {
+                throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
+            }
+            const serverVersionData = await versionResponse.json();
+            const serverVersion = serverVersionData.version;
 
-            processAndRenderData(fullData);
-            sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData));
-            console.log("Giao diện và cache đã được cập nhật.");
+            const localVersion = cachedDataJSON ? JSON.parse(cachedDataJSON).version : '-1';
 
-        } else {
-             console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
-             processAndRenderData(cachedData); // Dùng lại dữ liệu từ cache
+            // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
+            if (serverVersion !== localVersion) {
+                console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
+                
+                // Sử dụng URL đã có thông tin người dùng để gọi
+                const fullResponse = await fetch(userApiURL); // Gọi doGet chính
+                if (!fullResponse.ok) {
+                    throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
+                }
+                const fullData = await fullResponse.json();
+
+                if (fullData.status === "SUCCESS") {
+                    processAndRenderData(fullData); // Cập nhật giao diện với dữ liệu mới
+                    sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData)); // Lưu cache mới
+                    console.log("Giao diện và cache đã được cập nhật lên phiên bản mới nhất.");
+                } else {
+                    throw new Error(fullData.message || "Lỗi không xác định từ server khi tải dữ liệu đầy đủ.");
+                }
+            } else {
+                console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
+                if (!cachedDataJSON && globalHistoryData.length === 0) {
+                    renderHistoryTable([]); 
+                    renderWaitingListTable();
+                }
+            }
+            // ==================== KẾT THÚC THAY ĐỔI QUAN TRỌNG ====================
+        } catch (error) {
+            console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
+            if (!cachedDataJSON) {
+                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
+            }
         }
-
-    } catch (error) {
-        console.error("Lỗi nghiêm trọng khi đồng bộ dữ liệu:", error);
-        setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}. Vui lòng thử lại.`, "fas fa-exclamation-triangle");
     }
-}
-// Dán hàm này vào bên trong thẻ <script>
-async function fetchDataForApp(action) {
-    try {
-        const response = await fetch(`${apiURL}?action=${action}`);
-        if (!response.ok) {
-            console.error(`Lỗi khi tải dữ liệu cho '${action}': ${response.statusText}`);
-            return []; // Trả về mảng rỗng nếu lỗi
-        }
-        const result = await response.json();
-        if (result.status === "SUCCESS") {
-            return result.data || [];
-        } else {
-            console.error(`Lỗi logic từ server cho '${action}': ${result.message}`);
-            return [];
-        }
-    } catch (error) {
-        console.error(`Lỗi mạng khi gọi '${action}':`, error);
-        return [];
-    }
-}
 
 async function refreshData() {
     // Lấy tham chiếu đến nút bấm
@@ -3628,6 +3610,11 @@ function previewForm(e) {
     adjustModalScroll(previewModal);
 }
 
+// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
+
+// TỆP: yeucaughepxe.html
+// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
+
 async function confirmSubmit() {
     const submitButton = document.querySelector('#preview-modal .btn-success');
     if (submitButton && submitButton.disabled) return;
@@ -3660,32 +3647,32 @@ async function confirmSubmit() {
         const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
         const result = await response.json();
         
-        if (result.status === "SUCCESS" && result.newRecord) { // KIỂM TRA THÊM newRecord
+        if (result.status === "SUCCESS") {
             hideLoadingToast();
             showSuccessToast("Thành Công!", result.message || 'Yêu cầu của bạn đã được ghi nhận.');
             
-            const newOrderId = result.newRecord["Số đơn hàng"];
+            // Lấy Số Đơn Hàng từ kết quả trả về
+            const newOrderId = result.orderNumber || formData.so_don_hang;
             
-            // ▼▼▼ THAY ĐỔI QUAN TRỌNG ▼▼▼
-            // Bây giờ chúng ta sử dụng trực tiếp đối tượng newRecord từ server
-            sessionStorage.setItem('temp_new_order_details', JSON.stringify(result.newRecord));
-            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
-
+            // Xóa các tác vụ cũ
             clearFormDraft();
             document.getElementById("vinfast-form").reset();
             document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
             
+            // Tải lại toàn bộ dữ liệu ở chế độ nền để đảm bảo cache là mới nhất
             await fetchHistory(false);
             
+            // ▼▼▼ THAY ĐỔI QUAN TRỌNG NHẤT ▼▼▼
+            // Chuyển trang chỉ với Số Đơn Hàng
             setTimeout(() => {
                 hideSuccessToast();
                 window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(newOrderId)}`;
             }, 500);
+            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
 
         } else {
-            // Xử lý lỗi nếu server không trả về newRecord hoặc status là ERROR
             hideLoadingToast();
-            showNotification(result.message || 'Gửi yêu cầu thất bại. Không nhận được dữ liệu trả về.', 'error', 5000);
+            showNotification(result.message || 'Gửi yêu cầu thất bại.', 'error', 5000);
         }
 
     } catch (error) {
