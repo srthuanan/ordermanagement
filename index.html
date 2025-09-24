@@ -1754,10 +1754,6 @@ body.user-logged-in #dashboard-container {
 // Khai báo các URL API ở đầu script
 const API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
 const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
-// Thay thế dòng const STOCK_API_URL cũ bằng dòng này
-const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbyT6cV0-vepFVEAdPGlgOpywuCwb9Bc1jbpaIKGCOKnMEW73g2WElBSoIdU7y7KhmIheg/exec";
-// Thay thế dòng const PAIRING_REQUEST_API_URL cũ bằng dòng này
-const PAIRING_REQUEST_API_URL = "https://script.google.com/macros/s/AKfycbxCNy-XqHiMou0rPmkHwAd8arsZKGQYLFre5gHYiip_tPusCbuiJPWb4EXOsPW2wUrByQ/exec";
 
 // Khởi tạo AOS (Animate On Scroll)
 AOS.init({
@@ -2211,17 +2207,30 @@ function fetchDashboardData() {
     fetchPairingRequestsForDashboard();
 }
 
+// DÁN TOÀN BỘ ĐOẠN MÃ NÀY ĐỂ THAY THẾ CHO HÀM CŨ
 async function fetchStockDataForDashboard() {
     const stockCountElement = document.getElementById("currentStockCount");
     const statStockCountElement = document.getElementById("stat-stock-count");
     const tableBody = document.getElementById("stockTableBody");
+
+    // ================= SỬA LỖI TẠI ĐÂY =================
+    // Sử dụng đúng API endpoint từ file khoxe.html
+    const CORRECT_STOCK_API_URL = "https://script.google.com/macros/s/AKfycbyT6cV0-vepFVEAdPGlgOpywuCwb9Bc1jbpaIKGCOKnMEW73g2WElBSoIdU7y7KhmIheg/exec";
+    // ====================================================
 
     if (statStockCountElement) statStockCountElement.textContent = "...";
     if (stockCountElement) stockCountElement.textContent = translations[language]["loading-data"];
     if (tableBody) showSkeletonLoading("stockTableBody", 4);
 
     try {
-        const response = await axios.get(STOCK_API_URL);
+        // Gửi yêu cầu với tham số action giống như file khoxe.html
+        const response = await axios.get(CORRECT_STOCK_API_URL, {
+            params: {
+                action: 'getKhoXeData'
+            }
+        });
+        
+        // Cấu trúc dữ liệu trả về nằm trong response.data.khoxe
         const stockData = response.data.khoxe;
 
         if (stockData && Array.isArray(stockData) && stockData.length > 0) {
@@ -2230,6 +2239,7 @@ async function fetchStockDataForDashboard() {
             if (stockCountElement) stockCountElement.textContent = `${totalCount} xe`;
 
             if (tableBody) {
+                // Lấy ngẫu nhiên 5 xe để hiển thị tóm tắt trên dashboard
                 const randomRows = getRandomRows(stockData, 5);
                 tableBody.innerHTML = "";
                 if (randomRows.length > 0) {
@@ -2296,19 +2306,26 @@ async function fetchTotalSoldCars() {
     }
 }
 
+// DÁN TOÀN BỘ ĐOẠN MÃ NÀY ĐỂ THAY THẾ CHO HÀM CŨ
 async function fetchPairingRequestsForDashboard() {
     const pairingCountElement = document.getElementById("pairingRequestCount");
     const statPairingCountElement = document.getElementById("stat-pairing-count");
     const tableBody = document.getElementById("pairingRequestTableBody");
 
+    // ================= SỬA LỖI TẠI ĐÂY =================
+    // Sử dụng đúng API endpoint từ file yeucaughepxe.html
+    const CORRECT_PAIRING_API_URL = "https://script.google.com/macros/s/AKfycbw_nZ-eUxpXosmPY-_QfT7GlZ3SoRNjqjh9pK-7gIoMBk3vdhLsFqwLF60dY8OU7UEb9w/exec";
+    // ====================================================
+
     if (statPairingCountElement) statPairingCountElement.textContent = "...";
     if (pairingCountElement) pairingCountElement.textContent = translations[language]["loading-data"];
-    if (tableBody) showSkeletonLoading("pairingRequestTableBody", 3);
+    if (tableBody) showSkeletonLoading("pairingRequestTableBody", 5); // Cập nhật số cột là 5
 
     try {
         const currentUser = sessionStorage.getItem("currentConsultant") || "";
         const isAdmin = (currentUser === "PHẠM THÀNH NHÂN");
-        const userApiURL = `${PAIRING_REQUEST_API_URL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
+        // Gọi API với các tham số cần thiết
+        const userApiURL = `${CORRECT_PAIRING_API_URL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
         
         const response = await axios.get(userApiURL);
         const result = response.data;
@@ -2321,22 +2338,24 @@ async function fetchPairingRequestsForDashboard() {
             if (pairingCountElement) pairingCountElement.textContent = `${totalCount}`;
 
             if (tableBody) {
+                // Sắp xếp theo thời gian mới nhất lên đầu
                 pendingRequests.sort((a, b) => new Date(b["Thời gian nhập"]) - new Date(a["Thời gian nhập"]));
                 const latestRequests = pendingRequests.slice(0, 5);
                 
                 tableBody.innerHTML = "";
                 if (latestRequests.length > 0) {
                     latestRequests.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row["Tên tư vấn bán hàng"] || "N/A"}</td>
-                  <td>${row["Tên khách hàng"] || "N/A"}</td>
-                  <td>${row["Dòng xe"] || "N/A"}</td>
-                  <td>${row["Phiên bản"] || "N/A"}</td>
-                  <td>${row["Ngoại thất"] || "N/A"}</td>`;
-    tableBody.appendChild(tr);
-});
+                        const tr = document.createElement("tr");
+                        // Cập nhật lại các cột cho khớp với dữ liệu
+                        tr.innerHTML = `<td>${row["Tên tư vấn bán hàng"] || "N/A"}</td>
+                                      <td>${row["Tên khách hàng"] || "N/A"}</td>
+                                      <td>${row["Dòng xe"] || "N/A"}</td>
+                                      <td>${row["Phiên bản"] || "N/A"}</td>
+                                      <td>${row["Ngoại thất"] || "N/A"}</td>`;
+                        tableBody.appendChild(tr);
+                    });
                 } else {
-                    showEmptyState("pairingRequestTableBody", 3);
+                    showEmptyState("pairingRequestTableBody", 5); // Cập nhật số cột là 5
                 }
             }
         } else {
@@ -2346,7 +2365,7 @@ async function fetchPairingRequestsForDashboard() {
         console.error("Lỗi khi lấy yêu cầu ghép xe:", error);
         if (statPairingCountElement) statPairingCountElement.textContent = "Lỗi";
         if (pairingCountElement) pairingCountElement.textContent = "Lỗi tải";
-        if (tableBody) showEmptyState("pairingRequestTableBody", 3, "server-error");
+        if (tableBody) showEmptyState("pairingRequestTableBody", 5, "server-error"); // Cập nhật số cột là 5
     }
 }
 
