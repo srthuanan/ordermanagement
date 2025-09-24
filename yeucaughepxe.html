@@ -83,7 +83,6 @@ body {
     background: var(--background-light);
     color: var(--text-light);
     min-height: 100vh;
-    overflow-y: hidden !important;
     transition: background var(--transition-medium) ease, color var(--transition-medium) ease;
     font-size: 14px;
 }
@@ -650,16 +649,14 @@ footer {
     color: var(--text-light);
 }
 
-/* --- Tables --- */
 .table-wrapper {
-    flex-grow: 1;
     overflow: auto;
     position: relative;
     border: 1px solid var(--border-light);
     border-radius: 12px;
 }
 #history-section .table-wrapper {
-    flex-grow: 1; 
+s
     max-height: none; 
     overflow-y: auto; 
 }
@@ -1874,6 +1871,27 @@ tbody tr:hover {
     color: var(--text-light);
     word-break: break-all; /* Tự động ngắt chữ nếu quá dài */
 }
+/* [THÊM MỚI] - Dán đoạn mã này vào cuối thẻ <style> */
+#history-section {
+    display: flex;
+    flex-direction: column;
+}
+
+#pagination-controls {
+    margin-top: auto; /* <<-- Phép màu nằm ở đây */
+    padding-top: 1rem; /* Thay thế cho margin-top cũ, tạo khoảng cách nhẹ với bảng */
+}
+.main-container.layout-bulk-view #bulk-entry-table-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.main-container.layout-bulk-view #bulk-entry-table-section .table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+}
     </style>
 </head>
 <body data-theme="light">
@@ -1902,7 +1920,7 @@ tbody tr:hover {
     <div class="tabs">
         <a href="#" onclick="switchTab('cho-xe', this)" data-tooltip="Đăng ký và xem danh sách chờ xe">Yêu Cầu Tìm Xe</a>
         <a href="#" onclick="switchTab('form', this)" class="active" data-tooltip="Điền yêu cầu ghép xe trực tiếp">Yêu Cầu Ghép Xe</a>
-        <a href="#" onclick="switchTab('bulk-entry-table', this)" data-tooltip="Nhập nhiều đơn hàng cùng lúc">Yêu Cầu Hàng Loạt</a>
+        
         <a href="#" onclick="switchTab('history', this)" data-tooltip="Xem lịch sử các yêu cầu">Lịch Sử Ghép</a>
     </div>
 
@@ -2183,68 +2201,10 @@ tbody tr:hover {
                 </table>
             </div>
         </div>
-
-        <div class="grid-container hidden" id="bulk-entry-table-section">
-
-    <div class="controls mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-2">
-            <button type="button" onclick="addBulkOrderRow()" title="Thêm Dòng Mới" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i>
-                <span>Thêm Dòng</span>
-            </button>
-            <button type="button" onclick="processAndValidateBulkTable()" title="Kiểm Tra Dữ Liệu" class="btn btn-secondary btn-sm">
-                <i class="fas fa-check-double"></i>
-                <span>Kiểm Tra</span>
-            </button>
-            <button type="button" title="Xóa Toàn Bộ Bảng" class="btn btn-danger btn-icon" onclick="clearBulkEditableTable()">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-        <div class="flex items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
-             <span title="Tổng số dòng">
-                <i class="fas fa-list-ol mr-1.5 text-gray-500"></i>
-                Tổng: <strong id="bulk-total-rows" class="font-semibold text-gray-800 dark:text-gray-100">0</strong>
-            </span>
-            <span title="Số dòng hợp lệ">
-                <i class="fas fa-check-circle mr-1.5 text-green-500"></i>
-                Hợp lệ: <strong id="bulk-valid-rows" class="font-semibold text-green-600 dark:text-green-400">0</strong>
-            </span>
-            <span title="Số dòng bị lỗi">
-                <i class="fas fa-exclamation-circle mr-1.5 text-red-500"></i>
-                Lỗi: <strong id="bulk-error-rows" class="font-semibold text-red-600 dark:text-red-400">0</strong>
-            </span>
-        </div>
+<div id="pagination-controls" class="flex items-center justify-center gap-2 mt-2">
     </div>
-
-    <div class="table-wrapper">
-        <table id="bulk-order-editable-table" class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-            <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0 z-10">
-                <tr>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider" title="Số Thứ Tự">STT</th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên Khách Hàng <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Dòng Xe <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Phiên Bản <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngoại Thất <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Nội Thất <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Số Đơn Hàng <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày Cọc <span class="text-red-500">*</span></th>
-                    <th class="px-3 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider" title="Xóa Dòng"><i class="fas fa-trash-alt"></i></th>
-                    <th class="px-3 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider min-w-[150px]">Trạng Thái / Lỗi</th>
-                </tr>
-            </thead>
-            <tbody id="bulk-order-editable-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                </tbody>
-        </table>
     </div>
-
-    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-        <button type="button" id="submit-valid-bulk-table-orders-btn" title="Gửi Các Đơn Hợp Lệ" class="btn btn-success" onclick="submitValidBulkTableOrders()" style="display:none;">
-            <i class="fas fa-paper-plane"></i>
-            <span>GỬI CÁC ĐƠN HỢP LỆ</span>
-        </button>
-    </div>
-</div>
-    
+            
     <footer>
         VinFast Thuận An - Dĩ An
     </footer>
@@ -2592,6 +2552,15 @@ tbody tr:hover {
 </body>
 
 <script>
+// [THÊM MỚI] - Các biến trạng thái cho Lazy Loading
+let currentArchiveSheet = null;
+let currentPageInArchive = 1;
+let isLastArchive = false;
+let isLoadingArchives = false; // Để ngăn người dùng nhấn nút nhiều lần
+let currentPage = 1;
+let totalPages = 0;
+let currentSort = { column: 'Thời gian nhập', order: 'desc' };
+let currentFilters = {};
 let vehicleAnalyticsData = null;
 let filtersPopulated = false; 
 let currentDataVersion = '0';
@@ -2601,7 +2570,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbw_nZ-eUxpXosmPY-_QfT7GlZ3SoRNjqjh9pK-7gIoMBk3vdhLsFqwLF60dY8OU7UEb9w/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbxAxRItkaRZCTRWEDDLQwrAERVgyPtagmTBbEtyXBWq77wbasecjQEstttQoT8XwpAb-Q/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -2637,11 +2606,6 @@ const allPossibleVersions = [
     "Plus_Metal Tiêu chuẩn", "Plus_Metal Nâng cấp", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES",
     "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO"
 ];
-
-
-// --- Biến toàn cục cho Bulk Table (sẽ được gán trong DOMContentLoaded) ---
-let bulkTableBody, bulkTotalRowsEl, bulkValidRowsEl, bulkErrorRowsEl, submitValidBulkTableOrdersBtn;
-let bulkOrderRowCount = 0;
 
 
 function toggleSidebarDesktop() {
@@ -2715,15 +2679,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Khởi tạo và giới hạn các phiên bản xe cho form chờ
     restrictVersion(waitDongXe);
 
-    // 3. Khởi tạo các thành phần giao diện khác
-    bulkTableBody = document.getElementById('bulk-order-editable-table-body');
-    bulkTotalRowsEl = document.getElementById('bulk-total-rows');
-    bulkValidRowsEl = document.getElementById('bulk-valid-rows');
-    bulkErrorRowsEl = document.getElementById('bulk-error-rows');
-    submitValidBulkTableOrdersBtn = document.getElementById('submit-valid-bulk-table-orders-btn');
-    if (bulkTableBody) {
-        bulkTableBody.addEventListener('paste', handlePasteIntoBulkTableGeneral, true);
-    }
+
     setupScrollSync();
     initScrollToTopButton();
 
@@ -2810,14 +2766,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     handleHeldCarRequest();
-    // 8. Tải dữ liệu lần đầu, khởi động Polling và xử lý URL
-    fetchHistory().then(() => {
-        startPolling();
-        handleUrlParameters(); // Gọi hàm xử lý link từ email
-    }).catch(error => {
-        console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
-        showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
-    });
+    fetchPaginatedData().then(() => {
+    startPolling();
+    handleUrlParameters();
+}).catch(error => {
+    console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
+    showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
+});
 
     fetchVehicleAnalytics();
 });
@@ -3090,72 +3045,166 @@ sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData
 renderNotifications(data.notifications, data.unreadCount);
     }
 
-    async function fetchHistory(showLoadingPlaceholder = true) {
-        if (showLoadingPlaceholder) {
-            setTablePlaceholder("table-body", "Đang tải dữ liệu...", "fas fa-spinner fa-spin");
-        }
-
-        // 1. Render ngay lập tức từ cache (nếu có) để có giao diện tức thì
-        const cachedDataJSON = sessionStorage.getItem(CACHED_DATA_KEY);
-        if (cachedDataJSON) {
-            console.log("Hiển thị dữ liệu ban đầu từ sessionStorage cache.");
-            processAndRenderData(JSON.parse(cachedDataJSON));
-        }
-
-        try {
-            // ==================== BẮT ĐẦU THAY ĐỔI QUAN TRỌNG ====================
-
-            // Lấy thông tin người dùng và vai trò để gửi lên backend
-            const currentUser = sessionStorage.getItem("currentConsultant") || "";
-            // Thay "PHẠM THÀNH NHÂN" bằng tên đăng nhập của Admin nếu khác
-            const isAdmin = (currentUser === "PHẠM THÀNH NHÂN"); 
-            
-            // Xây dựng URL có chứa thông tin người dùng
-            const userApiURL = `${apiURL}?currentUser=${encodeURIComponent(currentUser)}&isAdmin=${isAdmin}`;
-
-            // 2. Luôn kiểm tra phiên bản mới nhất từ server ở chế độ nền
-            const versionResponse = await fetch(apiURL + "?action=getVersion");
-            if (!versionResponse.ok) {
-                throw new Error(`Lỗi mạng khi kiểm tra phiên bản: ${versionResponse.statusText}`);
-            }
-            const serverVersionData = await versionResponse.json();
-            const serverVersion = serverVersionData.version;
-
-            const localVersion = cachedDataJSON ? JSON.parse(cachedDataJSON).version : '-1';
-
-            // 3. Nếu phiên bản trên server mới hơn, tải toàn bộ dữ liệu mới
-            if (serverVersion !== localVersion) {
-                console.log(`Dữ liệu đã cũ (Local: ${localVersion}, Server: ${serverVersion}). Đang tải bản cập nhật đầy đủ.`);
-                
-                // Sử dụng URL đã có thông tin người dùng để gọi
-                const fullResponse = await fetch(userApiURL); // Gọi doGet chính
-                if (!fullResponse.ok) {
-                    throw new Error(`Lỗi mạng khi tải dữ liệu đầy đủ: ${fullResponse.statusText}`);
-                }
-                const fullData = await fullResponse.json();
-
-                if (fullData.status === "SUCCESS") {
-                    processAndRenderData(fullData); // Cập nhật giao diện với dữ liệu mới
-                    sessionStorage.setItem(CACHED_DATA_KEY, JSON.stringify(fullData)); // Lưu cache mới
-                    console.log("Giao diện và cache đã được cập nhật lên phiên bản mới nhất.");
-                } else {
-                    throw new Error(fullData.message || "Lỗi không xác định từ server khi tải dữ liệu đầy đủ.");
-                }
-            } else {
-                console.log("Dữ liệu trong cache đã là phiên bản mới nhất.");
-                if (!cachedDataJSON && globalHistoryData.length === 0) {
-                    renderHistoryTable([]); 
-                    renderWaitingListTable();
-                }
-            }
-            // ==================== KẾT THÚC THAY ĐỔI QUAN TRỌNG ====================
-        } catch (error) {
-            console.error("Lỗi trong quá trình đồng bộ dữ liệu:", error);
-            if (!cachedDataJSON) {
-                setTablePlaceholder("table-body", `Không thể tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
-            }
-        }
+    // [THAY THẾ] - Toàn bộ hàm fetchPaginatedData cũ
+async function fetchPaginatedData(page = 1, showLoading = true) {
+    if (showLoading) {
+        setTablePlaceholder("table-body", "Đang tải dữ liệu trang " + page + "...", "fas fa-spinner fa-spin");
     }
+
+    currentPage = page;
+
+    // [NÂNG CẤP] - Thêm thông tin người dùng vào mỗi yêu cầu
+    const currentUser = sessionStorage.getItem("currentConsultant") || "";
+    const isAdmin = (currentUser === ADMIN_USER);
+
+    const params = new URLSearchParams({
+        action: 'getPaginatedData',
+        page: currentPage,
+        pageSize: 50,
+        sortBy: currentSort.column,
+        sortOrder: currentSort.order,
+        filters: JSON.stringify(currentFilters),
+        currentUser: currentUser, // Gửi tên người dùng
+        isAdmin: isAdmin          // Gửi vai trò
+    });
+
+    try {
+        const response = await fetch(`${apiURL}?${params.toString()}`);
+        if (!response.ok) throw new Error(`Lỗi mạng: ${response.statusText}`);
+        
+        const result = await response.json();
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        globalHistoryData = result.data;
+        totalPages = result.totalPages;
+        
+        renderHistoryTable(result.data);
+        renderPaginationControls();
+        
+        if (!filtersPopulated) {
+             populateFilterDropdowns();
+        }
+        
+        // Cập nhật summary với tổng số item từ server sau khi đã lọc theo user
+        const summaryData = {
+            length: result.totalItems 
+        };
+        renderSummary(result.totalItems, result.summary);
+
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu phân trang:", error);
+        setTablePlaceholder("table-body", `Lỗi tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
+    }
+}
+// [THAY THẾ] - Toàn bộ hàm fetchNextArchivePage cũ
+async function fetchNextArchivePage() {
+    if (isLoadingArchives) return; // Ngăn chặn click liên tục
+    isLoadingArchives = true;
+    
+    const loadMoreBtn = document.getElementById('load-more-archives-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
+        loadMoreBtn.disabled = true;
+    }
+
+    try {
+        // [NÂNG CẤP] - Thêm thông tin người dùng vào yêu cầu
+        const currentUser = sessionStorage.getItem("currentConsultant") || "";
+        const isAdmin = (currentUser === ADMIN_USER);
+
+        const params = new URLSearchParams({
+            action: 'getArchivedDataPage',
+            page: currentPageInArchive,
+            currentUser: currentUser, // Gửi tên người dùng
+            isAdmin: isAdmin          // Gửi vai trò (có phải admin không)
+        });
+        // [KẾT THÚC NÂNG CẤP]
+        
+        if (currentArchiveSheet) {
+            params.append('archiveSheetName', currentArchiveSheet);
+        }
+
+        const response = await fetch(`${apiURL}?${params.toString()}`);
+        const result = await response.json();
+
+        if (result.status !== 'SUCCESS') throw new Error(result.message);
+
+        if (result.data && result.data.length > 0) {
+            globalHistoryData.push(...result.data);
+            renderHistoryTable(globalHistoryData);
+        }
+        
+        if (result.nextArchiveSheetName) {
+            currentArchiveSheet = result.nextArchiveSheetName;
+            currentPageInArchive = 1;
+        } else {
+            currentArchiveSheet = result.currentArchiveSheetName;
+            currentPageInArchive++;
+        }
+        
+        isLastArchive = result.isLastArchive;
+        
+        renderPaginationControls();
+        
+        if (isLastArchive) {
+             showNotification("Đã tải tất cả dữ liệu lưu trữ.", "info");
+        }
+
+    } catch (error) {
+        showNotification(`Lỗi khi tải dữ liệu lưu trữ: ${error.message}`, 'error');
+    } finally {
+        isLoadingArchives = false;
+    }
+}
+// [THAY THẾ] - Toàn bộ hàm renderPaginationControls cũ bằng hàm này
+function renderPaginationControls() {
+    const container = document.getElementById('pagination-controls');
+    if (!container) return;
+
+    // Nếu chỉ có 1 trang dữ liệu hiện tại VÀ không còn kho lưu trữ nào, thì không cần hiển thị gì cả
+    if (totalPages <= 1 && isLastArchive) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // 1. Nút "Trang Trước": Chỉ hiển thị khi không ở trang đầu tiên
+    if (currentPage > 1) {
+        html += `<button onclick="fetchPaginatedData(${currentPage - 1})" class="px-3 py-1 text-sm rounded-md border">&laquo; Trước</button>`;
+    }
+    
+    // 2. Hiển thị các nút số trang (logic giữ nguyên)
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    if (startPage > 1) {
+        html += `<button onclick="fetchPaginatedData(1)" class="px-3 py-1 text-sm rounded-md border">1</button>`;
+        if (startPage > 2) html += `<span class="px-3 py-1 text-sm">...</span>`;
+    }
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'border';
+        html += `<button onclick="fetchPaginatedData(${i})" class="px-3 py-1 text-sm rounded-md ${isActive}">${i}</button>`;
+    }
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="px-3 py-1 text-sm">...</span>`;
+        html += `<button onclick="fetchPaginatedData(${totalPages})" class="px-3 py-1 text-sm rounded-md border">${totalPages}</button>`;
+    }
+    
+    // 3. Logic hiển thị nút "Sau" hoặc "Tải thêm"
+    if (currentPage < totalPages) {
+        // Nếu CHƯA phải trang cuối của dữ liệu hiện tại, hiển thị nút "Sau" bình thường
+        html += `<button onclick="fetchPaginatedData(${currentPage + 1})" class="px-3 py-1 text-sm rounded-md border">Sau &raquo;</button>`;
+    } else if (!isLastArchive) {
+        // Nếu ĐÃ ở trang cuối VÀ VẪN CÒN dữ liệu lưu trữ, hiển thị nút "Tải thêm"
+        html += `<button id="load-more-archives-btn" onclick="fetchNextArchivePage()" class="px-3 py-1 text-sm rounded-md border bg-green-100 text-green-800 font-semibold hover:bg-green-200">Tải thêm &raquo;</button>`;
+    }
+
+    container.innerHTML = html;
+}
 
 async function refreshData() {
     // Lấy tham chiếu đến nút bấm
@@ -3324,90 +3373,37 @@ function getStatusClass(statusText) {
     }
 }
 
-function renderSummary(data) {
-    const totalElForm = document.getElementById("summary-total-form");
-    const topCarElForm = document.getElementById("summary-top-car-form");
-    const topAdvisorElForm = document.getElementById("summary-top-advisor-form");
+// [THAY THẾ] - Toàn bộ hàm renderSummary cũ
+function renderSummary(total, summary = {}) {
     const totalElHistory = document.getElementById("summary-total-history");
     const topCarElHistory = document.getElementById("summary-top-car-history");
     const topAdvisorElHistory = document.getElementById("summary-top-advisor-history");
 
-    if (!Array.isArray(data) || data.length === 0) {
-        const defaultText = { total: "0", car: "N/A", advisor: "N/A" };
-        if (totalElHistory) totalElHistory.textContent = defaultText.total;
-        if (topCarElHistory) topCarElHistory.textContent = defaultText.car;
-        if (topAdvisorElHistory) topAdvisorElHistory.textContent = defaultText.advisor;
-        
-        if (totalElForm) totalElForm.textContent = defaultText.total;
-        if (topCarElForm) topCarElForm.textContent = "Chưa có dữ liệu";
-        if (topAdvisorElForm) topAdvisorElForm.textContent = "Chưa có dữ liệu";
-        return;
-    }
+    if (!totalElHistory || !topCarElHistory || !topAdvisorElHistory) return;
 
-    const total = data.length;
-    const carCounts = data.reduce((acc, row) => { if (row["Dòng xe"]) acc[row["Dòng xe"]] = (acc[row["Dòng xe"]] || 0) + 1; return acc; }, {});
-    const advisorCounts = data.reduce((acc, row) => { if (row["Tên tư vấn bán hàng"]) acc[row["Tên tư vấn bán hàng"]] = (acc[row["Tên tư vấn bán hàng"]] || 0) + 1; return acc; }, {});
+    // Chỉ cần hiển thị dữ liệu đã được tính toán sẵn từ server
+    totalElHistory.textContent = total || 0;
+    topCarElHistory.textContent = summary.topCar || "N/A";
     
-    const topCar = Object.entries(carCounts).sort((a,b) => b[1] - a[1])[0];
-    const topAdvisor = Object.entries(advisorCounts).sort((a,b) => b[1] - a[1])[0];
-
-    // Tạo văn bản để hiển thị (không cần rút gọn)
-    const topCarText = topCar ? `${topCar[0]} (${topCar[1]})` : "N/A";
-    const topAdvisorText = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]})` : "N/A";
-    
-    // Cập nhật UI cho bố cục mới
-    if (totalElHistory) totalElHistory.textContent = total;
-    if (topCarElHistory) topCarElHistory.textContent = topCarText;
-    if (topAdvisorElHistory) topAdvisorElHistory.textContent = topAdvisorText;
-
-    // Cập nhật cho view cũ (nếu có) để không bị lỗi
-    const topCarTextFull = topCar ? `${topCar[0]} (${topCar[1]} yêu cầu)` : "Chưa có dữ liệu";
-    const topAdvisorTextFull = topAdvisor ? `${topAdvisor[0]} (${topAdvisor[1]} yêu cầu)` : "Chưa có dữ liệu";
-    if (totalElForm) totalElForm.textContent = total;
-    if (topCarElForm) topCarElForm.textContent = topCarTextFull;
-    if (topAdvisorElForm) topAdvisorElForm.textContent = topAdvisorTextFull;
+    // Nếu là Admin, sẽ có topAdvisor, ngược lại hiển thị N/A
+    topAdvisorElHistory.textContent = summary.topAdvisor || "N/A";
 }
 
-// HÀM CẦN THAY THẾ: Xóa hàm filterHistory() cũ và dùng hàm này
-// HÀM ĐỂ THAY THẾ
 function applyFilters() {
-    if (!globalHistoryData) return;
+    // [THÊM MỚI] - Reset trạng thái lưu trữ
+    currentArchiveSheet = null;
+    currentPageInArchive = 1;
+    isLastArchive = false;
+    // [KẾT THÚC THÊM MỚI]
 
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = currentUser === ADMIN_USER;
-
-    let dataToDisplay = isAdmin 
-        ? globalHistoryData 
-        : globalHistoryData.filter(row => normalizeName(row["Tên tư vấn bán hàng"]) === normalizeName(currentUser));
-
-    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-    const carModel = document.getElementById('filter-car-model').value;
-    const status = document.getElementById('filter-status').value;
-
-    if (searchTerm) {
-        dataToDisplay = dataToDisplay.filter(row => {
-            const customerName = (row["Tên khách hàng"] || '').toLowerCase();
-            const orderNumber = (row["Số đơn hàng"] || '').toLowerCase();
-            const vin = (row["VIN"] || '').toLowerCase();
-            const resultText = (row["Kết quả"] || '').toLowerCase();
-            return customerName.includes(searchTerm) || 
-                   orderNumber.includes(searchTerm) || 
-                   vin.includes(searchTerm) ||
-                   resultText.includes(searchTerm);
-        });
-    }
-
-    if (carModel) {
-        dataToDisplay = dataToDisplay.filter(row => row["Dòng xe"] === carModel);
-    }
-
-    if (status) {
-        dataToDisplay = dataToDisplay.filter(row => (row["Kết quả"] || 'Chưa ghép') === status);
-    }
-
-    renderHistoryTable(dataToDisplay);
-    document.getElementById("total-don-count").textContent = dataToDisplay.length;
+    currentFilters = {
+        keyword: document.getElementById('search-input').value,
+        dong_xe: document.getElementById('filter-car-model').value,
+        status: document.getElementById('filter-status').value
+    };
+    fetchPaginatedData(1);
 }
+
 
 function resetFilters() {
     document.getElementById('search-input').value = '';
@@ -3444,37 +3440,21 @@ function populateFilterDropdowns() {
 let lastSortColumn = '';
 let lastSortDirection = 'asc';
 function sortTable(columnKey) {
-    const dataKey = columnKey;
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = currentUser === ADMIN_USER;
-    let dataToSort = isAdmin ? [...globalHistoryData] : [...globalHistoryData.filter(row => row["Tên tư vấn bán hàng"] === currentUser)];
-
-    if (lastSortColumn === dataKey) {
+currentArchiveSheet = null;
+    currentPageInArchive = 1;
+    isLastArchive = false;
+    if (lastSortColumn === columnKey) {
         lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
         lastSortDirection = 'asc';
     }
-    lastSortColumn = dataKey;
+    lastSortColumn = columnKey;
 
-    dataToSort.sort((a, b) => {
-        let valA = a[dataKey] ?? "";
-        let valB = b[dataKey] ?? "";
-        if (dataKey === "STT") {
-            const indexA = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(a);
-            const indexB = (isAdmin ? globalHistoryData : globalHistoryData.filter(r => r["Tên tư vấn bán hàng"] === currentUser)).indexOf(b);
-            return lastSortDirection === 'asc' ? indexA - indexB : indexB - indexA;
-        }
-        if (dataKey === "Kết quả") { valA = a["Kết quả"] || "Chưa có"; valB = b["Kết quả"] || "Chưa có"; }
-        if (["Ngày cọc", "Thời gian nhập", "Thời gian ghép"].includes(dataKey)) {
-            valA = new Date(a[dataKey] || 0).getTime(); valB = new Date(b[dataKey] || 0).getTime();
-        }
-        if (typeof valA === 'number' && typeof valB === 'number') return lastSortDirection === 'asc' ? valA - valB : valB - valA;
-        valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase();
-        if (valA < valB) return lastSortDirection === 'asc' ? -1 : 1;
-        if (valA > valB) return lastSortDirection === 'asc' ? 1 : -1;
-        return 0;
-    });
-    renderHistoryTable(dataToSort);
+    // Cập nhật trạng thái sắp xếp hiện tại
+    currentSort = { column: columnKey, order: lastSortDirection };
+    
+    // Gọi tải lại dữ liệu từ trang 1 với cách sắp xếp mới
+    fetchPaginatedData(1);
 }
 
 function exportToExcel() {
@@ -3705,11 +3685,11 @@ function switchTab(tabName, element) {
         'form': document.getElementById('form-section'),
         'history': document.getElementById('history-section'),
         'bulk-entry-table': document.getElementById('bulk-entry-table-section'),
-        // [THÊM MỚI] - Tách riêng hai thành phần của tab "Tìm Xe"
         'dang-ky-cho': document.getElementById('dang-ky-cho-section'),
         'danh-sach-cho': document.getElementById('danh-sach-cho-section')
     };
     const mainContainer = document.getElementById('main-container');
+    const paginationControls = document.getElementById('pagination-controls'); // Lấy phần tử phân trang
 
     // 3. Ẩn tất cả các khối nội dung trước
     Object.values(sections).forEach(section => {
@@ -3717,34 +3697,44 @@ function switchTab(tabName, element) {
     });
 
     // 4. Xóa class layout 2 cột (nếu có)
-    mainContainer.classList.remove('layout-form-view');
+    mainContainer.classList.remove('layout-form-view', 'layout-bulk-view');
 
     // 5. Xử lý hiển thị dựa trên tab được chọn
     if (tabName === 'form') {
-        // Layout 2 cột cho tab "Yêu Cầu Ghép Xe"
         mainContainer.classList.add('layout-form-view');
         if (sections.form) sections.form.classList.remove('hidden');
         if (sections.history) sections.history.classList.remove('hidden');
         const historySummary = sections.history.querySelector('#summary-section-history-view');
-        if(historySummary) historySummary.classList.add('hidden');
+        if (historySummary) historySummary.classList.add('hidden');
 
     } else if (tabName === 'cho-xe') {
-        // [THÊM MỚI] - Áp dụng layout 2 cột cho tab "Yêu Cầu Tìm Xe"
         mainContainer.classList.add('layout-form-view');
-        // Hiển thị form đăng ký chờ bên trái
         if (sections['dang-ky-cho']) sections['dang-ky-cho'].classList.remove('hidden');
-        // Hiển thị bảng danh sách chờ bên phải
         if (sections['danh-sach-cho']) sections['danh-sach-cho'].classList.remove('hidden');
 
     } else {
-        // Logic mặc định cho các tab còn lại (Lịch sử, Hàng loạt)
-        const sectionToShow = document.getElementById(tabName + '-section') || document.getElementById(tabName);
-        if (sectionToShow) {
-             sectionToShow.classList.remove('hidden');
-        }
-        if(tabName === 'history'){
-            const historySummary = sections.history.querySelector('#summary-section-history-view');
-            if(historySummary) historySummary.classList.remove('hidden');
+    // ===== BẮT ĐẦU CHỈNH SỬA =====
+    if (tabName === 'bulk-entry-table') {
+        mainContainer.classList.add('layout-bulk-view');
+    }
+    // ===== KẾT THÚC CHỈNH SỬA =====
+
+    const sectionToShow = document.getElementById(tabName + '-section') || document.getElementById(tabName);
+    if (sectionToShow) {
+         sectionToShow.classList.remove('hidden');
+    }
+    if (tabName === 'history') {
+        const historySummary = sections.history.querySelector('#summary-section-history-view');
+        if (historySummary) historySummary.classList.remove('hidden');
+    }
+}
+
+    // 6. [ĐIỂM THAY ĐỔI QUAN TRỌNG] Hiển thị hoặc ẩn phân trang
+    if (paginationControls) {
+        if (tabName === 'history') {
+            paginationControls.style.display = 'flex'; // Hiển thị phân trang cho tab Lịch sử
+        } else {
+            paginationControls.style.display = 'none'; // Ẩn phân trang cho tất cả các tab khác
         }
     }
 
@@ -3753,11 +3743,9 @@ function switchTab(tabName, element) {
     if (mobileMenu) mobileMenu.classList.remove("active");
     const hamburger = document.querySelector(".hamburger");
     if (hamburger) hamburger.classList.remove("active");
-document.querySelector('.navbar .tabs').classList.remove('active');
+    const mobileTabs = document.querySelector('.navbar .tabs');
+    if(mobileTabs) mobileTabs.classList.remove('active');
 }
-
-
-
 function setupScrollSync() {
     document.querySelectorAll(".table-wrapper").forEach(wrapper => {
         const header = wrapper.querySelector("thead");
@@ -4104,539 +4092,6 @@ function getInitialSelectOptions(selectName, includeDisabledPlaceholder = true) 
     });
     return optionsHtml;
 }
-
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
-function addBulkOrderRow(data = {}, isPastedRow = false) {
-    if (!bulkTableBody) {
-        console.error("bulkTableBody is not initialized.");
-        return;
-    }
-    bulkOrderRowCount = bulkTableBody.querySelectorAll('.bulk-order-row').length + 1;
-
-    const tr = document.createElement('tr');
-    tr.classList.add('bulk-order-row');
-    tr.setAttribute('data-row-id', bulkOrderRowCount); 
-
-    const dongXeOptions = getInitialSelectOptions('dong_xe');
-    const ngoaiThatOptions = getInitialSelectOptions('ngoai_that');
-    const noiThatOptions = getInitialSelectOptions('noi_that');
-    const uniqueRowIdSuffix = `_row_${bulkOrderRowCount}`;
-
-    // [THAY ĐỔI] - Cấu trúc HTML mới cho toàn bộ dòng
-    tr.innerHTML = `
-        <td class="row-stt">${bulkOrderRowCount}</td>
-        
-        <td><input type="text" name="ten_khach_hang" class="form-input text-sm" value="${data.ten_khach_hang || ''}" required oninput="this.value = this.value.toUpperCase()"></td>
-        
-        <td>
-            <select name="dong_xe" class="form-select text-sm" required onchange="restrictVersionForRow(this.closest('tr'), this)">
-                ${dongXeOptions}
-            </select>
-        </td>
-        
-        <td><select name="phien_ban" class="form-select text-sm" required><option value="" disabled selected>Chọn dòng xe</option></select></td>
-        
-        <td><select name="ngoai_that" class="form-select text-sm" required>${ngoaiThatOptions}</select></td>
-        
-        <td><select name="noi_that" class="form-select text-sm" required>${noiThatOptions}</select></td>
-        
-        <td><input type="text" name="so_don_hang" class="form-input text-sm" value="${data.so_don_hang || ''}" required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"></td>
-        
-        <td>
-            <div class="bulk-date-file-container">
-                <label for="chic_file_input_bulk${uniqueRowIdSuffix}" class="compact-file-upload-wrapper">
-                    <input type="file" id="chic_file_input_bulk${uniqueRowIdSuffix}" name="chic_file_input_bulk_row" class="chic-file-input-bulk" accept="image/*">
-                    <span class="file-prompt"><i class="fas fa-paperclip"></i> Chọn UNC</span>
-                    <span class="file-name-display"></span>
-                </label>
-                <input name="ngay_coc" id="ngay_coc_bulk${uniqueRowIdSuffix}" type="date" class="form-input text-sm" readonly required value="${data.ngay_coc_datetime_local || ''}">
-            </div>
-            <p id="chic_ocr_status_bulk${uniqueRowIdSuffix}" class="chic-ocr-status-bulk"></p>
-        </td>
-
-        <td class="text-center">
-             <button type="button" class="btn-icon-danger" onclick="removeBulkOrderRow(this.closest('tr'))" title="Xóa dòng">
-                <i class="fas fa-times"></i>
-            </button>
-        </td>
-
-        <td class="row-status">Chưa kiểm tra</td>
-    `;
-    bulkTableBody.appendChild(tr);
-
-    // Gắn sự kiện cho input file của dòng mới
-    const fileInputBulk = tr.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
-    const wrapperBulk = tr.querySelector('.compact-file-upload-wrapper');
-    
-    if (fileInputBulk && wrapperBulk) {
-        fileInputBulk.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const fileNameDisplay = wrapperBulk.querySelector('.file-name-display');
-            const filePrompt = wrapperBulk.querySelector('.file-prompt');
-
-            if (file) {
-                fileNameDisplay.textContent = file.name;
-                fileNameDisplay.title = file.name;
-                filePrompt.style.display = 'none';
-                fileNameDisplay.style.display = 'block';
-                wrapperBulk.classList.add('file-selected-bulk');
-                xuLyAnhUNCRow(event.target, tr);
-            } else {
-                fileNameDisplay.textContent = '';
-                fileNameDisplay.title = '';
-                filePrompt.style.display = 'flex';
-                fileNameDisplay.style.display = 'none';
-                wrapperBulk.classList.remove('file-selected-bulk');
-            }
-        });
-    }
-
-    // Các logic khác trong hàm được giữ nguyên...
-    // Ví dụ: khóa trường ngày cọc, xử lý dữ liệu được dán, gắn event listener...
-    const ngayCocBulkInput = tr.querySelector(`input[name="ngay_coc"]`);
-    if (ngayCocBulkInput) {
-        ngayCocBulkInput.setAttribute('readonly', true);
-    }
-
-    // Các logic xử lý dữ liệu dán và gán sự kiện...
-    if (data.dong_xe) {
-        const dongXeSelect = tr.querySelector('select[name="dong_xe"]');
-        dongXeSelect.value = data.dong_xe; 
-        restrictVersionForRow(tr, dongXeSelect, data.phien_ban); 
-    } else {
-        const dongXeSelect = tr.querySelector('select[name="dong_xe"]');
-        restrictVersionForRow(tr, dongXeSelect, data.phien_ban);
-    }
-
-    if (data.ngoai_that) tr.querySelector('select[name="ngoai_that"]').value = data.ngoai_that;
-    if (data.noi_that) tr.querySelector('select[name="noi_that"]').value = data.noi_that;
-
-    tr.querySelectorAll('input:not([type="file"]), select').forEach(el => {
-        const resetStatus = () => {
-            tr.classList.remove('valid-row', 'invalid-row');
-            const statusCell = tr.querySelector('.row-status');
-            if (statusCell) {
-                statusCell.textContent = 'Chưa kiểm tra';
-                statusCell.className = 'row-status';
-            }
-            updateBulkTableSummary();
-            if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
-        };
-        el.addEventListener('input', resetStatus);
-        if (el.tagName === 'SELECT') {
-             el.addEventListener('change', resetStatus);
-        }
-    });
-
-    if (!isPastedRow && bulkTableBody.firstChild === tr) {
-        const firstInput = tr.querySelector('input[name="ten_khach_hang"]');
-        if (firstInput) firstInput.focus();
-    }
-    updateBulkTableSummary();
-}
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
-async function xuLyAnhUNCRow(fileInputElement, rowElement) {
-    if (!fileInputElement || !fileInputElement.files || fileInputElement.files.length === 0) {
-        return; 
-    }
-    const file = fileInputElement.files[0]; 
-
-    const rowIdNum = rowElement.getAttribute('data-row-id');
-    const uniqueRowIdSuffix = `_row_${rowIdNum}`;
-
-    const statusElement = rowElement.querySelector(`#chic_ocr_status_bulk${uniqueRowIdSuffix}`);
-    const ngayCocInput = rowElement.querySelector(`#ngay_coc_bulk${uniqueRowIdSuffix}`);
-    const wrapperBulk = rowElement.querySelector('.compact-file-upload-wrapper');
-
-    if (!statusElement || !ngayCocInput || !wrapperBulk) {
-        showNotification(`Lỗi cấu trúc DOM cho dòng ${rowIdNum}.`, "error");
-        return;
-    }
-    
-    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Đang chuẩn bị...';
-    
-    if (!file.type.startsWith('image/')) {
-        showErrorToast(`Lỗi dòng ${rowIdNum}`, 'File không phải là ảnh.');
-        statusElement.textContent = 'Lỗi: File không phải ảnh.';
-        fileInputElement.value = null;
-        const fileNameDisplay = wrapperBulk.querySelector('.file-name-display');
-        const filePrompt = wrapperBulk.querySelector('.file-prompt');
-        fileNameDisplay.style.display = 'none';
-        filePrompt.style.display = 'flex';
-        wrapperBulk.classList.remove('file-selected-bulk');
-        return;
-    }
-
-    try {
-        statusElement.innerHTML = `<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (0%)`;
-        const { data: { text } } = await Tesseract.recognize(file, 'vie+eng', {
-            logger: m => {
-                if (m.status === 'recognizing text') {
-                    statusElement.innerHTML = `<i class="fas fa-cogs fa-spin mr-1"></i>Đang nhận dạng... (${Math.round(m.progress * 100)}%)`;
-                }
-            }
-        });
-        statusElement.innerHTML = '<i class="fas fa-search mr-1"></i>Đang tìm ngày giờ...';
-
-        let extractedDateTime = null;
-        // ... (toàn bộ logic nhận dạng ngày tháng phức tạp vẫn được giữ nguyên)
-        let cleanedText = text.replace(/\n+/g, ' ');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (match, h, _, m, s) => `${h}:${m}${s ? ':'+s : ''}`);
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)/gi, '$1');
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giây|giay|s|sec)/gi, '$1');
-        cleanedText = cleanedText.replace(/\s*:\s*/g, ':').replace(/\s*-\s*/g, '-').replace(/\s*\/\s*/g, '/').replace(/\s*\.\s*/g, '.');
-        cleanedText = cleanedText.replace(/(\d{1,2})([\/.-])(\d{1,2})\2(\d{2})(?!\d)/g, (match, day, sep, month, yearYY) => {
-            const cY = new Date().getFullYear(); const yYI = parseInt(yearYY,10); let fY;
-            if (yYI > (cY % 100 + 15) && yYI <= 99) fY = 1900 + yYI; else fY = Math.floor(cY / 100) * 100 + yYI;
-            return `${day}/${month}/${fY}`;
-        });
-        cleanedText = cleanedText.replace(/(\d{1,2})\.(\d{1,2})\/(\d{1,2})\/(\d{4})/g, '$2/$3/$4');
-        cleanedText = cleanedText.replace(/(\d{1,2})\/(\d{1,2})\.(\d{1,2})\/(\d{4})/g, '$1/$2/$4');
-        cleanedText = cleanedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-        let bestMatchScore = -1; let bestMatchDetails = {};
-        const monthTextRegexPart = `(?:tháng|thg|t|Tháng|Thg\\.?|T\\.)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-zÀ-ỹ]{3,}`;
-        const dateSeparatorRegexPart = `[\\s\\/\\.-]+`;
-        const patternsWithParsers = [
-            { regex: new RegExp(`(?:Ngày|Date(?: time)?)[:\\s]*?(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00'}), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
-            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 15.5, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)" },
-            {
-                regex: new RegExp(`(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})-(\\d{1,2}):(\\d{1,2})`, "i"),
-                parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }),
-                score: 14.9, 
-                name: "DD/MM/YYYY-HH:MM (Cleaned Vietinbank iPay style)"
-            },
-            { regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện|Transaction Date)\\s*[:\\s]*?(\\d{1,2})\\s*(?:tháng|thg|/|-|\\.)\\s*(\\d{1,2})(?:,\\s*|\\s+|/|-|\\.)(\\d{4})\\s*(?:lúc|\\@|at|\\s)\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 15, name: "Techcombank & similar" },
-            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật|Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\\s*,?\\s*(?:ngày\\s*|date\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3] || '00', day: m[4], month: m[5], year: m[6] }), score: 14.5, name: "HH:MM(:SS) [DayOfWeek] DD/MM/YYYY (VCB)" },
-            { regex: new RegExp(`Chuyển\\s*nhanh\\s*Napas\\s*247\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second:m[3], day: m[4], month: m[5], year: m[6] }), score: 14, name: "TPBank Napas" },
-            { regex: new RegExp(`(\\d{4})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})[\\sT]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 13.5, name: "YYYY-MM-DD[ T]HH:MM:SS (Sacombank, ISO)" },
-            { regex: new RegExp(`(?:Ngày\\s*thực\\s*hiện|Date\\s*of\\s*transaction)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 13, name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY" },
-            { regex: new RegExp(`(?:vào\\s*lúc|lúc|at)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*,?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 12.5, name: "(vào) lúc/at DD/MM/YYYY HH:MM:SS (BIDV)" },
-            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 12, name: "SHB Thời gian/Time" },
-            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11.5, name: "DD-MM-YYYY HH:MM:SS (Agribank & Common)" },
-            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2})(?!\\d)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11.2, name: "DD/MM/YY HH:MM:SS (2-digit year)" },
-            { regex: new RegExp(`(?:Ngày|Date)\\s*(?:giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực|ghi nhận|transaction|payment|value)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*(?:lúc|at|@|thời gian|time)|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11, name: "Ngày GD/Keyword DD/MM/YYYY lúc/time HH:MM(:SS)" },
-            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện|record)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,|on)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 10, name: "Thời gian/Time ... HH:MM:SS ngày/on DD/MM/YYYY" },
-            { regex: new RegExp(`(?<![:\\d\\w])(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }), score: 9.5, name: "DD/MM/YYYY HH:MM (Standalone, Vietinbank)" },
-            { regex: new RegExp(`(?:Ngày\\s*)?(\\d{1,2})\\s*(?:tháng|Thg\\.?|T)?\\s*(${monthTextRegexPart})\\s*(?:năm|nam)?\\s*(\\d{2,4})\\s*(?:vào\\s*lúc|lúc|Time|@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 9, name: "Ngày DD tháng MM năm Yokohama lúc HHMMSS" },
-            { regex: new RegExp(`(${monthTextRegexPart})\\s+(\\d{1,2}),\\s*(\\d{4})\\s+(?:at|lúc)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM)?`, "i"), parser: (m) => { let h = parseInt(m[4], 10); if (m[7] && m[7].toUpperCase() === 'PM' && h < 12) h += 12; if (m[7] && m[7].toUpperCase() === 'AM' && h === 12) h = 0; return { month: m[1], day: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 8.8, name: "Month DD, YYYY at HH:MM(:SS) AM/PM" },
-            { regex: new RegExp(`(?:Ngày|Date\\s*Time)?:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})[\\s,T]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 8.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Generic)" },
-            { regex: new RegExp(`(?:Vào\\s*lúc|Time):?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?,\\s*(?:ngày)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 8, name: "Vào lúc HH:MM, ngày DD/MM/YYYY" },
-            { regex: new RegExp(`(?:Date:|Ngày:)?\\s*(\\d{4})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{1,2})[\\sT,]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 7.5, name: "YYYY/MM/DD[ T]HH:MM:SS (Generic)" },
-            { regex: new RegExp(`(?:^|\\s|[^\\d\\w.,])(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?(?!=\\d{3}[,\\.])\\s+(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 7, name: "HH:MM:SS DD/MM/YYYY (Improved)" },
-            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM|SA|CH)`, "i"), parser: (m) => { let h = parseInt(m[4], 10); const ampm = m[7] ? m[7].toUpperCase() : null; if (ampm) { if ((ampm === 'PM' || ampm === 'CH') && h < 12) h += 12; if ((ampm === 'AM' || ampm === 'SA') && h === 12) h = 0; } return { day: m[1], month: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 6.5, name: "DD/MM/YYYY HH:MM(:SS) AM/PM/SA/CH" },
-            { regex: new RegExp(`(?:Ngày|Date|Transaction Date|Ngay GD|Thời gian GD|Ngay thuc hien|Date of issue)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 5, name: "Date only with keyword" },
-            { regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"), parser: (m) => ({ day: m[1], month: m[3], year: m[4], hour: '00', minute: '00', second: '00' }), score: 4, name: "Date only DD/MM/YYYY (generic)" },
-            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{2})(\\d{2})(\\d{4})(?!\\d)`, "i"), parser: (m) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 3.5, name: "Date only DDMMYYYY with keyword" },
-            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{4})(\\d{2})(\\d{2})(?!\\d)`, "i"), parser: (m) => ({ year: m[1], month: m[2], day: m[3], hour: '00', minute: '00', second: '00' }), score: 3, name: "Date only YYYYMMDD with keyword" }
-        ];
-        patternsWithParsers.sort((a, b) => b.score - a.score); 
-
-        for (const item of patternsWithParsers) {
-            let match;
-            const gRegex = new RegExp(item.regex.source, item.regex.flags + (item.regex.flags.includes('g') ? '' : 'g')); 
-            while ((match = gRegex.exec(cleanedText)) !== null) {
-                const components = item.parser(match);
-                if (components) {
-                    const tempDateTime = parseAndValidateDate(components.day, components.month, components.year, components.hour, components.minute, components.second);
-                    if (tempDateTime) {
-                        if (item.score > bestMatchScore) {
-                            bestMatchScore = item.score;
-                            extractedDateTime = tempDateTime;
-                            bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
-                        } else if (item.score === bestMatchScore) {
-                            const currentHasTime = bestMatchDetails.components && (bestMatchDetails.components.hour !== '00' || bestMatchDetails.components.minute !== '00' || (bestMatchDetails.components.second && bestMatchDetails.components.second !=='00'));
-                            const newHasTime = components.hour !== '00' || components.minute !== '00' || (components.second && components.second !=='00');
-                            if (newHasTime && !currentHasTime) { 
-                                extractedDateTime = tempDateTime;
-                                bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
-                            }
-                        }
-                    }
-                }
-            }
-            if (bestMatchScore >= 10 && extractedDateTime) break;
-        }
-
-        // --- BẮT ĐẦU PHẦN SỬA LỖI ---
-        if (extractedDateTime) {
-            // Định dạng lại giá trị để phù hợp với input type="date"
-            // extractedDateTime có dạng 'YYYY-MM-DDTHH:mm:ss', chúng ta chỉ cần phần 'YYYY-MM-DD'
-            ngayCocInput.value = extractedDateTime.split('T')[0];
-            statusElement.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Đã điền Ngày Cọc!';
-        } else {
-            ngayCocInput.value = ""; 
-            statusElement.innerHTML = '<i class="fas fa-exclamation-triangle text-yellow-500 mr-1"></i>Không tìm thấy.';
-            showWarningToast(`Cảnh báo dòng ${rowIdNum}`, "Không tìm thấy ngày cọc, vui lòng nhập thủ công.");
-        }
-        // --- KẾT THÚC PHẦN SỬA LỖI ---
-
-    } catch (error) {
-        ngayCocInput.value = ""; 
-        statusElement.innerHTML = `<i class="fas fa-times-circle text-red-500 mr-1"></i>Lỗi xử lý ảnh.`;
-        showErrorToast(`Lỗi dòng ${rowIdNum}`, "Không thể xử lý ảnh UNC.");
-    } finally {
-        rowElement.classList.remove('valid-row', 'invalid-row');
-        const statusCellForRow = rowElement.querySelector('.row-status');
-        if (statusCellForRow) {
-            statusCellForRow.textContent = 'Chưa kiểm tra'; 
-            statusCellForRow.className = 'row-status';
-        }
-        updateBulkTableSummary();
-    }
-}
-// --- Hàm Cập Nhật Phiên Bản Cho Dòng Trong Bảng ---
-function restrictVersionForRow(rowElement, dongXeSelectElement, savedPhienBanValue = null) {
-    const phienBanSelect = rowElement.querySelector('select[name="phien_ban"]');
-    const noiThatSelect = rowElement.querySelector('select[name="noi_that"]');
-    if (!phienBanSelect) return;
-
-    const selectedDongXe = dongXeSelectElement.value;
-    const availableVersions = versionsMap[selectedDongXe] || allPossibleVersions;
-    const previousSelectedPhienBan = phienBanSelect.value;
-
-    phienBanSelect.innerHTML = '<option value="" disabled selected>Chọn phiên bản</option>';
-    availableVersions.forEach(version => {
-        const option = document.createElement('option');
-        option.value = version; option.textContent = version;
-        phienBanSelect.appendChild(option);
-    });
-
-    if (savedPhienBanValue && availableVersions.includes(savedPhienBanValue)) {
-        phienBanSelect.value = savedPhienBanValue;
-    } else if (availableVersions.includes(previousSelectedPhienBan)) {
-        phienBanSelect.value = previousSelectedPhienBan;
-    } else if (selectedDongXe === "VF 3") {
-        phienBanSelect.value = "Base";
-    } else if (selectedDongXe === "VF 5") {
-        phienBanSelect.value = "Plus";
-    }
-
-    if (noiThatSelect && (selectedDongXe === "VF 3" || selectedDongXe === "VF 5")) {
-        noiThatSelect.value = "Black";
-    }
-}
-
-// --- Hàm Xử Lý Dán Dữ Liệu Chung ---
-function handlePasteIntoBulkTableGeneral(event) {
-    const targetElement = event.target;
-    if (targetElement.tagName === 'INPUT' || targetElement.tagName === 'SELECT') {
-        const targetCell = targetElement.closest('td');
-        const targetRow = targetElement.closest('tr');
-        if (targetCell && targetRow) {
-            event.preventDefault();
-            const pasteData = (event.clipboardData || window.clipboardData).getData('text');
-            const pastedRows = pasteData.split(/\r\n|\n|\r/);
-            const columnNames = Array.from(document.getElementById('bulk-order-editable-table').querySelector('thead tr').cells).map(th => th.querySelector('span.text-red-500') ? th.childNodes[0].textContent.trim() : th.textContent.trim());
-            // Find the index of the current cell's column
-            const currentCellIndex = Array.from(targetRow.cells).indexOf(targetCell);
-
-
-            pastedRows.forEach((rowString, pRowIndex) => {
-                if (!rowString.trim()) return;
-                const pastedCells = rowString.split('\t'); // Assume tab-separated
-
-                if (pRowIndex === 0) { // First pasted row updates current or subsequent cells in the targetRow
-                    for (let i = 0; i < pastedCells.length; i++) {
-                        const cellToUpdateIndex = currentCellIndex + i;
-                        if (cellToUpdateIndex < targetRow.cells.length - 2) { // -2 to exclude delete and status
-                            const cellInputOrSelect = targetRow.cells[cellToUpdateIndex].querySelector('input, select');
-                            if (cellInputOrSelect) {
-                                cellInputOrSelect.value = pastedCells[i].trim();
-                                if (cellInputOrSelect.name === 'dong_xe') {
-                                    restrictVersionForRow(targetRow, cellInputOrSelect);
-                                }
-                                // Trigger change event for selects to update dependent fields if any
-                                if(cellInputOrSelect.tagName === 'SELECT') {
-                                    cellInputOrSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                                }
-                            }
-                        }
-                    }
-                } else { // Subsequent pasted rows create new table rows
-                    const newRowData = {};
-                    // Map pasted cells to expected data fields based on a fixed order
-                    // This order must match the order of columns in your Excel/source
-                    const fieldOrder = ['ten_khach_hang', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that', 'so_don_hang', 'ngay_coc'];
-                    pastedCells.forEach((cellValue, cellIndex) => {
-                        if (cellIndex < fieldOrder.length) {
-                            newRowData[fieldOrder[cellIndex]] = cellValue.trim();
-                        }
-                    });
-                    addBulkOrderRow(newRowData, true);
-                }
-            });
-            updateBulkTableSummary();
-        }
-    }
-}
-
-
-// --- Hàm Xóa Dòng ---
-function removeBulkOrderRow(rowElement) {
-    if (rowElement) {
-        rowElement.remove();
-        // Đánh lại số STT
-        const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
-        rows.forEach((row, index) => {
-            const sttCell = row.querySelector('.row-stt');
-            if (sttCell) sttCell.textContent = index + 1;
-        });
-        bulkOrderRowCount = rows.length; // Cập nhật lại số dòng
-    }
-    updateBulkTableSummary();
-}
-
-// --- Hàm Xóa Toàn Bộ Bảng ---
-function clearBulkEditableTable() {
-    if (bulkTableBody) bulkTableBody.innerHTML = '';
-    bulkOrderRowCount = 0;
-    addBulkOrderRow(); // Thêm lại một dòng trống
-    updateBulkTableSummary();
-    if(submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
-}
-
-// --- Hàm Cập Nhật Tóm Tắt Bảng ---
-function updateBulkTableSummary() {
-    if (!bulkTableBody || !bulkTotalRowsEl || !bulkValidRowsEl || !bulkErrorRowsEl) return;
-    const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
-    let validCount = 0;
-    let errorCount = 0;
-    rows.forEach(row => {
-        if (row.classList.contains('valid-row')) validCount++;
-        else if (row.classList.contains('invalid-row')) errorCount++;
-    });
-    bulkTotalRowsEl.textContent = rows.length;
-    bulkValidRowsEl.textContent = validCount;
-    bulkErrorRowsEl.textContent = errorCount;
-
-    if (submitValidBulkTableOrdersBtn) {
-        submitValidBulkTableOrdersBtn.style.display = validCount > 0 ? 'inline-block' : 'none';
-    }
-}
-
-// [THAY THẾ TOÀN BỘ HÀM CŨ]
-function processAndValidateBulkTable() {
-    if (!bulkTableBody) {
-        console.error("processAndValidateBulkTable: bulkTableBody is not initialized.");
-        showNotification("Lỗi: Bảng dữ liệu chưa sẵn sàng.", "error");
-        return;
-    }
-    const rows = bulkTableBody.querySelectorAll('.bulk-order-row');
-    if (rows.length === 0) {
-        showNotification("Không có dữ liệu để kiểm tra.", "info");
-        return;
-    }
-
-    let overallValid = true;
-    const currentOrderNumbersInTable = new Set();
-    let firstErrorRow = null;
-
-    rows.forEach((row, rowIndex) => {
-        row.classList.remove('valid-row', 'invalid-row');
-        const statusCell = row.querySelector('.row-status');
-        if (!statusCell) {
-            console.warn("Không tìm thấy ô trạng thái cho dòng:", row);
-            return;
-        }
-        statusCell.classList.remove('error', 'success');
-        statusCell.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...';
-
-        const inputs = {
-            ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
-            dong_xe: row.querySelector('select[name="dong_xe"]').value,
-            phien_ban: row.querySelector('select[name="phien_ban"]').value,
-            ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
-            noi_that: row.querySelector('select[name="noi_that"]').value,
-            so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
-            ngay_coc: row.querySelector('input[name="ngay_coc"]').value
-        };
-
-        const rowIdNum = row.getAttribute('data-row-id');
-        const uniqueRowIdSuffix = `_row_${rowIdNum}`;
-        const fileInputBulk = row.querySelector(`#chic_file_input_bulk${uniqueRowIdSuffix}`);
-
-        let errors = [];
-
-        // Kiểm tra các trường thông thường
-        if (!inputs.ten_khach_hang) errors.push("Tên KH trống");
-        if (!inputs.dong_xe) errors.push("Chưa chọn Dòng xe");
-        if (!inputs.phien_ban) {
-            errors.push("Chưa chọn Phiên bản");
-        } else if (versionsMap[inputs.dong_xe] && !versionsMap[inputs.dong_xe].includes(inputs.phien_ban)) {
-            errors.push(`Phiên bản '${inputs.phien_ban}' không hợp lệ cho dòng xe '${inputs.dong_xe}'`);
-        }
-        if (!inputs.ngoai_that) errors.push("Chưa chọn Ngoại thất");
-        if (!inputs.noi_that) errors.push("Chưa chọn Nội thất");
-
-        // Kiểm tra Số Đơn Hàng
-        if (!inputs.so_don_hang) {
-            errors.push("Số đơn hàng trống");
-        } else if (!/^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(inputs.so_don_hang)) {
-            errors.push("Số ĐH sai định dạng");
-        } else {
-            if (globalHistoryData && globalHistoryData.some(histRow => histRow["Số đơn hàng"] === inputs.so_don_hang)) {
-                errors.push("Số ĐH đã tồn tại");
-            }
-            if (currentOrderNumbersInTable.has(inputs.so_don_hang)) {
-                errors.push("Số ĐH trùng lặp trong bảng này");
-            } else {
-                currentOrderNumbersInTable.add(inputs.so_don_hang);
-            }
-        }
-
-        // [SỬA LỖI LOGIC] - Kiểm tra Ngày Cọc và UNC một cách thông minh hơn
-        const hasFile = fileInputBulk && fileInputBulk.files && fileInputBulk.files.length > 0;
-        const hasDate = inputs.ngay_coc && !isNaN(new Date(inputs.ngay_coc).getTime());
-
-        if (!hasFile && !hasDate) {
-            // Trường hợp không có cả file và ngày
-            errors.push("Chưa có UNC & Ngày cọc");
-        } else if (hasFile && !hasDate) {
-            // Có file nhưng chưa có ngày -> Lỗi OCR
-            errors.push("Ngày cọc trống (lỗi xử lý UNC)");
-        } else if (!hasFile && hasDate) {
-            // Có ngày nhưng chưa có file -> Bắt buộc phải có file
-            errors.push("Chưa tải ảnh Ủy nhiệm chi");
-        }
-        // Nếu có cả hai (hasFile && hasDate) thì coi như hợp lệ ở bước này
-
-        // Cập nhật trạng thái dòng
-        if (errors.length > 0) {
-            row.classList.add('invalid-row');
-            const maxErrorsToShow = 2;
-            let errorHtml = errors.slice(0, maxErrorsToShow).map(err => `<span class="block">- ${err}</span>`).join('');
-            if (errors.length > maxErrorsToShow) {
-                errorHtml += `<span class="block">- Và ${errors.length - maxErrorsToShow} lỗi khác...</span>`;
-            }
-            statusCell.innerHTML = errorHtml;
-            statusCell.classList.add('error');
-            statusCell.title = errors.join('; ');
-            overallValid = false;
-            if (!firstErrorRow) {
-                firstErrorRow = row.querySelector('input:not([type="file"]), select');
-            }
-        } else {
-            row.classList.add('valid-row');
-            statusCell.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Hợp lệ';
-            statusCell.classList.add('success');
-            statusCell.title = 'Dữ liệu dòng này hợp lệ';
-        }
-    });
-
-    updateBulkTableSummary();
-
-    const validRowCount = bulkTableBody.querySelectorAll('.bulk-order-row.valid-row').length;
-    if (validRowCount > 0) {
-        if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'inline-block';
-    } else {
-        if (submitValidBulkTableOrdersBtn) submitValidBulkTableOrdersBtn.style.display = 'none';
-    }
-}
-
 function confirmCancelRequest(event, orderNumber) {
     event.stopPropagation(); // Ngăn sự kiện click chính của dòng
     currentOrderNumberToCancel = orderNumber;
@@ -4720,83 +4175,7 @@ async function handleConfirmCancelClick() {
         currentOrderNumberToCancel = null;
     }
 }
-async function submitValidBulkTableOrders() {
-    const submitButton = document.getElementById('submit-valid-bulk-table-orders-btn');
-    if (!bulkTableBody || !submitButton || submitButton.disabled) return;
 
-    const validRows = Array.from(bulkTableBody.querySelectorAll('.bulk-order-row.valid-row'));
-    if (validRows.length === 0) {
-        showNotification("Không có đơn hàng hợp lệ nào để gửi.", "info");
-        return;
-    }
-
-    submitButton.disabled = true;
-    showLoadingToast("Đang Gửi Đơn Hàng Loạt...", `Hệ thống đang xử lý ${validRows.length} yêu cầu...`);
-
-    const requests = validRows.map(row => ({
-        ten_khach_hang: row.querySelector('input[name="ten_khach_hang"]').value.trim().toUpperCase(),
-        dong_xe: row.querySelector('select[name="dong_xe"]').value,
-        phien_ban: row.querySelector('select[name="phien_ban"]').value,
-        ngoai_that: row.querySelector('select[name="ngoai_that"]').value,
-        noi_that: row.querySelector('select[name="noi_that"]').value,
-        so_don_hang: row.querySelector('input[name="so_don_hang"]').value.trim(),
-        ngay_coc: row.querySelector('input[name="ngay_coc"]').value
-    }));
-
-    const payload = new FormData();
-    payload.append('action', 'addBulkRequests');
-    payload.append('consultantName', sessionStorage.getItem("currentConsultant") || "N/A");
-    payload.append('requests', JSON.stringify(requests));
-    
-    try {
-        const response = await fetch(apiURL, { method: "POST", body: payload });
-        const result = await response.json();
-
-        if (result.status !== "SUCCESS") {
-            throw new Error(result.message || 'Lỗi không xác định từ máy chủ.');
-        }
-
-        hideLoadingToast();
-        const submittedCount = validRows.length;
-        showSuccessToast(
-            "Gửi Hàng Loạt Thành Công", 
-            `Đã ghi nhận thành công ${submittedCount} yêu cầu.`
-        );
-        
-        // Dọn dẹp bảng
-        validRows.forEach(row => row.remove());
-        const remainingRows = bulkTableBody.querySelectorAll('.bulk-order-row');
-        if (remainingRows.length === 0) addBulkOrderRow();
-        updateBulkTableSummary();
-
-        // BƯỚC QUAN TRỌNG: Đợi cho dữ liệu mới được tải về hoàn tất
-        await refreshData();
-
-        // Sau khi dữ liệu đã được tải, đợi thêm 1.5 giây để người dùng đọc toast
-        // rồi mới chuyển tab
-        setTimeout(() => {
-            hideSuccessToast();
-            const historyTabLink = document.querySelector('.tabs a[onclick*="history"]');
-            if (historyTabLink) {
-                switchTab('history', historyTabLink);
-            }
-        }, 1500); // Giảm thời gian chờ một chút
-
-    } catch (error) {
-        hideLoadingToast();
-        console.error('Lỗi khi gửi hàng loạt:', error);
-        showNotification(`Lỗi hệ thống khi gửi hàng loạt: ${error.message}`, 'error', 5000);
-    } finally {
-        submitButton.disabled = false;
-    }
-}
-
-function closeModalAndRedirectAfterBulk(orderNumber) {
-    hideSuccessToast();
-    if (orderNumber) {
-        window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
-    }
-}
 
 function requestInvoice(event, orderNumber) {
     event.stopPropagation(); // Quan trọng: Ngăn chặn sự kiện click chính của dòng
