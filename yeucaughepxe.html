@@ -1125,45 +1125,6 @@ tbody tr:hover {
 /* 5. CÁC THÀNH PHẦN NÂNG CAO (ADVANCED COMPONENTS)
 /* =================================================================== */
 
-/* --- AI Chatbot --- */
-#ai-chat-toggle {
-    position: fixed; bottom: 70px; right: 25px; width: 60px; height: 60px; border-radius: 50%;
-    background: var(--gradient); color: white; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-lg); font-size: 28px;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1011;
-}
-#ai-chat-toggle:hover { transform: scale(1.1); }
-#ai-chat-window {
-    position: fixed; bottom: 140px; right: 25px; width: 370px; max-width: 90vw; height: 500px;
-    background: rgba(248, 249, 250, 0.75); backdrop-filter: blur(8px);
-    border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-light);
-    display: flex; flex-direction: column; overflow: hidden;
-    visibility: hidden; opacity: 0; transform: translateY(20px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1010;
-}
-#ai-chat-window.visible { visibility: visible; opacity: 1; transform: translateY(0); }
-.ai-chat-header { flex-shrink: 0; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: var(--gradient); color: white; }
-.ai-chat-header h3 { margin: 0; font-size: 16px; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; }
-#ai-chat-close { background: none; border: none; font-size: 24px; cursor: pointer; color: rgba(255, 255, 255, 0.8); transition: color 0.2s ease, transform 0.2s ease; }
-#ai-chat-close:hover { color: white; transform: rotate(90deg); }
-#ai-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: transparent; }
-.user-message, .ai-message { margin-bottom: 15px; display: flex; max-width: 90%; }
-.user-message { margin-left: auto; flex-direction: row-reverse; }
-.message-content { padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
-.user-message .message-content { background: var(--gradient); color: white; border-bottom-right-radius: 5px; }
-.ai-message .message-content { background: var(--card-bg-light); color: var(--text-light); border: 1px solid var(--border-light); border-bottom-left-radius: 5px; box-shadow: var(--shadow-sm); }
-.ai-chat-input-area { flex-shrink: 0; padding: 15px; border-top: 1px solid var(--border-light); display: flex; gap: 10px; background-color: transparent; }
-#ai-chat-input { flex-grow: 1; border: 1px solid var(--border-light); border-radius: 20px; padding: 10px 15px; font-size: 14px; resize: none; background: var(--background-light); color: var(--text-light); transition: all 0.2s ease; }
-#ai-chat-input:focus { outline: none; border-color: var(--gradient-start); box-shadow: var(--shadow-glow-light); }
-#ai-chat-send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--gradient); color: white; font-size: 16px; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
-#ai-chat-send:hover:not(:disabled) { transform: scale(1.1); box-shadow: var(--shadow-md); }
-.typing-indicator { display: flex; align-items: center; padding: 10px 0; }
-.typing-indicator span { height: 8px; width: 8px; background-color: var(--text-muted-light); border-radius: 50%; display: inline-block; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
-.typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
-.typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
 /* --- Notification Panel --- */
 .notification-panel-pro {
     position: absolute; right: 0; margin-top: 8px; width: 380px; max-width: 90vw;
@@ -2175,49 +2136,9 @@ tbody tr:hover {
     </div>
 
 </div>   
-<button id="ai-chat-toggle" onclick="toggleGlobalAIChat()">
-    <i class="fas fa-robot"></i>
-</button>
 
-<div id="ai-chat-window">
-    <div class="ai-chat-header">
-        <h3><i class="fas fa-brain"></i> Trợ lý</h3>
-        <button id="ai-chat-close" aria-label="Đóng chat">&times;</button>
-    </div>
-    <div id="ai-chat-messages">
-        <div class="ai-message">
-            <div class="message-content">Xin chào! Tôi có thể giúp gì cho bạn?</div>
-        </div>
-    </div>
-    <div class="ai-chat-input-area">
-        <input type="text" id="ai-chat-input" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
-        <button id="ai-chat-send" aria-label="Gửi tin nhắn">
-            <i class="fas fa-paper-plane"></i>
-        </button>
-    </div>
-</div>
 <div class="mobile-overlay" id="mobile-overlay" onclick="closeAllMobileMenus()"></div>
-<div id="ai-context-manual" hidden>
-  <h3>Sổ Tay Hướng Dẫn Chức Năng Website Ghép Xe</h3>
 
-  <h4>Quy trình Yêu Cầu Ghép Xe:</h4>
-  - Người dùng vào tab "Yêu Cầu Ghép Xe".
-  - Điền đầy đủ thông tin khách hàng, thông tin xe.
-  - Tải lên ảnh Ủy Nhiệm Chi để hệ thống tự động lấy ngày cọc.
-  - Nhấn "Xác Nhận" để xem lại, sau đó nhấn "Gửi" để hoàn tất.
-
-  <h4>Quy trình Yêu Cầu Xuất Hóa Đơn:</h4>
-  - Chỉ có thể yêu cầu xuất hóa đơn khi một yêu cầu ghép xe có trạng thái là "Đã Ghép".
-  - Trong bảng Lịch Sử Ghép, tìm đến dòng có trạng thái "Đã Ghép".
-  - Trong cột "Hành động", bấm vào nút menu (...) và chọn "Y/C Xuất Hóa đơn".
-  - Một cửa sổ sẽ hiện ra, yêu cầu người dùng tải lên "Hợp đồng mua bán" và "Đề nghị xuất hóa đơn".
-  - Người dùng phải tick vào ô xác nhận đã tạo tài khoản Vinclub cho khách hàng.
-  - Nhấn "Gửi Yêu Cầu" để hoàn tất. Trạng thái của đơn hàng sẽ chuyển thành "Chờ phê duyệt".
-
-  <h4>Các chức năng khác:</h4>
-  - Tab "Yêu Cầu Hàng Loạt" dùng để nhập nhiều đơn hàng từ Excel.
-  - Admin có quyền tải lên hóa đơn đã xuất cho các yêu cầu có trạng thái "Chờ ký hóa đơn".
-</div>
     <div class="main-container" id="main-container">
         <div class="form-container" id="form-section">
             <form id="vinfast-form" onsubmit="previewForm(event)">
@@ -2803,7 +2724,7 @@ let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
 const apiURL = "https://script.google.com/macros/s/AKfycbyaPU3v_YAeiZ4uxEA7_ZlsXypUJbY-bMEWzNTzxOEyVDonhkxc3lJcVh7DzgM8-EdeQA/exec";
-const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
+
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
 const GLOBAL_HISTORY_DATA_KEY = 'globalHistoryData_v1';
@@ -2878,7 +2799,6 @@ document.addEventListener("DOMContentLoaded", function() {
         window.location.href = "index.html";
         return;
     }
-    chatMessagesContainer = document.getElementById('ai-chat-messages');
 
     // 2. Thiết lập giao diện người dùng cơ bản
     const consultantInput = document.getElementById("ten_ban_hang");
@@ -2999,7 +2919,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     handleHeldCarRequest();
     fetchPaginatedData().then(() => {
-        startPolling();
+
         handleUrlParameters();
     }).catch(error => {
         console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
@@ -3297,7 +3217,7 @@ renderNotifications(data.notifications, data.unreadCount);
     }
 
     // [THAY THẾ TOÀN BỘ HÀM CŨ]
-async function fetchPaginatedData(forceRefresh = false) {
+async function fetchPaginatedData(forceRefresh = false, silent = false) { // Thêm tham số 'silent'
     const CACHE_KEY = `cachedHistoryData_${sessionStorage.getItem("currentConsultant")}`;
     const cachedData = sessionStorage.getItem(CACHE_KEY);
 
@@ -3307,26 +3227,25 @@ async function fetchPaginatedData(forceRefresh = false) {
             if (parsedCache.version === currentDataVersion && parsedCache.data) {
                 console.log("Đang sử dụng dữ liệu Lịch sử từ cache.");
                 globalHistoryData = parsedCache.data;
-                applyFilters(); // Áp dụng bộ lọc hiện tại trên dữ liệu cache
+                applyFilters(); 
                 return;
             }
         } catch(e) { console.warn("Lỗi đọc cache, sẽ tải lại từ đầu."); }
     }
     
     console.log("Đang tải mới dữ liệu Lịch sử từ server...");
-    showLoadingToast("Đang tải dữ liệu...", "Vui lòng chờ trong giây lát");
+    if (!silent) showLoadingToast("Đang tải dữ liệu...", "Vui lòng chờ trong giây lát"); // Chỉ hiển thị toast nếu không ở chế độ 'silent'
 
     const currentUser = sessionStorage.getItem("currentConsultant") || "";
     const isAdmin = (currentUser === ADMIN_USER);
 
-    // Tải tất cả dữ liệu bằng cách yêu cầu một trang rất lớn
     const params = new URLSearchParams({
         action: 'getPaginatedData',
         page: 1,
         pageSize: 9999, 
         sortBy: 'Thời gian nhập',
         sortOrder: 'desc',
-        filters: JSON.stringify({}), // Bỏ bộ lọc khi tải toàn bộ
+        filters: JSON.stringify({}), 
         currentUser: currentUser,
         isAdmin: isAdmin
     });
@@ -3338,19 +3257,18 @@ async function fetchPaginatedData(forceRefresh = false) {
         const result = await response.json();
         if (result.status !== 'SUCCESS') throw new Error(result.message);
 
-        // Lưu dữ liệu toàn cục và vào cache
         globalHistoryData = result.data || [];
         sessionStorage.setItem(CACHE_KEY, JSON.stringify({ version: currentDataVersion, data: globalHistoryData }));
         
-        // Cập nhật lại giao diện với dữ liệu mới
         applyFilters(); 
         if (!filtersPopulated) populateFilterDropdowns();
         
     } catch (error) {
         console.error("Lỗi khi tải toàn bộ dữ liệu:", error);
-        showNotification(`Lỗi tải dữ liệu: ${error.message}.`, "error");
+        // Không hiển thị toast lỗi khi tải âm thầm để tránh làm phiền
+        if (!silent) showNotification(`Lỗi tải dữ liệu: ${error.message}.`, "error");
     } finally {
-        hideLoadingToast();
+        if (!silent) hideLoadingToast(); // Chỉ ẩn toast nếu nó đã được hiển thị
     }
 }
 
@@ -4990,32 +4908,6 @@ async function refreshData() {
     }
 }
 
-// [THAY THẾ HÀM CŨ]
-function pollForUpdates() {
-    const loadingModal = document.getElementById('loading-modal');
-    if (loadingModal && loadingModal.classList.contains('active')) return;
-
-    fetch(apiURL + "?action=getVersion")
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "SUCCESS" && data.version && data.version !== currentDataVersion) {
-                console.log(`Phát hiện phiên bản mới. Server: ${data.version}, Client: ${currentDataVersion}. Đang tải lại...`);
-                currentDataVersion = data.version; // Cập nhật phiên bản ngay
-                fetchPaginatedData(true); // Gọi với forceRefresh = true
-            }
-        })
-        .catch(error => console.warn("Lỗi khi kiểm tra phiên bản:", error));
-}
-function startPolling() {
-    // Dừng interval cũ nếu có để tránh chạy nhiều lần
-    if (pollingInterval) {
-        clearInterval(pollingInterval);
-    }
-    // Bắt đầu một interval mới, lặp lại hàm pollForUpdates mỗi 7 giây
-    pollingInterval = setInterval(pollForUpdates, POLLING_RATE_MS);
-    console.log(`Đã bắt đầu cơ chế polling mỗi ${POLLING_RATE_MS / 1000} giây.`);
-}
-
 
 /**
  * [HÀM ĐÃ NÂNG CẤP HOÀN CHỈNH] - Nhận dữ liệu đã lọc/sắp xếp, thực hiện phân trang và vẽ lại bảng.
@@ -5523,28 +5415,7 @@ async function sendGlobalAIChatMessage() {
         }
     }
 }
-// [THÊM MỚI] Gắn sự kiện cho các thành phần của Chatbot
-document.addEventListener('DOMContentLoaded', () => {
-    // Lấy các phần tử DOM của chatbot
-    const chatSendButton = document.getElementById('ai-chat-send');
-    const chatInput = document.getElementById('ai-chat-input');
-    const chatCloseButton = document.getElementById('ai-chat-close');
 
-    // Gắn sự kiện click cho nút Gửi
-    if (chatSendButton) {
-        chatSendButton.addEventListener('click', sendGlobalAIChatMessage);
-    }
-
-    // Gắn sự kiện nhấn phím cho ô nhập liệu
-    if (chatInput) {
-        chatInput.addEventListener('keydown', handleChatInputKey);
-    }
-
-    // Gắn sự kiện click cho nút Đóng (X)
-    if (chatCloseButton) {
-        chatCloseButton.addEventListener('click', toggleGlobalAIChat);
-    }
-});
 // THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY
 function renderNotifications(notifications, unreadCount) {
     const badge = document.getElementById('notification-badge');
@@ -6101,10 +5972,7 @@ function updateLocalOrderData(orderNumber, updates) {
     console.log(`Đã cập nhật giao diện cho đơn hàng ${orderNumber} với:`, updates);
     return true;
 }
-function closeDetailsModalAndReload() {
-    // Chỉ cần gọi hàm đóng modal là đủ, không cần tải lại trang
-    closeModal('order-details-modal');
-}
+
 function closeDetailsModalAndReload() {
     // Gọi hàm closeModal sẵn có để đóng cửa sổ một cách mượt mà
     closeModal('order-details-modal');
@@ -6214,6 +6082,30 @@ function displayOrderDetails(orderData) {
             }); 
         });
     }
+}
+/**
+ * [HÀM MỚI] - Reset giao diện về trạng thái ban đầu bằng dữ liệu đã có.
+ * Đây là một "soft reload", không gọi API.
+ */
+function resetToInitialView() {
+    console.log("Thực hiện 'soft reload' - reset lại giao diện từ dữ liệu cache.");
+
+    // 1. Reset các biến trạng thái về mặc định
+    currentPage = 1;
+    currentSort = { column: 'Thời gian nhập', order: 'desc' };
+    currentFilters = {};
+
+    // 2. Reset các ô lọc trên giao diện về giá trị trống
+    const searchInput = document.getElementById('search-input');
+    const carModelSelect = document.getElementById('filter-car-model');
+    const statusSelect = document.getElementById('filter-status');
+    if (searchInput) searchInput.value = '';
+    if (carModelSelect) carModelSelect.value = '';
+    if (statusSelect) statusSelect.value = '';
+
+    // 3. Gọi hàm render trung tâm để vẽ lại toàn bộ giao diện
+    // Hàm này sẽ tự động dùng globalHistoryData đã có sẵn
+    updateAndRenderHistoryView();
 }
 </script>
 </body>
