@@ -1892,6 +1892,226 @@ tbody tr:hover {
     flex: 1;
     overflow-y: auto;
 }
+/* =================================================================== */
+/* CSS BỔ SUNG CHO MODAL CHI TIẾT ĐƠN HÀNG                            */
+/* =================================================================== */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+.details-section {
+    padding: 12px;
+    background-color: var(--background-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+}
+.details-section h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gradient-start);
+}
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+}
+.detail-item .label {
+    font-weight: 500;
+    color: var(--text-muted-light);
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+.detail-item .value {
+    font-weight: 600;
+    color: var(--text-light);
+    text-align: right;
+    word-break: break-word;
+}
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+.file-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-light);
+    background-color: var(--background-light);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-fast) ease;
+}
+.file-link:hover {
+    border-color: var(--gradient-start);
+    color: var(--gradient-start);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+.file-link.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f8f9fa;
+}
+.file-link i {
+    color: var(--text-muted-light);
+}
+.timeline { list-style: none; padding: 0; position: relative; }
+.timeline-item {
+    padding-left: 25px;
+    margin-bottom: 15px;
+    position: relative;
+}
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--card-bg-light);
+    border: 2px solid var(--gradient-start);
+    z-index: 1;
+}
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 15px;
+    bottom: -5px;
+    width: 2px;
+    background: var(--border-light);
+}
+.timeline-item:last-child::after { display: none; }
+.timeline-time {
+    font-size: 12px;
+    color: var(--text-muted-light);
+    display: block;
+    margin-bottom: 2px;
+}
+.timeline-content {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-light);
+}
+/* =================================================================== */
+/* CSS BỔ SUNG CHO MODAL CHI TIẾT ĐƠN HÀNG                            */
+/* =================================================================== */
+.details-card-wrapper {
+    background: var(--card-bg-light);
+    border-radius: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+.details-card-header-gradient {
+    padding: 20px 25px;
+    background: var(--gradient);
+    color: white;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+.header-info h2 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.header-info p {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+.order-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+.status-paired { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.status-waiting { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-cancelled { background-color: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.status-unknown { background-color: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+.details-card-body { padding: 20px 25px; }
+
+.vin-highlight-section {
+    background: #eef2ff;
+    border: 1px solid var(--gradient-start);
+    border-radius: 12px;
+    padding: 20px 15px; /* Tăng khoảng đệm dọc */
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* Xếp các mục theo chiều dọc */
+    align-items: center;    /* Căn giữa theo chiều ngang */
+    justify-content: center;/* Căn giữa theo chiều dọc */
+    position: relative;
+    text-align: center;     /* Căn giữa chữ */
+    min-height: 110px;      /* Đảm bảo ô có độ cao nhất định */
+}
+.vin-info { display: flex; flex-direction: column; line-height: 1.4; }
+.vin-label { font-size: 12px; font-weight: 600; color: var(--text-muted-light); text-transform: uppercase; letter-spacing: 0.5px; }
+.vin-text { font-family: 'SF Mono', 'Consolas', monospace; font-size: 30px; font-weight: 700; color: var(--gradient-start); word-break: break-all; }
+.vin-text.not-available { color: var(--text-muted-light); font-style: italic; font-weight: 500; font-size: 16px; }
+
+.details-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.detail-item { background-color: var(--bg-light); border: 1px solid var(--border-light); padding: 12px; border-radius: 10px; }
+.detail-item .detail-label { font-size: 12px; font-weight: 500; color: var(--text-muted-light); margin-bottom: 4px; display: block; }
+.detail-item .detail-value { font-size: 14px; font-weight: 600; color: var(--text-light); word-break: break-word; }
+
+@media (max-width: 767px) {
+    .details-card-header-gradient { padding: 15px; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+    .header-info h2 { font-size: 20px; }
+    .header-info p { font-size: 14px; }
+    .details-card-body { padding: 15px; }
+    .vin-highlight-section { flex-direction: column; text-align: center; }
+    .vin-text { font-size: 18px; }
+    .details-grid-container { grid-template-columns: 1fr; }
+}
+/* CSS cho nút sao chép VIN */
+.copy-btn {
+    background: var(--border-light);
+    color: var(--text-muted-light);
+    border: none;
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+    flex-shrink: 0;
+    margin-left: 15px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+.copy-btn:hover {
+    background-color: var(--gradient-start);
+    color: white;
+    transform: scale(1.1);
+}
     </style>
 </head>
 <body data-theme="light">
@@ -2204,7 +2424,19 @@ tbody tr:hover {
 <div id="pagination-controls" class="flex items-center justify-center gap-2 mt-2">
     </div>
     </div>
-            
+       <div class="modal" id="order-details-modal">
+    <div class="modal-content" style="max-width: 900px; padding: 0;">
+        <div id="details-modal-body">
+            </div>
+        
+        <div class="modal-footer-pro">
+            <button class="btn modal-btn secondary" onclick="closeDetailsModalAndReload()">
+                <i class="fas fa-times"></i>
+                <span>Đóng</span>
+            </button>
+        </div>
+    </div>
+</div>     
     <footer>
         VinFast Thuận An - Dĩ An
     </footer>
@@ -2570,7 +2802,7 @@ let globalHistoryData = []; let formData = {}, orderId = "", redirectTimeout;
 let autoRefreshInterval;
 let activeDropdown = { element: null, originalParent: null };
 const POLLING_RATE_MS = 7000;
-const apiURL = "https://script.google.com/macros/s/AKfycbxAxRItkaRZCTRWEDDLQwrAERVgyPtagmTBbEtyXBWq77wbasecjQEstttQoT8XwpAb-Q/exec";
+const apiURL = "https://script.google.com/macros/s/AKfycbyaPU3v_YAeiZ4uxEA7_ZlsXypUJbY-bMEWzNTzxOEyVDonhkxc3lJcVh7DzgM8-EdeQA/exec";
 const chatbotApiURL = "https://script.google.com/macros/s/AKfycbyTFpexz4NUSIDge_WVXGEImlRAV1H8mL6R3cl28jHfSC7VCQHMRrvE6YwgzugA_qQpjg/exec";
 const ADMIN_USER = "PHẠM THÀNH NHÂN"; // Hoặc tên admin của bạn
 const FORM_DRAFT_KEY = 'vinfastFormDraft_v3_chic';
@@ -2767,12 +2999,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     handleHeldCarRequest();
     fetchPaginatedData().then(() => {
-    startPolling();
-    handleUrlParameters();
-}).catch(error => {
-    console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
-    showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
-});
+        startPolling();
+        handleUrlParameters();
+    }).catch(error => {
+        console.error("Lỗi khởi tạo dữ liệu ban đầu:", error);
+        showNotification("Không thể tải dữ liệu ban đầu từ máy chủ.", "error");
+    });
 
     fetchVehicleAnalytics();
 });
@@ -2852,11 +3084,30 @@ function clearFormDraft() {
     localStorage.removeItem(FORM_DRAFT_KEY);
 }
 
-function formatDateTime(dtString) {
-    if (!dtString) return "N/A";
-    const d = new Date(dtString);
-    if (isNaN(d.getTime())) return dtString;
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return null; // <-- THAY ĐỔI Ở ĐÂY
+
+    let date;
+    const potentialDate = new Date(dateTimeString);
+
+    if (!isNaN(potentialDate.getTime())) {
+        date = potentialDate;
+    } 
+    else if (typeof dateTimeString === 'string' && dateTimeString.includes('/')) {
+        const parts = dateTimeString.split(/[\s/:]+/);
+        if (parts.length >= 3) {
+            date = new Date(parts[2], parts[1] - 1, parts[0], parts[3] || 0, parts[4] || 0, parts[5] || 0);
+        }
+    }
+
+    if (!date || isNaN(date.getTime())) {
+        return null; // <-- THAY ĐỔI Ở ĐÂY
+    }
+
+    return new Intl.DateTimeFormat('vi-VN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    }).format(date);
 }
 
 function formatDateForFilter(dtString) {
@@ -3045,27 +3296,39 @@ sessionStorage.setItem(GLOBAL_HISTORY_DATA_KEY, JSON.stringify(globalHistoryData
 renderNotifications(data.notifications, data.unreadCount);
     }
 
-    // [THAY THẾ] - Toàn bộ hàm fetchPaginatedData cũ
-async function fetchPaginatedData(page = 1, showLoading = true) {
-    if (showLoading) {
-        setTablePlaceholder("table-body", "Đang tải dữ liệu trang " + page + "...", "fas fa-spinner fa-spin");
+    // [THAY THẾ TOÀN BỘ HÀM CŨ]
+async function fetchPaginatedData(forceRefresh = false) {
+    const CACHE_KEY = `cachedHistoryData_${sessionStorage.getItem("currentConsultant")}`;
+    const cachedData = sessionStorage.getItem(CACHE_KEY);
+
+    if (cachedData && !forceRefresh) {
+        try {
+            const parsedCache = JSON.parse(cachedData);
+            if (parsedCache.version === currentDataVersion && parsedCache.data) {
+                console.log("Đang sử dụng dữ liệu Lịch sử từ cache.");
+                globalHistoryData = parsedCache.data;
+                applyFilters(); // Áp dụng bộ lọc hiện tại trên dữ liệu cache
+                return;
+            }
+        } catch(e) { console.warn("Lỗi đọc cache, sẽ tải lại từ đầu."); }
     }
+    
+    console.log("Đang tải mới dữ liệu Lịch sử từ server...");
+    showLoadingToast("Đang tải dữ liệu...", "Vui lòng chờ trong giây lát");
 
-    currentPage = page;
-
-    // [NÂNG CẤP] - Thêm thông tin người dùng vào mỗi yêu cầu
     const currentUser = sessionStorage.getItem("currentConsultant") || "";
     const isAdmin = (currentUser === ADMIN_USER);
 
+    // Tải tất cả dữ liệu bằng cách yêu cầu một trang rất lớn
     const params = new URLSearchParams({
         action: 'getPaginatedData',
-        page: currentPage,
-        pageSize: 50,
-        sortBy: currentSort.column,
-        sortOrder: currentSort.order,
-        filters: JSON.stringify(currentFilters),
-        currentUser: currentUser, // Gửi tên người dùng
-        isAdmin: isAdmin          // Gửi vai trò
+        page: 1,
+        pageSize: 9999, 
+        sortBy: 'Thời gian nhập',
+        sortOrder: 'desc',
+        filters: JSON.stringify({}), // Bỏ bộ lọc khi tải toàn bộ
+        currentUser: currentUser,
+        isAdmin: isAdmin
     });
 
     try {
@@ -3075,30 +3338,26 @@ async function fetchPaginatedData(page = 1, showLoading = true) {
         const result = await response.json();
         if (result.status !== 'SUCCESS') throw new Error(result.message);
 
-        globalHistoryData = result.data;
-        totalPages = result.totalPages;
+        // Lưu dữ liệu toàn cục và vào cache
+        globalHistoryData = result.data || [];
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ version: currentDataVersion, data: globalHistoryData }));
         
-        renderHistoryTable(result.data);
-        renderPaginationControls();
+        // Cập nhật lại giao diện với dữ liệu mới
+        applyFilters(); 
+        if (!filtersPopulated) populateFilterDropdowns();
         
-        if (!filtersPopulated) {
-             populateFilterDropdowns();
-        }
-        
-        // Cập nhật summary với tổng số item từ server sau khi đã lọc theo user
-        const summaryData = {
-            length: result.totalItems 
-        };
-        renderSummary(result.totalItems, result.summary);
-
     } catch (error) {
-        console.error("Lỗi khi tải dữ liệu phân trang:", error);
-        setTablePlaceholder("table-body", `Lỗi tải dữ liệu: ${error.message}.`, "fas fa-exclamation-triangle");
+        console.error("Lỗi khi tải toàn bộ dữ liệu:", error);
+        showNotification(`Lỗi tải dữ liệu: ${error.message}.`, "error");
+    } finally {
+        hideLoadingToast();
     }
 }
-// [THAY THẾ] - Toàn bộ hàm fetchNextArchivePage cũ
+
+
+// [THAY THẾ TOÀN BỘ HÀM CŨ]
 async function fetchNextArchivePage() {
-    if (isLoadingArchives) return; // Ngăn chặn click liên tục
+    if (isLoadingArchives) return;
     isLoadingArchives = true;
     
     const loadMoreBtn = document.getElementById('load-more-archives-btn');
@@ -3108,17 +3367,15 @@ async function fetchNextArchivePage() {
     }
 
     try {
-        // [NÂNG CẤP] - Thêm thông tin người dùng vào yêu cầu
         const currentUser = sessionStorage.getItem("currentConsultant") || "";
         const isAdmin = (currentUser === ADMIN_USER);
 
         const params = new URLSearchParams({
             action: 'getArchivedDataPage',
             page: currentPageInArchive,
-            currentUser: currentUser, // Gửi tên người dùng
-            isAdmin: isAdmin          // Gửi vai trò (có phải admin không)
+            currentUser: currentUser,
+            isAdmin: isAdmin
         });
-        // [KẾT THÚC NÂNG CẤP]
         
         if (currentArchiveSheet) {
             params.append('archiveSheetName', currentArchiveSheet);
@@ -3129,22 +3386,19 @@ async function fetchNextArchivePage() {
 
         if (result.status !== 'SUCCESS') throw new Error(result.message);
 
+        // Nối dữ liệu lưu trữ mới vào cuối danh sách hiện tại
         if (result.data && result.data.length > 0) {
             globalHistoryData.push(...result.data);
-            renderHistoryTable(globalHistoryData);
         }
         
-        if (result.nextArchiveSheetName) {
-            currentArchiveSheet = result.nextArchiveSheetName;
-            currentPageInArchive = 1;
-        } else {
-            currentArchiveSheet = result.currentArchiveSheetName;
-            currentPageInArchive++;
-        }
-        
+        // Cập nhật các biến trạng thái từ phản hồi của server
+        currentArchiveSheet = result.nextArchiveSheetName;
         isLastArchive = result.isLastArchive;
+        // Nếu có sheet tiếp theo, reset page về 1, nếu không thì tăng page hiện tại lên
+        currentPageInArchive = result.nextArchiveSheetName ? 1 : currentPageInArchive + 1;
         
-        renderPaginationControls();
+        // Cập nhật lại toàn bộ giao diện với dữ liệu mới
+        updateAndRenderHistoryView();
         
         if (isLastArchive) {
              showNotification("Đã tải tất cả dữ liệu lưu trữ.", "info");
@@ -3154,92 +3408,156 @@ async function fetchNextArchivePage() {
         showNotification(`Lỗi khi tải dữ liệu lưu trữ: ${error.message}`, 'error');
     } finally {
         isLoadingArchives = false;
+        // Nút bấm sẽ tự động được vẽ lại bởi hàm updateAndRenderHistoryView()
     }
 }
-// [THAY THẾ] - Toàn bộ hàm renderPaginationControls cũ bằng hàm này
-function renderPaginationControls() {
+// [THAY THẾ TOÀN BỘ HÀM CŨ]
+function renderPaginationControls(totalItems) {
     const container = document.getElementById('pagination-controls');
     if (!container) return;
 
-    // Nếu chỉ có 1 trang dữ liệu hiện tại VÀ không còn kho lưu trữ nào, thì không cần hiển thị gì cả
-    if (totalPages <= 1 && isLastArchive) {
-        container.innerHTML = '';
-        return;
-    }
+    totalPages = Math.ceil(totalItems / 50); // page size là 50
 
     let html = '';
 
-    // 1. Nút "Trang Trước": Chỉ hiển thị khi không ở trang đầu tiên
-    if (currentPage > 1) {
-        html += `<button onclick="fetchPaginatedData(${currentPage - 1})" class="px-3 py-1 text-sm rounded-md border">&laquo; Trước</button>`;
+    // Chỉ hiển thị các nút số trang nếu có nhiều hơn 1 trang
+    if (totalPages > 1) {
+        // Nút "Trang Trước"
+        if (currentPage > 1) {
+            html += `<button onclick="changePage(${currentPage - 1})" class="px-3 py-1 text-sm rounded-md border">&laquo; Trước</button>`;
+        }
+        
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        if (startPage > 1) {
+            html += `<button onclick="changePage(1)" class="px-3 py-1 text-sm rounded-md border">1</button>`;
+            if (startPage > 2) html += `<span class="px-3 py-1 text-sm">...</span>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const isActive = i === currentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'border';
+            html += `<button onclick="changePage(${i})" class="px-3 py-1 text-sm rounded-md ${isActive}">${i}</button>`;
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) html += `<span class="px-3 py-1 text-sm">...</span>`;
+            html += `<button onclick="changePage(${totalPages})" class="px-3 py-1 text-sm rounded-md border">${totalPages}</button>`;
+        }
+
+        // Nút "Trang Sau"
+        if (currentPage < totalPages) {
+            html += `<button onclick="changePage(${currentPage + 1})" class="px-3 py-1 text-sm rounded-md border">Sau &raquo;</button>`;
+        }
     }
     
-    // 2. Hiển thị các nút số trang (logic giữ nguyên)
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-    if (endPage - startPage + 1 < maxPagesToShow) {
-        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    // ▼▼▼ PHẦN THÊM MỚI QUAN TRỌNG ▼▼▼
+    // Hiển thị nút "Tải thêm" nếu đang ở trang cuối và vẫn còn dữ liệu lưu trữ
+    if ((currentPage === totalPages || totalPages === 0) && !isLastArchive && !isLoadingArchives) {
+        html += `<button id="load-more-archives-btn" onclick="fetchNextArchivePage()" class="ml-4 px-4 py-2 text-sm rounded-md border-indigo-600 border text-indigo-600 font-semibold hover:bg-indigo-50">
+                     <i class="fas fa-archive mr-2"></i>Tải thêm
+                 </button>`;
     }
-    if (startPage > 1) {
-        html += `<button onclick="fetchPaginatedData(1)" class="px-3 py-1 text-sm rounded-md border">1</button>`;
-        if (startPage > 2) html += `<span class="px-3 py-1 text-sm">...</span>`;
-    }
-    for (let i = startPage; i <= endPage; i++) {
-        const isActive = i === currentPage ? 'bg-indigo-600 text-white border-indigo-600' : 'border';
-        html += `<button onclick="fetchPaginatedData(${i})" class="px-3 py-1 text-sm rounded-md ${isActive}">${i}</button>`;
-    }
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<span class="px-3 py-1 text-sm">...</span>`;
-        html += `<button onclick="fetchPaginatedData(${totalPages})" class="px-3 py-1 text-sm rounded-md border">${totalPages}</button>`;
-    }
-    
-    // 3. Logic hiển thị nút "Sau" hoặc "Tải thêm"
-    if (currentPage < totalPages) {
-        // Nếu CHƯA phải trang cuối của dữ liệu hiện tại, hiển thị nút "Sau" bình thường
-        html += `<button onclick="fetchPaginatedData(${currentPage + 1})" class="px-3 py-1 text-sm rounded-md border">Sau &raquo;</button>`;
-    } else if (!isLastArchive) {
-        // Nếu ĐÃ ở trang cuối VÀ VẪN CÒN dữ liệu lưu trữ, hiển thị nút "Tải thêm"
-        html += `<button id="load-more-archives-btn" onclick="fetchNextArchivePage()" class="px-3 py-1 text-sm rounded-md border bg-green-100 text-green-800 font-semibold hover:bg-green-200">Tải thêm &raquo;</button>`;
-    }
+    // ▲▲▲ KẾT THÚC PHẦN THÊM MỚI ▲▲▲
 
     container.innerHTML = html;
 }
 
+/**
+ * [HÀM MỚI] - Chỉ dùng để thay đổi trang hiện tại.
+ */
+function changePage(page) {
+    currentPage = page;
+    updateAndRenderHistoryView(); // Gọi hàm render trung tâm
+}
+
+/**
+ * [HÀM MỚI] - Hàm render trung tâm, chịu trách nhiệm cập nhật giao diện.
+ * Tất cả các hàm khác (lọc, sắp xếp, chuyển trang) đều sẽ gọi hàm này.
+ */
+function updateAndRenderHistoryView() {
+    // 1. Lấy dữ liệu gốc
+    let dataToProcess = [...globalHistoryData];
+    
+    // 2. Lọc dữ liệu
+    if (Object.keys(currentFilters).length > 0) {
+      dataToProcess = dataToProcess.filter(row => {
+        let isMatch = true;
+        if (currentFilters.keyword) {
+          const keyword = currentFilters.keyword.toLowerCase().trim();
+          const searchableText = [row["Tên khách hàng"], row["Số đơn hàng"], row["VIN"]].join(' ').toLowerCase();
+          if (!searchableText.includes(keyword)) isMatch = false;
+        }
+        if (isMatch && currentFilters.dong_xe) {
+          if (row["Dòng xe"] !== currentFilters.dong_xe) isMatch = false;
+        }
+        if (isMatch && currentFilters.status) {
+          const rowStatus = row["Kết quả"] || 'Chưa ghép';
+          if (rowStatus !== currentFilters.status) isMatch = false;
+        }
+        return isMatch;
+      });
+    }
+
+    // 3. Sắp xếp dữ liệu
+    dataToProcess.sort((a, b) => {
+        let valA = a[currentSort.column] ?? "";
+        let valB = b[currentSort.column] ?? "";
+        if (['Ngày cọc', 'Thời gian nhập', 'Thời gian ghép'].includes(currentSort.column)) {
+            valA = valA ? new Date(valA).getTime() : 0;
+            valB = valB ? new Date(valB).getTime() : 0;
+        }
+        if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+        return 0;
+    });
+    
+    // 4. Cập nhật giao diện với dữ liệu đã được xử lý
+    renderHistoryTable(dataToProcess);
+    renderPaginationControls(dataToProcess.length);
+    renderSummary(dataToProcess.length, calculateSummary(globalHistoryData));
+}
+
+function calculateSummary(data) {
+    if (!data || data.length === 0) return { topCar: "N/A", topAdvisor: "N/A" };
+    const carCounts = data.reduce((acc, row) => {
+        if (row["Dòng xe"]) acc[row["Dòng xe"]] = (acc[row["Dòng xe"]] || 0) + 1;
+        return acc;
+    }, {});
+    const topCarEntry = Object.entries(carCounts).sort((a, b) => b[1] - a[1])[0];
+
+    const advisorCounts = data.reduce((acc, row) => {
+        if (row["Tên tư vấn bán hàng"]) acc[row["Tên tư vấn bán hàng"]] = (acc[row["Tên tư vấn bán hàng"]] || 0) + 1;
+        return acc;
+    }, {});
+    const topAdvisorEntry = Object.entries(advisorCounts).sort((a, b) => b[1] - a[1])[0];
+
+    return {
+        topCar: topCarEntry ? `${topCarEntry[0]} (${topCarEntry[1]})` : "N/A",
+        topAdvisor: topAdvisorEntry ? `${topAdvisorEntry[0]} (${topAdvisorEntry[1]})` : "N/A"
+    };
+}
 async function refreshData() {
-    // Lấy tham chiếu đến nút bấm
     const refreshButton = document.querySelector('.refresh-btn');
     if (!refreshButton) return;
-
-    // Lưu lại icon gốc và vô hiệu hóa nút, hiển thị spinner
     const originalIconHTML = refreshButton.innerHTML;
     refreshButton.disabled = true;
     refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    // Hiển thị thông báo toast (giữ nguyên)
-    showLoadingToast("Đang làm mới...", "Đang tải dữ liệu mới nhất từ máy chủ.");
-
+    showLoadingToast("Đang làm mới...");
     try {
-        sessionStorage.removeItem(CACHED_DATA_KEY);
-        await fetchHistory(false); // Chờ tải dữ liệu xong
-
-        // Xử lý khi thành công
-        hideLoadingToast();
+        await fetchPaginatedData(true); // Gọi với forceRefresh = true
         showSuccessToast("Làm mới thành công!", "Dữ liệu đã được cập nhật.");
         setTimeout(hideSuccessToast, 2500);
-
     } catch (error) {
-        // Xử lý khi có lỗi
         hideLoadingToast();
-        console.error("Lỗi khi làm mới dữ liệu:", error);
-        showNotification("Không thể làm mới dữ liệu. Vui lòng kiểm tra kết nối.", "error");
+        showNotification("Không thể làm mới dữ liệu.", "error");
     } finally {
-        // Dùng finally để đảm bảo nút luôn được reset về trạng thái ban đầu
-        // dù cho quá trình tải thành công hay thất bại.
-        if (refreshButton) {
-            refreshButton.disabled = false;
-            refreshButton.innerHTML = originalIconHTML;
-        }
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = originalIconHTML;
     }
 }
 function normalizeName(str) {
@@ -3389,19 +3707,20 @@ function renderSummary(total, summary = {}) {
     topAdvisorElHistory.textContent = summary.topAdvisor || "N/A";
 }
 
+// [THAY THẾ TOÀN BỘ HÀM CŨ]
 function applyFilters() {
-    // [THÊM MỚI] - Reset trạng thái lưu trữ
-    currentArchiveSheet = null;
-    currentPageInArchive = 1;
-    isLastArchive = false;
-    // [KẾT THÚC THÊM MỚI]
-
+    // 1. Lấy giá trị bộ lọc mới nhất từ các ô input/select
     currentFilters = {
         keyword: document.getElementById('search-input').value,
         dong_xe: document.getElementById('filter-car-model').value,
         status: document.getElementById('filter-status').value
     };
-    fetchPaginatedData(1);
+
+    // 2. Khi áp dụng bộ lọc mới, luôn quay về trang đầu tiên
+    currentPage = 1;
+    
+    // 3. Gọi hàm render trung tâm để cập nhật toàn bộ giao diện
+    updateAndRenderHistoryView();
 }
 
 
@@ -3439,22 +3758,21 @@ function populateFilterDropdowns() {
 }
 let lastSortColumn = '';
 let lastSortDirection = 'asc';
-function sortTable(columnKey) {
-currentArchiveSheet = null;
-    currentPageInArchive = 1;
-    isLastArchive = false;
-    if (lastSortColumn === columnKey) {
-        lastSortDirection = lastSortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        lastSortDirection = 'asc';
-    }
-    lastSortColumn = columnKey;
 
-    // Cập nhật trạng thái sắp xếp hiện tại
-    currentSort = { column: columnKey, order: lastSortDirection };
+// [THAY THẾ TOÀN BỘ HÀM CŨ]
+function sortTable(columnKey) {
+    if (currentSort.column === columnKey) {
+        currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.column = columnKey;
+        currentSort.order = 'asc'; // Mặc định sắp xếp tăng dần khi chọn cột mới
+    }
     
-    // Gọi tải lại dữ liệu từ trang 1 với cách sắp xếp mới
-    fetchPaginatedData(1);
+    // Khi sắp xếp lại, luôn quay về trang đầu tiên
+    currentPage = 1;
+
+    // Gọi hàm render trung tâm
+    updateAndRenderHistoryView();
 }
 
 function exportToExcel() {
@@ -3589,11 +3907,6 @@ function previewForm(e) {
     adjustModalScroll(previewModal);
 }
 
-// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
-
-// TỆP: yeucaughepxe.html
-// THAY THẾ TOÀN BỘ HÀM confirmSubmit CŨ BẰNG HÀM NÀY
-
 async function confirmSubmit() {
     const submitButton = document.querySelector('#preview-modal .btn-success');
     if (submitButton && submitButton.disabled) return;
@@ -3626,32 +3939,27 @@ async function confirmSubmit() {
         const response = await fetch(apiURL, { method: "POST", body: formDataToSend });
         const result = await response.json();
         
-        if (result.status === "SUCCESS") {
+        if (result.status === "SUCCESS" && result.newRecord) {
+            // Ẩn toast loading và hiển thị toast thành công
             hideLoadingToast();
-            showSuccessToast("Thành Công!", result.message || 'Yêu cầu của bạn đã được ghi nhận.');
-            
-            // Lấy Số Đơn Hàng từ kết quả trả về
-            const newOrderId = result.orderNumber || formData.so_don_hang;
-            
-            // Xóa các tác vụ cũ
+            showSuccessToast("Thành Công!", result.message);
+
+            // Xóa dữ liệu nháp và reset form
             clearFormDraft();
             document.getElementById("vinfast-form").reset();
             document.getElementById("ten_ban_hang").value = sessionStorage.getItem("currentConsultant") || "";
             
-            // Tải lại toàn bộ dữ liệu ở chế độ nền để đảm bảo cache là mới nhất
-            await fetchHistory(false);
-            
-            // ▼▼▼ THAY ĐỔI QUAN TRỌNG NHẤT ▼▼▼
-            // Chuyển trang chỉ với Số Đơn Hàng
+            // Gọi hàm hiển thị modal chi tiết với dữ liệu trả về từ server
+            // Dùng setTimeout nhỏ để người dùng kịp thấy toast thành công trước khi modal hiện ra
             setTimeout(() => {
                 hideSuccessToast();
-                window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(newOrderId)}`;
-            }, 500);
-            // ▲▲▲ KẾT THÚC THAY ĐỔI ▲▲▲
+                displayOrderDetails(result.newRecord); // <-- THAY ĐỔI QUAN TRỌNG
+            }, 700); // 0.7 giây
 
         } else {
+            // Xử lý lỗi nếu server không trả về dữ liệu như mong đợi
             hideLoadingToast();
-            showNotification(result.message || 'Gửi yêu cầu thất bại.', 'error', 5000);
+            showNotification(result.message || 'Gửi yêu cầu thất bại hoặc phản hồi không hợp lệ.', 'error', 5000);
         }
 
     } catch (error) {
@@ -3662,7 +3970,6 @@ async function confirmSubmit() {
         if (submitButton) submitButton.disabled = false;
     }
 }
-
 
 function closeModalAndRedirect() {
     hideSuccessToast();
@@ -4158,7 +4465,7 @@ async function handleConfirmCancelClick() {
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
             // 3. THÀNH CÔNG: Đồng bộ hóa trong nền để lấy dữ liệu chính xác
-            fetchHistory(false);
+            fetchPaginatedData(true);
         } else {
             // 4. THẤT BẠI: Khôi phục lại giao diện
             showNotification(`Hủy thất bại: ${result.message || 'Lỗi không xác định'}`, 'error', 5000);
@@ -4275,7 +4582,7 @@ async function processInvoiceRequest(orderNumber) {
         if (result.status === 'SUCCESS') {
             showNotification(result.message, 'success', 3000);
             // 3. THÀNH CÔNG: Đồng bộ hóa trong nền để lấy dữ liệu chính xác
-            fetchHistory(false);
+            fetchPaginatedData(true);
         } else {
             // 4. THẤT BẠI: Khôi phục lại giao diện về trạng thái cũ
             showNotification(`Yêu cầu thất bại: ${result.message}`, 'error', 5000);
@@ -4416,7 +4723,7 @@ async function processSupplementaryFiles(orderNumber) {
         if (result.status === 'SUCCESS') {
             showSuccessToast("Gửi Thành Công!", result.message || 'File bổ sung đã được ghi nhận.');
             // 3. THÀNH CÔNG: Đồng bộ hóa
-            fetchHistory(false);
+            fetchPaginatedData(true);
             setTimeout(() => { hideSuccessToast(); }, 2500);
         } else {
             // 4. THẤT BẠI: Khôi phục lại giao diện
@@ -4477,24 +4784,17 @@ function setupSimpleFileUpload(inputId, wrapperId, promptTextId, isResetting = f
         resetUI();
     }
 }
-// DÁN ĐOẠN MÃ NÀY ĐỂ THAY THẾ TOÀN BỘ HÀM viewOrderDetail CŨ
-
-function viewOrderDetail(orderNumber) {
-    if (!orderNumber) {
-        console.error("Số đơn hàng không hợp lệ.");
-        return;
+/**
+ * [HÀM ĐÃ CẬP NHẬT] - Tìm dữ liệu của một đơn hàng và gọi hàm hiển thị.
+ * @param {string} orderNumber - Số đơn hàng cần hiển thị.
+ */
+function showOrderDetailModal(orderNumber) {
+    const orderData = globalHistoryData.find(row => row && row["Số đơn hàng"] === orderNumber);
+    if (orderData) {
+        displayOrderDetails(orderData);
+    } else {
+        showNotification("Không tìm thấy dữ liệu cho đơn hàng này.", "error");
     }
-
-    // 1. Đảm bảo dữ liệu mới nhất đã được lưu vào sessionStorage
-    //    Hàm renderHistoryTable và confirmSubmit đã thực hiện việc này,
-    //    nên ở đây chúng ta có thể tin rằng dữ liệu đã có sẵn.
-    const storedData = sessionStorage.getItem(GLOBAL_HISTORY_DATA_KEY);
-    if (!storedData || !JSON.parse(storedData).find(row => row && row["Số đơn hàng"] === orderNumber)) {
-         console.warn(`Không tìm thấy đơn hàng ${orderNumber} trong sessionStorage. Trang chi tiết sẽ phải tải lại từ server.`);
-    }
-
-    // 2. Chuyển hướng đến trang chi tiết và chỉ truyền Số đơn hàng
-    window.location.href = `xem-chi-tiet-lich-su.html?orderNumber=${encodeURIComponent(orderNumber)}`;
 }
 
 function showBulkSuccessModal(count, redirectOrderNumber) {
@@ -4669,31 +4969,42 @@ window.addEventListener('click', function(event) {
     }
 });
 
-function pollForUpdates() {
-    // Chỉ thực hiện nếu trang không ở trong trạng thái loading
-    const loadingModal = document.getElementById('loading-modal');
-    if (loadingModal && loadingModal.classList.contains('active')) {
-        return;
+// [THAY THẾ HÀM CŨ]
+async function refreshData() {
+    const refreshButton = document.querySelector('.refresh-btn');
+    if (!refreshButton) return;
+    const originalIconHTML = refreshButton.innerHTML;
+    refreshButton.disabled = true;
+    refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    showLoadingToast("Đang làm mới...");
+    try {
+        await fetchPaginatedData(true); // Gọi với forceRefresh = true
+        showSuccessToast("Làm mới thành công!", "Dữ liệu đã được cập nhật.");
+        setTimeout(hideSuccessToast, 2500);
+    } catch (error) {
+        hideLoadingToast();
+        showNotification("Không thể làm mới dữ liệu.", "error");
+    } finally {
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = originalIconHTML;
     }
+}
 
-    // Gọi đến API với action=getVersion để chỉ lấy số phiên bản
+// [THAY THẾ HÀM CŨ]
+function pollForUpdates() {
+    const loadingModal = document.getElementById('loading-modal');
+    if (loadingModal && loadingModal.classList.contains('active')) return;
+
     fetch(apiURL + "?action=getVersion")
         .then(response => response.json())
         .then(data => {
-            // Nếu server trả về phiên bản mới và khác với phiên bản hiện tại của trình duyệt
             if (data.status === "SUCCESS" && data.version && data.version !== currentDataVersion) {
-                console.log(`Phát hiện phiên bản mới. Server: ${data.version}, Client: ${currentDataVersion}. Đang tải lại dữ liệu...`);
-                
-                // --- ĐÃ VÔ HIỆU HÓA DÒNG NÀY ---
-                // showNotification("Phát hiện dữ liệu mới, đang tự động cập nhật...", "info", 2000);
-                
-                // Gọi hàm fetchHistory để tải lại toàn bộ dữ liệu mới
-                fetchHistory(false); // Tham số 'false' để không hiện popup "Đang tải..."
+                console.log(`Phát hiện phiên bản mới. Server: ${data.version}, Client: ${currentDataVersion}. Đang tải lại...`);
+                currentDataVersion = data.version; // Cập nhật phiên bản ngay
+                fetchPaginatedData(true); // Gọi với forceRefresh = true
             }
         })
-        .catch(error => {
-            console.warn("Lỗi khi kiểm tra phiên bản:", error);
-        });
+        .catch(error => console.warn("Lỗi khi kiểm tra phiên bản:", error));
 }
 function startPolling() {
     // Dừng interval cũ nếu có để tránh chạy nhiều lần
@@ -4706,6 +5017,10 @@ function startPolling() {
 }
 
 
+/**
+ * [HÀM ĐÃ NÂNG CẤP HOÀN CHỈNH] - Nhận dữ liệu đã lọc/sắp xếp, thực hiện phân trang và vẽ lại bảng.
+ * @param {Array} dataToRender - Mảng dữ liệu lịch sử cần hiển thị.
+ */
 function renderHistoryTable(dataToRender) {
     const tbody = document.getElementById("table-body");
     const tableWrapper = tbody ? tbody.closest('.table-wrapper') : null;
@@ -4716,9 +5031,11 @@ function renderHistoryTable(dataToRender) {
         return;
     }
 
+    // Xóa placeholder cũ nếu có
     const oldPlaceholder = tableWrapper.querySelector('.table-placeholder-pro');
     if (oldPlaceholder) oldPlaceholder.remove();
 
+    // Xử lý trường hợp không có dữ liệu
     if (!dataToRender || dataToRender.length === 0) {
         tbody.innerHTML = '';
         table.style.display = 'none';
@@ -4728,52 +5045,43 @@ function renderHistoryTable(dataToRender) {
         return;
     }
     
+    // Đảm bảo bảng được hiển thị
     table.style.display = 'table';
+
+    // --- Xử lý phân trang cục bộ (Local Pagination) ---
+    const pageSize = 50;
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedData = dataToRender.slice(startIndex, startIndex + pageSize);
     
     const currentUser = sessionStorage.getItem("currentConsultant");
     const isAdmin = currentUser === ADMIN_USER;
 
-    const allRowsHtml = dataToRender.map((row, i) => {
-        const orderNumber = row["Số đơn hàng"] || `temp-id-${i}`;
+    // Tạo HTML cho tất cả các dòng trong trang hiện tại
+    const allRowsHtml = paginatedData.map((row, index) => {
+        const globalIndex = startIndex + index;
+        const orderNumber = row["Số đơn hàng"] || `temp-id-${globalIndex}`;
         
-        // === LOGIC QUAN TRỌNG NHẤT ĐƯỢC SỬA TẠI ĐÂY ===
-        // Ưu tiên lấy trạng thái từ "Trạng thái VC" (dành cho đơn lưu trữ), 
-        // nếu không có thì mới lấy từ "Kết quả" (dành cho đơn ở DaGhep).
         const statusTextOriginal = row["Trạng thái VC"] || row["Kết quả"] || "Chưa ghép";
-        
         const statusClass = getStatusClass(statusTextOriginal);
         const normalizedStatusText = statusTextOriginal.toLowerCase().replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().normalize('NFC');
 
-        // Xác định các quyền hành động
+        // --- Logic xác định các hành động có thể thực hiện ---
         const canDownloadInvoice = !!row.LinkHoaDonDaXuat;
         const canRequestInvoice = normalizedStatusText === 'đã ghép';
         const canUpdateFiles = normalizedStatusText === 'yêu cầu bổ sung';
         const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(normalizedStatusText);
         const canAdminUploadInvoice = isAdmin && ['chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn'].includes(normalizedStatusText);
-        
         const daYeuCauVC = statusTextOriginal === "Đã yêu cầu VC" || statusTextOriginal === "Chờ duyệt YCVC";
         const biTuChoi = statusTextOriginal.toLowerCase().startsWith('từ chối ycvc:');
         const canRequestVC = (normalizedStatusText === 'đã xuất hóa đơn' || biTuChoi) && !daYeuCauVC;
 
         let allActions = [];
         if (statusTextOriginal === 'Yêu cầu VinClub') {
-            allActions.push({ 
-                id: 'confirmVinClub', 
-                type: 'primary', 
-                class: 'btn-success',
-                html: `<button class="btn btn-success btn-sm" onclick="handleTvbhConfirmVinClub(event, '${orderNumber}')"><i class="fas fa-check"></i> Xác Nhận VinClub</button>` 
-            });
+            allActions.push({ id: 'confirmVinClub', type: 'primary', class: 'btn-success', html: `<button class="btn btn-success btn-sm" onclick="handleTvbhConfirmVinClub(event, '${orderNumber}')"><i class="fas fa-check"></i> Xác Nhận VinClub</button>` });
         }
-        
         if (canRequestVC) {
-            allActions.push({ 
-                id: 'requestVc',
-                type: 'primary',
-                class: 'btn-pro-gradient',
-                html: `<button class="btn btn-pro-gradient btn-sm" onclick="openVcRequestModal(event, '${orderNumber}')"><i class="fas fa-id-card"></i> Yêu cầu cấp VC</button>` 
-            });
-        }
-        else if (canAdminUploadInvoice) {
+            allActions.push({ id: 'requestVc', type: 'primary', class: 'btn-pro-gradient', html: `<button class="btn btn-pro-gradient btn-sm" onclick="openVcRequestModal(event, '${orderNumber}')"><i class="fas fa-id-card"></i> Yêu cầu cấp VC</button>` });
+        } else if (canAdminUploadInvoice) {
             allActions.push({ id: 'adminUpload', type: 'primary', class: 'secondary', html: `<button class="btn secondary btn-sm" onclick="openAdminInvoiceUploadModal(event, '${orderNumber}')"><i class="fas fa-upload"></i> Tải Lên HĐ</button>` });
         } else if (canRequestInvoice) {
             allActions.push({ id: 'request', type: 'primary', class: 'btn-pro-gradient', html: `<button class="btn btn-pro-gradient btn-sm" onclick="requestInvoice(event, '${orderNumber}')"><i class="fas fa-file-invoice-dollar"></i> Xuất Hóa Đơn</button>` });
@@ -4782,92 +5090,57 @@ function renderHistoryTable(dataToRender) {
         }
 
         if (canDownloadInvoice) {
-            allActions.push({ 
-                id: 'download', 
-                type: 'secondary',
-                html: `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download fa-fw"></i><span>Tải Hóa Đơn</span></button>` 
-            });
-        }
-        
-        if (canUpdateFiles && !allActions.some(a => a.id === 'update')) {
-            allActions.push({ type: 'secondary', html: `<button class="action-item" onclick="openSupplementaryFileModal(event, '${orderNumber}')"><i class="fas fa-edit fa-fw"></i><span>Bổ sung/Thay thế File</span></button>` });
+            allActions.push({ id: 'download', type: 'secondary', html: `<button class="action-item" onclick="downloadInvoice(event, '${row.LinkHoaDonDaXuat}')"><i class="fas fa-download fa-fw"></i><span>Tải Hóa Đơn</span></button>` });
         }
         if (canCancel) {
             allActions.push({ type: 'secondary', html: `<button class="action-item danger" onclick="confirmCancelRequest(event, '${orderNumber}')"><i class="fas fa-trash-alt fa-fw"></i><span>Hủy Yêu cầu</span></button>` });
         }
 
-		let finalActionCellHtml = '';
-		if (allActions.length === 1) {
-		    const singleAction = allActions[0];
-		    let buttonHtml = singleAction.html;
-		    if (singleAction.type === 'secondary') {
-		        buttonHtml = buttonHtml.replace('class="action-item danger"', 'class="btn btn-sm btn-danger"')
-		                               .replace('class="action-item"', 'class="btn btn-sm secondary"')
-		                               .replace(/<span>(.*?)<\/span>/, '$1');
-		    }
-		    finalActionCellHtml = `<div class="primary-action-group">${buttonHtml}</div>`;
-		} else if (allActions.length > 1) {
-		    const primaryAction = allActions.find(a => a.type === 'primary');
-		    const secondaryActions = allActions.filter(a => a !== primaryAction);
-		    const primaryActionHtml = primaryAction ? primaryAction.html : '';
-		    const dropdownItemsHtml = secondaryActions.map(a => a.html).join('<div class="divider"></div>');
-
-		    let menuButtonHtml = '';
-		    if (secondaryActions.length > 0) {
-		        menuButtonHtml = `<button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác"><i class="fas fa-ellipsis-v"></i></button>
-		                          <div class="action-menu-dropdown">${dropdownItemsHtml}</div>`;
-		    }
-		    
-		    if (!primaryActionHtml && secondaryActions.length > 0) {
-		         finalActionCellHtml = `<div class="primary-action-group">${menuButtonHtml}</div>`;
-		    } else {
-		         finalActionCellHtml = `<div class="primary-action-group">${primaryActionHtml}${menuButtonHtml}</div>`;
-		    }
-		}
+        let finalActionCellHtml = '';
+        if (allActions.length > 0) {
+            const primaryAction = allActions.find(a => a.type === 'primary');
+            const secondaryActions = allActions.filter(a => a.type !== 'primary');
+            const primaryActionHtml = primaryAction ? primaryAction.html : '';
+            const dropdownItemsHtml = secondaryActions.map(a => a.html).join('');
+            let menuButtonHtml = '';
+            if (secondaryActions.length > 0) {
+                menuButtonHtml = `<button class="action-menu-toggle" onclick="toggleActionMenu(event, this)" title="Hành động khác"><i class="fas fa-ellipsis-v"></i></button>
+                                  <div class="action-menu-dropdown">${dropdownItemsHtml}</div>`;
+            }
+            finalActionCellHtml = `<div class="primary-action-group">${primaryActionHtml}${menuButtonHtml}</div>`;
+        }
         
         const isVinLike = (text) => text && /^[A-Z0-9]{17}$/.test(text.toUpperCase());
         const vin = row["VIN"] || (isVinLike(row["Kết quả"]) ? row["Kết quả"] : '');
         
-        let timelineHtml = '';
-        const hasInvoiceDate = normalizedStatusText === 'đã xuất hóa đơn' && row["Ngày xuất hóa đơn"];
-        
-        if (hasInvoiceDate) {
-            timelineHtml += `<span><i class="fas fa-receipt info-icon"></i> Xuất HĐ: ${formatDateTime(row["Ngày xuất hóa đơn"])}</span>`;
-        } else if (row["Thời gian nhập"]) {
-            timelineHtml += `<span><i class="far fa-calendar-alt info-icon"></i> Yêu cầu: ${formatDateTime(row["Thời gian nhập"])}</span>`;
-        }
-        if (row["Thời gian ghép"]) {
-            timelineHtml += `<span><i class="far fa-calendar-check info-icon"></i> Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>`;
-        }
-        
+        // --- Tạo HTML cho giao diện desktop ---
         const desktopRowHtml = `
-            <tr class="desktop-view-row" onclick="viewOrderDetail('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
-                <td data-label="STT">${i + 1}</td>
-                <td data-label="Khách Hàng / Số Đơn Hàng">
+            <tr class="desktop-view-row" onclick="showOrderDetailModal('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
+                <td class="text-center">${globalIndex + 1}</td>
+                <td>
                     <div class="font-semibold text-gray-800 dark:text-gray-100">${row["Tên khách hàng"] || "N/A"}</div>
                     <div class="text-xs text-gray-500 font-mono">${orderNumber}</div>
                 </td>
-                <td data-label="Tư Vấn Bán Hàng">${row["Tên tư vấn bán hàng"] || "N/A"}</td>
-                <td data-label="Thông Tin Xe">
+                <td>${row["Tên tư vấn bán hàng"] || "N/A"}</td>
+                <td>
                     <div class="font-medium">${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</div>
                     <div class="text-xs car-exterior-color" style="${getExteriorColorStyle(row['Ngoại thất'])}">${row["Ngoại thất"] || "N/A"} / ${row["Nội thất"] || "N/A"}</div>
                 </td>
-                <td data-label="Trạng Thái">
+                <td class="text-center">
                     <span class="status-badge ${statusClass}">${statusTextOriginal}</span>
                 </td>
-                <td data-label="Hành Động">${finalActionCellHtml}</td>
+                <td class="text-center">${finalActionCellHtml}</td>
             </tr>
         `;
 
-        let mobileActionsHtml = '';
-        if (allActions.length > 0) {
-            mobileActionsHtml += `<div class="card-actions">`;
-            const primaryAction = allActions.find(a => a.type === 'primary');
-            if (primaryAction) {
-                mobileActionsHtml += primaryAction.html.replace('btn-sm', 'btn-primary');
-            }
-            mobileActionsHtml += `</div>`;
-        }
+        // --- Tạo HTML cho giao diện mobile card ---
+        const timelineHtml = `
+            <div class="card-timeline">
+                ${row["Thời gian nhập"] ? `<span><i class="far fa-calendar-alt info-icon"></i>YC: ${formatDateTime(row["Thời gian nhập"])}</span>` : ''}
+                ${row["Thời gian ghép"] ? `<span><i class="far fa-calendar-check info-icon"></i>Ghép: ${formatDateTime(row["Thời gian ghép"])}</span>` : ''}
+                ${row["Ngày xuất hóa đơn"] ? `<span><i class="fas fa-receipt info-icon"></i>XHĐ: ${formatDateTime(row["Ngày xuất hóa đơn"])}</span>` : ''}
+            </div>
+        `;
 
         const mobileCardHtml = `
             <div class="history-card">
@@ -4883,7 +5156,7 @@ function renderHistoryTable(dataToRender) {
                 <div class="card-body">
                     <div class="info-group">
                         <i class="fas fa-car info-icon"></i>
-                        <div class="info-content"><strong>${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</strong> / <span style="${getExteriorColorStyle(row['Ngoại thất'])}">${row['Ngoại thất'] || 'N/A'}</span> / ${row["Nội thất"] || "N/A"}</div>
+                        <div class="info-content"><strong>${row["Dòng xe"] || ""} ${row["Phiên bản"] || ""}</strong> / <span style="${getExteriorColorStyle(row['Ngoại thất'])}">${row['Ngoại thất'] || 'N/A'}</span></div>
                     </div>
                     <div class="info-group">
                         <i class="fas fa-user-tie info-icon"></i>
@@ -4894,13 +5167,13 @@ function renderHistoryTable(dataToRender) {
                         <div class="info-content"><strong>VIN:</strong> ${vin}</div>
                     </div>` : ''}
                 </div>
-                ${timelineHtml ? `<div class="card-timeline">${timelineHtml}</div>` : ''}
-                ${mobileActionsHtml || finalActionCellHtml ? `<div class="card-actions">${mobileActionsHtml || finalActionCellHtml}</div>` : ''}
+                ${timelineHtml}
+                <div class="card-actions">${finalActionCellHtml}</div>
             </div>
         `;
         
         const mobileRowHtml = `
-            <tr class="mobile-view-row" onclick="viewOrderDetail('${orderNumber}')" title="Nhấp để xem chi tiết đơn hàng ${orderNumber}">
+            <tr class="mobile-view-row" onclick="showOrderDetailModal('${orderNumber}')">
                 <td colspan="6">${mobileCardHtml}</td>
             </tr>`;
 
@@ -5590,24 +5863,13 @@ function handleHeldCarRequest() {
  * [HÀM MỚI] Đóng modal, tìm tab đang hoạt động và tải lại trang về đúng tab đó.
  */
 function cancelAndReloadCurrentView() {
-    // Tìm thẻ a (link) của tab đang có class 'active'
-    const activeTabLink = document.querySelector(".navbar .tabs a.active");
-    let currentTabName = 'form'; // Mặc định là tab 'form' nếu không tìm thấy
-
-    if (activeTabLink) {
-        // Trích xuất tên tab từ thuộc tính onclick, ví dụ: "switchTab('history', this)" -> "history"
-        const onclickAttribute = activeTabLink.getAttribute('onclick');
-        const match = onclickAttribute.match(/switchTab\('([^']+)'/);
-        if (match && match[1]) {
-            currentTabName = match[1];
-        }
-    }
-
-    // Lấy đường dẫn của trang hiện tại (VD: /yeucaughepxe.html)
-    const pathname = window.location.pathname;
-    
-    // Điều hướng đến URL mới, gây ra việc tải lại trang
-    window.location.href = `${pathname}?tab=${currentTabName}`;
+    // Đóng tất cả các modal có thể đang mở
+    closeModal('preview-modal');
+    closeModal('cancel-confirm-modal');
+    closeModal('invoice-confirm-modal');
+    closeModal('supplementary-file-modal');
+    closeModal('admin-invoice-upload-modal');
+    closeModal('vc-request-modal');
 }
 /**
  * [HÀM MỚI] - Gửi hành động chung lên server (tương tự như trong admin.html)
@@ -5838,6 +6100,120 @@ function updateLocalOrderData(orderNumber, updates) {
 
     console.log(`Đã cập nhật giao diện cho đơn hàng ${orderNumber} với:`, updates);
     return true;
+}
+function closeDetailsModalAndReload() {
+    // Chỉ cần gọi hàm đóng modal là đủ, không cần tải lại trang
+    closeModal('order-details-modal');
+}
+function closeDetailsModalAndReload() {
+    // Gọi hàm closeModal sẵn có để đóng cửa sổ một cách mượt mà
+    closeModal('order-details-modal');
+    
+    // Thực hiện tải lại toàn bộ trang
+    window.location.reload();
+}
+
+// Hàm phụ trợ để lấy thông tin class và icon cho trạng thái
+function getStatusInfo(statusText) {
+    if (!statusText) statusText = "Chưa rõ";
+    const lowerStatus = statusText.toLowerCase();
+    if (lowerStatus.includes('ghép')) {
+        return { icon: 'fa-check-circle', className: 'status-paired' };
+    } else if (lowerStatus.includes('hủy')) {
+        return { icon: 'fa-times-circle', className: 'status-cancelled' };
+    } else if (lowerStatus.includes('chờ')) {
+        return { icon: 'fa-hourglass-half', className: 'status-waiting' };
+    } else {
+        return { icon: 'fa-question-circle', className: 'status-unknown' };
+    }
+}
+
+function displayOrderDetails(orderData) {
+    const modal = document.getElementById('order-details-modal');
+    const modalBody = document.getElementById('details-modal-body');
+
+    if (!modal || !modalBody || !orderData) {
+        console.error("Lỗi hiển thị modal: Thiếu thành phần hoặc dữ liệu.");
+        showNotification("Không thể hiển thị chi tiết đơn hàng.", "error");
+        return;
+    }
+
+    const statusText = orderData["Kết quả"] || "Chưa rõ";
+    const statusInfo = getStatusInfo(statusText);
+
+    let soNgayGhepDisplay = null; // Mặc định là null
+    const pairingDate = orderData["Thời gian ghép"] ? new Date(orderData["Thời gian ghép"]) : null;
+    if (pairingDate && !isNaN(pairingDate)) {
+        const diffTime = Math.abs(new Date() - pairingDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        soNgayGhepDisplay = diffDays <= 1 ? "Trong ngày" : `${diffDays} ngày`;
+    }
+
+    // ▼▼▼ THAY ĐỔI QUAN TRỌNG: Hàm createDetailItem sẽ tự động ẩn nếu value là null ▼▼▼
+    const createDetailItem = (label, value, style = '') => {
+        // Nếu giá trị là null, undefined, hoặc chuỗi rỗng, trả về chuỗi rỗng (không hiển thị gì cả)
+        if (!value && value !== 0) return ''; 
+        
+        return `<div class="detail-item">
+                    <span class="detail-label">${label}</span>
+                    <span class="detail-value" style="${style}">${value}</span>
+                </div>`;
+    };
+    
+    const vin = orderData["VIN"] || null;
+
+    const modalHtml = `
+        <div class="details-card-wrapper">
+            <header class="details-card-header-gradient">
+                <div class="header-info">
+                    <h2>${orderData["Số đơn hàng"] || "..."}</h2>
+                    <p>${orderData["Tên khách hàng"] || "..."}</p>
+                </div>
+                <div class="order-status-badge ${statusInfo.className}">
+                    <i class="fas ${statusInfo.icon}"></i>
+                    <span>${statusText}</span>
+                </div>
+            </header>
+            <div class="details-card-body">
+                
+                ${vin ? `
+                <div class="vin-highlight-section">
+                    <div class="vin-info">
+                        <span class="vin-label">Số Khung (VIN)</span>
+                        <span class="vin-text" id="vin-value">${vin}</span>
+                    </div>
+                    <button class="copy-btn" id="copy-vin-btn" title="Sao chép VIN"><i class="far fa-copy"></i></button>
+                </div>` : ''}
+
+                <div class="details-grid-container">
+                    ${createDetailItem("Tư Vấn Bán Hàng", orderData["Tên tư vấn bán hàng"])}
+                    ${createDetailItem("Dòng Xe", orderData["Dòng xe"])}
+                    ${createDetailItem("Phiên Bản", orderData["Phiên bản"])}
+                    ${createDetailItem("Ngoại Thất", orderData["Ngoại thất"], getExteriorColorStyle(orderData["Ngoại thất"]))}
+                    ${createDetailItem("Nội Thất", orderData["Nội thất"])}
+                    ${createDetailItem("Ngày Yêu Cầu", formatDateTime(orderData["Thời gian nhập"]))}
+                    ${createDetailItem("Ngày Cọc", formatDateTime(orderData["Ngày cọc"]))}
+                    ${createDetailItem("Ngày Ghép", formatDateTime(orderData["Thời gian ghép"]))}
+                    ${createDetailItem("Số Ngày Đã Ghép", soNgayGhepDisplay)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    modalBody.innerHTML = modalHtml;
+    modal.classList.add('active');
+    adjustModalScroll(modal);
+
+    const copyBtn = document.getElementById('copy-vin-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            navigator.clipboard.writeText(document.getElementById('vin-value').textContent).then(() => { 
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>'; 
+                setTimeout(() => { copyBtn.innerHTML = '<i class="far fa-copy"></i>'; }, 2000); 
+            }); 
+        });
+    }
 }
 </script>
 </body>
