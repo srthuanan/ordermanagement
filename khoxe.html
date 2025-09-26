@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kho Xe</title>
     
-    <!-- Thư viện ngoài -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -16,7 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
-<script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
     <style>
         /* ==========================================================================
@@ -62,7 +61,7 @@
             --status-chua-ghep-bg-light: #fff8e1; --status-chua-ghep-text-light: #f57c00;
             --status-da-ban-bg-light: #f1f2f6; --status-da-ban-text-light: #57606f;
             --status-cho-vbc-bg-light: #e8eaf6; --status-cho-vbc-text-light: #3f51b5;
---status-dang-giu-bg-light: #ede7f6; --status-dang-giu-text-light: #673ab7;
+            --status-dang-giu-bg-light: #ede7f6; --status-dang-giu-text-light: #673ab7;
             --status-default-bg-light: #eceff1; --status-default-text-light: #546e7a;
 
             /* Status Colors (Dark) */
@@ -71,7 +70,7 @@
             --status-chua-ghep-bg-dark: #4b3c1c; --status-chua-ghep-text-dark: #ffe082;
             --status-da-ban-bg-dark: #393e46; --status-da-ban-text-dark: #a6acb3;
             --status-cho-vbc-bg-dark: #2c304d; --status-cho-vbc-text-dark: #b3bcf5;
---status-dang-giu-bg-dark: #2a243d; --status-dang-giu-text-dark: #d1c4e9;
+            --status-dang-giu-bg-dark: #2a243d; --status-dang-giu-text-dark: #d1c4e9;
             --status-default-bg-dark: #37474f; --status-default-text-dark: #b0bec5;
 
             /* Shadows & Effects */
@@ -1138,6 +1137,29 @@ body.dark-mode .card-footer {
     display: flex;
     gap: 12px; /* Khoảng cách giữa các nút */
 }
+/* CSS cho trạng thái nút thành công và lỗi */
+.action-cell .hold-btn.success {
+    background: linear-gradient(135deg, #10B981 0%, #064E3B 100%);
+    cursor: default;
+}
+
+.action-cell .hold-btn.error {
+    background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%);
+    cursor: default;
+}
+
+/* Hiệu ứng rung lắc nhẹ khi có lỗi */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(5px); }
+  50% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.action-cell .hold-btn.error {
+    animation: shake 0.3s ease-in-out;
+}
  </style>
 </head>
 <body>
@@ -1206,19 +1228,18 @@ body.dark-mode .card-footer {
                     </div>
                     <table class="data-table" id="data-table">
                      <thead>
-    <tr>
-        <th>Hành động</th>
-        <th data-sort-key="line">Dòng Xe</th>
-        <th data-sort-key="version">Phiên Bản</th>
-        <th data-sort-key="exterior">Ngoại Thất</th>
-        <th data-sort-key="interior">Nội Thất</th>
-        <th data-sort-key="vin">Số VIN</th>
-        <th data-sort-key="status">Trạng Thái</th>
-    </tr>
-</thead>
+                        <tr>
+                            <th>Hành động</th>
+                            <th data-sort-key="line">Dòng Xe</th>
+                            <th data-sort-key="version">Phiên Bản</th>
+                            <th data-sort-key="exterior">Ngoại Thất</th>
+                            <th data-sort-key="interior">Nội Thất</th>
+                            <th data-sort-key="vin">Số VIN</th>
+                            <th data-sort-key="status">Trạng Thái</th>
+                        </tr>
+                    </thead>
                         <tbody id="table-body">
-                             <!-- Dữ liệu sẽ được chèn vào đây bởi JavaScript -->
-                        </tbody>
+                             </tbody>
                     </table>
                 </div>
                  <div class="pagination" id="pagination">
@@ -1229,12 +1250,12 @@ body.dark-mode .card-footer {
             </div>
         </section>
     </main>
-<div id="toastContainer" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container"></div>
     <footer id="footer"><p>VinFast Thuận An - Dĩ An</p></footer>
     
     <script>
     document.addEventListener("DOMContentLoaded", function () {
-if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
             // Nếu chưa đăng nhập, chuyển hướng về trang chủ (trang đăng nhập)
             window.location.href = "index.html";
             return; // Dừng thực thi các mã script khác để tránh lỗi
@@ -1248,7 +1269,7 @@ if (sessionStorage.getItem("isLoggedIn") !== "true") {
         let filteredCars = [];
         let currentPage = 1;
         const ROWS_PER_PAGE = 25;
-const HOLD_DURATION_HOURS = 24;
+        const HOLD_DURATION_HOURS = 24;
         let sortState = { key: 'dateAdded', direction: 'desc' };
 
         // ==========================================================================
@@ -1292,10 +1313,14 @@ const HOLD_DURATION_HOURS = 24;
                     window.location.href = "index.html";
                 });
                 document.getElementById('toggle-filters-btn')?.addEventListener('click', this.toggleCollapsibleFilters);
-                DOMElements.searchInput?.addEventListener('input', debounce(App.applyFiltersAndRender, 300));
+                // ========================= SỬA LỖI TẠI ĐÂY =========================
+                // Sử dụng arrow function '() =>' để đảm bảo 'this' trong 'App.applyFiltersAndRender'
+                // luôn là đối tượng 'App', giữ đúng ngữ cảnh thực thi.
+                DOMElements.searchInput?.addEventListener('input', debounce(() => App.applyFiltersAndRender(), 300));
                 [DOMElements.filterLine, DOMElements.filterVersion, DOMElements.filterExterior, DOMElements.filterStatus].forEach(el => {
-                    el?.addEventListener('change', App.applyFiltersAndRender);
+                    el?.addEventListener('change', () => App.applyFiltersAndRender());
                 });
+                // =================================================================
                 document.getElementById('refresh-btn')?.addEventListener('click', () => App.refreshData());
                 document.getElementById('export-btn')?.addEventListener('click', () => Exporter.exportToExcel());
                 document.getElementById('print-btn')?.addEventListener('click', () => window.print());
@@ -1404,56 +1429,59 @@ const HOLD_DURATION_HOURS = 24;
             },
             
             // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
-initializePopovers: function() {
-    // Popover xác nhận hành động (giữ nguyên)
-    tippy('.hold-btn:not(:disabled)', {
-        content(reference) {
-            const action = reference.dataset.action;
-            const vin = reference.dataset.vin;
-            const isHold = action === 'hold';
-            const title = isHold ? 'Xác nhận giữ xe?' : 'Xác nhận hủy giữ?';
-            const actionFunc = isHold ? `App.holdCar('${vin}')` : `App.releaseCar('${vin}')`;
-            const template = document.createElement('div');
-            template.className = 'popover-content';
-            template.innerHTML = `
-                <div class="popover-title">${title}</div>
-                <div class="popover-buttons">
-                    <button class="popover-btn no">Không</button>
-                    <button class="popover-btn yes">Có</button>
-                </div>
-            `;
-            const yesBtn = template.querySelector('.yes');
-            const noBtn = template.querySelector('.no');
-            yesBtn.addEventListener('click', () => {
-                eval(actionFunc);
-                reference._tippy.hide();
-            });
-            noBtn.addEventListener('click', () => {
-                reference._tippy.hide();
-            });
-            return template;
-        },
-        allowHTML: true,
-        interactive: true,
-        trigger: 'click',
-        placement: 'right',
-        theme: 'confirm',
-        animation: 'scale-subtle',
-    });
+            initializePopovers: function() {
+                // Popover xác nhận hành động (giữ nguyên)
+                tippy('.hold-btn:not(:disabled)', {
+                    content(reference) {
+                        const action = reference.dataset.action;
+                        const vin = reference.dataset.vin;
+                        const isHold = action === 'hold';
+                        const title = isHold ? 'Xác nhận giữ xe?' : 'Xác nhận hủy giữ?';
+                        const actionFunc = isHold ? `App.holdCar('${vin}')` : `App.releaseCar('${vin}')`;
+                        const template = document.createElement('div');
+                        template.className = 'popover-content';
+                        template.innerHTML = `
+                            <div class="popover-title">${title}</div>
+                            <div class="popover-buttons">
+                                <button class="popover-btn no">Không</button>
+                                <button class="popover-btn yes">Có</button>
+                            </div>
+                        `;
+                        const yesBtn = template.querySelector('.yes');
+                        const noBtn = template.querySelector('.no');
+                        yesBtn.addEventListener('click', () => {
+                            eval(actionFunc);
+                            reference._tippy.hide();
+                        });
+                        noBtn.addEventListener('click', () => {
+                            reference._tippy.hide();
+                        });
+                        return template;
+                    },
+                    allowHTML: true,
+                    interactive: true,
+                    trigger: 'click',
+                    placement: 'right',
+                    theme: 'confirm',
+                    animation: 'scale-subtle',
+                });
 
-    // === THÊM MỚI: Popover hiển thị thông tin khi di chuột ===
-    tippy('.has-hold-info', {
-        allowHTML: true,
-        theme: 'hold-info-popover', // Giao diện mới sẽ được tạo ở CSS
-        placement: 'right',
-        animation: 'scale-subtle',
-        arrow: true,
-        trigger: 'mouseenter focus', // Hiện khi di chuột vào hoặc focus
-        delay: [100, 0], // Trễ 100ms khi hiện
-    });
-}
-};
+                // === THÊM MỚI: Popover hiển thị thông tin khi di chuột ===
+                tippy('.has-hold-info', {
+                    allowHTML: true,
+                    theme: 'hold-info-popover', // Giao diện mới sẽ được tạo ở CSS
+                    placement: 'right',
+                    animation: 'scale-subtle',
+                    arrow: true,
+                    trigger: 'mouseenter focus', // Hiện khi di chuột vào hoặc focus
+                    delay: [100, 0], // Trễ 100ms khi hiện
+                });
+            }
+        };
 
+        // ==========================================================================
+        // 4. Đối tượng chính của Ứng dụng (App)
+        // ==========================================================================
         window.App = {
             init: async function() {
                 UIManager.init();
@@ -1465,11 +1493,9 @@ initializePopovers: function() {
                 const CACHE_KEY = 'khoXeData';
                 const cachedData = sessionStorage.getItem(CACHE_KEY);
 
-                // --- BỔ SUNG: Kiểm tra cache trước ---
                 if (cachedData) {
                     try {
-                        console.log("Đang tải dữ liệu từ cache...");
-                        // Chuyển đổi dữ liệu từ chuỗi JSON và khôi phục các đối tượng Date
+                        console.log("Đang tải dữ liệu Kho Xe từ cache...");
                         allCars = JSON.parse(cachedData).map(car => ({
                             ...car,
                             dateAdded: car.dateAdded ? new Date(car.dateAdded) : null,
@@ -1479,16 +1505,15 @@ initializePopovers: function() {
                         this.populateFilters();
                         this.applyFiltersAndRender();
                         UIManager.showLoading(false);
-                        return; // Dừng hàm tại đây vì đã có dữ liệu
+                        return; 
                     } catch (e) {
                         console.error("Lỗi đọc cache, sẽ tải lại từ đầu:", e);
-                        sessionStorage.removeItem(CACHE_KEY); // Xóa cache lỗi
+                        sessionStorage.removeItem(CACHE_KEY); 
                     }
                 }
                 
-                // --- Giữ nguyên logic tải dữ liệu gốc nếu không có cache ---
                 try {
-                    console.log("Đang tải dữ liệu từ API...");
+                    console.log("Đang tải dữ liệu Kho Xe từ API...");
                     const currentUser = sessionStorage.getItem("currentConsultant");
                     const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
                     const response = await axios.get(API_URL, {
@@ -1499,8 +1524,8 @@ initializePopovers: function() {
                     }
                     allCars = DataProcessor.parseApiData(response.data.khoxe);
                     
-                    // --- BỔ SUNG: Lưu dữ liệu mới vào cache ---
                     sessionStorage.setItem(CACHE_KEY, JSON.stringify(allCars));
+                    console.log("Đã lưu dữ liệu Kho Xe vào cache.");
 
                     this.populateFilters();
                     this.applyFiltersAndRender();
@@ -1510,13 +1535,6 @@ initializePopovers: function() {
                 } finally {
                     UIManager.showLoading(false);
                 }
-            },
-
-            applyFiltersAndRender: function() {
-                App.filterData();
-                App.sortData();
-                currentPage = 1;
-                App.render();
             },
 
             filterData: function() {
@@ -1607,112 +1625,114 @@ initializePopovers: function() {
                 }
             },
             
-            // === [THAY THẾ] HÀM holdCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
-            // === [THAY THẾ] HÀM holdCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
-holdCar: async function(vin) {
-    const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
-    if (button) button.disabled = true;
-    ToastManager.showProcessing('Đang xử lý...');
+            holdCar: function(vin) {
+                const button = document.querySelector(`.hold-btn[data-action="hold"][data-vin="${vin}"]`);
+                if (!button || button.disabled) return;
 
-    try {
-        const response = await axios.post(API_URL, null, {
-            params: {
-                action: 'holdCar',
-                vin: vin,
-                updatedBy: sessionStorage.getItem("currentConsultant")
-            }
-        });
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        ToastManager.hideProcessing();
+                const carIndex = allCars.findIndex(car => car.vin === vin);
+                if (carIndex === -1) return;
+                const originalCarState = { ...allCars[carIndex] };
 
-        if (response.data.status === "SUCCESS") {
-            // **THAY ĐỔI QUAN TRỌNG**: Cập nhật dữ liệu ngay trên client
-            const carToUpdate = allCars.find(car => car.vin === vin);
-            if (carToUpdate) {
-                carToUpdate.holder = sessionStorage.getItem("currentConsultant");
                 const expiryTime = new Date();
                 expiryTime.setHours(expiryTime.getHours() + HOLD_DURATION_HOURS);
-                carToUpdate.expiry = expiryTime;
-                carToUpdate.status = "Đang giữ"; // Cập nhật trạng thái mới
-            }
-            this.applyFiltersAndRender(); // Chỉ vẽ lại bảng với dữ liệu mới
-            showToast(response.data.message || 'Giữ xe thành công!', 'success');
-            
-            // === GỌI HIỆU ỨNG TẠI ĐÂY ===
-            triggerConfetti(); 
+                allCars[carIndex].status = "Đang giữ";
+                allCars[carIndex].holder = sessionStorage.getItem("currentConsultant");
+                allCars[carIndex].expiry = expiryTime;
+                
+                axios.post(API_URL, null, { params: { action: 'holdCar', vin: vin, updatedBy: sessionStorage.getItem("currentConsultant") } })
+                .then(response => {
+                    if (response.data.status === "SUCCESS") {
+                        this.render();
+                        showToast('Giữ xe thành công!', 'success');
+                        triggerConfetti();
+                        this.backgroundSync();
+                    } else {
+                        throw new Error(response.data.message);
+                    }
+                }).catch(error => {
+                    showToast(`Lỗi giữ xe: ${error.message}. Đã hoàn tác.`, 'error');
+                    allCars[carIndex] = originalCarState;
+                    this.render(); 
+                });
+            },
 
-        } else {
-            throw new Error(response.data.message);
-        }
-    } catch (error) {
-        ToastManager.hideProcessing();
-        console.error("Lỗi khi giữ xe:", error);
-        const errorMessage = error.response?.data?.message || error.message;
-        showToast(`Lỗi: ${errorMessage}`, 'error');
-    } finally {
-        if (button) button.disabled = false;
-    }
-},
+            releaseCar: function(vin) {
+                const button = document.querySelector(`.hold-btn[data-action="release"][data-vin="${vin}"]`);
+                if (!button || button.disabled) return;
 
-            // === [THAY THẾ] HÀM releaseCar ĐỂ CẬP NHẬT UI NGAY LẬP TỨC ===
-            releaseCar: async function(vin) {
-                const button = document.querySelector(`.hold-btn[data-vin="${vin}"]`);
-                if (button) button.disabled = true;
-                ToastManager.showProcessing('Đang xử lý...');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                triggerDisintegration(button);
 
+                const carIndex = allCars.findIndex(car => car.vin === vin);
+                if (carIndex === -1) return;
+                const originalCarState = { ...allCars[carIndex] };
+
+                allCars[carIndex].status = "Chưa ghép";
+                allCars[carIndex].holder = null;
+                allCars[carIndex].expiry = null;
+
+                axios.post(API_URL, null, { params: { action: 'releaseCar', vin: vin, updatedBy: sessionStorage.getItem("currentConsultant") } })
+                .then(response => {
+                    if (response.data.status === "SUCCESS") {
+                        showToast('Hủy giữ thành công!', 'success');
+                        this.render(); 
+                        this.backgroundSync();
+                    } else {
+                        throw new Error(response.data.message);
+                    }
+                }).catch(error => {
+                    showToast(`Lỗi hủy giữ: ${error.message}. Đã hoàn tác.`, 'error');
+                    allCars[carIndex] = originalCarState;
+                    this.render();
+                });
+            },
+
+            backgroundSync: async function() {
+                console.log("Bắt đầu đồng bộ dữ liệu nền...");
                 try {
-                    const response = await axios.post(API_URL, null, {
-                        params: {
-                            action: 'releaseCar',
-                            vin: vin,
-                            updatedBy: sessionStorage.getItem("currentConsultant")
-                        }
+                    const currentUser = sessionStorage.getItem("currentConsultant");
+                    const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
+                    const response = await axios.get(API_URL, {
+                        params: { currentUser: currentUser, isAdmin: isAdmin }
                     });
+                    if (!response.data || !Array.isArray(response.data.khoxe)) {
+                        throw new Error("Dữ liệu đồng bộ không hợp lệ");
+                    }
                     
-                     ToastManager.hideProcessing();
+                    const freshCars = DataProcessor.parseApiData(response.data.khoxe);
+                    allCars = freshCars;
+                    
+                    sessionStorage.setItem('khoXeData', JSON.stringify(allCars));
+                    console.log("Cache Kho Xe đã được cập nhật sau khi đồng bộ nền.");
 
-        if (response.data.status === "SUCCESS") {
-            showToast(response.data.message || 'Hủy giữ thành công!', 'success');
-            
-            // === GỌI HIỆU ỨNG MỚI TẠI ĐÂY ===
-            triggerDisintegration(button);
-            
-            // Đợi một chút để người dùng thấy hiệu ứng rồi mới cập nhật bảng
-            setTimeout(() => {
-                const carToUpdate = allCars.find(car => car.vin === vin);
-                if (carToUpdate) {
-                    carToUpdate.holder = null;
-                    carToUpdate.expiry = null;
-                    carToUpdate.status = "Chưa ghép"; 
+                    this.filterData();
+                    this.sortData();
+                    this.render();
+                    
+                } catch (error) {
+                    console.error("Lỗi khi đồng bộ dữ liệu nền:", error);
                 }
-                this.applyFiltersAndRender();
-            }, 800); // Trì hoãn 0.8 giây
-
-        } else {
-            // Nếu lỗi, vẽ lại bảng ngay lập tức để nút hiện lại
-            this.applyFiltersAndRender();
-            throw new Error(response.data.message);
-        }
-    } catch (error) {
-        ToastManager.hideProcessing();
-        console.error("Lỗi khi hủy giữ xe:", error);
-        const errorMessage = error.response?.data?.message || error.message;
-        showToast(`Lỗi: ${errorMessage}`, 'error');
-        // Nếu có lỗi, cũng vẽ lại bảng để nút không bị "kẹt"
-        this.applyFiltersAndRender();
-    } 
-    // Bỏ khối finally đi để kiểm soát nút tốt hơn
-},
+            },
 
             refreshData: async function() {
-                // --- BỔ SUNG: Xóa cache trước khi làm mới ---
                 sessionStorage.removeItem('khoXeData');
+                console.log("Đã xóa cache Kho Xe để làm mới.");
                 
-                // Refresh vẫn sẽ tải lại toàn bộ dữ liệu
                 [DOMElements.searchInput, DOMElements.filterLine, DOMElements.filterVersion, DOMElements.filterExterior, DOMElements.filterStatus].forEach(el => { if(el) el.value = ""; });
                 currentPage = 1;
                 sortState = { key: 'dateAdded', direction: 'desc' };
                 await this.fetchData();
+            },
+
+            applyFiltersAndRender: function() {
+                this.filterData();
+                this.sortData();
+                currentPage = 1;
+                this.render();
             }
         };
 
@@ -1720,183 +1740,171 @@ holdCar: async function(vin) {
         // 5. Đối tượng hiển thị (Renderer)
         // ==========================================================================
         const Renderer = {
-    // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
-renderTableRows: function(data) {
-    const fragment = document.createDocumentFragment();
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
+            renderTableRows: function(data) {
+                const fragment = document.createDocumentFragment();
+                const currentUser = sessionStorage.getItem("currentConsultant");
+                const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
 
-    data.forEach((car, index) => {
-        const tr = document.createElement("tr");
-        let actionCellHtml = '';
-        const isHeld = car.holder && car.expiry && car.expiry > new Date();
-        const currentStatus = car.status.toLowerCase(); // Lấy trạng thái đã được chuẩn hóa
+                data.forEach((car, index) => {
+                    const tr = document.createElement("tr");
+                    let actionCellHtml = '';
+                    const isHeld = car.holder && car.expiry && car.expiry > new Date();
+                    const currentStatus = car.status.toLowerCase();
 
-        // === BẮT ĐẦU THAY ĐỔI LOGIC ===
-        if (currentStatus === 'đã ghép') {
-            // Nếu xe đã được ghép, không hiển thị hành động nào
-            actionCellHtml = ''; 
-        } else if (isHeld) {
-            // Logic cũ cho xe đang giữ (giữ nguyên)
-            if (car.holder === currentUser) {
-                const releaseButton = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
-                const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
-                pairingUrl.searchParams.append('tab', 'form');
-                pairingUrl.searchParams.append('vin_giu', car.vin);
-                pairingUrl.searchParams.append('dong_xe', car.line);
-                pairingUrl.searchParams.append('phien_ban', car.version);
-                pairingUrl.searchParams.append('ngoai_that', car.exterior);
-                pairingUrl.searchParams.append('noi_that', car.interior);
-                const pairingButton = `<a href="${pairingUrl.href}" class="pairing-btn">
-                                           <i class="fas fa-link"></i>
-                                           <span>Ghép</span>
-                                       </a>`;
-                actionCellHtml = `<div class="action-buttons-wrapper">${releaseButton}${pairingButton}</div>`;
-            } else {
-                if (isAdmin) {
-                    actionCellHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
-                } else {
-                    actionCellHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
-                }
-            }
-        } else if (currentStatus === 'chưa ghép') {
-            // Logic cũ cho xe chưa ghép (giữ nguyên)
-            actionCellHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
-        }
-        // === KẾT THÚC THAY ĐỔI LOGIC ===
+                    if (currentStatus === 'đã ghép') {
+                        actionCellHtml = ''; 
+                    } else if (isHeld) {
+                        if (car.holder === currentUser) {
+                            const releaseButton = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><span>Hủy</span><i class="fas fa-lock-open"></i></button>`;
+                            const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
+                            pairingUrl.searchParams.append('tab', 'form');
+                            pairingUrl.searchParams.append('vin_giu', car.vin);
+                            pairingUrl.searchParams.append('dong_xe', car.line);
+                            pairingUrl.searchParams.append('phien_ban', car.version);
+                            pairingUrl.searchParams.append('ngoai_that', car.exterior);
+                            pairingUrl.searchParams.append('noi_that', car.interior);
+                            const pairingButton = `<a href="${pairingUrl.href}" class="pairing-btn">
+                                                       <i class="fas fa-link"></i>
+                                                       <span>Ghép</span>
+                                                   </a>`;
+                            actionCellHtml = `<div class="action-buttons-wrapper">${releaseButton}${pairingButton}</div>`;
+                        } else {
+                            if (isAdmin) {
+                                actionCellHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><span>Hủy Giữ</span><i class="fas fa-lock-open"></i></button>`;
+                            } else {
+                                actionCellHtml = `<button class="hold-btn" disabled>Đang Giữ</button>`;
+                            }
+                        }
+                    } else if (currentStatus === 'chưa ghép') {
+                        actionCellHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><span>Giữ Xe</span><i class="fas fa-key"></i></button>`;
+                    }
 
-        let statusBadgeClass = `status-badge ${DataProcessor.getStatusClass(car.status)}`;
-        let statusBadgeAttributes = '';
+                    let statusBadgeClass = `status-badge ${DataProcessor.getStatusClass(car.status)}`;
+                    let statusBadgeAttributes = '';
 
-        if (isHeld) {
-            statusBadgeClass += ' has-hold-info';
-            const holderName = car.holder.split('@')[0];
-            const expiryDate = car.expiry.toLocaleString('vi-VN');
-            
-            // === THAY ĐỔI CẤU TRÚC HTML CHO POPOVER MỚI ===
-            const popoverContent = `
-                <div class="hold-popover-container">
-                    <div class="popover-header">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Thông tin giữ xe</span>
-                    </div>
-                    <div class="popover-body">
-                        <div class="info-row">
-                            <span class="label">Người giữ:</span>
-                            <span class="value holder-name">${holderName}</span>
+                    if (isHeld) {
+                        statusBadgeClass += ' has-hold-info';
+                        const holderName = car.holder.split('@')[0];
+                        const expiryDate = car.expiry.toLocaleString('vi-VN');
+                        
+                        const popoverContent = `
+                            <div class="hold-popover-container">
+                                <div class="popover-header">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Thông tin giữ xe</span>
+                                </div>
+                                <div class="popover-body">
+                                    <div class="info-row">
+                                        <span class="label">Người giữ:</span>
+                                        <span class="value holder-name">${holderName}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <span class="label">Hết hạn:</span>
+                                        <span class="value expiry-time">${expiryDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        const compactedPopoverContent = popoverContent.replace(/\s+/g, ' ').replace(/"/g, '&quot;').trim();
+                        statusBadgeAttributes = `data-tippy-content="${compactedPopoverContent}"`;
+                    }
+
+                    let statusHtml = `<span class="${statusBadgeClass}" ${statusBadgeAttributes}>${car.status}</span>`;
+
+                    tr.innerHTML = `
+                        <td class="action-cell">${actionCellHtml}</td>
+                        <td>${car.line}</td>
+                        <td>${car.version}</td>
+                        <td style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</td>
+                        <td>${car.interior}</td>
+                        <td>${car.vin}</td>
+                        <td>${statusHtml}</td>
+                    `;
+                    fragment.appendChild(tr);
+                });
+                DOMElements.tableBody.className = '';
+                DOMElements.tableBody.appendChild(fragment);
+            },
+
+            renderCards: function(data) {
+                const fragment = document.createDocumentFragment();
+                const currentUser = sessionStorage.getItem("currentConsultant");
+                const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
+
+                data.forEach(car => {
+                    const card = document.createElement('div');
+                    card.className = 'vehicle-card';
+                    let actionButtonHtml = '';
+                    let cardClass = '';
+                    const isHeld = car.holder && car.expiry && car.expiry > new Date();
+
+                    if (isHeld) {
+                        if (car.holder === currentUser) {
+                            cardClass = 'held-by-me';
+                            actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><i class="fas fa-lock-open"></i></button>`;
+                        } else {
+                            cardClass = 'held-by-other';
+                            if (isAdmin) {
+                                actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><i class="fas fa-lock-open"></i></button>`;
+                            } else {
+                                actionButtonHtml = `<button class="hold-btn" disabled><i class="fas fa-lock"></i></button>`;
+                            }
+                        }
+                    } else if (car.status.toLowerCase() === 'chưa ghép') {
+                        actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><i class="fas fa-key"></i></button>`;
+                    }
+
+                    if (cardClass) {
+                        card.classList.add(cardClass);
+                    }
+
+                    let statusHtml = `<span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>`;
+                    if (isHeld) {
+                        statusHtml += `<div class="hold-info" style="text-align: right; margin-top: 4px; font-size: 10px;">Giữ bởi: ${car.holder.split('@')[0]}</div>`;
+                    }
+
+                    const isHeldByCurrentUser = isHeld && car.holder === currentUser;
+                    let requestButtonHtml = '';
+
+                    if (isHeldByCurrentUser) {
+                        const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
+                        pairingUrl.searchParams.append('tab', 'form');
+                        pairingUrl.searchParams.append('vin_giu', car.vin);
+                        requestButtonHtml = `<a href="${pairingUrl.href}" class="pairing-btn"><i class="fas fa-link"></i></a>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="car-model">${car.line} ${car.version}</span>
+                            <div>${statusHtml}</div>
                         </div>
-                        <div class="info-row">
-                            <span class="label">Hết hạn:</span>
-                            <span class="value expiry-time">${expiryDate}</span>
+                        <div class="card-body">
+                            <div class="card-row"><span class="card-label">Ngoại thất</span><span class="card-value" style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</span></div>
+                            <div class="card-row"><span class="card-label">Nội thất</span><span class="card-value">${car.interior}</span></div>
+                            <div class="card-row full-width"><span class="card-label">Số VIN</span><span class="card-value">${car.vin}</span></div>
                         </div>
-                    </div>
-                </div>
-            `;
-            
-            // Nén và gán nội dung vào thuộc tính (loại bỏ khoảng trắng thừa)
-            const compactedPopoverContent = popoverContent.replace(/\s+/g, ' ').replace(/"/g, '&quot;').trim();
-            statusBadgeAttributes = `data-tippy-content="${compactedPopoverContent}"`;
-        }
-
-        let statusHtml = `<span class="${statusBadgeClass}" ${statusBadgeAttributes}>${car.status}</span>`;
-
-        // (Phần tr.innerHTML giữ nguyên như cũ)
-        tr.innerHTML = `
-            <td class="action-cell">${actionCellHtml}</td>
-            <td>${car.line}</td>
-            <td>${car.version}</td>
-            <td style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</td>
-            <td>${car.interior}</td>
-            <td>${car.vin}</td>
-           
-            <td>${statusHtml}</td>
-        `;
-        fragment.appendChild(tr);
-    });
-    DOMElements.tableBody.className = '';
-    DOMElements.tableBody.appendChild(fragment);
-},
-
-       // [THAY THẾ TOÀN BỘ HÀM CŨ BẰNG HÀM NÀY]
-renderCards: function(data) {
-    const fragment = document.createDocumentFragment();
-    const currentUser = sessionStorage.getItem("currentConsultant");
-    const isAdmin = sessionStorage.getItem("isAdmin") === 'true';
-
-    data.forEach(car => {
-        const card = document.createElement('div');
-        card.className = 'vehicle-card';
-        let actionButtonHtml = '';
-        let cardClass = '';
-        const isHeld = car.holder && car.expiry && car.expiry > new Date();
-
-        if (isHeld) {
-            if (car.holder === currentUser) {
-                cardClass = 'held-by-me';
-                actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}"><i class="fas fa-lock-open"></i></button>`;
-            } else {
-                cardClass = 'held-by-other';
-                if (isAdmin) {
-                    actionButtonHtml = `<button class="hold-btn release-btn" data-action="release" data-vin="${car.vin}" title="Admin hủy giữ"><i class="fas fa-lock-open"></i></button>`;
-                } else {
-                    actionButtonHtml = `<button class="hold-btn" disabled><i class="fas fa-lock"></i></button>`;
-                }
+                        <div class="card-footer">
+                            <div class="card-actions">
+                                ${requestButtonHtml}
+                                ${actionButtonHtml}
+                            </div>
+                        </div>
+                    `;
+                    fragment.appendChild(card);
+                });
+                DOMElements.tableBody.className = 'card-view-container';
+                DOMElements.tableBody.appendChild(fragment);
             }
-        } else if (car.status.toLowerCase() === 'chưa ghép') {
-            actionButtonHtml = `<button class="hold-btn" data-action="hold" data-vin="${car.vin}"><i class="fas fa-key"></i></button>`;
-        }
+        };
 
-        if (cardClass) {
-            card.classList.add(cardClass);
-        }
-
-        let statusHtml = `<span class="status-badge ${DataProcessor.getStatusClass(car.status)}">${car.status}</span>`;
-        if (isHeld) {
-            statusHtml += `<div class="hold-info" style="text-align: right; margin-top: 4px; font-size: 10px;">Giữ bởi: ${car.holder.split('@')[0]}</div>`;
-        }
-
-        const isHeldByCurrentUser = isHeld && car.holder === currentUser;
-        let requestButtonHtml = ''; // Đổi tên biến để rõ ràng hơn
-
-        if (isHeldByCurrentUser) {
-            const pairingUrl = new URL('yeucaughepxe.html', window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/')) + '/');
-            pairingUrl.searchParams.append('tab', 'form');
-            pairingUrl.searchParams.append('vin_giu', car.vin);
-            // (Các searchParams khác giữ nguyên)
-            requestButtonHtml = `<a href="${pairingUrl.href}" class="pairing-btn"><i class="fas fa-link"></i></a>`;
-        }
-
-        // === THAY ĐỔI BỐ CỤC HTML Ở ĐÂY ===
-        card.innerHTML = `
-            <div class="card-header">
-                <span class="car-model">${car.line} ${car.version}</span>
-                <div>${statusHtml}</div>
-            </div>
-            <div class="card-body">
-                <div class="card-row"><span class="card-label">Ngoại thất</span><span class="card-value" style="${DataProcessor.getExteriorColorStyle(car.exterior)}">${car.exterior}</span></div>
-                <div class="card-row"><span class="card-label">Nội thất</span><span class="card-value">${car.interior}</span></div>
-                <div class="card-row full-width"><span class="card-label">Số VIN</span><span class="card-value">${car.vin}</span></div>
-            </div>
-            <div class="card-footer">
-                <div class="card-actions">
-                    ${requestButtonHtml}
-                    ${actionButtonHtml}
-                </div>
-            </div>
-        `;
-        fragment.appendChild(card);
-    });
-    DOMElements.tableBody.className = 'card-view-container';
-    DOMElements.tableBody.appendChild(fragment);
-},
-};
-
-       const DataProcessor = {
+        // ==========================================================================
+        // 6. Đối tượng xử lý Dữ liệu (DataProcessor)
+        // ==========================================================================
+        const DataProcessor = {
             parseApiData: function(apiData) {
                 return apiData.map((row, index) => {
-                    // DÒNG ĐÃ SỬA: Lấy giá trị gốc từ API
                     const holderValue = row["Người Giữ Xe"];
-                    
                     return {
                         index: index + 1,
                         line: row["Dòng xe"] || "N/A",
@@ -1906,12 +1914,9 @@ renderCards: function(data) {
                         vin: row["VIN"] || "N/A",
                         dms: row["Mã DMS"] || "N/A",
                         status: row["Trạng thái"] || "N/A",
-                        request: row["Yêu cầu"] || "", // Thêm dòng này
-dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
-                        
-                        // DÒNG ĐÃ SỬA: Kiểm tra nếu giá trị là chữ "undefined" thì coi như trống (null)
+                        request: row["Yêu cầu"] || "",
+                        dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                         holder: (holderValue && holderValue.toLowerCase() !== 'undefined') ? holderValue : null,
-                        
                         expiry: row["Thời Gian Hết Hạn Giữ"] ? new Date(row["Thời Gian Hết Hạn Giữ"]) : null,
                     };
                 });
@@ -1922,9 +1927,7 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                 const lowerStatus = statusText.toLowerCase();
                 if (lowerStatus.includes('sẵn sàng')) return 'status-san-sang';
                 if (lowerStatus.includes('đã ghép')) return 'status-da-ghep';
-                // === THAY ĐỔI BẮT ĐẦU TẠI ĐÂY ===
-                if (lowerStatus.includes('đang giữ')) return 'status-dang-giu'; // Thêm dòng này
-                // === KẾT THÚC THAY ĐỔI ===
+                if (lowerStatus.includes('đang giữ')) return 'status-dang-giu';
                 if (lowerStatus.includes('chưa ghép')) return 'status-chua-ghep';
                 if (lowerStatus.includes('đã bán')) return 'status-da-ban';
                 if (lowerStatus.includes('chờ vbc')) return 'status-cho-vbc';
@@ -1937,10 +1940,8 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                 const isDarkMode = document.body.classList.contains('dark-mode');
 
                 if (!exteriorValue) return '';
-                
                 const lowerExteriorValue = exteriorValue.toLowerCase();
 
-                // Các trường hợp đặc biệt, kiểm tra mã màu cụ thể trước
                 if (lowerExteriorValue === "brahminy white (ce18)") return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("sunset orb (ce1a)")) return `color: var(--exterior-orange-text); ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("crimson red (ce1m)")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
@@ -1975,8 +1976,6 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                 if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? `color: white; ${specificFontWeight}` : `color: white; ${outlineStyle} ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return `color: var(--exterior-yellow-text); ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return `color: var(--exterior-grey-text); ${specificFontWeight}`;
-
-                // Các trường hợp chung chung hơn
                 if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return `color: var(--exterior-red-text); ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return `color: var(--exterior-pink-text); ${specificFontWeight}`;
                 if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return `color: var(--exterior-blue-text); ${specificFontWeight}`;
@@ -1993,14 +1992,9 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
             }
         };
         
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
+        // ==========================================================================
+        // 7. Các hàm tiện ích & Xuất file
+        // ==========================================================================
         const Exporter = {
             exportToExcel: function() {
                 const dataToExport = filteredCars.map((car, index) => ({
@@ -2021,7 +2015,16 @@ dateAdded: row["Ngày nhập"] ? new Date(row["Ngày nhập"]) : null,
                 XLSX.writeFile(workbook, "KhoXeVinFast.xlsx");
             }
         };
-function showToast(message, type = 'info', duration = 4000) {
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
             const container = document.getElementById('toastContainer');
             if (!container) return;
 
@@ -2035,125 +2038,64 @@ function showToast(message, type = 'info', duration = 4000) {
             toast.innerHTML = `<i class="${iconClass}"></i> <span class="toast-message">${message}</span>`;
             container.appendChild(toast);
             
-            // Trigger animation
             setTimeout(() => toast.classList.add('show'), 10);
 
-            // Tự động xóa
             setTimeout(() => {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove());
             }, duration);
         }
-const ToastManager = {
-            processingToast: null,
-            showProcessing: function(message) {
-                // Nếu đã có toast xử lý, không làm gì cả
-                if (this.processingToast) return;
 
-                const container = document.getElementById('toastContainer');
-                if (!container) return;
-                
-                const toast = document.createElement('div');
-                toast.className = 'toast info'; // Luôn là màu info
-                toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span class="toast-message">${message}</span>`;
-                container.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                // Lưu lại tham chiếu đến toast này
-                this.processingToast = toast;
-            },
-            hideProcessing: function() {
-        if (this.processingToast) {
-            // Lưu tham chiếu của toast vào một biến tạm thời
-            const toastToRemove = this.processingToast;
-            
-            // Đặt lại biến toàn cục thành null ngay lập tức
-            this.processingToast = null;
-
-            // Sử dụng biến tạm thời cho các thao tác tiếp theo
-            toastToRemove.classList.remove('show');
-            toastToRemove.addEventListener('transitionend', () => toastToRemove.remove());
-        }
-    }
-};
         function triggerConfetti() {
- confetti({
-        particleCount: 150, // Số lượng mảnh pháo giấy
-        spread: 90,         // Độ tỏa rộng của pháo giấy
-        origin: { y: 0.8 }  // Vị trí bắt đầu (0.6 là hơi thấp hơn giữa màn hình)
-    });
-   
-}
-function triggerDisintegration(buttonElement) {
-    if (!buttonElement) return;
-
-    const rect = buttonElement.getBoundingClientRect();
-    const particles = [];
-    const particleCount = 20; // Số lượng hạt
-
-    // Tạo các hạt bụi
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.style.position = 'absolute';
-        particle.style.left = `${rect.left + rect.width / 2}px`;
-        particle.style.top = `${rect.top + rect.height / 2}px`;
-        particle.style.width = `${anime.random(3, 8)}px`;
-        particle.style.height = particle.style.width;
-        // Màu xám giống nút release
-        particle.style.backgroundColor = `hsl(220, 10%, ${anime.random(40, 70)}%)`; 
-        particle.style.borderRadius = '50%';
-        document.body.appendChild(particle);
-        particles.push(particle);
-    }
-
-    // Ẩn nút gốc đi
-    buttonElement.style.opacity = '0';
-
-    // Dùng anime.js để di chuyển các hạt
-    anime({
-        targets: particles,
-        translateX: () => anime.random(-40, 40),
-        translateY: () => anime.random(-40, 40),
-        scale: [1, 0],
-        opacity: [1, 0],
-        duration: anime.random(600, 1200),
-        easing: 'easeOutExpo',
-        delay: anime.stagger(20),
-        complete: () => {
-            particles.forEach(p => p.remove()); // Dọn dẹp các hạt sau khi xong
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.8 }
+            });
         }
-    });
-}
-/**
- * Hàm định dạng ngày giờ chuẩn cho giao diện người dùng.
- * @param {string | Date} dateValue - Giá trị ngày tháng cần định dạng.
- * @returns {string} - Chuỗi có định dạng HH:mm DD/MM/YYYY hoặc 'N/A'.
- */
-function formatCustomDateTime(dateValue) {
-    if (!dateValue) return 'N/A';
-    try {
-        const date = new Date(dateValue);
-        // Kiểm tra xem date có hợp lệ không
-        if (isNaN(date.getTime())) return 'N/A';
 
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
+        function triggerDisintegration(buttonElement) {
+            if (!buttonElement) return;
+            const rect = buttonElement.getBoundingClientRect();
+            const particles = [];
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.left = `${rect.left + rect.width / 2}px`;
+                particle.style.top = `${rect.top + rect.height / 2}px`;
+                particle.style.width = `${anime.random(3, 8)}px`;
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = `hsl(220, 10%, ${anime.random(40, 70)}%)`; 
+                particle.style.borderRadius = '50%';
+                document.body.appendChild(particle);
+                particles.push(particle);
+            }
+
+            buttonElement.style.opacity = '0';
+
+            anime({
+                targets: particles,
+                translateX: () => anime.random(-40, 40),
+                translateY: () => anime.random(-40, 40),
+                scale: [1, 0],
+                opacity: [1, 0],
+                duration: anime.random(600, 1200),
+                easing: 'easeOutExpo',
+                delay: anime.stagger(20),
+                complete: () => {
+                    particles.forEach(p => p.remove());
+                }
+            });
+        }
         
-        // Trả về định dạng thân thiện với người dùng
-        return `${hours}:${minutes} ${day}/${month}/${year}`;
-    } catch (e) {
-        // Trả về N/A nếu có lỗi xảy ra
-        return 'N/A';
-    }
-}
+        // ==========================================================================
+        // 8. Khởi chạy Ứng dụng
+        // ==========================================================================
         App.init();
 
     });
-
     </script>
 </body>
 </html>
