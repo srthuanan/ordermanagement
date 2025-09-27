@@ -2356,30 +2356,60 @@ const appState = {
     async function fetchInitialData(isSilent = false) {
     if (!isSilent) {
         appState.loading = true;
-        render();
+        render(); // Hiển thị trạng thái loading
     }
     updateConnectionStatus('connecting');
-    try {
-        // Tạo URL mới với tham số timestamp để đảm bảo không dùng cache
-        const url = new URL(API_URL);
-        url.searchParams.append('timestamp', new Date().getTime());
-        const response = await fetch(url);
 
-        if (!response.ok) throw new Error(`Lỗi mạng: ${response.status} ${response.statusText}`);
-        const result = await response.json();
-        
-        if (result.status === "SUCCESS") {
-            appState.data = result;
-            appState.currentDataVersion = result.version;
-            appState.error = null;
-            updateConnectionStatus('online');
-            appState.connection.currentDelay = appState.connection.baseDelay;
-            if (result.notifications) {
-                updateNotifications(result.notifications);
-            }
-        } else {
-            throw new Error(result.message || 'Lỗi không xác định từ API');
+    try {
+        // Danh sách các loại dữ liệu cần tải
+        const dataEndpoints = [
+            'DaGhep', 'ChuaGhep', 'KhoXe', 'Xuathoadon', 
+            'HuyGhep', 'DangKyCho', 'YeuCauVc'
+        ];
+
+        // Tạo một mảng các promise để fetch dữ liệu song song
+        const dataPromises = dataEndpoints.map(name =>
+            fetch(`${API_URL}?action=get${name}Data`).then(res => res.json())
+        );
+
+        // Lấy thông báo và phiên bản trong một promise riêng
+        const baseDataPromise = fetch(API_URL).then(res => res.json());
+
+        // Chờ tất cả các yêu cầu hoàn tất
+        const allResults = await Promise.all([baseDataPromise, ...dataPromises]);
+
+        // Tách kết quả
+        const baseResult = allResults[0];
+        const dataResults = allResults.slice(1);
+
+        if (baseResult.status !== "SUCCESS") {
+            throw new Error(baseResult.message || 'Lỗi tải dữ liệu cơ bản');
         }
+
+        // Gộp tất cả dữ liệu lại thành một đối tượng duy nhất
+        const mergedData = { ...baseResult };
+        dataResults.forEach((result, index) => {
+            const endpointName = dataEndpoints[index].toLowerCase();
+            if (result.status === "SUCCESS") {
+                // Key trong appState là chữ thường (ví dụ: daghep, khoxe)
+                mergedData[endpointName] = result.data || result[endpointName] || [];
+            } else {
+                console.warn(`Không thể tải dữ liệu cho ${dataEndpoints[index]}: ${result.message}`);
+                mergedData[endpointName] = []; // Gán mảng rỗng nếu có lỗi
+            }
+        });
+
+        appState.data = mergedData;
+        appState.currentDataVersion = mergedData.version;
+        appState.error = null;
+
+        updateConnectionStatus('online');
+        appState.connection.currentDelay = appState.connection.baseDelay;
+
+        if (mergedData.notifications) {
+            updateNotifications(mergedData.notifications);
+        }
+
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu ban đầu:", error);
         appState.error = error.message;
@@ -2388,7 +2418,7 @@ const appState = {
         if (!isSilent) {
             appState.loading = false;
         }
-        render();
+        render(); // Vẽ lại giao diện với dữ liệu mới
     }
 }
 /**
