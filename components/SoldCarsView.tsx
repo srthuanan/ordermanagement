@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import Chart from 'chart.js/auto';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
@@ -7,6 +6,9 @@ import Pagination from './ui/Pagination';
 import SummaryCard from './ui/SummaryCard';
 import * as apiService from '../services/apiService';
 import { MONTHS } from '../constants';
+
+// Chart.js is loaded from a CDN in index.html, so we declare it as a global variable for TypeScript.
+declare const Chart: any;
 
 const PAGE_SIZE = 10;
 
@@ -17,7 +19,6 @@ interface SoldCarsViewProps {
   onSupplement: (order: Order) => void;
   onRequestVC: (order: Order) => void;
   onConfirmVC: (order: Order) => void;
-  showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -46,7 +47,7 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
 
 
 const SoldCarsView: React.FC<SoldCarsViewProps> = ({
-  onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, showToast
+  onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC
 }) => {
   const currentMonthIndex = new Date().getMonth();
   const [activeTab, setActiveTab] = useState<string>(MONTHS[currentMonthIndex]);
@@ -62,7 +63,8 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
   
   const monthlyChartRef = useRef<HTMLCanvasElement>(null);
   const carChartRef = useRef<HTMLCanvasElement>(null);
-  const chartInstances = useRef<{ [key: string]: Chart }>({});
+  // FIX: Changed Chart to any because 'Chart' is a value from a CDN, not a TypeScript type.
+  const chartInstances = useRef<{ [key: string]: any }>({});
   
   const refetch = useCallback(async () => {
         setError(null);
@@ -137,7 +139,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
   }, [viewData]);
   
   const yearlyStats = useMemo(() => {
-    if (totalData.length === 0) return { total: 0, topCar: '-', topTvbh: '-', monthlySales: [], carDistribution: [] };
+    if (totalData.length === 0) return { total: 0, topCar: '-', topTvbh: '-', monthlySales: [], carDistribution: [], top5Cars: [], top5Tvbh: [] };
     const carDataAgg = aggregateData(totalData, 'Dòng xe');
     const tvbhDataAgg = aggregateData(totalData, 'Tên tư vấn bán hàng');
     const topCar = carDataAgg[0] || { key: "-", count: 0 };

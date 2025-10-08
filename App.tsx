@@ -546,7 +546,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         onSupplement={setOrderToSupplement}
                         onRequestVC={setOrderToRequestVC}
                         onConfirmVC={handleConfirmVC}
-                        showToast={showToast}
                     />
                 );
             default:
