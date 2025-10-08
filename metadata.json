@@ -1,0 +1,5 @@
+{
+  "name": "VinFast Order Management Dashboard",
+  "description": "An internal tool for VinFast sales consultants to manage and track vehicle pairing requests, from initial order to invoicing. It features real-time data updates, a detailed history log, and streamlined workflows for order submission and processing.",
+  "requestFramePermissions": []
+}
