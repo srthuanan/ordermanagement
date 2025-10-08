@@ -93,7 +93,6 @@ export const extractDateFromImageTesseract = async (
         onProgress('Đang tìm ngày giờ...');
         
         let cleanedText = text.replace(/\n+/g, ' ');
-        // FIX: Provided explicit types for all callback parameters in replace calls to resolve TS7006. Prefixed unused parameters with an underscore to resolve TS6133.
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (_match: string, h: string, _hourWord: string, m: string, s: string) => `${h}:${m}${s ? ':'+s : ''}`);
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2');

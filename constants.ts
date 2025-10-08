@@ -1,7 +1,10 @@
 export const API_URL = "https://script.google.com/macros/s/AKfycbytcOsvwhkNWBYu-yHeZ1ZJcMg7g-JTGrJ0uFwMkt6ajqpa72ofGkNH4WlhL0oDYKT4fQ/exec";
 export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
 export const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
+export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";
+
+export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export const versionsMap = {
     "VF 3": ["Base"], 
@@ -33,7 +36,7 @@ export const defaultExteriors = [
     "Jet Black-Champagne Creme Roof (2311)", "Infinity Blanc _ Silky White R (2418)",
     "Champagne Creme - Matte Champa (2523)", "Jet Black - Graphite Roof (2811)",
     "Crimson Velvet - Mystery Bronz (2927)", "Ivy_Green_GNE (CE22)", "Champagne_Creme_YLG (CE23)",
-    "Crimson Red - Jet Black Roof (111M)", "Infinity Blanc_Zenith Grey Roof (1V18)",
+    "Crimson Red - Jet Black Roof (111M)", "Infinity Blanc_Zenith Grey Roof (1v18)",
     "Deep Ocean_Jet Black Roof (111H)", "Alantic Blue_Denim Blue Roof (2A26)",
     "Jet Black_Mystery Bronze Roof (2911)", "Champagne Creme_Infinity Blanc Roof (1823)",
     "Silver (CE17)"

@@ -1,5 +1,6 @@
-import { API_URL, STOCK_API_URL, ADMIN_USER } from '../constants';
+import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS } from '../constants';
 import { VcRequestData } from '../components/modals/VcRequestModal';
+import { Order } from '../types';
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -323,4 +324,78 @@ export const markNotificationAsRead = async (notificationId: string) => {
         timestamp: new Date().toISOString(),
     };
     return postApi(payload);
+};
+
+const mapSoldDataRowToOrder = (row: any[], index: number): Order => ({
+    "Tên khách hàng": String(row[0] || ''),
+    "Số đơn hàng": String(row[2] || `SOLD-${index}`),
+    "Dòng xe": String(row[3] || ''),
+    "Phiên bản": String(row[4] || ''),
+    "Ngoại thất": String(row[5] || ''),
+    "Nội thất": String(row[6] || ''),
+    "Tên tư vấn bán hàng": String(row[7] || ''),
+    "VIN": String(row[8] || ''),
+    "Ngày cọc": new Date().toISOString(), 
+    "Thời gian nhập": new Date().toISOString(),
+    "Thời gian ghép": new Date().toISOString(),
+    "Kết quả": "Đã xuất hóa đơn",
+    "Trạng thái VC": "Đã xuất hóa đơn",
+    "Số ngày ghép": 0,
+});
+
+
+const getSoldDataForMonth = async (sheetName: string): Promise<any[]> => {
+    const url = `${SOLD_CARS_API_URL}?sheet=${sheetName}`;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+             console.warn(`Failed to fetch sold data for ${sheetName}: ${response.statusText}`);
+             return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.warn(`Error fetching sold data for ${sheetName}:`, error);
+        return [];
+    }
+};
+
+export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> => {
+    try {
+        const rawData = await getSoldDataForMonth(month);
+        const mappedData: Order[] = rawData
+            .filter(row => Array.isArray(row) && row.length > 8 && row[8])
+            .map(mapSoldDataRowToOrder);
+        return {
+            status: 'SUCCESS',
+            message: `Successfully fetched data for ${month}.`,
+            data: mappedData,
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `An unknown error occurred while fetching data for ${month}.`;
+        return { status: 'ERROR', message: errorMessage };
+    }
+};
+
+export const getAllSoldCarsData = async (): Promise<ApiResult> => {
+    try {
+        const fetchPromises = MONTHS.map(month => getSoldDataForMonth(month));
+        const monthlyResults = await Promise.all(fetchPromises);
+        
+        const allSoldData: any[][] = monthlyResults.flat().filter(row => Array.isArray(row) && row.length > 8 && row[8]);
+
+        const mappedData: Order[] = allSoldData.map(mapSoldDataRowToOrder);
+
+        return {
+            status: 'SUCCESS',
+            message: 'Successfully fetched all sold car data.',
+            data: mappedData
+        };
+    } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred while fetching sold cars data.';
+        return {
+            status: 'ERROR',
+            message: errorMessage
+        }
+    }
 };

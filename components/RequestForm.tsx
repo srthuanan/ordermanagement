@@ -139,7 +139,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    // FIX: Removed the unused 'setAvailableExteriors' state setter to resolve TypeScript error TS6133.
     const [availableExteriors] = useState<string[]>(defaultExteriors);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
     

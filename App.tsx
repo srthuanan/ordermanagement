@@ -4,6 +4,7 @@ import 'moment/locale/vi';
 import { Order, SortConfig, Notification, NotificationType, StockVehicle } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
+import SoldCarsView from './components/SoldCarsView';
 import OrderDetailsModal from './components/modals/OrderDetailsModal';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
@@ -21,7 +22,7 @@ moment.locale('vi');
 
 const PAGE_SIZE = 10;
 
-type ActiveView = 'orders' | 'stock';
+type ActiveView = 'orders' | 'stock' | 'sold';
 
 interface AppProps {
     onLogout: () => void;
@@ -419,7 +420,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
         return filteredOrders;
     }, [historyData, filters, sortConfig]);
-    
+
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
@@ -516,6 +517,43 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         
     const mainContentPadding = isSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72';
 
+    const renderActiveView = () => {
+        switch (activeView) {
+            case 'orders':
+                return renderOrdersContent();
+            case 'stock':
+                return (
+                    <StockView 
+                        stockData={stockData}
+                        setStockData={setStockData}
+                        isLoading={isLoadingStock}
+                        error={errorStock}
+                        refetchStock={refetchStock}
+                        highlightedVins={highlightedVins}
+                        showToast={showToast} 
+                        hideToast={hideToast} 
+                        currentUser={currentUser} 
+                        isAdmin={isCurrentUserAdmin} 
+                        onCreateRequestForVehicle={handleCreateRequestForVehicle}
+                    />
+                );
+            case 'sold':
+                return (
+                    <SoldCarsView
+                        onViewDetails={handleViewDetails}
+                        onCancel={setOrderToCancel}
+                        onRequestInvoice={setOrderToRequestInvoice}
+                        onSupplement={setOrderToSupplement}
+                        onRequestVC={setOrderToRequestVC}
+                        onConfirmVC={handleConfirmVC}
+                        showToast={showToast}
+                    />
+                );
+            default:
+                return renderOrdersContent();
+        }
+    };
+
     return (
         <>
             <div className="circuit-background"></div>
@@ -541,6 +579,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
                         <i className={`fas fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                         <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Kho Xe</span>
+                    </a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                        <i className={`fas fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
                     </a>
                 </nav>
 
@@ -615,21 +657,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </header>
 
                 <main className={`flex-1 p-4 sm:p-6 flex flex-col overflow-hidden`}>
-                    {activeView === 'orders' ? renderOrdersContent() : 
-                        <StockView 
-                            stockData={stockData}
-                            setStockData={setStockData}
-                            isLoading={isLoadingStock}
-                            error={errorStock}
-                            refetchStock={refetchStock}
-                            highlightedVins={highlightedVins}
-                            showToast={showToast} 
-                            hideToast={hideToast} 
-                            currentUser={currentUser} 
-                            isAdmin={isCurrentUserAdmin} 
-                            onCreateRequestForVehicle={handleCreateRequestForVehicle}
-                        />
-                    }
+                    {renderActiveView()}
                 </main>
             </div>
             
