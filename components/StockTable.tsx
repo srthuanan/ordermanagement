@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 

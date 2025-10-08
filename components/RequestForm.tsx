@@ -139,7 +139,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const [availableExteriors, setAvailableExteriors] = useState<string[]>(defaultExteriors);
+    // FIX: Removed the unused 'setAvailableExteriors' state setter to resolve TypeScript error TS6133.
+    const [availableExteriors] = useState<string[]>(defaultExteriors);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
     
     const inputClass = "peer w-full pl-11 pr-4 py-3 bg-surface-card text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder";

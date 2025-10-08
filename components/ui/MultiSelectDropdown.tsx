@@ -9,7 +9,7 @@ interface MultiSelectDropdownProps {
   icon: string;
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ id, label, options, selectedOptions, onChange, icon }) => {
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);

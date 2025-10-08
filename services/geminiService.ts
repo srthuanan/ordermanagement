@@ -1,13 +1,14 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 // SECURITY WARNING: This key will be exposed to clients.
 // In a production environment, this API call should be made from a server-side component
 // or a secure cloud function to protect the API key.
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// FIX: The API key must be obtained from process.env.API_KEY per coding guidelines, which also resolves the TypeScript error.
+const API_KEY = process.env.API_KEY;
 
 if (!API_KEY) {
-  console.warn("VITE_GEMINI_API_KEY environment variable not set. Gemini API calls will fail.");
+  // FIX: Updated warning message to reflect the correct environment variable.
+  console.warn("API_KEY environment variable not set. Gemini API calls will fail.");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY! });
@@ -39,7 +40,7 @@ export const extractDateFromImage = async (imageBase64: string, mimeType: string
       contents: { parts: [imagePart, textPart] },
     });
     
-    const text = response.text.trim();
+    const text = (response.text ?? '').trim();
     
     // Validate if the response is a plausible date format or the string 'null'
     if (text === 'null') {
