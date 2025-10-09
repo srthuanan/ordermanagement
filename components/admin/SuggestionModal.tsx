@@ -59,7 +59,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-primary">
-                                    {suggestedCars.map((car, index) => (
+                                    {suggestedCars.map((car) => (
                                         <tr key={car.VIN} className="hover:bg-surface-hover">
                                             <td className="py-2.5 px-3">
                                                 <input type="radio" name="suggested-vin" value={car.VIN} checked={selectedVin === car.VIN} onChange={() => setSelectedVin(car.VIN)} className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-border-secondary" />

@@ -86,22 +86,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
     const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
     const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
-    const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
-    const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
 
     const refetchXuathoadon = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingXuathoadon(true);
-        setErrorXuathoadon(null);
         try {
             const result = await apiService.getXuathoadonData();
             setXuathoadonData(result.data || []);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            setErrorXuathoadon(message);
-        } finally {
-            if (!isSilent) setIsLoadingXuathoadon(false);
+            showToast('Lỗi Tải Dữ Liệu Hóa Đơn', message, 'error');
         }
-    }, []);
+    }, [showToast]);
 
     useEffect(() => {
         refetchXuathoadon();
@@ -602,7 +596,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     allOrders={historyData}
                     xuathoadonData={xuathoadonData}
                     refetchXuathoadon={refetchXuathoadon}
-                    currentUser={currentUser}
                     stockData={stockData}
                     /> : renderOrdersContent();
             default:
