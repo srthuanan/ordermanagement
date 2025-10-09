@@ -14,6 +14,7 @@ interface StockTableProps {
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
   highlightedVins: Set<string>;
+  processingVin: string | null;
 }
 
 // Helper function to apply dynamic styles based on exterior color text.
@@ -88,7 +89,7 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
     );
 };
 
-const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, showToast, highlightedVins }) => {
+const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
   const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
   const confirmRef = useRef<HTMLDivElement>(null);
 
@@ -143,9 +144,11 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && 
                             vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
                             
-                        const canBeHeld = vehicle["Trạng thái"] === 'Chưa ghép';
+                        const isAvailable = vehicle["Trạng thái"] === 'Chưa ghép';
+                        const isHeldByOther = vehicle["Trạng thái"] === 'Đang giữ' && !isHeldByCurrentUser;
                         const isHighlighted = highlightedVins.has(vehicle.VIN);
                         const isConfirmOpen = confirmAction?.vin === vehicle.VIN;
+                        const isProcessing = processingVin === vehicle.VIN;
 
                         return (
                             <tr key={vehicle.VIN} className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} style={{animationDelay: `${index * 20}ms`}}>
@@ -164,8 +167,29 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm"><StatusBadge status={vehicle["Trạng thái"]} /></td>
                                 <td className="whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
-                                    <div className="relative flex items-center justify-center gap-2">
-                                        {isHeldByCurrentUser ? (
+                                    <div className="relative flex items-center justify-center gap-2 h-9">
+                                        {isProcessing ? (
+                                            <div className="flex items-center justify-center w-full h-full">
+                                                <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                            </div>
+                                        ) : isAvailable ? (
+                                            <>
+                                                <button
+                                                    className="action-btn hold-action"
+                                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'hold' }); }}
+                                                    title="Giữ xe (tạm thời)"
+                                                >
+                                                    <i className="fas fa-stopwatch-20"></i>
+                                                </button>
+                                                <button
+                                                    className="action-btn pair-action"
+                                                    onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
+                                                    title="Ghép xe ngay"
+                                                >
+                                                    <i className="fas fa-link"></i>
+                                                </button>
+                                            </>
+                                        ) : isHeldByCurrentUser ? (
                                             <>
                                                 <button
                                                     className="action-btn release-action"
@@ -177,12 +201,12 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                 <button
                                                     className="action-btn pair-action"
                                                     onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
-                                                    title="Tạo yêu cầu mới cho xe này"
+                                                    title="Tạo yêu cầu cho xe đã giữ"
                                                 >
-                                                    <i className="fas fa-file-plus"></i>
+                                                    <i className="fas fa-link"></i>
                                                 </button>
                                             </>
-                                        ) : vehicle['Trạng thái'] === 'Đang giữ' ? (
+                                        ) : isHeldByOther ? (
                                             <>
                                                 <button
                                                     disabled
@@ -201,19 +225,11 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                     </button>
                                                 )}
                                             </>
-                                        ) : canBeHeld ? (
-                                            <button
-                                                className="action-btn hold-action"
-                                                onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'hold' }); }}
-                                                title="Giữ xe"
-                                            >
-                                                <i className="fas fa-stopwatch-20"></i>
-                                            </button>
                                         ) : (
                                             <span className="text-xs text-text-secondary">—</span>
                                         )}
                                         
-                                        {isConfirmOpen && (
+                                        {isConfirmOpen && !isProcessing && (
                                             <div
                                                 ref={confirmRef}
                                                 onClick={e => e.stopPropagation()}

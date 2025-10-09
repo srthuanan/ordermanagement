@@ -7,11 +7,12 @@ export interface DropdownFilterConfig {
   label: string;
   options: string[];
   icon: string;
+  displayMode?: 'count' | 'selection';
 }
 
 interface FiltersProps {
   filters: {
-    keyword: string;
+    keyword?: string;
     [key: string]: string | string[]; // Allow dynamic filter keys
   };
   onFilterChange: (filters: Partial<FiltersProps['filters']>) => void;
@@ -21,6 +22,7 @@ interface FiltersProps {
   totalCount: number;
   onRefresh: () => void;
   isLoading: boolean;
+  hideSearch?: boolean;
 }
 
 const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ value, onRemove }) => (
@@ -33,7 +35,7 @@ const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ 
 );
 
 
-const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading }) => {
+const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, hideSearch = false }) => {
   
   const activeDropdownFilters = dropdowns.flatMap(d => 
     (filters[d.key] as string[]).map(value => ({
@@ -49,21 +51,43 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
   const hasActiveDropdownFilters = activeDropdownFilters.length > 0;
 
   return (
-    <div className="flex-shrink-0 bg-surface-card p-4 rounded-xl shadow-md border border-border-primary">
-        {/* Top Section: Search and Primary Actions */}
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="relative flex-grow w-full">
-                 <i className="fas fa-search absolute top-1/2 left-4 -translate-y-1/2 text-text-placeholder peer-focus:text-accent-primary"></i>
-                 <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder={searchPlaceholder} 
-                    value={filters.keyword}
-                    onChange={(e) => onFilterChange({ keyword: e.target.value })}
-                    className="peer w-full pl-11 pr-4 py-2.5 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder"
-                 />
-            </div>
-            <div className="flex-shrink-0 flex items-center justify-end gap-2 w-full sm:w-auto">
+    <div className="flex-shrink-0 bg-surface-card p-4 rounded-xl shadow-md border border-border-primary space-y-3">
+        {/* Main filter bar */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap">
+            {/* Search Input */}
+            {!hideSearch && (
+              <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
+                  <i className="fas fa-search absolute top-1/2 left-4 -translate-y-1/2 text-text-placeholder peer-focus:text-accent-primary"></i>
+                  <input 
+                      type="text" 
+                      id="search-input" 
+                      placeholder={searchPlaceholder} 
+                      value={filters.keyword || ''}
+                      onChange={(e) => onFilterChange({ keyword: e.target.value })}
+                      className="peer w-full pl-11 pr-4 py-2.5 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder"
+                  />
+              </div>
+            )}
+
+            {/* Dropdown Filters */}
+            {dropdowns.map(dropdown => (
+                <MultiSelectDropdown
+                    key={dropdown.id}
+                    id={dropdown.id}
+                    label={dropdown.label}
+                    options={dropdown.options}
+                    selectedOptions={filters[dropdown.key] as string[]}
+                    onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+                    icon={dropdown.icon}
+                    displayMode={dropdown.displayMode}
+                />
+            ))}
+
+            {/* Spacer to push right content */}
+            <div className="flex-grow hidden lg:block"></div>
+
+            {/* Right-aligned controls */}
+            <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
                  <span id="total-items-count" className="text-sm font-medium text-text-secondary px-4 py-2.5 bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap">
                     Tổng: <strong className="font-semibold text-text-primary">{totalCount}</strong>
                  </span>
@@ -73,43 +97,18 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
             </div>
         </div>
 
-        {/* Bottom Section: Filter Controls & Active Filters */}
-        <div className="mt-3 pt-3 border-t border-border-primary">
-             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                {/* Filter Dropdowns */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-wrap">
-                     <span className="text-sm font-semibold text-text-primary whitespace-nowrap hidden sm:block">
-                        <i className="fas fa-filter mr-2 text-accent-primary"></i>
-                        Bộ lọc chi tiết:
-                    </span>
-                    {dropdowns.map(dropdown => (
-                        <MultiSelectDropdown
-                            key={dropdown.id}
-                            id={dropdown.id}
-                            label={dropdown.label}
-                            options={dropdown.options}
-                            selectedOptions={filters[dropdown.key] as string[]}
-                            onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-                            icon={dropdown.icon}
-                        />
-                    ))}
-                </div>
-
-                {/* Active Filters & Reset Button */}
-                {hasActiveDropdownFilters && (
-                    <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end w-full md:w-auto animate-fade-in-up" style={{animationDuration: '300ms'}}>
-                        {activeDropdownFilters.map(filter => (
-                            <ActiveFilterPill key={filter.key} value={filter.value} onRemove={filter.onRemove} />
-                        ))}
-                        
-                        <button onClick={onReset} className="ml-2 text-sm text-accent-secondary hover:text-accent-primary font-semibold transition-all flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-accent">
-                            <i className="fas fa-times-circle"></i>
-                            <span>Xóa Lọc</span>
-                        </button>
-                    </div>
-                )}
-             </div>
-        </div>
+        {/* Active Filters (only shown when active) */}
+        {hasActiveDropdownFilters && (
+            <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-border-primary/50">
+                {activeDropdownFilters.map(filter => (
+                    <ActiveFilterPill key={filter.key} value={filter.value} onRemove={filter.onRemove} />
+                ))}
+                <button onClick={onReset} className="ml-auto text-xs text-accent-secondary hover:text-accent-primary font-semibold transition-all flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-surface-accent">
+                    <i className="fas fa-times-circle"></i>
+                    <span>Xóa Lọc</span>
+                </button>
+            </div>
+        )}
     </div>
   );
 };

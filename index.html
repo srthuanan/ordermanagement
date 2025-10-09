@@ -87,7 +87,7 @@
               'float': { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } },
               'scan': { 'from': { transform: 'translateY(-10px)' }, 'to': { transform: 'translateY(100vh)' } },
               'button-breathing': { '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)' }, '50%': { transform: 'scale(1.03)', boxShadow: '0 0 25px rgba(59, 130, 246, 0.6)' } },
-              'button-breathing-silver': { '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 15px rgba(255, 255, 255, 0.2)' }, '50%': { transform: 'scale(1.03)', boxShadow: '0 0 25px rgba(255, 255, 255, 0.4)' } },
+              'button-breathing-silver': { '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 15px rgba(255, 255, 255, 0.2)' }, '50%': { transform: 'scale(1.03)', boxShadow: '0 0 25px rgba(255, 255, 0.4)' } },
               'border-glow': { '0%, 100%': { borderColor: 'rgba(59, 130, 246, 0.4)' }, '50%': { borderColor: 'rgba(59, 130, 246, 0.8)' } },
               'text-gradient-flow': { '0%': { 'background-position': '0% 50%' }, '50%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0% 50%' } },
             },
@@ -430,43 +430,50 @@
       .action-btn {
           position: relative;
           width: 36px; height: 36px;
-          border-radius: 50%;
+          border-radius: 0.5rem; /* rounded-lg */
           cursor: pointer;
           border: none;
-          color: white;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           text-decoration: none;
       }
       .action-btn i {
           font-size: 14px;
           z-index: 2;
-          transition: transform 0.3s ease;
+          transition: all 0.2s ease;
       }
       .action-btn:not(:disabled):hover {
-          transform: translateY(-2px) scale(1.1);
-          box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
+          transform: translateY(-2px) scale(1.05);
+          box-shadow: 0 6px 15px -6px rgba(0, 0, 0, 0.2);
+          color: white; /* Icon becomes white on hover */
       }
       .action-btn:not(:disabled):hover i {
           animation: icon-pop 0.4s ease-in-out;
       }
       .action-btn:not(:disabled):active {
-          transform: translateY(0px) scale(1.05);
+          transform: translateY(0px) scale(1);
       }
-      .action-btn.hold-action { background: linear-gradient(145deg, #3B82F6, #60A5FA); box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.6); }
-      .action-btn.release-action { background: linear-gradient(145deg, #EF4444, #F87171); box-shadow: 0 4px 12px -4px rgba(239, 68, 68, 0.6); }
-      .action-btn.admin-release-action { background: linear-gradient(145deg, #8B5CF6, #A78BFA); box-shadow: 0 4px 12px -4px rgba(139, 92, 246, 0.6); }
-      .action-btn.pair-action { background: linear-gradient(145deg, #22C55E, #4ADE80); box-shadow: 0 4px 12px -4px rgba(34, 197, 94, 0.6); }
+      /* Hold Action (Blue) */
+      .action-btn.hold-action { background-color: #EBF5FF; color: #0D47A1; } /* surface-accent, accent-primary */
+      .action-btn.hold-action:hover { background-color: #1565C0; } /* accent-primary-hover */
+      /* Release Action (Red) */
+      .action-btn.release-action { background-color: #FFEBEE; color: #D32F2F; } /* danger-bg, danger */
+      .action-btn.release-action:hover { background-color: #D32F2F; } /* danger */
+      /* Admin Release Action (Purple) */
+      .action-btn.admin-release-action { background-color: #F3E5F5; color: #8E24AA; }
+      .action-btn.admin-release-action:hover { background-color: #8E24AA; }
+      /* Pair Action (Green) */
+      .action-btn.pair-action { background-color: #E8F5E9; color: #388E3C; } /* success-bg, success */
+      .action-btn.pair-action:hover { background-color: #388E3C; } /* success */
       .action-btn:disabled {
-          background: #9CA3AF;
-          color: #E5E7EB;
+          background-color: #F1F5F9; /* surface-input */
           cursor: not-allowed;
           box-shadow: none;
       }
       .action-btn:disabled i {
-          color: #CBD5E1;
+          color: #94A3B8; /* text-placeholder */
       }
 
       /* Custom Toast Styles */
@@ -574,6 +581,106 @@
           from { width: 100%; }
           to { width: 0%; }
       }
+
+      /* Styles for Sold Cars View Layout */
+      .detail-panel {
+          background: var(--tw-color-surface-card);
+          border-radius: 0.75rem; /* rounded-xl */
+          box-shadow: var(--tw-shadow-md);
+          border: 1px solid var(--tw-color-border-primary);
+          overflow: hidden; /* Hide overflow for internal scrolling */
+          display: flex;
+          flex-direction: column;
+      }
+
+      .detail-panel-body {
+        overflow-y: auto;
+        padding: 0.75rem; /* p-3 */
+      }
+
+      tbody tr.selected-row-highlight {
+          background-color: var(--tw-color-surface-accent) !important;
+      }
+      tbody tr.selected-row-highlight td:first-child {
+          box-shadow: inset 3px 0 0 0 var(--tw-color-accent-primary);
+      }
+      
+
+      @media (max-width: 1024px) { /* lg breakpoint */
+          .tables-section {
+              grid-template-columns: 1fr;
+          }
+          .detail-panel {
+              position: static;
+              top: auto;
+              max-height: none;
+              width: 100%;
+          }
+      }
+
+      /* New Request Form Modal Styles (Light Theme) */
+      .futuristic-modal-bg {
+          background-color: var(--tw-color-surface-card, #FFFFFF);
+          color: var(--tw-color-text-primary, #0F172A);
+      }
+      .futuristic-input, .futuristic-select {
+        background-color: var(--tw-color-surface-ground, #F7F9FC) !important;
+        border: 1px solid var(--tw-color-border-primary, #E2E8F0) !important;
+        color: var(--tw-color-text-primary, #0F172A) !important;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+      .futuristic-input:focus, .futuristic-select:focus {
+        border-color: var(--tw-color-accent-primary, #0D47A1) !important;
+        box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+        outline: none;
+      }
+       .futuristic-input::placeholder {
+        color: var(--tw-color-text-placeholder, #94A3B8) !important;
+       }
+      .btn-futuristic-primary {
+        /* Use btn-primary styles */
+        background: linear-gradient(45deg, #0c3483, #a2b6df, #6b8cce, #a2b6df);
+        background-size: 200% auto;
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 4px 14px 0 rgba(12, 52, 131, 0.38);
+        transition: all 0.3s ease-in-out;
+        border: none;
+      }
+      .btn-futuristic-primary:hover:not(:disabled) {
+        background-position: right center;
+        transform: translateY(-2px);
+        box-shadow: 0 7px 20px 0 rgba(12, 52, 131, 0.45);
+      }
+       .btn-futuristic-primary:disabled {
+        background: #E2E8F0;
+        color: #94A3B8;
+        cursor: not-allowed;
+        animation: none;
+        box-shadow: none;
+        background-image: none;
+       }
+
+      .btn-futuristic-secondary {
+        /* Use btn-secondary styles */
+        background-color: #FFFFFF;
+        color: #475569;
+        font-weight: 600;
+        border: 1px solid #E2E8F0;
+        transition: all 0.3s;
+        box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+      }
+      .btn-futuristic-secondary:hover:not(:disabled) {
+        background-color: #F8FAFC;
+        transform: translateY(-1px);
+        border-color: #CBD5E1;
+      }
+       .btn-futuristic-secondary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #F1F5F9;
+        color: #94A3B8;
+       }
     </style>
 <script type="importmap">
 {

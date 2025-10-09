@@ -163,8 +163,18 @@ export const releaseCar = async (vin: string) => {
 
 export const addRequest = async (formData: Record<string, string>, chicFile: File) => {
     const chicFileBase64 = await fileToBase64(chicFile);
+    
+    // Create a mutable copy of the form data to avoid side effects
+    const payloadData: Record<string, string> = { ...formData };
+
+    // If a specific VIN is provided (from a held car), map it to the backend parameter
+    if (payloadData.vin) {
+        payloadData.vin_giu_yeu_cau = payloadData.vin;
+        delete payloadData.vin; // Remove the original 'vin' key to avoid confusion
+    }
+    
     const payload = {
-        ...formData,
+        ...payloadData,
         thoi_gian_nhap: new Date().toISOString(),
         action: 'addRequest',
         chic_file_base64: chicFileBase64,
@@ -326,22 +336,32 @@ export const markNotificationAsRead = async (notificationId: string) => {
     return postApi(payload);
 };
 
-const mapSoldDataRowToOrder = (row: any[], index: number): Order => ({
-    "Tên khách hàng": String(row[0] || ''),
-    "Số đơn hàng": String(row[2] || `SOLD-${index}`),
-    "Dòng xe": String(row[3] || ''),
-    "Phiên bản": String(row[4] || ''),
-    "Ngoại thất": String(row[5] || ''),
-    "Nội thất": String(row[6] || ''),
-    "Tên tư vấn bán hàng": String(row[7] || ''),
-    "VIN": String(row[8] || ''),
-    "Ngày cọc": new Date().toISOString(), 
-    "Thời gian nhập": new Date().toISOString(),
-    "Thời gian ghép": new Date().toISOString(),
-    "Kết quả": "Đã xuất hóa đơn",
-    "Trạng thái VC": "Đã xuất hóa đơn",
-    "Số ngày ghép": 0,
-});
+const mapSoldDataRowToOrder = (row: any[], index: number, month?: string): Order => {
+    let saleDate = new Date().toISOString();
+    if (month) {
+        const monthIndex = MONTHS.indexOf(month);
+        if (monthIndex > -1) {
+            const year = new Date().getFullYear();
+            saleDate = new Date(year, monthIndex, 15).toISOString();
+        }
+    }
+    return {
+        "Tên khách hàng": String(row[0] || ''),
+        "Số đơn hàng": String(row[2] || `SOLD-${index}`),
+        "Dòng xe": String(row[3] || ''),
+        "Phiên bản": String(row[4] || ''),
+        "Ngoại thất": String(row[5] || ''),
+        "Nội thất": String(row[6] || ''),
+        "Tên tư vấn bán hàng": String(row[7] || ''),
+        "VIN": String(row[8] || ''),
+        "Ngày cọc": saleDate, 
+        "Thời gian nhập": saleDate,
+        "Thời gian ghép": saleDate,
+        "Kết quả": "Đã xuất hóa đơn",
+        "Trạng thái VC": "Đã xuất hóa đơn",
+        "Số ngày ghép": 0,
+    };
+};
 
 
 const getSoldDataForMonth = async (sheetName: string): Promise<any[]> => {
@@ -365,7 +385,7 @@ export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> 
         const rawData = await getSoldDataForMonth(month);
         const mappedData: Order[] = rawData
             .filter(row => Array.isArray(row) && row.length > 8 && row[8])
-            .map(mapSoldDataRowToOrder);
+            .map((row, index) => mapSoldDataRowToOrder(row, index, month));
         return {
             status: 'SUCCESS',
             message: `Successfully fetched data for ${month}.`,
@@ -379,12 +399,18 @@ export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> 
 
 export const getAllSoldCarsData = async (): Promise<ApiResult> => {
     try {
-        const fetchPromises = MONTHS.map(month => getSoldDataForMonth(month));
+        const fetchPromises = MONTHS.map(month => 
+            getSoldDataForMonth(month).then(data => ({ month, data }))
+        );
         const monthlyResults = await Promise.all(fetchPromises);
         
-        const allSoldData: any[][] = monthlyResults.flat().filter(row => Array.isArray(row) && row.length > 8 && row[8]);
+        const allSoldDataWithMonth = monthlyResults.flatMap(({ month, data }) => 
+            data
+                .filter(row => Array.isArray(row) && row.length > 8 && row[8])
+                .map(row => ({ row, month }))
+        );
 
-        const mappedData: Order[] = allSoldData.map(mapSoldDataRowToOrder);
+        const mappedData: Order[] = allSoldDataWithMonth.map(({row, month}, index) => mapSoldDataRowToOrder(row, index, month));
 
         return {
             status: 'SUCCESS',

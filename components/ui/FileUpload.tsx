@@ -65,12 +65,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
 
     const getOcrStatusClass = () => {
         if (ocrStatus.includes('Lỗi') || ocrStatus.includes('Không tìm thấy')) {
-            return 'text-red-500';
+            return 'text-danger';
         }
         if (ocrStatus.includes('Đã điền')) {
-            return 'text-green-600 font-medium';
+            return 'text-success font-medium';
         }
-        return 'text-sky-600';
+        return 'text-accent-secondary';
     }
 
   return (
@@ -86,9 +86,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
         onChange={handleChange}
       />
       <div
-        className={`relative w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300
-                    ${dragActive ? 'border-sky-500 bg-sky-50' : 'border-slate-300'}
-                    ${selectedFile ? 'border-solid' : ''}
+        className={`relative w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
+                    ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}
+                    ${selectedFile ? 'border-solid border-accent-primary/50' : ''}
                   `}
         onClick={onButtonClick}
         onDragLeave={handleDrag}
@@ -96,9 +96,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
         onDrop={handleDrop}
       >
         {!selectedFile && (
-             <div className="text-center text-slate-500">
-                <i className="fas fa-cloud-upload-alt fa-3x mb-2"></i>
-                <p className="font-semibold">Kéo & thả hoặc nhấn để tải ảnh</p>
+             <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
+                <i className="fas fa-cloud-upload-alt fa-3x mb-2 group-hover:text-accent-primary"></i>
+                <p className="font-semibold text-text-primary">Kéo & thả hoặc nhấn để tải ảnh</p>
                 <p className="text-xs">Chấp nhận file ảnh (tối đa 10MB)</p>
             </div>
         )}
@@ -108,12 +108,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
             <div className="absolute inset-0 p-2 z-0">
                  <img src={previewUrl} alt="Preview" className="w-full h-full object-contain rounded-md" />
             </div>
-            <div className="absolute inset-0 bg-black/50 hover:bg-black/70 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg cursor-pointer z-10">
+            <div className="absolute inset-0 bg-black/40 hover:bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg cursor-pointer z-10">
                 <span className="text-white font-bold">Thay đổi ảnh</span>
             </div>
              <button
                 onClick={handleRemove}
-                className="absolute top-2 right-2 z-20 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-transform duration-200 hover:scale-110"
+                className="absolute top-2 right-2 z-20 w-8 h-8 bg-danger/80 text-white rounded-full flex items-center justify-center hover:bg-danger transition-all duration-200 hover:scale-110"
                 title="Xóa ảnh"
             >
                 <i className="fas fa-times"></i>

@@ -43,6 +43,7 @@ const StockView: React.FC<StockViewProps> = ({
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
+    const [processingVin, setProcessingVin] = useState<string | null>(null);
     
     const handleFilterChange = (newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -68,56 +69,38 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleHoldCar = async (vin: string) => {
-        const originalData = [...stockData];
-        const carToUpdate = originalData.find(v => v.VIN === vin);
-        if (!carToUpdate || carToUpdate["Trạng thái"] !== 'Chưa ghép') return;
-        
-        // Optimistic update
-        setStockData(prevData => prevData.map(v => 
-            v.VIN === vin 
-            ? { ...v, "Trạng thái": "Đang giữ", "Người Giữ Xe": currentUser } 
-            : v
-        ));
-
+        setProcessingVin(vin);
         showToast('Đang Giữ Xe', `Đang thực hiện giữ xe VIN: ${vin}`, 'loading');
 
         try {
             await apiService.holdCar(vin);
             hideToast();
             showToast('Giữ Xe Thành Công', `Xe VIN ${vin} đã được giữ thành công.`, 'success', 3000);
-            refetchStock(); // Re-fetch to get server-confirmed expiry time
+            await refetchStock();
         } catch (err) {
             hideToast();
             const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
             showToast('Giữ Xe Thất Bại', message, 'error', 5000);
-            setStockData(originalData); // Revert on failure
+        } finally {
+            setProcessingVin(null);
         }
     };
 
     const handleReleaseCar = async (vin: string) => {
-        const originalData = [...stockData];
-        const carToUpdate = originalData.find(v => v.VIN === vin);
-        if (!carToUpdate || carToUpdate["Trạng thái"] !== 'Đang giữ') return;
-
-        // Optimistic update
-        setStockData(prevData => prevData.map(v => 
-            v.VIN === vin 
-            ? { ...v, "Trạng thái": "Chưa ghép", "Người Giữ Xe": undefined, "Thời Gian Hết Hạn Giữ": undefined, "Thời Gian Giữ Xe": undefined } 
-            : v
-        ));
-        
+        setProcessingVin(vin);
         showToast('Đang Hủy Giữ', `Đang hủy giữ xe VIN: ${vin}`, 'loading');
 
         try {
             await apiService.releaseCar(vin);
             hideToast();
             showToast('Hủy Giữ Thành Công', `Đã hủy giữ xe VIN ${vin}.`, 'info', 3000);
-            refetchStock();
+            await refetchStock();
         } catch (err) {
             hideToast();
             const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
             showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
-            setStockData(originalData); // Revert on failure
+        } finally {
+            setProcessingVin(null);
         }
     };
 
@@ -251,6 +234,7 @@ const StockView: React.FC<StockViewProps> = ({
                             isAdmin={isAdmin}
                             showToast={showToast}
                             highlightedVins={highlightedVins}
+                            processingVin={processingVin}
                          />
                     </div>
                     {totalPages > 0 && 

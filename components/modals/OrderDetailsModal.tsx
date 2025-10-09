@@ -6,16 +6,21 @@ import StatusBadge from '../ui/StatusBadge';
 
 moment.locale('vi');
 
-// Helper to format date and time
+// Helper to format date and time, ensuring robustness for various string formats
+// FIX: Updated to be more robust by trying multiple common formats with strict parsing.
 const formatDateTime = (dateString?: string) => {
     if (!dateString) return '—';
-    try {
-        const date = moment(dateString);
-        return date.isValid() ? date.format('HH:mm DD/MM/YYYY') : '—';
-    } catch (e) {
-        return '—';
-    }
+    // Define possible formats, with ISO 8601 being a common one from JS dates.
+    const formats = [
+        moment.ISO_8601,
+        "DD/MM/YYYY HH:mm:ss",
+        "D/M/YYYY H:m:s",
+        "YYYY-MM-DD HH:mm:ss"
+    ];
+    const date = moment(dateString, formats, 'vi', true); // Strict parsing
+    return date.isValid() ? date.format('HH:mm DD/MM/YYYY') : '—';
 };
+
 
 const InfoItem: React.FC<{ icon: string; label: string; value?: string | number; children?: React.ReactNode; valueClassName?: string }> = ({ icon, label, value, children, valueClassName = '' }) => (
     <div className="flex items-start gap-4 py-3">
@@ -90,11 +95,23 @@ const OrderDetailsModal: React.FC<{ order: Order | null; onClose: () => void }> 
   const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
   const isCancelled = statusText.toLowerCase().includes('đã hủy') || statusText.toLowerCase().includes('từ chối');
 
+  // FIX: Correctly calculate the number of days since the VIN was paired using robust parsing.
+  // This logic now correctly handles future dates and prevents incorrect calculations.
   let daysSincePairedText = '—';
   if (order["Thời gian ghép"]) {
-      const pairingDate = moment(order["Thời gian ghép"]);
+      const formats = [
+          moment.ISO_8601,
+          "DD/MM/YYYY HH:mm:ss",
+          "D/M/YYYY H:m:s",
+          "YYYY-MM-DD HH:mm:ss"
+      ];
+      const pairingDate = moment(order["Thời gian ghép"], formats, 'vi', true);
       if (pairingDate.isValid()) {
-          const days = moment().diff(pairingDate, 'days');
+          // Use moment().startOf('day') to compare just the date part, avoiding time-of-day issues.
+          const today = moment().startOf('day');
+          const pairingDay = pairingDate.startOf('day');
+          const days = today.diff(pairingDay, 'days');
+          // Ensure the value is not negative for future dates.
           daysSincePairedText = `${Math.max(0, days)} ngày`;
       }
   }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
 interface MultiSelectDropdownProps {
   id: string;
@@ -7,9 +7,10 @@ interface MultiSelectDropdownProps {
   selectedOptions: string[];
   onChange: (selected: string[]) => void;
   icon: string;
+  displayMode?: 'count' | 'selection';
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon }) => {
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -37,9 +38,17 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
     onChange(newSelected);
   };
   
-  const displayLabel = selectedOptions.length > 0 
-    ? `${selectedOptions.length} đã chọn`
-    : label;
+  const displayLabel = useMemo(() => {
+    if (selectedOptions.length === 0) return label;
+
+    if (displayMode === 'selection') {
+        if (selectedOptions.length === 1) return selectedOptions[0];
+        return `${selectedOptions.length} lựa chọn`;
+    }
+    
+    // default 'count' mode
+    return `${selectedOptions.length} đã chọn`;
+  }, [selectedOptions, label, displayMode]);
 
   return (
     <div className="relative" ref={dropdownRef}>

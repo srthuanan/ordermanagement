@@ -1,18 +1,22 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Order, SortConfig } from '../types';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Order, SortConfig } from '../../types';
 import HistoryTable from './HistoryTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
-import SummaryCard from './ui/SummaryCard';
 import * as apiService from '../services/apiService';
-import { MONTHS } from '../constants';
-
-// Chart.js is loaded from a CDN in index.html, so we declare it as a global variable for TypeScript.
-declare const Chart: any;
+import { MONTHS } from '../../constants';
+import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
+import Leaderboard from './ui/Leaderboard';
+import StatsOverview from './ui/StatsOverview';
+import TotalViewDashboard from './ui/TotalViewDashboard';
 
 const PAGE_SIZE = 10;
 
 interface SoldCarsViewProps {
+  soldData: Order[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
   onViewDetails: (order: Order) => void;
   onCancel: (order: Order) => void;
   onRequestInvoice: (order: Order) => void;
@@ -21,6 +25,7 @@ interface SoldCarsViewProps {
   onConfirmVC: (order: Order) => void;
 }
 
+// Helper functions for data aggregation
 const synchronizeTvbhName = (name?: string): string => {
     if (!name || typeof name !== 'string') return 'N/A';
     return String(name).normalize("NFC").trim().toLowerCase()
@@ -47,64 +52,35 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
 
 
 const SoldCarsView: React.FC<SoldCarsViewProps> = ({
+  soldData, isLoading, error, refetch,
   onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC
 }) => {
-  const currentMonthIndex = new Date().getMonth();
-  const [activeTab, setActiveTab] = useState<string>(MONTHS[currentMonthIndex]);
-  const [viewData, setViewData] = useState<Order[]>([]);
-  const [totalData, setTotalData] = useState<Order[]>([]);
-  const [cachedData, setCachedData] = useState<Record<string, Order[]>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[] });
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('Total');
+  const [filters, setFilters] = useState({ tvbh: [] as string[] });
   const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
   
-  const monthlyChartRef = useRef<HTMLCanvasElement>(null);
-  const carChartRef = useRef<HTMLCanvasElement>(null);
-  // FIX: Changed Chart to any because 'Chart' is a value from a CDN, not a TypeScript type.
-  const chartInstances = useRef<{ [key: string]: any }>({});
-  
-  const refetch = useCallback(async () => {
-        setError(null);
-        setIsLoading(true);
-        const currentTab = activeTab;
-
+  const displayData = useMemo(() => {
+    if (selectedPeriod === 'Total') {
+        return soldData;
+    }
+    return soldData.filter(order => {
         try {
-            if (currentTab === 'Total') {
-                const result = await apiService.getAllSoldCarsData();
-                if (result.status === 'SUCCESS') {
-                    setTotalData(result.data || []);
-                    setCachedData(prev => ({ ...prev, Total: result.data || [] }));
-                } else { throw new Error(result.message); }
-            } else {
-                const result = await apiService.getSoldCarsDataByMonth(currentTab);
-                if (result.status === 'SUCCESS') {
-                    setViewData(result.data || []);
-                    setCachedData(prev => ({ ...prev, [currentTab]: result.data || [] }));
-                } else { throw new Error(result.message); }
-            }
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            setError(message);
-        } finally {
-            setIsLoading(false);
+            const date = new Date(order['Thời gian nhập']);
+            if (isNaN(date.getTime())) return false; // Guard against invalid dates
+            const monthName = MONTHS[date.getMonth()];
+            return monthName === selectedPeriod;
+        } catch {
+            return false;
         }
-  }, [activeTab]);
+    });
+  }, [soldData, selectedPeriod]);
 
   useEffect(() => {
-    const fetchDataForTab = async () => {
-        if (cachedData[activeTab]) {
-            if (activeTab === 'Total') setTotalData(cachedData[activeTab]);
-            else setViewData(cachedData[activeTab]);
-            setIsLoading(false);
-            return;
-        }
-        refetch();
-    };
-    fetchDataForTab();
-  }, [activeTab, cachedData, refetch]);
+    setCurrentPage(1);
+    setFilters({ tvbh: [] });
+  }, [selectedPeriod]);
 
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
@@ -114,7 +90,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
 
   const handleResetFilters = () => {
     setCurrentPage(1);
-    setFilters({ keyword: '', carModel: [] });
+    setFilters({ tvbh: [] });
   };
 
   const handleSort = (key: keyof Order) => {
@@ -125,55 +101,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
     }
     setSortConfig({ key, direction });
   };
-
-  const monthlyStats = useMemo(() => {
-    const carDataAgg = aggregateData(viewData, 'Dòng xe');
-    const tvbhDataAgg = aggregateData(viewData, 'Tên tư vấn bán hàng');
-    const topCar = carDataAgg[0] || { key: "-", count: 0 };
-    const topTvbh = tvbhDataAgg[0] || { key: "-", count: 0 };
-    return {
-        total: viewData.length,
-        topCar: `${topCar.key} (${topCar.count} xe)`,
-        topTvbh: `${topTvbh.key} (${topTvbh.count} xe)`,
-    };
-  }, [viewData]);
   
-  const yearlyStats = useMemo(() => {
-    if (totalData.length === 0) return { total: 0, topCar: '-', topTvbh: '-', monthlySales: [], carDistribution: [], top5Cars: [], top5Tvbh: [] };
-    const carDataAgg = aggregateData(totalData, 'Dòng xe');
-    const tvbhDataAgg = aggregateData(totalData, 'Tên tư vấn bán hàng');
-    const topCar = carDataAgg[0] || { key: "-", count: 0 };
-    const topTvbh = tvbhDataAgg[0] || { key: "-", count: 0 };
-    
-    const monthlySales = MONTHS.map((month, index) => ({
-      month: `Th ${index + 1}`,
-      count: cachedData[month]?.length || 0,
-    }));
-
-    return {
-        total: totalData.length,
-        topCar: `${topCar.key} (${topCar.count} xe)`,
-        topTvbh: `${topTvbh.key} (${topTvbh.count} xe)`,
-        monthlySales,
-        carDistribution: carDataAgg,
-        top5Cars: carDataAgg.slice(0, 5),
-        top5Tvbh: tvbhDataAgg.slice(0, 5),
-    };
-  }, [totalData, cachedData]);
-
   const processedData = useMemo(() => {
-    let filteredOrders = [...viewData];
-    if (filters.keyword) {
-      const keyword = filters.keyword.toLowerCase();
-      filteredOrders = filteredOrders.filter(
-        order =>
-          order['Tên khách hàng']?.toLowerCase().includes(keyword) ||
-          order['Số đơn hàng']?.toLowerCase().includes(keyword) ||
-          order.VIN?.toLowerCase().includes(keyword)
+    let filteredOrders = [...displayData];
+    if (filters.tvbh.length > 0) {
+      filteredOrders = filteredOrders.filter(order => 
+        filters.tvbh.includes(synchronizeTvbhName(order['Tên tư vấn bán hàng']))
       );
-    }
-    if (filters.carModel.length > 0) {
-      filteredOrders = filteredOrders.filter(order => filters.carModel.includes(order['Dòng xe']));
     }
     if (sortConfig !== null) {
       filteredOrders.sort((a, b) => {
@@ -187,138 +121,82 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
       });
     }
     return filteredOrders;
-  }, [viewData, filters, sortConfig]);
+  }, [displayData, filters, sortConfig]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     return processedData.slice(startIndex, startIndex + PAGE_SIZE);
   }, [processedData, currentPage]);
-
-  const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
-  const uniqueCarModels = useMemo(() => [...new Set(viewData.map(o => o["Dòng xe"]))].sort(), [viewData]);
-  const dropdownConfigs: DropdownFilterConfig[] = [
-    { id: 'sold-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
-  ].filter(d => d.options.length > 0);
-  
-  const renderMonthView = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <SummaryCard icon="fa-car" title="Tổng Số Xe (Tháng)" value={monthlyStats.total} />
-        <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy (Tháng)" value={monthlyStats.topCar} />
-        <SummaryCard icon="fa-user-tie" title="TVBH Xuất Sắc (Tháng)" value={monthlyStats.topTvbh} />
-      </div>
-      <Filters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onReset={handleResetFilters}
-        dropdowns={dropdownConfigs}
-        searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
-        totalCount={processedData.length}
-        onRefresh={refetch}
-        isLoading={isLoading}
-      />
-      <div className="mt-4 flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-        <div className="flex-grow overflow-auto relative">
-          <HistoryTable
-            orders={paginatedData} onViewDetails={onViewDetails} onCancel={onCancel}
-            onRequestInvoice={onRequestInvoice} onSupplement={onSupplement}
-            onRequestVC={onRequestVC} onConfirmVC={onConfirmVC}
-            sortConfig={sortConfig} onSort={handleSort}
-            startIndex={(currentPage - 1) * PAGE_SIZE}
-          />
-        </div>
-        {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
-      </div>
-    </>
-  );
   
   useEffect(() => {
-    if (activeTab !== 'Total' || !yearlyStats || !monthlyChartRef.current || !carChartRef.current) return;
+    if (selectedPeriod !== 'Total') {
+        const isSelectedOrderVisible = processedData.some(o => o['Số đơn hàng'] === selectedDetailOrder?.['Số đơn hàng']);
+        if (processedData.length > 0 && !isSelectedOrderVisible) {
+            setSelectedDetailOrder(processedData[0]);
+        } else if (processedData.length === 0) {
+            setSelectedDetailOrder(null);
+        }
+    }
+  }, [processedData, selectedDetailOrder, selectedPeriod]);
+
+  const stats = useMemo(() => {
+    const carDataAgg = aggregateData(processedData, 'Dòng xe');
+    const tvbhDataAgg = aggregateData(processedData, 'Tên tư vấn bán hàng');
+    const topCar = carDataAgg[0] || { key: "-", count: 0 };
+    // FIX: Renamed local variable to avoid confusion and corrected the returned object structure.
+    const topTvbhInfo = tvbhDataAgg[0] || { key: "-", count: 0 };
     
-    // Destroy previous charts
-    Object.values(chartInstances.current).forEach(chart => chart.destroy());
-    chartInstances.current = {};
+    const monthlySalesData: Record<string, number> = {};
+    MONTHS.forEach(m => monthlySalesData[m] = 0);
+    processedData.forEach(order => {
+        if (order['Thời gian nhập']) {
+            try {
+                const date = new Date(order['Thời gian nhập']);
+                if (!isNaN(date.getTime())) {
+                    const monthName = MONTHS[date.getMonth()];
+                    if (monthName) {
+                        monthlySalesData[monthName] = (monthlySalesData[monthName] || 0) + 1;
+                    }
+                }
+            } catch (e) {
+                // ignore invalid dates
+            }
+        }
+    });
+    const monthlySales = MONTHS.map((month, index) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
 
-    const monthlyCtx = monthlyChartRef.current.getContext('2d');
-    if (monthlyCtx) {
-        chartInstances.current.monthly = new Chart(monthlyCtx, {
-            type: 'bar',
-            data: {
-                labels: yearlyStats.monthlySales.map(d => d.month),
-                datasets: [{ label: 'Xe bán', data: yearlyStats.monthlySales.map(d => d.count), backgroundColor: '#0D47A1', borderRadius: 4 }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-    }
 
-    const carCtx = carChartRef.current.getContext('2d');
-    if (carCtx) {
-        const top5Cars = yearlyStats.carDistribution.slice(0, 5);
-        const otherCount = yearlyStats.carDistribution.slice(5).reduce((acc, curr) => acc + curr.count, 0);
-        const chartData = [...top5Cars];
-        if (otherCount > 0) chartData.push({ key: 'Khác', count: otherCount });
-
-        chartInstances.current.car = new Chart(carCtx, {
-            type: 'pie',
-            data: {
-                labels: chartData.map(d => d.key),
-                datasets: [{ data: chartData.map(d => d.count), backgroundColor: ['#0D47A1', '#1565C0', '#42A5F5', '#90CAF9', '#BBDEFB', '#E3F2FD'], borderWidth: 2, borderColor: '#fff' }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-        });
-    }
-     return () => {
-      Object.values(chartInstances.current).forEach(chart => chart.destroy());
+    return {
+        total: processedData.length,
+        topCar: `${topCar.key} (${topCar.count} xe)`,
+        topTvbhSummary: `${topTvbhInfo.key} (${topTvbhInfo.count} xe)`,
+        monthlySales: monthlySales,
+        carDistribution: carDataAgg,
+        topCars: carDataAgg.slice(0, 10),
+        topTvbh: tvbhDataAgg.slice(0, 10),
     };
-  }, [activeTab, yearlyStats]);
+  }, [processedData]);
 
-  const renderTotalView = () => (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <SummaryCard icon="fa-car" title="Tổng Số Xe (Năm)" value={yearlyStats.total} />
-            <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy (Năm)" value={yearlyStats.topCar} />
-            <SummaryCard icon="fa-user-tie" title="TVBH Xuất Sắc (Năm)" value={yearlyStats.topTvbh} />
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-surface-card p-4 rounded-lg border border-border-primary">
-                <h3 className="font-bold text-text-primary mb-4">Doanh Số Theo Tháng</h3>
-                <div className="h-72"><canvas ref={monthlyChartRef}></canvas></div>
-            </div>
-            <div className="bg-surface-card p-4 rounded-lg border border-border-primary">
-                <h3 className="font-bold text-text-primary mb-4">Phân Bố Dòng Xe</h3>
-                <div className="h-72"><canvas ref={carChartRef}></canvas></div>
-            </div>
-        </div>
+  const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+  const uniqueTvbh = useMemo(() => [...new Set(displayData.map(o => synchronizeTvbhName(o["Tên tư vấn bán hàng"])))].filter(name => name && name !== 'N/A').sort(), [displayData]);
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-surface-card p-4 rounded-lg border border-border-primary">
-                 <h3 className="font-bold text-text-primary mb-4">Top 5 Dòng Xe Bán Chạy</h3>
-                 <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-text-secondary uppercase bg-surface-ground"><tr><th className="px-4 py-2">#</th><th className="px-4 py-2">Dòng Xe</th><th className="px-4 py-2">Số Lượng</th></tr></thead>
-                    <tbody>{yearlyStats.top5Cars.map((item, i) => (<tr key={item.key} className="border-b border-border-primary">
-                        <td className="px-4 py-2 font-medium">{i+1}</td><td className="px-4 py-2 font-semibold text-text-primary">{item.key}</td><td className="px-4 py-2">{item.count}</td></tr>))}</tbody>
-                 </table>
-            </div>
-             <div className="bg-surface-card p-4 rounded-lg border border-border-primary">
-                 <h3 className="font-bold text-text-primary mb-4">Top 5 TVBH Xuất Sắc</h3>
-                 <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-text-secondary uppercase bg-surface-ground"><tr><th className="px-4 py-2">#</th><th className="px-4 py-2">Tên TVBH</th><th className="px-4 py-2">Số Lượng</th></tr></thead>
-                    <tbody>{yearlyStats.top5Tvbh.map((item, i) => (<tr key={item.key} className="border-b border-border-primary">
-                        <td className="px-4 py-2 font-medium">{i+1}</td><td className="px-4 py-2 font-semibold text-text-primary">{item.key}</td><td className="px-4 py-2">{item.count}</td></tr>))}</tbody>
-                 </table>
-            </div>
-        </div>
-    </div>
-  );
-
+  const dropdownConfigs: DropdownFilterConfig[] = [
+    { 
+        id: 'sold-filter-tvbh', 
+        key: 'tvbh', 
+        label: 'Tư Vấn Bán Hàng', 
+        options: uniqueTvbh, 
+        icon: 'fa-user-tie',
+    },
+  ].filter(d => d.options.length > 0);
+  
   const renderContent = () => {
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+    if (isLoading && displayData.length === 0) {
+        return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
     }
     if (error) {
         return (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center h-full">
                 <div className="text-center p-8 bg-surface-card rounded-lg shadow-xl">
                     <i className="fas fa-exclamation-triangle fa-3x text-danger"></i>
                     <p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p>
@@ -328,24 +206,81 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
             </div>
         );
     }
-    return activeTab === 'Total' ? renderTotalView() : renderMonthView();
+    
+    if (selectedPeriod === 'Total') {
+        return (
+            <div className="space-y-6">
+                <TotalViewDashboard yearlyStats={stats} />
+            </div>
+        );
+    }
+    
+    // Monthly View
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+            {/* Left Column: Filters & Stats */}
+            <div className="lg:col-span-3 space-y-6 flex flex-col">
+                <StatsOverview stats={{ total: stats.total, topCar: stats.topCar, topTvbh: stats.topTvbhSummary }} />
+                <Filters
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    onReset={handleResetFilters}
+                    dropdowns={dropdownConfigs}
+                    searchPlaceholder=""
+                    totalCount={processedData.length}
+                    onRefresh={refetch}
+                    isLoading={isLoading}
+                    hideSearch={true}
+                />
+            </div>
+
+            {/* Center Column: Data Table */}
+            <div className="lg:col-span-6 flex flex-col min-h-0 h-full">
+                <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                    <div className="flex-grow overflow-auto relative">
+                        <HistoryTable
+                            orders={paginatedData}
+                            onRowClick={setSelectedDetailOrder}
+                            selectedOrder={selectedDetailOrder}
+                            sortConfig={sortConfig}
+                            onSort={handleSort}
+                            startIndex={(currentPage - 1) * PAGE_SIZE}
+                            viewMode="sold"
+                        />
+                    </div>
+                    {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                </div>
+            </div>
+
+            {/* Right Column: Contextual Info */}
+            <div className="lg:col-span-3 h-full flex flex-col gap-6">
+                <SoldCarDetailPanel order={selectedDetailOrder} />
+            </div>
+        </div>
+    );
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6 h-full animate-fade-in-up">
-      <div className="flex-shrink-0 border-b border-border-primary">
-        <div className="flex items-center space-x-2 overflow-x-auto pb-px">
-          <button onClick={() => setActiveTab('Total')} className={`px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${activeTab === 'Total' ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-secondary hover:border-border-secondary hover:text-text-primary'}`}>
-            <i className="fas fa-chart-pie mr-2"></i>Tổng Hợp
-          </button>
-          {MONTHS.map((month, index) => (
-            <button key={month} onClick={() => setActiveTab(month)} className={`px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${activeTab === month ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-secondary hover:border-border-secondary hover:text-text-primary'}`}>
-              Tháng {index + 1}
+    <div className="flex flex-col h-full animate-fade-in-up">
+      <div className="flex-shrink-0 flex items-center justify-between gap-4 pb-4 border-b border-border-primary">
+          <h2 className="text-xl font-bold text-text-primary">Báo Cáo Xe Đã Bán</h2>
+          <div className="flex items-center gap-4">
+            <select 
+              value={selectedPeriod} 
+              onChange={e => setSelectedPeriod(e.target.value)}
+              className="w-48 pl-3 pr-8 py-2 bg-surface-card text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all text-sm font-semibold"
+            >
+              <option value="Total">Cả Năm</option>
+              {MONTHS.map((month, index) => (
+                <option key={month} value={month}>Tháng {index + 1}</option>
+              ))}
+            </select>
+            <button onClick={refetch} disabled={isLoading} className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-card text-text-secondary border border-border-primary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50" aria-label="Làm mới" title="Làm mới">
+                <i className={`fas fa-sync-alt ${isLoading ? 'animate-spin' : ''}`}></i>
             </button>
-          ))}
-        </div>
+          </div>
       </div>
-      <div className="flex-grow flex flex-col">{renderContent()}</div>
+      <div className="flex-grow pt-6 flex flex-col min-h-0">{renderContent()}</div>
     </div>
   );
 };

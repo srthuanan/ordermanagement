@@ -6,20 +6,22 @@ import ActionMenu from './ui/ActionMenu';
 
 interface HistoryTableProps {
   orders: Order[];
-  onViewDetails: (order: Order) => void;
-  onCancel: (order: Order) => void;
-  onRequestInvoice: (order: Order) => void;
-  onSupplement: (order: Order) => void;
-  onRequestVC: (order: Order) => void;
-  onConfirmVC: (order: Order) => void;
+  onViewDetails?: (order: Order) => void;
+  onCancel?: (order: Order) => void;
+  onRequestInvoice?: (order: Order) => void;
+  onSupplement?: (order: Order) => void;
+  onRequestVC?: (order: Order) => void;
+  onConfirmVC?: (order: Order) => void;
   sortConfig: SortConfig | null;
-  // FIX: Changed the type of onSort to be a function that accepts a key of Order.
   onSort: (key: keyof Order) => void;
   startIndex: number;
+  onRowClick?: (order: Order) => void;
+  selectedOrder?: Order | null;
+  viewMode?: 'full' | 'sold';
+  processingOrder?: string | null;
 }
 
 const getExteriorColorStyle = (exteriorValue: string | undefined): React.CSSProperties => {
-    // The application does not have a dark mode feature, so isDarkMode is hardcoded to false.
     const isDarkMode = false;
     const specificFontWeight = 500;
     const outlineStyle: React.CSSProperties = {
@@ -90,13 +92,35 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof Order; title: string; sort
     );
 };
 
-const HistoryTableRow: React.FC<{ order: Order; index: number; onViewDetails: (order: Order) => void; onCancel: (order: Order) => void; onRequestInvoice: (order: Order) => void; onSupplement: (order: Order) => void; onRequestVC: (order: Order) => void; onConfirmVC: (order: Order) => void; }> = 
-({ order, index, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC }) => {
+interface HistoryTableRowProps { 
+    order: Order; 
+    index: number; 
+    onViewDetails?: (order: Order) => void; 
+    onCancel?: (order: Order) => void; 
+    onRequestInvoice?: (order: Order) => void; 
+    onSupplement?: (order: Order) => void; 
+    onRequestVC?: (order: Order) => void; 
+    onConfirmVC?: (order: Order) => void; 
+    onRowClick?: (order: Order) => void; 
+    selectedOrder?: Order | null;
+    viewMode: 'full' | 'sold';
+    processingOrder?: string | null;
+}
+
+
+const HistoryTableRow: React.FC<HistoryTableRowProps> = 
+({ order, index, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onRowClick, selectedOrder, viewMode, processingOrder }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
+    const isSelected = selectedOrder && selectedOrder["Số đơn hàng"] === order["Số đơn hàng"];
+    const isProcessing = processingOrder === order["Số đơn hàng"];
 
     return (
-        <tr className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up cursor-pointer ${isMenuOpen ? 'relative z-20' : ''}`} style={{animationDelay: `${index * 20}ms`}} onClick={() => onViewDetails(order)}>
+        <tr 
+            className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${onRowClick ? 'cursor-pointer' : ''} ${isSelected ? 'selected-row-highlight' : ''} ${isMenuOpen ? 'relative z-20' : ''}`} 
+            style={{animationDelay: `${index * 20}ms`}} 
+            onClick={() => onRowClick ? onRowClick(order) : onViewDetails?.(order)}
+        >
             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{index + 1}</td>
             <td className="whitespace-nowrap px-3 py-4 text-sm">
                 <div className="font-semibold text-text-primary">{order["Tên khách hàng"] || "N/A"}</div>
@@ -106,22 +130,43 @@ const HistoryTableRow: React.FC<{ order: Order; index: number; onViewDetails: (o
                 <div className="text-text-primary">{order["Dòng xe"]} / {order["Phiên bản"]}</div>
                 <div className="text-text-secondary text-xs" style={getExteriorColorStyle(order['Ngoại thất'])}>{order["Ngoại thất"]} / {order["Nội thất"]}</div>
             </td>
-            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                <div className="text-text-primary" title={moment(order["Thời gian nhập"]).format('DD/MM/YYYY HH:mm:ss')}>
-                    {moment(order["Thời gian nhập"]).format('DD/MM/YY HH:mm')}
-                </div>
-                <div className="text-text-secondary text-xs">{moment(order["Thời gian nhập"]).fromNow()}</div>
-            </td>
+            {viewMode === 'full' && (
+                 <td className="whitespace-nowrap px-3 py-4 text-sm">
+                    <div className="text-text-primary" title={moment(order["Thời gian nhập"]).format('DD/MM/YYYY HH:mm:ss')}>
+                        {moment(order["Thời gian nhập"]).format('DD/MM/YY HH:mm')}
+                    </div>
+                    <div className="text-text-secondary text-xs">{moment(order["Thời gian nhập"]).fromNow()}</div>
+                </td>
+            )}
             <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary truncate" title={order["Tên tư vấn bán hàng"]}>{order["Tên tư vấn bán hàng"] || "N/A"}</td>
-            <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary"><StatusBadge status={statusText} /></td>
-            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6" onClick={(e) => e.stopPropagation()}>
-                <ActionMenu order={order} onViewDetails={onViewDetails} onCancel={onCancel} onRequestInvoice={onRequestInvoice} onSupplement={onSupplement} onRequestVC={onRequestVC} onConfirmVC={onConfirmVC} onToggle={setIsMenuOpen} />
-            </td>
+            {viewMode === 'full' && (
+                 <>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary"><StatusBadge status={statusText} /></td>
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6" onClick={(e) => e.stopPropagation()}>
+                        {isProcessing ? (
+                            <div className="flex items-center justify-center h-9">
+                                <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                            </div>
+                        ) : (
+                            <ActionMenu 
+                                order={order} 
+                                onViewDetails={onViewDetails!} 
+                                onCancel={onCancel!} 
+                                onRequestInvoice={onRequestInvoice!} 
+                                onSupplement={onSupplement!} 
+                                onRequestVC={onRequestVC!} 
+                                onConfirmVC={onConfirmVC!} 
+                                onToggle={setIsMenuOpen} 
+                            />
+                        )}
+                    </td>
+                </>
+            )}
         </tr>
     );
 };
 
-const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, sortConfig, onSort, startIndex }) => {
+const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, sortConfig, onSort, startIndex, onRowClick, selectedOrder, viewMode = 'full', processingOrder }) => {
   if (orders.length === 0) {
     return (
       <div className="text-center py-16 text-text-secondary">
@@ -141,15 +186,29 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCa
                         <th scope="col" className="py-3.5 pl-4 pr-3 text-center text-xs font-bold text-text-secondary sm:pl-6 w-12 uppercase tracking-wider">#</th>
                         <SortableHeaderCell columnKey="Tên khách hàng" title="Khách hàng / SĐH" sortConfig={sortConfig} onSort={onSort} />
                         <SortableHeaderCell columnKey="Dòng xe" title="Thông Tin Xe" sortConfig={sortConfig} onSort={onSort} />
-                        <SortableHeaderCell columnKey="Thời gian nhập" title="Ngày Yêu Cầu" sortConfig={sortConfig} onSort={onSort} />
+                        {viewMode === 'full' && <SortableHeaderCell columnKey="Thời gian nhập" title="Ngày Yêu Cầu" sortConfig={sortConfig} onSort={onSort} />}
                         <SortableHeaderCell columnKey="Tên tư vấn bán hàng" title="Tư vấn" sortConfig={sortConfig} onSort={onSort} />
-                        <SortableHeaderCell columnKey="Kết quả" title="Trạng thái" sortConfig={sortConfig} onSort={onSort} />
-                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành động</th>
+                        {viewMode === 'full' && <SortableHeaderCell columnKey="Kết quả" title="Trạng thái" sortConfig={sortConfig} onSort={onSort} />}
+                        {viewMode === 'full' && <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành động</th>}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-border-primary bg-surface-card">
                     {orders.map((order, index) => (
-                        <HistoryTableRow key={order["Số đơn hàng"] || index} order={order} index={startIndex + index} onViewDetails={onViewDetails} onCancel={onCancel} onRequestInvoice={onRequestInvoice} onSupplement={onSupplement} onRequestVC={onRequestVC} onConfirmVC={onConfirmVC}/>
+                        <HistoryTableRow 
+                            key={order["Số đơn hàng"] || index} 
+                            order={order} 
+                            index={startIndex + index} 
+                            onViewDetails={onViewDetails} 
+                            onCancel={onCancel} 
+                            onRequestInvoice={onRequestInvoice} 
+                            onSupplement={onSupplement} 
+                            onRequestVC={onRequestVC} 
+                            onConfirmVC={onConfirmVC}
+                            onRowClick={onRowClick}
+                            selectedOrder={selectedOrder}
+                            viewMode={viewMode}
+                            processingOrder={processingOrder}
+                        />
                     ))}
                 </tbody>
             </table>

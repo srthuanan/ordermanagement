@@ -15,6 +15,7 @@ import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
+import { useSoldCarsApi } from './hooks/useSoldCarsApi';
 import * as apiService from './services/apiService';
 import { ADMIN_USER } from './constants';
 
@@ -38,6 +39,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     // Centralized data fetching
     const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi();
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
+    const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
     
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
@@ -51,6 +53,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoadingArchives, setIsLoadingArchives] = useState(false);
     const [isLastArchive, setIsLastArchive] = useState(false);
+    const [processingOrder, setProcessingOrder] = useState<string | null>(null);
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -244,6 +247,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     
     const handleViewDetails = (order: Order) => setSelectedOrder(order);
     const handleCancelOrder = async (order: Order, reason: string) => {
+        setProcessingOrder(order["Số đơn hàng"]);
         showToast('Đang Hủy Yêu Cầu', `Hủy yêu cầu cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading');
         try {
             const result = await apiService.cancelRequest(order["Số đơn hàng"], reason);
@@ -256,24 +260,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Hủy Thất Bại', message, 'error', 5000);
         } finally {
             setOrderToCancel(null);
+            setProcessingOrder(null);
         }
     };
     
     const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File) => {
-        const originalOrder = historyData.find(o => o["Số đơn hàng"] === order["Số đơn hàng"]);
-        if (!originalOrder) {
-            showToast('Lỗi Dữ Liệu', 'Không tìm thấy đơn hàng để cập nhật.', 'error', 5000);
-            return;
-        }
-
-        // Optimistic UI Update
-        setHistoryData(prevData =>
-            prevData.map(o =>
-                o["Số đơn hàng"] === order["Số đơn hàng"]
-                    ? { ...o, "Kết quả": "Chờ phê duyệt", "Trạng thái VC": "Chờ phê duyệt" }
-                    : o
-            )
-        );
+        setProcessingOrder(order["Số đơn hàng"]);
         setOrderToRequestInvoice(null);
         showToast('Đang Gửi Chứng Từ', 'Quá trình này có thể mất một lúc. Vui lòng không đóng trang.', 'loading');
 
@@ -286,19 +278,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Gửi Thất Bại', message, 'error', 5000);
-
-            // Rollback optimistic update on failure
-            setHistoryData(prevData =>
-                prevData.map(o =>
-                    o["Số đơn hàng"] === order["Số đơn hàng"]
-                        ? originalOrder
-                        : o
-                )
-            );
+        } finally {
+            setProcessingOrder(null);
         }
     };
     
     const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null) => {
+        setProcessingOrder(order["Số đơn hàng"]);
         showToast('Đang Bổ Sung Chứng Từ', 'Hệ thống đang xử lý tệp của bạn.', 'loading');
         try {
             const result = await apiService.uploadSupplementaryFiles(order["Số đơn hàng"], contractFile, proposalFile);
@@ -311,10 +297,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Bổ Sung Thất Bại', message, 'error', 5000);
         } finally {
              setOrderToSupplement(null);
+             setProcessingOrder(null);
         }
     };
 
     const handleConfirmVC = async (order: Order) => {
+        setProcessingOrder(order["Số đơn hàng"]);
         showToast('Đang Xác Nhận VinClub', `Xác nhận VinClub cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading');
         try {
             const result = await apiService.confirmVinClubVerification(order["Số đơn hàng"]);
@@ -325,10 +313,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Xác Nhận Thất Bại', message, 'error', 5000);
+        } finally {
+            setProcessingOrder(null);
         }
     };
 
     const handleSendVcRequest = async (order: Order, data: VcRequestData) => {
+        setProcessingOrder(order["Số đơn hàng"]);
         showToast('Đang Yêu Cầu Cấp VC', 'Hệ thống đang xử lý tệp.', 'loading');
         try {
             const result = await apiService.requestVcIssuance(order["Số đơn hàng"], data);
@@ -341,6 +332,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Yêu Cầu Thất Bại', message, 'error', 5000);
         } finally {
             setOrderToRequestVC(null);
+            setProcessingOrder(null);
         }
     };
 
@@ -502,7 +494,19 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 />
                 <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                     <div className="flex-grow overflow-auto relative">
-                         <HistoryTable orders={paginatedData} onViewDetails={handleViewDetails} onCancel={setOrderToCancel} onRequestInvoice={setOrderToRequestInvoice} onSupplement={setOrderToSupplement} onRequestVC={setOrderToRequestVC} onConfirmVC={handleConfirmVC} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} />
+                         <HistoryTable 
+                             orders={paginatedData} 
+                             onViewDetails={handleViewDetails} 
+                             onCancel={setOrderToCancel} 
+                             onRequestInvoice={setOrderToRequestInvoice} 
+                             onSupplement={setOrderToSupplement} 
+                             onRequestVC={setOrderToRequestVC} 
+                             onConfirmVC={handleConfirmVC} 
+                             sortConfig={sortConfig} 
+                             onSort={handleSort} 
+                             startIndex={(currentPage - 1) * PAGE_SIZE}
+                             processingOrder={processingOrder} 
+                         />
                     </div>
                     {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                 </div>
@@ -540,6 +544,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             case 'sold':
                 return (
                     <SoldCarsView
+                        soldData={soldData}
+                        isLoading={isLoadingSold}
+                        error={errorSold}
+                        refetch={refetchSold}
                         onViewDetails={handleViewDetails}
                         onCancel={setOrderToCancel}
                         onRequestInvoice={setOrderToRequestInvoice}
@@ -668,6 +676,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 hideToast={hideToast}
                 existingOrderNumbers={historyData.map(o => o["Số đơn hàng"])}
                 initialVehicle={createRequestData.initialVehicle}
+                currentUser={currentUser}
             />
             <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
