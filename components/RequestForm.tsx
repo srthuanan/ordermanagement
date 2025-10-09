@@ -14,9 +14,13 @@ interface RequestFormProps {
     currentUser: string;
 }
 
-const InputGroup: React.FC<{icon: string; children: React.ReactNode; label: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
+const InputGroup: React.FC<{icon: string; children: React.ReactNode; label?: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
     <div>
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-2">{label}</label>
+        {label ? (
+            <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-2">{label}</label>
+        ) : (
+            <div className="block text-sm font-medium text-transparent mb-2 select-none">&nbsp;</div>
+        )}
         <div className="relative">
             <i className={`fas ${icon} absolute top-1/2 left-4 -translate-y-1/2 text-slate-500 peer-focus:text-accent-start transition-colors text-base`}></i>
             {children}
@@ -222,8 +226,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                     <section>
                         <SectionHeader icon="fa-user-circle" title="Thông tin Khách hàng & Xe" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-                            <InputGroup icon="fa-user-tie" label="Tên khách hàng" htmlFor="ten_khach_hang"><input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYỄN VĂN A" /></InputGroup>
-                            <InputGroup icon="fa-barcode" label="Số đơn hàng" htmlFor="so_don_hang"><input id="so_don_hang" type="text" name="so_don_hang" value={formData.so_don_hang} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng. VD: N31913-VSO-25-04-0028')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="VD: N31913-VSO-25-04-0028" /></InputGroup>
+                            <InputGroup icon="fa-user-tie" htmlFor="ten_khach_hang"><input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="Tên khách hàng" /></InputGroup>
+                            <InputGroup icon="fa-barcode" htmlFor="so_don_hang"><input id="so_don_hang" type="text" name="so_don_hang" value={formData.so_don_hang} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng. Yêu cầu định dạng: Nxxxxx-XXX-yy-mm-zzzz')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="Số đơn hàng" /></InputGroup>
                             <InputGroup icon="fa-car" label="Dòng xe" htmlFor="dong_xe"><select id="dong_xe" name="dong_xe" value={formData.dong_xe} onChange={handleInputChange} required className={`${inputClass} futuristic-select disabled:opacity-50`} disabled={isPreFilled}><option value="" disabled>Chọn dòng xe</option>{Object.keys(versionsMap).map(car => <option key={car} value={car}>{car}</option>)}</select></InputGroup>
                             <InputGroup icon="fa-cogs" label="Phiên bản" htmlFor="phien_ban"><select id="phien_ban" name="phien_ban" value={formData.phien_ban} onChange={handleInputChange} required disabled={!formData.dong_xe || isPreFilled} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn phiên bản</option>{availableVersions.map(v => <option key={v} value={v}>{v}</option>)}</select></InputGroup>
                         </div>

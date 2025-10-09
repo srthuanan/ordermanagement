@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 
@@ -94,6 +95,18 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
   const confirmRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if ((window as any).tippy) {
+      (window as any).tippy('[data-tippy-content]', {
+        allowHTML: true,
+        placement: 'top',
+        animation: 'scale-subtle',
+        theme: 'light-border',
+        duration: [200, 200],
+      });
+    }
+  }, [vehicles]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (confirmRef.current && !confirmRef.current.contains(event.target as Node)) {
         setConfirmAction(null);
@@ -150,8 +163,34 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         const isConfirmOpen = confirmAction?.vin === vehicle.VIN;
                         const isProcessing = processingVin === vehicle.VIN;
 
+                        const isHeld = vehicle["Trạng thái"] === 'Đang giữ';
+                        const tippyContent = isHeld && vehicle["Người Giữ Xe"] && vehicle["Thời Gian Hết Hạn Giữ"] ? `
+                            <div class="p-2 text-left text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-user-clock text-accent-primary"></i>
+                                    <div>
+                                        <div class="font-semibold text-text-secondary text-xs">Người giữ:</div>
+                                        <div class="text-text-primary font-medium">${vehicle["Người Giữ Xe"]}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-dashed border-border-primary">
+                                    <i class="fas fa-hourglass-end text-danger"></i>
+                                    <div>
+                                        <div class="font-semibold text-text-secondary text-xs">Hết hạn:</div>
+                                        <div class="text-text-primary font-medium font-mono">${moment(vehicle["Thời Gian Hết Hạn Giữ"]).format('HH:mm DD/MM/YYYY')}</div>
+                                        <div class="text-xs text-text-secondary">${moment(vehicle["Thời Gian Hết Hạn Giữ"]).fromNow()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : '';
+
                         return (
-                            <tr key={vehicle.VIN} className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} style={{animationDelay: `${index * 20}ms`}}>
+                            <tr 
+                                key={vehicle.VIN}
+                                data-tippy-content={tippyContent}
+                                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
+                                style={{animationDelay: `${index * 20}ms`}}
+                            >
                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
                                     <span

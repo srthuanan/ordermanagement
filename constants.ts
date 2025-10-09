@@ -1,4 +1,4 @@
-export const API_URL = "https://script.google.com/macros/s/AKfycbytcOsvwhkNWBYu-yHeZ1ZJcMg7g-JTGrJ0uFwMkt6ajqpa72ofGkNH4WlhL0oDYKT4fQ/exec";
+export const API_URL = "https://script.google.com/macros/s/AKfycbxUu9P6ctkA4VBlgQlENI3CHi7s-3P7MdtW2lv6ntJ8fYelclN8YwxfP-m0N-oKW-OROw/exec";
 export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
 export const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
 export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";

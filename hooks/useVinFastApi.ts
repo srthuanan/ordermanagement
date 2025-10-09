@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Order } from '../types';
 import * as apiService from '../services/apiService';
 
-export const useVinFastApi = () => {
+export const useVinFastApi = (usersToView?: string[]) => {
     const [historyData, setHistoryData] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export const useVinFastApi = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await apiService.getPaginatedData();
+            const result = await apiService.getPaginatedData(usersToView);
             setHistoryData(result.data || []);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -19,7 +19,7 @@ export const useVinFastApi = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [usersToView]);
 
     useEffect(() => {
         fetchData();

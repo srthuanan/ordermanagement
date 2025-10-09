@@ -116,16 +116,22 @@ const postStockApiWithParams = async (params: Record<string, any>): Promise<ApiR
     }
 };
 
-export const getPaginatedData = async (): Promise<ApiResult> => {
+export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const isAdmin = currentUser === ADMIN_USER;
+    
+    const filters: Record<string, any> = {};
+    if (usersToView && usersToView.length > 0) {
+        filters.usersToView = usersToView;
+    }
+
     const params = {
         action: 'getPaginatedData',
         page: '1',
         pageSize: '9999',
         sortBy: 'Thời gian nhập',
         sortOrder: 'desc',
-        filters: JSON.stringify({}),
+        filters: JSON.stringify(filters),
         currentUser: currentUser,
         isAdmin: String(isAdmin),
     };

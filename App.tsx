@@ -17,6 +17,7 @@ import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
 import { useSoldCarsApi } from './hooks/useSoldCarsApi';
 import * as apiService from './services/apiService';
+import { teamMap } from './services/authService';
 import { ADMIN_USER } from './constants';
 
 moment.locale('vi');
@@ -35,11 +36,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeView, setActiveView] = useState<ActiveView>('orders');
-    
-    // Centralized data fetching
-    const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi();
-    const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
-    const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
     
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
@@ -60,6 +56,28 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const notificationContainerRef = useRef<HTMLDivElement>(null);
     
+    // FIX: Hoisted data fetching logic and user info variables to resolve a "used before declaration" error.
+    // The stockData variable, fetched via the useStockApi hook, was being accessed in a useEffect hook 
+    // before it was declared, causing a runtime error. By moving the user info retrieval, role determination, 
+    // and all data fetching hooks (useVinFastApi, useStockApi, useSoldCarsApi) to an earlier point in the 
+    // component's execution, we ensure that stockData is initialized before any dependent effects are run.
+    const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
+    const currentUserName = sessionStorage.getItem("currentUser") || "User";
+    const userRole = sessionStorage.getItem("userRole") || (currentUserName.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Tư vấn bán hàng');
+    const isCurrentUserAdmin = currentUserName.toLowerCase() === 'admin';
+
+    const usersToView = useMemo(() => {
+        if (userRole === 'Trưởng Phòng Kinh Doanh' && teamMap[currentUser]) {
+            return [currentUser, ...teamMap[currentUser]];
+        }
+        return undefined;
+    }, [currentUser, userRole]);
+
+    // Centralized data fetching
+    const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi(usersToView);
+    const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
+    const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
+
     // State and refs for stock polling
     const [highlightedVins, setHighlightedVins] = useState<Set<string>>(new Set());
     const prevStockDataRef = useRef<StockVehicle[]>([]);
@@ -67,11 +85,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     useEffect(() => {
         prevStockDataRef.current = stockData;
     }, [stockData]);
-
-
-    const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-    const currentUserName = sessionStorage.getItem("currentUser") || "User";
-    const isCurrentUserAdmin = currentUserName.toLowerCase() === 'admin';
 
     useEffect(() => {
         const savedState = localStorage.getItem('sidebarState');
@@ -593,7 +606,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         </div>
                         <div className={`transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
                             <p className="text-sm font-bold text-text-primary whitespace-nowrap">{currentUser}</p>
-                            <p className="text-xs text-text-secondary capitalize">{currentUserName}</p>
+                            <p className="text-xs text-text-secondary capitalize">{userRole}</p>
                         </div>
                     </div>
                 </div>
