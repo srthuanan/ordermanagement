@@ -23,6 +23,7 @@ interface FiltersProps {
   onRefresh: () => void;
   isLoading: boolean;
   hideSearch?: boolean;
+  size?: 'default' | 'compact';
 }
 
 const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ value, onRemove }) => (
@@ -35,7 +36,7 @@ const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ 
 );
 
 
-const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, hideSearch = false }) => {
+const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, hideSearch = false, size = 'default' }) => {
   
   const activeDropdownFilters = dropdowns.flatMap(d => 
     ((filters[d.key] || []) as string[]).map(value => ({
@@ -49,11 +50,12 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
   );
 
   const hasActiveDropdownFilters = activeDropdownFilters.length > 0;
+  const isCompact = size === 'compact';
 
   return (
-    <div className="flex-shrink-0 bg-surface-card p-4 rounded-xl shadow-md border border-border-primary space-y-3">
+    <div className={`flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary space-y-3 ${isCompact ? 'p-3' : 'p-4'}`}>
         {/* Main filter bar */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap">
+        <div className={`flex flex-col sm:flex-row items-center flex-wrap ${isCompact ? 'gap-2' : 'gap-3'}`}>
             {/* Search Input */}
             {!hideSearch && (
               <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
@@ -64,7 +66,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
                       placeholder={searchPlaceholder} 
                       value={filters.keyword || ''}
                       onChange={(e) => onFilterChange({ keyword: e.target.value })}
-                      className="peer w-full pl-11 pr-4 py-2.5 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder"
+                      className={`peer w-full pl-11 pr-4 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder ${isCompact ? 'py-2' : 'py-2.5'}`}
                   />
               </div>
             )}
@@ -80,6 +82,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
                     onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
                     icon={dropdown.icon}
                     displayMode={dropdown.displayMode}
+                    size={size}
                 />
             ))}
 
@@ -88,10 +91,10 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
 
             {/* Right-aligned controls */}
             <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
-                 <span id="total-items-count" className="text-sm font-medium text-text-secondary px-4 py-2.5 bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap">
+                 <span id="total-items-count" className={`text-sm font-medium text-text-secondary bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap ${isCompact ? 'px-3 py-2' : 'px-4 py-2.5'}`}>
                     Tổng: <strong className="font-semibold text-text-primary">{totalCount}</strong>
                  </span>
-                 <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50" aria-label="Làm mới" title="Làm mới">
+                 <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className={`flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50 ${isCompact ? 'w-10 h-10' : 'w-11 h-11'}`} aria-label="Làm mới" title="Làm mới">
                     <i className={`fas fa-sync-alt text-lg ${isLoading ? 'animate-spin' : ''}`}></i>
                  </button>
             </div>

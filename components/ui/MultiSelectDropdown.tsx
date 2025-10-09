@@ -8,9 +8,10 @@ interface MultiSelectDropdownProps {
   onChange: (selected: string[]) => void;
   icon: string;
   displayMode?: 'count' | 'selection';
+  size?: 'default' | 'compact';
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count' }) => {
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count', size = 'default' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -49,6 +50,8 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
     // default 'count' mode
     return `${selectedOptions.length} đã chọn`;
   }, [selectedOptions, label, displayMode]);
+  
+  const isCompact = size === 'compact';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -56,7 +59,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
         <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full md:w-52 flex items-center justify-between pl-3.5 pr-3 py-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
+            className={`w-full flex items-center justify-between pl-3.5 pr-3 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 ${isCompact ? 'md:w-48 py-2' : 'md:w-52 py-2.5'}`}
         >
             <div className="flex items-center gap-3">
                  <i className={`fas ${icon} text-text-placeholder`}></i>

@@ -36,7 +36,6 @@ const StockView: React.FC<StockViewProps> = ({
         keyword: '',
         carModel: [] as string[],
         status: [] as string[],
-        version: [] as string[],
         exterior: [] as string[],
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
@@ -54,7 +53,6 @@ const StockView: React.FC<StockViewProps> = ({
             keyword: '',
             carModel: [],
             status: [],
-            version: [],
             exterior: [],
         });
     };
@@ -122,9 +120,6 @@ const StockView: React.FC<StockViewProps> = ({
         if (filters.status.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.status.includes(vehicle["Trạng thái"]));
         }
-        if (filters.version.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
-        }
         if (filters.exterior.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.exterior.includes(vehicle["Ngoại thất"]));
         }
@@ -152,13 +147,11 @@ const StockView: React.FC<StockViewProps> = ({
     const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]))].sort(), [stockData]);
-    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]))].sort(), [stockData]);
     const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]))].sort(), [stockData]);
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
         { id: 'stock-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
-        { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
         { id: 'stock-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
     ].filter(d => d.options.length > 0);
 
@@ -192,6 +185,7 @@ const StockView: React.FC<StockViewProps> = ({
                         totalCount={0}
                         onRefresh={refetchStock}
                         isLoading={isLoading}
+                        size="compact"
                     />
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto">
@@ -217,6 +211,7 @@ const StockView: React.FC<StockViewProps> = ({
                     totalCount={processedData.length}
                     onRefresh={refetchStock}
                     isLoading={isLoading}
+                    size="compact"
                 />
                 <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                     <div className="flex-grow overflow-auto relative">
