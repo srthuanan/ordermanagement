@@ -529,7 +529,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 return (
                     <StockView 
                         stockData={stockData}
-                        setStockData={setStockData}
                         isLoading={isLoadingStock}
                         error={errorStock}
                         refetchStock={refetchStock}
@@ -548,12 +547,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         isLoading={isLoadingSold}
                         error={errorSold}
                         refetch={refetchSold}
-                        onViewDetails={handleViewDetails}
-                        onCancel={setOrderToCancel}
-                        onRequestInvoice={setOrderToRequestInvoice}
-                        onSupplement={setOrderToSupplement}
-                        onRequestVC={setOrderToRequestVC}
-                        onConfirmVC={handleConfirmVC}
                     />
                 );
             default:

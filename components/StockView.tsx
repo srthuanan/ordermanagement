@@ -14,7 +14,6 @@ interface StockViewProps {
   isAdmin: boolean;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
   stockData: StockVehicle[];
-  setStockData: React.Dispatch<React.SetStateAction<StockVehicle[]>>;
   isLoading: boolean;
   error: string | null;
   refetchStock: () => void;
@@ -28,7 +27,6 @@ const StockView: React.FC<StockViewProps> = ({
     isAdmin, 
     onCreateRequestForVehicle,
     stockData,
-    setStockData,
     isLoading,
     error,
     refetchStock,

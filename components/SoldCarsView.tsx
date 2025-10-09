@@ -1,12 +1,10 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Order, SortConfig } from '../../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
-import * as apiService from '../services/apiService';
-import { MONTHS } from '../../constants';
+import { MONTHS } from '../constants';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
-import Leaderboard from './ui/Leaderboard';
 import StatsOverview from './ui/StatsOverview';
 import TotalViewDashboard from './ui/TotalViewDashboard';
 
@@ -17,12 +15,6 @@ interface SoldCarsViewProps {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
-  onViewDetails: (order: Order) => void;
-  onCancel: (order: Order) => void;
-  onRequestInvoice: (order: Order) => void;
-  onSupplement: (order: Order) => void;
-  onRequestVC: (order: Order) => void;
-  onConfirmVC: (order: Order) => void;
 }
 
 // Helper functions for data aggregation
@@ -52,11 +44,10 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
 
 
 const SoldCarsView: React.FC<SoldCarsViewProps> = ({
-  soldData, isLoading, error, refetch,
-  onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC
+  soldData, isLoading, error, refetch
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('Total');
-  const [filters, setFilters] = useState({ tvbh: [] as string[] });
+  const [filters, setFilters] = useState({ tvbh: [] as string[], keyword: '' });
   const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
@@ -79,7 +70,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
 
   useEffect(() => {
     setCurrentPage(1);
-    setFilters({ tvbh: [] });
+    setFilters({ tvbh: [], keyword: '' });
   }, [selectedPeriod]);
 
 
@@ -90,7 +81,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
 
   const handleResetFilters = () => {
     setCurrentPage(1);
-    setFilters({ tvbh: [] });
+    setFilters({ tvbh: [], keyword: '' });
   };
 
   const handleSort = (key: keyof Order) => {
@@ -147,7 +138,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
     const topTvbhInfo = tvbhDataAgg[0] || { key: "-", count: 0 };
     
     const monthlySalesData: Record<string, number> = {};
-    MONTHS.forEach(m => monthlySalesData[m] = 0);
+    MONTHS.forEach((m: string) => monthlySalesData[m] = 0);
     processedData.forEach(order => {
         if (order['Thời gian nhập']) {
             try {
@@ -163,7 +154,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
             }
         }
     });
-    const monthlySales = MONTHS.map((month, index) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
+    const monthlySales = MONTHS.map((month: string, index: number) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
 
 
     return {
@@ -271,7 +262,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({
               className="w-48 pl-3 pr-8 py-2 bg-surface-card text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all text-sm font-semibold"
             >
               <option value="Total">Cả Năm</option>
-              {MONTHS.map((month, index) => (
+              {MONTHS.map((month: string, index: number) => (
                 <option key={month} value={month}>Tháng {index + 1}</option>
               ))}
             </select>

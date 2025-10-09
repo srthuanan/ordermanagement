@@ -13,7 +13,7 @@ export interface DropdownFilterConfig {
 interface FiltersProps {
   filters: {
     keyword?: string;
-    [key: string]: string | string[]; // Allow dynamic filter keys
+    [key: string]: string | string[] | undefined;
   };
   onFilterChange: (filters: Partial<FiltersProps['filters']>) => void;
   onReset: () => void;
@@ -38,11 +38,11 @@ const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ 
 const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, hideSearch = false }) => {
   
   const activeDropdownFilters = dropdowns.flatMap(d => 
-    (filters[d.key] as string[]).map(value => ({
+    ((filters[d.key] || []) as string[]).map(value => ({
       key: `${d.key}-${value}`,
       value: value,
       onRemove: () => {
-        const currentValues = filters[d.key] as string[];
+        const currentValues = (filters[d.key] || []) as string[];
         onFilterChange({ [d.key]: currentValues.filter(v => v !== value) });
       }
     }))
@@ -76,7 +76,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
                     id={dropdown.id}
                     label={dropdown.label}
                     options={dropdown.options}
-                    selectedOptions={filters[dropdown.key] as string[]}
+                    selectedOptions={(filters[dropdown.key] || []) as string[]}
                     onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
                     icon={dropdown.icon}
                     displayMode={dropdown.displayMode}
