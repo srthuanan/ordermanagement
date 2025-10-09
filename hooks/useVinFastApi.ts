@@ -7,8 +7,8 @@ export const useVinFastApi = (usersToView?: string[]) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
+    const fetchData = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoading(true);
         setError(null);
         try {
             const result = await apiService.getPaginatedData(usersToView);
@@ -17,7 +17,7 @@ export const useVinFastApi = (usersToView?: string[]) => {
             const message = err instanceof Error ? err.message : 'An unknown error occurred';
             setError(message);
         } finally {
-            setIsLoading(false);
+            if (!isSilent) setIsLoading(false);
         }
     }, [usersToView]);
 

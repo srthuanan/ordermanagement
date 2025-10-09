@@ -1,12 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
 import { MONTHS } from '../constants';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
-import StatsOverview from './ui/StatsOverview';
-import TotalViewDashboard from './ui/TotalViewDashboard';
+import SummaryCard from './ui/SummaryCard';
+import Leaderboard from './ui/Leaderboard';
+import SalesChart from './ui/SalesChart';
+import MultiSelectDropdown from './ui/MultiSelectDropdown';
 
 const PAGE_SIZE = 10;
 
@@ -17,7 +18,6 @@ interface SoldCarsViewProps {
   refetch: () => void;
 }
 
-// Helper functions for data aggregation
 const synchronizeTvbhName = (name?: string): string => {
     if (!name || typeof name !== 'string') return 'N/A';
     return String(name).normalize("NFC").trim().toLowerCase()
@@ -43,235 +43,263 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
 };
 
 
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({
-  soldData, isLoading, error, refetch
-}) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('Total');
-  const [filters, setFilters] = useState({ tvbh: [] as string[], keyword: '' });
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error, refetch }) => {
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
+  const [selectedLeaderboardItem, setSelectedLeaderboardItem] = useState<{ type: 'tvbh' | 'car'; key: string } | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
+  const [selectedTvbh, setSelectedTvbh] = useState<string[]>([]);
   
-  const displayData = useMemo(() => {
-    if (selectedPeriod === 'Total') {
-        return soldData;
-    }
-    return soldData.filter(order => {
-        try {
-            const date = new Date(order['Thời gian nhập']);
-            if (isNaN(date.getTime())) return false; // Guard against invalid dates
-            const monthName = MONTHS[date.getMonth()];
-            return monthName === selectedPeriod;
-        } catch {
-            return false;
-        }
-    });
-  }, [soldData, selectedPeriod]);
+  const uniqueTvbh = useMemo(() => [...new Set(soldData.map(o => synchronizeTvbhName(o['Tên tư vấn bán hàng'])).filter(Boolean))].sort(), [soldData]);
 
-  useEffect(() => {
+  const resetFilters = useCallback(() => {
+    setSelectedMonthIndex(null);
+    setSelectedLeaderboardItem(null);
+    setSelectedTvbh([]);
     setCurrentPage(1);
-    setFilters({ tvbh: [], keyword: '' });
-  }, [selectedPeriod]);
+  }, []);
 
-
-  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
-    setCurrentPage(1);
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
-
-  const handleResetFilters = () => {
-    setCurrentPage(1);
-    setFilters({ tvbh: [], keyword: '' });
-  };
-
-  const handleSort = (key: keyof Order) => {
-    setCurrentPage(1);
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-  
-  const processedData = useMemo(() => {
-    let filteredOrders = [...displayData];
-    if (filters.tvbh.length > 0) {
-      filteredOrders = filteredOrders.filter(order => 
-        filters.tvbh.includes(synchronizeTvbhName(order['Tên tư vấn bán hàng']))
-      );
-    }
-    if (sortConfig !== null) {
-      filteredOrders.sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-        if (aValue === null || aValue === undefined || aValue === '') return 1;
-        if (bValue === null || bValue === undefined || bValue === '') return -1;
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
+  const yearlyData = useMemo(() => {
+      const monthlySalesData: Record<string, number> = {};
+      MONTHS.forEach(m => monthlySalesData[m] = 0);
+      soldData.forEach(order => {
+          if (order['Thời gian nhập']) {
+              try {
+                  const date = new Date(order['Thời gian nhập']);
+                  if (!isNaN(date.getTime())) {
+                      const monthName = MONTHS[date.getMonth()];
+                      if (monthName) {
+                          monthlySalesData[monthName] = (monthlySalesData[monthName] || 0) + 1;
+                      }
+                  }
+              } catch {}
+          }
       });
-    }
-    return filteredOrders;
-  }, [displayData, filters, sortConfig]);
+      return MONTHS.map((month, index) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
+  }, [soldData]);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [processedData, currentPage]);
-  
-  useEffect(() => {
-    if (selectedPeriod !== 'Total') {
-        const isSelectedOrderVisible = processedData.some(o => o['Số đơn hàng'] === selectedDetailOrder?.['Số đơn hàng']);
-        if (processedData.length > 0 && !isSelectedOrderVisible) {
-            setSelectedDetailOrder(processedData[0]);
-        } else if (processedData.length === 0) {
-            setSelectedDetailOrder(null);
-        }
-    }
-  }, [processedData, selectedDetailOrder, selectedPeriod]);
-
-  const stats = useMemo(() => {
-    const carDataAgg = aggregateData(processedData, 'Dòng xe');
-    const tvbhDataAgg = aggregateData(processedData, 'Tên tư vấn bán hàng');
-    const topCar = carDataAgg[0] || { key: "-", count: 0 };
-    // FIX: Renamed local variable to avoid confusion and corrected the returned object structure.
-    const topTvbhInfo = tvbhDataAgg[0] || { key: "-", count: 0 };
-    
-    const monthlySalesData: Record<string, number> = {};
-    MONTHS.forEach((m: string) => monthlySalesData[m] = 0);
-    processedData.forEach(order => {
-        if (order['Thời gian nhập']) {
+  const displayData = useMemo(() => {
+    let data = [...soldData];
+    if (selectedMonthIndex !== null) {
+        const selectedMonthName = MONTHS[selectedMonthIndex];
+        data = data.filter(order => {
             try {
                 const date = new Date(order['Thời gian nhập']);
-                if (!isNaN(date.getTime())) {
-                    const monthName = MONTHS[date.getMonth()];
-                    if (monthName) {
-                        monthlySalesData[monthName] = (monthlySalesData[monthName] || 0) + 1;
-                    }
-                }
-            } catch (e) {
-                // ignore invalid dates
-            }
-        }
-    });
-    const monthlySales = MONTHS.map((month: string, index: number) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
+                return !isNaN(date.getTime()) && MONTHS[date.getMonth()] === selectedMonthName;
+            } catch { return false; }
+        });
+    }
 
+    if (selectedLeaderboardItem) {
+        if (selectedLeaderboardItem.type === 'tvbh') {
+            data = data.filter(o => synchronizeTvbhName(o['Tên tư vấn bán hàng']) === selectedLeaderboardItem.key);
+        } else if (selectedLeaderboardItem.type === 'car') {
+            data = data.filter(o => o['Dòng xe'] === selectedLeaderboardItem.key);
+        }
+    }
+    
+    if (selectedTvbh.length > 0) {
+        data = data.filter(o => selectedTvbh.includes(synchronizeTvbhName(o['Tên tư vấn bán hàng'])));
+    }
+    
+    return data;
+  }, [soldData, selectedMonthIndex, selectedLeaderboardItem, selectedTvbh]);
+
+  const stats = useMemo(() => {
+    const carDataAgg = aggregateData(displayData, 'Dòng xe');
+    const tvbhDataAgg = aggregateData(displayData, 'Tên tư vấn bán hàng');
+    const topCar = carDataAgg[0] || { key: "—", count: 0 };
+    const topSalesperson = tvbhDataAgg[0] || { key: "—", count: 0 };
 
     return {
-        total: processedData.length,
-        topCar: `${topCar.key} (${topCar.count} xe)`,
-        topTvbhSummary: `${topTvbhInfo.key} (${topTvbhInfo.count} xe)`,
-        monthlySales: monthlySales,
-        carDistribution: carDataAgg,
+        total: displayData.length,
+        topCarDisplay: `${topCar.key}`,
+        topCarCount: `(${topCar.count} xe)`,
+        topTvbhDisplay: `${topSalesperson.key}`,
+        topTvbhCount: `(${topSalesperson.count} xe)`,
         topCars: carDataAgg.slice(0, 10),
         topTvbh: tvbhDataAgg.slice(0, 10),
     };
-  }, [processedData]);
-
-  const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
-  const uniqueTvbh = useMemo(() => [...new Set(displayData.map(o => synchronizeTvbhName(o["Tên tư vấn bán hàng"])))].filter(name => name && name !== 'N/A').sort(), [displayData]);
-
-  const dropdownConfigs: DropdownFilterConfig[] = [
-    { 
-        id: 'sold-filter-tvbh', 
-        key: 'tvbh', 
-        label: 'Tư Vấn Bán Hàng', 
-        options: uniqueTvbh, 
-        icon: 'fa-user-tie',
-    },
-  ].filter(d => d.options.length > 0);
+  }, [displayData]);
   
-  const renderContent = () => {
-    if (isLoading && displayData.length === 0) {
-        return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+  const handleSort = (key: keyof Order) => {
+    setCurrentPage(1);
+    setSortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+  };
+  
+  const sortedData = useMemo(() => {
+    let sortableData = [...displayData];
+    if (sortConfig) {
+      sortableData.sort((a, b) => {
+        const aVal = a[sortConfig.key]; const bVal = b[sortConfig.key];
+        if (aVal === null || aVal === undefined || aVal === '') return 1;
+        if (bVal === null || bVal === undefined || bVal === '') return -1;
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
     }
-    if (error) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center p-8 bg-surface-card rounded-lg shadow-xl">
-                    <i className="fas fa-exclamation-triangle fa-3x text-danger"></i>
-                    <p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p>
-                    <p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p>
-                    <button onClick={refetch} className="mt-6 btn-primary">Thử lại</button>
-                </div>
-            </div>
-        );
+    return sortableData;
+  }, [displayData, sortConfig]);
+
+  const paginatedData = useMemo(() => sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [sortedData, currentPage]);
+  const totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
+
+  const renderActiveFilters = () => {
+    const filters = [];
+    if (selectedMonthIndex !== null) {
+      filters.push({
+        key: `month-${selectedMonthIndex}`,
+        value: `Tháng ${selectedMonthIndex + 1}`,
+        onRemove: () => setSelectedMonthIndex(null)
+      });
     }
-    
-    if (selectedPeriod === 'Total') {
-        return (
-            <div className="space-y-6">
-                <TotalViewDashboard yearlyStats={stats} />
-            </div>
-        );
+    if (selectedLeaderboardItem) {
+      filters.push({
+        key: `leaderboard-${selectedLeaderboardItem.key}`,
+        value: selectedLeaderboardItem.key,
+        onRemove: () => setSelectedLeaderboardItem(null)
+      });
     }
-    
-    // Monthly View
+    selectedTvbh.forEach(tvbh => {
+      filters.push({
+        key: `tvbh-${tvbh}`,
+        value: tvbh,
+        onRemove: () => setSelectedTvbh(prev => prev.filter(t => t !== tvbh))
+      });
+    });
+
+    if (filters.length === 0) return null;
+
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-            {/* Left Column: Filters & Stats */}
-            <div className="lg:col-span-3 space-y-6 flex flex-col">
-                <StatsOverview stats={{ total: stats.total, topCar: stats.topCar, topTvbh: stats.topTvbhSummary }} />
-                <Filters
-                    filters={filters}
-                    onFilterChange={handleFilterChange}
-                    onReset={handleResetFilters}
-                    dropdowns={dropdownConfigs}
-                    searchPlaceholder=""
-                    totalCount={processedData.length}
-                    onRefresh={refetch}
-                    isLoading={isLoading}
-                    hideSearch={true}
-                />
-            </div>
-
-            {/* Center Column: Data Table */}
-            <div className="lg:col-span-6 flex flex-col min-h-0 h-full">
-                <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-                    <div className="flex-grow overflow-auto relative">
-                        <HistoryTable
-                            orders={paginatedData}
-                            onRowClick={setSelectedDetailOrder}
-                            selectedOrder={selectedDetailOrder}
-                            sortConfig={sortConfig}
-                            onSort={handleSort}
-                            startIndex={(currentPage - 1) * PAGE_SIZE}
-                            viewMode="sold"
-                        />
-                    </div>
-                    {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
-                </div>
-            </div>
-
-            {/* Right Column: Contextual Info */}
-            <div className="lg:col-span-3 h-full flex flex-col gap-6">
-                <SoldCarDetailPanel order={selectedDetailOrder} />
-            </div>
-        </div>
+      <div className="flex items-center gap-2 flex-wrap mt-2">
+        <span className="text-sm font-medium text-text-secondary">Đang lọc theo:</span>
+        {filters.map(f => (
+          <div key={f.key} className="flex items-center gap-2 bg-accent-primary/10 text-accent-primary text-xs font-semibold pl-2.5 pr-1.5 py-1 rounded-full animate-fade-in-up" style={{animationDuration: '300ms'}}>
+            <span>{f.value}</span>
+            <button onClick={f.onRemove} className="w-4 h-4 rounded-full bg-accent-primary/20 hover:bg-accent-primary/40 flex items-center justify-center flex-shrink-0"><i className="fas fa-times text-xs"></i></button>
+          </div>
+        ))}
+        <button onClick={resetFilters} className="ml-auto text-xs text-accent-secondary hover:text-accent-primary font-semibold transition-all flex items-center gap-1.5">
+            <i className="fas fa-times-circle"></i>
+            <span>Xóa Lọc</span>
+        </button>
+      </div>
     );
   };
-
-  return (
-    <div className="flex flex-col h-full animate-fade-in-up">
-      <div className="flex-shrink-0 flex items-center justify-between gap-4 pb-4 border-b border-border-primary">
-          <h2 className="text-xl font-bold text-text-primary">Báo Cáo Xe Đã Bán</h2>
-          <div className="flex items-center gap-4">
-            <select 
-              value={selectedPeriod} 
-              onChange={e => setSelectedPeriod(e.target.value)}
-              className="w-48 pl-3 pr-8 py-2 bg-surface-card text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all text-sm font-semibold"
-            >
-              <option value="Total">Cả Năm</option>
-              {MONTHS.map((month: string, index: number) => (
-                <option key={month} value={month}>Tháng {index + 1}</option>
+  
+  if (isLoading && soldData.length === 0) return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+  if (error) return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
+    
+  const isYearlyView = selectedMonthIndex === null;
+  const buttonClass = "px-3 py-1.5 text-sm font-semibold rounded-lg border transition-colors duration-200 shadow-sm";
+  const activeClass = "bg-accent-primary text-white border-accent-primary";
+  const inactiveClass = "bg-surface-card text-text-secondary border-border-primary hover:bg-surface-accent hover:border-accent-primary/50";
+  
+  const monthSelector = (
+      <div className="bg-surface-card p-2 rounded-xl border border-border-primary shadow-md">
+          <div className="flex items-center gap-2 flex-wrap">
+              <button
+                  onClick={() => { setSelectedMonthIndex(null); setCurrentPage(1); }}
+                  className={`${buttonClass} ${selectedMonthIndex === null ? activeClass : inactiveClass}`}
+              >
+                  <i className="fas fa-calendar-alt mr-2"></i> Cả Năm
+              </button>
+              <div className="h-6 w-px bg-border-primary mx-1"></div>
+              {MONTHS.map((_, index) => (
+                  <button
+                      key={index}
+                      onClick={() => { setSelectedMonthIndex(index); setCurrentPage(1); }}
+                      className={`${buttonClass} ${selectedMonthIndex === index ? activeClass : inactiveClass}`}
+                  >
+                      Tháng {index + 1}
+                  </button>
               ))}
-            </select>
-            <button onClick={refetch} disabled={isLoading} className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-card text-text-secondary border border-border-primary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50" aria-label="Làm mới" title="Làm mới">
-                <i className={`fas fa-sync-alt ${isLoading ? 'animate-spin' : ''}`}></i>
-            </button>
+               <div className="flex-grow"></div>
+               <MultiSelectDropdown
+                  id="sold-tvbh-filter"
+                  label="Tất cả TVBH"
+                  options={uniqueTvbh}
+                  selectedOptions={selectedTvbh}
+                  onChange={(v) => { setSelectedTvbh(v); setCurrentPage(1); }}
+                  icon="fa-user-tie"
+                  size="compact"
+                  displayMode="selection"
+              />
           </div>
       </div>
-      <div className="flex-grow pt-6 flex flex-col min-h-0">{renderContent()}</div>
+  );
+
+  const tableSection = (
+      <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+          <div className="p-4 border-b border-border-primary flex-shrink-0">
+              <h3 className="font-bold text-text-primary text-base">Chi Tiết Giao Dịch</h3>
+              {renderActiveFilters()}
+          </div>
+          <div className="flex-grow overflow-y-auto relative">
+              <HistoryTable orders={paginatedData} onRowClick={setSelectedDetailOrder} selectedOrder={selectedDetailOrder} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} viewMode="sold" />
+          </div>
+          {totalPages > 0 &&
+              <div className="flex-shrink-0">
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />
+              </div>
+          }
+      </div>
+  );
+
+  if (!isYearlyView) {
+      return (
+          <div className="flex flex-col h-full animate-fade-in-up">
+              <div className="flex-shrink-0 space-y-6">
+                  {monthSelector}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow mt-6 min-h-0">
+                  <div className="lg:col-span-2 flex flex-col h-full min-h-0">
+                      {tableSection}
+                  </div>
+                  <div className="lg:col-span-1 hidden lg:block h-full min-h-0">
+                      <SoldCarDetailPanel order={selectedDetailOrder} />
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
+  // Yearly view with normal page scroll
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      {monthSelector}
+      
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SummaryCard icon="fa-car" title="Tổng Số Xe Bán" value={stats.total} />
+          <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} valueClassName="text-xl" />
+          <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} valueClassName="text-xl" />
+          <SummaryCard icon="fa-chart-pie" title="Tổng Doanh Số (Năm)" value={soldData.length} />
+      </div>
+      
+      {/* Chart */}
+      <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1">
+          <h3 className="font-bold text-text-primary text-base mb-3">Doanh Số Theo Tháng</h3>
+          <SalesChart salesData={yearlyData} onMonthClick={(index) => { setSelectedMonthIndex(index); setCurrentPage(1); }} selectedMonthIndex={selectedMonthIndex} />
+      </div>
+      
+      {/* Leaderboards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Leaderboard title="BXH Dòng Xe" icon="fa-trophy" items={stats.topCars} color="blue" />
+          <Leaderboard title="BXH TVBH" icon="fa-crown" items={stats.topTvbh} color="green" />
+      </div>
+
+      {/* Table & Detail Panel Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2">
+              {tableSection}
+          </div>
+          <div className="lg:col-span-1 hidden lg:block sticky top-24">
+               <SoldCarDetailPanel order={selectedDetailOrder} />
+          </div>
+      </div>
     </div>
   );
 };

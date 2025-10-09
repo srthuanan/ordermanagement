@@ -42,7 +42,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ title, icon, items, color }) 
     };
 
     return (
-        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md flex flex-col h-96">
+        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md flex flex-col h-96 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1">
             <h3 className={`font-bold text-text-primary text-base mb-3 flex items-center gap-3`}>
                 <i className={`fas ${icon} ${selectedColor.icon}`}></i>
                 {title}

@@ -138,6 +138,10 @@ export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResul
     return getApi(params);
 };
 
+export const getXuathoadonData = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getXuathoadonData' });
+};
+
 export const getStockData = async (): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const isAdmin = currentUser === ADMIN_USER;
@@ -424,10 +428,30 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
             data: mappedData
         };
     } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred while fetching sold cars data.';
+         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching sold cars data.';
         return {
             status: 'ERROR',
             message: errorMessage
         }
     }
+};
+
+// --- Admin Actions ---
+
+export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
+    const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
+    return postApi({ action, ...params, adminUser: currentUser });
+};
+
+export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> => {
+    return getApi({ action: 'getOrderHistory', orderNumber });
+}
+
+export const bulkUploadInvoices = async (filesData: { orderNumber: string; base64Data: string; mimeType: string; fileName: string }[]) => {
+    const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
+    return postApi({ 
+        action: 'handleBulkUploadIssuedInvoices',
+        filesData: JSON.stringify(filesData),
+        uploadedBy: currentUser
+    });
 };

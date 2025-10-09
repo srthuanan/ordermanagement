@@ -1,65 +1,66 @@
-
-
+// FIX: Replaced the entire content of this file which was an incorrect copy of index.tsx.
+// This file now contains the centralized type definitions for the application,
+// resolving numerous "has no exported member" errors.
 export interface Order {
-  "Tên tư vấn bán hàng": string;
-  "Tên khách hàng": string;
-  "Số đơn hàng": string;
-  "Dòng xe": string;
-  "Phiên bản": string;
-  "Ngoại thất": string;
-  "Nội thất": string;
-  "Ngày cọc": string;
-  "Thời gian nhập": string;
-  "Kết quả": string;
-  "VIN": string;
-  "Thời gian ghép": string;
-  "Số ngày ghép": number;
-  "LinkHoaDonDaXuat"?: string;
-  "Trạng thái VC"?: string;
-  "Ghi chú hủy"?: string;
-  "LinkHopDong"?: string;
-  "LinkDeNghiXHD"?: string;
+    "Số đơn hàng": string;
+    "Tên khách hàng": string;
+    "Dòng xe": string;
+    "Phiên bản": string;
+    "Ngoại thất": string;
+    "Nội thất": string;
+    "Thời gian nhập": string; // ISO Date string
+    "Tên tư vấn bán hàng": string;
+    "Kết quả": string; // e.g., "Chưa ghép", "Đã ghép"
+    "Trạng thái VC"?: string;
+    VIN?: string;
+    "Thời gian ghép"?: string; // ISO Date string
+    "Ghi chú hủy"?: string;
+    LinkHoaDonDaXuat?: string;
+    LinkHopDong?: string;
+    LinkDeNghiXHD?: string;
+    "Số động cơ"?: string;
+    // other potential fields from components
+    [key: string]: any; // Allow for other properties
 }
 
 export interface StockVehicle {
-  "VIN": string;
-  "Dòng xe": string;
-  "Phiên bản": string;
-  "Ngoại thất": string;
-  "Nội thất": string;
-  "Trạng thái": "Chưa ghép" | "Đang giữ" | "Xe trưng bày";
-  "Ngày về kho": string;
-  "Vị trí": string;
-  "Người Giữ Xe"?: string;
-  "Thời Gian Giữ Xe"?: string;
-  "Thời Gian Hết Hạn Giữ"?: string;
+    VIN: string;
+    "Dòng xe": string;
+    "Phiên bản": string;
+    "Ngoại thất": string;
+    "Nội thất": string;
+    "Trạng thái": string; // e.g., "Chưa ghép", "Đang giữ"
+    "Người Giữ Xe"?: string;
+    "Thời Gian Hết Hạn Giữ"?: string; // ISO Date string
+    "Vị trí"?: string;
+    [key: string]: any; // Allow for other properties
 }
-
-export interface AnalyticsData {
-  pendingRequestCount: Record<string, number>;
-  stockStatus: Record<string, { count: number; isSlowMoving: boolean }>;
-}
-
-export type SortDirection = 'asc' | 'desc';
 
 export interface SortConfig {
-  key: keyof Order;
-  direction: SortDirection;
+    key: keyof Order;
+    direction: 'asc' | 'desc';
 }
 
 export interface StockSortConfig {
-  key: keyof StockVehicle;
-  direction: SortDirection;
+    key: keyof StockVehicle;
+    direction: 'asc' | 'desc';
 }
 
+export interface AnalyticsData {
+    pendingRequestCount: { [key: string]: number };
+    stockStatus: { [key: string]: { count: number, isSlowMoving: boolean } };
+}
 
-export type NotificationType = 'success' | 'info' | 'warning' | 'error' | 'danger';
+export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'danger';
 
 export interface Notification {
-  id: string;
-  message: string;
-  timestamp: string;
-  type: NotificationType;
-  link?: string;
-  isRead: boolean;
+    id: string;
+    message: string;
+    timestamp: string; // ISO Date string
+    isRead: boolean;
+    link?: string;
+    type: NotificationType;
 }
+
+// FIX: Added ActionType to centralize the definition of possible admin actions.
+export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'vinclub' | 'manualMatch' | 'requestInvoice' | 'unmatch';

@@ -5,12 +5,14 @@ import { Order, SortConfig, Notification, NotificationType, StockVehicle } from 
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
+import AdminView from './components/AdminView';
 import OrderDetailsModal from './components/modals/OrderDetailsModal';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
 import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
 import VcRequestModal, { VcRequestData } from './components/modals/VcRequestModal';
 import CreateRequestModal from './components/modals/CreateRequestModal';
+import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
@@ -24,7 +26,7 @@ moment.locale('vi');
 
 const PAGE_SIZE = 10;
 
-type ActiveView = 'orders' | 'stock' | 'sold';
+type ActiveView = 'orders' | 'stock' | 'sold' | 'admin';
 
 interface AppProps {
     onLogout: () => void;
@@ -43,6 +45,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [orderToSupplement, setOrderToSupplement] = useState<Order | null>(null);
     const [orderToRequestVC, setOrderToRequestVC] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -56,11 +59,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const notificationContainerRef = useRef<HTMLDivElement>(null);
     
-    // FIX: Hoisted data fetching logic and user info variables to resolve a "used before declaration" error.
-    // The stockData variable, fetched via the useStockApi hook, was being accessed in a useEffect hook 
-    // before it was declared, causing a runtime error. By moving the user info retrieval, role determination, 
-    // and all data fetching hooks (useVinFastApi, useStockApi, useSoldCarsApi) to an earlier point in the 
-    // component's execution, we ensure that stockData is initialized before any dependent effects are run.
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const currentUserName = sessionStorage.getItem("currentUser") || "User";
     const userRole = sessionStorage.getItem("userRole") || (currentUserName.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Tư vấn bán hàng');
@@ -73,20 +71,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     
         const normalizedCurrentUser = normalizeName(currentUser);
         
-        // Find the matching key in teamMap by normalizing both the key and the current user's name.
-        // This makes the lookup robust against whitespace/Unicode inconsistencies in the key itself.
         const teamMapKey = Object.keys(teamMap).find(key => normalizeName(key) === normalizedCurrentUser);
     
         if (teamMapKey) {
-            // If a team is found, normalize all names before sending them to the API.
-            // This ensures consistency between the list we send and the data in the sheet,
-            // fixing issues with extra whitespace that the backend's trim() might miss.
             const teamMembers = teamMap[teamMapKey];
             return [teamMapKey, ...teamMembers].map(name => normalizeName(name));
         }
         
-        // If no team is found for the TPKD, return undefined. The API will then only fetch
-        // data for the TPKD themselves, which is a safe fallback.
         return undefined;
     }, [currentUser, userRole]);
 
@@ -94,6 +85,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi(usersToView);
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
     const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
+    const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
+    const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
+    const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
+
+    const refetchXuathoadon = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingXuathoadon(true);
+        setErrorXuathoadon(null);
+        try {
+            const result = await apiService.getXuathoadonData();
+            setXuathoadonData(result.data || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'An unknown error occurred';
+            setErrorXuathoadon(message);
+        } finally {
+            if (!isSilent) setIsLoadingXuathoadon(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        refetchXuathoadon();
+    }, [refetchXuathoadon]);
 
     // State and refs for stock polling
     const [highlightedVins, setHighlightedVins] = useState<Set<string>>(new Set());
@@ -494,7 +506,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         dropdowns={dropdownConfigs}
                         searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
                         totalCount={0}
-                        onRefresh={refetch}
+                        // FIX: Wrapped refetch in an arrow function to match the expected event handler signature. The `refetch` function expects an optional boolean, not a MouseEvent from onClick.
+                        onRefresh={() => refetch()}
                         isLoading={isLoading}
                     />
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -508,7 +521,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             );
         }
         if (error) {
-            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div></div>);
+            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
@@ -519,7 +532,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     dropdowns={dropdownConfigs}
                     searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
                     totalCount={processedData.length}
-                    onRefresh={refetch}
+                    // FIX: Wrapped refetch in an arrow function to match the expected event handler signature. The `refetch` function expects an optional boolean, not a MouseEvent from onClick.
+                    onRefresh={() => refetch()}
                     isLoading={isLoading}
                 />
                 <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -544,7 +558,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         );
     };
 
-    const sidebarClasses = `fixed top-0 left-0 h-full z-40 bg-surface-card w-64 transition-all duration-300 ease-in-out flex flex-col border-r border-border-primary
+    const sidebarClasses = `fixed top-0 left-0 h-full z-40 bg-surface-card/70 backdrop-blur-xl w-64 transition-all duration-300 ease-in-out flex flex-col border-r border-border-primary/50
         lg:top-4 lg:left-4 lg:h-[calc(100%-2rem)] lg:rounded-2xl lg:border lg:shadow-xl
         ${isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`;
@@ -579,6 +593,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         refetch={refetchSold}
                     />
                 );
+            case 'admin':
+                return isCurrentUserAdmin ? <AdminView 
+                    showToast={showToast} 
+                    hideToast={hideToast} 
+                    refetchHistory={refetchHistory} 
+                    refetchStock={refetchStock}
+                    allOrders={historyData}
+                    xuathoadonData={xuathoadonData}
+                    refetchXuathoadon={refetchXuathoadon}
+                    currentUser={currentUser}
+                    stockData={stockData}
+                    /> : renderOrdersContent();
             default:
                 return renderOrdersContent();
         }
@@ -591,7 +617,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 
             <aside className={sidebarClasses}>
-                <div className="flex items-center h-16 border-b border-border-primary flex-shrink-0 px-4">
+                <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
                      <a href="#" onClick={(e) => e.preventDefault()} className={`flex items-center gap-3 group transition-all duration-300 ${isSidebarCollapsed ? 'lg:w-12' : 'lg:w-auto'}`}>
                         <i className="fas fa-bolt text-2xl text-gradient from-accent-primary to-accent-secondary group-hover:scale-110 transition-transform"></i>
                         <h1 className={`font-extrabold text-lg text-text-primary whitespace-nowrap tracking-wider transition-all duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>VINFAST</h1>
@@ -614,9 +640,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         <i className={`fas fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                         <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
                     </a>
+                    {isCurrentUserAdmin && (
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                            <i className={`fas fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Admin</span>
+                        </a>
+                    )}
                 </nav>
 
-                <div className="p-2 flex-shrink-0 border-t border-border-primary">
+                <div className="p-2 flex-shrink-0 border-t border-border-primary/50">
                     <div className={`flex items-center gap-3 p-2 rounded-lg ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                             {currentUser ? currentUser.charAt(0) : 'A'}
@@ -624,13 +656,19 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         <div className={`transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
                             <p className="text-sm font-bold text-text-primary whitespace-nowrap">{currentUser}</p>
                             <p className="text-xs text-text-secondary capitalize">{userRole}</p>
+                             <button 
+                                onClick={() => setIsChangePasswordModalOpen(true)} 
+                                className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover hover:underline mt-1 focus:outline-none"
+                            >
+                                Đổi mật khẩu
+                            </button>
                         </div>
                     </div>
                 </div>
             </aside>
             
              <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out ${mainContentPadding} ${isMobileMenuOpen ? 'translate-x-64' : ''}`}>
-                <header className={`relative sticky top-0 w-full z-20 h-16 bg-surface-ground/80 backdrop-blur-md border-b border-border-primary flex items-center justify-between px-4 sm:px-6`}>
+                <header className={`relative sticky top-0 w-full z-20 h-16 bg-surface-card/70 backdrop-blur-xl border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6`}>
                     <div className="flex items-center gap-4">
                          <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-text-secondary hover:text-text-primary text-xl">
                             <i className="fas fa-bars"></i>
@@ -686,7 +724,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                 </header>
 
-                <main className={`flex-1 p-4 sm:p-6 flex flex-col overflow-hidden`}>
+                <main className={`flex-1 p-4 sm:p-6 flex flex-col overflow-y-auto`}>
                     {renderActiveView()}
                 </main>
             </div>
@@ -700,6 +738,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 existingOrderNumbers={historyData.map(o => o["Số đơn hàng"])}
                 initialVehicle={createRequestData.initialVehicle}
                 currentUser={currentUser}
+            />
+            <ChangePasswordModal
+                isOpen={isChangePasswordModalOpen}
+                onClose={() => setIsChangePasswordModalOpen(false)}
+                showToast={showToast}
+                username={currentUserName}
             />
             <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}

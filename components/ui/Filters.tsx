@@ -66,7 +66,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
                       placeholder={searchPlaceholder} 
                       value={filters.keyword || ''}
                       onChange={(e) => onFilterChange({ keyword: e.target.value })}
-                      className={`peer w-full pl-11 pr-4 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-placeholder ${isCompact ? 'py-2' : 'py-2.5'}`}
+                      className={`peer w-full pl-11 pr-4 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent ${isCompact ? 'py-2' : 'py-2.5'}`}
                   />
               </div>
             )}

@@ -47,7 +47,7 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
                             rows={3}
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            className="w-full bg-surface-card border-border-primary rounded-lg shadow-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition"
+                            className="w-full bg-surface-card border-border-primary rounded-lg shadow-sm p-2 focus:border-accent-primary transition focus:shadow-glow-accent focus:outline-none"
                             placeholder="VD: Khách hàng đổi ý, sai thông tin..."
                         />
                     </div>

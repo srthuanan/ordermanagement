@@ -44,13 +44,13 @@ export const userRoleMap: Record<string, string> = {
     'trungnm': 'Tư vấn bán hàng',
     'cant': 'Tư vấn bán hàng',
     'tienna': 'Tư vấn bán hàng',
-    'namlv': 'Tư vấn bán hàng',
-    'tramhdt': 'Tư vấn bán hàng',
-    'thanhldv': 'Tư vấn bán hàng',
-    'chinhtc': 'Tư vấn bán hàng',
-    'lanvt': 'Tư vấn bán hàng',
-    'vyny': 'Tư vấn bán hàng',
-    'huyhkn': 'Tư vấn bán hàng',
+    'namlv': 'LÊ VĂN NAM',
+    'tramhdt': 'HUỲNH DIỆP THANH TRÂM',
+    'thanhldv': 'LÊ DƯ VĂN THÀNH',
+    'chinhtc': 'TRANG CÔNG CHÍNH',
+    'lanvt': 'VÕ THẾ LÂN',
+    'vyny': 'NGUYỄN THỊ YẾN VY',
+    'huyhkn': 'NGUYỄN HOÀNG KHANG HUY',
     'thanhdn': 'Tư vấn bán hàng',
 };
 
@@ -123,4 +123,62 @@ export const login = async (username: string, password: string): Promise<LoginRe
 
 export const logout = () => {
     sessionStorage.clear();
+};
+
+interface ForgotPasswordResult {
+    success: boolean;
+    message?: string;
+    username?: string;
+}
+
+export const forgotPassword = async (email: string): Promise<ForgotPasswordResult> => {
+    try {
+        const response = await axios.post(LOGIN_API_URL, null, { params: { action: "forgotPassword", email } });
+        if (response.data.success) {
+            return { success: true, username: response.data.username, message: response.data.message };
+        } else {
+            return { success: false, message: response.data.message || "Email không tồn tại trong hệ thống." };
+        }
+    } catch (error) {
+        console.error("Forgot Password API error:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ. Vui lòng thử lại." };
+    }
+};
+
+interface ResetPasswordResult {
+    success: boolean;
+    message?: string;
+}
+
+export const resetPassword = async (username: string, otp: string, newPassword: string): Promise<ResetPasswordResult> => {
+    try {
+        const response = await axios.post(LOGIN_API_URL, null, { params: { action: "resetPassword", username, otp, newPassword } });
+        if (response.data.success) {
+            return { success: true, message: response.data.message };
+        } else {
+            return { success: false, message: response.data.message || "Đặt lại mật khẩu thất bại." };
+        }
+    } catch (error) {
+        console.error("Reset Password API error:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ. Vui lòng thử lại." };
+    }
+};
+
+interface ChangePasswordResult {
+    success: boolean;
+    message?: string;
+}
+
+export const changePassword = async (username: string, oldPassword: string, newPassword: string): Promise<ChangePasswordResult> => {
+    try {
+        const response = await axios.post(LOGIN_API_URL, null, { params: { action: "changePassword", username, oldPassword, newPassword } });
+        if (response.data.success) {
+            return { success: true, message: response.data.message };
+        } else {
+            return { success: false, message: response.data.message || "Đổi mật khẩu thất bại." };
+        }
+    } catch (error) {
+        console.error("Change Password API error:", error);
+        return { success: false, message: "Không thể kết nối đến máy chủ. Vui lòng thử lại." };
+    }
 };

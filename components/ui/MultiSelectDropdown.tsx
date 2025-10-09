@@ -79,7 +79,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
                             placeholder="Tìm kiếm..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary"
+                            className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow focus:shadow-glow-accent"
                         />
                     </div>
                 </div>
