@@ -17,7 +17,7 @@ import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
 import { useSoldCarsApi } from './hooks/useSoldCarsApi';
 import * as apiService from './services/apiService';
-import { teamMap } from './services/authService';
+import { teamMap, normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
 moment.locale('vi');
@@ -67,9 +67,26 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const isCurrentUserAdmin = currentUserName.toLowerCase() === 'admin';
 
     const usersToView = useMemo(() => {
-        if (userRole === 'Trưởng Phòng Kinh Doanh' && teamMap[currentUser]) {
-            return [currentUser, ...teamMap[currentUser]];
+        if (userRole !== 'Trưởng Phòng Kinh Doanh') {
+            return undefined;
         }
+    
+        const normalizedCurrentUser = normalizeName(currentUser);
+        
+        // Find the matching key in teamMap by normalizing both the key and the current user's name.
+        // This makes the lookup robust against whitespace/Unicode inconsistencies in the key itself.
+        const teamMapKey = Object.keys(teamMap).find(key => normalizeName(key) === normalizedCurrentUser);
+    
+        if (teamMapKey) {
+            // If a team is found, normalize all names before sending them to the API.
+            // This ensures consistency between the list we send and the data in the sheet,
+            // fixing issues with extra whitespace that the backend's trim() might miss.
+            const teamMembers = teamMap[teamMapKey];
+            return [teamMapKey, ...teamMembers].map(name => normalizeName(name));
+        }
+        
+        // If no team is found for the TPKD, return undefined. The API will then only fetch
+        // data for the TPKD themselves, which is a safe fallback.
         return undefined;
     }, [currentUser, userRole]);
 

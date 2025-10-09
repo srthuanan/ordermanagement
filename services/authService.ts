@@ -79,6 +79,21 @@ export const teamMap: Record<string, string[]> = {
     ]
 };
 
+/**
+ * Normalizes a name string by trimming whitespace, collapsing multiple spaces, and ensuring consistent Unicode representation.
+ * This is crucial for matching names between the local teamMap and the remote data source.
+ * @param name The name to normalize.
+ * @returns The normalized name.
+ */
+export const normalizeName = (name: string): string => {
+    if (typeof name !== 'string') return '';
+    return name
+        .trim() // Remove leading/trailing whitespace
+        .replace(/\s+/g, ' ') // Collapse multiple spaces into one
+        .normalize('NFC'); // Normalize Unicode characters
+};
+
+
 interface LoginResult {
     success: boolean;
     message?: string;
