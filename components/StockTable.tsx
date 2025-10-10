@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
@@ -17,6 +17,53 @@ interface StockTableProps {
   highlightedVins: Set<string>;
   processingVin: string | null;
 }
+
+const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime }) => {
+    const calculateRemainingTime = useCallback(() => {
+        const expiration = moment(expirationTime);
+        const now = moment();
+        const duration = moment.duration(expiration.diff(now));
+        
+        if (duration.asSeconds() <= 0) {
+            return { total: 0, hours: 0, minutes: 0, seconds: 0 };
+        }
+
+        return {
+            total: duration.asSeconds(),
+            hours: Math.floor(duration.asHours()),
+            minutes: duration.minutes(),
+            seconds: duration.seconds(),
+        };
+    }, [expirationTime]);
+
+    const [remainingTime, setRemainingTime] = useState(calculateRemainingTime());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setRemainingTime(calculateRemainingTime());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [calculateRemainingTime]);
+
+    if (remainingTime.total <= 0) {
+        return <div className="mt-1 text-xs font-mono text-danger font-semibold">Hết hạn</div>;
+    }
+
+    const isUrgent = remainingTime.total < 5 * 60; // Less than 5 minutes
+
+    const pad = (num: number) => num.toString().padStart(2, '0');
+
+    return (
+        <div className={`mt-1 text-xs font-mono font-semibold flex items-center gap-1.5 ${isUrgent ? 'text-danger animate-pulse' : 'text-text-secondary'}`}>
+            <i className="far fa-clock"></i>
+            <span>
+                {remainingTime.hours > 0 && `${pad(remainingTime.hours)}:`}
+                {pad(remainingTime.minutes)}:{pad(remainingTime.seconds)}
+            </span>
+        </div>
+    );
+};
 
 // Helper function to apply dynamic styles based on exterior color text.
 const getExteriorColorStyle = (exteriorValue: string | undefined): React.CSSProperties => {
@@ -204,7 +251,14 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Phiên bản"]}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle["Ngoại thất"]}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
-                                <td className="whitespace-nowrap px-3 py-4 text-sm"><StatusBadge status={vehicle["Trạng thái"]} /></td>
+                                <td className="whitespace-nowrap px-3 py-4 text-sm">
+                                    <div>
+                                        <StatusBadge status={vehicle["Trạng thái"]} />
+                                        {isHeld && vehicle["Thời Gian Hết Hạn Giữ"] && (
+                                            <HoldCountdown expirationTime={vehicle["Thời Gian Hết Hạn Giữ"]} />
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
                                     <div className="relative flex items-center justify-center gap-2 h-9">
                                         {isProcessing ? (

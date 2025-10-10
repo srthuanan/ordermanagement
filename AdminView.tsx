@@ -1,5 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Order, SortConfig, StockVehicle, ActionType, VcRequest } from '../../types';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import moment from 'moment';
+import 'moment/locale/vi';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle, VcRequest, ActionType } from '../../types';
 import Pagination from './ui/Pagination';
 import AdminInvoiceTable from './admin/AdminInvoiceTable';
 import AdminVcRequestTable from './admin/AdminVcRequestTable';
@@ -51,6 +53,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const [vcSortConfig, setVcSortConfig] = useState<SortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
     const [vcCurrentPage, setVcCurrentPage] = useState(1);
+    
+    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
+    const [isLoadingVc, setIsLoadingVc] = useState(true);
+    const [errorVc, setErrorVc] = useState<string | null>(null);
 
     // State for filtering
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -66,6 +72,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    const fetchVcData = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingVc(true);
+        setErrorVc(null);
+        try {
+            const result = await apiService.getApi({ action: 'getYeuCauVcData' });
+            setVcRequestsData(result.data || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
+            setErrorVc(message);
+        } finally {
+            if (!isSilent) setIsLoadingVc(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchVcData();
+    }, [fetchVcData]);
+
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -127,8 +152,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             .map(invoice => {
                 const orderNumber = invoice['SỐ ĐƠN HÀNG'];
                 const correspondingOrder = orderStatusMap.get(orderNumber);
-
-                // Start with all data from the Xuathoadon sheet row
                 const mergedOrder: Order = {
                     "Số đơn hàng": orderNumber,
                     "Tên khách hàng": invoice['TÊN KHÁCH HÀNG'],
@@ -139,7 +162,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     "Tên tư vấn bán hàng": invoice['TƯ VẤN BÁN HÀNG'],
                     "VIN": invoice['SỐ VIN'],
                     "Số động cơ": invoice['SỐ ĐỘNG CƠ'],
-                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'], // Map 'NGÀY YÊU CẦU XHĐ' to a common key for sorting/display
+                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'],
                     "Ngày xuất hóa đơn": invoice['NGÀY XUẤT HÓA ĐƠN'],
                     "PO PIN": invoice['PO PIN'],
                     "CHÍNH SÁCH": invoice['CHÍNH SÁCH'],
@@ -149,7 +172,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     "LinkHopDong": invoice['URL Hợp Đồng'],
                     "LinkDeNghiXHD": invoice['URL Đề Nghị XHĐ'],
                     "LinkHoaDonDaXuat": invoice['URL Hóa Đơn Đã Xuất'],
-                    "Kết quả": 'N/A', // Default status
+                    "Kết quả": 'N/A',
                 };
 
                 if (correspondingOrder) {
@@ -162,24 +185,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 } else {
                     mergedOrder["Kết quả"] = 'Đã xuất hóa đơn';
                 }
-
                 (mergedOrder as any)['Trạng thái xử lý'] = mergedOrder["Kết quả"];
-
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = (apiService.getVcRequestsDataFromAppState() || []).map((req: VcRequest) => {
-            const correspondingOrder = orderStatusMap.get(req['Số đơn hàng']);
-            return {
-                ...req,
-                'Trạng thái xử lý': correspondingOrder?.['Kết quả'] || 'Chờ duyệt YCVC'
-            };
-        });
-
+        const allVcRequests: VcRequest[] = vcRequestsData;
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
         const allPaired = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase() === 'đã ghép');
 
-        // Suggestions logic
         const suggestions = new Map<string, StockVehicle[]>();
         if(stockData && allPending.length > 0) {
             const availableCars = stockData.filter(car => car['Trạng thái']?.toLowerCase() === 'chưa ghép');
@@ -195,7 +208,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             suggestions.forEach((cars) => cars.sort((a, b) => new Date(a['Thời gian nhập'] || 0).getTime() - new Date(b['Thời gian nhập'] || 0).getTime()));
         }
 
-        // Filtering logic
         const applyFilters = (data: (Order | VcRequest)[], filters: Record<string, string[]>, view: AdminSubView) => {
             return data.filter(row => {
                 const tvbhMatch = view === 'vc' ? (filters.nguoiyc.length === 0 || filters.nguoiyc.includes((row as VcRequest)['Người YC'])) : (filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']));
@@ -211,14 +223,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return tvbhMatch && (view === 'vc' || dongXeMatch) && trangThaiMatch;
             });
         };
-        
 
         const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices') as Order[];
         const filteredPending = applyFilters(allPending, pendingFilters, 'pending') as Order[];
         const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired') as Order[];
         const filteredVc = applyFilters(allVcRequests, vcFilters, 'vc') as VcRequest[];
         
-        // Sorting logic
         const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | null) => {
             let sorted = [...data];
             if (sortConfig) {
@@ -264,7 +274,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
             }
         };
-    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters]);
+    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
     const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
@@ -285,24 +295,23 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         showToast('Đang xử lý...', 'Vui lòng chờ trong giây lát.', 'loading');
         try {
             const result = await apiService.performAdminAction(action, params);
-            // Close modals immediately on success
             setInvoiceModalState(null);
             setAdminModal(null);
             setSuggestionModalState(null);
             setSelectedRows(new Set());
             
-            // Show success toast and then refetch in the background
             hideToast();
             showToast('Thành công!', result.message || successMessage, 'success');
             
-            // Refetch data silently in the background without awaiting
-            // This makes the UI feel instantly responsive.
             if (refetchType === 'history' || refetchType === 'both') {
                 refetchHistory(true); 
                 refetchXuathoadon(true);
             }
             if (refetchType === 'stock' || refetchType === 'both') {
                 refetchStock(true);
+            }
+            if (action.includes('VcRequest')) {
+                fetchVcData(true);
             }
             return true;
         } catch (error) {
@@ -389,7 +398,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onReset={handleReset}
                         dropdowns={dropdownConfigs}
                         searchPlaceholder=""
-                        totalCount={0} // Not needed here
+                        totalCount={0}
                         onRefresh={() => {}}
                         isLoading={false}
                         hideSearch={true}
@@ -401,14 +410,19 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const renderCurrentView = () => {
-        if (adminView === 'invoices') {
-            if (isLoadingXuathoadon) {
-                return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
-            }
-            if (errorXuathoadon) {
-                return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
-            }
+        if (adminView === 'invoices' && isLoadingXuathoadon) {
+            return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
         }
+        if (adminView === 'invoices' && errorXuathoadon) {
+            return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
+        }
+        if (adminView === 'vc' && isLoadingVc) {
+            return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+        }
+        if (adminView === 'vc' && errorVc) {
+            return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải Yêu cầu VC</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorVc}</p><button onClick={() => fetchVcData()} className="mt-6 btn-primary">Thử lại</button></div>;
+        }
+
         switch(adminView) {
             case 'invoices':
             case 'pending':
@@ -470,7 +484,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <button 
                         onClick={async () => {
                             showToast('Đang làm mới...', 'Làm mới dữ liệu từ máy chủ.', 'loading');
-                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), apiService.refetchVcRequests()]);
+                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), fetchVcData(true)]);
                             hideToast();
                             showToast('Làm mới thành công', 'Dữ liệu đã được cập nhật.', 'success', 2000);
                         }} 

@@ -26,7 +26,7 @@ const SortableHeader: React.FC<{ colKey: keyof Order, title: string, sortConfig:
     return <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
-const CopyableField: React.FC<{ text: string, showToast: Function, className?: string, label?: string }> = ({ text, showToast, className, label }) => {
+const CopyableField: React.FC<{ text: string; showToast: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, showToast, className, label, wrap = false }) => {
     if (!text || text === 'N/A') {
         return <div className={className}>{label ? `${label}: ` : ''}N/A</div>;
     }
@@ -37,11 +37,13 @@ const CopyableField: React.FC<{ text: string, showToast: Function, className?: s
             showToast('Đã sao chép!', `${text} đã được sao chép.`, 'success', 2000);
         }).catch(() => showToast('Lỗi', 'Không thể sao chép.', 'error'));
     };
+    
+    const textClasses = wrap ? 'cursor-pointer break-words' : 'truncate cursor-pointer';
 
     return (
-        <div className={`group relative flex items-center justify-between ${className}`} title={`Click để sao chép: ${text}`}>
-            <span className="truncate cursor-pointer" onClick={(e) => handleCopy(e)}>{label ? `${label}: ` : ''}{text}</span>
-            <button onClick={handleCopy} className="ml-2 text-text-secondary/50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none shrink-0">
+        <div className={`group relative flex items-start justify-between ${className}`} title={`Click để sao chép: ${text}`}>
+            <span className={textClasses} onClick={(e) => handleCopy(e)}>{label ? `${label}: ` : ''}{text}</span>
+            <button onClick={handleCopy} className="ml-2 text-text-secondary/50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 shrink-0">
                 <i className="fas fa-copy text-xs"></i>
             </button>
         </div>
@@ -55,7 +57,8 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
         invoices: [
             { key: 'Tên khách hàng', title: 'Khách Hàng / SĐH', sortable: true },
             { key: 'Dòng xe', title: 'Thông Tin Xe', sortable: false },
-            { key: 'Thời gian nhập', title: 'Ngày Yêu Cầu', sortable: true },
+            { key: 'Thời gian nhập', title: 'Ngày YC / XHĐ', sortable: true },
+            { key: 'CHÍNH SÁCH', title: 'Chính Sách / PO', sortable: false },
             { key: 'Hồ sơ', title: 'Hồ Sơ', sortable: false },
             { key: 'Kết quả', title: 'Trạng Thái', sortable: true },
         ],
@@ -101,8 +104,8 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
                             <td className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
                             
                             {/* Customer/Order Info */}
-                            <td className="px-3 py-4 text-sm">
-                                <CopyableField text={order["Tên khách hàng"]} showToast={showToast} className="font-semibold text-text-primary" />
+                            <td className="px-3 py-4 text-sm max-w-xs">
+                                <CopyableField text={order["Tên khách hàng"]} showToast={showToast} className="font-semibold text-text-primary" wrap={true} />
                                 <CopyableField text={orderNumber} showToast={showToast} className="text-text-secondary font-mono text-xs" />
                                 <div className="text-text-secondary text-xs mt-1">TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}</div>
                             </td>
@@ -112,10 +115,22 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
                                 <>
                                     <td className="px-3 py-4 text-sm">
                                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
+                                        <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                                         <CopyableField text={order.VIN || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="VIN" />
                                         <CopyableField text={order["Số động cơ"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="S.MÁY" />
                                     </td>
-                                    <td className="px-3 py-4 text-sm"><div className="text-text-primary">{moment(order["Thời gian nhập"]).format('DD/MM/YYYY')}</div></td>
+                                    <td className="px-3 py-4 text-sm">
+                                        <div className="text-text-primary" title={`Yêu cầu: ${order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
+                                            {order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('DD/MM/YYYY') : 'N/A'}
+                                        </div>
+                                        <div className="text-text-secondary text-xs mt-1" title={order["Ngày xuất hóa đơn"] ? `Xuất hóa đơn: ${moment(order["Ngày xuất hóa đơn"]).format('HH:mm DD/MM/YYYY')}` : 'Chưa xuất hóa đơn'}>
+                                            {order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"]).format('DD/MM/YYYY') : 'Chưa XHĐ'}
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-4 text-sm max-w-[150px]">
+                                        <div className="font-medium text-text-primary truncate" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
+                                        <CopyableField text={order["PO PIN"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="PO" />
+                                    </td>
                                     <td className="px-3 py-4 text-sm">
                                         <div className="flex items-center gap-3">
                                             {[ { key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar' }].map(file => (

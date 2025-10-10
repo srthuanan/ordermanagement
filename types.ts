@@ -19,6 +19,12 @@ export interface Order {
     LinkHopDong?: string;
     LinkDeNghiXHD?: string;
     "Số động cơ"?: string;
+    "Ngày xuất hóa đơn"?: string;
+    "PO PIN"?: string;
+    "CHÍNH SÁCH"?: string;
+    "Ngày cọc"?: string;
+    "BÁO BÁN"?: boolean | string;
+    "KẾT QUẢ GỬI MAIL"?: string;
     // other potential fields from components
     [key: string]: any; // Allow for other properties
 }
@@ -36,8 +42,26 @@ export interface StockVehicle {
     [key: string]: any; // Allow for other properties
 }
 
+export interface VcRequest {
+    "Thời gian YC": string;
+    "Người YC": string;
+    "Tên khách hàng": string;
+    "Số đơn hàng": string;
+    "VIN": string;
+    "Loại KH": 'Cá nhân' | 'Công ty';
+    "Mã KH DMS": string;
+    "Link CCCD Mặt Trước": string;
+    "Link CCCD Mặt Sau": string;
+    "Link Cavet Xe Mặt Trước": string;
+    "Link Cavet Xe Mặt Sau": string;
+    "Link GPKD": string;
+    "Trạng thái xử lý": string;
+    [key: string]: any;
+}
+
+
 export interface SortConfig {
-    key: keyof Order;
+    key: keyof Order | keyof VcRequest;
     direction: 'asc' | 'desc';
 }
 
@@ -63,4 +87,4 @@ export interface Notification {
 }
 
 // FIX: Added ActionType to centralize the definition of possible admin actions.
-export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'vinclub' | 'manualMatch' | 'requestInvoice' | 'unmatch';
+export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'vinclub' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc';

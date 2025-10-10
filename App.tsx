@@ -13,6 +13,7 @@ import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
 import VcRequestModal, { VcRequestData } from './components/modals/VcRequestModal';
 import CreateRequestModal from './components/modals/CreateRequestModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
+import ImagePreviewModal from './components/modals/ImagePreviewModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
@@ -46,6 +47,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [orderToRequestVC, setOrderToRequestVC] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+    const [imagePreview, setImagePreview] = useState<{ imageUrl: string; originalUrl: string; fileLabel: string; customerName: string; } | null>(null);
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -428,6 +430,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const handleCreateRequestForVehicle = (vehicle: StockVehicle) => {
         setCreateRequestData({ isOpen: true, initialVehicle: vehicle });
     };
+    
+    const openImagePreviewModal = useCallback((imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => {
+        setImagePreview({ imageUrl, originalUrl, fileLabel, customerName });
+    }, []);
 
     const processedData = useMemo(() => {
         let filteredOrders = [...historyData];
@@ -605,6 +611,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     stockData={stockData}
                     isLoadingXuathoadon={isLoadingXuathoadon}
                     errorXuathoadon={errorXuathoadon}
+                    onOpenImagePreview={openImagePreviewModal}
                     /> : renderOrdersContent();
             default:
                 return renderOrdersContent();
@@ -751,6 +758,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
             {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} />}
             {orderToRequestVC && <VcRequestModal order={orderToRequestVC} onClose={() => setOrderToRequestVC(null)} onConfirm={handleSendVcRequest} />}
+            <ImagePreviewModal 
+                isOpen={!!imagePreview}
+                onClose={() => setImagePreview(null)}
+                imageUrl={imagePreview?.imageUrl}
+                originalUrl={imagePreview?.originalUrl}
+                fileLabel={imagePreview?.fileLabel}
+                customerName={imagePreview?.customerName}
+            />
         </>
     );
 };

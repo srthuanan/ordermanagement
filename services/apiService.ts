@@ -2,6 +2,10 @@ import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS } from '.
 import { VcRequestData } from '../components/modals/VcRequestModal';
 import { Order } from '../types';
 
+let vcRequestsCache: any[] | null = null;
+let lastVcRequestsFetchTime = 0;
+const VC_REQUESTS_CACHE_DURATION = 15000; // 15 seconds
+
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -51,7 +55,8 @@ const postApi = async (payload: Record<string, any>): Promise<ApiResult> => {
     }
 };
 
-const getApi = async (params: Record<string, any>, baseUrl: string = API_URL): Promise<ApiResult> => {
+// FIX: Exported the 'getApi' function to make it accessible from other modules.
+export const getApi = async (params: Record<string, any>, baseUrl: string = API_URL): Promise<ApiResult> => {
     const queryParams = new URLSearchParams();
     for (const key in params) {
         if (params[key] !== null && params[key] !== undefined) {
@@ -141,6 +146,30 @@ export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResul
 export const getXuathoadonData = async (): Promise<ApiResult> => {
     return getApi({ action: 'getXuathoadonData' });
 };
+
+export const refetchVcRequests = async () => {
+    try {
+        const result = await getApi({ action: 'getYeuCauVcData' });
+        vcRequestsCache = result.data || [];
+        lastVcRequestsFetchTime = Date.now();
+        return vcRequestsCache;
+    } catch (error) {
+        console.error("Failed to refetch VC requests:", error);
+        return vcRequestsCache; // return stale data on error
+    }
+};
+
+export const getVcRequestsDataFromAppState = (): any[] | null => {
+    const now = Date.now();
+    if (!vcRequestsCache || (now - lastVcRequestsFetchTime > VC_REQUESTS_CACHE_DURATION)) {
+        // This is a fire-and-forget call, the UI won't wait for it,
+        // but it will trigger a fetch if data is stale.
+        // The next time this function is called, it might have fresh data.
+        refetchVcRequests();
+    }
+    return vcRequestsCache;
+};
+
 
 export const getStockData = async (): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
