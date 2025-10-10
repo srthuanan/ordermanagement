@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Order, SortConfig, StockVehicle, ActionType, VcRequest } from '../../types';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import 'moment/locale/vi';
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType } from '../types';
 import Pagination from './ui/Pagination';
 import AdminInvoiceTable from './admin/AdminInvoiceTable';
 import AdminVcRequestTable from './admin/AdminVcRequestTable';
@@ -51,6 +52,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const [vcSortConfig, setVcSortConfig] = useState<SortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
     const [vcCurrentPage, setVcCurrentPage] = useState(1);
+    
+    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
+    const [isLoadingVc, setIsLoadingVc] = useState(true);
+    const [errorVc, setErrorVc] = useState<string | null>(null);
 
     // State for filtering
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -66,6 +71,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    const fetchVcData = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingVc(true);
+        setErrorVc(null);
+        try {
+            const result = await apiService.getApi({ action: 'getYeuCauVcData' });
+            setVcRequestsData(result.data || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
+            setErrorVc(message);
+        } finally {
+            if (!isSilent) setIsLoadingVc(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchVcData();
+    }, [fetchVcData]);
+
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -127,8 +151,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             .map(invoice => {
                 const orderNumber = invoice['SỐ ĐƠN HÀNG'];
                 const correspondingOrder = orderStatusMap.get(orderNumber);
-
-                // Start with all data from the Xuathoadon sheet row
                 const mergedOrder: Order = {
                     "Số đơn hàng": orderNumber,
                     "Tên khách hàng": invoice['TÊN KHÁCH HÀNG'],
@@ -139,7 +161,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     "Tên tư vấn bán hàng": invoice['TƯ VẤN BÁN HÀNG'],
                     "VIN": invoice['SỐ VIN'],
                     "Số động cơ": invoice['SỐ ĐỘNG CƠ'],
-                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'], // Map 'NGÀY YÊU CẦU XHĐ' to a common key for sorting/display
+                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'],
                     "Ngày xuất hóa đơn": invoice['NGÀY XUẤT HÓA ĐƠN'],
                     "PO PIN": invoice['PO PIN'],
                     "CHÍNH SÁCH": invoice['CHÍNH SÁCH'],
@@ -149,7 +171,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     "LinkHopDong": invoice['URL Hợp Đồng'],
                     "LinkDeNghiXHD": invoice['URL Đề Nghị XHĐ'],
                     "LinkHoaDonDaXuat": invoice['URL Hóa Đơn Đã Xuất'],
-                    "Kết quả": 'N/A', // Default status
+                    "Kết quả": 'N/A',
                 };
 
                 if (correspondingOrder) {
@@ -162,24 +184,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 } else {
                     mergedOrder["Kết quả"] = 'Đã xuất hóa đơn';
                 }
-
                 (mergedOrder as any)['Trạng thái xử lý'] = mergedOrder["Kết quả"];
-
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = (apiService.getVcRequestsDataFromAppState() || []).map((req: VcRequest) => {
-            const correspondingOrder = orderStatusMap.get(req['Số đơn hàng']);
-            return {
-                ...req,
-                'Trạng thái xử lý': correspondingOrder?.['Kết quả'] || 'Chờ duyệt YCVC'
-            };
-        });
-
+        const allVcRequests: VcRequest[] = vcRequestsData;
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
         const allPaired = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase() === 'đã ghép');
 
-        // Suggestions logic
         const suggestions = new Map<string, StockVehicle[]>();
         if(stockData && allPending.length > 0) {
             const availableCars = stockData.filter(car => car['Trạng thái']?.toLowerCase() === 'chưa ghép');
@@ -195,7 +207,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             suggestions.forEach((cars) => cars.sort((a, b) => new Date(a['Thời gian nhập'] || 0).getTime() - new Date(b['Thời gian nhập'] || 0).getTime()));
         }
 
-        // Filtering logic
         const applyFilters = (data: (Order | VcRequest)[], filters: Record<string, string[]>, view: AdminSubView) => {
             return data.filter(row => {
                 const tvbhMatch = view === 'vc' ? (filters.nguoiyc.length === 0 || filters.nguoiyc.includes((row as VcRequest)['Người YC'])) : (filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']));
@@ -211,14 +222,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return tvbhMatch && (view === 'vc' || dongXeMatch) && trangThaiMatch;
             });
         };
-        
 
         const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices') as Order[];
         const filteredPending = applyFilters(allPending, pendingFilters, 'pending') as Order[];
         const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired') as Order[];
         const filteredVc = applyFilters(allVcRequests, vcFilters, 'vc') as VcRequest[];
         
-        // Sorting logic
         const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | null) => {
             let sorted = [...data];
             if (sortConfig) {
@@ -264,7 +273,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
             }
         };
-    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters]);
+    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
     const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
@@ -285,24 +294,23 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         showToast('Đang xử lý...', 'Vui lòng chờ trong giây lát.', 'loading');
         try {
             const result = await apiService.performAdminAction(action, params);
-            // Close modals immediately on success
             setInvoiceModalState(null);
             setAdminModal(null);
             setSuggestionModalState(null);
             setSelectedRows(new Set());
             
-            // Show success toast and then refetch in the background
             hideToast();
             showToast('Thành công!', result.message || successMessage, 'success');
             
-            // Refetch data silently in the background without awaiting
-            // This makes the UI feel instantly responsive.
             if (refetchType === 'history' || refetchType === 'both') {
                 refetchHistory(true); 
                 refetchXuathoadon(true);
             }
             if (refetchType === 'stock' || refetchType === 'both') {
                 refetchStock(true);
+            }
+            if (action.includes('VcRequest')) {
+                fetchVcData(true);
             }
             return true;
         } catch (error) {
@@ -389,7 +397,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onReset={handleReset}
                         dropdowns={dropdownConfigs}
                         searchPlaceholder=""
-                        totalCount={0} // Not needed here
+                        totalCount={0}
                         onRefresh={() => {}}
                         isLoading={false}
                         hideSearch={true}
@@ -401,14 +409,19 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const renderCurrentView = () => {
-        if (adminView === 'invoices') {
-            if (isLoadingXuathoadon) {
-                return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
-            }
-            if (errorXuathoadon) {
-                return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
-            }
+        if (adminView === 'invoices' && isLoadingXuathoadon) {
+            return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
         }
+        if (adminView === 'invoices' && errorXuathoadon) {
+            return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
+        }
+        if (adminView === 'vc' && isLoadingVc) {
+            return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+        }
+        if (adminView === 'vc' && errorVc) {
+            return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải Yêu cầu VC</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorVc}</p><button onClick={() => fetchVcData()} className="mt-6 btn-primary">Thử lại</button></div>;
+        }
+
         switch(adminView) {
             case 'invoices':
             case 'pending':
@@ -422,7 +435,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  return (
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto relative">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
+                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key: keyof Order) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
@@ -435,9 +448,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             <AdminVcRequestTable 
                                 requests={paginatedVcData} 
                                 sortConfig={vcSortConfig}
-                                onSort={(key) => setVcSortConfig((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
+                                onSort={(key: keyof VcRequest) => setVcSortConfig((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
                                 selectedRows={selectedRows} 
-                                onToggleRow={(id) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
+                                onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
                                 onToggleAllRows={() => { if (selectedRows.size === paginatedVcData.length) setSelectedRows(new Set()); else setSelectedRows(new Set(paginatedVcData.map(o => o['Số đơn hàng']))); }} 
                                 onAction={handleAction} 
                                 showToast={showToast} 
@@ -470,7 +483,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <button 
                         onClick={async () => {
                             showToast('Đang làm mới...', 'Làm mới dữ liệu từ máy chủ.', 'loading');
-                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), apiService.refetchVcRequests()]);
+                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), fetchVcData(true)]);
                             hideToast();
                             showToast('Làm mới thành công', 'Dữ liệu đã được cập nhật.', 'success', 2000);
                         }} 
@@ -491,29 +504,29 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 <>
                     {/* Invoice Actions */}
                     <ActionModal isOpen={invoiceModalState.type === 'approve'} onClose={() => setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'supplement'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason, images) => handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'vinclub'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Xác Thực VinClub" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Ghi chú (Tùy chọn):" onSubmit={(reason, images) => handleAdminSubmit('requestVinClubVerification', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu VinClub.')} icon="fa-id-card" theme="primary" />
+                    <RequestWithImageModal isOpen={invoiceModalState.type === 'supplement'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
+                    <RequestWithImageModal isOpen={invoiceModalState.type === 'vinclub'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Xác Thực VinClub" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Ghi chú (Tùy chọn):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestVinClubVerification', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu VinClub.')} icon="fa-id-card" theme="primary" />
                     <ActionModal isOpen={invoiceModalState.type === 'pendingSignature'} onClose={() => setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'?" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={() => handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã chuyển trạng thái.')} />
-                    <UploadInvoiceModal isOpen={invoiceModalState.type === 'uploadInvoice'} onClose={() => setInvoiceModalState(null)} order={invoiceModalState.order as Order} onSubmit={async (file) => {
+                    <UploadInvoiceModal isOpen={invoiceModalState.type === 'uploadInvoice'} onClose={() => setInvoiceModalState(null)} order={invoiceModalState.order as Order} onSubmit={async (file: File) => {
                         const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
                         const base64Data = await fileToBase64(file);
                         return handleAdminSubmit('handleBulkUploadIssuedInvoices', { filesData: JSON.stringify([{ orderNumber: invoiceModalState.order['Số đơn hàng'], base64Data, mimeType: file.type, fileName: file.name }])}, 'Đã tải lên hóa đơn thành công.');
                     }} />
-                    <ActionModal isOpen={invoiceModalState.type === 'cancel'} onClose={() => setInvoiceModalState(null)} title="Hủy Yêu Cầu Xuất Hóa Đơn" description="Hành động này sẽ hủy yêu cầu và thông báo cho TVBH." targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data) => handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason: data.reason }, 'Đã hủy yêu cầu.')} />
-                    <ActionModal isOpen={invoiceModalState.type === 'unmatch'} onClose={() => setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy ghép (bắt buộc)', placeholder: 'VD: Sai thông tin xe...', type: 'textarea' }]} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data) => handleAdminSubmit('unmatchOrder', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason: data.reason }, 'Đã hủy ghép xe.', 'both')} />
+                    <ActionModal isOpen={invoiceModalState.type === 'cancel'} onClose={() => setInvoiceModalState(null)} title="Hủy Yêu Cầu Xuất Hóa Đơn" description="Hành động này sẽ hủy yêu cầu và thông báo cho TVBH." targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason: data.reason }, 'Đã hủy yêu cầu.')} />
+                    <ActionModal isOpen={invoiceModalState.type === 'unmatch'} onClose={() => setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy ghép (bắt buộc)', placeholder: 'VD: Sai thông tin xe...', type: 'textarea' }]} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => handleAdminSubmit('unmatchOrder', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason: data.reason }, 'Đã hủy ghép xe.', 'both')} />
                     <ActionModal isOpen={invoiceModalState.type === 'resend'} onClose={() => setInvoiceModalState(null)} title="Gửi Lại Email" description="Gửi lại email thông báo cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Gửi Lại" submitColor="primary" icon="fa-paper-plane" onSubmit={() => handleAdminSubmit('resendEmail', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), emailType: 'invoice_issued' }, 'Đã gửi lại email.')} />
                     
                     {/* VC Actions */}
                     <ActionModal isOpen={invoiceModalState.type === 'approveVc'} onClose={() => setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu VC" description="Xác nhận phê duyệt yêu cầu cấp VinClub cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-circle" onSubmit={() => handleAdminSubmit('approveVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.')} />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'rejectVc'} onClose={() => setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason, images) => handleAdminSubmit('rejectVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
+                    <RequestWithImageModal isOpen={invoiceModalState.type === 'rejectVc'} onClose={() => setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('rejectVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
                 </>
             )}
             <ActionModal isOpen={adminModal === 'archive'} onClose={() => setAdminModal(null)} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history')} />
-            <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị ẩn khỏi kho và ghi vào nhật ký xóa. Có thể phục hồi lại sau." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'restoreCar'} onClose={() => setAdminModal(null)} title="Phục Hồi Xe Đã Xóa" description="Xe sẽ được phục hồi về trạng thái 'Chưa ghép' và hiển thị lại trong kho." inputs={[{ id: 'vinToRestore', label: 'Số VIN cần phục hồi (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }]} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={(data) => handleAdminSubmit('restoreCarToStockLogic', data, 'Đã phục hồi xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
-            <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
+            <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
+            <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị ẩn khỏi kho và ghi vào nhật ký xóa. Có thể phục hồi lại sau." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
+            <ActionModal isOpen={adminModal === 'restoreCar'} onClose={() => setAdminModal(null)} title="Phục Hồi Xe Đã Xóa" description="Xe sẽ được phục hồi về trạng thái 'Chưa ghép' và hiển thị lại trong kho." inputs={[{ id: 'vinToRestore', label: 'Số VIN cần phục hồi (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }]} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={(data: Record<string, string>) => handleAdminSubmit('restoreCarToStockLogic', data, 'Đã phục hồi xe thành công.', 'stock')} />
+            <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
+            <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
             <OrderTimelineModal isOpen={adminModal === 'timeline'} onClose={() => setAdminModal(null)} />
             <BulkInvoiceUploadModal isOpen={adminModal === 'bulkUpload'} onClose={() => setAdminModal(null)} onSuccess={() => { refetchHistory(); setAdminModal(null); }} showToast={showToast} hideToast={hideToast} />
         </div>
