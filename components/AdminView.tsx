@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import moment from 'moment';
-import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
+import { Order, SortConfig, StockVehicle, ActionType } from '../types';
 import Pagination from './ui/Pagination';
 import AdminInvoiceTable from './admin/AdminInvoiceTable';
 import ActionModal from './admin/ActionModal';
@@ -9,7 +8,6 @@ import OrderTimelineModal from './admin/OrderTimelineModal';
 import BulkInvoiceUploadModal from './admin/BulkInvoiceUploadModal';
 import SuggestionModal from './admin/SuggestionModal';
 import * as apiService from '../services/apiService';
-import { ADMIN_USER } from '../constants';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 
 
@@ -24,7 +22,8 @@ interface AdminViewProps {
     allOrders: Order[];
     xuathoadonData: Order[];
     stockData: StockVehicle[];
-    currentUser: string;
+    isLoadingXuathoadon: boolean;
+    errorXuathoadon: string | null;
 }
 
 type ModalState = {
@@ -35,7 +34,7 @@ type ModalState = {
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'bulkUpload';
 type AdminSubView = 'invoices' | 'pending' | 'paired';
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, allOrders, xuathoadonData, stockData, currentUser }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, allOrders, xuathoadonData, stockData, isLoadingXuathoadon, errorXuathoadon }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting and pagination for each tab
@@ -157,15 +156,15 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
         const getFilterOptions = (data: Order[], keys: (keyof Order)[]) => {
             const options: Record<string, Set<string>> = {};
-            keys.forEach(key => options[key] = new Set());
+            keys.forEach(key => options[key as string] = new Set());
             data.forEach(row => {
                 keys.forEach(key => {
                     const value = key === 'Kết quả' ? (row as any)['Trạng thái xử lý'] : row[key];
-                    if (value) options[key].add(value as string);
+                    if (value) options[key as string].add(value as string);
                 });
             });
             const result: Record<string, string[]> = {};
-            keys.forEach(key => result[key] = Array.from(options[key]).sort());
+            keys.forEach(key => result[key as string] = Array.from(options[key as string]).sort());
             return result;
         };
         
@@ -256,16 +255,28 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const renderFilterPanel = () => {
         const currentFilters = adminView === 'invoices' ? invoiceFilters : adminView === 'pending' ? pendingFilters : pairedFilters;
         const currentOptions = filterOptions[adminView];
-        const setFilters = adminView === 'invoices' ? setInvoiceFilters : adminView === 'pending' ? setPendingFilters : setPairedFilters;
         
-        const handleFilterChange = (newFilters: Partial<typeof invoiceFilters>) => {
-            setFilters(prev => ({ ...prev, ...newFilters }));
+        const handleFilterChange = (newFilters: Partial<{ tvbh: string[], dongXe: string[], trangThai: string[] }>) => {
+            if (adminView === 'invoices') {
+                setInvoiceFilters(prev => ({...prev, ...newFilters}));
+            } else if (adminView === 'pending') {
+                setPendingFilters(prev => ({...prev, ...(newFilters as Partial<{ tvbh: string[], dongXe: string[] }>)}));
+            } else if (adminView === 'paired') {
+                setPairedFilters(prev => ({...prev, ...(newFilters as Partial<{ tvbh: string[], dongXe: string[] }>)}));
+            }
+            
             setCurrentPage(1); 
             setPendingCurrentPage(1); 
             setPairedCurrentPage(1);
         };
         const handleReset = () => {
-            setFilters({ tvbh: [], dongXe: [], trangThai: [] });
+            if (adminView === 'invoices') {
+                setInvoiceFilters({ tvbh: [], dongXe: [], trangThai: [] });
+            } else if (adminView === 'pending') {
+                setPendingFilters({ tvbh: [], dongXe: [] });
+            } else { // 'paired'
+                setPairedFilters({ tvbh: [], dongXe: [] });
+            }
             setCurrentPage(1); 
             setPendingCurrentPage(1); 
             setPairedCurrentPage(1);
@@ -284,7 +295,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
                      <Filters 
                         filters={currentFilters}
-                        onFilterChange={handleFilterChange as any}
+                        onFilterChange={handleFilterChange}
                         onReset={handleReset}
                         dropdowns={dropdownConfigs}
                         searchPlaceholder=""
@@ -300,29 +311,36 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const renderCurrentView = () => {
+        if (adminView === 'invoices') {
+            if (isLoadingXuathoadon) {
+                return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+            }
+            if (errorXuathoadon) {
+                return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
+            }
+        }
         switch(adminView) {
             case 'invoices':
             case 'pending':
-            case 'paired':
-                 const isPending = adminView === 'pending';
-                 const data = adminView === 'invoices' ? paginatedInvoices : isPending ? paginatedPendingData : paginatedPairedData;
-                 const totalPages = adminView === 'invoices' ? totalInvoicePages : isPending ? totalPendingPages : totalPairedPages;
-                 const activePage = adminView === 'invoices' ? currentPage : isPending ? pendingCurrentPage : pairedCurrentPage;
-                 const onPageChange = adminView === 'invoices' ? setCurrentPage : isPending ? setPendingCurrentPage : setPairedCurrentPage;
-                 const sortConf = adminView === 'invoices' ? sortConfig : isPending ? pendingSortConfig : pairedSortConfig;
-                 const onSort = adminView === 'invoices' ? setSortConfig : isPending ? setPendingSortConfig : setPairedSortConfig;
-                
+            case 'paired': {
+                 const data = adminView === 'invoices' ? paginatedInvoices : adminView === 'pending' ? paginatedPendingData : paginatedPairedData;
+                 const totalPages = adminView === 'invoices' ? totalInvoicePages : adminView === 'pending' ? totalPendingPages : totalPairedPages;
+                 const activePage = adminView === 'invoices' ? currentPage : adminView === 'pending' ? pendingCurrentPage : pairedCurrentPage;
+                 const onPageChange = adminView === 'invoices' ? setCurrentPage : adminView === 'pending' ? setPendingCurrentPage : setPairedCurrentPage;
+                 const sortConf = adminView === 'invoices' ? sortConfig : adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
+                 const onSort = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
                  return (
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto relative">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key) => onSort(p => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
+                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                  );
+            }
             default: return null;
         }
-    }
+    };
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">

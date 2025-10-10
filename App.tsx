@@ -602,8 +602,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     allOrders={historyData}
                     xuathoadonData={xuathoadonData}
                     refetchXuathoadon={refetchXuathoadon}
-                    currentUser={currentUser}
                     stockData={stockData}
+                    isLoadingXuathoadon={isLoadingXuathoadon}
+                    errorXuathoadon={errorXuathoadon}
                     /> : renderOrdersContent();
             default:
                 return renderOrdersContent();
