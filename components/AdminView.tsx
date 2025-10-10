@@ -70,6 +70,34 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+    
+    const handleFilterChange = (newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
+        if (adminView === 'invoices') {
+            setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+        } else if (adminView === 'pending') {
+            setPendingFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+        } else { // 'paired'
+            setPairedFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+        }
+        
+        setCurrentPage(1);
+        setPendingCurrentPage(1);
+        setPairedCurrentPage(1);
+    };
+
+    const handleReset = () => {
+        if (adminView === 'invoices') {
+            setInvoiceFilters({ tvbh: [], dongXe: [], trangThai: [] });
+        } else if (adminView === 'pending') {
+            setPendingFilters({ tvbh: [], dongXe: [] });
+        } else { // 'paired'
+            setPairedFilters({ tvbh: [], dongXe: [] });
+        }
+        setCurrentPage(1);
+        setPendingCurrentPage(1);
+        setPairedCurrentPage(1);
+    };
+
 
     const { 
         invoiceRequests, 
@@ -255,32 +283,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const renderFilterPanel = () => {
         const currentFilters = adminView === 'invoices' ? invoiceFilters : adminView === 'pending' ? pendingFilters : pairedFilters;
         const currentOptions = filterOptions[adminView];
-        
-        const handleFilterChange = (newFilters: Partial<{ tvbh: string[], dongXe: string[], trangThai: string[] }>) => {
-            if (adminView === 'invoices') {
-                setInvoiceFilters(prev => ({...prev, ...newFilters}));
-            } else if (adminView === 'pending') {
-                setPendingFilters(prev => ({...prev, ...(newFilters as Partial<{ tvbh: string[], dongXe: string[] }>)}));
-            } else if (adminView === 'paired') {
-                setPairedFilters(prev => ({...prev, ...(newFilters as Partial<{ tvbh: string[], dongXe: string[] }>)}));
-            }
-            
-            setCurrentPage(1); 
-            setPendingCurrentPage(1); 
-            setPairedCurrentPage(1);
-        };
-        const handleReset = () => {
-            if (adminView === 'invoices') {
-                setInvoiceFilters({ tvbh: [], dongXe: [], trangThai: [] });
-            } else if (adminView === 'pending') {
-                setPendingFilters({ tvbh: [], dongXe: [] });
-            } else { // 'paired'
-                setPairedFilters({ tvbh: [], dongXe: [] });
-            }
-            setCurrentPage(1); 
-            setPendingCurrentPage(1); 
-            setPairedCurrentPage(1);
-        };
 
         const dropdownConfigs: DropdownFilterConfig[] = [
             { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
