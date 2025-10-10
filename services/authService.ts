@@ -5,7 +5,7 @@ export const userToConsultantMap: Record<string, string> = {
     'admin': 'PHẠM THÀNH NHÂN', 'bachttn': 'TRẦN THỊ NGUYỆT BẠCH', 'thangtq': 'TỐNG QUỐC THẮNG', 'vinhtn': 'THÀNH NGỌC VINH',
     'taone': 'PHẠM NHÂN', 'thaont': 'NGUYỄN THIỆN THẢO', 'tuanna': 'NGUYỄN ANH TUẤN', 'nhandt': 'ĐINH TRỌNG NHÂN',
     'thanhnth': 'NGUYỄN TRẦN HOÀNG THANH', 'phucnh': 'NGUYỄN HOÀNG PHÚC', 'phuongtd': 'TRẦN DANH PHƯƠNG', 'tuongtb': 'TẤT BÁCH TƯỜNG',
-    'vinhl': 'LÝ KIM VINH', 'nguyenhtt': 'HỒ THỊ THẢO NGUYÊN', 'huypt': 'PHẠM TRỌNG HUY', 'giapnv': 'NGUYỄN VĂN GIÁP',
+    'vynty': 'NGUYỄN THỊ YẾN VY', 'nguyenhtt': 'HỒ THỊ THẢO NGUYÊN', 'huypt': 'PHẠM TRỌNG HUY', 'giapnv': 'NGUYỄN VĂN GIÁP',
     'haivv': 'VŨ VIẾT HẢI', 'nhungnth': 'NGUYỄN THỊ HỒNG NHUNG', 'kydm': 'ĐÀO MINH KÝ', 'ngaptt': 'PHẠM THỊ THÚY NGA',
     'tannd': 'NGUYỄN DUY TÂN', 'ducdt': 'ĐINH TÀI ĐỨC', 'dattt': 'TỐNG THÀNH ĐẠT', 'haink': 'NGUYỄN KIM HẢI',
     'xuyennb': 'NGUYỄN BẢO XUYÊN', 'diennt': 'NGUYỄN THỊ DIỆN', 'trungnm': 'NGUYỄN MINH TRUNG', 'cant': 'NGUYỄN THANH CẢ',
@@ -49,7 +49,7 @@ export const userRoleMap: Record<string, string> = {
     'thanhldv': 'LÊ DƯ VĂN THÀNH',
     'chinhtc': 'TRANG CÔNG CHÍNH',
     'lanvt': 'VÕ THẾ LÂN',
-    'vyny': 'NGUYỄN THỊ YẾN VY',
+    'vynTy': 'NGUYỄN THỊ YẾN VY',
     'huyhkn': 'NGUYỄN HOÀNG KHANG HUY',
     'thanhdn': 'Tư vấn bán hàng',
 };
