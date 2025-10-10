@@ -86,16 +86,22 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
     const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
     const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
+    const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
+    const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
 
     const refetchXuathoadon = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingXuathoadon(true);
+        setErrorXuathoadon(null);
         try {
             const result = await apiService.getXuathoadonData();
             setXuathoadonData(result.data || []);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            showToast('Lỗi Tải Dữ Liệu Hóa Đơn', message, 'error');
+            setErrorXuathoadon(message);
+        } finally {
+            if (!isSilent) setIsLoadingXuathoadon(false);
         }
-    }, [showToast]);
+    }, []);
 
     useEffect(() => {
         refetchXuathoadon();
@@ -596,6 +602,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     allOrders={historyData}
                     xuathoadonData={xuathoadonData}
                     refetchXuathoadon={refetchXuathoadon}
+                    currentUser={currentUser}
                     stockData={stockData}
                     /> : renderOrdersContent();
             default:
@@ -613,7 +620,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
                      <a href="#" onClick={(e) => e.preventDefault()} className={`flex items-center gap-3 group transition-all duration-300 ${isSidebarCollapsed ? 'lg:w-12' : 'lg:w-auto'}`}>
                         <i className="fas fa-bolt text-2xl text-gradient from-accent-primary to-accent-secondary group-hover:scale-110 transition-transform"></i>
-                        <h1 className={`font-extrabold text-lg text-text-primary whitespace-nowrap tracking-wider transition-all duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>VINFAST</h1>
+                        <h1 className={`font-extrabold text-lg text-text-primary whitespace-nowrap tracking-wider transition-all duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>ORDERMGMT</h1>
                     </a>
                     <button onClick={toggleSidebar} className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-surface-hover text-text-secondary hover:text-text-primary ml-auto">
                         <i className={`fas fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
@@ -671,8 +678,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     <div className={`absolute -translate-x-1/2 hidden sm:flex items-center gap-3 left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
                         <i className="fas fa-bolt text-2xl text-accent-secondary"></i>
                         <div className="flex items-center">
-                            <span className="font-bold text-base text-text-primary">VINFAST</span>
-                            <span className="ml-1.5 text-base font-medium text-text-secondary tracking-wider">MINH ĐẠO</span>
+                            <span className="font-bold text-base text-text-primary">ORDER</span>
+                            <span className="ml-1.5 text-base font-medium text-text-secondary tracking-wider">MANAGEMENT</span>
                         </div>
                     </div>
                     

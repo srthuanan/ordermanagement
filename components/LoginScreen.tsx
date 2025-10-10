@@ -226,13 +226,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                         <div className="flex items-center gap-3 mb-4">
                             <i className="fas fa-bolt text-4xl text-gradient from-accent-start to-accent-end"></i>
                             <div className="text-xl font-bold text-white tracking-wider">
-                                VINFAST <span className="font-light text-white/80">MINH ĐẠO</span>
+                                ORDER <span className="font-light text-white/80">MANAGEMENT</span>
                             </div>
                         </div>
                         <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-3d animate-text-gradient-flow">
                             Hệ Thống Quản Lý Đơn Hàng
                         </h2>
-                        <p className="text-lg md:text-xl mt-4 max-w-2xl text-white/90" style={{textShadow: '0 2px 20px rgba(0,0,0,0.7)'}}>Chào mừng đến với Showroom THUẬN AN</p>
+                        <p className="text-lg md:text-xl mt-4 max-w-2xl text-white/90" style={{textShadow: '0 2px 20px rgba(0,0,0,0.7)'}}>Nâng cao hiệu quả công việc cho tư vấn bán hàng.</p>
                     </div>
 
                     <div className="absolute bottom-0 left-0 w-full z-20" style={{transform: 'translateY(1px)'}}>
@@ -260,7 +260,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             {view === 'login' && (
                                 <form onSubmit={handleLoginSubmit} className="w-full animate-fade-in-up">
                                     <h2 className="text-gradient text-4xl font-extrabold mb-2 text-center tracking-tight">Đăng Nhập</h2>
-                                    <p className="text-md text-text-secondary mb-10 text-center">Truy cập hệ thống nội bộ THUẬN AN</p>
+                                    <p className="text-md text-text-secondary mb-10 text-center">Truy cập hệ thống nội bộ</p>
                                     <div className="space-y-6">
                                         <div className="relative"><i className="fas fa-user absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
                                         <div className="relative"><i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
@@ -297,7 +297,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                         </div>
                     </div>
                      <footer className="absolute bottom-4 text-center text-[10px] font-medium text-text-secondary/50 z-10">
-                        &copy; {new Date().getFullYear()} VinFast Thuận An. All Rights Reserved.
+                        &copy; {new Date().getFullYear()} OrderManagement. All Rights Reserved.
                     </footer>
                 </main>
             </div>

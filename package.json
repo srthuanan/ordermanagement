@@ -1,9 +1,9 @@
 {
-  "name": "vinfast-order-dashboard",
+  "name": "ordermanagement",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://srthuanan.github.io/vinfast-dashboard/",
+  "homepage": "https://srthuanan.github.io/ordermanagement/",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
