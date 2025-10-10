@@ -193,37 +193,38 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
   if (error) return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
     
   const isYearlyView = selectedMonthIndex === null;
-  const buttonClass = "px-3 py-1.5 text-sm font-semibold rounded-lg border transition-colors duration-200 shadow-sm";
+  const buttonClass = "px-2 py-1 text-xs font-semibold rounded-lg border transition-colors duration-200 shadow-sm";
   const activeClass = "bg-accent-primary text-white border-accent-primary";
   const inactiveClass = "bg-surface-card text-text-secondary border-border-primary hover:bg-surface-accent hover:border-accent-primary/50";
   
   const monthSelector = (
       <div className="bg-surface-card p-2 rounded-xl border border-border-primary shadow-md">
-          <div className="flex items-center gap-2 flex-wrap">
-              <button
-                  onClick={() => { setSelectedMonthIndex(null); setCurrentPage(1); }}
-                  className={`${buttonClass} ${selectedMonthIndex === null ? activeClass : inactiveClass}`}
-              >
-                  <i className="fas fa-calendar-alt mr-2"></i> Cả Năm
-              </button>
-              <div className="h-6 w-px bg-border-primary mx-1"></div>
-              {MONTHS.map((_, index) => (
+          <div className="flex items-center justify-between flex-wrap gap-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
                   <button
-                      key={index}
-                      onClick={() => { setSelectedMonthIndex(index); setCurrentPage(1); }}
-                      className={`${buttonClass} ${selectedMonthIndex === index ? activeClass : inactiveClass}`}
+                      onClick={() => { setSelectedMonthIndex(null); setCurrentPage(1); }}
+                      className={`${buttonClass} ${selectedMonthIndex === null ? activeClass : inactiveClass}`}
                   >
-                      Tháng {index + 1}
+                      <i className="fas fa-calendar-alt mr-2"></i> Cả Năm
                   </button>
-              ))}
-               <div className="flex-grow"></div>
+                  <div className="h-6 w-px bg-border-primary mx-1 hidden sm:block"></div>
+                  {MONTHS.map((_, index) => (
+                      <button
+                          key={index}
+                          onClick={() => { setSelectedMonthIndex(index); setCurrentPage(1); }}
+                          className={`${buttonClass} ${selectedMonthIndex === index ? activeClass : inactiveClass}`}
+                      >
+                          Tháng {index + 1}
+                      </button>
+                  ))}
+               </div>
                <MultiSelectDropdown
                   id="sold-tvbh-filter"
-                  label="Tất cả TVBH"
+                  label="Lọc theo TVBH"
                   options={uniqueTvbh}
                   selectedOptions={selectedTvbh}
                   onChange={(v) => { setSelectedTvbh(v); setCurrentPage(1); }}
-                  icon="fa-user-tie"
+                  icon="fa-filter"
                   size="compact"
                   displayMode="selection"
               />
