@@ -10,7 +10,11 @@ export const userToConsultantMap: Record<string, string> = {
     'tannd': 'NGUYỄN DUY TÂN', 'ducdt': 'ĐINH TÀI ĐỨC', 'dattt': 'TỐNG THÀNH ĐẠT', 'haink': 'NGUYỄN KIM HẢI',
     'xuyennb': 'NGUYỄN BẢO XUYÊN', 'diennt': 'NGUYỄN THỊ DIỆN', 'trungnm': 'NGUYỄN MINH TRUNG', 'cant': 'NGUYỄN THANH CẢ',
     'tienna': 'NGUYỄN ANH TIẾN', 'namlv': 'LÊ VĂN NAM', 'tramhdt': 'HUỲNH DIỆP THANH TRÂM', 'thanhldv': 'LÊ DƯ VĂN THÀNH', 'chinhtc': 'TRANG CÔNG CHÍNH',
+<<<<<<< HEAD
     'lanvt': 'VÕ THẾ LÂN', 'vynty': 'NGUYỄN THỊ YẾN VY', 'huyhkn': 'NGUYỄN HOÀNG KHANG HUY',
+=======
+    'lanvt': 'VÕ THẾ LÂN', 'huyhkn': 'NGUYỄN HOÀNG KHANG HUY',
+>>>>>>> 81a64b748cb8b61434eae2b5b27b50bdc4da4433
     'thanhdn': 'ĐỒNG NGỌC THÀNH',
 };
 
@@ -49,7 +53,11 @@ export const userRoleMap: Record<string, string> = {
     'thanhldv': 'Tư vấn bán hàng',
     'chinhtc': 'Tư vấn bán hàng',
     'lanvt': 'Tư vấn bán hàng',
+<<<<<<< HEAD
     'vynty': 'Tư vấn bán hàng',
+=======
+   
+>>>>>>> 81a64b748cb8b61434eae2b5b27b50bdc4da4433
     'huyhkn': 'Tư vấn bán hàng',
     'thanhdn': 'Tư vấn bán hàng',
 };
