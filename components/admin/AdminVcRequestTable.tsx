@@ -58,7 +58,7 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
     }
 
     return (
-        <table className="min-w-full divide-y divide-border-primary">
+        <table className="min-w-full divide-y divide-border-primary responsive-table">
             <thead className="bg-surface-hover sticky top-0 z-10">
                 <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 w-12 sm:pl-6">
@@ -109,31 +109,31 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
 
                     return (
                         <tr key={orderNumber} className="hover:bg-surface-hover transition-colors">
-                            <td className="pl-4 w-12 sm:pl-6" onClick={e => e.stopPropagation()}>
+                            <td data-label="checkbox" className="pl-4 w-12 sm:pl-6" onClick={e => e.stopPropagation()}>
                                 <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} />
                             </td>
-                            <td className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
+                            <td data-label="#" className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
                             
-                            <td className="px-3 py-4 text-sm max-w-xs">
+                            <td data-label="Người YC / Khách Hàng" className="px-3 py-4 text-sm max-w-xs">
                                 <div className="font-semibold text-text-primary">{req["Người YC"]}</div>
                                 <div className="text-text-secondary text-xs mt-1">KH: {req["Tên khách hàng"]} ({req['Loại KH']})</div>
                             </td>
 
-                            <td className="px-3 py-4 text-sm max-w-xs">
+                            <td data-label="SĐH / VIN" className="px-3 py-4 text-sm max-w-xs">
                                 <CopyableField text={orderNumber} showToast={showToast} className="font-semibold text-text-primary" />
                                 <CopyableField text={req.VIN || ''} showToast={showToast} className="text-text-secondary font-mono text-xs mt-1" label="VIN" />
                             </td>
                             
-                            <td className="px-3 py-4 text-sm">
+                            <td data-label="Thời Gian YC" className="px-3 py-4 text-sm">
                                 <div className="text-text-primary" title={req["Thời gian YC"] ? moment(req["Thời gian YC"]).format('HH:mm DD/MM/YYYY') : 'N/A'}>
                                     {req["Thời gian YC"] ? moment(req["Thời gian YC"]).format('DD/MM/YYYY') : 'N/A'}
                                 </div>
                             </td>
                             
-                            <td className="px-3 py-4 text-sm">{filesHtml}</td>
-                            <td className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
+                            <td data-label="Hồ Sơ" className="px-3 py-4 text-sm">{filesHtml}</td>
+                            <td data-label="Trạng Thái" className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
                             
-                            <td className="px-3 py-4 text-center">
+                            <td data-label="Hành động" className="px-3 py-4 text-center">
                                 <AdminVcActionMenu status={status} onAction={(type) => onAction(type, req)} />
                             </td>
                         </tr>

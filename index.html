@@ -135,7 +135,16 @@
       .nav-link[data-active-link="true"] { background-color: #EBF5FF; color: #0D47A1; }
       .nav-link[data-active-link="true"] i { color: #0D47A1; }
       
-      .text-gradient { background: linear-gradient(45deg, var(--tw-gradient-stops, #0D47A1), var(--tw-gradient-stops, #42A5F5)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; color: #0D47A1; }
+      .text-gradient { 
+        background: linear-gradient(90deg, #0D47A1, #42A5F5, #0D47A1);
+        background-size: 200% auto;
+        -webkit-background-clip: text; 
+        -webkit-text-fill-color: transparent; 
+        background-clip: text; 
+        text-fill-color: transparent; 
+        color: #0D47A1; 
+        animation: text-gradient-flow 4s ease-in-out infinite;
+      }
       .icon-gradient { background: linear-gradient(45deg, #0c3483, #a2b6df, #6b8cce, #a2b6df); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; color: #0c3483; }
       
       @keyframes spin-icon {
@@ -747,6 +756,150 @@
             animation: boundary-glow 4s ease-in-out infinite;
         }
       }
+      
+      .admin-tabs-container {
+        scrollbar-width: none; /* Firefox */
+      }
+      .admin-tabs-container::-webkit-scrollbar {
+        display: none; /* Safari and Chrome */
+      }
+
+      /* === MOBILE RESPONSIVE STYLES === */
+      @media (max-width: 767px) {
+        /* General Layout */
+        main {
+          padding: 0.75rem;
+        }
+
+        /* Responsive Tables -> Card View */
+        .responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr {
+          display: block;
+        }
+        
+        .responsive-table thead tr {
+          position: absolute;
+          top: -9999px;
+          left: -9999px;
+        }
+
+        .responsive-table tbody tr {
+          border: 1px solid var(--tw-color-border-primary);
+          border-radius: 0.75rem;
+          margin-bottom: 1rem;
+          background-color: var(--tw-color-surface-card);
+          position: relative; /* For action button positioning */
+          overflow: hidden; /* To contain header background */
+        }
+
+        .responsive-table tbody td {
+          border-bottom: 1px dashed var(--tw-color-border-primary);
+          position: relative;
+          padding: 0.75rem 0.75rem 0.75rem 45%;
+          text-align: right;
+          min-height: 2.5rem;
+          display: block;
+        }
+        
+        .responsive-table tbody tr td:last-of-type {
+          border-bottom: none;
+        }
+
+        .responsive-table tbody td:before {
+          content: attr(data-label);
+          position: absolute;
+          left: 0.75rem;
+          width: 40%;
+          padding-right: 10px;
+          white-space: nowrap;
+          text-align: left;
+          font-weight: 600;
+          color: var(--tw-color-text-secondary);
+          font-size: 0.8rem;
+          top: 0.75rem;
+        }
+        
+        /* Hide index and checkbox cells */
+        .responsive-table td[data-label="#"],
+        .responsive-table td[data-label="checkbox"] {
+          display: none;
+        }
+        
+        /* Style the main identifying cell as a card header */
+        .responsive-table td[data-label="Khách hàng / SĐH"],
+        .responsive-table td[data-label="Người YC / Khách Hàng"],
+        .responsive-table td[data-label="Số VIN"],
+        .responsive-table td[data-label="Tên tệp"] {
+          display: block;
+          padding: 0.75rem;
+          text-align: left;
+          border-bottom: 1px solid var(--tw-color-border-primary);
+          background-color: var(--tw-color-surface-hover);
+        }
+        .responsive-table td[data-label="Khách hàng / SĐH"]:before,
+        .responsive-table td[data-label="Người YC / Khách Hàng"]:before,
+        .responsive-table td[data-label="Số VIN"]:before,
+        .responsive-table td[data-label="Tên tệp"]:before {
+          display: none; /* Hide label for the header */
+        }
+
+        /* Absolutely position the action menu in the top right of the card */
+        .responsive-table td[data-label="Hành động"] {
+          position: absolute;
+          top: 0.25rem;
+          right: 0.25rem;
+          border-bottom: none;
+          padding: 0;
+          display: block;
+          height: auto;
+          width: auto;
+          background: transparent;
+        }
+        .responsive-table td[data-label="Hành động"]:before {
+          display: none; /* Hide label for actions */
+        }
+        
+        .mobile-filter-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 0.625rem 1rem;
+          border: 1px solid var(--tw-color-border-primary);
+          background-color: var(--tw-color-surface-ground);
+          border-radius: 0.5rem;
+          font-weight: 600;
+          color: var(--tw-color-text-primary);
+        }
+        .mobile-filters-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease-in-out;
+        }
+        .mobile-filters-content.open {
+          max-height: 500px; /* Adjust as needed */
+        }
+
+
+        /* Make modals full-width on mobile */
+        .futuristic-modal-bg,
+        .bg-surface-card.w-full.max-w-lg,
+        .bg-surface-card.w-full.max-w-2xl,
+        .bg-surface-card.w-full.max-w-md {
+          max-width: calc(100% - 2rem);
+        }
+        .bg-surface-card.w-full.max-w-6xl {
+           max-width: 100%;
+           height: 100%;
+           max-height: 100vh;
+           border-radius: 0;
+        }
+
+        .notification-panel {
+          width: calc(100vw - 2rem);
+          right: -1rem;
+        }
+      }
+
     </style>
 <script type="importmap">
 {

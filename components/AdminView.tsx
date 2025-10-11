@@ -7,8 +7,8 @@ import AdminVcRequestTable from './admin/AdminVcRequestTable';
 import ActionModal from './admin/ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './admin/AdminActionModals';
 import OrderTimelineModal from './admin/OrderTimelineModal';
-import BulkInvoiceUploadModal from './admin/BulkInvoiceUploadModal';
 import SuggestionModal from './admin/SuggestionModal';
+import BulkUploadModal from './admin/BulkUploadModal'; // New Import
 import * as apiService from '../services/apiService';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
@@ -41,7 +41,7 @@ type ModalState = {
     order: Order | VcRequest;
 } | null;
 
-type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'bulkUpload' | 'addUser';
+type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
 type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview }) => {
@@ -78,6 +78,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+    
+    // New state for Bulk Upload Modal
+    const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     
     // Team management modal state
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
@@ -389,7 +392,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
     
-    const adminTools = [ { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') }, { title: 'Tải Lên Hàng Loạt', icon: 'fa-file-upload', action: () => setAdminModal('bulkUpload') }, { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') }, { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') }, { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') }, { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => setAdminModal('addUser') }, { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') }, { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') }, { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') }, ];
+    const adminTools = [
+        { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') },
+        { title: 'Tải Lên HĐ Hàng Loạt', icon: 'fa-file-upload', action: () => setIsBulkUploadModalOpen(true) },
+        { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') },
+        { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') },
+        { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') },
+        { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => setAdminModal('addUser') },
+        { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') },
+        { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') },
+        { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') },
+    ];
 
     const renderFilterPanel = () => {
         let currentFilters: any;
@@ -524,11 +537,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex flex-col h-full">
                  <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 flex items-center gap-2 mb-4">
-                    <div className="flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
                         {(['invoices', 'pending', 'paired', 'vc', 'phongkd'] as AdminSubView[]).map(view => {
                             const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
                             const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
-                            return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
+                            return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
                         })}
                     </div>
                     <div className="flex-grow"></div>
@@ -576,16 +589,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <RequestWithImageModal isOpen={invoiceModalState.type === 'rejectVc'} onClose={() => setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('rejectVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
                 </>
             )}
-            {(editingTeam || isAddingNewTeam) && 
-                <TeamEditorModal 
-                    isOpen={true} 
-                    onClose={() => { setEditingTeam(null); setIsAddingNewTeam(false); }} 
-                    teamData={teamData}
-                    allUsers={allUsers}
-                    editingTeam={editingTeam}
-                    onSave={handleSaveTeam}
-                />
-            }
             <ActionModal isOpen={adminModal === 'archive'} onClose={() => setAdminModal(null)} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history')} />
             <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
             <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị ẩn khỏi kho và ghi vào nhật ký xóa. Có thể phục hồi lại sau." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
@@ -594,7 +597,16 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
             <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
             <OrderTimelineModal isOpen={adminModal === 'timeline'} onClose={() => setAdminModal(null)} />
-            <BulkInvoiceUploadModal isOpen={adminModal === 'bulkUpload'} onClose={() => setAdminModal(null)} onSuccess={() => { refetchHistory(); setAdminModal(null); }} showToast={showToast} hideToast={hideToast} />
+            <BulkUploadModal
+                isOpen={isBulkUploadModalOpen}
+                onClose={() => setIsBulkUploadModalOpen(false)}
+                showToast={showToast}
+                hideToast={hideToast}
+                onSuccess={() => {
+                    refetchHistory(true);
+                    refetchXuathoadon(true);
+                }}
+            />
         </div>
     );
 };

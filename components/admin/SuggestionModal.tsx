@@ -49,7 +49,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                     <div>
                         <h3 className="font-semibold text-text-primary mb-2">Tìm thấy {suggestedCars.length} xe phù hợp trong kho (ưu tiên xe nhập sớm):</h3>
                         <div className="max-h-64 overflow-y-auto border border-border-primary rounded-lg">
-                            <table className="min-w-full text-sm">
+                            <table className="min-w-full text-sm responsive-table">
                                 <thead className="bg-surface-hover sticky top-0">
                                     <tr>
                                         <th className="py-2 px-3 text-left w-10">Chọn</th>
@@ -61,12 +61,12 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                 <tbody className="divide-y divide-border-primary">
                                     {suggestedCars.map((car) => (
                                         <tr key={car.VIN} className="hover:bg-surface-hover">
-                                            <td className="py-2.5 px-3">
+                                            <td className="py-2.5 px-3" data-label="Chọn">
                                                 <input type="radio" name="suggested-vin" value={car.VIN} checked={selectedVin === car.VIN} onChange={() => setSelectedVin(car.VIN)} className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-border-secondary" />
                                             </td>
-                                            <td className="py-2.5 px-3 font-mono text-text-primary">{car.VIN}</td>
-                                            <td className="py-2.5 px-3 text-text-secondary">{car["Nội thất"]}</td>
-                                            <td className="py-2.5 px-3 text-text-secondary">{car['Thời gian nhập'] ? moment(car['Thời gian nhập']).format('DD/MM/YYYY') : 'N/A'}</td>
+                                            <td className="py-2.5 px-3 font-mono text-text-primary" data-label="Số VIN">{car.VIN}</td>
+                                            <td className="py-2.5 px-3 text-text-secondary" data-label="Nội Thất">{car["Nội thất"]}</td>
+                                            <td className="py-2.5 px-3 text-text-secondary" data-label="Ngày Nhập Kho">{car['Thời gian nhập'] ? moment(car['Thời gian nhập']).format('DD/MM/YYYY') : 'N/A'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

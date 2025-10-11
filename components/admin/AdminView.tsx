@@ -1,18 +1,22 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import 'moment/locale/vi';
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType } from './types';
-import Pagination from './components/ui/Pagination';
-import AdminInvoiceTable from './components/admin/AdminInvoiceTable';
-import AdminVcRequestTable from './components/admin/AdminVcRequestTable';
-import ActionModal from './components/admin/ActionModal';
-import { RequestWithImageModal, UploadInvoiceModal } from './components/admin/AdminActionModals';
-import OrderTimelineModal from './components/admin/OrderTimelineModal';
-import SuggestionModal from './components/admin/SuggestionModal';
-import * as apiService from './services/apiService';
-import Filters, { DropdownFilterConfig } from './components/ui/Filters';
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType } from '../../types';
+import Pagination from '../ui/Pagination';
+import AdminInvoiceTable from './AdminInvoiceTable';
+import AdminVcRequestTable from './AdminVcRequestTable';
+import ActionModal from './ActionModal';
+import { RequestWithImageModal, UploadInvoiceModal } from './AdminActionModals';
+import OrderTimelineModal from './OrderTimelineModal';
+import SuggestionModal from './SuggestionModal';
+import * as apiService from '../../services/apiService';
+import Filters, { DropdownFilterConfig } from '../ui/Filters';
+import MultiSelectDropdown from '../ui/MultiSelectDropdown';
+import { ADMIN_USER } from '../../constants';
 
 
 const PAGE_SIZE = 15;
+
+type User = { name: string, role: string, username: string };
 
 interface AdminViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -20,9 +24,12 @@ interface AdminViewProps {
     refetchHistory: (isSilent?: boolean) => void;
     refetchStock: (isSilent?: boolean) => void;
     refetchXuathoadon: (isSilent?: boolean) => void;
+    refetchAdminData: (isSilent?: boolean) => void;
     allOrders: Order[];
     xuathoadonData: Order[];
     stockData: StockVehicle[];
+    teamData: Record<string, string[]>;
+    allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
     onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
@@ -33,10 +40,10 @@ type ModalState = {
     order: Order | VcRequest;
 } | null;
 
-type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline';
-type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc';
+type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
+type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, allOrders, xuathoadonData, stockData, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting and pagination for each tab
@@ -70,12 +77,31 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+    
+    // Team management modal state
+    const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
+    const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
+
+
+    const addUserInputs = useMemo(() => [
+        { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
+        { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
+    ], []);
+
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
         setErrorVc(null);
         try {
-            const result = await apiService.getApi({ action: 'getYeuCauVcData' });
+            const currentUserName = sessionStorage.getItem("currentUser") || '';
+            const isAdmin = currentUserName.toLowerCase() === 'admin';
+
+            const params: Record<string, any> = { action: 'getYeuCauVcData', isAdmin: String(isAdmin) };
+            if (!isAdmin) {
+                params.currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
+            }
+
+            const result = await apiService.getApi(params);
             setVcRequestsData(result.data || []);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
@@ -288,7 +314,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         action: string, 
         params: Record<string, any>, 
         successMessage: string, 
-        refetchType: 'history' | 'stock' | 'both' = 'history'
+        refetchType: 'history' | 'stock' | 'both' | 'admin' | 'none' = 'history'
     ) => {
         showToast('Đang xử lý...', 'Vui lòng chờ trong giây lát.', 'loading');
         try {
@@ -307,6 +333,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
             if (refetchType === 'stock' || refetchType === 'both') {
                 refetchStock(true);
+            }
+            if (refetchType === 'admin') {
+                refetchAdminData(true);
             }
             if (action.includes('VcRequest')) {
                 fetchVcData(true);
@@ -343,8 +372,23 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const handleConfirmSuggestion = async (orderNumber: string, vin: string) => {
         await handleAdminSubmit( 'manualMatchCar', { orderNumber, vin }, `Đã ghép thành công ĐH ${orderNumber}.`, 'both' );
     };
+
+    const handleSaveTeam = async (newTeamData: Record<string, string[]>) => {
+        await handleAdminSubmit('updateTeams', { teams: JSON.stringify(newTeamData) }, 'Cập nhật phòng ban thành công.', 'admin');
+        setEditingTeam(null);
+        setIsAddingNewTeam(false);
+    };
+
+    const handleDeleteTeam = async (leader: string) => {
+        const confirmed = window.confirm(`Bạn có chắc chắn muốn giải tán phòng của "${leader}"? Các thành viên sẽ không bị xóa khỏi hệ thống.`);
+        if (confirmed) {
+            const newTeamData = { ...teamData };
+            delete newTeamData[leader];
+            await handleSaveTeam(newTeamData);
+        }
+    };
     
-    const adminTools = [ { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') }, { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') }, { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') }, { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') }, { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') }, { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') }, { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') }, ];
+    const adminTools = [ { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') }, { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') }, { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') }, { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') }, { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => setAdminModal('addUser') }, { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') }, { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') }, { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') }, ];
 
     const renderFilterPanel = () => {
         let currentFilters: any;
@@ -385,6 +429,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     { id: 'admin-filter-trangthai-vc', key: 'trangthai', label: 'Tất cả Trạng Thái', options: currentOptions['Trạng thái xử lý'], icon: 'fa-tag', displayMode: 'selection'}
                 ];
                 break;
+            case 'phongkd':
+                return null;
         }
 
         return (
@@ -460,6 +506,15 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
                 );
             }
+            case 'phongkd': {
+                return <TeamManagementComponent 
+                    teamData={teamData} 
+                    allUsers={allUsers}
+                    onEditTeam={(leader, members) => setEditingTeam({ leader, members })}
+                    onAddNewTeam={() => setIsAddingNewTeam(true)}
+                    onDeleteTeam={handleDeleteTeam}
+                />;
+            }
             default: return null;
         }
     };
@@ -468,21 +523,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex flex-col h-full">
                  <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 flex items-center gap-2 mb-4">
-                    <div className="flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5">
-                        {(['invoices', 'pending', 'paired', 'vc'] as AdminSubView[]).map(view => {
-                            const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC' };
-                            const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length };
-                            return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
+                        {(['invoices', 'pending', 'paired', 'vc', 'phongkd'] as AdminSubView[]).map(view => {
+                            const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+                            const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+                            return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
                         })}
                     </div>
                     <div className="flex-grow"></div>
-                     <button onClick={() => setIsFilterPanelOpen(p => !p)} title="Lọc dữ liệu" className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all ${isFilterPanelOpen ? '!bg-surface-accent !text-accent-primary' : ''}`}>
+                     <button onClick={() => setIsFilterPanelOpen(p => !p)} title="Lọc dữ liệu" className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all ${isFilterPanelOpen ? '!bg-surface-accent !text-accent-primary' : ''} ${adminView === 'phongkd' ? 'hidden' : ''}`}>
                         <i className="fas fa-filter"></i>
                     </button>
                     <button 
                         onClick={async () => {
                             showToast('Đang làm mới...', 'Làm mới dữ liệu từ máy chủ.', 'loading');
-                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), fetchVcData(true)]);
+                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), fetchVcData(true), refetchAdminData(true)]);
                             hideToast();
                             showToast('Làm mới thành công', 'Dữ liệu đã được cập nhật.', 'success', 2000);
                         }} 
@@ -524,11 +579,154 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
             <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị ẩn khỏi kho và ghi vào nhật ký xóa. Có thể phục hồi lại sau." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
             <ActionModal isOpen={adminModal === 'restoreCar'} onClose={() => setAdminModal(null)} title="Phục Hồi Xe Đã Xóa" description="Xe sẽ được phục hồi về trạng thái 'Chưa ghép' và hiển thị lại trong kho." inputs={[{ id: 'vinToRestore', label: 'Số VIN cần phục hồi (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }]} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={(data: Record<string, string>) => handleAdminSubmit('restoreCarToStockLogic', data, 'Đã phục hồi xe thành công.', 'stock')} />
+            <ActionModal isOpen={adminModal === 'addUser'} onClose={() => setAdminModal(null)} title="Thêm Nhân Viên Mới" description="Thêm một tài khoản nhân viên mới. Hệ thống sẽ tự động tạo tên đăng nhập, mật khẩu và gửi email thông báo." inputs={addUserInputs} submitText="Thêm & Gửi Email" submitColor="primary" icon="fa-user-plus" onSubmit={(data) => handleAdminSubmit('addUser', data, `Đã tạo tài khoản cho ${data.fullName} và gửi email.`, 'admin')} />
             <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
             <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
             <OrderTimelineModal isOpen={adminModal === 'timeline'} onClose={() => setAdminModal(null)} />
         </div>
     );
 };
+
+
+// --- Team Management Components (nested for simplicity) ---
+
+interface TeamManagementProps {
+    teamData: Record<string, string[]>;
+    allUsers: User[];
+    onEditTeam: (leader: string, members: string[]) => void;
+    onAddNewTeam: () => void;
+    onDeleteTeam: (leader: string) => void;
+}
+
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+    const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
+
+    return (
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
+                <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
+            </div>
+            {sortedTeams.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sortedTeams.map(([leader, members]) => (
+                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-text-secondary">Trưởng phòng</p>
+                                    <p className="font-bold text-accent-primary">{leader}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
+                                    <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div className="border-t border-dashed border-border-secondary my-3"></div>
+                            <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
+                            <div className="space-y-2 flex-grow">
+                                {members.length > 0 ? members.map(member => (
+                                    <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
+                                )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 text-text-secondary">
+                    <i className="fas fa-users-slash fa-3x mb-4"></i>
+                    <p>Chưa có phòng kinh doanh nào được thiết lập.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+interface TeamEditorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (newTeamData: Record<string, string[]>) => void;
+    teamData: Record<string, string[]>;
+    allUsers: User[];
+    editingTeam: { leader: string; members: string[] } | null;
+}
+
+const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSave, teamData, allUsers, editingTeam }) => {
+    const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
+    const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const isNewTeam = !editingTeam;
+
+    const { potentialLeaders, availableMembers } = useMemo(() => {
+        const allLeaders = new Set(Object.keys(teamData));
+        const allMembers = new Set(Object.values(teamData).flat());
+        
+        const leaders = allUsers.filter(u => u.role === 'Trưởng Phòng Kinh Doanh' && (!allLeaders.has(u.name) || u.name === editingTeam?.leader));
+        const members = allUsers.filter(u => u.role === 'Tư vấn bán hàng' && (!allMembers.has(u.name) || editingTeam?.members.includes(u.name)));
+
+        return { potentialLeaders: leaders.map(u => u.name), availableMembers: members.map(u => u.name) };
+    }, [allUsers, teamData, editingTeam]);
+
+    const handleSave = async () => {
+        if (!selectedLeader) {
+            alert('Vui lòng chọn trưởng phòng.');
+            return;
+        }
+        setIsSubmitting(true);
+        const newTeamData = { ...teamData };
+        if (isNewTeam) {
+            newTeamData[selectedLeader] = selectedMembers;
+        } else {
+            // If leader name is changed (should not happen with current UI but good practice)
+            if (editingTeam.leader !== selectedLeader) {
+                delete newTeamData[editingTeam.leader];
+            }
+            newTeamData[selectedLeader] = selectedMembers;
+        }
+        await onSave(newTeamData);
+        setIsSubmitting(false);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
+                <main className="p-6 space-y-4 overflow-y-auto">
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
+                        {isNewTeam ? (
+                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input">
+                                <option value="" disabled>Chọn một trưởng phòng</option>
+                                {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                        ) : (
+                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2 futuristic-input cursor-not-allowed" />
+                        )}
+                    </div>
+                    <div>
+                         <MultiSelectDropdown 
+                            id="team-member-select"
+                            label="Thành viên"
+                            options={availableMembers}
+                            selectedOptions={selectedMembers}
+                            onChange={setSelectedMembers}
+                            icon="fa-users"
+                            displayMode="selection"
+                         />
+                    </div>
+                </main>
+                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
+                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
+                    <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
+                        {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
 
 export default AdminView;

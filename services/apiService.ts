@@ -536,11 +536,11 @@ export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> =
     return getApi({ action: 'getOrderHistory', orderNumber });
 }
 
-export const bulkUploadInvoices = async (filesData: { orderNumber: string; base64Data: string; mimeType: string; fileName: string }[]) => {
-    const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
-    return postApi({ 
+export const uploadBulkInvoices = async (filesData: any[]): Promise<ApiResult> => {
+    const payload = {
         action: 'handleBulkUploadIssuedInvoices',
         filesData: JSON.stringify(filesData),
-        uploadedBy: currentUser
-    });
+        uploadedBy: sessionStorage.getItem("currentConsultant") || "Admin",
+    };
+    return postApi(payload);
 };

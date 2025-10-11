@@ -127,7 +127,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
   return (
     <div className="w-full">
         <div className="min-w-full py-2 align-middle">
-            <table className="min-w-full divide-y divide-border-primary responsive-table">
+            <table className="min-w-full divide-y divide-border-primary">
                 <thead className="bg-surface-hover sticky top-0 z-10">
                     <tr>
                         <th scope="col" className="py-3.5 pl-4 pr-3 text-center text-xs font-bold text-text-secondary sm:pl-6 w-12 uppercase tracking-wider">#</th>
