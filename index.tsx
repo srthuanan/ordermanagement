@@ -44,31 +44,6 @@ const Root = () => {
     
     const hideToast = () => setToast(null);
     
-    // NEW FUNCTION: Handles multiple asynchronous requests with progress updates.
-    const runBulkAction = async (items: any[], actionAsync: (item: any) => Promise<any>, toastTitle: string) => {
-        let successCount = 0;
-        let errorCount = 0;
-        const total = items.length;
-    
-        showToast(toastTitle, `Bắt đầu xử lý ${total} mục...`, 'loading');
-    
-        for (let i = 0; i < total; i++) {
-            showToast(toastTitle, `Đang xử lý ${i + 1} / ${total}...`, 'loading');
-            try {
-                await actionAsync(items[i]);
-                successCount++;
-            } catch (error) {
-                console.error(`Lỗi xử lý mục ${i + 1}:`, error);
-                errorCount++;
-            }
-        }
-    
-        hideToast();
-        const successMessage = `Hoàn tất! Thành công: ${successCount}. Thất bại: ${errorCount}.`;
-        showToast('Hoàn Tất', successMessage, errorCount > 0 ? 'warning' : 'success', 5000);
-    };
-
-
     if (isLoading) {
         // You can return a loading spinner here if needed
         return null;

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import moment from 'moment';
-import { StockVehicle, StockSortConfig } from '../types';
-import StatusBadge from './ui/StatusBadge';
-import { getExteriorColorStyle } from '../utils/styleUtils';
+import { StockVehicle, StockSortConfig } from './types';
+import StatusBadge from './components/ui/StatusBadge';
+import { getExteriorColorStyle } from './utils/styleUtils';
 
 interface StockTableProps {
   vehicles: StockVehicle[];
@@ -127,7 +127,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
   return (
     <div className="w-full">
         <div className="min-w-full py-2 align-middle">
-            <table className="min-w-full divide-y divide-border-primary">
+            <table className="min-w-full divide-y divide-border-primary responsive-table">
                 <thead className="bg-surface-hover sticky top-0 z-10">
                     <tr>
                         <th scope="col" className="py-3.5 pl-4 pr-3 text-center text-xs font-bold text-text-secondary sm:pl-6 w-12 uppercase tracking-wider">#</th>
@@ -263,7 +263,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                             <span className="text-xs text-text-secondary">—</span>
                                         )}
                                         
-                                        {isConfirmOpen && !isProcessing && (
+                                        {isConfirmOpen && !isProcessing && confirmAction && (
                                             <div
                                                 ref={confirmRef}
                                                 onClick={e => e.stopPropagation()}

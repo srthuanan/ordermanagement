@@ -263,7 +263,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                             <span className="text-xs text-text-secondary">—</span>
                                         )}
                                         
-                                        {isConfirmOpen && !isProcessing && (
+                                        {isConfirmOpen && !isProcessing && confirmAction && (
                                             <div
                                                 ref={confirmRef}
                                                 onClick={e => e.stopPropagation()}

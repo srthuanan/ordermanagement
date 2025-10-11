@@ -8,6 +8,7 @@ import ActionModal from './ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './AdminActionModals';
 import OrderTimelineModal from './OrderTimelineModal';
 import SuggestionModal from './SuggestionModal';
+import BulkUploadModal from './BulkUploadModal'; // New Import
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
@@ -77,6 +78,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+    
+    // New state for Bulk Upload Modal
+    const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     
     // Team management modal state
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
@@ -388,7 +392,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
     
-    const adminTools = [ { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') }, { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') }, { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') }, { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') }, { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => setAdminModal('addUser') }, { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') }, { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') }, { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') }, ];
+    const adminTools = [
+        { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') },
+        { title: 'Tải Lên HĐ Hàng Loạt', icon: 'fa-file-upload', action: () => setIsBulkUploadModalOpen(true) },
+        { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => setAdminModal('addCar') },
+        { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => setAdminModal('deleteCar') },
+        { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => setAdminModal('restoreCar') },
+        { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => setAdminModal('addUser') },
+        { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => setAdminModal('deleteOrder') },
+        { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => setAdminModal('revertOrder') },
+        { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') },
+    ];
 
     const renderFilterPanel = () => {
         let currentFilters: any;
@@ -583,6 +597,27 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
             <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
             <OrderTimelineModal isOpen={adminModal === 'timeline'} onClose={() => setAdminModal(null)} />
+            <BulkUploadModal
+                isOpen={isBulkUploadModalOpen}
+                onClose={() => setIsBulkUploadModalOpen(false)}
+                showToast={showToast}
+                hideToast={hideToast}
+                onSuccess={() => {
+                    refetchHistory(true);
+                    refetchXuathoadon(true);
+                }}
+            />
+            <TeamEditorModal
+                isOpen={!!editingTeam || isAddingNewTeam}
+                onClose={() => {
+                    setEditingTeam(null);
+                    setIsAddingNewTeam(false);
+                }}
+                onSave={handleSaveTeam}
+                teamData={teamData}
+                allUsers={allUsers}
+                editingTeam={editingTeam}
+            />
         </div>
     );
 };
