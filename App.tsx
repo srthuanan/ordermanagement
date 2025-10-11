@@ -20,7 +20,7 @@ import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
 import { useSoldCarsApi } from './hooks/useSoldCarsApi';
 import * as apiService from './services/apiService';
-import { teamMap, normalizeName } from './services/authService';
+import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
 moment.locale('vi');
@@ -66,22 +66,54 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const userRole = sessionStorage.getItem("userRole") || (currentUserName.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Tư vấn bán hàng');
     const isCurrentUserAdmin = currentUserName.toLowerCase() === 'admin';
 
+    const [teamData, setTeamData] = useState<Record<string, string[]>>({});
+    const [allUsers, setAllUsers] = useState<{name: string, role: string, username: string}[]>([]);
+
+    const fetchAdminData = useCallback(async () => {
+        if (!isCurrentUserAdmin && userRole !== 'Trưởng Phòng Kinh Doanh') return;
+        try {
+            const [teamsResult, usersResult] = await Promise.all([
+                apiService.getTeamData(),
+                apiService.getUsers()
+            ]);
+
+            if (teamsResult.status === 'SUCCESS' && teamsResult.teamData) {
+                setTeamData(teamsResult.teamData);
+            } else {
+                console.error('Failed to fetch team data:', teamsResult.message);
+            }
+
+            if (usersResult.status === 'SUCCESS' && usersResult.users) {
+                setAllUsers(usersResult.users);
+            } else {
+                 console.error('Failed to fetch user list:', usersResult.message);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin data:", error);
+            showToast('Lỗi Tải Dữ Liệu', 'Không thể tải dữ liệu quản trị phòng ban.', 'error');
+        }
+    }, [isCurrentUserAdmin, userRole, showToast]);
+
+    useEffect(() => {
+        fetchAdminData();
+    }, [fetchAdminData]);
+
     const usersToView = useMemo(() => {
         if (userRole !== 'Trưởng Phòng Kinh Doanh') {
             return undefined;
         }
     
         const normalizedCurrentUser = normalizeName(currentUser);
-        
-        const teamMapKey = Object.keys(teamMap).find(key => normalizeName(key) === normalizedCurrentUser);
+        const teamMapKey = Object.keys(teamData).find(key => normalizeName(key) === normalizedCurrentUser);
     
-        if (teamMapKey) {
-            const teamMembers = teamMap[teamMapKey];
+        if (teamMapKey && teamData[teamMapKey]) {
+            const teamMembers = teamData[teamMapKey];
             return [teamMapKey, ...teamMembers].map(name => normalizeName(name));
         }
         
-        return undefined;
-    }, [currentUser, userRole]);
+        return [normalizedCurrentUser];
+    }, [currentUser, userRole, teamData]);
+
 
     // Centralized data fetching
     const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi(usersToView);
@@ -612,6 +644,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     isLoadingXuathoadon={isLoadingXuathoadon}
                     errorXuathoadon={errorXuathoadon}
                     onOpenImagePreview={openImagePreviewModal}
+                    teamData={teamData}
+                    allUsers={allUsers}
+                    refetchAdminData={fetchAdminData}
                     /> : renderOrdersContent();
             default:
                 return renderOrdersContent();

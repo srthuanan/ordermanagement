@@ -1,4 +1,4 @@
-import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS } from '../constants';
+import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS, LOGIN_API_URL } from '../constants';
 import { VcRequestData } from '../components/modals/VcRequestModal';
 import { Order } from '../types';
 
@@ -22,7 +22,7 @@ interface ApiResult {
     [key: string]: any;
 }
 
-const postApi = async (payload: Record<string, any>): Promise<ApiResult> => {
+const postApi = async (payload: Record<string, any>, url: string = API_URL): Promise<ApiResult> => {
     try {
         const bodyParams = new URLSearchParams();
         for (const key in payload) {
@@ -31,7 +31,7 @@ const postApi = async (payload: Record<string, any>): Promise<ApiResult> => {
             }
         }
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(url, {
             method: 'POST',
             body: bodyParams,
         });
@@ -55,7 +55,6 @@ const postApi = async (payload: Record<string, any>): Promise<ApiResult> => {
     }
 };
 
-// FIX: Exported the 'getApi' function to make it accessible from other modules.
 export const getApi = async (params: Record<string, any>, baseUrl: string = API_URL): Promise<ApiResult> => {
     const queryParams = new URLSearchParams();
     for (const key in params) {
@@ -123,23 +122,28 @@ const postStockApiWithParams = async (params: Record<string, any>): Promise<ApiR
 
 export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-    const isAdmin = currentUser === ADMIN_USER;
+    const currentUserName = sessionStorage.getItem("currentUser") || '';
+    const isAdmin = currentUserName.toLowerCase() === 'admin';
     
     const filters: Record<string, any> = {};
     if (usersToView && usersToView.length > 0) {
         filters.usersToView = usersToView;
     }
 
-    const params = {
+    const params: Record<string, any> = {
         action: 'getPaginatedData',
         page: '1',
         pageSize: '9999',
         sortBy: 'Thời gian nhập',
         sortOrder: 'desc',
         filters: JSON.stringify(filters),
-        currentUser: currentUser,
         isAdmin: String(isAdmin),
     };
+    
+    if (!isAdmin && (!usersToView || usersToView.length === 0)) {
+        params.currentUser = currentUser;
+    }
+
     return getApi(params);
 };
 
@@ -467,9 +471,65 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
 
 // --- Admin Actions ---
 
+// Helper for user management API which returns a different response format { success: true }
+const postUserApi = async (payload: Record<string, any>): Promise<ApiResult> => {
+    try {
+        const bodyParams = new URLSearchParams();
+        for (const key in payload) {
+            if (payload[key] !== null && payload[key] !== undefined) {
+                bodyParams.append(key, String(payload[key]));
+            }
+        }
+
+        const response = await fetch(LOGIN_API_URL, {
+            method: 'POST',
+            body: bodyParams,
+        });
+
+        const resultText = await response.text();
+        let result: { success: boolean; message: string; [key: string]: any; };
+        try {
+            result = JSON.parse(resultText);
+        } catch (e) {
+            console.error("Failed to parse user API response as JSON:", resultText);
+            throw new Error("User API returned an invalid response that was not JSON.");
+        }
+
+        if (!result.success) {
+            throw new Error(result.message || 'User API returned an unspecified error.');
+        }
+
+        // Translate the response to the standard ApiResult format
+        return {
+            status: 'SUCCESS',
+            message: result.message,
+            ...result
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown user API error occurred.';
+        throw new Error(errorMessage);
+    }
+};
+
+export const getTeamData = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getTeamData' }, LOGIN_API_URL);
+};
+
+export const getUsers = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getUsers' }, LOGIN_API_URL);
+};
+
+
 export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
-    return postApi({ action, ...params, adminUser: currentUser });
+    
+    // Actions related to user/team management use LOGIN_API_URL
+    if (['addUser', 'updateTeams'].includes(action)) {
+        return postUserApi({ action, ...params, adminUser: currentUser });
+    }
+
+    // All other admin actions use the standard API_URL and format ({ status: 'SUCCESS'/'ERROR' })
+    return postApi({ action, ...params, adminUser: currentUser }, API_URL);
 };
 
 export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> => {

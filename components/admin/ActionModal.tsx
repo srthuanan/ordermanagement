@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 interface InputConfig {
     id: string;
     label: string;
-    placeholder: string;
-    type?: 'text' | 'textarea';
+    placeholder?: string;
+    type?: 'text' | 'textarea' | 'select';
     isVIN?: boolean;
+    options?: string[];
 }
 
 interface ActionModalProps {
@@ -39,7 +40,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
 
     if (!isOpen) return null;
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         let value = e.target.value;
         const inputConfig = inputs.find(i => i.id === e.target.name);
         if (inputConfig?.isVIN) {
@@ -128,6 +129,19 @@ const ActionModal: React.FC<ActionModalProps> = ({
                                             rows={3}
                                             className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
                                         />
+                                    ) : input.type === 'select' ? (
+                                        <select
+                                            id={input.id}
+                                            name={input.id}
+                                            value={formData[input.id] || ''}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
+                                        >
+                                            <option value="" disabled>{input.placeholder || 'Chọn một tùy chọn'}</option>
+                                            {input.options?.map(option => (
+                                                <option key={option} value={option}>{option}</option>
+                                            ))}
+                                        </select>
                                     ) : (
                                         <input
                                             id={input.id}
@@ -148,7 +162,6 @@ const ActionModal: React.FC<ActionModalProps> = ({
                 <footer className="px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-center sm:gap-4 bg-surface-ground rounded-b-2xl">
                     <button onClick={onClose} disabled={isSubmitting} className="btn-secondary w-full sm:w-auto">Hủy</button>
                     <button onClick={handleSubmit} disabled={isSubmitting || (inputs.length > 0 && !isFormValid())} className={`${submitButtonClass} w-full sm:w-auto`}>
-                        {/* FIX: Replaced undefined variable 'submitIcon' with the 'icon' prop. */}
                         {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className={`fas ${icon} mr-2`}></i>}
                         {isSubmitting ? 'Đang xử lý...' : submitText}
                     </button>

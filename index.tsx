@@ -13,12 +13,14 @@ type ToastState = {
 } | null;
 
 const Root = () => {
+    // TẠM THỜI: Bỏ qua đăng nhập để tạo tài khoản admin đầu tiên.
+    // BƯỚC 1 HOÀN TÁC: Sau khi tạo admin xong, hãy đổi `true` thành `false`.
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState<ToastState>(null);
 
     useEffect(() => {
-        // Check session storage on initial load
+        
         const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
         setIsAuthenticated(loggedIn);
         setIsLoading(false);
@@ -30,6 +32,7 @@ const Root = () => {
 
     const handleLogout = useCallback(() => {
         sessionStorage.clear();
+        // Sau khi hoàn tác, dòng này sẽ hoạt động đúng.
         setIsAuthenticated(false);
         showToast('Đăng Xuất Thành Công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info', 3000);
     }, []);

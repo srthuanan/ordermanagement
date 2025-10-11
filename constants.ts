@@ -1,5 +1,5 @@
 export const API_URL = "https://script.google.com/macros/s/AKfycbzyCavSl0hMucDNNjuR_zUuCDWZ9YP3Qn4XL6sCgqBxLxK0L8eXkXEY7sody0eSvQEXzg/exec";
-export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbzTYOQKBRNxAP5AtR0v7Dxz-F3zI3nyUXYxLt6MCHH7ZK0vVG36o2l2ObyY-3OF2xjS/exec";
+export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbw6kkgqPpzF2_kRVzHbD9tB6YCOjsF-FV4pOFMcAuyiCNxhnY4q8cSgB28UCEDTkBqMKg/exec";
 export const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
 export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";
@@ -31,8 +31,8 @@ export const defaultExteriors = [
     "Brahminy White Roof- Aquatic Azure Body (181Y)", "Brahminy White Roof- Rose Pink Body (1821)",
     "Brahminy White Roof - Iris Berry Body (181X)", "Urbant Mint (CE1W)", "Vinbus Green (CE2B)",
     "Deep Ocean (CE1H)", "Brahminy White Roof- Summer Yellow Body (181U)", "Iris Berry (CE1X)",
-    "Zenith Grey-Desat Silver Roof (171V)", "Urbant Mint Green - Desat Silv (171W)",
-    "Ivy Green-Desat Silver Roof (1722)", "Atlantic Blue-Aquatic Azure Ro (1Y26)",
+    "Zenith Grey-desat Silver Roof (171V)", "Urbant Mint Green - Desat Silv (171W)",
+    "Ivy Green-desat Silver Roof (1722)", "Atlantic Blue-Aquatic Azure Ro (1Y26)",
     "Jet Black-Champagne Creme Roof (2311)", "Infinity Blanc _ Silky White R (2418)",
     "Champagne Creme - Matte Champa (2523)", "Jet Black - Graphite Roof (2811)",
     "Crimson Velvet - Mystery Bronz (2927)", "Ivy_Green_GNE (CE22)", "Champagne_Creme_YLG (CE23)",

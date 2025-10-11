@@ -7,15 +7,20 @@ interface LoginScreenProps {
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) => {
-    const [view, setView] = useState<'login' | 'forgot' | 'reset'>('login');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // State for different views
+    const [viewMode, setViewMode] = useState<'login' | 'forgot' | 'reset'>('login');
+
+    // Login form state
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [email, setEmail] = useState('');
+    
+    // Forgot/Reset password state
+    const [email, setEmail] = useState(''); 
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [usernameForReset, setUsernameForReset] = useState('');
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const clockIntervalRef = useRef<number | null>(null);
@@ -152,26 +157,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             showToast('Thất Bại', result.message || 'Đăng nhập không thành công.', 'error');
         }
     };
-
+    
     const handleForgotPasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!email) {
-            showToast('Thiếu Thông Tin', 'Vui lòng nhập địa chỉ email của bạn.', 'warning');
+            showToast('Lỗi', 'Vui lòng nhập email của bạn.', 'error');
             return;
         }
         setIsSubmitting(true);
         const result = await authService.forgotPassword(email);
         setIsSubmitting(false);
-    
-        if (result.success && result.username) {
-            showToast('Thành Công', result.message || 'Mã OTP đã được gửi đến email của bạn.', 'success');
-            setUsernameForReset(result.username);
-            setView('reset');
+
+        if (result.success) {
+            showToast('Thành Công', result.message || 'Mã OTP đã được gửi.', 'success', 6000);
+            setViewMode('reset');
         } else {
-            showToast('Thất Bại', result.message || 'Không thể gửi yêu cầu. Vui lòng thử lại.', 'error');
+            showToast('Thất Bại', result.message || 'Yêu cầu không thành công.', 'error');
         }
     };
-    
+
     const handleResetPasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!otp || !newPassword || !confirmPassword) {
@@ -186,20 +190,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             showToast('Lỗi', 'Mật khẩu xác nhận không khớp.', 'error');
             return;
         }
-    
+
         setIsSubmitting(true);
-        const result = await authService.resetPassword(usernameForReset, otp, newPassword);
+        const result = await authService.resetPassword(email, otp, newPassword);
         setIsSubmitting(false);
-    
+
         if (result.success) {
-            showToast('Thành Công', result.message || 'Mật khẩu đã được đặt lại thành công!', 'success');
-            // Reset state and go back to login view
-            setView('login');
-            setEmail(''); setOtp(''); setNewPassword(''); setConfirmPassword(''); setUsernameForReset('');
+            showToast('Thành Công', result.message || 'Mật khẩu đã được đặt lại.', 'success');
+            handleBackToLogin();
         } else {
             showToast('Thất Bại', result.message || 'Đặt lại mật khẩu không thành công.', 'error');
         }
     };
+
+    const handleBackToLogin = () => {
+        setEmail('');
+        setOtp('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setUsername('');
+        setPassword('');
+        setViewMode('login');
+    };
+
+    const inputBaseClass = "peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm";
     
     return (
         <div className="relative isolate h-screen flex flex-col overflow-hidden">
@@ -256,44 +270,44 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     <div className="relative z-10 w-full max-w-md bg-white/70 backdrop-blur-lg p-10 sm:p-12 rounded-2xl border border-white/20 shadow-xl animate-border-glow overflow-hidden">
                         <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-accent-start/10 via-transparent to-accent-end/10 animate-aurora opacity-50 -z-10"></div>
                         <div className="relative z-10 min-h-[380px]">
-
-                            {view === 'login' && (
+                            {viewMode === 'login' && (
                                 <form onSubmit={handleLoginSubmit} className="w-full animate-fade-in-up">
                                     <h2 className="text-gradient text-4xl font-extrabold mb-2 text-center tracking-tight">Đăng Nhập</h2>
                                     <p className="text-md text-text-secondary mb-10 text-center">Truy cập hệ thống nội bộ</p>
                                     <div className="space-y-6">
-                                        <div className="relative"><i className="fas fa-user absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
-                                        <div className="relative"><i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
+                                        <div className="relative"><i className="fas fa-user absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className={inputBaseClass}/></div>
+                                        <div className="relative"><i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className={inputBaseClass}/></div>
                                     </div>
                                     <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-10 !py-3 !text-base">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...</> : 'Đăng Nhập'}</button>
-                                    <div className="text-center mt-6"><button type="button" onClick={() => setView('forgot')} className="text-sm font-semibold text-accent-primary hover:text-accent-primary-hover transition-colors">Quên mật khẩu?</button></div>
+                                    <div className="text-center mt-6">
+                                        <button type="button" onClick={() => setViewMode('forgot')} className="text-sm font-semibold text-accent-primary hover:underline">Quên mật khẩu?</button>
+                                    </div>
                                 </form>
                             )}
-                            
-                            {view === 'forgot' && (
+
+                            {viewMode === 'forgot' && (
                                 <form onSubmit={handleForgotPasswordSubmit} className="w-full animate-fade-in-up">
                                     <h2 className="text-gradient text-3xl font-extrabold mb-2 text-center tracking-tight">Quên Mật Khẩu</h2>
-                                    <p className="text-sm text-text-secondary mb-8 text-center">Nhập email đã đăng ký để nhận mã OTP.</p>
-                                    <div className="relative"><i className="fas fa-envelope absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Địa chỉ email" autoComplete="email" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
-                                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-8 !py-3 !text-base">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang gửi...</> : 'Gửi Yêu Cầu'}</button>
-                                    <div className="text-center mt-6"><button type="button" onClick={() => setView('login')} className="text-sm font-semibold text-accent-secondary hover:text-accent-primary transition-colors"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
+                                    <p className="text-md text-text-secondary mb-10 text-center">Nhập email để nhận mã khôi phục.</p>
+                                    <div className="relative"><i className="fas fa-envelope absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email đăng ký" required className={inputBaseClass}/></div>
+                                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-10 !py-3 !text-base">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang gửi...</> : 'Gửi Mã OTP'}</button>
+                                    <div className="text-center mt-6"><button type="button" onClick={handleBackToLogin} className="text-sm font-semibold text-text-secondary hover:underline"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
                                 </form>
                             )}
 
-                            {view === 'reset' && (
+                             {viewMode === 'reset' && (
                                 <form onSubmit={handleResetPasswordSubmit} className="w-full animate-fade-in-up">
                                     <h2 className="text-gradient text-3xl font-extrabold mb-2 text-center tracking-tight">Đặt Lại Mật Khẩu</h2>
-                                    <p className="text-sm text-text-secondary mb-6 text-center">Mã OTP đã được gửi đến email cho tài khoản <strong className="text-text-primary">{usernameForReset}</strong>.</p>
+                                    <p className="text-sm text-text-secondary mb-8 text-center">Mã OTP đã được gửi tới <strong>{email}</strong>. Vui lòng kiểm tra và nhập vào bên dưới.</p>
                                     <div className="space-y-4">
-                                        <div className="relative"><i className="fas fa-key absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="Mã OTP" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
-                                        <div className="relative"><i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="Mật khẩu mới" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
-                                        <div className="relative"><i className="fas fa-check-circle absolute top-1/2 left-4 -translate-y-1/2 icon-gradient peer-focus:opacity-70 transition-opacity"></i><input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Xác nhận mật khẩu mới" className="peer w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm text-text-primary border border-slate-300/50 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all placeholder:text-text-secondary/70 shadow-sm"/></div>
+                                        <div className="relative"><i className="fas fa-key absolute top-1/2 left-4 -translate-y-1/2 icon-gradient"></i><input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="Mã OTP" required className={inputBaseClass}/></div>
+                                        <div className="relative"><i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 icon-gradient"></i><input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)" required className={inputBaseClass}/></div>
+                                        <div className="relative"><i className="fas fa-check-circle absolute top-1/2 left-4 -translate-y-1/2 icon-gradient"></i><input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Xác nhận mật khẩu mới" required className={inputBaseClass}/></div>
                                     </div>
-                                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-8 !py-3 !text-base">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang xác nhận...</> : 'Xác Nhận'}</button>
-                                    <div className="text-center mt-6"><button type="button" onClick={() => setView('login')} className="text-sm font-semibold text-accent-secondary hover:text-accent-primary transition-colors"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
+                                    <button type="submit" disabled={isSubmitting} className="btn-primary w-full mt-8 !py-3 !text-base">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...</> : 'Xác Nhận & Đổi Mật Khẩu'}</button>
+                                    <div className="text-center mt-6"><button type="button" onClick={handleBackToLogin} className="text-sm font-semibold text-text-secondary hover:underline"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
                                 </form>
                             )}
-
                         </div>
                     </div>
                      <footer className="absolute bottom-4 text-center text-[10px] font-medium text-text-secondary/50 z-10">
