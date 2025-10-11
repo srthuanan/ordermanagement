@@ -500,10 +500,10 @@ const postUserApi = async (payload: Record<string, any>): Promise<ApiResult> => 
         }
 
         // Translate the response to the standard ApiResult format
+        const { success, ...apiResultData } = result;
         return {
             status: 'SUCCESS',
-            message: result.message,
-            ...result
+            ...apiResultData,
         };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown user API error occurred.';

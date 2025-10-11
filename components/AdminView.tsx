@@ -94,8 +94,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         if (!isSilent) setIsLoadingVc(true);
         setErrorVc(null);
         try {
-            // FIX: Added admin/user context to the API call to ensure admins can see all VC requests,
-            // aligning the logic with other data fetching methods.
             const currentUserName = sessionStorage.getItem("currentUser") || '';
             const isAdmin = currentUserName.toLowerCase() === 'admin';
 
