@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { Order, SortConfig, Notification, NotificationType, StockVehicle, ActionType } from './types';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';

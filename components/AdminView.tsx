@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import 'moment/locale/vi';
 import { Order, SortConfig, StockVehicle, ActionType } from '../types';
 import Pagination from './ui/Pagination';
@@ -41,7 +41,7 @@ type ModalState = {
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
 type AdminSubView = 'invoices' | 'pending' | 'paired' | 'phongkd';
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting and pagination for each tab
@@ -536,7 +536,7 @@ interface TeamManagementProps {
     onDeleteTeam: (leader: string) => void;
 }
 
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, allUsers, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
     const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
 
     return (
@@ -622,6 +622,7 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
         if (isNewTeam) {
             newTeamData[selectedLeader] = selectedMembers;
         } else {
+            // If leader name is changed (should not happen with current UI but good practice)
             if (editingTeam.leader !== selectedLeader) {
                 delete newTeamData[editingTeam.leader];
             }
@@ -650,10 +651,9 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                         )}
                     </div>
                     <div>
-                         <label className="block text-sm font-medium text-text-primary mb-2">Thành viên</label>
                          <MultiSelectDropdown 
                             id="team-member-select"
-                            label="Chọn thành viên"
+                            label="Thành viên"
                             options={availableMembers}
                             selectedOptions={selectedMembers}
                             onChange={setSelectedMembers}
@@ -672,5 +672,6 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
         </div>
     );
 };
+
 
 export default AdminView;
