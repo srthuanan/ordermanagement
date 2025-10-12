@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Order } from '../../types';
-import SimpleFileUpload from './SimpleFileUpload';
+import SimpleFileUpload from '../ui/SimpleFileUpload';
 
 interface VcRequestPayload {
     orderNumber: string;
@@ -18,7 +18,7 @@ interface VcRequestPayload {
 interface RequestVcModalProps {
     order: Order | null;
     onClose: () => void;
-    onSubmit: (payload: VcRequestPayload) => Promise<boolean>;
+    onSubmit: (payload: VcRequestPayload, vin?: string) => Promise<boolean>;
 }
 
 const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmit }) => {
@@ -80,7 +80,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
             payload.dmsCode = dmsCode;
         }
 
-        const success = await onSubmit(payload);
+        const success = await onSubmit(payload, order.VIN);
         if (!success) {
             setIsSubmitting(false); // Only re-enable button on failure
         }

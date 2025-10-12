@@ -15,6 +15,8 @@ const getStatusDetails = (statusText: string): { className: string; icon: string
         case 'đã hủy':
         case 'đã hủy (ui)':
             return { className: 'status-da-huy', icon: 'fa-times-circle' };
+        case 'từ chối ycvc':
+            return { className: 'status-tu-choi-ycvc', icon: 'fa-ban' };
         
         // Pending/Waiting Statuses
         case 'chưa ghép':
@@ -26,14 +28,15 @@ const getStatusDetails = (statusText: string): { className: string; icon: string
         case 'chờ ký hóa đơn':
              return { className: 'status-cho-ky-hoa-don', icon: 'fa-file-signature' };
         case 'chờ duyệt ycvc':
-            return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-check' };
+             return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-clock' };
 
         // Action Required Status
         case 'yêu cầu bổ sung':
             return { className: 'status-yeu-cau-bo-sung', icon: 'fa-edit' };
+        case 'chờ xác thực vc (tvbh)':
+            return { className: 'status-yeu-cau-bo-sung', icon: 'fa-user-check' };
 
         // In Progress Statuses
-        case 'đã yêu cầu vc':
         case 'đang giữ':
             return { className: 'status-dang-giu', icon: 'fa-pause-circle' };
         case 'đã ghép':
@@ -50,11 +53,10 @@ const getStatusDetails = (statusText: string): { className: string; icon: string
             return { className: 'status-da-xuat-hoa-don', icon: 'fa-file-invoice-dollar' };
         case 'yêu cầu vinclub':
             return { className: 'status-yeu-cau-vinclub', icon: 'fa-id-card' };
+        case 'đã có vc':
+            return { className: 'status-san-sang', icon: 'fa-id-badge' };
 
         default:
-            if (lowerStatus.startsWith('từ chối ycvc:')) {
-                return { className: 'status-tu-choi-ycvc', icon: 'fa-ban' };
-            }
             if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
                 return { className: 'status-san-sang', icon: 'fa-check-circle' };
             }

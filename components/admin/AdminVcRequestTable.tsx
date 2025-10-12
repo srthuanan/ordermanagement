@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import moment from 'moment';
-import { API_URL } from '../../constants';
-import { VcRequest, SortConfig, ActionType } from '../../types';
+import { VcRequest, VcSortConfig, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 
 interface AdminVcRequestTableProps {
     requests: VcRequest[];
-    sortConfig: SortConfig | null;
+    sortConfig: VcSortConfig | null;
     onSort: (key: keyof VcRequest) => void;
     selectedRows: Set<string>;
     onToggleRow: (orderNumber: string) => void;
@@ -16,46 +15,28 @@ interface AdminVcRequestTableProps {
     onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
 }
 
-const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortConfig: SortConfig | null, onSort: (key: keyof VcRequest) => void }> = ({ colKey, title, sortConfig, onSort }) => {
+const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortConfig: VcSortConfig | null, onSort: (key: keyof VcRequest) => void }> = ({ colKey, title, sortConfig, onSort }) => {
     const isSorted = sortConfig?.key === colKey;
     const icon = isSorted ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '';
     return <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
-const CopyableField: React.FC<{ text: string; showToast: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, showToast, className, label, wrap = false }) => {
-    if (!text || text === 'N/A') {
-        return <div className={className}>{label ? `${label}: ` : ''}N/A</div>;
-    }
-    const handleCopy = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        navigator.clipboard.writeText(text).then(() => showToast('Đã sao chép!', `${text} đã được sao chép.`, 'success', 2000)).catch(() => showToast('Lỗi', 'Không thể sao chép.', 'error'));
-    };
-    const textClasses = wrap ? 'cursor-pointer break-words' : 'truncate cursor-pointer';
-    return (
-        <div className={`group relative flex items-start justify-between ${className}`} title={`Click để sao chép: ${text}`}>
-            <span className={textClasses} onClick={(e) => handleCopy(e)}>{label ? `${label}: ` : ''}{text}</span>
-            <button onClick={handleCopy} className="ml-2 text-text-secondary/50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 shrink-0"><i className="fas fa-copy text-xs"></i></button>
-        </div>
-    );
-};
 
-
-const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, showToast, onOpenImagePreview }) => {
+const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, onOpenImagePreview, showToast }) => {
     const isAllSelected = requests.length > 0 && selectedRows.size === requests.length;
+    
+    const handleImagePreview = (e: React.MouseEvent, url: string, label: string, customer: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onOpenImagePreview(url, url, label, customer);
+    };
 
-    const headers = [
-        { key: 'Người YC', title: 'Người YC / Khách Hàng', sortable: true },
-        { key: 'Số đơn hàng', title: 'SĐH / VIN', sortable: true },
-        { key: 'Thời gian YC', title: 'Thời Gian YC', sortable: true },
-        { key: 'Hồ sơ', title: 'Hồ Sơ', sortable: false },
-        { key: 'Trạng thái xử lý', title: 'Trạng Thái', sortable: true },
-    ];
-
-    const getFileIdFromUrl = (url: string) => {
-        if (!url || typeof url !== 'string') return null;
-        const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
-        return fileIdMatch ? (fileIdMatch[1] || fileIdMatch[2]) : null;
-    }
+    const handleCopy = (e: React.MouseEvent, text: string, label: string) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Đã sao chép!', `${label} ${text} đã được sao chép.`, 'success', 2000);
+        }).catch(() => showToast('Lỗi', `Không thể sao chép ${label}.`, 'error'));
+    };
 
     return (
         <table className="min-w-full divide-y divide-border-primary responsive-table">
@@ -65,7 +46,11 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                         <input type="checkbox" className="custom-checkbox" checked={isAllSelected} onChange={onToggleAllRows} />
                     </th>
                     <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary w-12 uppercase tracking-wider">#</th>
-                    {headers.map(h => h.sortable ? <SortableHeader key={h.key} colKey={h.key as keyof VcRequest} title={h.title} sortConfig={sortConfig} onSort={onSort} /> : <th key={h.key} className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">{h.title}</th>)}
+                    <SortableHeader colKey="Tên khách hàng" title="Khách Hàng / SĐH / VIN" sortConfig={sortConfig} onSort={onSort} />
+                    <SortableHeader colKey="Người YC" title="Người Yêu Cầu" sortConfig={sortConfig} onSort={onSort} />
+                    <SortableHeader colKey="Thời gian YC" title="Thời Gian YC" sortConfig={sortConfig} onSort={onSort} />
+                    <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">Hồ sơ & Ghi chú</th>
+                    <SortableHeader colKey="Trạng thái xử lý" title="Trạng Thái" sortConfig={sortConfig} onSort={onSort} />
                     <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành Động</th>
                 </tr>
             </thead>
@@ -73,39 +58,23 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                 {requests.map((req, index) => {
                     const orderNumber = req['Số đơn hàng'];
                     const status = req['Trạng thái xử lý'] || 'N/A';
-                    
-                    const documents = [
-                        { key: 'Link CCCD Mặt Trước', label: 'CCCD Trước', icon: 'fa-id-card' },
-                        { key: 'Link CCCD Mặt Sau', label: 'CCCD Sau', icon: 'fa-address-card' },
-                        { key: 'Link Cavet Xe Mặt Trước', label: 'Cavet Trước', icon: 'fa-car-side' },
-                        { key: 'Link Cavet Xe Mặt Sau', label: 'Cavet Sau', icon: 'fa-car-alt' },
-                        { key: 'Link GPKD', label: 'GPKD', icon: 'fa-building' }
-                    ];
+                    const dmsCode = req['Mã KH DMS'];
+                    let fileUrls: Record<string, string> = {};
+                    try {
+                        if (req.FileUrls) fileUrls = JSON.parse(req.FileUrls);
+                        // For backward compatibility with old single image
+                        else if (req['URL hình ảnh']) fileUrls = { unc: req['URL hình ảnh'] };
+                    } catch (e) { console.error('Failed to parse FileUrls', e); }
 
-                    const filesHtml = (
-                        <div className="flex items-center gap-3">
-                            {documents.map(doc => {
-                                const url = req[doc.key];
-                                const fileId = getFileIdFromUrl(url);
-                                const imageUrl = fileId ? `${API_URL}?action=serveImage&fileId=${fileId}` : '';
+                    const docLabels: Record<string, { label: string, icon: string }> = {
+                        idCardFront: { label: 'CCCD Trước', icon: 'fa-id-card' },
+                        idCardBack: { label: 'CCCD Sau', icon: 'fa-id-card' },
+                        businessLicense: { label: 'GPKD', icon: 'fa-file-alt' },
+                        regFront: { label: 'Cavet Trước', icon: 'fa-car' },
+                        regBack: { label: 'Cavet Sau', icon: 'fa-car' },
+                        unc: { label: 'UNC', icon: 'fa-file-invoice-dollar' },
+                    };
 
-                                return (
-                                    <button 
-                                        key={doc.key} 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (imageUrl && url) onOpenImagePreview(imageUrl, url, doc.label, req['Tên khách hàng'])
-                                        }}
-                                        disabled={!fileId}
-                                        className={`transition-opacity ${fileId ? 'hover:opacity-70 cursor-pointer' : 'cursor-not-allowed opacity-20'}`} 
-                                        title={doc.label + (fileId ? '' : ' (chưa có)')}
-                                    >
-                                        <i className={`fas ${doc.icon} fa-fw text-lg w-6 text-center text-text-secondary`}></i>
-                                    </button>
-                                )
-                            })}
-                        </div>
-                    );
 
                     return (
                         <tr key={orderNumber} className="hover:bg-surface-hover transition-colors">
@@ -114,27 +83,48 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                             </td>
                             <td data-label="#" className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
                             
-                            <td data-label="Người YC / Khách Hàng" className="px-3 py-4 text-sm max-w-xs">
-                                <div className="font-semibold text-text-primary">{req["Người YC"]}</div>
-                                <div className="text-text-secondary text-xs mt-1">KH: {req["Tên khách hàng"]} ({req['Loại KH']})</div>
-                            </td>
-
-                            <td data-label="SĐH / VIN" className="px-3 py-4 text-sm max-w-xs">
-                                <CopyableField text={orderNumber} showToast={showToast} className="font-semibold text-text-primary" />
-                                <CopyableField text={req.VIN || ''} showToast={showToast} className="text-text-secondary font-mono text-xs mt-1" label="VIN" />
-                            </td>
-                            
-                            <td data-label="Thời Gian YC" className="px-3 py-4 text-sm">
-                                <div className="text-text-primary" title={req["Thời gian YC"] ? moment(req["Thời gian YC"]).format('HH:mm DD/MM/YYYY') : 'N/A'}>
-                                    {req["Thời gian YC"] ? moment(req["Thời gian YC"]).format('DD/MM/YYYY') : 'N/A'}
+                            <td data-label="Khách hàng / SĐH / VIN" className="px-3 py-4 text-sm">
+                                <div className="font-semibold text-text-primary">{req["Tên khách hàng"]}</div>
+                                <div 
+                                    className="text-text-secondary font-mono text-xs mt-1 cursor-pointer group flex items-center gap-2"
+                                    title={`Click để sao chép: ${orderNumber}`}
+                                    onClick={(e) => handleCopy(e, orderNumber, 'SĐH')}
+                                >
+                                    <span>{orderNumber}</span>
+                                    <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                 </div>
+                                {req.VIN && (
+                                    <div 
+                                        className="text-accent-primary font-mono text-xs mt-1 cursor-pointer group flex items-center gap-2"
+                                        title={`Click để sao chép: ${req.VIN}`}
+                                        onClick={(e) => handleCopy(e, req.VIN!, 'VIN')}
+                                    >
+                                        <span>{req.VIN}</span>
+                                        <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    </div>
+                                )}
                             </td>
                             
-                            <td data-label="Hồ Sơ" className="px-3 py-4 text-sm">{filesHtml}</td>
+                            <td data-label="Người Yêu Cầu" className="px-3 py-4 text-sm text-text-primary">{req["Người YC"]}</td>
+                            <td data-label="Thời gian YC" className="px-3 py-4 text-sm text-text-primary">{moment(req["Thời gian YC"]).format('HH:mm DD/MM/YYYY')}</td>
+                            <td data-label="Hồ sơ & Ghi chú" className="px-3 py-4 text-sm text-text-secondary">
+                                {dmsCode && <div className="text-xs font-mono font-semibold text-text-primary">DMS: {dmsCode}</div>}
+                                <div className="flex items-center gap-3 mt-1">
+                                    {Object.entries(fileUrls).map(([key, url]) => {
+                                        const doc = docLabels[key] || { label: key, icon: 'fa-file' };
+                                        return (
+                                            <button key={key} onClick={(e) => handleImagePreview(e, url, doc.label, req['Tên khách hàng'])} title={`Xem ${doc.label}`} className="text-accent-primary hover:underline text-lg">
+                                                <i className={`fas ${doc.icon}`}></i>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                                <p className="truncate text-xs mt-1" title={req['Ghi chú']}>{req['Ghi chú'] || '—'}</p>
+                            </td>
                             <td data-label="Trạng Thái" className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
                             
-                            <td data-label="Hành động" className="px-3 py-4 text-center">
-                                <AdminVcActionMenu status={status} onAction={(type) => onAction(type, req)} />
+                            <td data-label="Hành Động" className="px-3 py-4 text-center">
+                                <AdminActionMenu status={status} onAction={(type) => onAction(type, req)} />
                             </td>
                         </tr>
                     );
@@ -144,7 +134,7 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
     );
 };
 
-const AdminVcActionMenu: React.FC<{ status: string; onAction: (type: ActionType) => void }> = ({ status, onAction }) => {
+const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) => void }> = ({ status, onAction }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = React.useRef<HTMLDivElement>(null);
     React.useEffect(() => {
@@ -154,21 +144,16 @@ const AdminVcActionMenu: React.FC<{ status: string; onAction: (type: ActionType)
     }, []);
 
     const s = status.toLowerCase();
-    
     const actions = [
         { type: 'approveVc', label: 'Phê Duyệt', icon: 'fa-check-circle', condition: s === 'chờ duyệt ycvc' },
         { type: 'rejectVc', label: 'Từ Chối', icon: 'fa-ban', isDanger: true, condition: s === 'chờ duyệt ycvc' },
     ].filter(a => a.condition);
 
-    if (actions.length === 0) {
-        return <span className="text-xs text-text-secondary">—</span>;
-    }
-
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button onClick={() => setIsOpen(p => !p)} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
+                <div className="absolute right-0 mt-1 w-40 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
                     {actions.map((action) => (
                         <button key={action.type} onClick={() => { onAction(action.type as ActionType); setIsOpen(false); }}
                             className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
@@ -177,6 +162,7 @@ const AdminVcActionMenu: React.FC<{ status: string; onAction: (type: ActionType)
                             <span>{action.label}</span>
                         </button>
                     ))}
+                     {actions.length === 0 && <div className="px-3 py-2 text-sm text-text-secondary text-center">Không có hành động</div>}
                 </div>
             )}
         </div>

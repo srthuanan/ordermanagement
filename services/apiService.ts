@@ -1,10 +1,7 @@
 import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS, LOGIN_API_URL } from '../constants';
-import { VcRequestData } from '../components/modals/VcRequestModal';
 import { Order } from '../types';
 
-let vcRequestsCache: any[] | null = null;
-let lastVcRequestsFetchTime = 0;
-const VC_REQUESTS_CACHE_DURATION = 15000; // 15 seconds
+declare const axios: any;
 
 const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -22,7 +19,9 @@ interface ApiResult {
     [key: string]: any;
 }
 
-const postApi = async (payload: Record<string, any>, url: string = API_URL): Promise<ApiResult> => {
+// FIX: Replaced fetch with axios for more robust handling of network requests and errors,
+// which should resolve the "Failed to fetch" errors. Axios is already loaded globally.
+export const postApi = async (payload: Record<string, any>, url: string = API_URL): Promise<ApiResult> => {
     try {
         const bodyParams = new URLSearchParams();
         for (const key in payload) {
@@ -31,62 +30,51 @@ const postApi = async (payload: Record<string, any>, url: string = API_URL): Pro
             }
         }
 
-        const response = await fetch(url, {
-            method: 'POST',
-            body: bodyParams,
-        });
+        const response = await axios.post(url, bodyParams);
         
-        const resultText = await response.text();
-        let result: ApiResult;
-        try {
-            result = JSON.parse(resultText);
-        } catch (e) {
-            console.error("Failed to parse API response as JSON:", resultText);
-            throw new Error("API returned an invalid response that was not JSON.");
-        }
+        // Handle cases where Google Apps Script returns a stringified JSON
+        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
 
         if (result.status !== 'SUCCESS') {
             throw new Error(result.message || 'API returned an unspecified error.');
         }
         return result;
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown API error occurred.';
+        const errorMessage = (error as any).response?.data?.message || (error as Error).message || 'An unknown API error occurred.';
+        console.error('API service error (POST):', error);
         throw new Error(errorMessage);
     }
 };
 
+// FIX: Replaced fetch with axios for GET requests.
 export const getApi = async (params: Record<string, any>, baseUrl: string = API_URL): Promise<ApiResult> => {
-    const queryParams = new URLSearchParams();
-    for (const key in params) {
-        if (params[key] !== null && params[key] !== undefined) {
-            queryParams.append(key, String(params[key]));
-        }
-    }
-    
     try {
-        const response = await fetch(`${baseUrl}?${queryParams.toString()}`, {
-            method: 'GET',
+        // FIX: Manually construct the URL to ensure parameters are correctly passed to Google Apps Script.
+        // This avoids potential issues with how axios's `params` config interacts with the backend.
+        const url = new URL(baseUrl);
+        Object.keys(params).forEach(key => {
+            if (params[key] !== undefined && params[key] !== null) {
+                 url.searchParams.append(key, String(params[key]));
+            }
         });
         
-        const resultText = await response.text();
-        let result: ApiResult;
-        try {
-            result = JSON.parse(resultText);
-        } catch (e) {
-            console.error("Failed to parse API response as JSON:", resultText);
-            throw new Error("API returned an invalid response that was not JSON.");
-        }
+        const response = await axios.get(url.toString());
 
+        // Handle cases where Google Apps Script returns a stringified JSON
+        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
+        
         if (result.status !== 'SUCCESS') {
             throw new Error(result.message || 'API returned an unspecified error.');
         }
         return result;
     } catch (error) {
+        const errorMessage = (error as any).response?.data?.message || (error as Error).message || 'An unknown API error occurred.';
         console.error('API service error (GET):', error);
-        throw error;
+        throw new Error(errorMessage);
     }
 };
 
+// FIX: Replaced fetch with axios for POST requests to the stock API.
 const postStockApiWithParams = async (params: Record<string, any>): Promise<ApiResult> => {
     try {
         const bodyParams = new URLSearchParams();
@@ -96,27 +84,19 @@ const postStockApiWithParams = async (params: Record<string, any>): Promise<ApiR
             }
         }
 
-        const response = await fetch(STOCK_API_URL, {
-            method: 'POST',
-            body: bodyParams,
-        });
+        const response = await axios.post(STOCK_API_URL, bodyParams);
         
-        const resultText = await response.text();
-        let result: ApiResult;
-        try {
-            result = JSON.parse(resultText);
-        } catch (e) {
-            console.error("Failed to parse stock API response as JSON:", resultText);
-            throw new Error("Stock API returned an invalid response that was not JSON.");
-        }
+        // Handle cases where Google Apps Script returns a stringified JSON
+        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
 
         if (result.status !== 'SUCCESS') {
             throw new Error(result.message || 'Stock API returned an unspecified error.');
         }
         return result;
     } catch (error) {
+        const errorMessage = (error as any).response?.data?.message || (error as Error).message || 'An unknown Stock API error occurred.';
         console.error('Stock API service error (POST with params):', error);
-        throw error;
+        throw new Error(errorMessage);
     }
 };
 
@@ -151,29 +131,9 @@ export const getXuathoadonData = async (): Promise<ApiResult> => {
     return getApi({ action: 'getXuathoadonData' });
 };
 
-export const refetchVcRequests = async () => {
-    try {
-        const result = await getApi({ action: 'getYeuCauVcData' });
-        vcRequestsCache = result.data || [];
-        lastVcRequestsFetchTime = Date.now();
-        return vcRequestsCache;
-    } catch (error) {
-        console.error("Failed to refetch VC requests:", error);
-        return vcRequestsCache; // return stale data on error
-    }
+export const getYeuCauVcData = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getYeuCauVcData' });
 };
-
-export const getVcRequestsDataFromAppState = (): any[] | null => {
-    const now = Date.now();
-    if (!vcRequestsCache || (now - lastVcRequestsFetchTime > VC_REQUESTS_CACHE_DURATION)) {
-        // This is a fire-and-forget call, the UI won't wait for it,
-        // but it will trigger a fetch if data is stale.
-        // The next time this function is called, it might have fresh data.
-        refetchVcRequests();
-    }
-    return vcRequestsCache;
-};
-
 
 export const getStockData = async (): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
@@ -291,55 +251,6 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
     return postApi(payload);
 };
 
-export const confirmVinClubVerification = async (orderNumber: string) => {
-    const payload = {
-        action: 'confirmVinClubVerification',
-        orderNumber: orderNumber,
-        updatedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
-    };
-    return postApi(payload);
-};
-
-export const requestVcIssuance = async (orderNumber: string, data: VcRequestData) => {
-    const payload: Record<string, any> = {
-        action: 'requestVcIssuance',
-        orderNumber: orderNumber,
-        requestedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
-        customerType: data.customerType,
-    };
-
-    const [cavetFrontBase64, cavetBackBase64] = await Promise.all([
-        fileToBase64(data.cavetFront),
-        fileToBase64(data.cavetBack),
-    ]);
-    payload.cavetFrontBase64 = cavetFrontBase64;
-    payload.cavetFrontName = data.cavetFront.name;
-    payload.cavetFrontType = data.cavetFront.type;
-    payload.cavetBackBase64 = cavetBackBase64;
-    payload.cavetBackName = data.cavetBack.name;
-    payload.cavetBackType = data.cavetBack.type;
-
-    if (data.customerType === 'Cá nhân' && data.cccdFront && data.cccdBack) {
-        const [cccdFrontBase64, cccdBackBase64] = await Promise.all([
-            fileToBase64(data.cccdFront),
-            fileToBase64(data.cccdBack),
-        ]);
-        payload.cccdFrontBase64 = cccdFrontBase64;
-        payload.cccdFrontName = data.cccdFront.name;
-        payload.cccdFrontType = data.cccdFront.type;
-        payload.cccdBackBase64 = cccdBackBase64;
-        payload.cccdBackName = data.cccdBack.name;
-        payload.cccdBackType = data.cccdBack.type;
-    } else if (data.customerType === 'Công ty' && data.gpkd && data.dmsCode) {
-        payload.dmsCustomerCode = data.dmsCode;
-        payload.gpkdBase64 = await fileToBase64(data.gpkd);
-        payload.gpkdName = data.gpkd.name;
-        payload.gpkdType = data.gpkd.type;
-    }
-
-    return postApi(payload);
-};
-
 export const fetchAllArchivedData = async (): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentConsultant") || "Unknown User";
     const params = {
@@ -401,21 +312,17 @@ const mapSoldDataRowToOrder = (row: any[], index: number, month?: string): Order
         "Thời gian nhập": saleDate,
         "Thời gian ghép": saleDate,
         "Kết quả": "Đã xuất hóa đơn",
-        "Trạng thái VC": "Đã xuất hóa đơn",
-        "Số ngày ghép": 0,
     };
 };
 
 
+// FIX: Switched from fetch to axios for consistency and robustness.
 const getSoldDataForMonth = async (sheetName: string): Promise<any[]> => {
     const url = `${SOLD_CARS_API_URL}?sheet=${sheetName}`;
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-             console.warn(`Failed to fetch sold data for ${sheetName}: ${response.statusText}`);
-             return [];
-        }
-        const data = await response.json();
+        const response = await axios.get(url);
+        // axios response.data should be the parsed JSON
+        const data = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
         return Array.isArray(data) ? data : [];
     } catch (error) {
         console.warn(`Error fetching sold data for ${sheetName}:`, error);
@@ -469,6 +376,16 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
     }
 };
 
+export const requestVinClub = async (payload: Record<string, any>): Promise<ApiResult> => {
+    const apiPayload = {
+        action: 'requestVinClub',
+        ...payload,
+        requestedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
+    };
+    return postApi(apiPayload);
+};
+
+
 // --- Admin Actions ---
 
 // Helper for user management API which returns a different response format { success: true }
@@ -481,19 +398,8 @@ const postUserApi = async (payload: Record<string, any>): Promise<ApiResult> => 
             }
         }
 
-        const response = await fetch(LOGIN_API_URL, {
-            method: 'POST',
-            body: bodyParams,
-        });
-
-        const resultText = await response.text();
-        let result: { success: boolean; message: string; [key: string]: any; };
-        try {
-            result = JSON.parse(resultText);
-        } catch (e) {
-            console.error("Failed to parse user API response as JSON:", resultText);
-            throw new Error("User API returned an invalid response that was not JSON.");
-        }
+        const response = await axios.post(LOGIN_API_URL, bodyParams);
+        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
 
         if (!result.success) {
             throw new Error(result.message || 'User API returned an unspecified error.');

@@ -1,19 +1,16 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import 'moment/locale/vi';
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType } from '../types';
+import { Order, SortConfig, StockVehicle, ActionType } from '../types';
 import Pagination from './ui/Pagination';
 import AdminInvoiceTable from './admin/AdminInvoiceTable';
-import AdminVcRequestTable from './admin/AdminVcRequestTable';
 import ActionModal from './admin/ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './admin/AdminActionModals';
 import OrderTimelineModal from './admin/OrderTimelineModal';
 import SuggestionModal from './admin/SuggestionModal';
-import BulkUploadModal from './admin/BulkUploadModal'; // New Import
+import BulkUploadModal from './admin/BulkUploadModal';
 import * as apiService from '../services/apiService';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
-import { ADMIN_USER } from '../constants';
-
 
 const PAGE_SIZE = 15;
 
@@ -38,11 +35,11 @@ interface AdminViewProps {
 
 type ModalState = {
     type: ActionType;
-    order: Order | VcRequest;
+    order: Order;
 } | null;
 
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
-type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
+type AdminSubView = 'invoices' | 'pending' | 'paired' | 'phongkd';
 
 const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
@@ -56,20 +53,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const [pairedSortConfig, setPairedSortConfig] = useState<SortConfig | null>({ key: 'Thời gian ghép', direction: 'desc' });
     const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
-
-    const [vcSortConfig, setVcSortConfig] = useState<SortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
-    const [vcCurrentPage, setVcCurrentPage] = useState(1);
     
-    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
-    const [isLoadingVc, setIsLoadingVc] = useState(true);
-    const [errorVc, setErrorVc] = useState<string | null>(null);
-
     // State for filtering
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [invoiceFilters, setInvoiceFilters] = useState<{ tvbh: string[], dongXe: string[], trangThai: string[] }>({ tvbh: [], dongXe: [], trangThai: [] });
     const [pendingFilters, setPendingFilters] = useState<{ tvbh: string[], dongXe: string[] }>({ tvbh: [], dongXe: [] });
     const [pairedFilters, setPairedFilters] = useState<{ tvbh: string[], dongXe: string[] }>({ tvbh: [], dongXe: [] });
-    const [vcFilters, setVcFilters] = useState<{ nguoiyc: string[], trangthai: string[] }>({ nguoiyc: [], trangthai: [] });
 
 
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -81,45 +70,16 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     
     // New state for Bulk Upload Modal
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
-    
+
     // Team management modal state
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
-
 
     const addUserInputs = useMemo(() => [
         { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
         { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
     ], []);
-
-
-    const fetchVcData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingVc(true);
-        setErrorVc(null);
-        try {
-            const currentUserName = sessionStorage.getItem("currentUser") || '';
-            const isAdmin = currentUserName.toLowerCase() === 'admin';
-
-            const params: Record<string, any> = { action: 'getYeuCauVcData', isAdmin: String(isAdmin) };
-            if (!isAdmin) {
-                params.currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-            }
-
-            const result = await apiService.getApi(params);
-            setVcRequestsData(result.data || []);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
-            setErrorVc(message);
-        } finally {
-            if (!isSilent) setIsLoadingVc(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchVcData();
-    }, [fetchVcData]);
-
-
+    
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
@@ -137,14 +97,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setPendingFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
         } else if (adminView === 'paired') {
             setPairedFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
-        } else if (adminView === 'vc') {
-            setVcFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
         }
         
         setCurrentPage(1);
         setPendingCurrentPage(1);
         setPairedCurrentPage(1);
-        setVcCurrentPage(1);
     };
 
     const handleReset = () => {
@@ -154,13 +111,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setPendingFilters({ tvbh: [], dongXe: [] });
         } else if (adminView === 'paired') {
             setPairedFilters({ tvbh: [], dongXe: [] });
-        } else if (adminView === 'vc') {
-            setVcFilters({ nguoiyc: [], trangthai: [] });
         }
         setCurrentPage(1);
         setPendingCurrentPage(1);
         setPairedCurrentPage(1);
-        setVcCurrentPage(1);
     };
 
 
@@ -168,7 +122,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         invoiceRequests, 
         pendingData,
         pairedData,
-        vcRequests,
         suggestionsMap,
         filterOptions,
     } = useMemo(() => {
@@ -204,7 +157,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 };
 
                 if (correspondingOrder) {
-                    mergedOrder["Kết quả"] = correspondingOrder["Trạng thái VC"] || correspondingOrder["Kết quả"] || 'Không rõ';
+                    mergedOrder["Kết quả"] = correspondingOrder["Kết quả"] || 'Không rõ';
                     Object.keys(correspondingOrder).forEach(key => {
                         if (!mergedOrder[key as keyof Order]) {
                             mergedOrder[key as keyof Order] = correspondingOrder[key as keyof Order];
@@ -217,7 +170,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = vcRequestsData;
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
         const allPaired = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase() === 'đã ghép');
 
@@ -236,33 +188,30 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             suggestions.forEach((cars) => cars.sort((a, b) => new Date(a['Thời gian nhập'] || 0).getTime() - new Date(b['Thời gian nhập'] || 0).getTime()));
         }
 
-        const applyFilters = (data: (Order | VcRequest)[], filters: Record<string, string[]>, view: AdminSubView) => {
+        const applyFilters = (data: Order[], filters: { tvbh?: string[], dongXe?: string[], trangThai?: string[] }, view: AdminSubView) => {
             return data.filter(row => {
-                const tvbhMatch = view === 'vc' ? (filters.nguoiyc.length === 0 || filters.nguoiyc.includes((row as VcRequest)['Người YC'])) : (filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']));
-                const dongXeMatch = view !== 'vc' && (filters.dongXe.length === 0 || filters.dongXe.includes(row['Dòng xe']));
+                const tvbhMatch = !filters.tvbh || filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']);
+                const dongXeMatch = !filters.dongXe || filters.dongXe.length === 0 || filters.dongXe.includes(row['Dòng xe']);
                 
                 let trangThaiMatch = true;
                 if (view === 'invoices' && filters.trangThai) {
                     trangThaiMatch = filters.trangThai.length === 0 || filters.trangThai.includes((row as any)['Trạng thái xử lý']);
-                } else if (view === 'vc' && filters.trangthai) {
-                    trangThaiMatch = filters.trangthai.length === 0 || filters.trangthai.includes((row as VcRequest)['Trạng thái xử lý']);
                 }
                 
-                return tvbhMatch && (view === 'vc' || dongXeMatch) && trangThaiMatch;
+                return tvbhMatch && dongXeMatch && trangThaiMatch;
             });
         };
 
-        const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices') as Order[];
-        const filteredPending = applyFilters(allPending, pendingFilters, 'pending') as Order[];
-        const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired') as Order[];
-        const filteredVc = applyFilters(allVcRequests, vcFilters, 'vc') as VcRequest[];
+        const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices');
+        const filteredPending = applyFilters(allPending, pendingFilters, 'pending');
+        const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired');
         
-        const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | null) => {
+        const applySort = (data: Order[], sortConfig: SortConfig | null) => {
             let sorted = [...data];
             if (sortConfig) {
                  sorted.sort((a, b) => {
                     const aVal = a[sortConfig.key]; const bVal = b[sortConfig.key];
-                    if (['Thời gian nhập', 'Thời gian ghép', 'Thời gian YC'].includes(String(sortConfig.key))) {
+                    if (['Thời gian nhập', 'Thời gian ghép'].includes(String(sortConfig.key))) {
                         const timeA = aVal ? new Date(aVal as string).getTime() : 0; const timeB = bVal ? new Date(bVal as string).getTime() : 0;
                         if (timeA < timeB) return sortConfig.direction === 'asc' ? -1 : 1;
                         if (timeA > timeB) return sortConfig.direction === 'asc' ? 1 : -1; return 0;
@@ -290,29 +239,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         };
         
         return { 
-            invoiceRequests: applySort(filteredInvoices, sortConfig) as Order[],
-            pendingData: applySort(filteredPending, pendingSortConfig) as Order[],
-            pairedData: applySort(filteredPaired, pairedSortConfig) as Order[],
-            vcRequests: applySort(filteredVc, vcSortConfig) as VcRequest[],
+            invoiceRequests: applySort(filteredInvoices, sortConfig),
+            pendingData: applySort(filteredPending, pendingSortConfig),
+            pairedData: applySort(filteredPaired, pairedSortConfig),
             suggestionsMap: suggestions,
             filterOptions: {
                 invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Kết quả']),
                 pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe']),
                 paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe']),
-                vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
             }
         };
-    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
+    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, invoiceFilters, pendingFilters, pairedFilters]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
     const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
     const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage]);
-    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage]);
     
     const totalInvoicePages = Math.ceil(invoiceRequests.length / PAGE_SIZE);
     const totalPendingPages = Math.ceil(pendingData.length / PAGE_SIZE);
     const totalPairedPages = Math.ceil(pairedData.length / PAGE_SIZE);
-    const totalVcPages = Math.ceil(vcRequests.length / PAGE_SIZE);
 
     const handleAdminSubmit = async (
         action: string, 
@@ -341,9 +286,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             if (refetchType === 'admin') {
                 refetchAdminData(true);
             }
-            if (action.includes('VcRequest')) {
-                fetchVcData(true);
-            }
             return true;
         } catch (error) {
             hideToast();
@@ -353,7 +295,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
     
-    const handleAction = (type: ActionType, order: Order | VcRequest) => {
+    const handleAction = (type: ActionType, order: Order) => {
         if (type === 'manualMatch') {
             const suggestedCars = suggestionsMap.get(order['Số đơn hàng']) || [];
             setSuggestionModalState({ order: order as Order, cars: suggestedCars });
@@ -435,14 +377,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'}
                 ];
                 break;
-             case 'vc':
-                currentFilters = vcFilters;
-                currentOptions = filterOptions.vc;
-                dropdownConfigs = [
-                    { id: 'admin-filter-nguoiyc', key: 'nguoiyc', label: 'Tất cả Người YC', options: currentOptions['Người YC'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-trangthai-vc', key: 'trangthai', label: 'Tất cả Trạng Thái', options: currentOptions['Trạng thái xử lý'], icon: 'fa-tag', displayMode: 'selection'}
-                ];
-                break;
             case 'phongkd':
                 return null;
         }
@@ -474,12 +408,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         if (adminView === 'invoices' && errorXuathoadon) {
             return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu hóa đơn</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorXuathoadon}</p><button onClick={() => refetchXuathoadon()} className="mt-6 btn-primary">Thử lại</button></div>;
         }
-        if (adminView === 'vc' && isLoadingVc) {
-            return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
-        }
-        if (adminView === 'vc' && errorVc) {
-            return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải Yêu cầu VC</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{errorVc}</p><button onClick={() => fetchVcData()} className="mt-6 btn-primary">Thử lại</button></div>;
-        }
 
         switch(adminView) {
             case 'invoices':
@@ -500,26 +428,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
                  );
             }
-             case 'vc': {
-                return (
-                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-                        <div className="flex-grow overflow-auto relative">
-                            <AdminVcRequestTable 
-                                requests={paginatedVcData} 
-                                sortConfig={vcSortConfig}
-                                onSort={(key: keyof VcRequest) => setVcSortConfig((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
-                                selectedRows={selectedRows} 
-                                onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
-                                onToggleAllRows={() => { if (selectedRows.size === paginatedVcData.length) setSelectedRows(new Set()); else setSelectedRows(new Set(paginatedVcData.map(o => o['Số đơn hàng']))); }} 
-                                onAction={handleAction} 
-                                showToast={showToast} 
-                                onOpenImagePreview={onOpenImagePreview}
-                            />
-                        </div>
-                        {totalVcPages > 0 && <Pagination currentPage={vcCurrentPage} totalPages={totalVcPages} onPageChange={setVcCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
-                    </div>
-                );
-            }
             case 'phongkd': {
                 return <TeamManagementComponent 
                     teamData={teamData} 
@@ -538,9 +446,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             <div className="flex flex-col h-full">
                  <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 flex items-center gap-2 mb-4">
                     <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
-                        {(['invoices', 'pending', 'paired', 'vc', 'phongkd'] as AdminSubView[]).map(view => {
-                            const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-                            const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+                        {(['invoices', 'pending', 'paired', 'phongkd'] as AdminSubView[]).map(view => {
+                            const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', phongkd: 'Phòng KD' };
+                            const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, phongkd: Object.keys(teamData).length };
                             return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
                         })}
                     </div>
@@ -551,7 +459,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <button 
                         onClick={async () => {
                             showToast('Đang làm mới...', 'Làm mới dữ liệu từ máy chủ.', 'loading');
-                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), fetchVcData(true), refetchAdminData(true)]);
+                            await Promise.all([refetchHistory(true), refetchXuathoadon(true), refetchStock(true), refetchAdminData(true)]);
                             hideToast();
                             showToast('Làm mới thành công', 'Dữ liệu đã được cập nhật.', 'success', 2000);
                         }} 
@@ -573,7 +481,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     {/* Invoice Actions */}
                     <ActionModal isOpen={invoiceModalState.type === 'approve'} onClose={() => setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
                     <RequestWithImageModal isOpen={invoiceModalState.type === 'supplement'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'vinclub'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Xác Thực VinClub" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Ghi chú (Tùy chọn):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestVinClubVerification', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu VinClub.')} icon="fa-id-card" theme="primary" />
                     <ActionModal isOpen={invoiceModalState.type === 'pendingSignature'} onClose={() => setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'?" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={() => handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã chuyển trạng thái.')} />
                     <UploadInvoiceModal isOpen={invoiceModalState.type === 'uploadInvoice'} onClose={() => setInvoiceModalState(null)} order={invoiceModalState.order as Order} onSubmit={async (file: File) => {
                         const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
@@ -583,10 +490,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <ActionModal isOpen={invoiceModalState.type === 'cancel'} onClose={() => setInvoiceModalState(null)} title="Hủy Yêu Cầu Xuất Hóa Đơn" description="Hành động này sẽ hủy yêu cầu và thông báo cho TVBH." targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason: data.reason }, 'Đã hủy yêu cầu.')} />
                     <ActionModal isOpen={invoiceModalState.type === 'unmatch'} onClose={() => setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy ghép (bắt buộc)', placeholder: 'VD: Sai thông tin xe...', type: 'textarea' }]} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => handleAdminSubmit('unmatchOrder', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason: data.reason }, 'Đã hủy ghép xe.', 'both')} />
                     <ActionModal isOpen={invoiceModalState.type === 'resend'} onClose={() => setInvoiceModalState(null)} title="Gửi Lại Email" description="Gửi lại email thông báo cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Gửi Lại" submitColor="primary" icon="fa-paper-plane" onSubmit={() => handleAdminSubmit('resendEmail', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), emailType: 'invoice_issued' }, 'Đã gửi lại email.')} />
-                    
-                    {/* VC Actions */}
-                    <ActionModal isOpen={invoiceModalState.type === 'approveVc'} onClose={() => setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu VC" description="Xác nhận phê duyệt yêu cầu cấp VinClub cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-circle" onSubmit={() => handleAdminSubmit('approveVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.')} />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'rejectVc'} onClose={() => setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('rejectVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
                 </>
             )}
             <ActionModal isOpen={adminModal === 'archive'} onClose={() => setAdminModal(null)} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history')} />
@@ -607,6 +510,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     refetchXuathoadon(true);
                 }}
             />
+            <TeamEditorModal
+                isOpen={!!editingTeam || isAddingNewTeam}
+                onClose={() => {
+                    setEditingTeam(null);
+                    setIsAddingNewTeam(false);
+                }}
+                onSave={handleSaveTeam}
+                teamData={teamData}
+                allUsers={allUsers}
+                editingTeam={editingTeam}
+            />
         </div>
     );
 };
@@ -622,7 +536,7 @@ interface TeamManagementProps {
     onDeleteTeam: (leader: string) => void;
 }
 
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, allUsers, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
     const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
 
     return (
@@ -679,6 +593,13 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
     const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedLeader(editingTeam ? editingTeam.leader : '');
+            setSelectedMembers(editingTeam ? editingTeam.members : []);
+        }
+    }, [isOpen, editingTeam]);
+
     const isNewTeam = !editingTeam;
 
     const { potentialLeaders, availableMembers } = useMemo(() => {
@@ -701,7 +622,6 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
         if (isNewTeam) {
             newTeamData[selectedLeader] = selectedMembers;
         } else {
-            // If leader name is changed (should not happen with current UI but good practice)
             if (editingTeam.leader !== selectedLeader) {
                 delete newTeamData[editingTeam.leader];
             }
@@ -721,18 +641,19 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
                         {isNewTeam ? (
-                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input">
+                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
                                 <option value="" disabled>Chọn một trưởng phòng</option>
                                 {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
                             </select>
                         ) : (
-                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2 futuristic-input cursor-not-allowed" />
+                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
                         )}
                     </div>
                     <div>
+                         <label className="block text-sm font-medium text-text-primary mb-2">Thành viên</label>
                          <MultiSelectDropdown 
                             id="team-member-select"
-                            label="Thành viên"
+                            label="Chọn thành viên"
                             options={availableMembers}
                             selectedOptions={selectedMembers}
                             onChange={setSelectedMembers}
@@ -751,6 +672,5 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
         </div>
     );
 };
-
 
 export default AdminView;

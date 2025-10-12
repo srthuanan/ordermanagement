@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { Order, SortConfig, Notification, NotificationType, StockVehicle } from './types';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle, ActionType } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
-import AdminView from './components/AdminView';
+import AdminView from './components/admin/AdminView';
 import OrderDetailsModal from './components/modals/OrderDetailsModal';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
 import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
-import VcRequestModal, { VcRequestData } from './components/modals/VcRequestModal';
 import CreateRequestModal from './components/modals/CreateRequestModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import ImagePreviewModal from './components/modals/ImagePreviewModal';
+import ActionModal from './components/admin/ActionModal';
+import RequestVcModal from './components/modals/RequestVcModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
@@ -45,6 +46,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [orderToRequestInvoice, setOrderToRequestInvoice] = useState<Order | null>(null);
     const [orderToSupplement, setOrderToSupplement] = useState<Order | null>(null);
     const [orderToRequestVC, setOrderToRequestVC] = useState<Order | null>(null);
+    const [orderToConfirmVC, setOrderToConfirmVC] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<{ imageUrl: string; originalUrl: string; fileLabel: string; customerName: string; } | null>(null);
@@ -53,7 +55,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoadingArchives, setIsLoadingArchives] = useState(false);
-    const [isLastArchive, setIsLastArchive] = useState(false);
+    
     const [processingOrder, setProcessingOrder] = useState<string | null>(null);
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -116,12 +118,19 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
 
     // Centralized data fetching
-    const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory } = useVinFastApi(usersToView);
+    const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi(usersToView);
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
     const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
     const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
     const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
     const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
+    
+    const [isLastArchive, setIsLastArchive] = useState(archivesLoadedFromCache);
+
+    useEffect(() => {
+        setIsLastArchive(archivesLoadedFromCache);
+    }, [archivesLoadedFromCache]);
+
 
     const refetchXuathoadon = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingXuathoadon(true);
@@ -377,38 +386,90 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     };
 
-    const handleConfirmVC = async (order: Order) => {
-        setProcessingOrder(order["Số đơn hàng"]);
-        showToast('Đang Xác Nhận VinClub', `Xác nhận VinClub cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading');
+    const handleConfirmRequestVC = async (payload: any, vin?: string): Promise<boolean> => {
+        if (!orderToRequestVC) return false;
+        setProcessingOrder(orderToRequestVC["Số đơn hàng"]);
+        showToast('Đang gửi YC VinClub', `Vui lòng chờ trong giây lát...`, 'loading');
+
+        const fileToBase64 = (file: File) => {
+            return new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () => resolve((reader.result as string).split(',')[1]); // Only data part
+              reader.onerror = error => reject(error);
+            });
+        };
+        
         try {
-            const result = await apiService.confirmVinClubVerification(order["Số đơn hàng"]);
-            await refetchHistory();
+            const filesData = [];
+            for (const key in payload.files) {
+                if (payload.files[key]) {
+                    const file = payload.files[key];
+                    const base64 = await fileToBase64(file);
+                    filesData.push({
+                        key: key,
+                        name: file.name,
+                        type: file.type,
+                        data: base64
+                    });
+                }
+            }
+            
+            const serverPayload = {
+                orderNumber: payload.orderNumber,
+                customerType: payload.customerType,
+                dmsCode: payload.dmsCode,
+                filesData: JSON.stringify(filesData),
+                vin: vin,
+            };
+
+            const result = await apiService.requestVinClub(serverPayload);
+            
             hideToast();
-            showToast('Xác Nhận Thành Công', result.message, 'success', 3000);
+            showToast('Thành Công', result.message || 'Yêu cầu VinClub đã được gửi.', 'success');
+            
+            if (result.updatedOrder) {
+                setHistoryData(currentOrders => 
+                  currentOrders.map(order => 
+                    order['Số đơn hàng'] === result.updatedOrder['Số đơn hàng']
+                      ? { ...order, ...result.updatedOrder }
+                      : order
+                  )
+                );
+            } else {
+                refetchHistory(true); // Silent refetch
+            }
+
+            setOrderToRequestVC(null);
+            return true;
         } catch (error) {
             hideToast();
-            const message = error instanceof Error ? error.message : "Lỗi không xác định";
-            showToast('Xác Nhận Thất Bại', message, 'error', 5000);
+            const message = error instanceof Error ? error.message : "Lỗi không xác định.";
+            showToast('Yêu Cầu Thất Bại', message, 'error');
+            return false;
         } finally {
             setProcessingOrder(null);
         }
     };
 
-    const handleSendVcRequest = async (order: Order, data: VcRequestData) => {
-        setProcessingOrder(order["Số đơn hàng"]);
-        showToast('Đang Yêu Cầu Cấp VC', 'Hệ thống đang xử lý tệp.', 'loading');
+    const handleConfirmVC = async (): Promise<boolean> => {
+        if (!orderToConfirmVC) return false;
+        setProcessingOrder(orderToConfirmVC["Số đơn hàng"]);
+        showToast('Đang Xác Thực VC', 'Vui lòng chờ...', 'loading');
         try {
-            const result = await apiService.requestVcIssuance(order["Số đơn hàng"], data);
+            await apiService.performAdminAction('confirmVcUnc', { orderNumber: orderToConfirmVC['Số đơn hàng'] });
             await refetchHistory();
             hideToast();
-            showToast('Yêu Cầu Thành Công', result.message, 'success', 3000);
+            showToast('Thành Công', 'Đã xác thực UNC cho VinClub.', 'success');
+            setOrderToConfirmVC(null);
+            return true;
         } catch (error) {
             hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
-            showToast('Yêu Cầu Thất Bại', message, 'error', 5000);
+            showToast('Xác Thực VC Thất Bại', message, 'error');
+            return false;
         } finally {
-            setOrderToRequestVC(null);
-            setProcessingOrder(null);
+             setProcessingOrder(null);
         }
     };
 
@@ -444,6 +505,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             const result = await apiService.fetchAllArchivedData();
             hideToast();
             if (result.data && result.data.length > 0) {
+                sessionStorage.setItem('archivedOrdersData', JSON.stringify(result.data));
                 setHistoryData(prevData => [...prevData, ...result.data]);
                 showToast('Tải Thành Công', `Đã tải thêm ${result.data.length} mục từ kho lưu trữ.`, 'success', 3000);
             } else {
@@ -544,7 +606,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         dropdowns={dropdownConfigs}
                         searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
                         totalCount={0}
-                        // FIX: Wrapped refetch in an arrow function to match the expected event handler signature. The `refetch` function expects an optional boolean, not a MouseEvent from onClick.
                         onRefresh={() => refetch()}
                         isLoading={isLoading}
                     />
@@ -570,7 +631,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     dropdowns={dropdownConfigs}
                     searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
                     totalCount={processedData.length}
-                    // FIX: Wrapped refetch in an arrow function to match the expected event handler signature. The `refetch` function expects an optional boolean, not a MouseEvent from onClick.
                     onRefresh={() => refetch()}
                     isLoading={isLoading}
                 />
@@ -581,16 +641,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                              onViewDetails={handleViewDetails} 
                              onCancel={setOrderToCancel} 
                              onRequestInvoice={setOrderToRequestInvoice} 
-                             onSupplement={setOrderToSupplement} 
-                             onRequestVC={setOrderToRequestVC} 
-                             onConfirmVC={handleConfirmVC} 
+                             onSupplement={setOrderToSupplement}
+                             onRequestVC={setOrderToRequestVC}
+                             onConfirmVC={setOrderToConfirmVC}
                              sortConfig={sortConfig} 
                              onSort={handleSort} 
                              startIndex={(currentPage - 1) * PAGE_SIZE}
                              processingOrder={processingOrder} 
                          />
                     </div>
-                    {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
+                    {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                 </div>
             </div>
         );
@@ -792,7 +852,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
             {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
             {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} />}
-            {orderToRequestVC && <VcRequestModal order={orderToRequestVC} onClose={() => setOrderToRequestVC(null)} onConfirm={handleSendVcRequest} />}
+            <RequestVcModal 
+                order={orderToRequestVC}
+                onClose={() => setOrderToRequestVC(null)}
+                onSubmit={handleConfirmRequestVC}
+            />
+            {orderToConfirmVC && <ActionModal isOpen={!!orderToConfirmVC} onClose={() => setOrderToConfirmVC(null)} title="Xác Thực UNC VinClub" description="Xác nhận bạn đã nhận được UNC cho yêu cầu VinClub của đơn hàng:" targetId={orderToConfirmVC['Số đơn hàng']} submitText="Đã Nhận UNC" submitColor="success" icon="fa-check-circle" onSubmit={handleConfirmVC} />}
             <ImagePreviewModal 
                 isOpen={!!imagePreview}
                 onClose={() => setImagePreview(null)}

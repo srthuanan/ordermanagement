@@ -92,7 +92,7 @@ const InfoCard: React.FC<{title: string, icon: string, children: React.ReactNode
 const OrderDetailsModal: React.FC<{ order: Order | null; onClose: () => void }> = ({ order, onClose }) => {
   if (!order) return null;
 
-  const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
+  const statusText = order["Kết quả"] || "Chưa ghép";
   const isCancelled = statusText.toLowerCase().includes('đã hủy') || statusText.toLowerCase().includes('từ chối');
 
   // FIX: Correctly calculate the number of days since the VIN was paired using robust parsing.

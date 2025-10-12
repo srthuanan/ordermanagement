@@ -11,7 +11,6 @@ export interface Order {
     "Thời gian nhập": string; // ISO Date string
     "Tên tư vấn bán hàng": string;
     "Kết quả": string; // e.g., "Chưa ghép", "Đã ghép"
-    "Trạng thái VC"?: string;
     VIN?: string;
     "Thời gian ghép"?: string; // ISO Date string
     "Ghi chú hủy"?: string;
@@ -25,9 +24,27 @@ export interface Order {
     "Ngày cọc"?: string;
     "BÁO BÁN"?: boolean | string;
     "KẾT QUẢ GỬI MAIL"?: string;
+    "Trạng thái VC"?: string;
     // other potential fields from components
     [key: string]: any; // Allow for other properties
 }
+
+// FIX: Added VcRequest interface for VC request management.
+export interface VcRequest {
+    "Số đơn hàng": string;
+    "Tên khách hàng": string;
+    "Thời gian YC": string;
+    "Người YC": string;
+    "Loại YC": string;
+    "Trạng thái xử lý": string;
+    "Ghi chú": string;
+    "URL hình ảnh"?: string; // Make optional for backward compatibility / new flow
+    "FileUrls"?: string; // JSON string of document URLs
+    "Mã KH DMS"?: string;
+    VIN?: string;
+    [key: string]: any;
+}
+
 
 export interface StockVehicle {
     VIN: string;
@@ -42,26 +59,8 @@ export interface StockVehicle {
     [key: string]: any; // Allow for other properties
 }
 
-export interface VcRequest {
-    "Thời gian YC": string;
-    "Người YC": string;
-    "Tên khách hàng": string;
-    "Số đơn hàng": string;
-    "VIN": string;
-    "Loại KH": 'Cá nhân' | 'Công ty';
-    "Mã KH DMS": string;
-    "Link CCCD Mặt Trước": string;
-    "Link CCCD Mặt Sau": string;
-    "Link Cavet Xe Mặt Trước": string;
-    "Link Cavet Xe Mặt Sau": string;
-    "Link GPKD": string;
-    "Trạng thái xử lý": string;
-    [key: string]: any;
-}
-
-
 export interface SortConfig {
-    key: keyof Order | keyof VcRequest;
+    key: keyof Order;
     direction: 'asc' | 'desc';
 }
 
@@ -69,6 +68,13 @@ export interface StockSortConfig {
     key: keyof StockVehicle;
     direction: 'asc' | 'desc';
 }
+
+// FIX: Added VcSortConfig for sorting VC requests.
+export interface VcSortConfig {
+    key: keyof VcRequest;
+    direction: 'asc' | 'desc';
+}
+
 
 export interface AnalyticsData {
     pendingRequestCount: { [key: string]: number };
@@ -86,5 +92,5 @@ export interface Notification {
     type: NotificationType;
 }
 
-// FIX: Added ActionType to centralize the definition of possible admin actions.
-export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'vinclub' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc';
+// FIX: Added 'approveVc', 'rejectVc', 'vinclub', and 'confirmVc' to the ActionType to support the VinClub feature workflow.
+export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc';

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import 'moment/locale/vi';
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType } from '../../types';
+// FIX: Imported VcRequest and VcSortConfig to support the new "Xử Lý VC" view.
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig } from '../../types';
 import Pagination from '../ui/Pagination';
 import AdminInvoiceTable from './AdminInvoiceTable';
 import AdminVcRequestTable from './AdminVcRequestTable';
@@ -12,13 +13,14 @@ import BulkUploadModal from './BulkUploadModal'; // New Import
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
-import { ADMIN_USER } from '../../constants';
 
 
 const PAGE_SIZE = 15;
 
+// FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
 
+// FIX: Added missing props (teamData, allUsers, refetchAdminData) to the interface.
 interface AdminViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     hideToast: () => void;
@@ -57,7 +59,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [pairedSortConfig, setPairedSortConfig] = useState<SortConfig | null>({ key: 'Thời gian ghép', direction: 'desc' });
     const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
 
-    const [vcSortConfig, setVcSortConfig] = useState<SortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
+    // FIX: Changed state type to VcSortConfig for correct type checking.
+    const [vcSortConfig, setVcSortConfig] = useState<VcSortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
     const [vcCurrentPage, setVcCurrentPage] = useState(1);
     
     const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
@@ -97,15 +100,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         if (!isSilent) setIsLoadingVc(true);
         setErrorVc(null);
         try {
-            const currentUserName = sessionStorage.getItem("currentUser") || '';
-            const isAdmin = currentUserName.toLowerCase() === 'admin';
-
-            const params: Record<string, any> = { action: 'getYeuCauVcData', isAdmin: String(isAdmin) };
-            if (!isAdmin) {
-                params.currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-            }
-
-            const result = await apiService.getApi(params);
+            const result = await apiService.getYeuCauVcData();
             setVcRequestsData(result.data || []);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
@@ -217,7 +212,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = vcRequestsData;
+        const allVcRequests: VcRequest[] = vcRequestsData.map(vcReq => {
+            const correspondingOrder = orderStatusMap.get(vcReq['Số đơn hàng']);
+            return {
+                ...vcReq,
+                VIN: correspondingOrder?.VIN,
+            };
+        });
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
         const allPaired = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase() === 'đã ghép');
 
@@ -257,11 +258,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired') as Order[];
         const filteredVc = applyFilters(allVcRequests, vcFilters, 'vc') as VcRequest[];
         
-        const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | null) => {
+        const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | VcSortConfig | null) => {
             let sorted = [...data];
             if (sortConfig) {
                  sorted.sort((a, b) => {
-                    const aVal = a[sortConfig.key]; const bVal = b[sortConfig.key];
+                    const aVal = a[sortConfig.key as keyof (Order & VcRequest)]; const bVal = b[sortConfig.key as keyof (Order & VcRequest)];
                     if (['Thời gian nhập', 'Thời gian ghép', 'Thời gian YC'].includes(String(sortConfig.key))) {
                         const timeA = aVal ? new Date(aVal as string).getTime() : 0; const timeB = bVal ? new Date(bVal as string).getTime() : 0;
                         if (timeA < timeB) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -341,7 +342,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             if (refetchType === 'admin') {
                 refetchAdminData(true);
             }
-            if (action.includes('VcRequest')) {
+            if (action.toLowerCase().includes('vcrequest')) {
                 fetchVcData(true);
             }
             return true;
@@ -490,11 +491,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  const activePage = adminView === 'invoices' ? currentPage : adminView === 'pending' ? pendingCurrentPage : pairedCurrentPage;
                  const onPageChange = adminView === 'invoices' ? setCurrentPage : adminView === 'pending' ? setPendingCurrentPage : setPairedCurrentPage;
                  const sortConf = adminView === 'invoices' ? sortConfig : adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
-                 const onSort = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
+                 // FIX: Corrected sort handler to properly update state without type conflicts.
+                 const onSortHandler = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
+
                  return (
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto relative">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key: keyof Order) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
+                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
@@ -507,7 +510,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             <AdminVcRequestTable 
                                 requests={paginatedVcData} 
                                 sortConfig={vcSortConfig}
-                                onSort={(key: keyof VcRequest) => setVcSortConfig((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
+                                onSort={(key: keyof VcRequest) => setVcSortConfig((p: VcSortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
                                 selectedRows={selectedRows} 
                                 onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
                                 onToggleAllRows={() => { if (selectedRows.size === paginatedVcData.length) setSelectedRows(new Set()); else setSelectedRows(new Set(paginatedVcData.map(o => o['Số đơn hàng']))); }} 
@@ -573,7 +576,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     {/* Invoice Actions */}
                     <ActionModal isOpen={invoiceModalState.type === 'approve'} onClose={() => setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
                     <RequestWithImageModal isOpen={invoiceModalState.type === 'supplement'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
-                    <RequestWithImageModal isOpen={invoiceModalState.type === 'vinclub'} onClose={() => setInvoiceModalState(null)} title="Yêu Cầu Xác Thực VinClub" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Ghi chú (Tùy chọn):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('requestVinClubVerification', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu VinClub.')} icon="fa-id-card" theme="primary" />
                     <ActionModal isOpen={invoiceModalState.type === 'pendingSignature'} onClose={() => setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'?" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={() => handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]) }, 'Đã chuyển trạng thái.')} />
                     <UploadInvoiceModal isOpen={invoiceModalState.type === 'uploadInvoice'} onClose={() => setInvoiceModalState(null)} order={invoiceModalState.order as Order} onSubmit={async (file: File) => {
                         const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
@@ -633,7 +635,7 @@ interface TeamManagementProps {
     onDeleteTeam: (leader: string) => void;
 }
 
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, allUsers, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
     const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
 
     return (
@@ -690,6 +692,13 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
     const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedLeader(editingTeam ? editingTeam.leader : '');
+            setSelectedMembers(editingTeam ? editingTeam.members : []);
+        }
+    }, [isOpen, editingTeam]);
+
     const isNewTeam = !editingTeam;
 
     const { potentialLeaders, availableMembers } = useMemo(() => {
@@ -732,12 +741,12 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
                         {isNewTeam ? (
-                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input">
+                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
                                 <option value="" disabled>Chọn một trưởng phòng</option>
                                 {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
                             </select>
                         ) : (
-                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2 futuristic-input cursor-not-allowed" />
+                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
                         )}
                     </div>
                     <div>
