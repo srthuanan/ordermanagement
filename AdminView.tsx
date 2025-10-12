@@ -1,18 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import 'moment/locale/vi';
 // FIX: Imported VcRequest and VcSortConfig to support the new "Xử Lý VC" view.
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig } from '../types';
-import Pagination from '../components/ui/Pagination';
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig } from './types';
+import Pagination from './components/ui/Pagination';
 import AdminInvoiceTable from './components/admin/AdminInvoiceTable';
 import AdminVcRequestTable from './components/admin/AdminVcRequestTable';
 import ActionModal from './components/admin/ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './components/admin/AdminActionModals';
 import OrderTimelineModal from './components/admin/OrderTimelineModal';
 import SuggestionModal from './components/admin/SuggestionModal';
-import BulkUploadModal from './components/admin/BulkUploadModal'; // New Import
-import * as apiService from '../services/apiService';
-import Filters, { DropdownFilterConfig } from '../components/ui/Filters';
-import MultiSelectDropdown from '../components/ui/MultiSelectDropdown';
+import BulkUploadModal from './components/admin/BulkUploadModal';
+import * as apiService from './services/apiService';
+import Filters, { DropdownFilterConfig } from './components/ui/Filters';
+import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
 
 
 const PAGE_SIZE = 15;
@@ -212,7 +212,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = vcRequestsData;
+        const allVcRequests: VcRequest[] = vcRequestsData.map(vcReq => {
+            const correspondingOrder = orderStatusMap.get(vcReq['Số đơn hàng']);
+            return {
+                ...vcReq,
+                VIN: correspondingOrder?.VIN,
+            };
+        });
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
         const allPaired = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase() === 'đã ghép');
 
@@ -623,13 +629,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 interface TeamManagementProps {
     teamData: Record<string, string[]>;
+    // FIX: Add missing 'allUsers' prop to fix TypeScript error.
     allUsers: User[];
     onEditTeam: (leader: string, members: string[]) => void;
     onAddNewTeam: () => void;
     onDeleteTeam: (leader: string) => void;
 }
 
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, allUsers, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
     const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
 
     return (

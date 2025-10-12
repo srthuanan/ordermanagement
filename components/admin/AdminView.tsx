@@ -629,6 +629,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 interface TeamManagementProps {
     teamData: Record<string, string[]>;
+    // FIX: Add missing 'allUsers' prop to fix TypeScript error.
     allUsers: User[];
     onEditTeam: (leader: string, members: string[]) => void;
     onAddNewTeam: () => void;
