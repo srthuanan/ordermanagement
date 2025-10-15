@@ -89,7 +89,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 loop
                 muted
                 playsInline
-                src="/2222.mp4"
+                src="2222.mp4"
             />
             
             {/* --- Animated Overlays --- */}
@@ -109,7 +109,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             muted
                             playsInline
                             className="absolute inset-0 w-full h-full object-cover z-0"
-                            src="/1111.mp4"
+                            src="1111.mp4"
                         />
                         {/* Dark Overlay for Readability */}
                         <div className="absolute inset-0 bg-black/40 z-10"></div>
