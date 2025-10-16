@@ -77,6 +77,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
     const [invoiceModalState, setInvoiceModalState] = useState<ModalState>(null);
+    const [bulkActionModal, setBulkActionModal] = useState<{ type: ActionType } | null>(null);
     const [suggestionModalState, setSuggestionModalState] = useState<{ order: Order; cars: StockVehicle[] } | null>(null);
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
@@ -314,6 +315,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const totalPendingPages = Math.ceil(pendingData.length / PAGE_SIZE);
     const totalPairedPages = Math.ceil(pairedData.length / PAGE_SIZE);
     const totalVcPages = Math.ceil(vcRequests.length / PAGE_SIZE);
+    
+    const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map(o => o['Số đơn hàng']), [invoiceRequests]);
+    const allPendingOrderNumbers = useMemo(() => pendingData.map(o => o['Số đơn hàng']), [pendingData]);
+    const allPairedOrderNumbers = useMemo(() => pairedData.map(o => o['Số đơn hàng']), [pairedData]);
+    const allVcOrderNumbers = useMemo(() => vcRequests.map(o => o['Số đơn hàng']), [vcRequests]);
+
+
+    const handleToggleAll = (allIds: string[]) => {
+        if (selectedRows.size >= allIds.length) {
+            setSelectedRows(new Set());
+        } else {
+            setSelectedRows(new Set(allIds));
+        }
+    };
+
 
     const handleAdminSubmit = async (
         action: string, 
@@ -328,6 +344,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setAdminModal(null);
             setSuggestionModalState(null);
             setSelectedRows(new Set());
+            setBulkActionModal(null);
             
             hideToast();
             showToast('Thành công!', result.message || successMessage, 'success');
@@ -353,6 +370,38 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             return false;
         }
     };
+
+    // FIX: Map ActionType to the correct API action string for bulk operations to resolve type errors.
+     const handleBulkActionSubmit = async (action: ActionType, params: Record<string, any> = {}) => {
+        if (selectedRows.size === 0) {
+            showToast('Lỗi', 'Không có mục nào được chọn.', 'error');
+            return false;
+        }
+        const orderNumbers = Array.from(selectedRows);
+        const successMessage = `Đã thực hiện thao tác cho ${orderNumbers.length} mục.`;
+
+        const apiActionMap: Partial<Record<ActionType, string>> = {
+            approve: 'approveSelectedInvoiceRequest',
+            pendingSignature: 'markAsPendingSignature',
+            supplement: 'requestSupplementForInvoice',
+            cancel: 'cancelRequest',
+        };
+        const apiAction = apiActionMap[action] || action;
+
+
+        const success = await handleAdminSubmit(
+            apiAction,
+            { ...params, orderNumbers: JSON.stringify(orderNumbers) },
+            successMessage
+        );
+
+        if (success) {
+            setBulkActionModal(null);
+            setSelectedRows(new Set()); // Clear selection on success
+        }
+        return success;
+    };
+
     
     const handleAction = (type: ActionType, order: Order | VcRequest) => {
         if (type === 'manualMatch') {
@@ -487,6 +536,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             case 'pending':
             case 'paired': {
                  const data = adminView === 'invoices' ? paginatedInvoices : adminView === 'pending' ? paginatedPendingData : paginatedPairedData;
+                 const allIds = adminView === 'invoices' ? allInvoiceOrderNumbers : adminView === 'pending' ? allPendingOrderNumbers : allPairedOrderNumbers;
                  const totalPages = adminView === 'invoices' ? totalInvoicePages : adminView === 'pending' ? totalPendingPages : totalPairedPages;
                  const activePage = adminView === 'invoices' ? currentPage : adminView === 'pending' ? pendingCurrentPage : pairedCurrentPage;
                  const onPageChange = adminView === 'invoices' ? setCurrentPage : adminView === 'pending' ? setPendingCurrentPage : setPairedCurrentPage;
@@ -496,8 +546,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
                  return (
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                        {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
+                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
@@ -506,6 +557,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
              case 'vc': {
                 return (
                     <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                        {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative">
                             <AdminVcRequestTable 
                                 requests={paginatedVcData} 
@@ -513,7 +565,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 onSort={(key: keyof VcRequest) => setVcSortConfig((p: VcSortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
                                 selectedRows={selectedRows} 
                                 onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
-                                onToggleAllRows={() => { if (selectedRows.size === paginatedVcData.length) setSelectedRows(new Set()); else setSelectedRows(new Set(paginatedVcData.map(o => o['Số đơn hàng']))); }} 
+                                onToggleAllRows={() => handleToggleAll(allVcOrderNumbers)} 
                                 onAction={handleAction} 
                                 showToast={showToast} 
                                 onOpenImagePreview={onOpenImagePreview}
@@ -534,6 +586,71 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
             default: return null;
         }
+    };
+
+    const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
+        invoices: [
+            { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
+            { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
+            { type: 'pendingSignature', label: 'Chuyển sang "Chờ ký HĐ"', icon: 'fa-signature' },
+            { type: 'cancel', label: 'Hủy Yêu cầu', icon: 'fa-trash-alt', isDanger: true },
+        ],
+        pending: [
+            { type: 'cancel', label: 'Hủy Yêu cầu (Xóa)', icon: 'fa-trash-alt', isDanger: true },
+        ],
+        paired: [], // No bulk actions for paired view based on GAS
+        vc: [],     // No bulk actions for VC view based on GAS
+        phongkd: [],
+    };
+    
+    const BulkActionBar = ({ view }: { view: AdminSubView }) => {
+        const [isMenuOpen, setIsMenuOpen] = useState(false);
+        const menuRef = useRef<HTMLDivElement>(null);
+    
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                    setIsMenuOpen(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, []);
+    
+        const actions = bulkActionsForView[view];
+        if (actions.length === 0) return null;
+    
+        return (
+            <div className="relative z-10 p-3 border-b border-border-primary flex items-center justify-between bg-surface-accent animate-fade-in-down">
+                <span className="text-sm font-semibold text-text-primary">
+                    Đã chọn: <span className="font-bold text-accent-primary">{selectedRows.size}</span>
+                </span>
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setSelectedRows(new Set())} className="btn-secondary !text-xs !py-1 !px-2.5">
+                        <i className="fas fa-times mr-1"></i> Bỏ chọn
+                    </button>
+                    <div className="relative" ref={menuRef}>
+                        <button onClick={() => setIsMenuOpen(p => !p)} className="btn-primary !text-xs !py-1 !px-3 flex items-center">
+                            Thao tác hàng loạt <i className={`fas fa-chevron-down ml-2 text-xs transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}></i>
+                        </button>
+                        {isMenuOpen && (
+                            <div className="absolute right-0 mt-1 w-52 bg-surface-card border rounded-lg shadow-lg z-20 p-1">
+                                {actions.map(action => (
+                                    <button 
+                                        key={action.type} 
+                                        onClick={() => { setBulkActionModal({ type: action.type as ActionType }); setIsMenuOpen(false); }}
+                                        className={`flex items-center gap-3 w-full text-left px-3 py-2 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                                    >
+                                        <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
+                                        <span>{action.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
     };
     
     return (
@@ -591,6 +708,18 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <RequestWithImageModal isOpen={invoiceModalState.type === 'rejectVc'} onClose={() => setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => handleAdminSubmit('rejectVcRequest', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
                 </>
             )}
+
+            {/* Bulk Action Modals */}
+            {/* FIX: Updated onSubmit handlers to pass valid ActionType values to handleBulkActionSubmit. */}
+            {bulkActionModal && (
+                <>
+                    <ActionModal isOpen={bulkActionModal.type === 'approve'} onClose={() => setBulkActionModal(null)} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleBulkActionSubmit('approve')} />
+                    <ActionModal isOpen={bulkActionModal.type === 'pendingSignature'} onClose={() => setBulkActionModal(null)} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={() => handleBulkActionSubmit('pendingSignature')} />
+                    <RequestWithImageModal isOpen={bulkActionModal.type === 'supplement'} onClose={() => setBulkActionModal(null)} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={(reason, images) => handleBulkActionSubmit('supplement', { reason, pastedImagesBase64: JSON.stringify(images) })} />
+                    <ActionModal isOpen={bulkActionModal.type === 'cancel'} onClose={() => setBulkActionModal(null)} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'Nhập lý do chung cho tất cả...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data) => handleBulkActionSubmit('cancel', { reason: data.reason })} />
+                </>
+            )}
+
             <ActionModal isOpen={adminModal === 'archive'} onClose={() => setAdminModal(null)} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history')} />
             <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
             <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
