@@ -183,7 +183,7 @@ const StockView: React.FC<StockViewProps> = ({
                         dropdowns={dropdownConfigs}
                         searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
                         totalCount={0}
-                        onRefresh={refetchStock}
+                        onRefresh={() => refetchStock()}
                         isLoading={isLoading}
                         size="compact"
                     />
@@ -198,7 +198,7 @@ const StockView: React.FC<StockViewProps> = ({
             );
         }
         if (error) {
-            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetchStock} className="mt-6 btn-primary">Thử lại</button></div></div>);
+            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetchStock()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
@@ -209,7 +209,7 @@ const StockView: React.FC<StockViewProps> = ({
                     dropdowns={dropdownConfigs}
                     searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
                     totalCount={processedData.length}
-                    onRefresh={refetchStock}
+                    onRefresh={() => refetchStock()}
                     isLoading={isLoading}
                     size="compact"
                 />
