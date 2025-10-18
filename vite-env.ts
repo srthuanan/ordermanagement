@@ -1,3 +1,19 @@
-// FIX: Commented out to resolve "Cannot find type definition file for 'vite/client'" error.
-// This is likely an environment-specific issue. Re-enable if your local setup is fixed.
-// /// <reference types="vite/client" />
+// This file provides TypeScript definitions for asset imports.
+// By declaring modules for these file types, we tell TypeScript that
+// importing them will return a string (the URL/path to the asset),
+// which resolves the "Cannot find module" errors (TS2307).
+
+declare module '*.png' {
+  const src: string;
+  export default src;
+}
+
+declare module '*.gif' {
+  const src: string;
+  export default src;
+}
+
+declare module '*.mp4' {
+  const src: string;
+  export default src;
+}

@@ -60,6 +60,11 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
     setCurrentPage(1);
   }, []);
 
+  const handleTvbhFilterChange = useCallback((v: string[]) => {
+    setSelectedTvbh(v);
+    setCurrentPage(1);
+  }, []);
+
   const yearlyData = useMemo(() => {
       const monthlySalesData: Record<string, number> = {};
       MONTHS.forEach(m => monthlySalesData[m] = 0);
@@ -223,7 +228,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
                   label="Lọc theo TVBH"
                   options={uniqueTvbh}
                   selectedOptions={selectedTvbh}
-                  onChange={(v) => { setSelectedTvbh(v); setCurrentPage(1); }}
+                  onChange={handleTvbhFilterChange}
                   icon="fa-filter"
                   size="compact"
                   displayMode="selection"

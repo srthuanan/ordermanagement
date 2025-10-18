@@ -126,7 +126,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-    const handleFilterChange = (newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
+    const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
         if (adminView === 'invoices') {
             setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
         } else if (adminView === 'pending') {
@@ -141,7 +141,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         setPendingCurrentPage(1);
         setPairedCurrentPage(1);
         setVcCurrentPage(1);
-    };
+    }, [adminView]);
 
     const handleReset = () => {
         if (adminView === 'invoices') {
@@ -710,7 +710,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             )}
 
             {/* Bulk Action Modals */}
-            {/* FIX: Updated onSubmit handlers to pass valid ActionType values to handleBulkActionSubmit. */}
             {bulkActionModal && (
                 <>
                     <ActionModal isOpen={bulkActionModal.type === 'approve'} onClose={() => setBulkActionModal(null)} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleBulkActionSubmit('approve')} />

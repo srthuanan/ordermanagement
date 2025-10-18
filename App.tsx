@@ -497,10 +497,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
     };
     
-    const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
         setFilters(prev => ({ ...prev, ...newFilters }));
-    };
+    }, []);
 
     const handleResetFilters = () => {
         setCurrentPage(1);

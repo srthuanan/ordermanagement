@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { StockVehicle, StockSortConfig } from '../types';
 import StockTable from './StockTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
@@ -42,10 +42,10 @@ const StockView: React.FC<StockViewProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [processingVin, setProcessingVin] = useState<string | null>(null);
     
-    const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
         setFilters(prev => ({ ...prev, ...newFilters }));
-    };
+    }, []);
 
     const handleResetFilters = () => {
         setCurrentPage(1);
