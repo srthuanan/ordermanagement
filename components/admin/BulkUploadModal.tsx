@@ -124,7 +124,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                         <div className="mt-4 max-h-64 overflow-y-auto border border-border-primary rounded-lg">
                             <table className="min-w-full text-sm responsive-table">
                                 <thead className="bg-surface-hover sticky top-0"><tr><th className="py-2 px-3 text-left">Tên tệp</th><th className="py-2 px-3 text-left">Số Đơn Hàng</th><th className="py-2 px-3 text-left">Trạng thái</th><th className="py-2 px-3 text-right"></th></tr></thead>
-                                <tbody className="divide-y divide-border-primary">
+                                <tbody className="divide-y divide-border-primary bg-surface-card">
                                     {files.map(({ file, orderNumber, status }) => (
                                         <tr key={file.name} className={status === 'invalid_name' ? 'bg-danger-bg/50' : ''}>
                                             <td data-label="Tên tệp" className="py-2 px-3 font-medium text-text-primary truncate max-w-xs">{file.name}</td>

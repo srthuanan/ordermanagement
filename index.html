@@ -74,14 +74,44 @@
               'text-focus-in': { '0%': { filter: 'blur(12px)', opacity: '0' }, '100%': { filter: 'blur(0px)', opacity: '1' } },
               'fade-out': { 'from': { opacity: '1', transform: 'scale(1)' }, 'to': { opacity: '0', transform: 'scale(0.9)' } },
               'text-gradient-flow': { '0%': { 'background-position': '0% 50%' }, '50%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0% 50%' } },
-              'slow-zoom': { '0%': { transform: 'scale(1.05)' }, '100%': { transform: 'scale(1)' } },
               'flow-light': { 'from': { 'background-position': '0 -50%' }, 'to': { 'background-position': '0 150%' } },
-              'zoom-in-out': { 'from': { 'background-position': '0 0', transform: 'scale(1)' }, 'to': { 'background-position': '25px 25px', transform: 'scale(1.2)' } },
               'aurora-fade-in': { 'to': { opacity: '1' } },
               'aurora-move': { '0%': { transform: 'rotate(0deg) scale(1.2)' }, '100%': { transform: 'rotate(15deg) scale(1.5)' } },
               'login-button-glow': { '0%, 100%': { 'border-color': 'rgba(255, 255, 255, 0.3)', 'box-shadow': '0 0 8px rgba(147, 197, 253, 0.2)' }, '50%': { 'border-color': 'rgba(255, 255, 255, 0.6)', 'box-shadow': '0 0 16px rgba(147, 197, 253, 0.4)' } },
               'input-glow-line': { 'from': { width: '0%', opacity: '0.5' }, 'to': { width: '100%', opacity: '1' } },
               'button-scan-line': { '0%': { transform: 'translateY(-100%)' }, '100%': { transform: 'translateY(200%)' } },
+              'spooky-flicker': {
+                '0%, 100%': {
+                  color: '#fb923c', /* orange-400 */
+                  textShadow: '0 0 5px #f97316, 0 0 15px #f97316, 0 0 25px #ea580c, 0 0 40px #ea580c',
+                  opacity: '1',
+                },
+                '25%': {
+                  color: '#d8b4fe', /* purple-300 */
+                  textShadow: '0 0 4px #a855f7, 0 0 10px #a855f7, 0 0 20px #9333ea',
+                  opacity: '0.9',
+                },
+                '50%': {
+                  color: '#fdba74', /* orange-300 */
+                  textShadow: '0 0 5px #f97316, 0 0 10px #f97316',
+                  opacity: '0.8',
+                },
+                '75%': {
+                  color: '#e9d5ff', /* purple-200 */
+                  textShadow: '0 0 4px #a855f7, 0 0 8px #a855f7',
+                  opacity: '0.95',
+                }
+              },
+              'ghostly-fade': {
+                '0%, 100%': {
+                  opacity: '0.6',
+                  filter: 'blur(0.5px)',
+                },
+                '50%': {
+                  opacity: '1',
+                  filter: 'blur(0)',
+                }
+              },
             },
             animation: {
               'skeleton': 'skeleton-loading 1.5s infinite linear',
@@ -92,8 +122,9 @@
               'text-focus': 'text-focus-in 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) both',
               'fade-out': 'fade-out 0.3s ease-out forwards',
               'text-gradient-flow': 'text-gradient-flow 8s ease infinite',
-              'slow-zoom': 'slow-zoom 40s infinite alternate ease-in-out',
               'login-button-glow': 'login-button-glow 3s infinite ease-in-out',
+              'spooky-flicker': 'spooky-flicker 4s ease-in-out infinite',
+              'ghostly-fade': 'ghostly-fade 6s ease-in-out infinite',
             }
           }
         }
@@ -321,6 +352,78 @@
       }
       .highlight-row {
         animation: row-highlight-fade 3s ease-out;
+      }
+
+      /* Custom Table Background */
+      /* The scrollable container for the table needs to create a 3D context for the parallax effect */
+      div.flex-grow[class*="overflow-"] {
+          position: relative;
+          perspective: 1px;
+          transform-style: preserve-3d;
+          overflow: auto; /* Required for the parallax effect to work */
+      }
+      
+      /* The pseudo-element acts as the fixed background layer */
+      div.flex-grow[class*="overflow-"]::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: -1;
+          
+          background-image: url('pictures/hinhnen.png');
+          background-size: contain;
+          background-position: center bottom;
+          background-repeat: no-repeat;
+          
+          /* Parallax trick: move the background away and scale it up to fill the space.
+            It will appear to scroll much slower than the foreground content, creating a fixed effect. */
+          transform: translateZ(-1px) scale(2);
+          
+          opacity: 0.2;
+          pointer-events: none;
+          
+          /* Ensure the background doesn't overflow the rounded corners of the parent card */
+          border-radius: inherit;
+      }
+
+      /* The table's body must be transparent to see the background behind it */
+      div.flex-grow[class*="overflow-"] table > tbody {
+          background-color: transparent !important;
+      }
+
+      /* Table rows need their own semi-transparent background */
+      div.flex-grow[class*="overflow-"] table > tbody > tr {
+          background-color: rgba(255, 255, 255, 0.92) !important;
+      }
+
+      div.flex-grow[class*="overflow-"] table > tbody > tr:hover {
+          background-color: rgba(241, 245, 249, 0.95) !important;
+      }
+      
+      /* Custom Modal Background */
+      .fixed.inset-0 > .bg-surface-card,
+      .fixed.inset-0 > .bg-surface-ground {
+          position: relative;
+          z-index: 0;
+          /* Override tailwind's solid color with a semi-transparent one */
+          background-color: rgba(255, 255, 255, 0.96) !important;
+      }
+      .fixed.inset-0 > .bg-surface-card::before,
+      .fixed.inset-0 > .bg-surface-ground::before {
+          content: "";
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-image: url('/pictures/modal.png');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          opacity: 0.6;
+          z-index: -1;
+          pointer-events: none;
+          border-radius: inherit;
       }
 
       /* === NEW ANIMATED BACKGROUND STYLES === */
@@ -575,7 +678,7 @@
       }
 
       tbody tr.selected-row-highlight {
-          background-color: var(--tw-color-surface-accent) !important;
+          background-color: rgba(235, 245, 255, 0.9) !important; /* surface-accent with alpha */
       }
       tbody tr.selected-row-highlight td:first-child {
           box-shadow: inset 3px 0 0 0 var(--tw-color-accent-primary);
@@ -659,15 +762,6 @@
        }
 
       /* === NEW LOGIN SCREEN ANIMATIONS === */
-      .login-animated-bg {
-        position: absolute;
-        inset: 0;
-        z-index: 10;
-        background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.15) 0, transparent 1px),
-                          radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0, transparent 0.5px);
-        background-size: 60px 60px, 30px 30px;
-        animation: zoom-in-out 30s infinite alternate ease-in-out;
-      }
       .glass-card::before {
         content: '';
         position: absolute;
@@ -682,23 +776,13 @@
       }
       
       /* === NEW LOGIN SCREEN STYLES === */
-      .login-video-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 0;
-        animation: slow-zoom 40s infinite alternate ease-in-out;
-      }
-      
       .text-shadow {
         text-shadow: 0 2px 10px rgba(0,0,0,0.5);
       }
 
       .glass-card {
-        background: rgba(15, 23, 42, 0.25);
+        /* Fading background for a blending effect */
+        background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 30%, rgba(15, 23, 42, 0.1) 75%, transparent 100%);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         animation: fade-in-scale-up 0.8s cubic-bezier(0.25, 1, 0.5, 1) both;
@@ -772,10 +856,11 @@
         border: none;
         outline: none;
         width: 100%;
-        padding: 0.75rem 1rem 0.75rem 3rem;
+        padding: 0.75rem 3.25rem;
         color: #F1F5F9;
         height: 52px;
         caret-color: #42A5F5;
+        text-align: center;
       }
       .energy-input:-webkit-autofill,
       .energy-input:-webkit-autofill:hover, 
@@ -795,11 +880,19 @@
         left: 1rem;
         transform: translateY(-50%);
         color: #94A3B8;
-        transition: color 0.3s ease, text-shadow 0.3s ease;
+        transition: color 0.3s ease, text-shadow 0.3s ease, filter 0.3s ease;
+      }
+      img.energy-input-icon {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
       }
       .energy-input-container:focus-within .energy-input-icon {
         color: #42A5F5;
         text-shadow: 0 0 5px #42A5F5;
+      }
+      .energy-input-container:focus-within img.energy-input-icon {
+        filter: drop-shadow(0 0 4px #42A5F5);
       }
 
       .energy-gate-button {
@@ -831,6 +924,110 @@
         box-shadow: 0 0 20px 0 rgba(147, 197, 253, 0.5);
         transform: translateY(-2px);
       }
+
+      /* === HALLOWEEN THEME STYLES === */
+      .halloween-bg {
+          background-color: #0f0a19;
+          background-image:
+              radial-gradient(circle at 15% 80%, rgba(249, 115, 22, 0.08), transparent 30%),
+              radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.08), transparent 30%);
+          position: relative;
+          overflow: hidden;
+      }
+      .halloween-bg::before { /* Floating embers/orbs */
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 1; /* Below the card, above the bg */
+          background-image:
+              radial-gradient(circle at 10% 20%, #f97316, transparent),
+              radial-gradient(circle at 90% 30%, #f97316, transparent),
+              radial-gradient(circle at 50% 80%, #a855f7, transparent),
+              radial-gradient(circle at 30% 90%, #f97316, transparent),
+              radial-gradient(circle at 70% 60%, #a855f7, transparent),
+              radial-gradient(circle at 25% 50%, #f97316, transparent),
+              radial-gradient(circle at 85% 75%, #a855f7, transparent);
+          background-size: 8px 8px, 6px 6px, 10px 10px, 4px 4px, 7px 7px, 5px 5px, 9px 9px;
+          background-repeat: no-repeat;
+          animation: floating-orbs 25s linear infinite;
+          opacity: 0;
+          animation-delay: 1s;
+          animation-fill-mode: forwards;
+      }
+      @keyframes floating-orbs {
+          0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.5; }
+          90% { opacity: 0.5; }
+          100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+      }
+      @keyframes spooky-swirl {
+          0% { transform: rotate(-5deg) scale(1.2); }
+          100% { transform: rotate(5deg) scale(1.4); }
+      }
+      @keyframes halloween-button-glow {
+          0%, 100% { border-color: rgba(249, 115, 22, 0.3); box-shadow: 0 0 8px rgba(249, 115, 22, 0.2); }
+          50% { border-color: rgba(249, 115, 22, 0.6); box-shadow: 0 0 16px rgba(249, 115, 22, 0.4); }
+      }
+
+      .halloween .text-brand-gradient {
+          background: linear-gradient(45deg, #f97316, #fb923c, #ea580c);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: #f97316;
+          animation: text-gradient-flow 4s ease-in-out infinite;
+      }
+      .halloween .glass-card {
+          /* Fading background for a blending effect */
+          background: radial-gradient(ellipse at center, rgba(26, 18, 40, 0.6) 30%, rgba(26, 18, 40, 0.2) 75%, transparent 100%);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          /* Removed border and box-shadow to blend edges with the video background */
+      }
+      .halloween .glass-card::before {
+          background: radial-gradient(ellipse at 70% 20%, rgba(234, 88, 12, 0.25) 0%, transparent 45%), /* Orange glow */
+                      radial-gradient(ellipse at 30% 80%, rgba(124, 58, 237, 0.2) 0%, transparent 50%); /* Purple glow */
+          animation-name: aurora-fade-in, spooky-swirl;
+          animation-duration: 1.5s, 20s;
+          animation-timing-function: ease-out, ease-in-out;
+          animation-iteration-count: 1, infinite;
+          animation-direction: normal, alternate;
+          animation-delay: 0.5s;
+          animation-fill-mode: forwards, normal;
+      }
+      .halloween .login-card-divider::before { background: rgba(249, 115, 22, 0.2); }
+      .halloween .login-card-divider::after {
+          background: linear-gradient( to bottom, transparent 0%, rgba(249, 115, 22, 0.8) 40%, rgba(249, 115, 22, 0.8) 60%, transparent 100% );
+          filter: blur(2px);
+          box-shadow: 0 0 8px rgba(249, 115, 22, 0.6), 0 0 12px rgba(234, 88, 12, 0.4);
+      }
+      .halloween .energy-input-container::before { background-color: rgba(249, 115, 22, 0.2); }
+      .halloween .energy-input-container::after {
+          background: #f97316;
+          box-shadow: 0 0 8px #f97316;
+      }
+      .halloween .energy-input { caret-color: #f97316; }
+      .halloween .energy-input-container:focus-within .energy-input-icon {
+          color: #f97316;
+          text-shadow: 0 0 5px #f97316;
+      }
+      .halloween .energy-input-container:focus-within img.energy-input-icon {
+          filter: drop-shadow(0 0 4px #f97316);
+      }
+      .halloween .forgot-password-link { color: #fb923c; } /* tailwind orange-400 */
+      .halloween .forgot-password-link:hover { color: #f97316; }
+      .halloween .energy-gate-button {
+          background: linear-gradient(45deg, rgba(234, 88, 12, 0.2), rgba(124, 58, 237, 0.15));
+          border: 1px solid rgba(249, 115, 22, 0.3);
+          animation: halloween-button-glow 3s infinite ease-in-out;
+      }
+      .halloween .energy-gate-button::before { background: linear-gradient(to right, transparent, rgba(251, 146, 60, 0.6), transparent); }
+      .halloween .energy-gate-button:hover:not(:disabled) {
+          background: linear-gradient(45deg, rgba(234, 88, 12, 0.3), rgba(124, 58, 237, 0.25));
+          box-shadow: 0 0 20px 0 rgba(249, 115, 22, 0.5);
+      }
+
 
       /* === MOBILE RESPONSIVE STYLES === */
       @media (max-width: 767px) {

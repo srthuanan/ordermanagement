@@ -81,20 +81,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     };
 
     return (
-        <div className="relative h-screen w-screen overflow-hidden bg-slate-900">
-            {/* --- Video Background --- */}
+        <div className="halloween relative h-screen w-screen overflow-hidden">
+            {/* Fullscreen Video Background */}
             <video
-                className="login-video-bg"
                 autoPlay
                 loop
                 muted
                 playsInline
-                src="2222.mp4"
-            />
-            
-            {/* --- Animated Overlays --- */}
+                className="absolute inset-0 w-full h-full object-cover z-0"
+            >
+                <source src="pictures/2222.mp4" type="video/mp4" />
+            </video>
+
+            {/* --- Dark Overlay --- */}
             <div className="absolute inset-0 bg-black/60 z-5"></div>
-            <div className="login-animated-bg"></div>
 
             {/* --- Login Card --- */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-5xl z-20">
@@ -102,14 +102,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     
                     {/* --- Left Branding Panel --- */}
                     <div className="hidden lg:col-span-6 lg:flex flex-col justify-between p-12 text-white relative login-card-divider overflow-hidden">
-                        {/* Video Background */}
-                        <video
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
+                        {/* GIF Background */}
+                        <img
+                            src="pictures/RIP.gif"
+                            alt="Background Animation"
                             className="absolute inset-0 w-full h-full object-cover z-0"
-                            src="1111.mp4"
                         />
                         {/* Dark Overlay for Readability */}
                         <div className="absolute inset-0 bg-black/40 z-10"></div>
@@ -118,7 +115,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                         <div className="relative z-20 flex flex-col justify-between h-full text-center">
                              {/* Top Content */}
                             <div className='text-center'>
-                                <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-shadow leading-tight animate-fade-in-down" style={{animationDelay: '200ms'}}>
+                                <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-shadow leading-tight animate-spooky-flicker">
                                     Hệ Thống Quản Lý<br/>Đơn Hàng Nội Bộ
                                 </h2>
                             </div>
@@ -126,8 +123,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             {/* Bottom Content */}
                             <div className='text-center'>
                                 <div className="w-24 h-1 bg-gradient-to-r from-accent-secondary to-transparent mb-6 animate-fade-in-up mx-auto" style={{animationDelay: '400ms'}}></div>
-                                <div className="animate-fade-in-up" style={{animationDelay: '600ms'}}>
-                                    <p className="max-w-md text-lg text-slate-300 text-shadow mx-auto">
+                                <div>
+                                    <p className="max-w-md text-lg text-slate-300 text-shadow mx-auto animate-ghostly-fade">
                                         Nâng cao hiệu quả công việc và trải nghiệm cho tư vấn bán hàng.
                                     </p>
                                 </div>
@@ -140,23 +137,32 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                          {viewMode === 'login' && (
                             <div className="w-full animate-fade-in-up">
                                 <div className="text-center mb-8">
-                                    <i className="fas fa-bolt text-5xl text-brand-gradient text-shadow"></i>
-                                    <h2 className="text-4xl font-extrabold tracking-tighter text-brand-gradient text-shadow mt-4">ORDER MANAGEMENT</h2>
+                                    <img src="pictures/logohallo.gif" alt="Order Management Logo" className="mx-auto h-35" />
                                 </div>
                                 <form onSubmit={handleLoginSubmit} className="space-y-6">
                                      <div className="energy-input-container">
-                                        <i className="fas fa-user energy-input-icon"></i>
+                                        <img src="pictures/icon1.gif" alt="Username Icon" className="energy-input-icon" />
                                         <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="energy-input"/>
                                     </div>
                                     <div className="energy-input-container">
-                                        <i className="fas fa-lock energy-input-icon"></i>
+                                        <img src="pictures/icon2.gif" alt="Password Icon" className="energy-input-icon" />
                                         <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="energy-input"/>
                                     </div>
                                     <div className="flex items-center justify-end pt-2">
-                                        <button type="button" onClick={() => setViewMode('forgot')} className="text-sm font-semibold text-accent-secondary hover:underline focus:outline-none">Quên mật khẩu?</button>
+                                        <button type="button" onClick={() => setViewMode('forgot')} className="text-sm font-semibold forgot-password-link hover:underline focus:outline-none">Quên mật khẩu?</button>
                                     </div>
-                                    <button type="submit" disabled={isSubmitting} className="energy-gate-button w-full py-3 text-sm font-bold mt-2">
-                                        {isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...</> : 'Đăng Nhập'}
+                                    <button type="submit" disabled={isSubmitting} className="bg-transparent border-none p-0 w-full mt-2 flex items-center justify-center h-[52px] cursor-pointer group disabled:cursor-not-allowed">
+                                        {isSubmitting ? (
+                                            <div className="text-white flex items-center font-semibold">
+                                                <i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...
+                                            </div>
+                                        ) : (
+                                            <img 
+                                                src="pictures/login.png" 
+                                                alt="Đăng Nhập" 
+                                                className="h-16 object-contain transition-transform duration-300 group-hover:scale-105 group-disabled:opacity-50"
+                                            />
+                                        )}
                                     </button>
                                 </form>
                             </div>

@@ -71,6 +71,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [teamData, setTeamData] = useState<Record<string, string[]>>({});
     const [allUsers, setAllUsers] = useState<{name: string, role: string, username: string}[]>([]);
 
+    const [currentGif, setCurrentGif] = useState('boxuong.gif');
+
+    useEffect(() => {
+        const gifInterval = setInterval(() => {
+            setCurrentGif(prevGif => (prevGif === 'boxuong.gif' ? 'xacuop.gif' : 'boxuong.gif'));
+        }, 5000); // Change every 5 seconds
+
+        return () => clearInterval(gifInterval);
+    }, []);
+
     const fetchAdminData = useCallback(async () => {
         if (!isCurrentUserAdmin && userRole !== 'Trưởng Phòng Kinh Doanh') return;
         try {
@@ -730,41 +740,52 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </button>
                 </div>
 
-                <nav className="p-2 space-y-1 flex-grow overflow-y-auto">
-                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fas fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Quản lý Ghép xe</span>
-                    </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fas fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Kho Xe</span>
-                    </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fas fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
-                    </a>
-                    {isCurrentUserAdmin && (
-                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                            <i className={`fas fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Admin</span>
+                <nav className="p-2 flex flex-col flex-grow overflow-y-auto">
+                    <div className="space-y-1">
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                            <i className={`fas fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Quản lý Ghép xe</span>
                         </a>
-                    )}
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                            <i className={`fas fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Kho Xe</span>
+                        </a>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                            <i className={`fas fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
+                        </a>
+                        {isCurrentUserAdmin && (
+                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                                <i className={`fas fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                                <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Admin</span>
+                            </a>
+                        )}
+                    </div>
+
+                    <div className={`px-2 pt-4 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
+                        <img src={`pictures/${currentGif}`} alt="Halloween decoration" className="w-full h-auto object-contain" />
+                    </div>
                 </nav>
 
-                <div className="p-2 flex-shrink-0 border-t border-border-primary/50">
-                    <div className={`flex items-center gap-3 p-2 rounded-lg ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
-                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                            {currentUser ? currentUser.charAt(0) : 'A'}
-                        </div>
-                        <div className={`transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
-                            <p className="text-sm font-bold text-text-primary whitespace-nowrap">{currentUser}</p>
-                            <p className="text-xs text-text-secondary capitalize">{userRole}</p>
-                             <button 
-                                onClick={() => setIsChangePasswordModalOpen(true)} 
-                                className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover hover:underline mt-1 focus:outline-none"
-                            >
-                                Đổi mật khẩu
-                            </button>
+                <div className="flex-shrink-0 border-t border-border-primary/50">
+                    <div className={`px-3 pt-3 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
+                        <img src="pictures/hinhslide.png" alt="Sidebar footer image" className="w-full h-auto object-contain" />
+                    </div>
+                    <div className="p-2">
+                        <div className={`flex items-center gap-3 p-2 rounded-lg ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
+                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                                {currentUser ? currentUser.charAt(0) : 'A'}
+                            </div>
+                            <div className={`transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+                                <p className="text-sm font-bold text-text-primary whitespace-nowrap">{currentUser}</p>
+                                <p className="text-xs text-text-secondary capitalize">{userRole}</p>
+                                 <button 
+                                    onClick={() => setIsChangePasswordModalOpen(true)} 
+                                    className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover hover:underline mt-1 focus:outline-none"
+                                >
+                                    Đổi mật khẩu
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -778,18 +799,17 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         </button>
                     </div>
                     
-                    <div className={`absolute -translate-x-1/2 hidden sm:flex items-center gap-3 left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
-                        <i className="fas fa-bolt text-2xl text-accent-secondary"></i>
-                        <div className="flex items-center">
-                            <span className="font-bold text-base text-text-primary">ORDER</span>
-                            <span className="ml-1.5 text-base font-medium text-text-secondary tracking-wider">MANAGEMENT</span>
-                        </div>
+                    <div className={`absolute -translate-x-1/2 hidden sm:flex items-center left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
+                       <img src="pictures/logohallo.gif" alt="Order Management Logo" className="h-10" />
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-                        <button onClick={() => setCreateRequestData({ isOpen: true })} className="btn-primary flex items-center">
-                            <i className="fas fa-clipboard-list mr-0 sm:mr-2 btn-icon"></i>
-                            <span className="hidden sm:inline">Tạo Yêu Cầu</span>
+                        <button 
+                            onClick={() => setCreateRequestData({ isOpen: true })} 
+                            className="group transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50 rounded-lg"
+                            title="Tạo Yêu Cầu Mới"
+                        >
+                            <img src="pictures/taoyeucau.png" alt="Tạo Yêu Cầu" className="h-12 object-contain" />
                         </button>
                         
                         <div ref={notificationContainerRef} className="relative notification-bell-container">

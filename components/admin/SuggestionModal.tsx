@@ -58,7 +58,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                         <th className="py-2 px-3 text-left">Ngày Nhập Kho</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-border-primary">
+                                <tbody className="divide-y divide-border-primary bg-surface-card">
                                     {suggestedCars.map((car) => (
                                         <tr key={car.VIN} className="hover:bg-surface-hover">
                                             <td className="py-2.5 px-3" data-label="Chọn">

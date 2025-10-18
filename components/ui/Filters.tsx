@@ -54,7 +54,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
   const hasActiveFilters = activeFilterCount > 0;
   const isCompact = size === 'compact';
 
-  const filterContentJSX = (
+  const FilterContent = () => (
     <div className={`flex flex-col sm:flex-row items-center flex-wrap ${isCompact ? 'gap-2' : 'gap-3'}`}>
       {!hideSearch && (
         <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
@@ -114,13 +114,13 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
 
         {/* Desktop View */}
         <div className="hidden sm:block">
-          {filterContentJSX}
+          <FilterContent />
         </div>
 
         {/* Mobile Collapsible Content */}
         <div className={`sm:hidden mobile-filters-content ${isMobileFilterOpen ? 'open' : ''}`}>
           <div className="pt-3 border-t border-border-primary">
-            {filterContentJSX}
+            <FilterContent />
           </div>
         </div>
 
