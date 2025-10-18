@@ -24,6 +24,12 @@ import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
+import logoHalloGif from './pictures/logohallo.gif';
+import createRequestPng from './pictures/taoyeucau.png';
+import boxuongGif from './pictures/boxuong.gif';
+import xacuopGif from './pictures/xacuop.gif';
+import hinhslidePng from './pictures/hinhslide.png';
+
 moment.locale('vi');
 
 const PAGE_SIZE = 10;
@@ -71,11 +77,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [teamData, setTeamData] = useState<Record<string, string[]>>({});
     const [allUsers, setAllUsers] = useState<{name: string, role: string, username: string}[]>([]);
 
-    const [currentGif, setCurrentGif] = useState('boxuong.gif');
+    const [currentGif, setCurrentGif] = useState(boxuongGif);
 
     useEffect(() => {
         const gifInterval = setInterval(() => {
-            setCurrentGif(prevGif => (prevGif === 'boxuong.gif' ? 'xacuop.gif' : 'boxuong.gif'));
+            setCurrentGif(prevGif => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
         }, 5000); // Change every 5 seconds
 
         return () => clearInterval(gifInterval);
@@ -763,13 +769,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
 
                     <div className={`px-2 pt-4 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
-                        <img src={`pictures/${currentGif}`} alt="Halloween decoration" className="w-full h-auto object-contain" />
+                        <img src={currentGif} alt="Halloween decoration" className="w-full h-auto object-contain" />
                     </div>
                 </nav>
 
                 <div className="flex-shrink-0 border-t border-border-primary/50">
                     <div className={`px-3 pt-3 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
-                        <img src="pictures/hinhslide.png" alt="Sidebar footer image" className="w-full h-auto object-contain" />
+                        <img src={hinhslidePng} alt="Sidebar footer image" className="w-full h-auto object-contain" />
                     </div>
                     <div className="p-2">
                         <div className={`flex items-center gap-3 p-2 rounded-lg ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
@@ -800,7 +806,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                     
                     <div className={`absolute -translate-x-1/2 hidden sm:flex items-center left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
-                       <img src="pictures/logohallo.gif" alt="Order Management Logo" className="h-10" />
+                       <img src={logoHalloGif} alt="Order Management Logo" className="h-10" />
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2 sm:space-x-4">
@@ -809,7 +815,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             className="group transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50 rounded-lg"
                             title="Tạo Yêu Cầu Mới"
                         >
-                            <img src="pictures/taoyeucau.png" alt="Tạo Yêu Cầu" className="h-12 object-contain" />
+                            <img src={createRequestPng} alt="Tạo Yêu Cầu" className="h-12 object-contain" />
                         </button>
                         
                         <div ref={notificationContainerRef} className="relative notification-bell-container">

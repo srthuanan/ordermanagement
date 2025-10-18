@@ -1,5 +1,11 @@
 import React, { useState, FormEvent } from 'react';
 import * as authService from '../services/authService';
+import backgroundVideo from '../pictures/2222.mp4';
+import backgroundGif from '../pictures/boxuong.gif';
+import logoGif from '../pictures/logohallo.gif';
+import userIcon from '../pictures/icon1.gif';
+import passIcon from '../pictures/icon2.gif';
+import loginButton from '../pictures/login.png';
 
 interface LoginScreenProps {
     onLoginSuccess: () => void;
@@ -90,7 +96,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 playsInline
                 className="absolute inset-0 w-full h-full object-cover z-0"
             >
-                <source src="pictures/2222.mp4" type="video/mp4" />
+                <source src={backgroundVideo} type="video/mp4" />
             </video>
 
             {/* --- Dark Overlay --- */}
@@ -104,7 +110,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     <div className="hidden lg:col-span-6 lg:flex flex-col justify-between p-12 text-white relative login-card-divider overflow-hidden">
                         {/* GIF Background */}
                         <img
-                            src="pictures/RIP.gif"
+                            src={backgroundGif}
                             alt="Background Animation"
                             className="absolute inset-0 w-full h-full object-cover z-0"
                         />
@@ -137,15 +143,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                          {viewMode === 'login' && (
                             <div className="w-full animate-fade-in-up">
                                 <div className="text-center mb-8">
-                                    <img src="pictures/logohallo.gif" alt="Order Management Logo" className="mx-auto h-35" />
+                                    <img src={logoGif} alt="Order Management Logo" className="mx-auto h-35" />
                                 </div>
                                 <form onSubmit={handleLoginSubmit} className="space-y-6">
                                      <div className="energy-input-container">
-                                        <img src="pictures/icon1.gif" alt="Username Icon" className="energy-input-icon" />
+                                        <img src={userIcon} alt="Username Icon" className="energy-input-icon" />
                                         <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="energy-input"/>
                                     </div>
                                     <div className="energy-input-container">
-                                        <img src="pictures/icon2.gif" alt="Password Icon" className="energy-input-icon" />
+                                        <img src={passIcon} alt="Password Icon" className="energy-input-icon" />
                                         <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="energy-input"/>
                                     </div>
                                     <div className="flex items-center justify-end pt-2">
@@ -158,7 +164,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                             </div>
                                         ) : (
                                             <img 
-                                                src="pictures/login.png" 
+                                                src={loginButton}
                                                 alt="Đăng Nhập" 
                                                 className="h-16 object-contain transition-transform duration-300 group-hover:scale-105 group-disabled:opacity-50"
                                             />
