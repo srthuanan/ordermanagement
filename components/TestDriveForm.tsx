@@ -140,7 +140,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     const handleReset = useCallback(() => {
         const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[allTestDrives.length - 1].soPhieu : undefined;
         const user = sessionStorage.getItem('currentConsultant') || '';
-        setFormData(prev => ({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) }));
+        setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
         setSelectedBookingForPreview(null);
         setActiveTab('create');
     }, [allTestDrives, generateNextSoPhieu]);
