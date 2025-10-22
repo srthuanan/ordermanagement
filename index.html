@@ -72,6 +72,7 @@
             },
             keyframes: {
               'skeleton-loading': { '0%': { 'background-position': '200% 0' }, '100%': { 'background-position': '-200% 0' }, },
+              'fade-in': { 'from': { opacity: '0' }, 'to': { opacity: '1' } },
               'fade-in-up': { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' }, },
               'fade-in-scale-up': { '0%': { opacity: '0', transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: '1', transform: 'scale(1) translateY(0)' }, },
               'pulse-glow': { '0%, 100%': { opacity: '0.7', boxShadow: '0 0 8px 0px var(--glow-color)' }, '50%': { opacity: '1', boxShadow: '0 0 12px 2px var(--glow-color)' }, },
@@ -120,6 +121,7 @@
             },
             animation: {
               'skeleton': 'skeleton-loading 1.5s infinite linear',
+              'fade-in': 'fade-in 0.3s ease-out both',
               'fade-in-up': 'fade-in-up 0.3s ease-out both',
               'fade-in-scale-up': 'fade-in-scale-up 0.2s ease-out both',
               'pulse-glow': 'pulse-glow 3s infinite ease-in-out',
@@ -1200,28 +1202,6 @@
           display: none; /* Hide label for actions */
         }
         
-        .mobile-filter-toggle {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          padding: 0.625rem 1rem;
-          border: 1px solid var(--tw-color-border-primary);
-          background-color: var(--tw-color-surface-ground);
-          border-radius: 0.5rem;
-          font-weight: 600;
-          color: var(--tw-color-text-primary);
-        }
-        .mobile-filters-content {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease-in-out;
-        }
-        .mobile-filters-content.open {
-          max-height: 500px; /* Adjust as needed */
-        }
-
-
         /* Make modals full-width on mobile */
         .futuristic-modal-bg,
         .bg-surface-card.w-full.max-w-lg,
@@ -1318,7 +1298,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-BFvjW100.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-BBe2IvzU.js"></script>
 </head>
 <body class="text-text-primary font-sans">
     <div id="root" class="relative isolate h-screen flex flex-col overflow-hidden"></div>
