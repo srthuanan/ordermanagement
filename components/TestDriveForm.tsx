@@ -67,7 +67,7 @@ const formatDisplayTime = (timeStr: string): string => {
     if (/^\d{2}:\d{2}$/.test(timeStr)) {
         return timeStr;
     }
-    // Handle full ISO/Date string from Google Sheets
+    // Handle full ISO/Date string from Google Sheets by interpreting it as UTC
     const time = moment.utc(timeStr);
     if (time.isValid()) {
         return time.format('HH:mm');
@@ -140,7 +140,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     const handleReset = useCallback(() => {
         const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[allTestDrives.length - 1].soPhieu : undefined;
         const user = sessionStorage.getItem('currentConsultant') || '';
-        setFormData({ ...initialFormData, soPhieu: generateNextSoPhieu(latestSoPhieu), tenTuVan: user });
+        setFormData(prev => ({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) }));
         setSelectedBookingForPreview(null);
         setActiveTab('create');
     }, [allTestDrives, generateNextSoPhieu]);
@@ -350,7 +350,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                         <i className="fas fa-edit mr-2"></i>Tạo Phiếu Mới
                     </button>
                      <button onClick={() => setActiveTab('history')} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${activeTab === 'history' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>
-                        <i className="fas fa-history mr-2"></i>Lịch Sử Phiếu
+                        <i className="fas fa-list-alt mr-2"></i>Danh sách Lái thử
                     </button>
                 </div>
                  <div className="flex items-center gap-2">
