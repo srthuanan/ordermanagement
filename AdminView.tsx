@@ -20,6 +20,13 @@ const PAGE_SIZE = 15;
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
 
+// FIX: Added ImageSource interface to align with the expected prop type.
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
+
 // FIX: Added missing props (teamData, allUsers, refetchAdminData) to the interface.
 interface AdminViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -35,7 +42,8 @@ interface AdminViewProps {
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
-    onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
+    // FIX: Corrected the signature for onOpenImagePreview to match what AdminVcRequestTable expects and what App.tsx provides.
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
 type ModalState = {

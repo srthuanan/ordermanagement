@@ -54,4 +54,4 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
     );
 };
 
-export default CreateRequestModal;
+export default React.memo(CreateRequestModal);

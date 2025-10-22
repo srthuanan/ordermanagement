@@ -310,4 +310,4 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
   );
 };
 
-export default SoldCarsView;
+export default React.memo(SoldCarsView);

@@ -171,4 +171,4 @@ const ActionModal: React.FC<ActionModalProps> = ({
     );
 };
 
-export default ActionModal;
+export default React.memo(ActionModal);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MultiSelectDropdown from './MultiSelectDropdown';
 
 export interface DropdownFilterConfig {
@@ -38,6 +38,26 @@ const ActiveFilterPill: React.FC<{ value: string; onRemove: () => void; }> = ({ 
 
 const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, hideSearch = false, size = 'default' }) => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
+
+  // Sync local state if parent's filter keyword changes (e.g., on reset)
+  useEffect(() => {
+    if (filters.keyword !== localKeyword) {
+      setLocalKeyword(filters.keyword || '');
+    }
+  }, [filters.keyword]);
+
+  // Debounce keyword changes before calling the parent's onFilterChange
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Only update parent if the debounced value is different from the prop
+      if (localKeyword !== filters.keyword) {
+        onFilterChange({ keyword: localKeyword });
+      }
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [localKeyword, filters.keyword, onFilterChange]);
   
   const activeDropdownFilters = dropdowns.flatMap(d => 
     ((filters[d.key] || []) as string[]).map(value => ({
@@ -54,7 +74,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
   const hasActiveFilters = activeFilterCount > 0;
   const isCompact = size === 'compact';
 
-  const FilterContent = () => (
+  const filterContent = (
     <div className={`flex flex-col sm:flex-row items-center flex-wrap ${isCompact ? 'gap-2' : 'gap-3'}`}>
       {!hideSearch && (
         <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
@@ -63,8 +83,8 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
                 type="text" 
                 id="search-input" 
                 placeholder={searchPlaceholder} 
-                value={filters.keyword || ''}
-                onChange={(e) => onFilterChange({ keyword: e.target.value })}
+                value={localKeyword}
+                onChange={(e) => setLocalKeyword(e.target.value)}
                 className={`peer w-full pl-11 pr-4 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent ${isCompact ? 'py-2' : 'py-2.5'}`}
             />
         </div>
@@ -114,13 +134,13 @@ const Filters: React.FC<FiltersProps> = ({ filters, onFilterChange, onReset, dro
 
         {/* Desktop View */}
         <div className="hidden sm:block">
-          <FilterContent />
+          {filterContent}
         </div>
 
         {/* Mobile Collapsible Content */}
         <div className={`sm:hidden mobile-filters-content ${isMobileFilterOpen ? 'open' : ''}`}>
           <div className="pt-3 border-t border-border-primary">
-            <FilterContent />
+            {filterContent}
           </div>
         </div>
 

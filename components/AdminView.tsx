@@ -16,6 +16,13 @@ const PAGE_SIZE = 15;
 
 type User = { name: string, role: string, username: string };
 
+// FIX: Added ImageSource interface to resolve type errors.
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
+
 interface AdminViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     hideToast: () => void;
@@ -30,7 +37,8 @@ interface AdminViewProps {
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
-    onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
+    // FIX: Corrected the signature for onOpenImagePreview to match the application's standard.
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
 type ModalState = {

@@ -252,6 +252,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 <div className="space-y-6">
                      <section>
                         <SectionHeader icon="fa-file-invoice-dollar" title="Chứng từ & Xác thực" />
+                        <a href="/ordermanagement/mau_uy_nhiem_chi.pdf" download="mau_uy_nhiem_chi.pdf" className="text-xs text-accent-secondary hover:text-accent-primary hover:underline transition-colors flex items-center gap-2 mb-2">
+                            <i className="fas fa-file-download"></i>
+                            <span>Tải Mẫu Ủy Nhiệm Chi</span>
+                        </a>
                         <div className="space-y-5 mt-4">
                             <div>
                                 <label htmlFor="chic_file_upload" className="block text-sm font-medium text-text-secondary text-left mb-2">Ảnh Ủy Nhiệm Chi</label>
@@ -277,4 +281,4 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     );
 };
 
-export default RequestForm;
+export default React.memo(RequestForm);

@@ -1,7 +1,7 @@
 import React, { useState, FormEvent } from 'react';
 import * as authService from '../services/authService';
 import backgroundVideo from '../pictures/2222.mp4';
-import backgroundGif from '../pictures/RIP.gif';
+import backgroundGif from '../pictures/boxuong.gif';
 import logoGif from '../pictures/logohallo.gif';
 import userIcon from '../pictures/icon1.gif';
 import passIcon from '../pictures/icon2.gif';

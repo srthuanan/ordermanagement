@@ -72,7 +72,7 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
     const directionIcon = sortConfig?.direction === 'asc' ? '▲' : '▼';
 
     return (
-        <th scope="col" onClick={() => onSort(columnKey)} className={`py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider ${className}`}>
+        <th scope="col" onClick={() => onSort(columnKey)} className={`py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors uppercase tracking-wider ${className}`}>
           {title} {isSorted && <span className="text-xs ml-1">{directionIcon}</span>}
         </th>
     );
@@ -179,8 +179,8 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
                                 style={{animationDelay: `${index * 20}ms`}}
                             >
-                                <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
-                                <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
+                                <td data-label="#" className="py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
+                                <td data-label="Số VIN" className="px-3 py-4 text-sm font-mono text-text-primary break-all">
                                     <span
                                         className="text-base font-bold text-accent-primary hover:text-accent-primary-hover hover:underline cursor-pointer transition-colors"
                                         title="Click để sao chép VIN"
@@ -188,11 +188,11 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                         {vehicle.VIN}
                                     </span>
                                 </td>
-                                <td data-label="Dòng Xe" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Dòng xe"]}</td>
-                                <td data-label="Phiên Bản" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Phiên bản"]}</td>
-                                <td data-label="Ngoại Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle["Ngoại thất"]}</td>
-                                <td data-label="Nội Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
-                                <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
+                                <td data-label="Dòng Xe" className="px-3 py-4 text-sm text-text-primary">{vehicle["Dòng xe"]}</td>
+                                <td data-label="Phiên bản" className="px-3 py-4 text-sm text-text-primary break-words">{vehicle["Phiên bản"]}</td>
+                                <td data-label="Ngoại Thất" className="px-3 py-4 text-sm text-text-primary font-medium break-words" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle["Ngoại thất"]}</td>
+                                <td data-label="Nội Thất" className="px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
+                                <td data-label="Trạng Thái" className="px-3 py-4 text-sm">
                                     <div>
                                         <StatusBadge status={vehicle["Trạng thái"]} />
                                         {isHeld && vehicle["Thời Gian Hết Hạn Giữ"] && (
@@ -200,7 +200,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                         )}
                                     </div>
                                 </td>
-                                <td data-label="Hành động" className="whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
+                                <td data-label="Hành động" className="py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
                                     <div className="relative flex items-center justify-center gap-2 h-9">
                                         {isProcessing ? (
                                             <div className="flex items-center justify-center w-full h-full">
@@ -214,13 +214,6 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                     title="Giữ xe (tạm thời)"
                                                 >
                                                     <i className="fas fa-stopwatch-20"></i>
-                                                </button>
-                                                <button
-                                                    className="action-btn pair-action"
-                                                    onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
-                                                    title="Ghép xe ngay"
-                                                >
-                                                    <i className="fas fa-link"></i>
                                                 </button>
                                             </>
                                         ) : isHeldByCurrentUser ? (

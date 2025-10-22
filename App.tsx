@@ -6,6 +6,7 @@ import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
 import AdminView from './components/admin/AdminView';
+import TestDriveForm from './components/TestDriveForm';
 import OrderDetailsModal from './components/modals/OrderDetailsModal';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
@@ -34,7 +35,13 @@ moment.locale('vi');
 
 const PAGE_SIZE = 10;
 
-type ActiveView = 'orders' | 'stock' | 'sold' | 'admin';
+type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu';
+
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
 
 interface AppProps {
     onLogout: () => void;
@@ -55,7 +62,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [orderToConfirmVC, setOrderToConfirmVC] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
-    const [imagePreview, setImagePreview] = useState<{ imageUrl: string; originalUrl: string; fileLabel: string; customerName: string; } | null>(null);
+    const [imagePreview, setImagePreview] = useState<{ images: ImageSource[], startIndex: number, customerName: string } | null>(null);
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -489,23 +496,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     };
 
-    const handleFormSuccess = (newOrder: Order) => {
+    const handleCreateRequestClose = useCallback(() => {
+        setCreateRequestData({ isOpen: false });
+    }, []);
+
+    const handleFormSuccess = useCallback((newOrder: Order) => {
         setCreateRequestData({ isOpen: false });
         setHistoryData(prev => [newOrder, ...prev].sort((a,b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
         showToast('Yêu Cầu Đã Gửi', 'Yêu cầu ghép xe của bạn đã được ghi nhận thành công.', 'success', 4000);
-        refetchStock(); // Refetch stock data as a car's status has changed
+        refetchStock(true); // refetchStock is from a hook and should be stable
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
-    };
+    }, [setHistoryData, showToast, refetchStock]);
     
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
         setFilters(prev => ({ ...prev, ...newFilters }));
     }, []);
 
-    const handleResetFilters = () => {
+    const handleResetFilters = useCallback(() => {
         setCurrentPage(1);
         setFilters({ keyword: '', carModel: [], status: [] });
-    };
+    }, []);
 
     const handleSort = (key: keyof Order) => {
         setCurrentPage(1);
@@ -541,8 +552,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setCreateRequestData({ isOpen: true, initialVehicle: vehicle });
     };
     
-    const openImagePreviewModal = useCallback((imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => {
-        setImagePreview({ imageUrl, originalUrl, fileLabel, customerName });
+    const openImagePreviewModal = useCallback((images: ImageSource[], startIndex: number = 0, customerName: string) => {
+        setImagePreview({ images, startIndex, customerName });
     }, []);
 
     const processedData = useMemo(() => {
@@ -636,7 +647,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             );
         }
         if (error) {
-            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
+            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fa-solid fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
@@ -707,6 +718,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         refetch={refetchSold}
                     />
                 );
+            case 'laithu':
+                return <TestDriveForm showToast={showToast} onOpenImagePreview={openImagePreviewModal} />;
             case 'admin':
                 return isCurrentUserAdmin ? <AdminView 
                     showToast={showToast} 
@@ -738,31 +751,35 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <aside className={sidebarClasses}>
                 <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
                      <a href="#" onClick={(e) => e.preventDefault()} className={`flex items-center gap-3 group transition-all duration-300 ${isSidebarCollapsed ? 'lg:w-12' : 'lg:w-auto'}`}>
-                        <i className="fas fa-bolt text-2xl text-gradient from-accent-primary to-accent-secondary group-hover:scale-110 transition-transform"></i>
+                        <i className="fa-solid fa-bolt text-2xl text-gradient from-accent-primary to-accent-secondary group-hover:scale-110 transition-transform"></i>
                         <h1 className={`font-extrabold text-lg text-text-primary whitespace-nowrap tracking-wider transition-all duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>ORDERMGMT</h1>
                     </a>
                     <button onClick={toggleSidebar} className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-surface-hover text-text-secondary hover:text-text-primary ml-auto">
-                        <i className={`fas fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
+                        <i className={`fa-solid fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
                     </button>
                 </div>
 
                 <nav className="p-2 flex flex-col flex-grow overflow-y-auto">
                     <div className="space-y-1">
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                            <i className={`fas fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <i className={`fa-solid fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                             <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Quản lý Ghép xe</span>
                         </a>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                            <i className={`fas fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <i className={`fa-solid fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                             <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Kho Xe</span>
                         </a>
+                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('laithu'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'laithu'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
+                            <i className={`fa-solid fa-gauge-high fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Lái Thử</span>
+                        </a>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                            <i className={`fas fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                            <i className={`fa-solid fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                             <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
                         </a>
                         {isCurrentUserAdmin && (
                             <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                                <i className={`fas fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
+                                <i className={`fa-solid fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
                                 <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Admin</span>
                             </a>
                         )}
@@ -801,7 +818,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 <header className={`relative sticky top-0 w-full z-20 h-16 bg-surface-card/70 backdrop-blur-xl border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6`}>
                     <div className="flex items-center gap-4">
                          <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-text-secondary hover:text-text-primary text-xl">
-                            <i className="fas fa-bars"></i>
+                            <i className="fa-solid fa-bars"></i>
                         </button>
                     </div>
                     
@@ -820,7 +837,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         
                         <div ref={notificationContainerRef} className="relative notification-bell-container">
                             <button onClick={toggleNotificationPanel} className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-accent-primary transition-colors" title="Thông báo">
-                                <i className="fas fa-bell"></i>
+                                <i className="fa-solid fa-bell"></i>
                                 {unreadCount > 0 && (<span id="notification-badge" className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>)}
                             </button>
                             <div className={`notification-panel ${isNotificationPanelOpen ? 'visible' : ''}`}>
@@ -835,7 +852,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                             const type = notification.type === 'error' ? 'danger' : notification.type;
                                             return (
                                                 <div key={notification.id} className={`notification-item ${!notification.isRead ? 'unread' : ''}`} onClick={(e) => handleNotificationClick(notification, e)}>
-                                                    <div className={`notification-icon type-${type}`}><i className={`fas ${iconMap[type] || 'fa-bell'}`}></i></div>
+                                                    <div className={`notification-icon type-${type}`}><i className={`fa-solid ${iconMap[type] || 'fa-bell'}`}></i></div>
                                                     <div className="notification-content">
                                                         <p className="notification-message" dangerouslySetInnerHTML={{__html: notification.message}}></p>
                                                         <p className="notification-time">{moment(notification.timestamp).fromNow()}</p>
@@ -843,12 +860,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                                 </div>
                                             );
                                         })
-                                    ) : ( <div className="no-notifications"><i className="fas fa-bell-slash"></i><p>Không có thông báo nào.</p></div> )}
+                                    ) : ( <div className="no-notifications"><i className="fa-solid fa-bell-slash"></i><p>Không có thông báo nào.</p></div> )}
                                 </div>
                             </div>
                         </div>
                          <button onClick={onLogout} className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-danger transition-colors" title="Đăng xuất">
-                            <i className="fas fa-sign-out-alt"></i>
+                            <i className="fa-solid fa-sign-out-alt"></i>
                         </button>
                     </div>
                 </header>
@@ -860,7 +877,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             
             <CreateRequestModal
                 isOpen={createRequestData.isOpen}
-                onClose={() => setCreateRequestData({ isOpen: false })}
+                onClose={handleCreateRequestClose}
                 onSuccess={handleFormSuccess}
                 showToast={showToast}
                 hideToast={hideToast}
@@ -884,12 +901,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 onSubmit={handleConfirmRequestVC}
             />
             {orderToConfirmVC && <ActionModal isOpen={!!orderToConfirmVC} onClose={() => setOrderToConfirmVC(null)} title="Xác Thực UNC VinClub" description="Xác nhận bạn đã nhận được UNC cho yêu cầu VinClub của đơn hàng:" targetId={orderToConfirmVC['Số đơn hàng']} submitText="Đã Nhận UNC" submitColor="success" icon="fa-check-circle" onSubmit={handleConfirmVC} />}
-            <ImagePreviewModal 
+            <ImagePreviewModal
                 isOpen={!!imagePreview}
                 onClose={() => setImagePreview(null)}
-                imageUrl={imagePreview?.imageUrl}
-                originalUrl={imagePreview?.originalUrl}
-                fileLabel={imagePreview?.fileLabel}
+                images={imagePreview?.images || []}
+                startIndex={imagePreview?.startIndex}
                 customerName={imagePreview?.customerName}
             />
         </>

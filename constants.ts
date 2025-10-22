@@ -1,5 +1,5 @@
 export const API_URL = "https://script.google.com/macros/s/AKfycbx2yjZErE-CHXCJhfuvpcB9jac6Dqz6CRCgGMH9ulwwIr70ROy0_w2FsYW8hgttKjr_sA/exec";
-export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbw6kkgqPpzF2_kRVzHbD9tB6YCOjsF-FV4pOFMcAuyiCNxhnY4q8cSgB28UCEDTkBqMKg/exec";
+export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbzqmyE8IHDWhl9j8dvp9WfZrf5JoxScll8bMmqNmGBMuNq-gyF8jfHiBVxu3VzQa0rTMw/exec";
 export const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
 export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";

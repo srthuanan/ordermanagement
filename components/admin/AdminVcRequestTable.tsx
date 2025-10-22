@@ -3,6 +3,12 @@ import moment from 'moment';
 import { VcRequest, VcSortConfig, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
+
 interface AdminVcRequestTableProps {
     requests: VcRequest[];
     sortConfig: VcSortConfig | null;
@@ -12,7 +18,7 @@ interface AdminVcRequestTableProps {
     onToggleAllRows: () => void;
     onAction: (type: ActionType, request: VcRequest) => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-    onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
 const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortConfig: VcSortConfig | null, onSort: (key: keyof VcRequest) => void }> = ({ colKey, title, sortConfig, onSort }) => {
@@ -25,10 +31,10 @@ const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortCon
 const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, onOpenImagePreview, showToast }) => {
     const isAllSelected = requests.length > 0 && selectedRows.size === requests.length;
     
-    const handleImagePreview = (e: React.MouseEvent, url: string, label: string, customer: string) => {
+    const handleImagePreview = (e: React.MouseEvent, images: ImageSource[], startIndex: number, customer: string) => {
         e.preventDefault();
         e.stopPropagation();
-        onOpenImagePreview(url, url, label, customer);
+        onOpenImagePreview(images, startIndex, customer);
     };
 
     const handleCopy = (e: React.MouseEvent, text: string, label: string) => {
@@ -62,7 +68,6 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                     let fileUrls: Record<string, string> = {};
                     try {
                         if (req.FileUrls) fileUrls = JSON.parse(req.FileUrls);
-                        // For backward compatibility with old single image
                         else if (req['URL hình ảnh']) fileUrls = { unc: req['URL hình ảnh'] };
                     } catch (e) { console.error('Failed to parse FileUrls', e); }
 
@@ -74,7 +79,12 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                         regBack: { label: 'Cavet Sau', icon: 'fa-car' },
                         unc: { label: 'UNC', icon: 'fa-file-invoice-dollar' },
                     };
-
+                    
+                    const docEntries = Object.entries(fileUrls);
+                    const allImageSources: ImageSource[] = docEntries.map(([key, url]) => {
+                        const doc = docLabels[key] || { label: key, icon: 'fa-file' };
+                        return { src: url, originalUrl: url, label: doc.label };
+                    });
 
                     return (
                         <tr key={orderNumber} className="hover:bg-surface-hover transition-colors">
@@ -110,10 +120,10 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                             <td data-label="Hồ sơ & Ghi chú" className="px-3 py-4 text-sm text-text-secondary">
                                 {dmsCode && <div className="text-xs font-mono font-semibold text-text-primary">DMS: {dmsCode}</div>}
                                 <div className="flex items-center gap-3 mt-1">
-                                    {Object.entries(fileUrls).map(([key, url]) => {
+                                    {docEntries.map(([key, url], docIndex) => {
                                         const doc = docLabels[key] || { label: key, icon: 'fa-file' };
                                         return (
-                                            <button key={key} onClick={(e) => handleImagePreview(e, url, doc.label, req['Tên khách hàng'])} title={`Xem ${doc.label}`} className="text-accent-primary hover:underline text-lg">
+                                            <button key={key} onClick={(e) => handleImagePreview(e, allImageSources, docIndex, req['Tên khách hàng'])} title={`Xem ${doc.label}`} className="text-accent-primary hover:underline text-lg">
                                                 <i className={`fas ${doc.icon}`}></i>
                                             </button>
                                         )

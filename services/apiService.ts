@@ -450,3 +450,32 @@ export const uploadBulkInvoices = async (filesData: any[]): Promise<ApiResult> =
     };
     return postApi(payload);
 };
+
+// --- Test Drive Actions ---
+export const getTestDriveSchedule = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getTestDriveSchedule' }, LOGIN_API_URL);
+};
+
+export const saveTestDriveBooking = async (bookingData: any): Promise<ApiResult> => {
+    return postApi({ action: 'saveTestDriveBooking', ...bookingData }, LOGIN_API_URL);
+};
+
+export const updateTestDriveCheckin = async (payload: {
+    soPhieu: string;
+    odoBefore?: string;
+    imagesBefore?: { name: string; type: string; data: string }[];
+    odoAfter?: string;
+    imagesAfter?: { name: string; type: string; data: string }[];
+}): Promise<ApiResult> => {
+    const apiPayload: Record<string, any> = {
+        action: 'updateTestDriveCheckin',
+        soPhieu: payload.soPhieu,
+        updatedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
+    };
+    if (payload.odoBefore) apiPayload.odoBefore = payload.odoBefore;
+    if (payload.imagesBefore) apiPayload.imagesBefore = JSON.stringify(payload.imagesBefore);
+    if (payload.odoAfter) apiPayload.odoAfter = payload.odoAfter;
+    if (payload.imagesAfter) apiPayload.imagesAfter = JSON.stringify(payload.imagesAfter);
+    
+    return postApi(apiPayload, LOGIN_API_URL);
+};

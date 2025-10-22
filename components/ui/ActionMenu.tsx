@@ -40,8 +40,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(generalStatus);
   const canRequestInvoice = generalStatus === 'đã ghép';
   const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
-  // FIX: Added conditions for new VinClub actions.
-  const canRequestVC = generalStatus === 'đã xuất hóa đơn' && !vcStatus;
+  // Allow requesting VC if invoiced and the VC process is not active or completed
+  const canRequestVC = generalStatus === 'đã xuất hóa đơn' && !['chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
   const canConfirmVC = status === 'chờ xác thực vc (tvbh)';
 
 

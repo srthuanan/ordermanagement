@@ -59,6 +59,34 @@ export interface StockVehicle {
     [key: string]: any; // Allow for other properties
 }
 
+// Defines the structure for a test drive booking record.
+// FIX: Expanded the TestDriveBooking interface to include all fields from the test drive form.
+// This resolves type errors when assigning a booking object to state that expects the full form data structure.
+export interface TestDriveBooking {
+    soPhieu: string;
+    ngayThuXe: string;
+    loaiXe: string;
+    thoiGianKhoiHanh: string;
+    thoiGianTroVe: string;
+    tenKhachHang: string;
+    loTrinh: string;
+    dienThoai: string;
+    email: string;
+    diaChi: string;
+    tuLai: string;
+    dacDiem: string;
+    gplxSo: string;
+    hieuLucGPLX: string;
+    ngayCamKet: string;
+    tenTuVan: string;
+    odoBefore?: string;
+    imagesBefore?: string; // JSON string of image URLs
+    odoAfter?: string;
+    imagesAfter?: string; // JSON string of image URLs
+    [key: string]: any; 
+}
+
+
 export interface SortConfig {
     key: keyof Order;
     direction: 'asc' | 'desc';

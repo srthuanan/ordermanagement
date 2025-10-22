@@ -20,6 +20,12 @@ const PAGE_SIZE = 15;
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
 
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
+
 // FIX: Added missing props (teamData, allUsers, refetchAdminData) to the interface.
 interface AdminViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -35,7 +41,7 @@ interface AdminViewProps {
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
-    onOpenImagePreview: (imageUrl: string, originalUrl: string, fileLabel: string, customerName: string) => void;
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
 type ModalState = {
@@ -91,12 +97,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
 
 
-    const addUserInputs = useMemo(() => [
-        { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
-        { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
-    ], []);
-
-
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
         setErrorVc(null);
@@ -143,7 +143,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         setVcCurrentPage(1);
     }, [adminView]);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         if (adminView === 'invoices') {
             setInvoiceFilters({ tvbh: [], dongXe: [], trangThai: [] });
         } else if (adminView === 'pending') {
@@ -157,7 +157,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         setPendingCurrentPage(1);
         setPairedCurrentPage(1);
         setVcCurrentPage(1);
-    };
+    }, [adminView]);
 
 
     const { 
@@ -331,7 +331,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
 
-    const handleAdminSubmit = async (
+    const handleAdminSubmit = useCallback(async (
         action: string, 
         params: Record<string, any>, 
         successMessage: string, 
@@ -369,10 +369,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             showToast('Thao tác thất bại', message, 'error');
             return false;
         }
-    };
+    }, [showToast, hideToast, refetchHistory, refetchXuathoadon, refetchStock, refetchAdminData, fetchVcData]);
 
-    // FIX: Map ActionType to the correct API action string for bulk operations to resolve type errors.
-     const handleBulkActionSubmit = async (action: ActionType, params: Record<string, any> = {}) => {
+     const handleBulkActionSubmit = useCallback(async (action: ActionType, params: Record<string, any> = {}) => {
         if (selectedRows.size === 0) {
             showToast('Lỗi', 'Không có mục nào được chọn.', 'error');
             return false;
@@ -400,7 +399,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setSelectedRows(new Set()); // Clear selection on success
         }
         return success;
-    };
+    }, [selectedRows, handleAdminSubmit, showToast]);
 
     
     const handleAction = (type: ActionType, order: Order | VcRequest) => {
@@ -441,6 +440,38 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             await handleSaveTeam(newTeamData);
         }
     };
+
+    // --- Start: Modal Prop Stabilization ---
+    const handleCloseAdminModal = useCallback(() => setAdminModal(null), []);
+    const handleCloseBulkActionModal = useCallback(() => setBulkActionModal(null), []);
+
+    const addCarInputs = useMemo(() => [{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }], []);
+    const deleteCarInputs = useMemo(() => [
+        { id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, 
+        { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' as const }
+    ], []);
+    const restoreCarInputs = useMemo(() => [{ id: 'vinToRestore', label: 'Số VIN cần phục hồi (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }], []);
+    const deleteOrderInputs = useMemo(() => [{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }], []);
+    const revertOrderInputs = useMemo(() => [{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }], []);
+    // FIX: Defined `addUserInputs` to resolve the 'Cannot find name' error.
+    const addUserInputs = useMemo(() => [
+        { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
+        { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
+    ], []);
+
+    const handleArchiveSubmit = useCallback(() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history'), [handleAdminSubmit]);
+    const handleAddCarSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock'), [handleAdminSubmit]);
+    const handleDeleteCarSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock'), [handleAdminSubmit]);
+    const handleRestoreCarSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('restoreCarToStockLogic', data, 'Đã phục hồi xe thành công.', 'stock'), [handleAdminSubmit]);
+    const handleAddUserSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('addUser', data, `Đã tạo tài khoản cho ${data.fullName} và gửi email.`, 'admin'), [handleAdminSubmit]);
+    const handleDeleteOrderSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history'), [handleAdminSubmit]);
+    const handleRevertOrderSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history'), [handleAdminSubmit]);
+
+    const handleBulkApproveSubmit = useCallback(() => handleBulkActionSubmit('approve'), [handleBulkActionSubmit]);
+    const handleBulkPendingSignatureSubmit = useCallback(() => handleBulkActionSubmit('pendingSignature'), [handleBulkActionSubmit]);
+    const handleBulkCancelSubmit = useCallback((data: Record<string, any>) => handleBulkActionSubmit('cancel', { reason: data.reason }), [handleBulkActionSubmit]);
+    const handleBulkSupplementSubmit = useCallback((reason: string, images: string[]) => handleBulkActionSubmit('supplement', { reason, pastedImagesBase64: JSON.stringify(images) }), [handleBulkActionSubmit]);
+    // --- End: Modal Prop Stabilization ---
     
     const adminTools = [
         { title: 'Lưu Trữ Hóa Đơn', icon: 'fa-archive', action: () => setAdminModal('archive') },
@@ -712,20 +743,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             {/* Bulk Action Modals */}
             {bulkActionModal && (
                 <>
-                    <ActionModal isOpen={bulkActionModal.type === 'approve'} onClose={() => setBulkActionModal(null)} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => handleBulkActionSubmit('approve')} />
-                    <ActionModal isOpen={bulkActionModal.type === 'pendingSignature'} onClose={() => setBulkActionModal(null)} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={() => handleBulkActionSubmit('pendingSignature')} />
-                    <RequestWithImageModal isOpen={bulkActionModal.type === 'supplement'} onClose={() => setBulkActionModal(null)} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={(reason, images) => handleBulkActionSubmit('supplement', { reason, pastedImagesBase64: JSON.stringify(images) })} />
-                    <ActionModal isOpen={bulkActionModal.type === 'cancel'} onClose={() => setBulkActionModal(null)} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'Nhập lý do chung cho tất cả...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data) => handleBulkActionSubmit('cancel', { reason: data.reason })} />
+                    <ActionModal isOpen={bulkActionModal.type === 'approve'} onClose={handleCloseBulkActionModal} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={handleBulkApproveSubmit} />
+                    <ActionModal isOpen={bulkActionModal.type === 'pendingSignature'} onClose={handleCloseBulkActionModal} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={handleBulkPendingSignatureSubmit} />
+                    <RequestWithImageModal isOpen={bulkActionModal.type === 'supplement'} onClose={handleCloseBulkActionModal} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={handleBulkSupplementSubmit} />
+                    <ActionModal isOpen={bulkActionModal.type === 'cancel'} onClose={handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'Nhập lý do chung cho tất cả...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={handleBulkCancelSubmit} />
                 </>
             )}
 
-            <ActionModal isOpen={adminModal === 'archive'} onClose={() => setAdminModal(null)} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history')} />
-            <ActionModal isOpen={adminModal === 'addCar'} onClose={() => setAdminModal(null)} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={[{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }]} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'deleteCar'} onClose={() => setAdminModal(null)} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={[{ id: 'vinToDelete', label: 'Số VIN cần xóa (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }, { id: 'reason', label: 'Lý do xóa (bắt buộc)', placeholder: 'VD: Xe bán lô, xe điều chuyển...', type: 'textarea' }]} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteCarFromStockLogic', data, 'Đã xóa xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'restoreCar'} onClose={() => setAdminModal(null)} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={[{ id: 'vinToRestore', label: 'Số VIN cần phục hồi (17 ký tự)', placeholder: 'Nhập chính xác 17 ký tự VIN...', isVIN: true }]} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={(data: Record<string, string>) => handleAdminSubmit('restoreCarToStockLogic', data, 'Đã phục hồi xe thành công.', 'stock')} />
-            <ActionModal isOpen={adminModal === 'addUser'} onClose={() => setAdminModal(null)} title="Thêm Nhân Viên Mới" description="Thêm một tài khoản nhân viên mới. Hệ thống sẽ tự động tạo tên đăng nhập, mật khẩu và gửi email thông báo." inputs={addUserInputs} submitText="Thêm & Gửi Email" submitColor="primary" icon="fa-user-plus" onSubmit={(data) => handleAdminSubmit('addUser', data, `Đã tạo tài khoản cho ${data.fullName} và gửi email.`, 'admin')} />
-            <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={() => setAdminModal(null)} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }]} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={(data: Record<string, string>) => handleAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history')} />
-            <ActionModal isOpen={adminModal === 'revertOrder'} onClose={() => setAdminModal(null)} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={[{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }]} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={(data: Record<string, string>) => handleAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history')} />
+            <ActionModal isOpen={adminModal === 'archive'} onClose={handleCloseAdminModal} title="Lưu Trữ Hóa Đơn" description="Lưu trữ hóa đơn đã xuất của tháng trước sang một sheet riêng." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={handleArchiveSubmit} />
+            <ActionModal isOpen={adminModal === 'addCar'} onClose={handleCloseAdminModal} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={addCarInputs} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={handleAddCarSubmit} />
+            <ActionModal isOpen={adminModal === 'deleteCar'} onClose={handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={handleDeleteCarSubmit} />
+            <ActionModal isOpen={adminModal === 'restoreCar'} onClose={handleCloseAdminModal} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={restoreCarInputs} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={handleRestoreCarSubmit} />
+            <ActionModal isOpen={adminModal === 'addUser'} onClose={handleCloseAdminModal} title="Thêm Nhân Viên Mới" description="Thêm một tài khoản nhân viên mới. Hệ thống sẽ tự động tạo tên đăng nhập, mật khẩu và gửi email thông báo." inputs={addUserInputs} submitText="Thêm & Gửi Email" submitColor="primary" icon="fa-user-plus" onSubmit={handleAddUserSubmit} />
+            <ActionModal isOpen={adminModal === 'deleteOrder'} onClose={handleCloseAdminModal} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={deleteOrderInputs} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={handleDeleteOrderSubmit} />
+            <ActionModal isOpen={adminModal === 'revertOrder'} onClose={handleCloseAdminModal} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng trong nhật ký." inputs={revertOrderInputs} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={handleRevertOrderSubmit} />
+            
             <OrderTimelineModal isOpen={adminModal === 'timeline'} onClose={() => setAdminModal(null)} />
             <BulkUploadModal
                 isOpen={isBulkUploadModalOpen}
@@ -902,4 +934,4 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
 };
 
 
-export default AdminView;
+export default React.memo(AdminView);

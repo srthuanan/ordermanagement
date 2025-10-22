@@ -30,19 +30,19 @@ const Root = () => {
         setIsAuthenticated(true);
     }, []);
 
+    const showToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => {
+        const toastDuration = type === 'loading' ? (duration ?? 0) : (duration ?? 5000);
+        setToast({ show: true, title, message, type, duration: toastDuration });
+    }, []);
+    
+    const hideToast = useCallback(() => setToast(null), []);
+
     const handleLogout = useCallback(() => {
         sessionStorage.clear();
         // Sau khi hoàn tác, dòng này sẽ hoạt động đúng.
         setIsAuthenticated(false);
         showToast('Đăng Xuất Thành Công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info', 3000);
-    }, []);
-
-    const showToast = (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => {
-        const toastDuration = type === 'loading' ? (duration ?? 0) : (duration ?? 5000);
-        setToast({ show: true, title, message, type, duration: toastDuration });
-    };
-    
-    const hideToast = () => setToast(null);
+    }, [showToast]);
     
     if (isLoading) {
         // You can return a loading spinner here if needed
