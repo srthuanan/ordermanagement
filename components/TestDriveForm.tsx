@@ -121,7 +121,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                 setAllTestDrives(sortedSchedule);
                 const latestSoPhieu = sortedSchedule.length > 0 ? sortedSchedule[sortedSchedule.length - 1].soPhieu : undefined;
                 const user = sessionStorage.getItem('currentConsultant') || '';
-                setFormData(prev => ({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) }));
+                setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
             } else {
                 showToast('Lỗi Tải Lịch', result.message || 'Không thể tải dữ liệu lịch lái thử.', 'error');
             }

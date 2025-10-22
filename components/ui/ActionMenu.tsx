@@ -41,7 +41,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   const canRequestInvoice = generalStatus === 'đã ghép';
   const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
   // Allow requesting VC if invoiced and the VC process is not active or completed
-  const canRequestVC = generalStatus === 'đã xuất hóa đơn' && !['chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
+  const canRequestVC = (generalStatus === 'đã xuất hóa đơn' || vcStatus === 'từ chối ycvc') && !['yêu cầu vinclub', 'chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
   const canConfirmVC = status === 'chờ xác thực vc (tvbh)';
 
 
@@ -68,7 +68,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
     <div className="relative inline-block text-left" ref={menuRef}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen); }}
-        className={`group w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/50
+        className={`group w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50
                    ${isOpen 
                      ? 'bg-accent-primary/10 text-accent-primary' 
                      : 'text-text-secondary bg-transparent hover:bg-surface-hover hover:text-text-primary'}`}

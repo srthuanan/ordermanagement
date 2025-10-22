@@ -120,7 +120,7 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                             <td data-label="Hồ sơ & Ghi chú" className="px-3 py-4 text-sm text-text-secondary">
                                 {dmsCode && <div className="text-xs font-mono font-semibold text-text-primary">DMS: {dmsCode}</div>}
                                 <div className="flex items-center gap-3 mt-1">
-                                    {docEntries.map(([key, url], docIndex) => {
+                                    {docEntries.map(([key], docIndex) => {
                                         const doc = docLabels[key] || { label: key, icon: 'fa-file' };
                                         return (
                                             <button key={key} onClick={(e) => handleImagePreview(e, allImageSources, docIndex, req['Tên khách hàng'])} title={`Xem ${doc.label}`} className="text-accent-primary hover:underline text-lg">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TestDriveBooking } from '../../types';
 import moment from 'moment';
+import logoMinhDao from '../../pictures/logomd.jpg';
 
 interface PreviewProps {
     data: TestDriveBooking;
@@ -40,7 +41,7 @@ const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
         <div className="print-area document-preview bg-white p-[12.5px] border border-gray-800 shadow-lg w-full font-serif text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
             <header className="flex justify-between items-center mb-4">
                 <div className="w-12">
-                    <img src="pictures/logomd.jpg" alt="Logo Minh Dao" className="w-full object-contain" />
+                    <img src={logoMinhDao} alt="Logo Minh Dao" className="w-full object-contain" />
                 </div>
                 <h1 className="font-bold text-lg flex-grow text-center">PHIẾU YÊU CẦU LÁI THỬ</h1>
                 <div className="w-12"></div> {/* Spacer to keep title centered */}

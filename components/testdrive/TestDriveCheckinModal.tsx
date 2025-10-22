@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TestDriveBooking } from '../../types';
 
 interface ImageSource {
@@ -188,7 +188,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                                 <ImageGallery
                                     images={existingImagesBefore}
                                     label="Hình ảnh đã tải lên"
-                                    onImageClick={(url, index) => {
+                                    onImageClick={(_, index) => {
                                         const imageSources = existingImagesBefore.map((imgUrl, i) => ({
                                             src: imgUrl,
                                             originalUrl: imgUrl,
@@ -213,7 +213,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                                 <ImageGallery
                                     images={existingImagesAfter}
                                     label="Hình ảnh đã tải lên"
-                                    onImageClick={(url, index) => {
+                                    onImageClick={(_, index) => {
                                         const imageSources = existingImagesAfter.map((imgUrl, i) => ({
                                             src: imgUrl,
                                             originalUrl: imgUrl,
