@@ -1060,7 +1060,6 @@
           margin-bottom: 1rem;
           background-color: var(--tw-color-surface-card);
           position: relative; /* For action button positioning */
-          overflow: hidden; /* To contain header background */
         }
 
         .responsive-table tbody td {
@@ -1100,17 +1099,21 @@
         .responsive-table td[data-label="Khách hàng / SĐH"],
         .responsive-table td[data-label="Người YC / Khách Hàng"],
         .responsive-table td[data-label="Số VIN"],
-        .responsive-table td[data-label="Tên tệp"] {
+        .responsive-table td[data-label="Tên tệp"],
+        .responsive-table td[data-label="Khách hàng / SĐH / VIN"] {
           display: block;
           padding: 0.75rem;
           text-align: left;
           border-bottom: 1px solid var(--tw-color-border-primary);
           background-color: var(--tw-color-surface-hover);
+          border-top-left-radius: 0.75rem;
+          border-top-right-radius: 0.75rem;
         }
         .responsive-table td[data-label="Khách hàng / SĐH"]:before,
         .responsive-table td[data-label="Người YC / Khách Hàng"]:before,
         .responsive-table td[data-label="Số VIN"]:before,
-        .responsive-table td[data-label="Tên tệp"]:before {
+        .responsive-table td[data-label="Tên tệp"]:before,
+        .responsive-table td[data-label="Khách hàng / SĐH / VIN"]:before {
           display: none; /* Hide label for the header */
         }
 
@@ -1226,7 +1229,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-Behm9Lez.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-BK5X_NgC.js"></script>
 </head>
 <body class="text-text-primary font-sans">
     <div id="root" class="relative isolate h-screen flex flex-col overflow-hidden"></div>
