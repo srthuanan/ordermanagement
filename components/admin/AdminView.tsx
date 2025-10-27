@@ -122,7 +122,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-     const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
+     const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | { start: string; end: string; } | undefined }>) => {
         if (adminView === 'invoices') {
             setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
         } else if (adminView === 'pending') {

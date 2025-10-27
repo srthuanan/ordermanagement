@@ -112,7 +112,7 @@ const Filters: React.FC<FiltersProps> = ({
   const hasActiveFilters = (filters.keyword && filters.keyword.length > 0) || activeFilters.length > 0;
 
   const searchControls = (
-    <div className="relative flex-grow min-w-0" style={{flexBasis: '280px'}}>
+    <div className="relative flex-1 min-w-0" style={{minWidth: '200px'}}>
       <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder peer-focus:text-accent-primary text-sm"></i>
       <input
         type="text"
@@ -161,13 +161,14 @@ const Filters: React.FC<FiltersProps> = ({
               )}
             </div>
           )}
-          <div className="flex-grow"></div>
-          <span id="total-items-count" className={`text-xs font-medium text-text-secondary bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap flex items-center ${isCompact ? 'px-2.5 h-8' : 'px-4 h-11'}`}>
-            {totalCount} kết quả
-          </span>
-          <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className={`flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50 ${isCompact ? 'w-8 h-8' : 'w-11 h-11'}`} aria-label="Làm mới" title="Làm mới">
-            <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <span id="total-items-count" className={`text-xs font-medium text-text-secondary bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap flex items-center ${isCompact ? 'px-2.5 h-8' : 'px-4 h-11'}`}>
+              {totalCount} kết quả
+            </span>
+            <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className={`flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50 ${isCompact ? 'w-8 h-8' : 'w-11 h-11'}`} aria-label="Làm mới" title="Làm mới">
+              <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+            </button>
+          </div>
       </div>
       {hasActiveFilters && (
         <div className="pt-2 flex flex-wrap items-center gap-2">
@@ -190,12 +191,18 @@ const Filters: React.FC<FiltersProps> = ({
       )}
     </div>
   );
+  
+  const finalDesktopContent = (
+    <div className={`hidden md:block flex-shrink-0 ${!plain && 'bg-surface-card rounded-xl shadow-md border border-border-primary'} ${isCompact ? 'p-2' : 'p-4'}`}>
+      {desktopContent}
+    </div>
+  );
 
   return (
       <>
           {/* --- Mobile View --- */}
           <div className="md:hidden flex w-full items-center gap-2">
-              {!hideSearch && searchControls}
+              {!hideSearch && React.cloneElement(searchControls, {id: 'search-input-mobile'})}
               <button onClick={() => setIsMobilePanelOpen(true)} className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-surface-ground rounded-lg border border-border-primary relative">
                   <i className="fas fa-filter text-accent-primary"></i>
                   {activeFilters.length > 0 && (
@@ -254,9 +261,7 @@ const Filters: React.FC<FiltersProps> = ({
           {plain ? (
               <div className="hidden md:block w-full">{desktopContent}</div>
           ) : (
-              <div className={`hidden md:block flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary ${isCompact ? 'p-2' : 'p-4'}`}>
-                  {desktopContent}
-              </div>
+              finalDesktopContent
           )}
       </>
   );

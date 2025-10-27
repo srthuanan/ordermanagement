@@ -215,14 +215,6 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                 >
                                                     <i className="fas fa-stopwatch-20"></i>
                                                 </button>
-                                                {/* FIX: Restored the missing 'pair vehicle' button which is a critical user action. */}
-                                                <button
-                                                    className="action-btn pair-action"
-                                                    onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
-                                                    title="Ghép xe ngay"
-                                                >
-                                                    <i className="fas fa-link"></i>
-                                                </button>
                                             </>
                                         ) : isHeldByCurrentUser ? (
                                             <>

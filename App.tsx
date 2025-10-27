@@ -90,7 +90,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     useEffect(() => {
         const gifInterval = setInterval(() => {
-            setCurrentGif(prevGif => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
+            setCurrentGif((prevGif: string) => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
         }, 5000); // Change every 5 seconds
 
         return () => clearInterval(gifInterval);
@@ -632,16 +632,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             ));
             return ( 
                  <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                    <Filters 
-                        filters={filters} 
-                        onFilterChange={handleFilterChange} 
-                        onReset={handleResetFilters} 
-                        dropdowns={dropdownConfigs}
-                        searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
-                        totalCount={0}
-                        onRefresh={() => refetch()}
-                        isLoading={isLoading}
-                    />
+                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="skeleton-item h-8 rounded-lg" style={{flexBasis: '280px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                            <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                            <div className="skeleton-item h-8 w-8 !rounded-lg ml-auto"></div>
+                        </div>
+                    </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto">
                             <table className="min-w-full">
@@ -657,16 +655,20 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                <Filters 
-                    filters={filters} 
-                    onFilterChange={handleFilterChange} 
-                    onReset={handleResetFilters} 
-                    dropdowns={dropdownConfigs}
-                    searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
-                    totalCount={processedData.length}
-                    onRefresh={() => refetch()}
-                    isLoading={isLoading}
-                />
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+                    <Filters 
+                        filters={filters} 
+                        onFilterChange={handleFilterChange} 
+                        onReset={handleResetFilters} 
+                        dropdowns={dropdownConfigs}
+                        searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
+                        totalCount={processedData.length}
+                        onRefresh={() => refetch()}
+                        isLoading={isLoading}
+                        size="compact"
+                        plain={true}
+                    />
+                </div>
                 <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                     <div className="flex-grow overflow-auto relative">
                          <HistoryTable 

@@ -4,7 +4,6 @@ import StockTable from './StockTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
 import * as apiService from '../services/apiService';
-import SummaryCard from './ui/SummaryCard';
 
 const PAGE_SIZE = 10;
 
@@ -162,20 +161,6 @@ const StockView: React.FC<StockViewProps> = ({
     const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]))].sort(), [stockData]);
     const uniqueInteriors = useMemo(() => [...new Set(stockData.map(v => v["Nội thất"]))].sort(), [stockData]);
 
-    const stockStats = useMemo(() => {
-        const counts = stockData.reduce((acc, vehicle) => {
-            const status = vehicle['Trạng thái'] || 'Không rõ';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-        return {
-            total: stockData.length,
-            available: counts['Chưa ghép'] || 0,
-            held: counts['Đang giữ'] || 0,
-        };
-    }, [stockData]);
-
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
         { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
@@ -187,51 +172,28 @@ const StockView: React.FC<StockViewProps> = ({
     const renderContent = () => {
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
-             const tableSkeletons = Array.from({ length: 7 }, (_, i) => (
-                <tr key={i}>
-                    <td colSpan={8} className="py-1 px-4 sm:px-6">
-                         <div className="flex items-center space-x-4 p-4 w-full">
-                            <div className="skeleton-item h-6 w-6 !rounded-full"></div>
-                            <div className="skeleton-item h-4 w-40"></div>
-                            <div className="skeleton-item h-4 w-24"></div>
-                            <div className="skeleton-item h-4 flex-1"></div>
-                            <div className="skeleton-item h-4 flex-1 hidden md:block"></div>
-                            <div className="skeleton-item h-4 w-20 hidden md:block"></div>
-                            <div className="skeleton-item h-8 w-24 !rounded-full"></div>
-                            <div className="skeleton-item h-8 w-24 !rounded-md"></div>
-                        </div>
-                    </td>
-                </tr>
-            ));
             return ( 
                  <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                             <div key={i} className="bg-surface-card p-4 rounded-xl border border-border-primary flex items-center gap-4">
-                                <div className="skeleton-item w-12 h-12 !rounded-lg flex-shrink-0"></div>
-                                <div className="flex-1 space-y-2">
-                                    <div className="skeleton-item h-4 w-3/4"></div>
-                                    <div className="skeleton-item h-6 w-1/2"></div>
+                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+                        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+                            <div className="w-full lg:flex-grow">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <div className="skeleton-item h-8 rounded-lg" style={{flexBasis: '280px', flexGrow: 1}}></div>
+                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                                    <div className="skeleton-item h-8 w-8 !rounded-lg ml-auto"></div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <div className="skeleton-item h-9 rounded-lg" style={{flexBasis: '280px'}}></div>
-                            <div className="skeleton-item h-9 w-32 rounded-lg"></div>
-                            <div className="skeleton-item h-9 w-32 rounded-lg"></div>
-                            <div className="skeleton-item h-9 w-32 rounded-lg"></div>
-                            <div className="flex-grow"></div>
-                            <div className="skeleton-item h-9 w-24 rounded-lg"></div>
-                            <div className="skeleton-item h-8 w-8 !rounded-lg"></div>
                         </div>
                     </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto">
-                            <table className="min-w-full">
-                                <tbody className="divide-y divide-border-primary">{tableSkeletons}</tbody>
-                            </table>
+                           <div className="p-4 space-y-2">
+                                {Array.from({ length: 7 }).map((_, i) => (
+                                    <div key={i} className="skeleton-item h-12 w-full"></div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -242,22 +204,24 @@ const StockView: React.FC<StockViewProps> = ({
         }
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <SummaryCard icon="fa-warehouse" title="Tổng Xe Trong Kho" value={stockStats.total} />
-                    <SummaryCard icon="fa-check-circle" title="Sẵn Sàng" value={stockStats.available} colorClass="text-success" iconBgClass="bg-success-bg" />
-                    <SummaryCard icon="fa-pause-circle" title="Đang Giữ" value={stockStats.held} colorClass="text-warning" iconBgClass="bg-warning-bg" />
-                    <SummaryCard icon="fa-car" title="Loại Xe" value={uniqueCarModels.length} />
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+                    <div className="flex flex-col xl:flex-row gap-4 xl:items-start">
+                        <div className="w-full xl:flex-grow">
+                            <Filters 
+                                filters={filters} 
+                                onFilterChange={handleFilterChange} 
+                                onReset={handleResetFilters} 
+                                dropdowns={dropdownConfigs}
+                                searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
+                                totalCount={processedData.length}
+                                onRefresh={() => refetchStock()}
+                                isLoading={isLoading}
+                                plain={true}
+                                size="compact"
+                            />
+                        </div>
+                    </div>
                 </div>
-                <Filters 
-                    filters={filters} 
-                    onFilterChange={handleFilterChange} 
-                    onReset={handleResetFilters} 
-                    dropdowns={dropdownConfigs}
-                    searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
-                    totalCount={processedData.length}
-                    onRefresh={() => refetchStock()}
-                    isLoading={isLoading}
-                />
                 <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                     <div className="flex-grow overflow-auto relative">
                          <StockTable 
