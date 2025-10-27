@@ -9,8 +9,6 @@ import OrderTimelineModal from './admin/OrderTimelineModal';
 import SuggestionModal from './admin/SuggestionModal';
 import BulkUploadModal from './admin/BulkUploadModal';
 import * as apiService from '../services/apiService';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
-import MultiSelectDropdown from './ui/MultiSelectDropdown';
 
 const PAGE_SIZE = 15;
 
@@ -39,6 +37,8 @@ interface AdminViewProps {
     errorXuathoadon: string | null;
     // FIX: Corrected the signature for onOpenImagePreview to match the application's standard.
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    // FIX: Added missing 'onOpenFilePreview' prop to the interface.
+    onOpenFilePreview: (url: string, label: string) => void;
 }
 
 type ModalState = {
@@ -49,7 +49,7 @@ type ModalState = {
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
 type AdminSubView = 'invoices' | 'pending' | 'paired' | 'phongkd';
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenFilePreview }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting and pagination for each tab
@@ -62,13 +62,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [pairedSortConfig, setPairedSortConfig] = useState<SortConfig | null>({ key: 'Thời gian ghép', direction: 'desc' });
     const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
     
-    // State for filtering
-    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-    const [invoiceFilters, setInvoiceFilters] = useState<{ tvbh: string[], dongXe: string[], trangThai: string[] }>({ tvbh: [], dongXe: [], trangThai: [] });
-    const [pendingFilters, setPendingFilters] = useState<{ tvbh: string[], dongXe: string[] }>({ tvbh: [], dongXe: [] });
-    const [pairedFilters, setPairedFilters] = useState<{ tvbh: string[], dongXe: string[] }>({ tvbh: [], dongXe: [] });
-
-
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
     const [invoiceModalState, setInvoiceModalState] = useState<ModalState>(null);
     const [suggestionModalState, setSuggestionModalState] = useState<{ order: Order; cars: StockVehicle[] } | null>(null);
@@ -98,40 +91,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-    const handleFilterChange = (newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
-        if (adminView === 'invoices') {
-            setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
-        } else if (adminView === 'pending') {
-            setPendingFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
-        } else if (adminView === 'paired') {
-            setPairedFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
-        }
-        
-        setCurrentPage(1);
-        setPendingCurrentPage(1);
-        setPairedCurrentPage(1);
-    };
-
-    const handleReset = () => {
-        if (adminView === 'invoices') {
-            setInvoiceFilters({ tvbh: [], dongXe: [], trangThai: [] });
-        } else if (adminView === 'pending') {
-            setPendingFilters({ tvbh: [], dongXe: [] });
-        } else if (adminView === 'paired') {
-            setPairedFilters({ tvbh: [], dongXe: [] });
-        }
-        setCurrentPage(1);
-        setPendingCurrentPage(1);
-        setPairedCurrentPage(1);
-    };
-
-
     const { 
         invoiceRequests, 
         pendingData,
         pairedData,
         suggestionsMap,
-        filterOptions,
     } = useMemo(() => {
         const orderStatusMap = new Map<string, Order>();
         allOrders.forEach(order => { if (order['Số đơn hàng']) orderStatusMap.set(order['Số đơn hàng'], order); });
@@ -195,24 +159,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             });
             suggestions.forEach((cars) => cars.sort((a, b) => new Date(a['Thời gian nhập'] || 0).getTime() - new Date(b['Thời gian nhập'] || 0).getTime()));
         }
-
-        const applyFilters = (data: Order[], filters: { tvbh?: string[], dongXe?: string[], trangThai?: string[] }, view: AdminSubView) => {
-            return data.filter(row => {
-                const tvbhMatch = !filters.tvbh || filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']);
-                const dongXeMatch = !filters.dongXe || filters.dongXe.length === 0 || filters.dongXe.includes(row['Dòng xe']);
-                
-                let trangThaiMatch = true;
-                if (view === 'invoices' && filters.trangThai) {
-                    trangThaiMatch = filters.trangThai.length === 0 || filters.trangThai.includes((row as any)['Trạng thái xử lý']);
-                }
-                
-                return tvbhMatch && dongXeMatch && trangThaiMatch;
-            });
-        };
-
-        const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices');
-        const filteredPending = applyFilters(allPending, pendingFilters, 'pending');
-        const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired');
         
         const applySort = (data: Order[], sortConfig: SortConfig | null) => {
             let sorted = [...data];
@@ -231,33 +177,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
             return sorted;
         };
-
-        const getFilterOptions = (data: any[], keys: string[]) => {
-            const options: Record<string, Set<string>> = {};
-            keys.forEach(key => options[key] = new Set());
-            data.forEach(row => {
-                keys.forEach(key => {
-                    const value = key === 'Kết quả' ? (row as any)['Trạng thái xử lý'] : row[key];
-                    if (value) options[key].add(value as string);
-                });
-            });
-            const result: Record<string, string[]> = {};
-            keys.forEach(key => result[key] = Array.from(options[key]).sort());
-            return result;
-        };
         
         return { 
-            invoiceRequests: applySort(filteredInvoices, sortConfig),
-            pendingData: applySort(filteredPending, pendingSortConfig),
-            pairedData: applySort(filteredPaired, pairedSortConfig),
+            invoiceRequests: applySort(processedInvoices, sortConfig),
+            pendingData: applySort(allPending, pendingSortConfig),
+            pairedData: applySort(allPaired, pairedSortConfig),
             suggestionsMap: suggestions,
-            filterOptions: {
-                invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Kết quả']),
-                pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe']),
-                paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe']),
-            }
         };
-    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, invoiceFilters, pendingFilters, pairedFilters]);
+    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
     const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
@@ -354,61 +281,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') },
     ];
 
-    const renderFilterPanel = () => {
-        let currentFilters: any;
-        let currentOptions: any;
-        let dropdownConfigs: DropdownFilterConfig[] = [];
-
-        switch(adminView) {
-            case 'invoices':
-                currentFilters = invoiceFilters;
-                currentOptions = filterOptions.invoices;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'},
-                    { id: 'admin-filter-status', key: 'trangThai', label: 'Tất cả Trạng Thái', options: currentOptions['Kết quả'], icon: 'fa-tag', displayMode: 'selection'}
-                ];
-                break;
-            case 'pending':
-                currentFilters = pendingFilters;
-                currentOptions = filterOptions.pending;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'}
-                ];
-                break;
-            case 'paired':
-                 currentFilters = pairedFilters;
-                currentOptions = filterOptions.paired;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'}
-                ];
-                break;
-            case 'phongkd':
-                return null;
-        }
-
-        return (
-             <div className={`transition-all duration-300 ease-in-out ${isFilterPanelOpen ? 'max-h-96' : 'max-h-0 !p-0 !mt-0 !mb-0 overflow-hidden'}`}>
-                <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
-                     <Filters 
-                        filters={currentFilters}
-                        onFilterChange={handleFilterChange}
-                        onReset={handleReset}
-                        dropdowns={dropdownConfigs}
-                        searchPlaceholder=""
-                        totalCount={0}
-                        onRefresh={() => {}}
-                        isLoading={false}
-                        hideSearch={true}
-                        size="compact"
-                    />
-                </div>
-            </div>
-        );
-    };
-
     const renderCurrentView = () => {
         if (adminView === 'invoices' && isLoadingXuathoadon) {
             return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
@@ -430,7 +302,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  return (
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto relative">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key: keyof Order) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} />
+                            {/* FIX: Added missing 'onOpenFilePreview' prop. */}
+                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(key: keyof Order) => onSort((p: SortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => { if (selectedRows.size === data.length) setSelectedRows(new Set()); else setSelectedRows(new Set(data.map(o => o['Số đơn hàng']))); }} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
@@ -461,9 +334,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         })}
                     </div>
                     <div className="flex-grow"></div>
-                     <button onClick={() => setIsFilterPanelOpen(p => !p)} title="Lọc dữ liệu" className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all ${isFilterPanelOpen ? '!bg-surface-accent !text-accent-primary' : ''} ${adminView === 'phongkd' ? 'hidden' : ''}`}>
-                        <i className="fas fa-filter"></i>
-                    </button>
                     <button 
                         onClick={async () => {
                             showToast('Đang làm mới...', 'Làm mới dữ liệu từ máy chủ.', 'loading');
@@ -480,7 +350,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         {isActionMenuOpen && ( <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>{adminTools.map(tool => (<button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover"><i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i><span>{tool.title}</span></button>))}</div>)}
                     </div>
                 </div>
-                {renderFilterPanel()}
                 {renderCurrentView()}
             </div>
             {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} />}
@@ -659,7 +528,8 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                         )}
                     </div>
                     <div>
-                         <MultiSelectDropdown 
+                         {/*
+<MultiSelectDropdown 
                             id="team-member-select"
                             label="Thành viên"
                             options={availableMembers}
@@ -668,6 +538,7 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                             icon="fa-users"
                             displayMode="selection"
                          />
+*/}
                     </div>
                 </main>
                 <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">

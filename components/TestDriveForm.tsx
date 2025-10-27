@@ -16,6 +16,8 @@ interface ImageSource {
 interface TestDriveFormProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    currentUser: string;
+    isAdmin: boolean;
 }
 
 const initialFormData: TestDriveBooking = {
@@ -40,9 +42,9 @@ const initialFormData: TestDriveBooking = {
 const timeToMinutes = (time: string): number => {
     if (!time) return 0;
     
-    // Handle full ISO/Date string from Google Sheets (which is what moment.utc is good at)
+    // Handle full ISO/Date string from Google Sheets
     if (time.includes('T') || time.includes(' ')) {
-        const date = moment.utc(time);
+        const date = moment(time);
         if (date.isValid()) {
             return date.hour() * 60 + date.minute();
         }
@@ -67,8 +69,8 @@ const formatDisplayTime = (timeStr: string): string => {
     if (/^\d{2}:\d{2}$/.test(timeStr)) {
         return timeStr;
     }
-    // Handle full ISO/Date string from Google Sheets by interpreting it as UTC
-    const time = moment.utc(timeStr);
+    // Handle full ISO/Date string from Google Sheets
+    const time = moment(timeStr);
     if (time.isValid()) {
         return time.format('HH:mm');
     }
@@ -77,7 +79,7 @@ const formatDisplayTime = (timeStr: string): string => {
 
 const BUFFER_MINUTES = 15;
 
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview, currentUser, isAdmin }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
         const user = sessionStorage.getItem('currentConsultant') || '';
         return { ...initialFormData, tenTuVan: user };
@@ -389,6 +391,8 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                             bookings={allTestDrives}
                             onSelectBooking={setSelectedBookingForPreview}
                             onUpdateCheckin={setCheckinBooking}
+                            currentUser={currentUser}
+                            isAdmin={isAdmin}
                         />
                     )}
                 </div>

@@ -60,11 +60,6 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
     setCurrentPage(1);
   }, []);
 
-  const handleTvbhFilterChange = useCallback((v: string[]) => {
-    setSelectedTvbh(v);
-    setCurrentPage(1);
-  }, []);
-
   const yearlyData = useMemo(() => {
       const monthlySalesData: Record<string, number> = {};
       MONTHS.forEach(m => monthlySalesData[m] = 0);
@@ -228,7 +223,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
                   label="Lọc theo TVBH"
                   options={uniqueTvbh}
                   selectedOptions={selectedTvbh}
-                  onChange={handleTvbhFilterChange}
+                  onChange={(v) => { setSelectedTvbh(v); setCurrentPage(1); }}
                   icon="fa-filter"
                   size="compact"
                   displayMode="selection"
@@ -278,7 +273,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
       {monthSelector}
       
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SummaryCard icon="fa-car" title="Tổng Số Xe Bán" value={stats.total} />
           <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} valueClassName="text-xl" />
           <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} valueClassName="text-xl" />
@@ -310,4 +305,4 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
   );
 };
 
-export default React.memo(SoldCarsView);
+export default SoldCarsView;

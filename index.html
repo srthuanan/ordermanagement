@@ -72,6 +72,7 @@
             },
             keyframes: {
               'skeleton-loading': { '0%': { 'background-position': '200% 0' }, '100%': { 'background-position': '-200% 0' }, },
+              'fade-in': { 'from': { opacity: '0' }, 'to': { opacity: '1' } },
               'fade-in-up': { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' }, },
               'fade-in-scale-up': { '0%': { opacity: '0', transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: '1', transform: 'scale(1) translateY(0)' }, },
               'pulse-glow': { '0%, 100%': { opacity: '0.7', boxShadow: '0 0 8px 0px var(--glow-color)' }, '50%': { opacity: '1', boxShadow: '0 0 12px 2px var(--glow-color)' }, },
@@ -120,6 +121,7 @@
             },
             animation: {
               'skeleton': 'skeleton-loading 1.5s infinite linear',
+              'fade-in': 'fade-in 0.3s ease-out both',
               'fade-in-up': 'fade-in-up 0.3s ease-out both',
               'fade-in-scale-up': 'fade-in-scale-up 0.2s ease-out both',
               'pulse-glow': 'pulse-glow 3s infinite ease-in-out',
@@ -387,7 +389,7 @@
             It will appear to scroll much slower than the foreground content, creating a fixed effect. */
           transform: translateZ(-1px) scale(2);
           
-          opacity: 0.2;
+          opacity: 0.1;
           pointer-events: none;
           
           /* Ensure the background doesn't overflow the rounded corners of the parent card */
@@ -425,7 +427,7 @@
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
-          opacity: 0.1;
+          opacity: 0.2;
           z-index: -1;
           pointer-events: none;
           border-radius: inherit;
@@ -766,66 +768,9 @@
         color: #94A3B8;
        }
 
-      /* === NEW LOGIN SCREEN ANIMATIONS === */
-      .glass-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 0; /* Will be behind content due to 'isolate' on parent */
-        border-radius: inherit;
-        background: radial-gradient(ellipse at 70% 20%, rgba(203, 213, 225, 0.3) 0%, transparent 45%),
-                    radial-gradient(ellipse at 30% 80%, rgba(66, 165, 245, 0.25) 0%, transparent 50%);
-        opacity: 0;
-        animation: aurora-fade-in 1.5s ease-out forwards, aurora-move 15s infinite alternate ease-in-out;
-        animation-delay: 0.5s;
-      }
-      
-      /* === NEW LOGIN SCREEN STYLES === */
+      /* === LOGIN SCREEN STYLES === */
       .text-shadow {
         text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-      }
-
-      .glass-card {
-        /* Fading background for a blending effect */
-        background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 30%, rgba(15, 23, 42, 0.1) 75%, transparent 100%);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        animation: fade-in-scale-up 0.8s cubic-bezier(0.25, 1, 0.5, 1) both;
-      }
-      
-      .login-card-divider::before {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 15%;
-        height: 70%;
-        width: 1px;
-        background: rgba(255, 255, 255, 0.15);
-        transform: translateX(50%);
-        z-index: 0;
-      }
-
-      .login-card-divider::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 15%;
-        height: 70%;
-        width: 3px;
-        transform: translateX(50%);
-        background: linear-gradient(
-            to bottom,
-            transparent 0%,
-            rgba(255, 255, 255, 0.9) 40%,
-            rgba(255, 255, 255, 0.9) 60%,
-            transparent 100%
-        );
-        background-size: 100% 30%;
-        background-repeat: no-repeat;
-        animation: flow-light 4s linear infinite;
-        filter: blur(2px);
-        box-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 12px rgba(66, 165, 245, 0.4);
-        z-index: 1;
       }
       
       .energy-input-container {
@@ -900,36 +845,6 @@
         filter: drop-shadow(0 0 4px #42A5F5);
       }
 
-      .energy-gate-button {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-        background: linear-gradient(45deg, rgba(66, 165, 245, 0.2), rgba(203, 213, 225, 0.15));
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        font-weight: 700;
-        border-radius: 0.5rem;
-        transition: all 0.3s ease-in-out;
-        animation: login-button-glow 3s infinite ease-in-out;
-      }
-      .energy-gate-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 150%;
-        height: 2px;
-        background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.8), transparent);
-        transform: translateX(-50%) translateY(-100%);
-        animation: button-scan-line 3s linear infinite;
-        filter: blur(1px);
-      }
-      .energy-gate-button:hover:not(:disabled) {
-        background: linear-gradient(45deg, rgba(66, 165, 245, 0.3), rgba(203, 213, 225, 0.25));
-        box-shadow: 0 0 20px 0 rgba(147, 197, 253, 0.5);
-        transform: translateY(-2px);
-      }
-
       /* === HALLOWEEN THEME STYLES === */
       .halloween-bg {
           background-color: #0f0a19;
@@ -983,30 +898,55 @@
           color: #f97316;
           animation: text-gradient-flow 4s ease-in-out infinite;
       }
-      .halloween .glass-card {
-          /* Fading background for a blending effect */
-          background: radial-gradient(ellipse at center, rgba(26, 18, 40, 0.6) 30%, rgba(26, 18, 40, 0.2) 75%, transparent 100%);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          /* Removed border and box-shadow to blend edges with the video background */
+
+      .form-panel-hallo {
+        background-color: rgba(12, 5, 22, 0.8);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        box-shadow: 0 0 30px rgba(234, 88, 12, 0.2);
+        animation: fade-in-up 0.8s cubic-bezier(0.25, 1, 0.5, 1) both;
+        animation-delay: 0.3s;
       }
-      .halloween .glass-card::before {
-          background: radial-gradient(ellipse at 70% 20%, rgba(234, 88, 12, 0.25) 0%, transparent 45%), /* Orange glow */
-                      radial-gradient(ellipse at 30% 80%, rgba(124, 58, 237, 0.2) 0%, transparent 50%); /* Purple glow */
-          animation-name: aurora-fade-in, spooky-swirl;
-          animation-duration: 1.5s, 20s;
-          animation-timing-function: ease-out, ease-in-out;
-          animation-iteration-count: 1, infinite;
-          animation-direction: normal, alternate;
-          animation-delay: 0.5s;
-          animation-fill-mode: forwards, normal;
+
+      .halloween-gate-button {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        background: linear-gradient(45deg, rgba(234, 88, 12, 0.2), rgba(124, 58, 237, 0.15));
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        color: white;
+        font-weight: 700;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease-in-out;
+        animation: halloween-button-glow 3s infinite ease-in-out;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .halloween .login-card-divider::before { background: rgba(249, 115, 22, 0.2); }
-      .halloween .login-card-divider::after {
-          background: linear-gradient( to bottom, transparent 0%, rgba(249, 115, 22, 0.8) 40%, rgba(249, 115, 22, 0.8) 60%, transparent 100% );
-          filter: blur(2px);
-          box-shadow: 0 0 8px rgba(249, 115, 22, 0.6), 0 0 12px rgba(234, 88, 12, 0.4);
+      .halloween-gate-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 150%;
+        height: 2px;
+        background: linear-gradient(to right, transparent, rgba(251, 146, 60, 0.6), transparent);
+        transform: translateX(-50%) translateY(-100%);
+        animation: button-scan-line 3s linear infinite;
+        filter: blur(1px);
       }
+      .halloween-gate-button:hover:not(:disabled) {
+        background: linear-gradient(45deg, rgba(234, 88, 12, 0.3), rgba(124, 58, 237, 0.25));
+        box-shadow: 0 0 20px 0 rgba(249, 115, 22, 0.5);
+        transform: translateY(-2px);
+      }
+      .halloween-gate-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
       .halloween .energy-input-container::before { background-color: rgba(249, 115, 22, 0.2); }
       .halloween .energy-input-container::after {
           background: #f97316;
@@ -1022,15 +962,126 @@
       }
       .halloween .forgot-password-link { color: #fb923c; } /* tailwind orange-400 */
       .halloween .forgot-password-link:hover { color: #f97316; }
-      .halloween .energy-gate-button {
-          background: linear-gradient(45deg, rgba(234, 88, 12, 0.2), rgba(124, 58, 237, 0.15));
-          border: 1px solid rgba(249, 115, 22, 0.3);
-          animation: halloween-button-glow 3s infinite ease-in-out;
+
+      /* === NEW TEST DRIVE KANBAN STYLES === */
+      .kanban-board {
+        display: flex;
+        gap: 1rem; /* 16px */
+        overflow-x: auto;
+        padding-bottom: 1rem; /* for scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: var(--tw-color-border-secondary) var(--tw-color-surface-ground);
       }
-      .halloween .energy-gate-button::before { background: linear-gradient(to right, transparent, rgba(251, 146, 60, 0.6), transparent); }
-      .halloween .energy-gate-button:hover:not(:disabled) {
-          background: linear-gradient(45deg, rgba(234, 88, 12, 0.3), rgba(124, 58, 237, 0.25));
-          box-shadow: 0 0 20px 0 rgba(249, 115, 22, 0.5);
+      .kanban-board::-webkit-scrollbar {
+        height: 8px;
+      }
+      .kanban-board::-webkit-scrollbar-track {
+        background: var(--tw-color-surface-ground);
+        border-radius: 4px;
+      }
+      .kanban-board::-webkit-scrollbar-thumb {
+        background: var(--tw-color-border-secondary);
+        border-radius: 4px;
+      }
+      .kanban-board::-webkit-scrollbar-thumb:hover {
+        background: var(--tw-color-text-secondary);
+      }
+
+      .kanban-column {
+        flex: 0 0 320px; /* Do not grow, do not shrink, base width 320px */
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--tw-color-surface-ground);
+        border-radius: 0.75rem; /* rounded-xl */
+        border: 1px solid var(--tw-color-border-primary);
+        max-height: 100%;
+      }
+      .kanban-column-header {
+        flex-shrink: 0;
+        padding: 0.75rem 1rem; /* p-3/p-4 */
+        font-weight: 700;
+        border-bottom: 1px solid var(--tw-color-border-primary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .kanban-cards {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0.75rem; /* p-3 */
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem; /* 12px */
+      }
+      .kanban-card {
+        background-color: var(--tw-color-surface-card);
+        border-radius: 0.5rem; /* rounded-lg */
+        border: 1px solid var(--tw-color-border-primary);
+        box-shadow: var(--tw-shadow-sm);
+        padding: 0.75rem; /* p-3 */
+        transition: all 0.2s ease-in-out;
+      }
+      .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--tw-shadow-md);
+        border-color: var(--tw-color-accent-primary);
+      }
+      .kanban-card-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      
+      /* === NEW FILTER STYLES === */
+      .active-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: var(--tw-color-surface-accent);
+        color: var(--tw-color-accent-primary);
+        padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1;
+        animation: fade-in-scale-up 0.2s ease-out;
+      }
+      .active-filter-chip .chip-label {
+        color: var(--tw-color-text-secondary);
+        font-weight: 500;
+      }
+      .active-filter-chip button {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        background-color: rgba(13, 71, 161, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+      }
+      .active-filter-chip button:hover {
+         background-color: rgba(13, 71, 161, 0.2);
+      }
+      .date-range-picker-popover {
+        width: 300px;
+        background: var(--tw-color-surface-card);
+        border: 1px solid var(--tw-color-border-primary);
+        border-radius: 0.75rem;
+        box-shadow: var(--tw-shadow-lg);
+        z-index: 20;
+      }
+      .date-range-picker-popover input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+      .date-range-picker-popover input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
       }
 
 
@@ -1058,7 +1109,6 @@
           margin-bottom: 1rem;
           background-color: var(--tw-color-surface-card);
           position: relative; /* For action button positioning */
-          overflow: hidden; /* To contain header background */
         }
 
         .responsive-table tbody td {
@@ -1098,17 +1148,21 @@
         .responsive-table td[data-label="Khách hàng / SĐH"],
         .responsive-table td[data-label="Người YC / Khách Hàng"],
         .responsive-table td[data-label="Số VIN"],
-        .responsive-table td[data-label="Tên tệp"] {
+        .responsive-table td[data-label="Tên tệp"],
+        .responsive-table td[data-label="Khách hàng / SĐH / VIN"] {
           display: block;
           padding: 0.75rem;
           text-align: left;
           border-bottom: 1px solid var(--tw-color-border-primary);
           background-color: var(--tw-color-surface-hover);
+          border-top-left-radius: 0.75rem;
+          border-top-right-radius: 0.75rem;
         }
         .responsive-table td[data-label="Khách hàng / SĐH"]:before,
         .responsive-table td[data-label="Người YC / Khách Hàng"]:before,
         .responsive-table td[data-label="Số VIN"]:before,
-        .responsive-table td[data-label="Tên tệp"]:before {
+        .responsive-table td[data-label="Tên tệp"]:before,
+        .responsive-table td[data-label="Khách hàng / SĐH / VIN"]:before {
           display: none; /* Hide label for the header */
         }
 
@@ -1128,28 +1182,6 @@
           display: none; /* Hide label for actions */
         }
         
-        .mobile-filter-toggle {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 100%;
-          padding: 0.625rem 1rem;
-          border: 1px solid var(--tw-color-border-primary);
-          background-color: var(--tw-color-surface-ground);
-          border-radius: 0.5rem;
-          font-weight: 600;
-          color: var(--tw-color-text-primary);
-        }
-        .mobile-filters-content {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease-in-out;
-        }
-        .mobile-filters-content.open {
-          max-height: 500px; /* Adjust as needed */
-        }
-
-
         /* Make modals full-width on mobile */
         .futuristic-modal-bg,
         .bg-surface-card.w-full.max-w-lg,

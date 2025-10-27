@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 
+// FIX: Added and exported DropdownFilterConfig interface to be used by other components.
+export interface DropdownFilterConfig {
+  id: string;
+  key: string;
+  label: string;
+  options: string[];
+  icon: string;
+  displayMode?: 'count' | 'selection';
+}
+
 interface MultiSelectDropdownProps {
   id: string;
   label: string;
@@ -39,19 +49,33 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
     onChange(newSelected);
   };
   
+  const handleSelectAll = () => {
+    // Select only the currently filtered options
+    onChange(Array.from(new Set([...selectedOptions, ...filteredOptions])));
+  };
+  
+  const handleClearAll = () => {
+      onChange([]);
+  }
+
+  const handleClearFiltered = () => {
+      onChange(selectedOptions.filter(opt => !filteredOptions.includes(opt)));
+  }
+
   const displayLabel = useMemo(() => {
     if (selectedOptions.length === 0) return label;
 
     if (displayMode === 'selection') {
-        if (selectedOptions.length === 1) return selectedOptions[0];
+        if (selectedOptions.length <= 2) return selectedOptions.join(', ');
         return `${selectedOptions.length} lựa chọn`;
     }
     
     // default 'count' mode
-    return `${selectedOptions.length} đã chọn`;
+    return `${label} (${selectedOptions.length})`;
   }, [selectedOptions, label, displayMode]);
   
   const isCompact = size === 'compact';
+  const areAllFilteredSelected = filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -59,34 +83,47 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
         <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className={`w-full flex items-center justify-between pl-3.5 pr-3 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 ${isCompact ? 'md:w-48 py-2' : 'md:w-52 py-2.5'}`}
+            className={`w-full flex items-center justify-between pl-3 pr-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 ${isCompact ? 'md:w-auto h-8' : 'md:w-52 h-11'}`}
         >
-            <div className="flex items-center gap-3">
-                 <i className={`fas ${icon} text-text-placeholder`}></i>
+            <div className="flex items-center gap-2 min-w-0">
+                 <i className={`fas ${icon} text-text-placeholder text-sm`}></i>
                  <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold text-accent-primary' : ''}`}>{displayLabel}</span>
             </div>
-            <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}></i>
+            <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`}></i>
         </button>
 
         {/* Dropdown Panel */}
         {isOpen && (
-            <div className="absolute top-full mt-2 w-72 bg-surface-card border border-border-secondary rounded-lg shadow-lg z-20 animate-fade-in-down" style={{animationDuration: '0.2s'}}>
-                <div className="p-2">
+            <div className="absolute top-full mt-2 w-72 bg-surface-card border border-border-secondary rounded-lg shadow-lg z-20 animate-fade-in-down flex flex-col" style={{animationDuration: '0.2s'}}>
+                <div className="p-2 border-b border-border-primary">
                     <div className="relative">
                         <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder text-sm"></i>
                         <input
                             type="text"
                             placeholder="Tìm kiếm..."
+                            autoFocus
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow focus:shadow-glow-accent"
                         />
                     </div>
                 </div>
-                <ul className="max-h-60 overflow-y-auto p-2">
+                <ul className="flex-grow max-h-60 overflow-y-auto p-1">
+                     <li key="select-all">
+                        <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={areAllFilteredSelected}
+                                onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
+                                className="custom-checkbox"
+                            />
+                            <span className="font-semibold italic">{areAllFilteredSelected ? 'Bỏ chọn tất cả (đã lọc)' : 'Chọn tất cả (đã lọc)'}</span>
+                        </label>
+                    </li>
+                    <div className="h-px bg-border-primary my-1"></div>
                     {filteredOptions.length > 0 ? filteredOptions.map(option => (
                         <li key={option}>
-                            <label className="flex items-center gap-3 w-full px-2 py-2.5 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+                            <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={selectedOptions.includes(option)}
@@ -100,6 +137,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
                         <li className="px-2 py-2 text-sm text-text-secondary text-center">Không có kết quả.</li>
                     )}
                 </ul>
+                <div className="p-2 border-t border-border-primary flex justify-between">
+                    <button onClick={handleClearAll} className="text-xs font-semibold text-danger hover:underline">Xóa tất cả</button>
+                    <button onClick={() => setIsOpen(false)} className="px-3 py-1 bg-accent-primary text-white text-xs font-bold rounded-md hover:bg-accent-primary-hover">Áp dụng</button>
+                </div>
             </div>
         )}
     </div>

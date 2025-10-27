@@ -19,6 +19,7 @@ interface AdminVcRequestTableProps {
     onAction: (type: ActionType, request: VcRequest) => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    onDownloadAll: (request: VcRequest) => void;
 }
 
 const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortConfig: VcSortConfig | null, onSort: (key: keyof VcRequest) => void }> = ({ colKey, title, sortConfig, onSort }) => {
@@ -27,8 +28,52 @@ const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortCon
     return <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
+const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void }> = ({ status, onAction, onToggle }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = React.useRef<HTMLDivElement>(null);
+    
+    const setOpenState = (newIsOpen: boolean) => {
+        setIsOpen(newIsOpen);
+        onToggle(newIsOpen);
+    };
 
-const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, onOpenImagePreview, showToast }) => {
+    React.useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => { 
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpenState(false);
+            } 
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onToggle]);
+
+    const s = status.toLowerCase();
+    const actions = [
+        { type: 'approveVc', label: 'Phê Duyệt', icon: 'fa-check-circle', condition: s === 'chờ duyệt ycvc' },
+        { type: 'rejectVc', label: 'Từ Chối', icon: 'fa-ban', isDanger: true, condition: s === 'chờ duyệt ycvc' },
+    ].filter(a => a.condition);
+
+    return (
+        <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
+            <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
+            {isOpen && (
+                <div className="absolute right-0 mt-1 w-40 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
+                    {actions.map((action) => (
+                        <button key={action.type} onClick={() => { onAction(action.type as ActionType); setOpenState(false); }}
+                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                        >
+                            <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
+                            <span>{action.label}</span>
+                        </button>
+                    ))}
+                     {actions.length === 0 && <div className="px-3 py-2 text-sm text-text-secondary text-center">Không có hành động</div>}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, onOpenImagePreview, showToast, onDownloadAll }) => {
     const isAllSelected = requests.length > 0 && selectedRows.size === requests.length;
     
     const handleImagePreview = (e: React.MouseEvent, images: ImageSource[], startIndex: number, customer: string) => {
@@ -62,6 +107,7 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
             </thead>
             <tbody className="divide-y divide-border-primary bg-surface-card">
                 {requests.map((req, index) => {
+                    const [isMenuOpen, setIsMenuOpen] = useState(false);
                     const orderNumber = req['Số đơn hàng'];
                     const status = req['Trạng thái xử lý'] || 'N/A';
                     const dmsCode = req['Mã KH DMS'];
@@ -87,7 +133,7 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                     });
 
                     return (
-                        <tr key={orderNumber} className="hover:bg-surface-hover transition-colors">
+                        <tr key={orderNumber} className={`hover:bg-surface-hover transition-colors ${isMenuOpen ? 'relative z-20' : ''}`}>
                             <td data-label="checkbox" className="pl-4 w-12 sm:pl-6" onClick={e => e.stopPropagation()}>
                                 <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} />
                             </td>
@@ -134,48 +180,22 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                             <td data-label="Trạng Thái" className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
                             
                             <td data-label="Hành Động" className="px-3 py-4 text-center">
-                                <AdminActionMenu status={status} onAction={(type) => onAction(type, req)} />
+                                <div className="flex items-center justify-center gap-2">
+                                     <button
+                                        onClick={(e) => { e.stopPropagation(); onDownloadAll(req); }}
+                                        className="action-btn hold-action"
+                                        title="Tải tất cả hồ sơ"
+                                    >
+                                        <i className="fas fa-file-archive"></i>
+                                    </button>
+                                    <AdminActionMenu status={status} onAction={(type) => onAction(type, req)} onToggle={setIsMenuOpen} />
+                                </div>
                             </td>
                         </tr>
                     );
                 })}
             </tbody>
         </table>
-    );
-};
-
-const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) => void }> = ({ status, onAction }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = React.useRef<HTMLDivElement>(null);
-    React.useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsOpen(false); };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const s = status.toLowerCase();
-    const actions = [
-        { type: 'approveVc', label: 'Phê Duyệt', icon: 'fa-check-circle', condition: s === 'chờ duyệt ycvc' },
-        { type: 'rejectVc', label: 'Từ Chối', icon: 'fa-ban', isDanger: true, condition: s === 'chờ duyệt ycvc' },
-    ].filter(a => a.condition);
-
-    return (
-        <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setIsOpen(p => !p)} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
-            {isOpen && (
-                <div className="absolute right-0 mt-1 w-40 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
-                    {actions.map((action) => (
-                        <button key={action.type} onClick={() => { onAction(action.type as ActionType); setIsOpen(false); }}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
-                        >
-                            <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
-                            <span>{action.label}</span>
-                        </button>
-                    ))}
-                     {actions.length === 0 && <div className="px-3 py-2 text-sm text-text-secondary text-center">Không có hành động</div>}
-                </div>
-            )}
-        </div>
     );
 };
 

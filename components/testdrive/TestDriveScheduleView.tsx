@@ -13,7 +13,7 @@ const timeToMinutes = (time: string): number => {
     
     // Handle full ISO/Date string from Google Sheets
     if (time.includes('T') || time.includes(' ')) {
-        const date = moment.utc(time); // Use UTC to avoid local timezone conversion
+        const date = moment(time);
         if (date.isValid()) {
             return date.hour() * 60 + date.minute();
         }
@@ -81,7 +81,7 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                             <div key={booking.soPhieu}
                                  className="absolute h-full bg-slate-400/70 rounded border border-slate-500 hover:bg-slate-500 transition-colors"
                                  style={{ left: `${left}%`, width: `${width}%` }}
-                                 title={`Đã đặt - KH: ${booking.tenKhachHang}\nThời gian: ${moment.utc(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment.utc(booking.thoiGianTroVe).format('HH:mm')}\nTVBH: ${booking.tenTuVan || 'N/A'}`}>
+                                 title={`Đã đặt - KH: ${booking.tenKhachHang}\nThời gian: ${moment(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment(booking.thoiGianTroVe).format('HH:mm')}\nTVBH: ${booking.tenTuVan || 'N/A'}`}>
                             </div>
                         );
                     })}
@@ -97,7 +97,7 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                     <ul className="mt-4 space-y-2 text-sm max-h-60 overflow-y-auto pr-2">
                         {scheduleForSelected.map(booking => (
                             <li key={booking.soPhieu} className="p-2 bg-white rounded-md border border-border-primary">
-                                <span className="font-semibold text-accent-primary">{moment.utc(booking.thoiGianKhoiHanh).format('HH:mm')} - {moment.utc(booking.thoiGianTroVe).format('HH:mm')}</span>: {booking.tenKhachHang} ({booking.soPhieu})
+                                <span className="font-semibold text-accent-primary">{moment(booking.thoiGianKhoiHanh).format('HH:mm')} - {moment(booking.thoiGianTroVe).format('HH:mm')}</span>: {booking.tenKhachHang} ({booking.soPhieu})
                                 <span className="text-xs text-text-secondary block">TVBH: {booking.tenTuVan || 'N/A'}</span>
                             </li>
                         ))}

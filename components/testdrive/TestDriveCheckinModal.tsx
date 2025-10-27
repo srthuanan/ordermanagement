@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TestDriveBooking } from '../../types';
 
 interface ImageSource {
@@ -31,9 +31,17 @@ const fileToBase64 = (file: File): Promise<{name: string, type: string, data: st
   });
 };
 
-// Helper to convert Google Drive URLs to a directly embeddable format
+// Helper to get a high-quality viewable URL from Google Drive that works in <img> tags
 const toEmbeddableDriveUrl = (url: string): string => {
     if (!url) return '';
+    // If it's a data URL, return it directly. It's already embeddable.
+    if (url.startsWith('data:image')) {
+        return url;
+    }
+    // If it's not a google drive url, return it
+    if (!url.includes('drive.google.com')) {
+        return url;
+    }
     // If it's already a thumbnail URL, return it
     if (url.includes('/thumbnail?id=')) {
         return url;
@@ -50,20 +58,56 @@ const toEmbeddableDriveUrl = (url: string): string => {
 
 const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label: string }> = 
 ({ onFilesChange, label }) => {
+    const [files, setFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const cameraInputRef = React.useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            const newFiles = Array.from(event.target.files);
-            onFilesChange(newFiles);
-            const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-            setPreviews(newPreviews);
-        }
+    useEffect(() => {
+        // Cleanup object URLs on unmount
+        return () => {
+            previews.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [previews]);
+    
+    const handleFiles = (newFilesList: FileList | null) => {
+        if (!newFilesList) return;
+
+        const newFilesArray = Array.from(newFilesList);
+        // Prevent duplicates by checking name, size, and last modified date
+        const uniqueNewFiles = newFilesArray.filter(nf => !files.some(f => f.name === nf.name && f.size === nf.size && f.lastModified === nf.lastModified));
+        
+        if (uniqueNewFiles.length === 0) return;
+
+        const allFiles = [...files, ...uniqueNewFiles];
+        setFiles(allFiles);
+
+        const newPreviews = uniqueNewFiles.map(file => URL.createObjectURL(file));
+        setPreviews(prev => [...prev, ...newPreviews]);
+
+        onFilesChange(allFiles);
     };
 
-    const handleRemoveImages = () => {
-        if (inputRef.current) inputRef.current.value = "";
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        handleFiles(event.target.files);
+        // Reset the input value to allow selecting/capturing the same file again in some browsers
+        if (event.target) event.target.value = '';
+    };
+
+    const handleRemoveImage = (index: number) => {
+        const newFiles = files.filter((_, i) => i !== index);
+        const newPreviews = previews.filter((_, i) => i !== index);
+
+        URL.revokeObjectURL(previews[index]); // Revoke the object URL of the removed image
+
+        setFiles(newFiles);
+        setPreviews(newPreviews);
+        onFilesChange(newFiles);
+    };
+
+    const handleRemoveAll = () => {
+        previews.forEach(url => URL.revokeObjectURL(url));
+        setFiles([]);
         setPreviews([]);
         onFilesChange([]);
     };
@@ -71,17 +115,40 @@ const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label
     return (
         <div>
             <label className="block text-sm font-medium text-text-primary mb-2">{label} <span className="text-danger">*</span></label>
-            <input type="file" multiple accept="image/*" onChange={handleFileChange} ref={inputRef} className="block w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent-primary/10 file:text-accent-primary hover:file:bg-accent-primary/20 cursor-pointer"/>
+            {/* Hidden Inputs */}
+            <input type="file" multiple accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" />
+            <input type="file" accept="image/*" capture onChange={handleFileChange} ref={cameraInputRef} className="hidden" />
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2 mb-2">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 btn-secondary !py-2 !text-xs">
+                    <i className="fas fa-images mr-2"></i>Chọn từ thư viện
+                </button>
+                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 btn-secondary !py-2 !text-xs">
+                    <i className="fas fa-camera mr-2"></i>Chụp ảnh
+                </button>
+            </div>
+            
             {previews.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     {previews.map((src, index) => (
-                        <div key={index} className="relative group w-20 h-20">
+                        <div key={index} className="relative group aspect-square">
                             <img src={src} alt={`Preview ${index}`} className="w-full h-full object-cover rounded-md border border-border-primary"/>
+                            <button 
+                                type="button" 
+                                onClick={() => handleRemoveImage(index)} 
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                                title="Xóa ảnh này"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
                         </div>
                     ))}
-                    <button onClick={handleRemoveImages} className="w-20 h-20 bg-surface-hover rounded-md flex items-center justify-center text-text-secondary hover:bg-danger-bg hover:text-danger-hover transition-colors" title="Xóa tất cả ảnh đã chọn">
-                        <i className="fas fa-trash-alt"></i>
-                    </button>
+                    <div className="relative group aspect-square">
+                        <button onClick={handleRemoveAll} className="w-full h-full bg-surface-hover rounded-md flex items-center justify-center text-text-secondary hover:bg-danger-bg hover:text-danger-hover transition-colors" title="Xóa tất cả ảnh đã chọn">
+                            <i className="fas fa-trash-alt text-2xl"></i>
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
@@ -122,13 +189,36 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
         return 'view'; // Both are filled
     }, [booking]);
 
-    const existingImagesBefore = useMemo(() => {
-        try { return JSON.parse(booking.imagesBefore || '[]') as string[]; } catch { return []; }
-    }, [booking.imagesBefore]);
+    const parseImageData = (jsonString: string | undefined): string[] => {
+        if (!jsonString) return [];
+        try {
+            const parsed = JSON.parse(jsonString);
+            if (Array.isArray(parsed)) {
+                return parsed.map(item => {
+                    if (typeof item === 'string') {
+                        // Only accept valid-looking URLs to prevent broken images from bad data
+                        if (item.startsWith('http') || item.startsWith('data:')) {
+                            return item;
+                        }
+                    }
+                    if (item && typeof item === 'object' && item.data && item.type) {
+                        return `data:${item.type};base64,${item.data}`;
+                    }
+                    return null;
+                }).filter((item): item is string => item !== null);
+            }
+        } catch (e) {
+            // Fallback for non-JSON string which might be a single URL (either http or data URL)
+            if (typeof jsonString === 'string' && (jsonString.startsWith('http') || jsonString.startsWith('data:'))) {
+                return [jsonString];
+            }
+            console.error("Failed to parse image data:", e, "Data was:", jsonString);
+        }
+        return [];
+    };
 
-    const existingImagesAfter = useMemo(() => {
-        try { return JSON.parse(booking.imagesAfter || '[]') as string[]; } catch { return []; }
-    }, [booking.imagesAfter]);
+    const existingImagesBefore = useMemo(() => parseImageData(booking.imagesBefore), [booking.imagesBefore]);
+    const existingImagesAfter = useMemo(() => parseImageData(booking.imagesAfter), [booking.imagesAfter]);
     
     const handleSubmit = async () => {
         const payload: any = { soPhieu: booking.soPhieu };

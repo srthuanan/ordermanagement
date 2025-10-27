@@ -91,7 +91,6 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
                 <React.Fragment key={item.label}>
                     {item.isDanger && menuItems.some(i => !i.isDanger && i.condition) && <div className="border-t border-border-primary/70 my-1 mx-1.5"></div>}
                     <button
-                      // FIX: Corrected function name from `handleActionClick` to `handleAction`.
                       onClick={(e) => handleAction(item.action, e)}
                       title={item.title}
                       className={`flex items-center w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 

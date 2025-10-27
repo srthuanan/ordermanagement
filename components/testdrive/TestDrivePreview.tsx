@@ -25,8 +25,8 @@ const formatTime = (timeStr?: string): string => {
     if (/^\d{2}:\d{2}$/.test(timeStr)) {
         return timeStr;
     }
-    // Handle full ISO/Date string from Google Sheets by interpreting it as UTC
-    const time = moment.utc(timeStr);
+    // Handle full ISO/Date string from Google Sheets
+    const time = moment(timeStr);
     if (time.isValid()) {
         return time.format('HH:mm');
     }

@@ -16,6 +16,7 @@ import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import ImagePreviewModal from './components/modals/ImagePreviewModal';
 import ActionModal from './components/admin/ActionModal';
 import RequestVcModal from './components/modals/RequestVcModal';
+import FilePreviewModal from './components/modals/FilePreviewModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
@@ -63,6 +64,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<{ images: ImageSource[], startIndex: number, customerName: string } | null>(null);
+    const [filePreview, setFilePreview] = useState<{ url: string, label: string } | null>(null);
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -556,6 +558,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setImagePreview({ images, startIndex, customerName });
     }, []);
 
+    const openFilePreviewModal = useCallback((url: string, label: string) => {
+        setFilePreview({ url, label });
+    }, []);
+
     const processedData = useMemo(() => {
         let filteredOrders = [...historyData];
         if (filters.keyword) {
@@ -719,7 +725,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
                 );
             case 'laithu':
-                return <TestDriveForm showToast={showToast} onOpenImagePreview={openImagePreviewModal} />;
+                return <TestDriveForm showToast={showToast} onOpenImagePreview={openImagePreviewModal} currentUser={currentUser} isAdmin={isCurrentUserAdmin} />;
             case 'admin':
                 return isCurrentUserAdmin ? <AdminView 
                     showToast={showToast} 
@@ -733,6 +739,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     isLoadingXuathoadon={isLoadingXuathoadon}
                     errorXuathoadon={errorXuathoadon}
                     onOpenImagePreview={openImagePreviewModal}
+                    onOpenFilePreview={openFilePreviewModal}
                     teamData={teamData}
                     allUsers={allUsers}
                     refetchAdminData={fetchAdminData}
@@ -908,6 +915,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 startIndex={imagePreview?.startIndex}
                 customerName={imagePreview?.customerName}
             />
+            {filePreview && (
+                <FilePreviewModal
+                    isOpen={!!filePreview}
+                    onClose={() => setFilePreview(null)}
+                    fileUrl={filePreview.url}
+                    fileLabel={filePreview.label}
+                />
+            )}
         </>
     );
 };
