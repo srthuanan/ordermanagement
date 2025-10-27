@@ -1035,6 +1035,55 @@
         font-weight: 600;
         text-transform: uppercase;
       }
+      
+      /* === NEW FILTER STYLES === */
+      .active-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: var(--tw-color-surface-accent);
+        color: var(--tw-color-accent-primary);
+        padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1;
+        animation: fade-in-scale-up 0.2s ease-out;
+      }
+      .active-filter-chip .chip-label {
+        color: var(--tw-color-text-secondary);
+        font-weight: 500;
+      }
+      .active-filter-chip button {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        background-color: rgba(13, 71, 161, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+      }
+      .active-filter-chip button:hover {
+         background-color: rgba(13, 71, 161, 0.2);
+      }
+      .date-range-picker-popover {
+        width: 300px;
+        background: var(--tw-color-surface-card);
+        border: 1px solid var(--tw-color-border-primary);
+        border-radius: 0.75rem;
+        box-shadow: var(--tw-shadow-lg);
+        z-index: 20;
+      }
+      .date-range-picker-popover input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+      .date-range-picker-popover input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+      }
+
 
       /* === MOBILE RESPONSIVE STYLES === */
       @media (max-width: 767px) {
@@ -1229,7 +1278,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-BK5X_NgC.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-Bn17KTvG.js"></script>
 </head>
 <body class="text-text-primary font-sans">
     <div id="root" class="relative isolate h-screen flex flex-col overflow-hidden"></div>
