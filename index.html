@@ -118,6 +118,10 @@
                   filter: 'blur(0)',
                 }
               },
+              'pulse-dot': {
+                '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+                '50%': { transform: 'scale(1.4)', opacity: '0.7' },
+              }
             },
             animation: {
               'skeleton': 'skeleton-loading 1.5s infinite linear',
@@ -230,57 +234,61 @@
 
       .skeleton-item { background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite linear; border-radius: 6px; }
       
-      /* Subtle Status Badge Styles */
+      /* === NEW ELEGANT STATUS BADGE STYLES V3 === */
       .status-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        border-radius: 9999px; /* Pill shape */
+        border-radius: 9999px; /* pill shape */
         font-size: 12px;
         font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
         transition: all 0.2s ease-in-out;
-        background-color: var(--badge-bg-color);
-        color: var(--badge-text-color);
+        background-color: var(--status-bg-color, rgba(107, 114, 128, 0.1));
+        color: var(--status-text-color, rgb(55 65 81));
+        padding: 4px 10px 4px 4px; /* Adjust padding for icon */
+        border: 1px solid transparent;
       }
-      .status-badge i {
-        font-size: 12px;
-        color: var(--badge-text-color);
-        opacity: 0.9;
+      .status-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px 0 rgba(var(--status-shadow-rgb, 107, 114, 128), 0.25);
+        border-color: rgba(var(--status-shadow-rgb, 107, 114, 128), 0.2);
       }
-      
-      /* --- Negative Statuses --- */
-      .status-da-huy { --badge-bg-color: #FFEBEE; --badge-text-color: #D32F2F; } /* Red */
-      .status-tu-choi-ycvc { --badge-bg-color: #FFCDD2; --badge-text-color: #B71C1C; } /* Darker Red */
+      .status-badge .badge-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 9999px;
+        background-color: var(--status-text-color, rgb(55 65 81));
+        color: white;
+        margin-right: 6px;
+        flex-shrink: 0;
+      }
+      .status-badge .badge-icon i {
+        font-size: 10px;
+      }
+      .status-badge .badge-text {
+        padding-right: 2px; /* Small padding for balance */
+      }
+      .status-badge.pulse-icon .badge-icon {
+        animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
 
-      /* --- Pending/Waiting Statuses --- */
-      .status-chua-ghep { --badge-bg-color: #FFF3E0; --badge-text-color: #F57C00; } /* Orange */
-      .status-cho-phe-duyet { --badge-bg-color: #E1F5FE; --badge-text-color: #0288D1; } /* Light Blue */
-      .status-cho-ky-hoa-don { --badge-bg-color: #E0F7FA; --badge-text-color: #0097A7; } /* Cyan */
-      .status-cho-duyet-ycvc { --badge-bg-color: #F3E5F5; --badge-text-color: #8E24AA; } /* Purple */
-      
-      /* --- Action Required Statuses --- */
-      .status-yeu-cau-bo-sung { --badge-bg-color: #FFF9C4; --badge-text-color: #FBC02D; } /* Yellow */
-      
-      /* --- In Progress Statuses --- */
-      .status-dang-giu { --badge-bg-color: #EDE9FE; --badge-text-color: #6D28D9; } /* Violet (re-purposed for "Đã yêu cầu VC") */
-      .status-da-ghep { --badge-bg-color: #EBF5FF; --badge-text-color: #0D47A1; } /* Corporate Blue */
-
-      /* --- Positive/Completed Statuses --- */
-      .status-da-bo-sung { --badge-bg-color: #F1F8E9; --badge-text-color: #689F38; } /* Light Green */
-      .status-da-phe-duyet { --badge-bg-color: #E3F2FD; --badge-text-color: #1976D2; } /* Blue */
-      .status-da-xuat-hoa-don { --badge-bg-color: #E8F5E9; --badge-text-color: #388E3C; } /* Green */
-      .status-yeu-cau-vinclub { --badge-bg-color: #D1C4E9; --badge-text-color: #512DA8; } /* Deep Purple */
-      .status-san-sang { --badge-bg-color: #E8F5E9; --badge-text-color: #388E3C; } /* Green (Paired with VIN) */
-      
-      /* --- Test Drive Statuses --- */
-      .status-cho-check-in { --badge-bg-color: #FFF9C4; --badge-text-color: #FBC02D; } /* Yellow */
-      .status-dang-lai-thu { --badge-bg-color: #E3F2FD; --badge-text-color: #1976D2; } /* Blue */
-      .status-da-hoan-tat { --badge-bg-color: #E8F5E9; --badge-text-color: #388E3C; } /* Green */
-
-      /* --- Default --- */
-      .status-default { --badge-bg-color: #F1F5F9; --badge-text-color: #64748B; } /* Grey */
-
+      /* --- Color Variants --- */
+      .status-da-huy, .status-tu-choi-ycvc { --status-shadow-rgb: 220, 38, 38; --status-bg-color: rgba(220, 38, 38, 0.1); --status-text-color: rgb(220 38 38); }
+      .status-chua-ghep { --status-shadow-rgb: 100, 116, 139; --status-bg-color: rgba(100, 116, 139, 0.1); --status-text-color: rgb(100 116 139); }
+      .status-cho-phe-duyet, .status-cho-duyet-ycvc, .status-cho-check-in { --status-shadow-rgb: 59, 130, 246; --status-bg-color: rgba(59, 130, 246, 0.1); --status-text-color: rgb(59 130 246); }
+      .status-cho-ky-hoa-don { --status-shadow-rgb: 6, 182, 212; --status-bg-color: rgba(6, 182, 212, 0.1); --status-text-color: rgb(6 182 212); }
+      .status-yeu-cau-bo-sung, .status-cho-xac-thuc-vc { --status-shadow-rgb: 245, 158, 11; --status-bg-color: rgba(245, 158, 11, 0.1); --status-text-color: rgb(245 158 11); }
+      .status-dang-giu, .status-dang-lai-thu { --status-shadow-rgb: 99, 102, 241; --status-bg-color: rgba(99, 102, 241, 0.1); --status-text-color: rgb(99 102 241); }
+      .status-da-ghep { --status-shadow-rgb: 14, 165, 233; --status-bg-color: rgba(14, 165, 233, 0.1); --status-text-color: rgb(14 165 233); }
+      .status-da-phe-duyet { --status-shadow-rgb: 14, 165, 233; --status-bg-color: rgba(14, 165, 233, 0.1); --status-text-color: rgb(14 165 233); } /* Sky Blue */
+      .status-da-bo-sung, .status-da-xuat-hoa-don, .status-da-co-vc, .status-da-hoan-tat { --status-shadow-rgb: 22, 163, 74; --status-bg-color: rgba(22, 163, 74, 0.1); --status-text-color: rgb(22 163 74); }
+      .status-yeu-cau-vinclub { --status-shadow-rgb: 124, 58, 237; --status-bg-color: rgba(124, 58, 237, 0.1); --status-text-color: rgb(124 58 237); }
+      .status-san-sang { --status-shadow-rgb: 100, 116, 139; --status-bg-color: rgba(100, 116, 139, 0.1); --status-text-color: rgb(100 116 139); }
+      .status-default { --status-shadow-rgb: 107, 114, 128; --status-bg-color: rgba(107, 114, 128, 0.1); --status-text-color: rgb(107 114 128); }
 
       /* Notification Bell Styles */
       .notification-bell-container { position: relative; }
@@ -312,44 +320,56 @@
         display: none; /* Safari and Chrome */
       }
 
-      /* Custom Checkbox for Multi-Select Filter */
+      /* === ELEGANT CUSTOM CHECKBOX V2 --- UPDATED === */
       .custom-checkbox {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        background-color: transparent;
-        border: 2px solid #CBD5E1; /* border-border-secondary */
-        border-radius: 0.25rem; /* rounded */
-        width: 1.125rem; /* w-4.5 */
-        height: 1.125rem; /* h-4.5 */
+        background-color: var(--tw-color-surface-card, #FFFFFF);
+        border: 2px solid var(--tw-color-border-secondary, #CBD5E1);
+        border-radius: 9999px; /* rounded-full */
+        width: 1.25rem;  /* w-5 */
+        height: 1.25rem; /* h-5 */
         cursor: pointer;
         position: relative;
-        transition: all 0.2s ease-in-out;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
+        box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
       }
+
       .custom-checkbox:hover {
-        border-color: #94A3B8;
+        border-color: var(--tw-color-accent-primary, #0D47A1);
+        transform: scale(1.05);
       }
+
       .custom-checkbox:focus {
         outline: none;
-        box-shadow: 0 0 0 2px rgba(13, 71, 161, 0.2);
+        box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.2); /* accent-primary with opacity */
       }
+
       .custom-checkbox:checked {
-        background-color: #0D47A1; /* accent-primary */
-        border-color: #0D47A1;
+        background-image: linear-gradient(45deg, var(--tw-color-accent-primary, #0D47A1), var(--tw-color-accent-secondary, #42A5F5));
+        border-color: transparent;
+        box-shadow: 0 2px 8px -1px rgba(13, 71, 161, 0.4);
       }
-      .custom-checkbox:checked::before {
-        content: '\\f00c'; /* Font Awesome check icon */
-        font-family: 'Font Awesome 6 Free';
-        font-weight: 900;
-        font-size: 0.75rem; /* 12px */
-        color: white;
+
+      .custom-checkbox::before {
+        content: '';
         position: absolute;
-        top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%) scale(1);
-        display: block;
-        transition: transform 0.1s ease-in-out;
+        top: 50%;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -60%) rotate(45deg) scale(0);
+        opacity: 0;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+      }
+
+      .custom-checkbox:checked::before {
+        transform: translate(-50%, -60%) rotate(45deg) scale(1);
+        opacity: 1;
       }
       
       @keyframes row-highlight-fade {
@@ -1294,7 +1314,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-BkqoC_D7.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-BAZkHdU7.js"></script>
 </head>
 <body class="text-text-primary font-sans">
     <div id="root" class="relative isolate h-screen flex flex-col overflow-hidden"></div>
