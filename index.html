@@ -696,6 +696,17 @@
           box-shadow: inset 3px 0 0 0 var(--tw-color-accent-primary);
       }
       
+      /* === NEW STYLE for highlighting user's own requests === */
+      tbody tr.my-request-row {
+        background-color: #f0f9ff !important; /* sky-50, a very light blue */
+      }
+      tbody tr.my-request-row:hover {
+          background-color: #e0f2fe !important; /* sky-100, a slightly darker blue on hover */
+      }
+      tbody tr.my-request-row td:first-child {
+          box-shadow: inset 3px 0 0 0 var(--tw-color-accent-secondary);
+      }
+
 
       @media (max-width: 1024px) { /* lg breakpoint */
           .tables-section {
@@ -1283,7 +1294,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-BL50qA_M.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-Di_PNglk.js"></script>
 </head>
 <body class="text-text-primary font-sans">
     <div id="root" class="relative isolate h-screen flex flex-col overflow-hidden"></div>
