@@ -7,7 +7,6 @@ import TestDrivePreview from './testdrive/TestDrivePreview';
 import TestDriveHistoryTable from './testdrive/TestDriveHistoryTable';
 import TestDriveCheckinModal from './testdrive/TestDriveCheckinModal';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
-import { versionsMap } from '../constants';
 
 interface ImageSource {
     src: string;
@@ -20,6 +19,10 @@ interface TestDriveFormProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     currentUser: string;
     isAdmin: boolean;
+    allTestDrives: TestDriveBooking[];
+    setAllTestDrives: React.Dispatch<React.SetStateAction<TestDriveBooking[]>>;
+    isLoading: boolean;
+    refetch: (isSilent?: boolean) => void;
 }
 
 const initialFormData: TestDriveBooking = {
@@ -73,15 +76,13 @@ const getStatus = (booking: TestDriveBooking): string => {
     return 'Chờ Check-in';
 };
 
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview, currentUser, isAdmin }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, refetch: fetchSchedule }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
         const user = sessionStorage.getItem('currentConsultant') || '';
         return { ...initialFormData, tenTuVan: user };
     });
-    const [allTestDrives, setAllTestDrives] = useState<TestDriveBooking[]>([]);
     const [conflictError, setConflictError] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
@@ -111,37 +112,16 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
         return `${prefix}/${nextCounter.toString().padStart(3, '0')}`;
     }, []);
 
-    const fetchSchedule = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoading(true);
-        try {
-            const result = await apiService.getTestDriveSchedule();
-            if (result.status === 'SUCCESS' && result.data) {
-                const schedule: TestDriveBooking[] = result.data;
-                const sortedSchedule = schedule.sort((a, b) => {
-                    const dateCompare = b.ngayThuXe.localeCompare(a.ngayThuXe);
-                    if (dateCompare !== 0) return dateCompare;
-                    return timeToMinutes(b.thoiGianKhoiHanh) - timeToMinutes(a.thoiGianKhoiHanh);
-                });
-                setAllTestDrives(sortedSchedule);
-                if (activeTab === 'create') {
-                    const latestSoPhieu = sortedSchedule.length > 0 ? sortedSchedule.find(b => b.soPhieu.startsWith(`LT/${moment().format('MMYY')}`))?.soPhieu : undefined;
-                    const user = sessionStorage.getItem('currentConsultant') || '';
-                    setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
-                }
-            } else {
-                showToast('Lỗi Tải Lịch', result.message || 'Không thể tải dữ liệu lịch lái thử.', 'error');
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Lỗi không xác định.';
-            showToast('Lỗi Mạng', message, 'error');
-        } finally {
-            if (!isSilent) setIsLoading(false);
-        }
-    }, [generateNextSoPhieu, showToast, activeTab]);
-
+    // Set initial form data after the first data fetch
     useEffect(() => {
-        fetchSchedule();
-    }, [fetchSchedule]);
+        // Only run if there's data and the form hasn't been initialized yet (soPhieu is empty)
+        if (allTestDrives.length > 0 && formData.soPhieu === '') {
+            const latestSoPhieu = allTestDrives.find(b => b.soPhieu.startsWith(`LT/${moment().format('MMYY')}`))?.soPhieu;
+            const user = sessionStorage.getItem('currentConsultant') || '';
+            setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allTestDrives, generateNextSoPhieu]);
 
     const handleReset = useCallback(() => {
         const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[0].soPhieu : undefined;
@@ -452,7 +432,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                             dropdowns={historyDropdowns}
                             searchPlaceholder="Tìm SĐT, Tên KH, TVBH, Số phiếu..."
                             totalCount={processedHistory.length}
-                            onRefresh={() => fetchSchedule(true)}
+                            onRefresh={() => fetchSchedule()}
                             isLoading={isLoading}
                             dateRangeEnabled={true}
                             plain
@@ -493,6 +473,8 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                     onSubmit={handleUpdateCheckin}
                     showToast={showToast}
                     onOpenImagePreview={onOpenImagePreview}
+                    currentUser={currentUser}
+                    isAdmin={isAdmin}
                 />
             )}
         </div>

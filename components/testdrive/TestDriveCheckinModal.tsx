@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TestDriveBooking } from '../../types';
+import { normalizeName } from '../../services/authService';
 
 interface ImageSource {
     src: string;
@@ -13,6 +14,8 @@ interface TestDriveCheckinModalProps {
     onSubmit: (payload: any) => Promise<boolean>;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    currentUser: string;
+    isAdmin: boolean;
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -212,12 +215,14 @@ const parseImageData = (jsonString: string | undefined): string[] => {
 };
 
 
-const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, onClose, onSubmit, showToast, onOpenImagePreview }) => {
+const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, onClose, onSubmit, showToast, onOpenImagePreview, currentUser, isAdmin }) => {
     const [odoBefore, setOdoBefore] = useState(booking.odoBefore || '');
     const [imagesBefore, setImagesBefore] = useState<File[]>([]);
     const [odoAfter, setOdoAfter] = useState(booking.odoAfter || '');
     const [imagesAfter, setImagesAfter] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const canUpdate = useMemo(() => isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan), [isAdmin, currentUser, booking.tenTuVan]);
 
     const mode = useMemo(() => {
         if (!booking.odoBefore) return 'checkin';
@@ -299,11 +304,11 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* BEFORE SECTION */}
-                        <fieldset disabled={mode !== 'checkin' && existingImagesBefore.length > 0} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
+                        <fieldset disabled={!canUpdate || mode !== 'checkin'} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
                             <legend className="font-bold text-lg text-text-primary px-2">Trước Khi Đi</legend>
                             <div>
                                 <label htmlFor="odoBefore" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) <span className="text-danger">*</span></label>
-                                <input type="number" id="odoBefore" value={odoBefore} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km hiện tại" readOnly={mode !== 'checkin'} />
+                                <input type="number" id="odoBefore" value={odoBefore} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km hiện tại" />
                             </div>
                             
                             {existingImagesBefore.length > 0 ? (
@@ -325,11 +330,11 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                         </fieldset>
 
                         {/* AFTER SECTION */}
-                         <fieldset disabled={mode !== 'checkout'} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
+                         <fieldset disabled={!canUpdate || mode !== 'checkout'} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
                             <legend className="font-bold text-lg text-text-primary px-2">Sau Khi Về</legend>
                              <div>
                                 <label htmlFor="odoAfter" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) <span className="text-danger">*</span></label>
-                                <input type="number" id="odoAfter" value={odoAfter} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km sau khi lái thử" readOnly={mode !== 'checkout'}/>
+                                <input type="number" id="odoAfter" value={odoAfter} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km sau khi lái thử"/>
                             </div>
                              {existingImagesAfter.length > 0 ? (
                                 <ImageGallery
@@ -351,7 +356,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     </div>
                 </main>
 
-                 {mode !== 'view' && (
+                 {canUpdate && mode !== 'view' && (
                     <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
                         <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                         <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">

@@ -81,10 +81,10 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                 <td data-label="Hành động" className="px-3 py-3 text-sm text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onUpdateCheckin(booking); }}
+                                            onClick={(e) => { if (canUpdate) { e.stopPropagation(); onUpdateCheckin(booking); } }}
                                             className="action-btn hold-action"
                                             disabled={!canUpdate}
-                                            title={!canUpdate ? "Chỉ người tạo phiếu mới có thể cập nhật." : "Cập nhật thông tin check-in/out"}
+                                            title={!canUpdate ? "Chỉ người tạo phiếu hoặc admin mới có thể cập nhật." : "Cập nhật thông tin check-in/out"}
                                         ><i className="fas fa-camera"></i></button>
                                         <button onClick={(e) => { e.stopPropagation(); onSelectBooking(booking); }} className="action-btn pair-action" title="Xem & In phiếu">
                                             <i className="fas fa-print"></i>

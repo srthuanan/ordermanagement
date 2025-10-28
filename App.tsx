@@ -22,6 +22,7 @@ import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
 import { useSoldCarsApi } from './hooks/useSoldCarsApi';
+import { useTestDriveApi } from './hooks/useTestDriveApi';
 import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
@@ -146,6 +147,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi(usersToView);
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
     const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
+    const { testDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
     const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
     const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
     const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
@@ -728,7 +730,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
                 );
             case 'laithu':
-                return <TestDriveForm showToast={showToast} onOpenImagePreview={openImagePreviewModal} currentUser={currentUser} isAdmin={isCurrentUserAdmin} />;
+                return <TestDriveForm
+                    showToast={showToast}
+                    onOpenImagePreview={openImagePreviewModal}
+                    currentUser={currentUser}
+                    isAdmin={isCurrentUserAdmin}
+                    allTestDrives={testDriveData}
+                    setAllTestDrives={setTestDriveData}
+                    isLoading={isLoadingTestDrive}
+                    refetch={refetchTestDrive}
+                />;
             case 'admin':
                 return isCurrentUserAdmin ? <AdminView 
                     showToast={showToast} 
