@@ -103,6 +103,11 @@ export interface VcSortConfig {
     direction: 'asc' | 'desc';
 }
 
+export interface TestDriveSortConfig {
+    key: keyof TestDriveBooking;
+    direction: 'asc' | 'desc';
+}
+
 
 export interface AnalyticsData {
     pendingRequestCount: { [key: string]: number };

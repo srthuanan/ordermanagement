@@ -53,6 +53,8 @@ type ModalState = {
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
 type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
+type DateRange = { start: string; end: string; };
+
 const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
@@ -74,10 +76,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [errorVc, setErrorVc] = useState<string | null>(null);
     
     // State for Filtering
-    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], trangThai: string[] }>({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
-    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[] }>({ keyword: '', tvbh: [], dongXe: [] });
-    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[] }>({ keyword: '', tvbh: [], dongXe: [] });
-    const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[] }>({ keyword: '', nguoiyc: [], trangthai: [] });
+    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], trangThai: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
+    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [] });
+    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [] });
+    const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: DateRange }>({ keyword: '', nguoiyc: [], trangthai: [] });
 
 
     // Other states
@@ -91,8 +93,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
-    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-    const mobileNavRef = useRef<HTMLDivElement>(null);
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
@@ -116,21 +116,20 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) { setIsActionMenuOpen(false); }
-            if (mobileNavRef.current && !mobileNavRef.current.contains(event.target as Node)) { setIsMobileNavOpen(false); }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-     const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | { start: string; end: string; } | undefined }>) => {
+     const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | DateRange | undefined; keyword?: string | undefined; dateRange?: DateRange | undefined; }>) => {
         if (adminView === 'invoices') {
-            setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setInvoiceFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'pending') {
-            setPendingFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setPendingFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'paired') {
-            setPairedFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setPairedFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'vc') {
-            setVcFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setVcFilters(prev => ({ ...prev, ...newFilters }));
         }
         
         setCurrentPage(1);
@@ -609,9 +608,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             case 'phongkd': {
                 return (
                     <div key={adminView} className="animate-fade-in">
-                        <TeamManagementComponent 
-                            teamData={teamData} 
-                            allUsers={allUsers}
+                        <TeamManagementComponent
+                            teamData={teamData}
                             onEditTeam={(leader, members) => setEditingTeam({ leader, members })}
                             onAddNewTeam={() => setIsAddingNewTeam(true)}
                             onDeleteTeam={handleDeleteTeam}
@@ -766,65 +764,46 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const tabs: AdminSubView[] = ['invoices', 'pending', 'paired', 'vc', 'phongkd'];
     const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
     const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
-    const currentLabel = labels[adminView];
-    const currentCount = counts[adminView];
-
+    
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex flex-col h-full">
-                 <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
-                    <div className="p-3 flex items-center gap-2 flex-wrap">
-                        {/* --- Desktop Tabs --- */}
-                        <div className="admin-tabs-container hidden md:flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto flex-shrink-0">
-                            {tabs.map(view => (
-                                <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button>
-                            ))}
-                        </div>
-
-                        {/* --- Mobile Dropdown --- */}
-                        <div className="relative md:hidden w-full" ref={mobileNavRef}>
-                            <button onClick={() => setIsMobileNavOpen(prev => !prev)} className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold border border-border-primary rounded-lg bg-surface-ground">
-                                <span>
-                                    {currentLabel}
-                                    <span className="text-xs font-mono ml-2 px-1.5 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary">{currentCount}</span>
-                                </span>
-                                <i className={`fas fa-chevron-down text-text-secondary transition-transform ${isMobileNavOpen ? 'rotate-180' : ''}`}></i>
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
+                <div className="p-3 flex items-center justify-between gap-2 flex-nowrap">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
+                        {tabs.map(view => (
+                            <button
+                                key={view}
+                                onClick={() => setAdminView(view)}
+                                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                            >
+                                {labels[view]}
+                                <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
                             </button>
-                            {isMobileNavOpen && (
-                                <div className="absolute top-full mt-1 w-full bg-surface-card border border-border-secondary rounded-lg shadow-lg z-20 p-1 animate-fade-in-up" style={{animationDuration: '200ms'}}>
-                                    {tabs.map(view => (
-                                        <button
-                                            key={view}
-                                            onClick={() => {
-                                                setAdminView(view);
-                                                setIsMobileNavOpen(false);
-                                            }}
-                                            className={`w-full text-left px-3 py-2.5 text-sm font-medium rounded-md flex justify-between items-center ${adminView === view ? 'bg-surface-accent text-accent-primary' : 'text-text-primary hover:bg-surface-hover'}`}
-                                        >
-                                            <span>{labels[view]}</span>
-                                            <span className="text-xs font-mono px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        
-                        <div className="w-full md:w-auto md:flex-grow min-w-0">
-                            {renderFilterPanel()}
-                        </div>
-                        
-                        <div className="hidden md:flex items-center justify-end gap-2">
-                            <div className="relative" ref={actionMenuRef}>
-                                <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
-                                    <i className="fas fa-bolt text-lg text-accent-primary"></i>
-                                </button>
-                                {isActionMenuOpen && ( <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>{adminTools.map(tool => (<button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover"><i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i><span>{tool.title}</span></button>))}</div>)}
+                        ))}
+                    </div>
+                    <div className="relative" ref={actionMenuRef}>
+                        <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
+                            <i className="fas fa-bolt text-lg text-accent-primary"></i>
+                        </button>
+                        {isActionMenuOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
+                                {adminTools.map(tool => (
+                                    <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover">
+                                        <i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i>
+                                        <span>{tool.title}</span>
+                                    </button>
+                                ))}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
+                 { adminView !== 'phongkd' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
+            </div>
+            
+            <div className="flex-grow min-h-0 flex flex-col">
                 {renderCurrentView()}
             </div>
+            
             {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} />}
             {invoiceModalState && (
                 <>
@@ -896,8 +875,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 interface TeamManagementProps {
     teamData: Record<string, string[]>;
-    // FIX: Add missing 'allUsers' prop to fix TypeScript error.
-    allUsers: User[];
     onEditTeam: (leader: string, members: string[]) => void;
     onAddNewTeam: () => void;
     onDeleteTeam: (leader: string) => void;

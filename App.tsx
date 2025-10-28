@@ -706,6 +706,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 return (
                     <StockView 
                         stockData={stockData}
+                        setStockData={setStockData}
                         isLoading={isLoadingStock}
                         error={errorStock}
                         refetchStock={refetchStock}

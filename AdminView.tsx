@@ -20,7 +20,6 @@ const PAGE_SIZE = 15;
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
 
-// FIX: Added ImageSource interface to align with the expected prop type.
 interface ImageSource {
     src: string;
     originalUrl?: string;
@@ -42,9 +41,7 @@ interface AdminViewProps {
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
-    // FIX: Corrected the signature for onOpenImagePreview to match what AdminVcRequestTable expects and what App.tsx provides.
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
-    // FIX: Add missing 'onOpenFilePreview' prop to the interface.
     onOpenFilePreview: (url: string, label: string) => void;
 }
 
@@ -56,34 +53,36 @@ type ModalState = {
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
 type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
+type DateRange = { start: string; end: string; };
+
 const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
-    // State for sorting and pagination for each tab
+    // State for sorting
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
-    const [currentPage, setCurrentPage] = useState(1);
-    
     const [pendingSortConfig, setPendingSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
-    const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
-
     const [pairedSortConfig, setPairedSortConfig] = useState<SortConfig | null>({ key: 'Thời gian ghép', direction: 'desc' });
-    const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
-
-    // FIX: Changed state type to VcSortConfig for correct type checking.
     const [vcSortConfig, setVcSortConfig] = useState<VcSortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
+
+    // State for pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
+    const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
     const [vcCurrentPage, setVcCurrentPage] = useState(1);
     
+    // State for VC tab data
     const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
     const [isLoadingVc, setIsLoadingVc] = useState(true);
     const [errorVc, setErrorVc] = useState<string | null>(null);
+    
+    // State for Filtering
+    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], trangThai: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
+    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [] });
+    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [] });
+    const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: DateRange }>({ keyword: '', nguoiyc: [], trangthai: [] });
 
-    // State for filtering
-    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], trangThai: string[] }>({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
-    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[] }>({ keyword: '', tvbh: [], dongXe: [] });
-    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[] }>({ keyword: '', tvbh: [], dongXe: [] });
-    const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[] }>({ keyword: '', nguoiyc: [], trangthai: [] });
 
-
+    // Other states
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
     const [invoiceModalState, setInvoiceModalState] = useState<ModalState>(null);
     const [bulkActionModal, setBulkActionModal] = useState<{ type: ActionType } | null>(null);
@@ -91,14 +90,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
-    
-    // New state for Bulk Upload Modal
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
-    
-    // Team management modal state
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
-
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
@@ -121,23 +115,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-                setIsActionMenuOpen(false);
-            }
+            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) { setIsActionMenuOpen(false); }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-    const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | undefined }>) => {
+     const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | DateRange | undefined; keyword?: string | undefined; dateRange?: DateRange | undefined; }>) => {
         if (adminView === 'invoices') {
-            setInvoiceFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setInvoiceFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'pending') {
-            setPendingFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setPendingFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'paired') {
-            setPairedFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setPairedFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'vc') {
-            setVcFilters(prev => ({ ...prev, ...newFilters as Partial<typeof prev> }));
+            setVcFilters(prev => ({ ...prev, ...newFilters }));
         }
         
         setCurrentPage(1);
@@ -161,7 +153,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         setPairedCurrentPage(1);
         setVcCurrentPage(1);
     }, [adminView]);
-
 
     const { 
         invoiceRequests, 
@@ -295,7 +286,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             keys.forEach(key => options[key] = new Set());
             data.forEach(row => {
                 keys.forEach(key => {
-                    const value = key === 'Kết quả' ? (row as any)['Trạng thái xử lý'] : row[key];
+                    const value = key === 'Kết quả' || key === 'Trạng thái xử lý' ? (row as any)['Trạng thái xử lý'] : row[key];
                     if (value) options[key].add(value as string);
                 });
             });
@@ -556,87 +547,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         { title: 'Tra Cứu Lịch Sử', icon: 'fa-search', action: () => setAdminModal('timeline') },
     ];
 
-    const renderFilterPanel = () => {
-        let currentFilters: any;
-        let currentOptions: any;
-        let dropdownConfigs: DropdownFilterConfig[] = [];
-        let searchPlaceholder = "Tìm kiếm...";
-        let totalCount = 0;
-        let onRefresh = () => {};
-        let isLoading = false;
-
-
-        switch(adminView) {
-            case 'invoices':
-                currentFilters = invoiceFilters;
-                currentOptions = filterOptions.invoices;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'},
-                    { id: 'admin-filter-status', key: 'trangThai', label: 'Tất cả Trạng Thái', options: currentOptions['Kết quả'], icon: 'fa-tag', displayMode: 'selection'}
-                ];
-                searchPlaceholder="Tìm SĐH, Tên KH, VIN...";
-                totalCount = invoiceRequests.length;
-                onRefresh = () => refetchXuathoadon();
-                isLoading = isLoadingXuathoadon;
-                break;
-            case 'pending':
-                currentFilters = pendingFilters;
-                currentOptions = filterOptions.pending;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'}
-                ];
-                searchPlaceholder="Tìm SĐH, Tên KH...";
-                totalCount = pendingData.length;
-                onRefresh = () => refetchHistory();
-                isLoading = false; // History is generally fast
-                break;
-            case 'paired':
-                 currentFilters = pairedFilters;
-                currentOptions = filterOptions.paired;
-                dropdownConfigs = [
-                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'Tất cả TVBH', options: currentOptions['Tên tư vấn bán hàng'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Tất cả Dòng Xe', options: currentOptions['Dòng xe'], icon: 'fa-car', displayMode: 'selection'}
-                ];
-                searchPlaceholder="Tìm SĐH, Tên KH, VIN...";
-                totalCount = pairedData.length;
-                onRefresh = () => refetchHistory();
-                isLoading = false;
-                break;
-             case 'vc':
-                currentFilters = vcFilters;
-                currentOptions = filterOptions.vc;
-                dropdownConfigs = [
-                    { id: 'admin-filter-nguoiyc', key: 'nguoiyc', label: 'Tất cả Người YC', options: currentOptions['Người YC'], icon: 'fa-user-tie', displayMode: 'selection'},
-                    { id: 'admin-filter-trangthai-vc', key: 'trangthai', label: 'Tất cả Trạng Thái', options: currentOptions['Trạng thái xử lý'], icon: 'fa-tag', displayMode: 'selection'}
-                ];
-                searchPlaceholder="Tìm SĐH, Tên KH, VIN, Mã DMS...";
-                totalCount = vcRequests.length;
-                onRefresh = () => fetchVcData();
-                isLoading = isLoadingVc;
-                break;
-            case 'phongkd':
-                return null;
-        }
-
-        return (
-             <Filters 
-                filters={currentFilters}
-                onFilterChange={handleFilterChange}
-                onReset={handleReset}
-                dropdowns={dropdownConfigs}
-                searchPlaceholder={searchPlaceholder}
-                totalCount={totalCount}
-                onRefresh={onRefresh}
-                isLoading={isLoading}
-                hideSearch={false}
-                size="compact"
-                plain
-            />
-        );
-    };
-
     const renderCurrentView = () => {
         if (adminView === 'invoices' && isLoadingXuathoadon && xuathoadonData.length === 0) {
             return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
@@ -661,16 +571,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  const activePage = adminView === 'invoices' ? currentPage : adminView === 'pending' ? pendingCurrentPage : pairedCurrentPage;
                  const onPageChange = adminView === 'invoices' ? setCurrentPage : adminView === 'pending' ? setPendingCurrentPage : setPairedCurrentPage;
                  const sortConf = adminView === 'invoices' ? sortConfig : adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
-                 // FIX: Corrected sort handler to properly update state without type conflicts.
                  const onSortHandler = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
 
                  return (
-                     <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                     <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative">
-                            {/*
- // FIX: Passed the 'onOpenFilePreview' prop to AdminInvoiceTable to resolve the missing required prop error.
-*/}
                             <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
@@ -679,10 +585,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
              case 'vc': {
                 return (
-                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                    <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative">
-                            {/* FIX: Passed the handleDownloadAllVcImages function to the onDownloadAll prop to resolve the missing property error. */}
                             <AdminVcRequestTable 
                                 requests={paginatedVcData} 
                                 sortConfig={vcSortConfig}
@@ -696,18 +601,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 onDownloadAll={handleDownloadAllVcImages}
                             />
                         </div>
-                        {totalVcPages > 0 && <Pagination currentPage={vcCurrentPage} totalPages={totalVcPages} onPageChange={setVcCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                         {totalVcPages > 0 && <Pagination currentPage={vcCurrentPage} totalPages={totalVcPages} onPageChange={setVcCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 );
             }
             case 'phongkd': {
-                return <TeamManagementComponent 
-                    teamData={teamData} 
-                    allUsers={allUsers}
-                    onEditTeam={(leader, members) => setEditingTeam({ leader, members })}
-                    onAddNewTeam={() => setIsAddingNewTeam(true)}
-                    onDeleteTeam={handleDeleteTeam}
-                />;
+                return (
+                    <div key={adminView} className="animate-fade-in">
+                        <TeamManagementComponent
+                            teamData={teamData}
+                            onEditTeam={(leader, members) => setEditingTeam({ leader, members })}
+                            onAddNewTeam={() => setIsAddingNewTeam(true)}
+                            onDeleteTeam={handleDeleteTeam}
+                        />
+                    </div>
+                );
             }
             default: return null;
         }
@@ -778,32 +686,124 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         );
     };
     
+    const renderFilterPanel = () => {
+        let currentFilters: any;
+        let dropdownConfigs: DropdownFilterConfig[] = [];
+        let searchPlaceholder = "Tìm kiếm...";
+        let totalCount = 0;
+        let onRefresh = () => {};
+        let isLoading = false;
+
+        switch(adminView) {
+            case 'invoices':
+                currentFilters = invoiceFilters;
+                dropdownConfigs = [
+                    { id: 'admin-filter-tvbh', key: 'tvbh', label: 'TVBH', options: filterOptions.invoices['Tên tư vấn bán hàng'], icon: 'fa-user-tie'},
+                    { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.invoices['Dòng xe'], icon: 'fa-car'},
+                    { id: 'admin-filter-status', key: 'trangThai', label: 'Trạng Thái', options: filterOptions.invoices['Kết quả'], icon: 'fa-tag'}
+                ];
+                searchPlaceholder="Tìm SĐH, Tên KH, VIN...";
+                totalCount = invoiceRequests.length;
+                onRefresh = () => refetchXuathoadon();
+                isLoading = isLoadingXuathoadon;
+                break;
+            case 'pending':
+                currentFilters = pendingFilters;
+                dropdownConfigs = [
+                    { id: 'admin-filter-tvbh-pending', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie'},
+                    { id: 'admin-filter-dongxe-pending', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car'}
+                ];
+                searchPlaceholder="Tìm SĐH, Tên KH...";
+                totalCount = pendingData.length;
+                onRefresh = () => refetchHistory();
+                isLoading = false;
+                break;
+            case 'paired':
+                 currentFilters = pairedFilters;
+                dropdownConfigs = [
+                    { id: 'admin-filter-tvbh-paired', key: 'tvbh', label: 'TVBH', options: filterOptions.paired['Tên tư vấn bán hàng'], icon: 'fa-user-tie'},
+                    { id: 'admin-filter-dongxe-paired', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.paired['Dòng xe'], icon: 'fa-car'}
+                ];
+                searchPlaceholder="Tìm SĐH, Tên KH, VIN...";
+                totalCount = pairedData.length;
+                onRefresh = () => refetchHistory();
+                isLoading = false;
+                break;
+             case 'vc':
+                currentFilters = vcFilters;
+                dropdownConfigs = [
+                    { id: 'admin-filter-nguoiyc-vc', key: 'nguoiyc', label: 'Người YC', options: filterOptions.vc['Người YC'], icon: 'fa-user-tie'},
+                    { id: 'admin-filter-trangthai-vc', key: 'trangthai', label: 'Trạng Thái', options: filterOptions.vc['Trạng thái xử lý'], icon: 'fa-tag'}
+                ];
+                searchPlaceholder="Tìm SĐH, Tên KH, VIN, Mã DMS...";
+                totalCount = vcRequests.length;
+                onRefresh = () => fetchVcData();
+                isLoading = isLoadingVc;
+                break;
+            default:
+                return null;
+        }
+
+        return (
+             <Filters 
+                filters={currentFilters}
+                onFilterChange={handleFilterChange}
+                onReset={handleReset}
+                dropdowns={dropdownConfigs}
+                searchPlaceholder={searchPlaceholder}
+                totalCount={totalCount}
+                onRefresh={onRefresh}
+                isLoading={isLoading}
+                hideSearch={false}
+                size="compact"
+                plain={true}
+            />
+        );
+    };
+
+    const tabs: AdminSubView[] = ['invoices', 'pending', 'paired', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex flex-col h-full">
-                 <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
-                    <div className="p-3 flex items-center gap-2 flex-nowrap">
-                        <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto flex-shrink-0">
-                            {(['invoices', 'pending', 'paired', 'vc', 'phongkd'] as AdminSubView[]).map(view => {
-                                const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-                                const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
-                                return ( <button key={view} onClick={() => setAdminView(view)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} > {labels[view]} <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span> </button> );
-                            })}
-                        </div>
-                        
-                        <div className="flex-grow flex items-center justify-end gap-2">
-                            { adminView !== 'phongkd' && renderFilterPanel() }
-                            <div className="relative" ref={actionMenuRef}>
-                                <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
-                                    <i className="fas fa-bolt text-lg text-accent-primary"></i>
-                                </button>
-                                {isActionMenuOpen && ( <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>{adminTools.map(tool => (<button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover"><i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i><span>{tool.title}</span></button>))}</div>)}
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
+                <div className="p-3 flex items-center justify-between gap-2 flex-nowrap">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
+                        {tabs.map(view => (
+                            <button
+                                key={view}
+                                onClick={() => setAdminView(view)}
+                                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                            >
+                                {labels[view]}
+                                <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="relative" ref={actionMenuRef}>
+                        <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
+                            <i className="fas fa-bolt text-lg text-accent-primary"></i>
+                        </button>
+                        {isActionMenuOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
+                                {adminTools.map(tool => (
+                                    <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover">
+                                        <i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i>
+                                        <span>{tool.title}</span>
+                                    </button>
+                                ))}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
+                 { adminView !== 'phongkd' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
+            </div>
+            
+            <div className="flex-grow min-h-0 flex flex-col">
                 {renderCurrentView()}
             </div>
+            
             {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} />}
             {invoiceModalState && (
                 <>
@@ -875,8 +875,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 interface TeamManagementProps {
     teamData: Record<string, string[]>;
-    // FIX: Add missing 'allUsers' prop to fix TypeScript error.
-    allUsers: User[];
     onEditTeam: (leader: string, members: string[]) => void;
     onAddNewTeam: () => void;
     onDeleteTeam: (leader: string) => void;

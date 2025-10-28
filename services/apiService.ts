@@ -468,7 +468,7 @@ export const updateTestDriveCheckin = async (payload: {
     imagesAfter?: { name: string; type: string; data: string }[];
 }): Promise<ApiResult> => {
     const apiPayload: Record<string, any> = {
-        action: 'updateTestDriveCheckin',
+        action: 'submitTestDriveCheckin',
         soPhieu: payload.soPhieu,
         updatedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
     };

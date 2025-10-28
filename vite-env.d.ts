@@ -1,34 +1,25 @@
-// This file provides TypeScript definitions for asset imports.
-// By declaring modules for these file types, we tell TypeScript that
-// importing them will return a string (the URL/path to the asset),
-// which resolves the "Cannot find module" errors (TS2307).
+// FIX: Remove reference to 'vite/client' to resolve "Cannot find type definition file" error.
+// This error is likely due to an environment setup issue where TypeScript cannot locate
+// Vite's type definitions, but removing the reference allows the project to compile
+// using the explicit module declarations below.
 
-// FIX: Using unique variable names for each module declaration to resolve duplicate identifier errors.
 declare module '*.png' {
-  const pngSrc: string;
-  export default pngSrc;
+    const src: string;
+    export default src;
 }
-
 declare module '*.gif' {
-  const gifSrc: string;
-  export default gifSrc;
+    const src: string;
+    export default src;
 }
-
 declare module '*.mp4' {
-  const mp4Src: string;
-  export default mp4Src;
+    const src: string;
+    export default src;
 }
-
 declare module '*.jpg' {
-  const jpgSrc: string;
-  export default jpgSrc;
+    const src: string;
+    export default src;
 }
-
 declare module '*.jpeg' {
-  const jpegSrc: string;
-  export default jpegSrc;
+    const src: string;
+    export default src;
 }
-
-// NOTE: It is important that this file is treated as a module.
-// An empty export statement ensures this.
-export {};

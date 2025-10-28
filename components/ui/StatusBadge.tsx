@@ -30,6 +30,14 @@ const getStatusDetails = (statusText: string): { className: string; icon: string
         case 'chờ duyệt ycvc':
              return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-clock' };
 
+        // Test Drive Statuses
+        case 'chờ check-in':
+            return { className: 'status-cho-check-in', icon: 'fa-hourglass-start' };
+        case 'đang lái thử':
+            return { className: 'status-dang-lai-thu', icon: 'fa-road' };
+        case 'đã hoàn tất':
+            return { className: 'status-da-hoan-tat', icon: 'fa-flag-checkered' };
+
         // Action Required Status
         case 'yêu cầu bổ sung':
             return { className: 'status-yeu-cau-bo-sung', icon: 'fa-edit' };

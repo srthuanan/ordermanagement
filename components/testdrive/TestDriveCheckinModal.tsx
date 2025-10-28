@@ -15,21 +15,22 @@ interface TestDriveCheckinModalProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
-const fileToBase64 = (file: File): Promise<{name: string, type: string, data: string}> => {
+const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      const result = reader.result as string;
-      resolve({
-        name: file.name,
-        type: file.type,
-        data: result.split(',')[1] // remove the "data:*/*;base64," part
-      });
+      if (typeof reader.result === 'string') {
+        // Return the full Data URL, which the backend script likely expects to parse.
+        resolve(reader.result);
+      } else {
+        reject(new Error('Không thể đọc tệp.'));
+      }
     };
     reader.onerror = error => reject(error);
   });
 };
+
 
 // Helper to get a high-quality viewable URL from Google Drive that works in <img> tags
 const toEmbeddableDriveUrl = (url: string): string => {
@@ -175,6 +176,41 @@ const ImageGallery: React.FC<{
     </div>
 );
 
+const parseImageData = (jsonString: string | undefined): string[] => {
+    if (!jsonString) return [];
+    try {
+        const parsed = JSON.parse(jsonString);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => {
+                if (typeof item === 'string') {
+                    // Only accept valid-looking URLs to prevent broken images from bad data
+                    if (item.startsWith('http') || item.startsWith('data:')) {
+                        return item;
+                    }
+                }
+                if (item && typeof item === 'object') {
+                    // Handle new format
+                    if (item.base64Data && item.mimeType) {
+                        return `data:${item.mimeType};base64,${item.base64Data}`;
+                    }
+                    // Handle old format
+                    if (item.data && item.type) {
+                        return `data:${item.type};base64,${item.data}`;
+                    }
+                }
+                return null;
+            }).filter((item): item is string => item !== null);
+        }
+    } catch (e) {
+        // Fallback for non-JSON string which might be a single URL (either http or data URL)
+        if (typeof jsonString === 'string' && (jsonString.startsWith('http') || jsonString.startsWith('data:'))) {
+            return [jsonString];
+        }
+        console.error("Failed to parse image data:", e, "Data was:", jsonString);
+    }
+    return [];
+};
+
 
 const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, onClose, onSubmit, showToast, onOpenImagePreview }) => {
     const [odoBefore, setOdoBefore] = useState(booking.odoBefore || '');
@@ -189,66 +225,62 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
         return 'view'; // Both are filled
     }, [booking]);
 
-    const parseImageData = (jsonString: string | undefined): string[] => {
-        if (!jsonString) return [];
-        try {
-            const parsed = JSON.parse(jsonString);
-            if (Array.isArray(parsed)) {
-                return parsed.map(item => {
-                    if (typeof item === 'string') {
-                        // Only accept valid-looking URLs to prevent broken images from bad data
-                        if (item.startsWith('http') || item.startsWith('data:')) {
-                            return item;
-                        }
-                    }
-                    if (item && typeof item === 'object' && item.data && item.type) {
-                        return `data:${item.type};base64,${item.data}`;
-                    }
-                    return null;
-                }).filter((item): item is string => item !== null);
-            }
-        } catch (e) {
-            // Fallback for non-JSON string which might be a single URL (either http or data URL)
-            if (typeof jsonString === 'string' && (jsonString.startsWith('http') || jsonString.startsWith('data:'))) {
-                return [jsonString];
-            }
-            console.error("Failed to parse image data:", e, "Data was:", jsonString);
-        }
-        return [];
-    };
-
     const existingImagesBefore = useMemo(() => parseImageData(booking.imagesBefore), [booking.imagesBefore]);
     const existingImagesAfter = useMemo(() => parseImageData(booking.imagesAfter), [booking.imagesAfter]);
     
     const handleSubmit = async () => {
-        const payload: any = { soPhieu: booking.soPhieu };
-        
-        if (mode === 'checkin') {
-            if (!odoBefore.trim() || imagesBefore.length === 0) {
-                showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh trước khi đi.', 'warning');
-                return;
-            }
-            payload.odoBefore = odoBefore;
-            payload.imagesBefore = await Promise.all(imagesBefore.map(fileToBase64));
-        } else if (mode === 'checkout') {
-            if (!odoAfter.trim() || imagesAfter.length === 0) {
-                 showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh sau khi về.', 'warning');
-                return;
-            }
-             if (parseFloat(odoAfter) <= parseFloat(odoBefore || booking.odoBefore || '0')) {
-                showToast('Lỗi ODO', 'ODO sau khi về phải lớn hơn ODO trước khi đi.', 'error');
-                return;
-            }
-            payload.odoAfter = odoAfter;
-            payload.imagesAfter = await Promise.all(imagesAfter.map(fileToBase64));
-        } else {
-            return; // View mode, no submission
-        }
-
         setIsSubmitting(true);
-        const success = await onSubmit(payload);
-        if (!success) {
-            setIsSubmitting(false); // Re-enable button on failure
+        try {
+            const payload: any = { soPhieu: booking.soPhieu };
+            
+            if (mode === 'checkin') {
+                if (!odoBefore.trim() || imagesBefore.length === 0) {
+                    showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh trước khi đi.', 'warning');
+                    setIsSubmitting(false);
+                    return;
+                }
+                payload.odoBefore = odoBefore;
+                payload.imagesBefore = await Promise.all(imagesBefore.map(async (file, index) => {
+                    const fileName = file.name || `${booking.soPhieu}_before_${Date.now()}_${index}.jpg`;
+                    return {
+                        name: fileName,
+                        type: file.type || 'image/jpeg',
+                        data: await fileToBase64(file)
+                    };
+                }));
+            } else if (mode === 'checkout') {
+                if (!odoAfter.trim() || imagesAfter.length === 0) {
+                     showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh sau khi về.', 'warning');
+                     setIsSubmitting(false);
+                    return;
+                }
+                 if (parseFloat(odoAfter) <= parseFloat(odoBefore || booking.odoBefore || '0')) {
+                    showToast('Lỗi ODO', 'ODO sau khi về phải lớn hơn ODO trước khi đi.', 'error');
+                    setIsSubmitting(false);
+                    return;
+                }
+                payload.odoAfter = odoAfter;
+                payload.imagesAfter = await Promise.all(imagesAfter.map(async (file, index) => {
+                    const fileName = file.name || `${booking.soPhieu}_after_${Date.now()}_${index}.jpg`;
+                    return {
+                        name: fileName,
+                        type: file.type || 'image/jpeg',
+                        data: await fileToBase64(file)
+                    };
+                }));
+            } else {
+                setIsSubmitting(false);
+                return; // View mode, no submission
+            }
+
+            const success = await onSubmit(payload);
+            if (!success) {
+                setIsSubmitting(false); // Re-enable button on submission failure from API
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Xử lý ảnh thất bại. Vui lòng thử lại.";
+            showToast('Lỗi Xử Lý Ảnh', message, 'error');
+            setIsSubmitting(false);
         }
     };
 

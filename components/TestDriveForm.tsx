@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import moment from 'moment';
-import { TestDriveBooking } from '../types';
+import { TestDriveBooking, TestDriveSortConfig } from '../types';
 import * as apiService from '../services/apiService';
 import TestDriveFormInputs from './testdrive/TestDriveFormInputs';
 import TestDrivePreview from './testdrive/TestDrivePreview';
 import TestDriveHistoryTable from './testdrive/TestDriveHistoryTable';
 import TestDriveCheckinModal from './testdrive/TestDriveCheckinModal';
+import Filters, { DropdownFilterConfig } from './ui/Filters';
+import { versionsMap } from '../constants';
 
 interface ImageSource {
     src: string;
@@ -63,21 +65,13 @@ const timeToMinutes = (time: string): number => {
     return 0; // Fallback
 };
 
-const formatDisplayTime = (timeStr: string): string => {
-    if (!timeStr) return '';
-    // Handle HH:mm format directly
-    if (/^\d{2}:\d{2}$/.test(timeStr)) {
-        return timeStr;
-    }
-    // Handle full ISO/Date string from Google Sheets
-    const time = moment(timeStr);
-    if (time.isValid()) {
-        return time.format('HH:mm');
-    }
-    return timeStr; // Fallback
-};
-
 const BUFFER_MINUTES = 15;
+
+const getStatus = (booking: TestDriveBooking): string => {
+    if (booking.odoBefore && booking.odoAfter) return 'Đã hoàn tất';
+    if (booking.odoBefore) return 'Đang lái thử';
+    return 'Chờ Check-in';
+};
 
 const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview, currentUser, isAdmin }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
@@ -96,6 +90,10 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     const [isPrinting, setIsPrinting] = useState(false);
     const [checkinBooking, setCheckinBooking] = useState<TestDriveBooking | null>(null);
 
+    // State for history view
+    const [historyFilters, setHistoryFilters] = useState<{ keyword: string; dateRange: { start: string, end: string }; car: string[]; status: string[]; }>({ keyword: '', dateRange: {start: '', end: ''}, car: [], status: [] });
+    const [historySortConfig, setHistorySortConfig] = useState<TestDriveSortConfig | null>({ key: 'ngayThuXe', direction: 'desc' });
+
     const generateNextSoPhieu = useCallback((latestSoPhieu?: string) => {
         const now = new Date();
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -113,17 +111,23 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
         return `${prefix}/${nextCounter.toString().padStart(3, '0')}`;
     }, []);
 
-    const fetchSchedule = useCallback(async () => {
-        setIsLoading(true);
+    const fetchSchedule = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoading(true);
         try {
             const result = await apiService.getTestDriveSchedule();
             if (result.status === 'SUCCESS' && result.data) {
                 const schedule: TestDriveBooking[] = result.data;
-                const sortedSchedule = schedule.sort((a, b) => a.soPhieu.localeCompare(b.soPhieu));
+                const sortedSchedule = schedule.sort((a, b) => {
+                    const dateCompare = b.ngayThuXe.localeCompare(a.ngayThuXe);
+                    if (dateCompare !== 0) return dateCompare;
+                    return timeToMinutes(b.thoiGianKhoiHanh) - timeToMinutes(a.thoiGianKhoiHanh);
+                });
                 setAllTestDrives(sortedSchedule);
-                const latestSoPhieu = sortedSchedule.length > 0 ? sortedSchedule[sortedSchedule.length - 1].soPhieu : undefined;
-                const user = sessionStorage.getItem('currentConsultant') || '';
-                setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
+                if (activeTab === 'create') {
+                    const latestSoPhieu = sortedSchedule.length > 0 ? sortedSchedule.find(b => b.soPhieu.startsWith(`LT/${moment().format('MMYY')}`))?.soPhieu : undefined;
+                    const user = sessionStorage.getItem('currentConsultant') || '';
+                    setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
+                }
             } else {
                 showToast('Lỗi Tải Lịch', result.message || 'Không thể tải dữ liệu lịch lái thử.', 'error');
             }
@@ -131,16 +135,16 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             const message = error instanceof Error ? error.message : 'Lỗi không xác định.';
             showToast('Lỗi Mạng', message, 'error');
         } finally {
-            setIsLoading(false);
+            if (!isSilent) setIsLoading(false);
         }
-    }, [generateNextSoPhieu, showToast]);
+    }, [generateNextSoPhieu, showToast, activeTab]);
 
     useEffect(() => {
         fetchSchedule();
     }, [fetchSchedule]);
 
     const handleReset = useCallback(() => {
-        const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[allTestDrives.length - 1].soPhieu : undefined;
+        const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[0].soPhieu : undefined;
         const user = sessionStorage.getItem('currentConsultant') || '';
         setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
         setSelectedBookingForPreview(null);
@@ -215,7 +219,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             const existingEnd = timeToMinutes(booking.thoiGianTroVe);
 
             if (newStart < (existingEnd + BUFFER_MINUTES) && (newEnd + BUFFER_MINUTES) > existingStart) {
-                setConflictError(`Lịch bị trùng với KH: ${booking.tenKhachHang} (${formatDisplayTime(booking.thoiGianKhoiHanh)} - ${formatDisplayTime(booking.thoiGianTroVe)})`);
+                setConflictError(`Lịch bị trùng với KH: ${booking.tenKhachHang} (${moment(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment(booking.thoiGianTroVe).format('HH:mm')})`);
                 
                 const duration = newEnd - newStart;
                 const nextSlots = findNextAvailableSlots(sortedSchedule, duration);
@@ -275,7 +279,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             const result = await apiService.saveTestDriveBooking(formData);
             if (result.status === 'SUCCESS' && result.newRecord) {
                 showToast('Lưu Thành Công', 'Lịch lái thử đã được lưu. Chuẩn bị in...', 'success');
-                setAllTestDrives(prev => [...prev, result.newRecord].sort((a,b) => a.soPhieu.localeCompare(b.soPhieu)));
+                setAllTestDrives(prev => [...prev, result.newRecord].sort((a,b) => b.ngayThuXe.localeCompare(a.ngayThuXe)));
                 
                 setDataForPrinting(formData);
                 setIsPrinting(true); 
@@ -320,6 +324,64 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             return false;
         }
     };
+
+    const processedHistory = useMemo(() => {
+        let filtered = [...allTestDrives];
+
+        if (historyFilters.keyword) {
+            const kw = historyFilters.keyword.toLowerCase();
+            filtered = filtered.filter(b => 
+                b.soPhieu.toLowerCase().includes(kw) ||
+                b.tenKhachHang.toLowerCase().includes(kw) ||
+                b.dienThoai.includes(kw) ||
+                b.tenTuVan.toLowerCase().includes(kw)
+            );
+        }
+        if (historyFilters.dateRange.start && historyFilters.dateRange.end) {
+            const start = moment(historyFilters.dateRange.start).startOf('day');
+            const end = moment(historyFilters.dateRange.end).endOf('day');
+            filtered = filtered.filter(b => {
+                if (!b.ngayThuXe) return false;
+                const bookingDate = moment(b.ngayThuXe);
+                return bookingDate.isBetween(start, end, 'day', '[]'); // inclusive
+            });
+        }
+        if (historyFilters.car.length > 0) {
+            filtered = filtered.filter(b => historyFilters.car.includes(b.loaiXe));
+        }
+        if (historyFilters.status.length > 0) {
+            filtered = filtered.filter(b => historyFilters.status.includes(getStatus(b)));
+        }
+
+        if (historySortConfig) {
+            filtered.sort((a, b) => {
+                const aVal = a[historySortConfig.key];
+                const bVal = b[historySortConfig.key];
+                if (aVal === null || aVal === undefined || aVal === '') return 1;
+                if (bVal === null || bVal === undefined || bVal === '') return -1;
+                
+                if (historySortConfig.key === 'ngayThuXe' || historySortConfig.key === 'thoiGianKhoiHanh') {
+                    const timeA = moment(`${a.ngayThuXe} ${a.thoiGianKhoiHanh}`);
+                    const timeB = moment(`${b.ngayThuXe} ${b.thoiGianKhoiHanh}`);
+                    if (timeA.isBefore(timeB)) return historySortConfig.direction === 'asc' ? -1 : 1;
+                    if (timeA.isAfter(timeB)) return historySortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                }
+
+                if (String(aVal) < String(bVal)) return historySortConfig.direction === 'asc' ? -1 : 1;
+                if (String(aVal) > String(bVal)) return historySortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return filtered;
+    }, [allTestDrives, historyFilters, historySortConfig]);
+    
+    const uniqueCars = useMemo(() => [...new Set(allTestDrives.map(b => b.loaiXe))].sort(), [allTestDrives]);
+    const uniqueStatuses = ['Chờ Check-in', 'Đang lái thử', 'Đã hoàn tất'];
+    const historyDropdowns: DropdownFilterConfig[] = [
+        { id: 'td-filter-car', key: 'car', label: 'Loại Xe', options: uniqueCars, icon: 'fa-car' },
+        { id: 'td-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' }
+    ];
 
     if (selectedBookingForPreview) {
         return (
@@ -381,18 +443,35 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             )}
             
             {activeTab === 'history' && (
-                <div className="flex-grow overflow-hidden print-hidden">
+                <div className="flex-grow flex flex-col overflow-hidden print-hidden">
+                    <div className="flex-shrink-0 p-3 border-b border-border-primary bg-surface-ground">
+                        <Filters
+                            filters={historyFilters}
+                            onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}
+                            onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '' }, car: [], status: [] })}
+                            dropdowns={historyDropdowns}
+                            searchPlaceholder="Tìm SĐT, Tên KH, TVBH, Số phiếu..."
+                            totalCount={processedHistory.length}
+                            onRefresh={() => fetchSchedule(true)}
+                            isLoading={isLoading}
+                            dateRangeEnabled={true}
+                            plain
+                            size="compact"
+                        />
+                    </div>
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
                             <i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i>
                         </div>
                     ) : (
                         <TestDriveHistoryTable 
-                            bookings={allTestDrives}
+                            bookings={processedHistory}
                             onSelectBooking={setSelectedBookingForPreview}
                             onUpdateCheckin={setCheckinBooking}
                             currentUser={currentUser}
                             isAdmin={isAdmin}
+                            sortConfig={historySortConfig}
+                            onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
                         />
                     )}
                 </div>

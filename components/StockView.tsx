@@ -4,6 +4,7 @@ import StockTable from './StockTable';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
 import * as apiService from '../services/apiService';
+import moment from 'moment';
 
 const PAGE_SIZE = 10;
 
@@ -14,9 +15,10 @@ interface StockViewProps {
   isAdmin: boolean;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
   stockData: StockVehicle[];
+  setStockData: React.Dispatch<React.SetStateAction<StockVehicle[]>>;
   isLoading: boolean;
   error: string | null;
-  refetchStock: () => void;
+  refetchStock: (isSilent?: boolean) => void;
   highlightedVins: Set<string>;
 }
 
@@ -27,6 +29,7 @@ const StockView: React.FC<StockViewProps> = ({
     isAdmin, 
     onCreateRequestForVehicle,
     stockData,
+    setStockData,
     isLoading,
     error,
     refetchStock,
@@ -69,16 +72,32 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleHoldCar = async (vin: string) => {
-        setProcessingVin(vin);
-        showToast('Đang Giữ Xe', `Đang thực hiện giữ xe VIN: ${vin}`, 'loading');
+        const originalStockData = [...stockData]; // Snapshot for rollback
+    
+        // Optimistic UI update
+        const updatedStockData = stockData.map(vehicle =>
+            vehicle.VIN === vin
+                ? {
+                    ...vehicle,
+                    'Trạng thái': 'Đang giữ',
+                    'Người Giữ Xe': currentUser,
+                    // Estimate expiration time for immediate display
+                    'Thời Gian Hết Hạn Giữ': moment().add(30, 'minutes').toISOString()
+                }
+                : vehicle
+        );
+        setStockData(updatedStockData);
+        setProcessingVin(vin); // Use this to show a spinner on the row
 
         try {
             await apiService.holdCar(vin);
-            hideToast();
-            showToast('Giữ Xe Thành Công', `Xe VIN ${vin} đã được giữ thành công.`, 'success', 3000);
-            await refetchStock();
+            showToast('Giữ Xe Thành Công', `Xe VIN ${vin} đã được giữ.`, 'success', 3000);
+            // Silently refetch to get the accurate server-side expiration time
+            await refetchStock(true);
         } catch (err) {
-            hideToast();
+            // Rollback on error
+            setStockData(originalStockData);
+            hideToast(); // Hide any "loading" toast if one was shown
             const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
             showToast('Giữ Xe Thất Bại', message, 'error', 5000);
         } finally {
@@ -87,15 +106,27 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleReleaseCar = async (vin: string) => {
+        const originalStockData = [...stockData];
+
+        const updatedStockData = stockData.map(vehicle =>
+            vehicle.VIN === vin
+                ? {
+                    ...vehicle,
+                    'Trạng thái': 'Chưa ghép',
+                    'Người Giữ Xe': undefined, // Clear holder info
+                    'Thời Gian Hết Hạn Giữ': undefined
+                }
+                : vehicle
+        );
+        setStockData(updatedStockData);
         setProcessingVin(vin);
-        showToast('Đang Hủy Giữ', `Đang hủy giữ xe VIN: ${vin}`, 'loading');
 
         try {
             await apiService.releaseCar(vin);
-            hideToast();
             showToast('Hủy Giữ Thành Công', `Đã hủy giữ xe VIN ${vin}.`, 'info', 3000);
-            await refetchStock();
+            await refetchStock(true);
         } catch (err) {
+            setStockData(originalStockData);
             hideToast();
             const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
             showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
