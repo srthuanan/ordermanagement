@@ -28,11 +28,11 @@ import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
-const logohalloVideo = './pictures/logohallo.mp4';
-const createRequestPng = './pictures/taoyeucau.png';
-const boxuongGif = './pictures/boxuong.gif';
-const xacuopGif = './pictures/xacuop.gif';
-const logoChinh = './pictures/logochinh.png';
+const logohalloVideo = '/pictures/logohallo.mp4';
+const createRequestPng = '/pictures/taoyeucau.png';
+const boxuongGif = '/pictures/boxuong.gif';
+const xacuopGif = '/pictures/xacuop.gif';
+const logoChinh = '/pictures/logochinh.png';
 
 moment.locale('vi');
 

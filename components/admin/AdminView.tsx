@@ -14,6 +14,7 @@ import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import TotalViewDashboard from '../ui/TotalViewDashboard';
+import StockVehicleDetailModal from '../ui/StockVehicleDetailModal';
 
 
 const PAGE_SIZE = 15;
@@ -98,6 +99,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
+    const [selectedStockVehicleForDetail, setSelectedStockVehicleForDetail] = useState<StockVehicle | null>(null);
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);

@@ -202,7 +202,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     };
     
     const handlePreviewUnc = () => {
-        const uncSampleJpg = './pictures/uynhiemchi.jpg';
+        const uncSampleJpg = '/pictures/uynhiemchi.jpg';
         onOpenImagePreview(
             [{ src: uncSampleJpg, originalUrl: uncSampleJpg, label: 'Mẫu Ủy Nhiệm Chi' }],
             0,

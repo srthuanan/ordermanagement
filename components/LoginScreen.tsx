@@ -89,7 +89,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover z-0"
             >
-                <source src="./pictures/1111.mp4" type="video/mp4" />
+                <source src="/pictures/1111.mp4" type="video/mp4" />
             </video>
             {/* --- Dark Overlay --- */}
             <div className="absolute inset-0 bg-black/40 z-5"></div>
@@ -111,7 +111,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     {viewMode === 'login' && (
                         <div className="w-full animate-fade-in-up">
                             <div className="text-center mb-8 animate-fade-in-down">
-                                <img src="./pictures/logonhagiao.png" alt="Tri Ân Thầy Cô" className="h-26 mx-auto filter drop-shadow-lg animate-zoom-in-out" />
+                                <img src="/pictures/logonhagiao.png" alt="Tri Ân Thầy Cô" className="h-26 mx-auto filter drop-shadow-lg animate-zoom-in-out" />
                                 <h1 className="text-3xl font-bold text-white mt-3 text-shadow">
                                     Tri Ân Thầy Cô
                                 </h1>
@@ -119,11 +119,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             </div>
                             <form onSubmit={handleLoginSubmit} className="space-y-6">
                                 <div className="energy-input-container">
-                                    <img src="./pictures/icon1.gif" alt="Username" className="energy-input-icon" />
+                                    <img src="/pictures/icon1.gif" alt="Username" className="energy-input-icon" />
                                     <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="energy-input"/>
                                 </div>
                                 <div className="energy-input-container">
-                                    <img src="./pictures/icon2.gif" alt="Password" className="energy-input-icon" />
+                                    <img src="/pictures/icon2.gif" alt="Password" className="energy-input-icon" />
                                     <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="energy-input"/>
                                 </div>
                                 <div className="flex items-center justify-end pt-2">
