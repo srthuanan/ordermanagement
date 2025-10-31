@@ -1,4 +1,4 @@
-import { API_URL, STOCK_API_URL, ADMIN_USER, SOLD_CARS_API_URL, MONTHS, LOGIN_API_URL } from '../constants';
+import { API_URL, MONTHS, ADMIN_USER } from '../constants';
 import { Order } from '../types';
 
 declare const axios: any;
@@ -18,6 +18,10 @@ interface ApiResult {
     message: string;
     [key: string]: any;
 }
+
+// The new, separate API endpoint for the "Xe Đã Bán" data.
+const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+
 
 // FIX: Replaced fetch with axios for more robust handling of network requests and errors,
 // which should resolve the "Failed to fetch" errors. Axios is already loaded globally.
@@ -74,37 +78,7 @@ export const getApi = async (params: Record<string, any>, baseUrl: string = API_
     }
 };
 
-// FIX: Replaced fetch with axios for POST requests to the stock API.
-const postStockApiWithParams = async (params: Record<string, any>): Promise<ApiResult> => {
-    try {
-        const bodyParams = new URLSearchParams();
-        for (const key in params) {
-            if (params[key] !== null && params[key] !== undefined) {
-                bodyParams.append(key, String(params[key]));
-            }
-        }
-
-        const response = await axios.post(STOCK_API_URL, bodyParams);
-        
-        // Handle cases where Google Apps Script returns a stringified JSON
-        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
-
-        if (result.status !== 'SUCCESS') {
-            throw new Error(result.message || 'Stock API returned an unspecified error.');
-        }
-        return result;
-    } catch (error) {
-        const errorMessage = (error as any).response?.data?.message || (error as Error).message || 'An unknown Stock API error occurred.';
-        console.error('Stock API service error (POST with params):', error);
-        throw new Error(errorMessage);
-    }
-};
-
 export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResult> => {
-    const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-    const currentUserName = sessionStorage.getItem("currentUser") || '';
-    const isAdmin = currentUserName.toLowerCase() === 'admin';
-    
     const filters: Record<string, any> = {};
     if (usersToView && usersToView.length > 0) {
         filters.usersToView = usersToView;
@@ -117,12 +91,8 @@ export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResul
         sortBy: 'Thời gian nhập',
         sortOrder: 'desc',
         filters: JSON.stringify(filters),
-        isAdmin: String(isAdmin),
+        isAdmin: 'true', // Always fetch as admin to get all data for client-side filtering and stats.
     };
-    
-    if (!isAdmin && (!usersToView || usersToView.length === 0)) {
-        params.currentUser = currentUser;
-    }
 
     return getApi(params);
 };
@@ -143,7 +113,7 @@ export const getStockData = async (): Promise<ApiResult> => {
         currentUser: currentUser,
         isAdmin: String(isAdmin),
     };
-    return getApi(params, STOCK_API_URL);
+    return getApi(params);
 };
 
 export const holdCar = async (vin: string) => {
@@ -152,7 +122,7 @@ export const holdCar = async (vin: string) => {
         vin,
         updatedBy: sessionStorage.getItem("currentConsultant") || ADMIN_USER
     };
-    return postStockApiWithParams(params);
+    return postApi(params);
 };
 
 export const releaseCar = async (vin: string) => {
@@ -161,7 +131,7 @@ export const releaseCar = async (vin: string) => {
         vin,
         updatedBy: sessionStorage.getItem("currentConsultant") || ADMIN_USER
     };
-    return postStockApiWithParams(params);
+    return postApi(params);
 };
 
 export const addRequest = async (formData: Record<string, string>, chicFile: File) => {
@@ -290,24 +260,46 @@ export const markNotificationAsRead = async (notificationId: string) => {
     return postApi(payload);
 };
 
+// --- SOLD CARS API FUNCTIONS ---
+
+// Helper to fetch raw data for a specific month from the sold cars sheet
+const getSoldDataForMonth = async (sheetName: string): Promise<any[]> => {
+    const url = `${SOLD_CARS_API_URL}?sheet=${sheetName}`;
+    try {
+        const response = await axios.get(url);
+        const data = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
+        // The API can return an object with the sheet name as a key, or just an array
+        if (data && data[sheetName] && Array.isArray(data[sheetName])) return data[sheetName];
+        if (Array.isArray(data)) return data;
+        return [];
+    } catch (error) {
+        console.warn(`Error fetching sold data for ${sheetName}:`, error);
+        return [];
+    }
+};
+
+// Helper to map raw array row to Order object, mimicking legacy file logic
 const mapSoldDataRowToOrder = (row: any[], index: number, month?: string): Order => {
     let saleDate = new Date().toISOString();
     if (month) {
         const monthIndex = MONTHS.indexOf(month);
         if (monthIndex > -1) {
             const year = new Date().getFullYear();
+            // Set to middle of the month as a placeholder to satisfy the type
             saleDate = new Date(year, monthIndex, 15).toISOString();
         }
     }
     return {
         "Tên khách hàng": String(row[0] || ''),
-        "Số đơn hàng": String(row[2] || `SOLD-${index}`),
+        "Số đơn hàng": String(row[2] || `SOLD-${month}-${index}`), // Ensure a unique key
         "Dòng xe": String(row[3] || ''),
         "Phiên bản": String(row[4] || ''),
         "Ngoại thất": String(row[5] || ''),
         "Nội thất": String(row[6] || ''),
         "Tên tư vấn bán hàng": String(row[7] || ''),
         "VIN": String(row[8] || ''),
+        "CHÍNH SÁCH": String(row[9] || ''),
+        // Mock required fields from Order type for consistency
         "Ngày cọc": saleDate, 
         "Thời gian nhập": saleDate,
         "Thời gian ghép": saleDate,
@@ -315,26 +307,12 @@ const mapSoldDataRowToOrder = (row: any[], index: number, month?: string): Order
     };
 };
 
-
-// FIX: Switched from fetch to axios for consistency and robustness.
-const getSoldDataForMonth = async (sheetName: string): Promise<any[]> => {
-    const url = `${SOLD_CARS_API_URL}?sheet=${sheetName}`;
-    try {
-        const response = await axios.get(url);
-        // axios response.data should be the parsed JSON
-        const data = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.warn(`Error fetching sold data for ${sheetName}:`, error);
-        return [];
-    }
-};
-
+// New function to get data for a specific month, used by the SoldCarsView component
 export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> => {
     try {
         const rawData = await getSoldDataForMonth(month);
         const mappedData: Order[] = rawData
-            .filter(row => Array.isArray(row) && row.length > 8 && row[8])
+            .filter(row => Array.isArray(row) && row.length > 8 && row[8]) // Filter for rows with a VIN
             .map((row, index) => mapSoldDataRowToOrder(row, index, month));
         return {
             status: 'SUCCESS',
@@ -347,6 +325,7 @@ export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> 
     }
 };
 
+// This function will be used by the useSoldCarsApi hook to get all yearly data
 export const getAllSoldCarsData = async (): Promise<ApiResult> => {
     try {
         const fetchPromises = MONTHS.map(month => 
@@ -356,7 +335,7 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
         
         const allSoldDataWithMonth = monthlyResults.flatMap(({ month, data }) => 
             data
-                .filter(row => Array.isArray(row) && row.length > 8 && row[8])
+                .filter(row => Array.isArray(row) && row.length > 8 && row[8]) // Filter for rows with a VIN
                 .map(row => ({ row, month }))
         );
 
@@ -375,6 +354,7 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
         }
     }
 };
+
 
 export const requestVinClub = async (payload: Record<string, any>): Promise<ApiResult> => {
     const apiPayload = {
@@ -398,7 +378,7 @@ const postUserApi = async (payload: Record<string, any>): Promise<ApiResult> => 
             }
         }
 
-        const response = await axios.post(LOGIN_API_URL, bodyParams);
+        const response = await axios.post(API_URL, bodyParams);
         const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
 
         if (!result.success) {
@@ -418,24 +398,24 @@ const postUserApi = async (payload: Record<string, any>): Promise<ApiResult> => 
 };
 
 export const getTeamData = async (): Promise<ApiResult> => {
-    return getApi({ action: 'getTeamData' }, LOGIN_API_URL);
+    return getApi({ action: 'getTeamData' });
 };
 
 export const getUsers = async (): Promise<ApiResult> => {
-    return getApi({ action: 'getUsers' }, LOGIN_API_URL);
+    return getApi({ action: 'getUsers' });
 };
 
 
 export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
     
-    // Actions related to user/team management use LOGIN_API_URL
+    // Actions related to user/team management use a different API format but same URL now
     if (['addUser', 'updateTeams'].includes(action)) {
         return postUserApi({ action, ...params, adminUser: currentUser });
     }
 
-    // All other admin actions use the standard API_URL and format ({ status: 'SUCCESS'/'ERROR' })
-    return postApi({ action, ...params, adminUser: currentUser }, API_URL);
+    // All other admin actions use the standard API_URL and format
+    return postApi({ action, ...params, adminUser: currentUser });
 };
 
 export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> => {
@@ -452,12 +432,53 @@ export const uploadBulkInvoices = async (filesData: any[]): Promise<ApiResult> =
 };
 
 // --- Test Drive Actions ---
+
+/**
+ * Generic POST helper for Test Drive and Auth actions which may use a different success response format.
+ * It normalizes various success responses to the standard { status: 'SUCCESS' } format.
+ * @param payload The data to post.
+ * @returns A promise that resolves to an ApiResult.
+ */
+const postLegacyApi = async (payload: Record<string, any>): Promise<ApiResult> => {
+    try {
+        const bodyParams = new URLSearchParams();
+        for (const key in payload) {
+            if (payload[key] !== undefined && payload[key] !== null) {
+                bodyParams.append(key, String(payload[key]));
+            }
+        }
+
+        const response = await axios.post(API_URL, bodyParams);
+        const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
+        
+        // FIX: Accommodate inconsistent backend responses for success status.
+        // Some functions return `success: true`, while others return `status: 'SUCCESS'`.
+        const isSuccess = result.success === true || result.status === 'SUCCESS';
+
+        if (!isSuccess) {
+            throw new Error(result.message || 'API returned a failure response.');
+        }
+
+        // Normalize the response to the standard ApiResult format
+        const { success, ...apiResultData } = result;
+        return {
+            status: 'SUCCESS',
+            ...apiResultData,
+        };
+    } catch (error) {
+        const errorMessage = (error as any).response?.data?.message || (error as Error).message || 'An unknown API error occurred.';
+        console.error('Legacy API service error (POST):', error);
+        throw new Error(errorMessage);
+    }
+};
+
+
 export const getTestDriveSchedule = async (): Promise<ApiResult> => {
-    return getApi({ action: 'getTestDriveSchedule' }, LOGIN_API_URL);
+    return getApi({ action: 'getTestDriveSchedule' });
 };
 
 export const saveTestDriveBooking = async (bookingData: any): Promise<ApiResult> => {
-    return postApi({ action: 'saveTestDriveBooking', ...bookingData }, LOGIN_API_URL);
+    return postLegacyApi({ action: 'saveTestDriveBooking', ...bookingData });
 };
 
 export const updateTestDriveCheckin = async (payload: {
@@ -466,16 +487,22 @@ export const updateTestDriveCheckin = async (payload: {
     imagesBefore?: { name: string; type: string; data: string }[];
     odoAfter?: string;
     imagesAfter?: { name: string; type: string; data: string }[];
+    updateMode?: 'append';
 }): Promise<ApiResult> => {
     const apiPayload: Record<string, any> = {
         action: 'submitTestDriveCheckin',
         soPhieu: payload.soPhieu,
         updatedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
     };
+
     if (payload.odoBefore) apiPayload.odoBefore = payload.odoBefore;
     if (payload.imagesBefore) apiPayload.imagesBefore = JSON.stringify(payload.imagesBefore);
     if (payload.odoAfter) apiPayload.odoAfter = payload.odoAfter;
     if (payload.imagesAfter) apiPayload.imagesAfter = JSON.stringify(payload.imagesAfter);
     
-    return postApi(apiPayload, LOGIN_API_URL);
+    return postLegacyApi(apiPayload);
+};
+
+export const deleteTestDriveBooking = async (soPhieu: string): Promise<ApiResult> => {
+    return postLegacyApi({ action: 'deleteTestDriveBooking', soPhieu, deletedBy: sessionStorage.getItem("currentConsultant") || "Unknown User" });
 };

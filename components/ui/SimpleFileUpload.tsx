@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { compressImage } from '../../services/ocrService';
 
 interface SimpleFileUploadProps {
   id: string;
@@ -34,17 +35,35 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
     return true;
   }
 
-  const handleFile = (file: File | null) => {
-    if (file && !validateFile(file)) {
+  const handleFile = async (file: File | null) => {
+    if (file) {
+      if (!validateFile(file)) {
+        setSelectedFile(null);
+        onFileSelect(null);
+        if (inputRef.current) inputRef.current.value = '';
+        return;
+      }
+
+      if (file.type.startsWith('image/')) {
+        try {
+          const compressedFile = await compressImage(file);
+          setSelectedFile(compressedFile);
+          onFileSelect(compressedFile);
+        } catch (error) {
+          console.error("Image compression failed:", error);
+          alert('Lỗi nén ảnh. Vui lòng thử lại với ảnh khác.');
+          setSelectedFile(null);
+          onFileSelect(null);
+          if (inputRef.current) inputRef.current.value = '';
+        }
+      } else {
+        setSelectedFile(file);
+        onFileSelect(file);
+      }
+    } else {
       setSelectedFile(null);
       onFileSelect(null);
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-      return;
     }
-    setSelectedFile(file);
-    onFileSelect(file);
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

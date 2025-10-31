@@ -27,6 +27,10 @@ interface FiltersProps {
   plain?: boolean;
   dateRangeEnabled?: boolean;
   dateFilterEnabled?: boolean; // For single date selection
+  viewSwitcherEnabled?: boolean;
+  activeView?: 'table' | 'grid';
+  onViewChange?: (view: 'table' | 'grid') => void;
+  extraActionButton?: React.ReactNode;
 }
 
 const DatePicker: React.FC<{
@@ -48,7 +52,8 @@ const DatePicker: React.FC<{
 
 const Filters: React.FC<FiltersProps> = ({ 
     filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, 
-    hideSearch = false, size = 'default', plain = false, dateRangeEnabled = false, dateFilterEnabled = false
+    hideSearch = false, size = 'default', plain = false, dateRangeEnabled = false, dateFilterEnabled = false,
+    viewSwitcherEnabled = false, activeView = 'table', onViewChange, extraActionButton
 }) => {
   const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
@@ -165,6 +170,13 @@ const Filters: React.FC<FiltersProps> = ({
             <span id="total-items-count" className={`text-xs font-medium text-text-secondary bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap flex items-center ${isCompact ? 'px-2.5 h-8' : 'px-4 h-11'}`}>
               {totalCount} kết quả
             </span>
+            {viewSwitcherEnabled && (
+                <div className="flex items-center bg-surface-ground rounded-lg border border-border-primary p-0.5">
+                    <button onClick={() => onViewChange?.('table')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'table' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} title="Xem dạng bảng"><i className="fas fa-list"></i></button>
+                    <button onClick={() => onViewChange?.('grid')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'grid' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
+                </div>
+            )}
+            {extraActionButton}
             <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className={`flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50 ${isCompact ? 'w-8 h-8' : 'w-11 h-11'}`} aria-label="Làm mới" title="Làm mới">
               <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
             </button>

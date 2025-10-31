@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 interface ToastProps {
     show: boolean; // This prop is always true when the component is mounted
     title: string;
-    message: string;
+    message?: string;
     type: 'success' | 'error' | 'loading' | 'warning' | 'info';
     onClose: () => void;
     duration?: number;
@@ -12,6 +12,17 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }) => {
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<number | null>(null);
+
+    const handleClose = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        setIsExiting(true);
+        // Allow time for the exit animation before calling onClose to unmount
+        setTimeout(() => {
+            onClose();
+        }, 300);
+    }, [onClose]);
 
     // Effect to handle auto-dismiss
     useEffect(() => {
@@ -28,27 +39,14 @@ const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [title, message, type, duration]); // Rerun effect when a new toast is shown
-
-    const handleClose = () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-        setIsExiting(true);
-        // Allow time for the exit animation before calling onClose to unmount
-        setTimeout(() => {
-            onClose();
-        }, 300);
-    };
-
-    const hasProgressBar = type !== 'loading' && duration && duration > 0;
+    }, [title, message, type, duration, handleClose]);
 
     const typeDetails = {
-        success: { icon: 'fa-check-circle', baseClass: 'toast-success', accentColor: 'var(--tw-color-success, #388E3C)' },
-        error: { icon: 'fa-times-circle', baseClass: 'toast-error', accentColor: 'var(--tw-color-danger, #D32F2F)' },
-        loading: { icon: 'fa-spinner fa-spin', baseClass: 'toast-loading', accentColor: 'var(--tw-color-accent-primary, #0D47A1)' },
-        warning: { icon: 'fa-exclamation-triangle', baseClass: 'toast-warning', accentColor: 'var(--tw-color-warning, #F57C00)' },
-        info: { icon: 'fa-info-circle', baseClass: 'toast-info', accentColor: 'var(--tw-color-accent-secondary, #42A5F5)' },
+        success: { icon: 'fa-check-circle', bgClass: 'bg-success-bg', textClass: 'text-success' },
+        error: { icon: 'fa-times-circle', bgClass: 'bg-danger-bg', textClass: 'text-danger' },
+        loading: { icon: 'fa-spinner fa-spin', bgClass: 'bg-surface-accent', textClass: 'text-accent-primary' },
+        warning: { icon: 'fa-exclamation-triangle', bgClass: 'bg-warning-bg', textClass: 'text-warning' },
+        info: { icon: 'fa-info-circle', bgClass: 'bg-surface-accent', textClass: 'text-accent-primary' },
     };
 
     const currentType = typeDetails[type];
@@ -56,33 +54,19 @@ const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }
 
     return (
         <div 
-            className={`toast-container ${currentType.baseClass} ${animationClass}`}
+            className={`toast-container ${animationClass}`}
             role="alert"
             aria-live="assertive"
             aria-atomic="true"
         >
             <div className="toast-content">
-                <div className="toast-icon">
-                    <i className={`fas ${currentType.icon}`}></i>
+                <div className={`toast-icon-wrapper ${currentType.bgClass}`}>
+                    <i className={`fas ${currentType.icon} ${currentType.textClass}`}></i>
                 </div>
                 <div className="toast-body">
                     <p className="toast-title">{title}</p>
-                    <p className="toast-message">{message}</p>
-                </div>
-                <div className="toast-close">
-                    <button onClick={handleClose} aria-label="Đóng">
-                        <i className="fas fa-times"></i>
-                    </button>
                 </div>
             </div>
-            {hasProgressBar && (
-                <div className="toast-progress-container">
-                    <div 
-                        className="toast-progress-bar"
-                        style={{ animationDuration: `${duration}ms`, backgroundColor: currentType.accentColor }}
-                    ></div>
-                </div>
-            )}
         </div>
     );
 };

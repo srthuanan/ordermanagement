@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { StockVehicle, StockSortConfig } from '../types';
 import StockTable from './StockTable';
+import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
 import * as apiService from '../services/apiService';
-import moment from 'moment';
 
 const PAGE_SIZE = 10;
 
@@ -45,8 +45,29 @@ const StockView: React.FC<StockViewProps> = ({
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
-    const [processingVin, setProcessingVin] = useState<string | null>(null);
+    const [processingAction, setProcessingAction] = useState<{ vin: string; initialStatus: string } | null>(null);
+    const [view, setView] = useState<'table' | 'grid'>('grid');
     
+    useEffect(() => {
+        if (!processingAction) return;
+    
+        const currentVehicle = stockData.find(v => v.VIN === processingAction.vin);
+        // Check if the status has changed
+        if (currentVehicle && currentVehicle['Trạng thái'] !== processingAction.initialStatus) {
+            setProcessingAction(null);
+        }
+    
+        // Add a timeout as a safeguard to prevent spinner from getting stuck
+        const timer = setTimeout(() => {
+            if (processingAction) {
+                console.warn(`Spinner for VIN ${processingAction.vin} timed out after 15 seconds.`);
+                setProcessingAction(null);
+            }
+        }, 15000); // 15s timeout
+    
+        return () => clearTimeout(timer);
+    }, [stockData, processingAction]);
+
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
         setFilters(prev => ({ ...prev, ...newFilters }));
@@ -72,66 +93,58 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleHoldCar = async (vin: string) => {
-        const originalStockData = [...stockData]; // Snapshot for rollback
-    
-        // Optimistic UI update
-        const updatedStockData = stockData.map(vehicle =>
-            vehicle.VIN === vin
-                ? {
-                    ...vehicle,
-                    'Trạng thái': 'Đang giữ',
-                    'Người Giữ Xe': currentUser,
-                    // Estimate expiration time for immediate display
-                    'Thời Gian Hết Hạn Giữ': moment().add(30, 'minutes').toISOString()
-                }
-                : vehicle
-        );
-        setStockData(updatedStockData);
-        setProcessingVin(vin); // Use this to show a spinner on the row
+        const vehicle = stockData.find(v => v.VIN === vin);
+        if (!vehicle) return;
 
+        setProcessingAction({ vin, initialStatus: vehicle['Trạng thái'] });
+        showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading');
         try {
-            await apiService.holdCar(vin);
-            showToast('Giữ Xe Thành Công', `Xe VIN ${vin} đã được giữ.`, 'success', 3000);
-            // Silently refetch to get the accurate server-side expiration time
-            await refetchStock(true);
+            const result = await apiService.holdCar(vin);
+            hideToast();
+            showToast('Giữ Xe Thành Công', result.message, 'success', 3000);
+            
+            if (result.updatedVehicle) {
+                setStockData(currentData =>
+                    currentData.map(vehicle =>
+                        vehicle.VIN === vin ? result.updatedVehicle : vehicle
+                    )
+                );
+            } else {
+                refetchStock(true); // Fallback
+            }
         } catch (err) {
-            // Rollback on error
-            setStockData(originalStockData);
-            hideToast(); // Hide any "loading" toast if one was shown
+            hideToast();
             const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
             showToast('Giữ Xe Thất Bại', message, 'error', 5000);
-        } finally {
-            setProcessingVin(null);
+            setProcessingAction(null);
         }
     };
 
     const handleReleaseCar = async (vin: string) => {
-        const originalStockData = [...stockData];
+        const vehicle = stockData.find(v => v.VIN === vin);
+        if (!vehicle) return;
 
-        const updatedStockData = stockData.map(vehicle =>
-            vehicle.VIN === vin
-                ? {
-                    ...vehicle,
-                    'Trạng thái': 'Chưa ghép',
-                    'Người Giữ Xe': undefined, // Clear holder info
-                    'Thời Gian Hết Hạn Giữ': undefined
-                }
-                : vehicle
-        );
-        setStockData(updatedStockData);
-        setProcessingVin(vin);
-
+        setProcessingAction({ vin, initialStatus: vehicle['Trạng thái'] });
+        showToast('Đang xử lý...', `Đang hủy giữ xe VIN ${vin}.`, 'loading');
         try {
-            await apiService.releaseCar(vin);
-            showToast('Hủy Giữ Thành Công', `Đã hủy giữ xe VIN ${vin}.`, 'info', 3000);
-            await refetchStock(true);
+            const result = await apiService.releaseCar(vin);
+            hideToast();
+            showToast('Hủy Giữ Thành Công', result.message, 'info', 3000);
+    
+            if (result.updatedVehicle) {
+                setStockData(currentData =>
+                    currentData.map(vehicle =>
+                        vehicle.VIN === vin ? result.updatedVehicle : vehicle
+                    )
+                );
+            } else {
+                refetchStock(true); // Fallback
+            }
         } catch (err) {
-            setStockData(originalStockData);
             hideToast();
             const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
             showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
-        } finally {
-            setProcessingVin(null);
+            setProcessingAction(null);
         }
     };
 
@@ -164,19 +177,29 @@ const StockView: React.FC<StockViewProps> = ({
          if (filters.interior.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.interior.includes(vehicle["Nội thất"]));
         }
-        if (sortConfig !== null) {
-            filteredVehicles.sort((a, b) => {
+        
+        // Sort: "Đang giữ" on top, then by user-selected column
+        filteredVehicles.sort((a, b) => {
+            const aIsHeld = a['Trạng thái'] === 'Đang giữ';
+            const bIsHeld = b['Trạng thái'] === 'Đang giữ';
+    
+            if (aIsHeld && !bIsHeld) return -1;
+            if (!aIsHeld && bIsHeld) return 1;
+    
+            if (sortConfig) {
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
                 
                 if (aValue === null || aValue === undefined || aValue === '') return 1;
                 if (bValue === null || bValue === undefined || bValue === '') return -1;
-
+    
                 if (aValue < bValue) { return sortConfig.direction === 'asc' ? -1 : 1; }
                 if (aValue > bValue) { return sortConfig.direction === 'asc' ? 1 : -1; }
-                return 0;
-            });
-        }
+            }
+            
+            return 0; // if no sortConfig or values are equal
+        });
+
         return filteredVehicles;
     }, [stockData, filters, sortConfig]);
 
@@ -233,6 +256,21 @@ const StockView: React.FC<StockViewProps> = ({
         if (error) {
             return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetchStock()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
+        
+        const commonProps = {
+            sortConfig,
+            onSort: handleSort,
+            startIndex: (currentPage - 1) * PAGE_SIZE,
+            onHoldCar: handleHoldCar,
+            onReleaseCar: handleReleaseCar,
+            onCreateRequestForVehicle,
+            currentUser,
+            isAdmin,
+            showToast,
+            highlightedVins,
+            processingVin: processingAction?.vin || null
+        };
+        
         return ( 
             <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
                 <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
@@ -249,36 +287,27 @@ const StockView: React.FC<StockViewProps> = ({
                                 isLoading={isLoading}
                                 plain={true}
                                 size="compact"
+                                viewSwitcherEnabled={true}
+                                activeView={view}
+                                onViewChange={setView}
                             />
                         </div>
                     </div>
                 </div>
-                <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-                    <div className="flex-grow overflow-auto relative">
-                         <StockTable 
-                            vehicles={paginatedData} 
-                            sortConfig={sortConfig} 
-                            onSort={handleSort} 
-                            startIndex={(currentPage - 1) * PAGE_SIZE} 
-                            onHoldCar={handleHoldCar}
-                            onReleaseCar={handleReleaseCar}
-                            onCreateRequestForVehicle={onCreateRequestForVehicle}
-                            currentUser={currentUser}
-                            isAdmin={isAdmin}
-                            showToast={showToast}
-                            highlightedVins={highlightedVins}
-                            processingVin={processingVin}
-                         />
-                    </div>
-                    {totalPages > 0 && 
-                        <Pagination 
-                            currentPage={currentPage} 
-                            totalPages={totalPages} 
-                            onPageChange={setCurrentPage} 
-                            onLoadMore={() => {}} // No archive loading for stock
-                            isLoadingArchives={false}
-                            isLastArchive={true} // No archive loading for stock
-                        />}
+                <div className="flex-1 flex flex-col min-h-0">
+                    {view === 'table' ? (
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+                            <div className="flex-grow overflow-auto relative">
+                                <StockTable vehicles={paginatedData} {...commonProps} />
+                            </div>
+                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                        </div>
+                    ) : (
+                        <>
+                            <StockGridView vehicles={paginatedData} {...commonProps} />
+                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                        </>
+                    )}
                 </div>
             </div>
         );

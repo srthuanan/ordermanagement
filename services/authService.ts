@@ -1,4 +1,4 @@
-import { LOGIN_API_URL } from '../constants';
+import { API_URL } from '../constants';
 declare const axios: any;
 
 /**
@@ -23,7 +23,7 @@ interface LoginResult {
 
 const postAuthRequest = async (params: Record<string, string>): Promise<any> => {
     const body = new URLSearchParams(params);
-    const response = await axios.post(LOGIN_API_URL, body);
+    const response = await axios.post(API_URL, body);
     return response.data;
 };
 

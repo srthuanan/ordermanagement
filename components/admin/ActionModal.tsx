@@ -77,19 +77,16 @@ const ActionModal: React.FC<ActionModalProps> = ({
     const colorMap = {
         primary: {
             bg: 'bg-accent-primary',
-            hover: 'hover:bg-accent-primary-hover',
             iconBg: 'bg-blue-100',
             iconText: 'text-accent-primary',
         },
         danger: {
             bg: 'bg-danger',
-            hover: 'hover:bg-danger-hover',
             iconBg: 'bg-danger-bg',
             iconText: 'text-danger',
         },
         success: {
             bg: 'bg-success',
-            hover: 'hover:bg-emerald-700',
             iconBg: 'bg-success-bg',
             iconText: 'text-success',
         }
@@ -101,24 +98,33 @@ const ActionModal: React.FC<ActionModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up"
+                className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
             >
-                <main className="p-6 text-center">
-                    <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${selectedColor.iconBg}`}>
-                         <i className={`fas ${icon} text-2xl ${selectedColor.iconText}`}></i>
-                    </div>
-                    <h3 className="mt-4 text-lg font-bold leading-6 text-text-primary">{title}</h3>
-                    <div className="mt-2">
-                        <p className="text-sm text-text-secondary">{description}</p>
-                        {targetId && <p className="text-sm font-semibold text-text-primary mt-1 font-mono">{targetId}</p>}
-                    </div>
+                <div className={`h-1.5 rounded-t-2xl ${selectedColor.bg}`}></div>
 
+                <header className="p-6 flex items-start gap-4">
+                    <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg ${selectedColor.iconBg}`}>
+                        <i className={`fas ${icon} text-2xl ${selectedColor.iconText}`}></i>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold leading-6 text-text-primary">{title}</h3>
+                        <p className="text-sm text-text-secondary mt-1">{description}</p>
+                    </div>
+                </header>
+
+                <main className="px-6 pb-6 space-y-4">
+                    {targetId && (
+                        <div className="bg-surface-ground border border-border-primary rounded-md p-3 text-center">
+                            <p className="text-xs text-text-secondary">Thực hiện cho:</p>
+                            <p className="text-sm font-semibold text-text-primary font-mono mt-0.5">{targetId}</p>
+                        </div>
+                    )}
                     {inputs.length > 0 && (
-                        <div className="mt-4 space-y-3 text-left">
+                        <div className="space-y-4">
                             {inputs.map(input => (
                                 <div key={input.id}>
-                                    <label htmlFor={input.id} className="block text-sm font-medium text-text-secondary mb-1">{input.label}</label>
+                                    <label htmlFor={input.id} className="block text-sm font-medium text-text-secondary mb-1.5">{input.label}</label>
                                     {input.type === 'textarea' ? (
                                         <textarea
                                             id={input.id}
@@ -127,7 +133,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                                             onChange={handleInputChange}
                                             placeholder={input.placeholder}
                                             rows={3}
-                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
                                         />
                                     ) : input.type === 'select' ? (
                                         <select
@@ -151,7 +157,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                                             onChange={handleInputChange}
                                             placeholder={input.placeholder}
                                             maxLength={input.isVIN ? 17 : undefined}
-                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input font-mono"
+                                            className={`w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input ${input.isVIN ? 'font-mono' : ''}`}
                                         />
                                     )}
                                 </div>
@@ -159,9 +165,10 @@ const ActionModal: React.FC<ActionModalProps> = ({
                         </div>
                     )}
                 </main>
-                <footer className="px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-center sm:gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary w-full sm:w-auto">Hủy</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting || (inputs.length > 0 && !isFormValid())} className={`${submitButtonClass} w-full sm:w-auto`}>
+                
+                <footer className="px-6 py-4 flex justify-end gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
+                    <button onClick={handleSubmit} disabled={isSubmitting || (inputs.length > 0 && !isFormValid())} className={`${submitButtonClass}`}>
                         {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className={`fas ${icon} mr-2`}></i>}
                         {isSubmitting ? 'Đang xử lý...' : submitText}
                     </button>

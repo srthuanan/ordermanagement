@@ -59,3 +59,41 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
 
     return {};
 };
+
+
+const colorMap: { [key: string]: string } = {
+    // Exterior
+    'white': '#F8F8F8', 'blanc': '#F5F5DC',
+    'sunset orb': '#F97316', 'orange': '#F97316',
+    'red': '#EF4444', 'crimson': '#DC143C',
+    'blue': '#3B82F6', 'azure': '#007FFF',
+    'grey': '#778899', 'gray': '#778899', 'silver': '#A9A9A9', 'graphite': '#36454F',
+    'black': '#1E1E1E',
+    'yellow': '#EAB308', 'creme': '#F5DEB3',
+    'pink': '#EC4899', 'berry': '#EC4899',
+    'mint': '#3CB371', 'green': '#22C55E', 'ocean': '#006400',
+    'bronze': '#92400E',
+    // Interior
+    'beige': '#F5F5DC',
+    'brown': '#A52A2A',
+};
+
+export const getBackgroundColorStyle = (colorName: string | undefined): React.CSSProperties => {
+    if (!colorName) return {};
+    const lowerColor = colorName.toLowerCase();
+    
+    // Find a matching key in our map
+    const matchedKey = Object.keys(colorMap).find(key => lowerColor.includes(key));
+    
+    if (matchedKey) {
+        const hex = colorMap[matchedKey];
+        const style: React.CSSProperties = { backgroundColor: hex };
+        // Add a border for very light or dark colors to ensure visibility on similar backgrounds
+        if (hex === '#F8F8F8' || hex === '#1E1E1E' || hex === '#F5F5DC') {
+            style.border = '1px solid #CBD5E1';
+        }
+        return style;
+    }
+
+    return { backgroundColor: '#E2E8F0' }; // fallback color
+};

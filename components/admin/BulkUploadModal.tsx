@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import * as apiService from '../../services/apiService';
+import { compressImage } from '../../services/ocrService';
 
 interface BulkUploadModalProps {
     isOpen: boolean;
@@ -29,9 +30,28 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const [isUploading, setIsUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
 
-    const handleFiles = useCallback((incomingFiles: FileList | null) => {
+    const handleFiles = useCallback(async (incomingFiles: FileList | null) => {
         if (!incomingFiles) return;
-        const newFiles: UploadableFile[] = Array.from(incomingFiles).map(file => {
+
+        showToast('Đang xử lý', `Đang chuẩn bị và nén ${incomingFiles.length} tệp...`, 'loading');
+
+        const newFilesArray = Array.from(incomingFiles);
+        const processedFiles = await Promise.all(newFilesArray.map(async file => {
+            if (file.type.startsWith('image/')) {
+                try {
+                    return await compressImage(file);
+                } catch (e) {
+                    console.error('Lỗi nén ảnh cho:', file.name, e);
+                    showToast('Lỗi Nén Ảnh', `Không thể nén tệp ${file.name}.`, 'warning');
+                    return file; // fallback to original on error
+                }
+            }
+            return file;
+        }));
+
+        hideToast();
+
+        const newUploadableFiles: UploadableFile[] = processedFiles.map(file => {
             const orderNumberRegex = /^(N\d{5}-VSO-\d{2}-\d{2}-\d{4})/i;
             const match = file.name.match(orderNumberRegex);
             const orderNumber = match ? match[1].toUpperCase() : null;
@@ -39,12 +59,13 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             return { file, orderNumber, status };
         });
 
+
         setFiles(prev => {
             const existingFileNames = new Set(prev.map(f => f.file.name));
-            const uniqueNewFiles = newFiles.filter(nf => !existingFileNames.has(nf.file.name));
+            const uniqueNewFiles = newUploadableFiles.filter(nf => !existingFileNames.has(nf.file.name));
             return [...prev, ...uniqueNewFiles];
         });
-    }, []);
+    }, [showToast, hideToast]);
 
     const handleDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
     const handleDrop = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); };

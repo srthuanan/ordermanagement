@@ -1,6 +1,12 @@
 import React from 'react';
 import RequestForm from '../RequestForm';
-import { Order, StockVehicle } from '../../types';
+import { AnalyticsData, Order, StockVehicle } from '../../types';
+
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
 
 interface CreateRequestModalProps {
     isOpen: boolean;
@@ -11,9 +17,11 @@ interface CreateRequestModalProps {
     existingOrderNumbers: string[];
     initialVehicle?: StockVehicle;
     currentUser: string;
+    vehicleAnalyticsData: AnalyticsData;
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
-const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose, onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser }) => {
+const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose, onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
     if (!isOpen) return null;
 
     return (
@@ -47,6 +55,8 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                         existingOrderNumbers={existingOrderNumbers}
                         initialVehicle={initialVehicle}
                         currentUser={currentUser}
+                        vehicleAnalyticsData={vehicleAnalyticsData}
+                        onOpenImagePreview={onOpenImagePreview}
                     />
                 </main>
             </div>

@@ -1,32 +1,54 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { compressImage } from '../../services/ocrService';
 
 interface FileUploadProps {
   onFileSelect: (file: File | null) => void;
   isProcessing: boolean;
   ocrStatus: string;
+  showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocrStatus }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocrStatus, showToast }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const handleFile = useCallback((file: File | null) => {
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file);
-      onFileSelect(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        onFileSelect(null);
+
+  const handleFile = useCallback(async (file: File | null) => {
+    // Reset states for a new file selection
+    onFileSelect(null);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        showToast('Tệp không hợp lệ', 'Vui lòng chỉ chọn tệp hình ảnh.', 'warning');
+        return;
+      }
+
+      setIsCompressing(true);
+      try {
+        const compressedFile = await compressImage(file);
+        
+        setSelectedFile(compressedFile);
+        onFileSelect(compressedFile); // This triggers the OCR in the parent component
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewUrl(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+        
+      } catch (error) {
+        console.error("Image compression failed:", error);
+        showToast('Lỗi Nén Ảnh', 'Không thể xử lý ảnh của bạn. Vui lòng thử ảnh khác.', 'error');
+      } finally {
+        setIsCompressing(false);
+      }
     }
-  }, [onFileSelect]);
+  }, [onFileSelect, showToast]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -121,9 +143,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
             </>
         )}
       </div>
-      {(isProcessing || ocrStatus) && (
+      {(isCompressing || isProcessing || ocrStatus) && (
         <p className={`mt-2 text-sm text-center italic ${getOcrStatusClass()}`}>
-            {isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang xử lý ảnh...</> : ocrStatus}
+            {isCompressing ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang nén ảnh...</> : (isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>{ocrStatus}</> : ocrStatus)}
         </p>
       )}
     </div>

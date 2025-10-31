@@ -83,18 +83,6 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
   const confirmRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if ((window as any).tippy) {
-      (window as any).tippy('[data-tippy-content]', {
-        allowHTML: true,
-        placement: 'top',
-        animation: 'scale-subtle',
-        theme: 'light-border',
-        duration: [200, 200],
-      });
-    }
-  }, [vehicles]);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (confirmRef.current && !confirmRef.current.contains(event.target as Node)) {
         setConfirmAction(null);
@@ -152,30 +140,10 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         const isProcessing = processingVin === vehicle.VIN;
 
                         const isHeld = vehicle["Trạng thái"] === 'Đang giữ';
-                        const tippyContent = isHeld && vehicle["Người Giữ Xe"] && vehicle["Thời Gian Hết Hạn Giữ"] ? `
-                            <div class="p-2 text-left text-sm">
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-user-clock text-accent-primary"></i>
-                                    <div>
-                                        <div class="font-semibold text-text-secondary text-xs">Người giữ:</div>
-                                        <div class="text-text-primary font-medium">${vehicle["Người Giữ Xe"]}</div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-dashed border-border-primary">
-                                    <i class="fas fa-hourglass-end text-danger"></i>
-                                    <div>
-                                        <div class="font-semibold text-text-secondary text-xs">Hết hạn:</div>
-                                        <div class="text-text-primary font-medium font-mono">${moment(vehicle["Thời Gian Hết Hạn Giữ"]).format('HH:mm DD/MM/YYYY')}</div>
-                                        <div class="text-xs text-text-secondary">${moment(vehicle["Thời Gian Hết Hạn Giữ"]).fromNow()}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        ` : '';
 
                         return (
                             <tr 
                                 key={vehicle.VIN}
-                                data-tippy-content={tippyContent}
                                 className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
                                 style={{animationDelay: `${index * 20}ms`}}
                             >
@@ -195,6 +163,12 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
                                     <div>
                                         <StatusBadge status={vehicle["Trạng thái"]} />
+                                        {isHeld && vehicle["Người Giữ Xe"] && (
+                                            <div className="mt-1.5 text-xs font-medium text-text-primary flex items-center gap-1.5">
+                                                <i className="far fa-user text-text-secondary" title="Người giữ xe"></i>
+                                                <span className="truncate max-w-[120px]" title={vehicle["Người Giữ Xe"]}>{vehicle["Người Giữ Xe"]}</span>
+                                            </div>
+                                        )}
                                         {isHeld && vehicle["Thời Gian Hết Hạn Giữ"] && (
                                             <HoldCountdown expirationTime={vehicle["Thời Gian Hết Hạn Giữ"]} />
                                         )}

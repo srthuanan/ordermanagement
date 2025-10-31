@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TestDriveBooking } from '../../types';
 import { normalizeName } from '../../services/authService';
+import { compressImage } from '../../services/ocrService';
 
 interface ImageSource {
     src: string;
@@ -10,6 +11,7 @@ interface ImageSource {
 
 interface TestDriveCheckinModalProps {
     booking: TestDriveBooking;
+    mode: 'checkin' | 'checkout' | 'update' | 'view';
     onClose: () => void;
     onSubmit: (payload: any) => Promise<boolean>;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -24,8 +26,12 @@ const fileToBase64 = (file: File): Promise<string> => {
     reader.readAsDataURL(file);
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        // Return the full Data URL, which the backend script likely expects to parse.
-        resolve(reader.result);
+        const base64String = reader.result.split(',')[1];
+        if (base64String) {
+          resolve(base64String);
+        } else {
+          reject(new Error('Không thể chuyển đổi file thành base64.'));
+        }
       } else {
         reject(new Error('Không thể đọc tệp.'));
       }
@@ -46,9 +52,9 @@ const toEmbeddableDriveUrl = (url: string): string => {
     if (!url.includes('drive.google.com')) {
         return url;
     }
-    // If it's already a thumbnail URL, return it
+    // If it's already a thumbnail URL, return it, but request a slightly larger size
     if (url.includes('/thumbnail?id=')) {
-        return url;
+        return url.replace(/(&sz=)[^&]+/, '&sz=w200');
     }
     // Try to extract file ID from other formats like /uc?id= or /d/
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
@@ -67,14 +73,14 @@ const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const cameraInputRef = React.useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
+    React.useEffect(() => {
         // Cleanup object URLs on unmount
         return () => {
             previews.forEach(url => URL.revokeObjectURL(url));
         };
     }, [previews]);
     
-    const handleFiles = (newFilesList: FileList | null) => {
+    const handleFiles = async (newFilesList: FileList | null) => {
         if (!newFilesList) return;
 
         const newFilesArray = Array.from(newFilesList);
@@ -83,13 +89,20 @@ const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label
         
         if (uniqueNewFiles.length === 0) return;
 
-        const allFiles = [...files, ...uniqueNewFiles];
-        setFiles(allFiles);
+        try {
+            const compressedFiles = await Promise.all(uniqueNewFiles.map(file => compressImage(file)));
 
-        const newPreviews = uniqueNewFiles.map(file => URL.createObjectURL(file));
-        setPreviews(prev => [...prev, ...newPreviews]);
-
-        onFilesChange(allFiles);
+            const allFiles = [...files, ...compressedFiles];
+            setFiles(allFiles);
+    
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+            setPreviews(prev => [...prev, ...newPreviews]);
+    
+            onFilesChange(allFiles);
+        } catch (error) {
+            console.error("Lỗi nén ảnh:", error);
+            alert('Một hoặc nhiều ảnh không thể được xử lý. Vui lòng thử lại.');
+        }
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,38 +197,17 @@ const parseImageData = (jsonString: string | undefined): string[] => {
     try {
         const parsed = JSON.parse(jsonString);
         if (Array.isArray(parsed)) {
-            return parsed.map(item => {
-                if (typeof item === 'string') {
-                    // Only accept valid-looking URLs to prevent broken images from bad data
-                    if (item.startsWith('http') || item.startsWith('data:')) {
-                        return item;
-                    }
-                }
-                if (item && typeof item === 'object') {
-                    // Handle new format
-                    if (item.base64Data && item.mimeType) {
-                        return `data:${item.mimeType};base64,${item.base64Data}`;
-                    }
-                    // Handle old format
-                    if (item.data && item.type) {
-                        return `data:${item.type};base64,${item.data}`;
-                    }
-                }
-                return null;
-            }).filter((item): item is string => item !== null);
+            // This now correctly handles an array of strings, which is the new format from the server.
+            return parsed.filter((item): item is string => typeof item === 'string');
         }
     } catch (e) {
-        // Fallback for non-JSON string which might be a single URL (either http or data URL)
-        if (typeof jsonString === 'string' && (jsonString.startsWith('http') || jsonString.startsWith('data:'))) {
-            return [jsonString];
-        }
         console.error("Failed to parse image data:", e, "Data was:", jsonString);
     }
     return [];
 };
 
 
-const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, onClose, onSubmit, showToast, onOpenImagePreview, currentUser, isAdmin }) => {
+const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, mode, onClose, onSubmit, showToast, onOpenImagePreview, currentUser, isAdmin }) => {
     const [odoBefore, setOdoBefore] = useState(booking.odoBefore || '');
     const [imagesBefore, setImagesBefore] = useState<File[]>([]);
     const [odoAfter, setOdoAfter] = useState(booking.odoAfter || '');
@@ -223,12 +215,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const canUpdate = useMemo(() => isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan), [isAdmin, currentUser, booking.tenTuVan]);
-
-    const mode = useMemo(() => {
-        if (!booking.odoBefore) return 'checkin';
-        if (!booking.odoAfter) return 'checkout';
-        return 'view'; // Both are filled
-    }, [booking]);
+    const isViewOnly = mode === 'view' || !canUpdate;
 
     const existingImagesBefore = useMemo(() => parseImageData(booking.imagesBefore), [booking.imagesBefore]);
     const existingImagesAfter = useMemo(() => parseImageData(booking.imagesAfter), [booking.imagesAfter]);
@@ -245,13 +232,8 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     return;
                 }
                 payload.odoBefore = odoBefore;
-                payload.imagesBefore = await Promise.all(imagesBefore.map(async (file, index) => {
-                    const fileName = file.name || `${booking.soPhieu}_before_${Date.now()}_${index}.jpg`;
-                    return {
-                        name: fileName,
-                        type: file.type || 'image/jpeg',
-                        data: await fileToBase64(file)
-                    };
+                payload.imagesBefore = await Promise.all(imagesBefore.map(async (file) => {
+                    return { name: file.name, type: file.type, data: await fileToBase64(file) };
                 }));
             } else if (mode === 'checkout') {
                 if (!odoAfter.trim() || imagesAfter.length === 0) {
@@ -265,14 +247,21 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     return;
                 }
                 payload.odoAfter = odoAfter;
-                payload.imagesAfter = await Promise.all(imagesAfter.map(async (file, index) => {
-                    const fileName = file.name || `${booking.soPhieu}_after_${Date.now()}_${index}.jpg`;
-                    return {
-                        name: fileName,
-                        type: file.type || 'image/jpeg',
-                        data: await fileToBase64(file)
-                    };
+                payload.imagesAfter = await Promise.all(imagesAfter.map(async (file) => {
+                    return { name: file.name, type: file.type, data: await fileToBase64(file) };
                 }));
+            } else if (mode === 'update') {
+                if (imagesBefore.length === 0 && imagesAfter.length === 0) {
+                    showToast('Không có ảnh mới', 'Vui lòng chọn hoặc chụp ảnh mới để cập nhật.', 'warning');
+                    setIsSubmitting(false);
+                    return;
+                }
+                if (imagesBefore.length > 0) {
+                    payload.imagesBefore = await Promise.all(imagesBefore.map(async (file) => ({ name: file.name, type: file.type, data: await fileToBase64(file) })));
+                }
+                if (imagesAfter.length > 0) {
+                    payload.imagesAfter = await Promise.all(imagesAfter.map(async (file) => ({ name: file.name, type: file.type, data: await fileToBase64(file) })));
+                }
             } else {
                 setIsSubmitting(false);
                 return; // View mode, no submission
@@ -293,7 +282,9 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-surface-card w-full max-w-5xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-text-primary">Cập Nhật Thông Tin Lái Thử</h2>
+                    <h2 className="text-xl font-bold text-text-primary">
+                        {mode === 'view' ? 'Xem Thông Tin Lái Thử' : 'Cập Nhật Thông Tin Lái Thử'}
+                    </h2>
                     <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
 
@@ -304,63 +295,61 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* BEFORE SECTION */}
-                        <fieldset disabled={!canUpdate || mode !== 'checkin'} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
-                            <legend className="font-bold text-lg text-text-primary px-2">Trước Khi Đi</legend>
+                        <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
+                            <legend className="font-bold text-lg text-text-primary px-2 -mx-2">Trước Khi Đi</legend>
                             <div>
-                                <label htmlFor="odoBefore" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) <span className="text-danger">*</span></label>
-                                <input type="number" id="odoBefore" value={odoBefore} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km hiện tại" />
+                                <label htmlFor="odoBefore" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkin' && <span className="text-danger">*</span>}</label>
+                                <input type="number" id="odoBefore" value={odoBefore} readOnly={mode !== 'checkin' || isViewOnly} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km hiện tại" />
                             </div>
                             
-                            {existingImagesBefore.length > 0 ? (
+                            {existingImagesBefore.length > 0 && (
                                 <ImageGallery
                                     images={existingImagesBefore}
                                     label="Hình ảnh đã tải lên"
                                     onImageClick={(_, index) => {
                                         const imageSources = existingImagesBefore.map((imgUrl, i) => ({
-                                            src: imgUrl,
-                                            originalUrl: imgUrl,
-                                            label: `Ảnh trước khi đi ${i + 1}`
+                                            src: imgUrl, originalUrl: imgUrl, label: `Ảnh trước khi đi ${i + 1}`
                                         }));
                                         onOpenImagePreview(imageSources, index, booking.tenKhachHang);
                                     }}
                                 />
-                            ) : (
-                                <MultiImageUpload label="Hình ảnh xe" onFilesChange={setImagesBefore} />
                             )}
-                        </fieldset>
+                            {(mode === 'checkin' || mode === 'update') && canUpdate && (
+                                <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh trước khi đi' : 'Hình ảnh xe'} onFilesChange={setImagesBefore} />
+                            )}
+                        </div>
 
                         {/* AFTER SECTION */}
-                         <fieldset disabled={!canUpdate || mode !== 'checkout'} className="space-y-4 p-4 border border-border-primary rounded-lg disabled:opacity-70 disabled:bg-surface-input">
-                            <legend className="font-bold text-lg text-text-primary px-2">Sau Khi Về</legend>
+                         <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
+                            <legend className="font-bold text-lg text-text-primary px-2 -mx-2">Sau Khi Về</legend>
                              <div>
-                                <label htmlFor="odoAfter" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) <span className="text-danger">*</span></label>
-                                <input type="number" id="odoAfter" value={odoAfter} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input" placeholder="Nhập số km sau khi lái thử"/>
+                                <label htmlFor="odoAfter" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkout' && <span className="text-danger">*</span>}</label>
+                                <input type="number" id="odoAfter" value={odoAfter} readOnly={mode !== 'checkout' || isViewOnly} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km sau khi lái thử"/>
                             </div>
-                             {existingImagesAfter.length > 0 ? (
+                             {existingImagesAfter.length > 0 && (
                                 <ImageGallery
                                     images={existingImagesAfter}
                                     label="Hình ảnh đã tải lên"
                                     onImageClick={(_, index) => {
                                         const imageSources = existingImagesAfter.map((imgUrl, i) => ({
-                                            src: imgUrl,
-                                            originalUrl: imgUrl,
-                                            label: `Ảnh sau khi về ${i + 1}`
+                                            src: imgUrl, originalUrl: imgUrl, label: `Ảnh sau khi về ${i + 1}`
                                         }));
                                         onOpenImagePreview(imageSources, index, booking.tenKhachHang);
                                     }}
                                 />
-                            ) : (
-                                <MultiImageUpload label="Hình ảnh xe" onFilesChange={setImagesAfter} />
                             )}
-                        </fieldset>
+                            {(mode === 'checkout' || mode === 'update') && canUpdate && (
+                                <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh sau khi về' : 'Hình ảnh xe'} onFilesChange={setImagesAfter} />
+                            )}
+                        </div>
                     </div>
                 </main>
 
-                 {canUpdate && mode !== 'view' && (
+                 {mode !== 'view' && canUpdate && (
                     <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
                         <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                         <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">
-                            {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang lưu...</> : <><i className="fas fa-save mr-2"></i> Lưu Thông Tin</>}
+                            {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang lưu...</> : <><i className="fas fa-save mr-2"></i> {mode === 'update' ? 'Cập Nhật Ảnh' : 'Lưu Thông Tin'}</>}
                         </button>
                     </footer>
                  )}

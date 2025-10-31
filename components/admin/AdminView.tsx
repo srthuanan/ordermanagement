@@ -13,10 +13,12 @@ import BulkUploadModal from './BulkUploadModal';
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
+import TotalViewDashboard from '../ui/TotalViewDashboard';
 
 
 const PAGE_SIZE = 15;
 
+type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu';
 // FIX: Defined the User type used for team management.
 type User = { name: string; role: string; username: string };
 
@@ -43,6 +45,9 @@ interface AdminViewProps {
     errorXuathoadon: string | null;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onOpenFilePreview: (url: string, label: string) => void;
+    soldData: Order[];
+    onNavigateTo?: (view: ActiveView) => void;
+    onShowOrderDetails: (order: Order) => void;
 }
 
 type ModalState = {
@@ -51,12 +56,12 @@ type ModalState = {
 } | null;
 
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
-type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
+type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 type DateRange = { start: string; end: string; };
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview }) => {
-    const [adminView, setAdminView] = useState<AdminSubView>('invoices');
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, soldData, onNavigateTo, onShowOrderDetails }) => {
+    const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
     
     // State for sorting
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -121,6 +126,23 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
+    const handleTabChange = useCallback((view: AdminSubView, filters?: any) => {
+        setAdminView(view);
+        if (view === 'invoices' && filters?.trangThai) {
+            setInvoiceFilters({
+                keyword: '',
+                tvbh: [],
+                dongXe: [],
+                trangThai: filters.trangThai,
+            });
+        }
+        setSelectedRows(new Set());
+        setCurrentPage(1);
+        setPendingCurrentPage(1);
+        setPairedCurrentPage(1);
+        setVcCurrentPage(1);
+    }, []);
+
      const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | DateRange | undefined; keyword?: string | undefined; dateRange?: DateRange | undefined; }>) => {
         if (adminView === 'invoices') {
             setInvoiceFilters(prev => ({ ...prev, ...newFilters }));
@@ -407,17 +429,35 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     
     const handleAction = (type: ActionType, order: Order | VcRequest) => {
-        if (type === 'manualMatch') {
+        const directExecutionActions: ActionType[] = [
+            'approve', 'pendingSignature', 'resend', 'approveVc'
+        ];
+
+        if (type === 'requestInvoice') {
+            showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
+            return;
+        }
+
+        if (directExecutionActions.includes(type)) {
+            switch (type) {
+                case 'approve':
+                    handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.');
+                    break;
+                case 'pendingSignature':
+                    handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([order['Số đơn hàng']]) }, 'Đã chuyển trạng thái.');
+                    break;
+                case 'resend':
+                    handleAdminSubmit('resendEmail', { orderNumbers: JSON.stringify([order['Số đơn hàng']]), emailType: 'invoice_issued' }, 'Đã gửi lại email.');
+                    break;
+                case 'approveVc':
+                     handleAdminSubmit('approveVcRequest', { orderNumber: order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.');
+                    break;
+            }
+        } else if (type === 'manualMatch') {
             const suggestedCars = suggestionsMap.get(order['Số đơn hàng']) || [];
             setSuggestionModalState({ order: order as Order, cars: suggestedCars });
-        } else if (type === 'requestInvoice') {
-            const orderToRequest = allOrders.find(o => o['Số đơn hàng'] === order['Số đơn hàng']);
-            if(orderToRequest) {
-                console.log("Requesting invoice for:", orderToRequest);
-                showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
-            }
-        }
-        else {
+        } else {
+            // All other actions need a modal for additional input
             setInvoiceModalState({ type, order });
         }
     };
@@ -562,6 +602,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
 
         switch(adminView) {
+            case 'dashboard':
+                return <TotalViewDashboard 
+                    allOrders={allOrders} 
+                    stockData={stockData} 
+                    soldData={soldData} 
+                    teamData={teamData}
+                    allUsers={allUsers}
+                    onTabChange={handleTabChange}
+                    onNavigateTo={onNavigateTo}
+                    onShowOrderDetails={onShowOrderDetails}
+                />;
             case 'invoices':
             case 'pending':
             case 'paired': {
@@ -622,6 +673,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
+        dashboard: [],
         invoices: [
             { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
             { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
@@ -761,9 +813,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         );
     };
 
-    const tabs: AdminSubView[] = ['invoices', 'pending', 'paired', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-    const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number> = { dashboard: 0, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
@@ -777,7 +829,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                             >
                                 {labels[view]}
-                                <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
+                                {view !== 'dashboard' && <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>}
                             </button>
                         ))}
                     </div>
@@ -797,7 +849,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )}
                     </div>
                 </div>
-                 { adminView !== 'phongkd' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
+                 { adminView !== 'phongkd' && adminView !== 'dashboard' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
             </div>
             
             <div className="flex-grow min-h-0 flex flex-col">

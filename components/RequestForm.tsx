@@ -5,6 +5,12 @@ import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, i
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 
+interface ImageSource {
+    src: string;
+    originalUrl?: string;
+    label: string;
+}
+
 interface RequestFormProps {
     onSuccess: (newOrder: Order) => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -12,6 +18,8 @@ interface RequestFormProps {
     existingOrderNumbers: string[];
     initialVehicle?: StockVehicle;
     currentUser: string;
+    vehicleAnalyticsData: AnalyticsData;
+    onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
 const InputGroup: React.FC<{icon: string; children: React.ReactNode; label?: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
@@ -39,7 +47,7 @@ const SectionHeader: React.FC<{icon: string, title: string}> = ({ icon, title })
 );
 
 
-const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser }) => {
+const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
     const [formData, setFormData] = useState({
         ten_ban_hang: currentUser,
         ten_khach_hang: '',
@@ -55,7 +63,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
 
     const [isProcessingOcr, setIsProcessingOcr] = useState(false);
     const [ocrStatus, setOcrStatus] = useState('');
-    const [vehicleAnalyticsData, setVehicleAnalyticsData] = useState<AnalyticsData | null>(null);
     const [warningMessage, setWarningMessage] = useState('');
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,14 +85,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
             }));
         }
     }, [initialVehicle]);
-
-    useEffect(() => {
-        const mockAnalytics: AnalyticsData = {
-            pendingRequestCount: { 'vf 8|plus|jet black (ce11)': 5 },
-            stockStatus: { 'vf 6|eco tiêu chuẩn|neptune grey (ce14)': { count: 3, isSlowMoving: true } }
-        };
-        setVehicleAnalyticsData(mockAnalytics);
-    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -202,6 +201,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
         } finally { setIsSubmitting(false); }
     };
     
+    const handlePreviewUnc = () => {
+        const uncSampleJpg = './pictures/uynhiemchi.jpg';
+        onOpenImagePreview(
+            [{ src: uncSampleJpg, originalUrl: uncSampleJpg, label: 'Mẫu Ủy Nhiệm Chi' }],
+            0,
+            'Mẫu UNC'
+        );
+    };
+
     const availableVersions = formData.dong_xe ? (versionsMap[formData.dong_xe as keyof typeof versionsMap] || allPossibleVersions) : [];
     const warningClasses = { hot: 'bg-warning-bg border-warning/50 text-warning', slow: 'bg-success-bg border-success/50 text-success' };
 
@@ -252,14 +260,14 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 <div className="space-y-6">
                      <section>
                         <SectionHeader icon="fa-file-invoice-dollar" title="Chứng từ & Xác thực" />
-                        <a href="/ordermanagement/mau_uy_nhiem_chi.pdf" download="mau_uy_nhiem_chi.pdf" className="text-xs text-accent-secondary hover:text-accent-primary hover:underline transition-colors flex items-center gap-2 mb-2">
-                            <i className="fas fa-file-download"></i>
-                            <span>Tải Mẫu Ủy Nhiệm Chi</span>
-                        </a>
+                        <button type="button" onClick={handlePreviewUnc} className="text-xs text-accent-secondary hover:text-accent-primary hover:underline transition-colors flex items-center gap-2 mb-2">
+                            <i className="fas fa-eye"></i>
+                            <span>Xem Ảnh Ủy Nhiệm Chi Mẫu</span>
+                        </button>
                         <div className="space-y-5 mt-4">
                             <div>
-                                <label htmlFor="chic_file_upload" className="block text-sm font-medium text-text-secondary text-left mb-2">Ảnh Ủy Nhiệm Chi</label>
-                                <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus}/>
+                                <label htmlFor="chic_file_upload" className="block text-sm font-medium text-text-secondary text-left mb-2">Ảnh Ủy nhiệm chi</label>
+                                <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus} showToast={showToast} />
                             </div>
                             <InputGroup icon="fa-calendar-alt" label="Ngày Cọc (Tự động điền từ ảnh)" htmlFor="ngay_coc">
                                 <input id="ngay_coc" name="ngay_coc" type="datetime-local" value={formData.ngay_coc ? formData.ngay_coc.slice(0, 16) : ''} required readOnly className={`${inputClass} !bg-surface-input cursor-not-allowed`} />

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import { compressImage } from '../../services/ocrService';
 
 // --- Modal 1: Request with Reason and Optional Image Paste ---
 
@@ -20,16 +21,26 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     const [images, setImages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>) => {
+    const handleImagePaste = useCallback(async (event: React.ClipboardEvent<HTMLDivElement>) => {
         const items = event.clipboardData.items;
         for (const item of items) {
             if (item.type.indexOf("image") !== -1) {
                 event.preventDefault();
                 const blob = item.getAsFile();
                 if (blob) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
-                    reader.readAsDataURL(blob);
+                    const file = new File([blob], "pasted_image.jpg", { type: blob.type });
+                    try {
+                        const compressedFile = await compressImage(file);
+                        const reader = new FileReader();
+                        reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
+                        reader.readAsDataURL(compressedFile);
+                    } catch (err) {
+                        console.error("Paste compression failed", err);
+                        // Fallback to original blob if compression fails
+                        const reader = new FileReader();
+                        reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
+                        reader.readAsDataURL(blob);
+                    }
                 }
             }
         }
@@ -54,32 +65,35 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     if (!isOpen) return null;
 
      const themeClasses = {
-        primary: { iconBg: 'bg-blue-100', iconText: 'text-accent-primary', btn: 'btn-primary' },
-        danger: { iconBg: 'bg-danger-bg', iconText: 'text-danger', btn: 'btn-danger' },
-        warning: { iconBg: 'bg-warning-bg', iconText: 'text-warning', btn: 'btn-primary' }, // Primary button for warning action
+        primary: { iconBg: 'bg-blue-100', iconText: 'text-accent-primary', btn: 'btn-primary', barBg: 'bg-accent-primary' },
+        danger: { iconBg: 'bg-danger-bg', iconText: 'text-danger', btn: 'btn-danger', barBg: 'bg-danger' },
+        warning: { iconBg: 'bg-warning-bg', iconText: 'text-warning', btn: 'btn-primary', barBg: 'bg-warning' }, // Primary button for warning action
     };
     const currentTheme = themeClasses[theme] || themeClasses.primary;
 
     return (
          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
-                <header className="flex items-center justify-between p-5 border-b border-border-primary">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentTheme.iconBg}`}>
-                            <i className={`fas ${icon} text-lg ${currentTheme.iconText}`}></i>
+                <div className={`h-1.5 rounded-t-2xl ${currentTheme.barBg}`}></div>
+                <header className="flex items-start justify-between p-6">
+                    <div className="flex items-start gap-4">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${currentTheme.iconBg}`}>
+                            <i className={`fas ${icon} text-2xl ${currentTheme.iconText}`}></i>
                         </div>
-                        <h2 className="text-xl font-bold text-text-primary">{title}</h2>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">{title}</h2>
+                            <p className="text-sm text-text-secondary mt-1">Đang thực hiện cho đơn hàng: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-2 -mr-2"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                    <p className="text-sm text-text-secondary">Đang thực hiện cho đơn hàng: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
+                <main className="px-6 pb-6 space-y-4 max-h-[60vh] overflow-y-auto">
                     <div>
-                        <label htmlFor="modal-reason-input" className="block text-sm font-medium text-text-primary mb-2">{reasonLabel}</label>
-                        <textarea id="modal-reason-input" value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input" />
+                        <label htmlFor="modal-reason-input" className="block text-sm font-medium text-text-primary mb-1.5">{reasonLabel}</label>
+                        <textarea id="modal-reason-input" value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Dán ảnh minh họa (Tùy chọn)</label>
+                        <label className="block text-sm font-medium text-text-primary mb-1.5">Dán ảnh minh họa (Tùy chọn)</label>
                         <div onPaste={handleImagePaste} contentEditable suppressContentEditableWarning className="p-4 border-2 border-dashed border-border-primary rounded-lg min-h-[80px] text-center text-text-placeholder focus:outline-none focus:border-accent-primary">Click và nhấn Ctrl+V để dán</div>
                         {images.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
@@ -90,7 +104,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                         )}
                     </div>
                 </main>
-                <footer className="p-4 border-t flex justify-end items-center gap-4 bg-surface-ground rounded-b-2xl"><button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button><button onClick={handleSubmit} disabled={isSubmitting} className={currentTheme.btn}>{isSubmitting ? 'Đang gửi...' : 'Gửi Yêu Cầu'}</button></footer>
+                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary"><button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button><button onClick={handleSubmit} disabled={isSubmitting} className={currentTheme.btn}>{isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang gửi...</> : 'Gửi Yêu Cầu'}</button></footer>
             </div>
         </div>
     );
@@ -130,17 +144,20 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
-                 <header className="flex items-center justify-between p-5 border-b border-border-primary">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-success-bg">
-                            <i className="fas fa-upload text-lg text-success"></i>
+                 <div className="h-1.5 rounded-t-2xl bg-success"></div>
+                 <header className="flex items-start justify-between p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-success-bg">
+                            <i className="fas fa-upload text-2xl text-success"></i>
                         </div>
-                        <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Đã Xuất</h2>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">Tải Lên Hóa Đơn Đã Xuất</h2>
+                            <p className="text-sm text-text-secondary mt-1">Tải file hóa đơn (PDF, ảnh...) cho ĐH: <strong className="font-mono text-text-primary">{order['Số đơn hàng']}</strong>.</p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-2 -mr-2"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-6 space-y-4">
-                    <p className="text-sm text-text-secondary">Tải lên file hóa đơn (PDF, ảnh...) cho đơn hàng <strong className="font-mono text-text-primary">{order['Số đơn hàng']}</strong>.</p>
+                <main className="px-6 pb-6 space-y-4">
                     <SimpleFileUpload
                         id="issued-invoice-upload"
                         label="File Hóa Đơn"
@@ -149,7 +166,7 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
                         accept=".pdf,.jpeg,.png,.jpg"
                     />
                 </main>
-                <footer className="p-4 border-t flex justify-end items-center gap-4 bg-surface-ground rounded-b-2xl">
+                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
                     <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                     <button onClick={handleSubmit} disabled={isSubmitting || !file} className="btn-primary">
                         {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải lên...</> : <><i className="fas fa-check-circle mr-2"></i> Tải Lên & Hoàn Tất</>}

@@ -4,7 +4,7 @@ import * as apiService from '../services/apiService';
 
 const ARCHIVED_ORDERS_CACHE_KEY = 'archivedOrdersData';
 
-export const useVinFastApi = (usersToView?: string[]) => {
+export const useVinFastApi = () => {
     const [historyData, setHistoryData] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export const useVinFastApi = (usersToView?: string[]) => {
         if (!isSilent) setIsLoading(true);
         setError(null);
         try {
-            const result = await apiService.getPaginatedData(usersToView);
+            const result = await apiService.getPaginatedData();
             let initialData = result.data || [];
 
             // Check for cached archives
@@ -42,7 +42,7 @@ export const useVinFastApi = (usersToView?: string[]) => {
         } finally {
             if (!isSilent) setIsLoading(false);
         }
-    }, [usersToView]);
+    }, []);
 
     useEffect(() => {
         fetchData();

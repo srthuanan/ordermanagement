@@ -4,82 +4,59 @@ interface StatusBadgeProps {
   status: string;
 }
 
-const getStatusDetails = (statusText: string): { className: string; icon: string } => {
+const getStatusInfo = (statusText: string): { className: string, icon: string, pulse: boolean } => {
     if (!statusText || typeof statusText !== 'string') {
-        return { className: 'status-default', icon: 'fa-info-circle' };
+        return { className: 'status-default', icon: 'fa-question-circle', pulse: false };
     }
     const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
 
     switch (lowerStatus) {
-        // Negative Statuses
-        case 'đã hủy':
-        case 'đã hủy (ui)':
-            return { className: 'status-da-huy', icon: 'fa-times-circle' };
-        case 'từ chối ycvc':
-            return { className: 'status-tu-choi-ycvc', icon: 'fa-ban' };
-        
-        // Pending/Waiting Statuses
-        case 'chưa ghép':
-        case 'chưa tìm thấy vin':
-            return { className: 'status-chua-ghep', icon: 'fa-hourglass-half' };
-        case 'chờ phê duyệt':
-            return { className: 'status-cho-phe-duyet', icon: 'fa-gavel' };
-        case 'chờ ký hóa đơn':
-        case 'chờ ký hóa đơn':
-             return { className: 'status-cho-ky-hoa-don', icon: 'fa-file-signature' };
-        case 'chờ duyệt ycvc':
-             return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-clock' };
+        // Negative
+        case 'đã hủy': case 'đã hủy (ui)': return { className: 'status-da-huy', icon: 'fa-times-circle', pulse: false };
+        case 'từ chối ycvc': return { className: 'status-tu-choi-ycvc', icon: 'fa-ban', pulse: false };
 
-        // Test Drive Statuses
-        case 'chờ check-in':
-            return { className: 'status-cho-check-in', icon: 'fa-hourglass-start' };
-        case 'đang lái thử':
-            return { className: 'status-dang-lai-thu', icon: 'fa-road' };
-        case 'đã hoàn tất':
-            return { className: 'status-da-hoan-tat', icon: 'fa-flag-checkered' };
+        // Pending / Waiting
+        case 'chưa ghép': case 'chưa tìm thấy vin': return { className: 'status-chua-ghep', icon: 'fa-search', pulse: false };
+        case 'chờ phê duyệt': return { className: 'status-cho-phe-duyet', icon: 'fa-hourglass-half', pulse: false };
+        case 'chờ ký hóa đơn': case 'chờ ký hóa đơn': return { className: 'status-cho-ky-hoa-don', icon: 'fa-file-signature', pulse: false };
+        case 'chờ duyệt ycvc': return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-clock', pulse: false };
+        case 'chờ check-in': return { className: 'status-cho-check-in', icon: 'fa-calendar-check', pulse: false };
 
-        // Action Required Status
-        case 'yêu cầu bổ sung':
-            return { className: 'status-yeu-cau-bo-sung', icon: 'fa-edit' };
-        case 'chờ xác thực vc (tvbh)':
-            return { className: 'status-yeu-cau-bo-sung', icon: 'fa-user-check' };
+        // Action Required
+        case 'yêu cầu bổ sung': return { className: 'status-yeu-cau-bo-sung', icon: 'fa-exclamation-circle', pulse: true };
+        case 'chờ xác thực vc (tvbh)': return { className: 'status-cho-xac-thuc-vc', icon: 'fa-exclamation-circle', pulse: true };
 
-        // In Progress Statuses
-        case 'đang giữ':
-            return { className: 'status-dang-giu', icon: 'fa-pause-circle' };
-        case 'đã ghép':
-            return { className: 'status-da-ghep', icon: 'fa-link' };
-        case 'xe trưng bày':
-            return { className: 'status-default', icon: 'fa-store' };
+        // In Progress
+        case 'đang giữ': return { className: 'status-dang-giu', icon: 'fa-lock', pulse: false };
+        case 'đang lái thử': return { className: 'status-dang-lai-thu', icon: 'fa-car-side', pulse: false }; // Changed icon
+        case 'đã ghép': return { className: 'status-da-ghep', icon: 'fa-link', pulse: false };
 
-        // Positive/Completed Statuses
-        case 'đã bổ sung':
-            return { className: 'status-da-bo-sung', icon: 'fa-plus-circle' };
-        case 'đã phê duyệt':
-            return { className: 'status-da-phe-duyet', icon: 'fa-check-double' };
-        case 'đã xuất hóa đơn':
-            return { className: 'status-da-xuat-hoa-don', icon: 'fa-file-invoice-dollar' };
-        case 'yêu cầu vinclub':
-            return { className: 'status-yeu-cau-vinclub', icon: 'fa-id-card' };
-        case 'đã có vc':
-            return { className: 'status-san-sang', icon: 'fa-id-badge' };
+        // Positive / Completed
+        case 'đã bổ sung': return { className: 'status-da-bo-sung', icon: 'fa-plus-circle', pulse: false };
+        case 'đã phê duyệt': return { className: 'status-da-phe-duyet', icon: 'fa-check', pulse: false };
+        case 'đã xuất hóa đơn': return { className: 'status-da-xuat-hoa-don', icon: 'fa-check-double', pulse: false };
+        case 'yêu cầu vinclub': return { className: 'status-yeu-cau-vinclub', icon: 'fa-star', pulse: false };
+        case 'đã có vc': return { className: 'status-da-co-vc', icon: 'fa-star-half-alt', pulse: false };
+        case 'đã hoàn tất': return { className: 'status-da-hoan-tat', icon: 'fa-flag-checkered', pulse: false };
 
         default:
             if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
-                return { className: 'status-san-sang', icon: 'fa-check-circle' };
+                return { className: 'status-san-sang', icon: 'fa-car', pulse: false };
             }
-            return { className: 'status-default', icon: 'fa-info-circle' };
+            return { className: 'status-default', icon: 'fa-question-circle', pulse: false };
     }
 };
 
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const { className, icon } = getStatusDetails(status);
+  const { className, icon, pulse } = getStatusInfo(status);
 
   return (
-    <div className={`status-badge ${className}`}>
-      <i className={`fas ${icon}`}></i>
-      <span className="truncate">{status}</span>
+    <div className={`status-badge ${className} ${pulse ? 'pulse-icon' : ''}`}>
+      <span className="badge-icon">
+        <i className={`fas ${icon}`}></i>
+      </span>
+      <span className="badge-text truncate">{status}</span>
     </div>
   );
 };

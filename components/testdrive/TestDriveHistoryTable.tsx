@@ -7,7 +7,8 @@ import StatusBadge from '../ui/StatusBadge';
 interface TestDriveHistoryTableProps {
     bookings: TestDriveBooking[];
     onSelectBooking: (booking: TestDriveBooking) => void;
-    onUpdateCheckin: (booking: TestDriveBooking) => void;
+    onUpdateCheckin: (booking: TestDriveBooking, mode?: 'update' | 'view') => void;
+    onDelete: (booking: TestDriveBooking) => void;
     currentUser: string;
     isAdmin: boolean;
     sortConfig: TestDriveSortConfig | null;
@@ -33,7 +34,7 @@ const SortableHeader: React.FC<{ colKey: keyof TestDriveBooking, title: string, 
     return <th className="py-3 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
-const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings, onSelectBooking, onUpdateCheckin, currentUser, isAdmin, sortConfig, onSort }) => {
+const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings, onSelectBooking, onUpdateCheckin, onDelete, currentUser, isAdmin, sortConfig, onSort }) => {
     if (bookings.length === 0) {
         return (
             <div className="text-center py-16 text-text-secondary flex flex-col items-center justify-center h-full">
@@ -63,8 +64,29 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                     {bookings.map((booking, index) => {
                         const canUpdate = isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan);
                         const status = getStatus(booking);
+                        const isMyRequest = normalizeName(currentUser) === normalizeName(booking.tenTuVan);
+
+                        const handleRowClick = () => {
+                            if (canUpdate) {
+                                // Owner/Admin can edit pending bookings, but only view completed ones via row click
+                                // (they can use the dedicated button to 'update' completed ones)
+                                if (status === 'Đã hoàn tất') {
+                                    onUpdateCheckin(booking, 'view');
+                                } else {
+                                    onUpdateCheckin(booking); // This will open in checkin/checkout mode
+                                }
+                            } else {
+                                // Other users can only view, regardless of status
+                                onUpdateCheckin(booking, 'view');
+                            }
+                        };
+                        
                         return (
-                            <tr key={booking.soPhieu} onClick={() => onUpdateCheckin(booking)} className="hover:bg-surface-hover transition-colors cursor-pointer">
+                            <tr 
+                                key={booking.soPhieu} 
+                                className={`hover:bg-surface-hover transition-colors ${isMyRequest ? 'my-request-row' : ''} cursor-pointer`}
+                                onClick={handleRowClick}
+                            >
                                 <td data-label="#" className="px-3 py-3 text-sm text-center text-text-secondary">{index + 1}</td>
                                 <td data-label="Số Phiếu" className="px-3 py-3 text-sm font-mono text-text-primary">{booking.soPhieu}</td>
                                 <td data-label="Khách Hàng" className="px-3 py-3 text-sm">
@@ -76,18 +98,43 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                     <div>{moment(booking.ngayThuXe).format('DD/MM/YYYY')}</div>
                                     <div className="text-xs font-semibold text-accent-primary">{formatTime(booking.thoiGianKhoiHanh)} - {formatTime(booking.thoiGianTroVe)}</div>
                                 </td>
-                                <td data-label="TVBH" className="px-3 py-3 text-sm text-text-secondary">{booking.tenTuVan}</td>
+                                <td data-label="TVBH" className="px-3 py-3 text-sm text-text-secondary">
+                                    <span className={isMyRequest ? 'font-semibold text-accent-primary' : ''}>
+                                        {booking.tenTuVan}
+                                    </span>
+                                </td>
                                 <td data-label="Trạng Thái" className="px-3 py-3 text-sm"><StatusBadge status={status} /></td>
                                 <td data-label="Hành động" className="px-3 py-3 text-sm text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         <button
-                                            onClick={(e) => { if (canUpdate) { e.stopPropagation(); onUpdateCheckin(booking); } }}
-                                            className="action-btn hold-action"
+                                            onClick={(e) => { 
+                                                if (canUpdate) { 
+                                                    e.stopPropagation(); 
+                                                    if (status === 'Đã hoàn tất') {
+                                                        onUpdateCheckin(booking, 'update');
+                                                    } else {
+                                                        onUpdateCheckin(booking);
+                                                    }
+                                                } 
+                                            }}
+                                            className={`action-btn ${status === 'Đã hoàn tất' ? 'pair-action' : 'hold-action'}`}
                                             disabled={!canUpdate}
-                                            title={!canUpdate ? "Chỉ người tạo phiếu hoặc admin mới có thể cập nhật." : "Cập nhật thông tin check-in/out"}
-                                        ><i className="fas fa-camera"></i></button>
+                                            title={!canUpdate 
+                                                ? "Chỉ người tạo phiếu hoặc admin mới có thể cập nhật." 
+                                                : (status === 'Đã hoàn tất' 
+                                                    ? "Cập nhật hình ảnh" 
+                                                    : "Cập nhật thông tin check-in/out")}
+                                        ><i className={`fas ${status === 'Đã hoàn tất' ? 'fa-plus-circle' : 'fa-camera'}`}></i></button>
                                         <button onClick={(e) => { e.stopPropagation(); onSelectBooking(booking); }} className="action-btn pair-action" title="Xem & In phiếu">
                                             <i className="fas fa-print"></i>
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onDelete(booking); }}
+                                            className="action-btn release-action"
+                                            disabled={!canUpdate || status !== 'Chờ Check-in'}
+                                            title={!canUpdate ? "Chỉ người tạo phiếu hoặc admin mới có thể xóa." : (status !== 'Chờ Check-in' ? 'Không thể xóa phiếu đã check-in' : 'Xóa phiếu lái thử')}
+                                        >
+                                            <i className="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </td>

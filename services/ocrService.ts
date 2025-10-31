@@ -3,6 +3,84 @@
 
 declare var Tesseract: any;
 
+/**
+ * Compresses an image file client-side before uploading.
+ * Resizes the image to a max dimension and converts it to a JPEG with a specific quality.
+ * @param file The original image File object.
+ * @param options Configuration for compression.
+ * @returns A promise that resolves to the compressed image as a File object.
+ */
+export const compressImage = (
+  file: File,
+  options: { maxWidth?: number; maxHeight?: number; quality?: number } = {}
+): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    // Only compress images, return other file types as-is
+    if (!file.type.startsWith('image/')) {
+      return resolve(file);
+    }
+
+    const { maxWidth = 1920, maxHeight = 1920, quality = 0.8 } = options;
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          return reject(new Error('Không thể lấy context của canvas.'));
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Get the blob from canvas
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              return reject(new Error('Tạo blob từ canvas thất bại.'));
+            }
+            // Create a new file with a .jpg extension to reflect the compression format
+            const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
+            const newFile = new File([blob], newFileName, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      img.onerror = (error) => reject(error);
+      img.src = event.target?.result as string;
+    };
+
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
+
 const parseAndValidateDate = (
     dayStr: string, 
     monthStr: string, 

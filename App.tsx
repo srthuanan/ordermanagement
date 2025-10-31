@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { Order, SortConfig, Notification, NotificationType, StockVehicle } from './types';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle, AnalyticsData } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
@@ -17,6 +17,7 @@ import ImagePreviewModal from './components/modals/ImagePreviewModal';
 import ActionModal from './components/admin/ActionModal';
 import RequestVcModal from './components/modals/RequestVcModal';
 import FilePreviewModal from './components/modals/FilePreviewModal';
+import PendingStatsModal from './components/modals/PendingStatsModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
 import { useVinFastApi } from './hooks/useVinFastApi';
@@ -27,11 +28,11 @@ import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
-import logoHalloGif from './pictures/logohallo.gif';
-import createRequestPng from './pictures/taoyeucau.png';
-import boxuongGif from './pictures/boxuong.gif';
-import xacuopGif from './pictures/xacuop.gif';
-import hinhslidePng from './pictures/hinhslide.png';
+const logohalloVideo = './pictures/logohallo.mp4';
+const createRequestPng = './pictures/taoyeucau.png';
+const boxuongGif = './pictures/boxuong.gif';
+const xacuopGif = './pictures/xacuop.gif';
+const logoChinh = './pictures/logochinh.png';
 
 moment.locale('vi');
 
@@ -66,6 +67,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<{ images: ImageSource[], startIndex: number, customerName: string } | null>(null);
     const [filePreview, setFilePreview] = useState<{ url: string, label: string } | null>(null);
+    const [isPendingStatsModalOpen, setIsPendingStatsModalOpen] = useState(false);
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -79,6 +81,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const notificationContainerRef = useRef<HTMLDivElement>(null);
     
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const currentUserName = sessionStorage.getItem("currentUser") || "User";
     const userRole = sessionStorage.getItem("userRole") || (currentUserName.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Tư vấn bán hàng');
@@ -121,7 +126,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Lỗi Tải Dữ Liệu', 'Không thể tải dữ liệu quản trị phòng ban.', 'error');
         }
     }, [isCurrentUserAdmin, userRole, showToast]);
-
+    
     useEffect(() => {
         fetchAdminData();
     }, [fetchAdminData]);
@@ -144,9 +149,24 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
 
     // Centralized data fetching
-    const { historyData, setHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi(usersToView);
+    const { historyData: allHistoryData, setHistoryData: setAllHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi();
+    
+    const historyData = useMemo(() => {
+        if (isCurrentUserAdmin) {
+            return allHistoryData;
+        }
+        if (userRole === 'Trưởng Phòng Kinh Doanh' && usersToView) {
+            const teamNames = new Set(usersToView.map(name => normalizeName(name)));
+            return allHistoryData.filter(order => teamNames.has(normalizeName(order['Tên tư vấn bán hàng'])));
+        }
+        // Regular user
+        const normalizedCurrentUser = normalizeName(currentUser);
+        return allHistoryData.filter(order => normalizeName(order['Tên tư vấn bán hàng']) === normalizedCurrentUser);
+    }, [allHistoryData, isCurrentUserAdmin, userRole, usersToView, currentUser]);
+
     const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
-    const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
+    // The useSoldCarsApi hook is now only used inside the SoldCarsView component.
+    const { soldData } = useSoldCarsApi(); // Keep this for Admin dashboard stats for now.
     const { testDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
     const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
     const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
@@ -176,6 +196,37 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     useEffect(() => {
         refetchXuathoadon();
     }, [refetchXuathoadon]);
+
+    const vehicleAnalyticsData = useMemo((): AnalyticsData => {
+        const pendingRequests = allHistoryData.filter(o => o['Kết quả']?.toLowerCase().includes('chưa'));
+
+        const pendingRequestCount: { [key: string]: number } = {};
+        pendingRequests.forEach(order => {
+            const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban, 'Ngoại thất': ngoai_that } = order;
+            if (dong_xe && phien_ban && ngoai_that) {
+                const vehicleKey = `${dong_xe}|${phien_ban}|${ngoai_that}`.trim().toLowerCase();
+                pendingRequestCount[vehicleKey] = (pendingRequestCount[vehicleKey] || 0) + 1;
+            }
+        });
+
+        const stockStatus: { [key: string]: { count: number, isSlowMoving: boolean } } = {};
+        stockData.forEach(vehicle => {
+            const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban, 'Ngoại thất': ngoai_that } = vehicle;
+            if (dong_xe && phien_ban && ngoai_that) {
+                const vehicleKey = `${dong_xe}|${phien_ban}|${ngoai_that}`.trim().toLowerCase();
+                const entry = stockStatus[vehicleKey] || { count: 0, isSlowMoving: false };
+                entry.count += 1;
+                
+                const importDate = vehicle['Thời gian nhập'] ? moment(vehicle['Thời gian nhập']) : null;
+                if (importDate && moment().diff(importDate, 'days') > 30) {
+                    entry.isSlowMoving = true;
+                }
+                stockStatus[vehicleKey] = entry;
+            }
+        });
+
+        return { pendingRequestCount, stockStatus };
+    }, [allHistoryData, stockData]);
 
     // State and refs for stock polling
     const [highlightedVins, setHighlightedVins] = useState<Set<string>>(new Set());
@@ -216,22 +267,24 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     }, []);
 
     useEffect(() => {
-        fetchNotifications();
-        const intervalId = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(intervalId);
-    }, [fetchNotifications]);
-
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (notificationContainerRef.current && !notificationContainerRef.current.contains(event.target as Node)) {
                 setIsNotificationPanelOpen(false);
+            }
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileMenuOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-    
 
+    useEffect(() => {
+        fetchNotifications();
+        const intervalId = setInterval(fetchNotifications, 30000);
+        return () => clearInterval(intervalId);
+    }, [fetchNotifications]);
+    
     // Stock data real-time update polling logic, moved from StockView
     const handleRealtimeStockUpdate = useCallback(async () => {
         if (document.hidden) return; // Don't fetch if tab is not visible
@@ -344,7 +397,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         if (notification.link) {
             const orderNumberMatch = notification.link.match(/orderNumber=([^&]+)/);
             if(orderNumberMatch && orderNumberMatch[1]) {
-                const order = historyData.find(o => o['Số đơn hàng'] === decodeURIComponent(orderNumberMatch[1]));
+                const order = allHistoryData.find(o => o['Số đơn hàng'] === decodeURIComponent(orderNumberMatch[1]));
                 if(order) {
                     setSelectedOrder(order);
                 } else {
@@ -456,7 +509,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Thành Công', result.message || 'Yêu cầu VinClub đã được gửi.', 'success');
             
             if (result.updatedOrder) {
-                setHistoryData(currentOrders => 
+                setAllHistoryData(currentOrders => 
                   currentOrders.map(order => 
                     order['Số đơn hàng'] === result.updatedOrder['Số đơn hàng']
                       ? { ...order, ...result.updatedOrder }
@@ -492,7 +545,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             return true;
         } catch (error) {
             hideToast();
-            const message = error instanceof Error ? error.message : "Lỗi không xác định";
+            // FIX: This expression is not callable. Type 'String' has no call signatures.
+            // Explicitly cast the error message to a primitive string to avoid potential errors with String objects.
+            const message = String(error instanceof Error ? error.message : "Lỗi không xác định");
             showToast('Xác Thực VC Thất Bại', message, 'error');
             return false;
         } finally {
@@ -506,11 +561,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const handleFormSuccess = useCallback((newOrder: Order) => {
         setCreateRequestData({ isOpen: false });
-        setHistoryData(prev => [newOrder, ...prev].sort((a,b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
+        setAllHistoryData(prev => [newOrder, ...prev].sort((a,b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
         showToast('Yêu Cầu Đã Gửi', 'Yêu cầu ghép xe của bạn đã được ghi nhận thành công.', 'success', 4000);
-        refetchStock(true); // refetchStock is from a hook and should be stable
+        refetchStock(true);
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
-    }, [setHistoryData, showToast, refetchStock]);
+    }, [setAllHistoryData, showToast, refetchStock]);
     
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -537,7 +592,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             hideToast();
             if (result.data && result.data.length > 0) {
                 sessionStorage.setItem('archivedOrdersData', JSON.stringify(result.data));
-                setHistoryData(prevData => [...prevData, ...result.data]);
+                setAllHistoryData(prevData => [...prevData, ...result.data]);
                 showToast('Tải Thành Công', `Đã tải thêm ${result.data.length} mục từ kho lưu trữ.`, 'success', 3000);
             } else {
                 showToast('Hoàn Tất', 'Không tìm thấy thêm dữ liệu nào trong kho lưu trữ.', 'info', 3000);
@@ -589,6 +644,40 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
         return filteredOrders;
     }, [historyData, filters, sortConfig]);
+    
+    const groupedPendingStats = useMemo(() => {
+        const dataForStats = allHistoryData;
+        const pendingRequests = dataForStats.filter(o => o['Kết quả']?.toLowerCase().includes('chưa'));
+
+        const groupedByModel: Record<string, Order[]> = {};
+        pendingRequests.forEach(order => {
+            const model = order['Dòng xe'] || 'Không xác định';
+            if (!groupedByModel[model]) {
+                groupedByModel[model] = [];
+            }
+            groupedByModel[model].push(order);
+        });
+
+        const result = Object.entries(groupedByModel).map(([model, orders]) => {
+            const total = orders.length;
+            const variantsCount: Record<string, number> = {};
+            
+            orders.forEach(order => {
+                const phienBan = (order['Phiên bản'] && order['Phiên bản'] !== 'N/A') ? `${order['Phiên bản']} - ` : '';
+                const variantKey = `${phienBan}${order['Ngoại thất'] || 'N/A'} / ${order['Nội thất'] || 'N/A'}`;
+                variantsCount[variantKey] = (variantsCount[variantKey] || 0) + 1;
+            });
+
+            const variants = Object.entries(variantsCount)
+                .map(([variant, count]) => ({ variant, count }))
+                .sort((a, b) => b.count - a.count);
+
+            return { model, total, variants };
+        });
+
+        return result.sort((a, b) => b.total - a.total);
+    }, [allHistoryData]);
+
 
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
@@ -596,8 +685,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     }, [processedData, currentPage]);
     
     const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
-    const uniqueCarModels = useMemo(() => [...new Set(historyData.map(o => o["Dòng xe"]))].sort(), [historyData]);
-    const uniqueStatuses = useMemo(() => [...new Set(historyData.map(o => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép"))].sort(), [historyData]);
+    const uniqueCarModels = useMemo(() => [...new Set(allHistoryData.map(o => o["Dòng xe"]))].sort(), [allHistoryData]);
+    const uniqueStatuses = useMemo(() => [...new Set(allHistoryData.map(o => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép"))].sort(), [allHistoryData]);
 
     const renderOrdersContent = () => {
         const animationClass = 'animate-fade-in-up';
@@ -610,7 +699,19 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             { id: 'order-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' }
         ].filter(d => d.options.length > 0);
 
-        if (isLoading && historyData.length === 0) {
+        const pendingStatsButton = (
+            <button
+                onClick={() => setIsPendingStatsModalOpen(true)}
+                className="flex-shrink-0 flex items-center gap-2 px-4 h-8 rounded-full bg-accent-primary text-white text-xs font-bold shadow-md hover:bg-accent-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-primary transition-all duration-300 animate-pulse-glow"
+                style={{ '--glow-color': 'rgba(13, 71, 161, 0.5)' } as React.CSSProperties}
+                title="Xem thống kê các xe đang có yêu cầu chờ ghép"
+            >
+                <i className="fas fa-chart-pie"></i>
+                <span>Thống Kê</span>
+            </button>
+        );
+
+        if (isLoading && allHistoryData.length === 0) {
             const skeletons = Array.from({ length: 7 }, (_, i) => (
                 <tr key={i}>
                     <td colSpan={7} className="py-1 px-4 sm:px-6">
@@ -669,25 +770,28 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         isLoading={isLoading}
                         size="compact"
                         plain={true}
+                        extraActionButton={pendingStatsButton}
                     />
                 </div>
-                <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-                    <div className="flex-grow overflow-auto relative">
-                         <HistoryTable 
-                             orders={paginatedData} 
-                             onViewDetails={handleViewDetails} 
-                             onCancel={setOrderToCancel} 
-                             onRequestInvoice={setOrderToRequestInvoice} 
-                             onSupplement={setOrderToSupplement}
-                             onRequestVC={setOrderToRequestVC}
-                             onConfirmVC={setOrderToConfirmVC}
-                             sortConfig={sortConfig} 
-                             onSort={handleSort} 
-                             startIndex={(currentPage - 1) * PAGE_SIZE}
-                             processingOrder={processingOrder} 
-                         />
+                <div className="flex-1 grid grid-cols-1 gap-6 min-h-0">
+                    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 h-full">
+                        <div className="flex-grow overflow-auto relative">
+                             <HistoryTable 
+                                 orders={paginatedData} 
+                                 onViewDetails={handleViewDetails} 
+                                 onCancel={setOrderToCancel} 
+                                 onRequestInvoice={setOrderToRequestInvoice} 
+                                 onSupplement={setOrderToSupplement}
+                                 onRequestVC={setOrderToRequestVC}
+                                 onConfirmVC={setOrderToConfirmVC}
+                                 sortConfig={sortConfig} 
+                                 onSort={handleSort} 
+                                 startIndex={(currentPage - 1) * PAGE_SIZE}
+                                 processingOrder={processingOrder} 
+                             />
+                        </div>
+                        {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                     </div>
-                    {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                 </div>
             </div>
         );
@@ -721,14 +825,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
                 );
             case 'sold':
-                return (
-                    <SoldCarsView
-                        soldData={soldData}
-                        isLoading={isLoadingSold}
-                        error={errorSold}
-                        refetch={refetchSold}
-                    />
-                );
+                return <SoldCarsView />;
             case 'laithu':
                 return <TestDriveForm
                     showToast={showToast}
@@ -746,7 +843,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     hideToast={hideToast} 
                     refetchHistory={refetchHistory} 
                     refetchStock={refetchStock}
-                    allOrders={historyData}
+                    allOrders={allHistoryData}
                     xuathoadonData={xuathoadonData}
                     refetchXuathoadon={refetchXuathoadon}
                     stockData={stockData}
@@ -757,6 +854,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     teamData={teamData}
                     allUsers={allUsers}
                     refetchAdminData={fetchAdminData}
+                    soldData={soldData}
+                    onNavigateTo={setActiveView}
+                    onShowOrderDetails={setSelectedOrder}
                     /> : renderOrdersContent();
             default:
                 return renderOrdersContent();
@@ -771,9 +871,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
             <aside className={sidebarClasses}>
                 <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
-                     <a href="#" onClick={(e) => e.preventDefault()} className={`flex items-center gap-3 group transition-all duration-300 ${isSidebarCollapsed ? 'lg:w-12' : 'lg:w-auto'}`}>
-                        <i className="fa-solid fa-bolt text-2xl text-gradient from-accent-primary to-accent-secondary group-hover:scale-110 transition-transform"></i>
-                        <h1 className={`font-extrabold text-lg text-text-primary whitespace-nowrap tracking-wider transition-all duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>ORDERMGMT</h1>
+                    <a href="#" onClick={(e) => e.preventDefault()} className="flex items-center justify-center h-full group">
+                        <img src={logoChinh} alt="Order Management Logo" className={`object-contain transition-all duration-300 group-hover:scale-105 ${isSidebarCollapsed ? 'h-10' : 'h-13'}`} />
                     </a>
                     <button onClick={toggleSidebar} className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-surface-hover text-text-secondary hover:text-text-primary ml-auto">
                         <i className={`fa-solid fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
@@ -811,26 +910,49 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                 </nav>
 
-                <div className="flex-shrink-0 border-t border-border-primary/50">
-                    <div className={`px-3 pt-3 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
-                        <img src={hinhslidePng} alt="Sidebar footer image" className="w-full h-auto object-contain" />
-                    </div>
-                    <div className="p-2">
-                        <div className={`flex items-center gap-3 p-2 rounded-lg ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
-                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                {currentUser ? currentUser.charAt(0) : 'A'}
-                            </div>
-                            <div className={`transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
-                                <p className="text-sm font-bold text-text-primary whitespace-nowrap">{currentUser}</p>
+                <div ref={profileMenuRef} className="relative flex-shrink-0 border-t border-border-primary/50">
+                    {isProfileMenuOpen && (
+                        <div className="absolute bottom-full left-2 right-2 mb-2 p-1.5 bg-surface-card rounded-lg shadow-lg border border-border-primary animate-fade-in-up" style={{animationDuration: '200ms'}}>
+                            <div className="px-3 py-2 border-b border-border-primary mb-1">
+                                <p className="font-bold text-sm text-text-primary truncate">{currentUser}</p>
                                 <p className="text-xs text-text-secondary capitalize">{userRole}</p>
-                                 <button 
-                                    onClick={() => setIsChangePasswordModalOpen(true)} 
-                                    className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover hover:underline mt-1 focus:outline-none"
-                                >
-                                    Đổi mật khẩu
-                                </button>
                             </div>
+                            <button 
+                                onClick={() => { setIsChangePasswordModalOpen(true); setIsProfileMenuOpen(false); }} 
+                                className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm rounded-md text-text-primary hover:bg-surface-hover"
+                            >
+                                <i className="fas fa-key fa-fw text-text-secondary"></i>
+                                <span>Đổi mật khẩu</span>
+                            </button>
+                            <button 
+                                onClick={() => { onLogout(); setIsProfileMenuOpen(false); }}
+                                className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm rounded-md text-danger hover:bg-danger-bg"
+                            >
+                                <i className="fas fa-sign-out-alt fa-fw"></i>
+                                <span>Đăng xuất</span>
+                            </button>
                         </div>
+                    )}
+                    
+                    <div className="p-2">
+                        <button 
+                            onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                            className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors hover:bg-surface-hover ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}
+                        >
+                            <div className="relative flex-shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg">
+                                    {currentUser ? currentUser.charAt(0) : 'A'}
+                                </div>
+                                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-success ring-2 ring-white"></span>
+                            </div>
+                            <div className={`transition-opacity duration-200 min-w-0 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+                                <p className="text-sm font-bold text-text-primary whitespace-nowrap truncate">{currentUser}</p>
+                                <p className="text-xs text-text-secondary capitalize truncate">{userRole}</p>
+                            </div>
+                            {!isSidebarCollapsed && (
+                                <i className={`fas fa-chevron-up text-xs text-text-secondary ml-auto transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''} ${isSidebarCollapsed ? 'lg:hidden' : ''}`}></i>
+                            )}
+                        </button>
                     </div>
                 </div>
             </aside>
@@ -844,7 +966,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                     
                     <div className={`absolute -translate-x-1/2 hidden sm:flex items-center left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
-                       <img src={logoHalloGif} alt="Order Management Logo" className="h-10" />
+                       <video
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="h-14 object-contain"
+                            src={logohalloVideo}
+                            aria-label="Order Management Logo"
+                        >
+                        </video>
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2 sm:space-x-4">
@@ -902,9 +1033,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 onSuccess={handleFormSuccess}
                 showToast={showToast}
                 hideToast={hideToast}
-                existingOrderNumbers={historyData.map(o => o["Số đơn hàng"])}
+                existingOrderNumbers={allHistoryData.map(o => o["Số đơn hàng"])}
                 initialVehicle={createRequestData.initialVehicle}
                 currentUser={currentUser}
+                vehicleAnalyticsData={vehicleAnalyticsData}
+                onOpenImagePreview={openImagePreviewModal}
             />
             <ChangePasswordModal
                 isOpen={isChangePasswordModalOpen}
@@ -937,6 +1070,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     fileLabel={filePreview.label}
                 />
             )}
+            <PendingStatsModal
+                isOpen={isPendingStatsModalOpen}
+                onClose={() => setIsPendingStatsModalOpen(false)}
+                stats={groupedPendingStats}
+            />
         </>
     );
 };

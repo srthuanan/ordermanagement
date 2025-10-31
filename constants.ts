@@ -1,7 +1,4 @@
-export const API_URL = "https://script.google.com/macros/s/AKfycbx2yjZErE-CHXCJhfuvpcB9jac6Dqz6CRCgGMH9ulwwIr70ROy0_w2FsYW8hgttKjr_sA/exec";
-export const LOGIN_API_URL = "https://script.google.com/macros/s/AKfycbyfy-qfOzda3zRBHCLQU2z0yJ1RP1KUuEu4AckfZIbSqU2IpvPDWinXbE2y4Q1g8wFP/exec";
-export const STOCK_API_URL = "https://script.google.com/macros/s/AKfycbwY6pOP9aGSxCEXRFG24_dVy1TXyn5jUg-VrotfTRZumbMl4xjycsXx1H1gUtWbWJlLNg/exec";
-export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbxOA5IJ8VYSM5WfA_eTbFm0oXmmRSFrn9HL-Gtf71uLqX4BPUambHzxmwLLW7U3dWN_Pw/exec";
+export const API_URL = "https://script.google.com/macros/s/AKfycbwi9NtWe08daVS2O2W3tJAf_x_Of7qWwpbTwj-_oKIjZi5z_PTJZ7NveIRNEtWnjSd2bQ/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";
 
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

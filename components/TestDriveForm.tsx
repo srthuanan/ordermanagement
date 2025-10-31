@@ -7,6 +7,7 @@ import TestDrivePreview from './testdrive/TestDrivePreview';
 import TestDriveHistoryTable from './testdrive/TestDriveHistoryTable';
 import TestDriveCheckinModal from './testdrive/TestDriveCheckinModal';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
+import ActionModal from './admin/ActionModal';
 
 interface ImageSource {
     src: string;
@@ -89,7 +90,9 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     const [selectedBookingForPreview, setSelectedBookingForPreview] = useState<TestDriveBooking | null>(null);
     const [dataForPrinting, setDataForPrinting] = useState<TestDriveBooking>(formData);
     const [isPrinting, setIsPrinting] = useState(false);
-    const [checkinBooking, setCheckinBooking] = useState<TestDriveBooking | null>(null);
+    const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view' } | null>(null);
+    const [bookingToDelete, setBookingToDelete] = useState<TestDriveBooking | null>(null);
+
 
     // State for history view
     const [historyFilters, setHistoryFilters] = useState<{ keyword: string; dateRange: { start: string, end: string }; car: string[]; status: string[]; }>({ keyword: '', dateRange: {start: '', end: ''}, car: [], status: [] });
@@ -111,25 +114,43 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
         }
         return `${prefix}/${nextCounter.toString().padStart(3, '0')}`;
     }, []);
+    
+    const getLatestSoPhieuForCurrentMonth = useCallback((drives: TestDriveBooking[]): string | undefined => {
+        const currentMonthPrefix = `LT/${moment().format('MMYY')}`;
+        const bookingsThisMonth = drives.filter(b => b.soPhieu && b.soPhieu.startsWith(currentMonthPrefix));
+    
+        if (bookingsThisMonth.length === 0) {
+            return undefined;
+        }
+    
+        // Sort by the counter part of soPhieu descending to find the max
+        bookingsThisMonth.sort((a, b) => {
+            const counterA = parseInt(a.soPhieu.split('/').pop() || '0', 10);
+            const counterB = parseInt(b.soPhieu.split('/').pop() || '0', 10);
+            return counterB - counterA;
+        });
+    
+        return bookingsThisMonth[0].soPhieu;
+    }, []);
 
     // Set initial form data after the first data fetch
     useEffect(() => {
-        // Only run if there's data and the form hasn't been initialized yet (soPhieu is empty)
-        if (allTestDrives.length > 0 && formData.soPhieu === '') {
-            const latestSoPhieu = allTestDrives.find(b => b.soPhieu.startsWith(`LT/${moment().format('MMYY')}`))?.soPhieu;
+        // Initialize the form once the initial data load is finished.
+        // This runs whether there are existing bookings or not.
+        if (!isLoading && formData.soPhieu === '') {
+            const latestSoPhieu = getLatestSoPhieuForCurrentMonth(allTestDrives);
             const user = sessionStorage.getItem('currentConsultant') || '';
             setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allTestDrives, generateNextSoPhieu]);
+    }, [isLoading, allTestDrives, formData.soPhieu, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth, initialFormData]);
 
     const handleReset = useCallback(() => {
-        const latestSoPhieu = allTestDrives.length > 0 ? allTestDrives[0].soPhieu : undefined;
+        const latestSoPhieu = getLatestSoPhieuForCurrentMonth(allTestDrives);
         const user = sessionStorage.getItem('currentConsultant') || '';
         setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
         setSelectedBookingForPreview(null);
         setActiveTab('create');
-    }, [allTestDrives, generateNextSoPhieu]);
+    }, [allTestDrives, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth]);
 
     useEffect(() => {
         if (isPrinting) {
@@ -293,7 +314,11 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                         drive.soPhieu === result.updatedRecord.soPhieu ? result.updatedRecord : drive
                     )
                 );
-                setCheckinBooking(null);
+                // Also update the preview if it's the one being edited
+                if (selectedBookingForPreview?.soPhieu === result.updatedRecord.soPhieu) {
+                    setSelectedBookingForPreview(result.updatedRecord);
+                }
+                setCheckinModalState(null);
                 return true;
             } else {
                 throw new Error(result.message || 'Cập nhật thất bại.');
@@ -303,6 +328,42 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             showToast('Cập Nhật Thất Bại', message, 'error');
             return false;
         }
+    };
+
+    const handleDeleteBooking = async (): Promise<boolean> => {
+        if (!bookingToDelete) return false;
+        showToast('Đang Xóa', `Đang xóa phiếu ${bookingToDelete.soPhieu}...`, 'loading');
+        try {
+            const result = await apiService.deleteTestDriveBooking(bookingToDelete.soPhieu);
+            if (result.status === 'SUCCESS') {
+                showToast('Thành Công', result.message || 'Đã xóa phiếu lái thử.', 'success');
+                setAllTestDrives(prev => prev.filter(b => b.soPhieu !== bookingToDelete.soPhieu));
+                setBookingToDelete(null);
+                return true;
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Lỗi không xác định";
+            showToast('Xóa Thất Bại', message, 'error');
+            setBookingToDelete(null);
+            return false;
+        }
+    };
+
+    const handleOpenCheckinModal = (booking: TestDriveBooking, modeOverride?: 'update' | 'view') => {
+        if (modeOverride) {
+            setCheckinModalState({ booking, mode: modeOverride });
+            return;
+        }
+
+        let mode: 'checkin' | 'checkout' | 'update' | 'view' = 'checkin';
+        if (booking.odoBefore && booking.odoAfter) {
+            mode = 'view';
+        } else if (booking.odoBefore) {
+            mode = 'checkout';
+        }
+        setCheckinModalState({ booking, mode });
     };
 
     const processedHistory = useMemo(() => {
@@ -447,7 +508,8 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                         <TestDriveHistoryTable 
                             bookings={processedHistory}
                             onSelectBooking={setSelectedBookingForPreview}
-                            onUpdateCheckin={setCheckinBooking}
+                            onUpdateCheckin={handleOpenCheckinModal}
+                            onDelete={setBookingToDelete}
                             currentUser={currentUser}
                             isAdmin={isAdmin}
                             sortConfig={historySortConfig}
@@ -466,15 +528,29 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                 </div>
             </div>
             
-            {checkinBooking && (
+            {checkinModalState && (
                 <TestDriveCheckinModal
-                    booking={checkinBooking}
-                    onClose={() => setCheckinBooking(null)}
+                    booking={checkinModalState.booking}
+                    mode={checkinModalState.mode}
+                    onClose={() => setCheckinModalState(null)}
                     onSubmit={handleUpdateCheckin}
                     showToast={showToast}
                     onOpenImagePreview={onOpenImagePreview}
                     currentUser={currentUser}
                     isAdmin={isAdmin}
+                />
+            )}
+            {bookingToDelete && (
+                <ActionModal
+                    isOpen={!!bookingToDelete}
+                    onClose={() => setBookingToDelete(null)}
+                    onSubmit={handleDeleteBooking}
+                    title="Xác Nhận Xóa Phiếu Lái Thử"
+                    description={`Bạn có chắc chắn muốn xóa vĩnh viễn phiếu ${bookingToDelete.soPhieu} của KH: ${bookingToDelete.tenKhachHang}?`}
+                    targetId={bookingToDelete.soPhieu}
+                    submitText="Xóa Phiếu"
+                    submitColor="danger"
+                    icon="fa-trash-alt"
                 />
             )}
         </div>

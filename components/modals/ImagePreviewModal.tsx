@@ -28,21 +28,37 @@ const getFilename = (customerName?: string, fileLabel?: string): string => {
 const toHighQualityDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) return url;
 
-    // Extract file ID
+    // Handle existing thumbnail URLs directly by changing the size parameter
+    if (url.includes('/thumbnail?id=')) {
+        if (url.includes('&sz=')) {
+            return url.replace(/(&sz=)[^&]+/, '&sz=s2048');
+        }
+        return `${url}&sz=s2048`;
+    }
+
+    // Extract file ID from other common drive URL formats
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
     if (idMatch && idMatch[1]) {
-        // Use the thumbnail endpoint which is designed for embedding and allows specifying size.
-        // 's0' requests the original size, providing high quality without cross-origin issues.
-        return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s0`;
+        // Construct a large, fixed-size thumbnail URL which bypasses certain permissions.
+        return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s2048`;
     }
-    // Fallback for URLs that are already in a different format or don't match
+    
+    // Fallback for URLs that don't match expected formats
     return url;
 };
+
 
 // Helper to get a thumbnail URL for performance in the strip
 const toThumbnailDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) return url;
     
+    if (url.includes('/thumbnail?id=')) {
+        if (url.includes('&sz=')) {
+            return url.replace(/(&sz=)[^&]+/, '&sz=w320');
+        }
+        return `${url}&sz=w320`;
+    }
+
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
     if (idMatch && idMatch[1]) {
         // Request a slightly larger thumbnail for better clarity in the filmstrip.
@@ -73,18 +89,21 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     const resetTransform = () => setTransform({ scale: 1, x: 0, y: 0, rotate: 0 });
 
     const goTo = useCallback((index: number) => {
+        if (images.length === 0) return;
         const newIndex = (index + images.length) % images.length;
         if (newIndex !== currentIndex) {
             setCurrentIndex(newIndex);
             resetTransform();
         }
-    }, [images.length, currentIndex]);
+    }, [images, currentIndex]);
 
     useEffect(() => {
         if (isOpen) {
-            setCurrentIndex(startIndex);
+            // Ensure startIndex is valid before setting it
+            const validStartIndex = (images.length > 0 && startIndex >= 0 && startIndex < images.length) ? startIndex : 0;
+            setCurrentIndex(validStartIndex);
         }
-    }, [isOpen, startIndex]);
+    }, [isOpen, startIndex, images]);
 
     useEffect(() => {
         if (!isOpen || images.length === 0) return;
@@ -94,6 +113,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         setDisplayUrl(null);
 
         const currentImage = images[currentIndex];
+        if (!currentImage) return; // Safeguard against race conditions
+
         const url = toHighQualityDriveUrl(currentImage.src);
         setDisplayUrl(url);
 
@@ -184,7 +205,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
             <header className="flex-shrink-0 text-white flex items-center justify-between p-4" onClick={e => e.stopPropagation()}>
                 <div className="min-w-0">
                     <h3 className="font-bold text-lg truncate">{currentImage?.label}</h3>
-                    <p className="text-sm opacity-80 truncate">{customerName} ({currentIndex + 1} / {images.length})</p>
+                    <p className="text-sm opacity-80 truncate">{customerName} ({images.length > 0 ? currentIndex + 1 : 0} / {images.length})</p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4">
                     {downloadUrl && <button onClick={handleDownload} title="Tải về" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-download"></i></button>}
@@ -199,7 +220,19 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                 {error && !isLoading && (
                     <div className="text-center p-6 bg-red-900/50 border border-red-500/50 rounded-lg max-w-sm mx-4" onClick={e => e.stopPropagation()}>
                         <i className="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
-                        <p className="font-semibold text-red-300">{error}</p>
+                        {error === 'IMAGE_LOAD_FAILED' ? (
+                            <div className="text-left">
+                                <p className="font-bold text-red-200 text-center mb-2">Không thể tải ảnh</p>
+                                <p className="text-sm text-red-200/90 mb-3 text-center">Nguyên nhân có thể do:</p>
+                                <ul className="text-sm text-red-200/90 list-disc list-inside space-y-1">
+                                    <li>Tệp đã bị xóa trên Google Drive.</li>
+                                    <li>Bạn không có quyền xem tệp này.</li>
+                                    <li>Liên kết hoặc tệp không hợp lệ.</li>
+                                </ul>
+                            </div>
+                        ) : (
+                            <p className="font-semibold text-red-300">{error}</p>
+                        )}
                         {currentImage?.originalUrl && (
                             <a 
                                 href={currentImage.originalUrl}
@@ -225,7 +258,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                             willChange: 'transform',
                         }}
                         onLoad={() => setIsLoading(false)}
-                        onError={() => { setIsLoading(false); setError('Không thể tải ảnh. File có thể đã bị xóa hoặc quyền truy cập bị hạn chế.'); }}
+                        onError={() => { setIsLoading(false); setError('IMAGE_LOAD_FAILED'); }}
                         onMouseDown={handleMouseDown}
                         onClick={e => e.stopPropagation()}
                     />

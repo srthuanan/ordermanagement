@@ -53,7 +53,10 @@ const CopyableField: React.FC<{ text: string; showToast: Function; className?: s
 
 const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pending' | 'paired', onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void }> = ({ status, viewType, onAction, onToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<{ type: ActionType; label: string; isDanger?: boolean } | null>(null);
     const menuRef = React.useRef<HTMLDivElement>(null);
+    const confirmRef = React.useRef<HTMLDivElement>(null);
+
 
     const setOpenState = (newIsOpen: boolean) => {
         setIsOpen(newIsOpen);
@@ -62,9 +65,13 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
 
     React.useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => { 
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+            if (
+                menuRef.current && !menuRef.current.contains(e.target as Node) &&
+                (!confirmRef.current || !confirmRef.current.contains(e.target as Node))
+            ) {
                 setOpenState(false);
-            } 
+                setConfirmAction(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -97,14 +104,56 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
             : []
     ).filter(a => a.condition);
 
+    const handleActionClick = (action: typeof actions[0]) => {
+        const simpleActions: ActionType[] = ['approve', 'pendingSignature', 'resend', 'requestInvoice'];
+        
+        if (simpleActions.includes(action.type as ActionType)) {
+            setOpenState(false);
+            setConfirmAction({ type: action.type as ActionType, label: action.label, isDanger: action.isDanger });
+        } else {
+            onAction(action.type as ActionType);
+            setOpenState(false);
+        }
+    };
+
 
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
+            <button onClick={(e) => { e.stopPropagation(); setConfirmAction(null); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
+            
+            {confirmAction && (
+                <div
+                    ref={confirmRef}
+                    className="absolute top-1/2 -translate-y-1/2 right-full mr-2 z-30 w-64 bg-surface-overlay p-4 rounded-lg shadow-xl border border-border-primary animate-fade-in-scale-up"
+                    style={{ animationDuration: '150ms' }}
+                >
+                    <p className="text-sm font-semibold text-text-primary text-center">
+                        Xác nhận "{confirmAction.label}"?
+                    </p>
+                    <div className="flex justify-center gap-3 mt-4">
+                        <button
+                            onClick={() => setConfirmAction(null)}
+                            className="flex-1 btn-secondary !py-1.5 !text-xs"
+                        >
+                            Không
+                        </button>
+                        <button
+                            onClick={() => {
+                                onAction(confirmAction.type);
+                                setConfirmAction(null);
+                            }}
+                            className={`flex-1 !py-1.5 !text-xs ${confirmAction.isDanger ? 'btn-danger' : 'btn-primary'}`}
+                        >
+                            Có, Xác nhận
+                        </button>
+                    </div>
+                </div>
+            )}
+            
             {isOpen && (
                 <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
                     {actions.map((action) => (
-                        <button key={action.type} onClick={() => { onAction(action.type as ActionType); setOpenState(false); }}
+                        <button key={action.type} onClick={() => handleActionClick(action)}
                             className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
                         >
                             <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
