@@ -28,7 +28,7 @@ const getFilename = (customerName?: string, fileLabel?: string): string => {
 const toHighQualityDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) return url;
 
-    // Handle existing thumbnail URLs directly by changing the size parameter
+    // If it's already a thumbnail URL, just increase the size parameter for high quality.
     if (url.includes('/thumbnail?id=')) {
         if (url.includes('&sz=')) {
             return url.replace(/(&sz=)[^&]+/, '&sz=s2048');
@@ -36,14 +36,14 @@ const toHighQualityDriveUrl = (url: string): string => {
         return `${url}&sz=s2048`;
     }
 
-    // Extract file ID from other common drive URL formats
+    // For other Drive URLs (/d/, /view, /uc), extract the ID and construct a thumbnail URL.
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
     if (idMatch && idMatch[1]) {
-        // Construct a large, fixed-size thumbnail URL which bypasses certain permissions.
+        // The thumbnail service is generally more reliable for direct embedding.
         return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s2048`;
     }
     
-    // Fallback for URLs that don't match expected formats
+    // Fallback for URLs that don't match expected formats.
     return url;
 };
 
@@ -218,29 +218,29 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
             <main className="flex-grow flex items-center justify-center relative overflow-hidden" onClick={onClose}>
                 {isLoading && <i className="fas fa-spinner fa-spin text-4xl text-white"></i>}
                 {error && !isLoading && (
-                    <div className="text-center p-6 bg-red-900/50 border border-red-500/50 rounded-lg max-w-sm mx-4" onClick={e => e.stopPropagation()}>
-                        <i className="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i>
+                    <div className="text-center p-8 bg-red-800 rounded-lg shadow-2xl max-w-sm mx-4 text-white" onClick={e => e.stopPropagation()}>
+                        <i className="fas fa-exclamation-triangle text-5xl text-amber-300 mb-4"></i>
                         {error === 'IMAGE_LOAD_FAILED' ? (
-                            <div className="text-left">
-                                <p className="font-bold text-red-200 text-center mb-2">Không thể tải ảnh</p>
-                                <p className="text-sm text-red-200/90 mb-3 text-center">Nguyên nhân có thể do:</p>
-                                <ul className="text-sm text-red-200/90 list-disc list-inside space-y-1">
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-xl">Không thể tải ảnh</h3>
+                                <p className="text-sm text-red-200">Nguyên nhân có thể do:</p>
+                                <ul className="text-sm text-red-100 list-disc list-inside text-left mx-auto max-w-xs space-y-1">
                                     <li>Tệp đã bị xóa trên Google Drive.</li>
                                     <li>Bạn không có quyền xem tệp này.</li>
                                     <li>Liên kết hoặc tệp không hợp lệ.</li>
                                 </ul>
                             </div>
                         ) : (
-                            <p className="font-semibold text-red-300">{error}</p>
+                            <p className="font-semibold text-red-100">{error}</p>
                         )}
                         {currentImage?.originalUrl && (
                             <a 
                                 href={currentImage.originalUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-4 inline-block px-4 py-2 bg-slate-200 text-slate-800 rounded-lg font-semibold hover:bg-slate-300 transition-colors text-sm"
+                                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-red-800 rounded-lg font-bold hover:bg-red-100 transition-colors text-sm shadow-lg"
                             >
-                                Thử mở trong tab mới <i className="fas fa-external-link-alt ml-2 text-xs"></i>
+                                Thử mở trong tab mới <i className="fas fa-external-link-alt text-xs"></i>
                             </a>
                         )}
                     </div>

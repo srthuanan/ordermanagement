@@ -804,7 +804,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {renderCurrentView()}
             </div>
             
-            {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} />}
+            {/* FIX: Passed the showToast prop to SuggestionModal to fix a missing property error. */}
+            {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} showToast={showToast} />}
             {invoiceModalState && (
                 <>
                     {/* Invoice Actions */}

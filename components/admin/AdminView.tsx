@@ -14,7 +14,6 @@ import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import TotalViewDashboard from '../ui/TotalViewDashboard';
-import StockVehicleDetailModal from '../ui/StockVehicleDetailModal';
 
 
 const PAGE_SIZE = 15;
@@ -61,6 +60,154 @@ type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'ph
 
 type DateRange = { start: string; end: string; };
 
+// FIX: Moved Team Management components before AdminView to resolve scope issues.
+// --- Team Management Components (nested for simplicity) ---
+
+interface TeamManagementProps {
+    teamData: Record<string, string[]>;
+    onEditTeam: (leader: string, members: string[]) => void;
+    onAddNewTeam: () => void;
+    onDeleteTeam: (leader: string) => void;
+}
+
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+    const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
+
+    return (
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
+                <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
+            </div>
+            {sortedTeams.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sortedTeams.map(([leader, members]) => (
+                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-text-secondary">Trưởng phòng</p>
+                                    <p className="font-bold text-accent-primary">{leader}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
+                                    <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div className="border-t border-dashed border-border-secondary my-3"></div>
+                            <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
+                            <div className="space-y-2 flex-grow">
+                                {members.length > 0 ? members.map(member => (
+                                    <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
+                                )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 text-text-secondary">
+                    <i className="fas fa-users-slash fa-3x mb-4"></i>
+                    <p>Chưa có phòng kinh doanh nào được thiết lập.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+interface TeamEditorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (newTeamData: Record<string, string[]>) => void;
+    teamData: Record<string, string[]>;
+    allUsers: User[];
+    editingTeam: { leader: string; members: string[] } | null;
+}
+
+const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSave, teamData, allUsers, editingTeam }) => {
+    const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
+    const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedLeader(editingTeam ? editingTeam.leader : '');
+            setSelectedMembers(editingTeam ? editingTeam.members : []);
+        }
+    }, [isOpen, editingTeam]);
+
+    const isNewTeam = !editingTeam;
+
+    const { potentialLeaders, availableMembers } = useMemo(() => {
+        const allLeaders = new Set(Object.keys(teamData));
+        const allMembers = new Set(Object.values(teamData).flat());
+        
+        const leaders = allUsers.filter(u => u.role === 'Trưởng Phòng Kinh Doanh' && (!allLeaders.has(u.name) || u.name === editingTeam?.leader));
+        const members = allUsers.filter(u => u.role === 'Tư vấn bán hàng' && (!allMembers.has(u.name) || editingTeam?.members.includes(u.name)));
+
+        return { potentialLeaders: leaders.map(u => u.name), availableMembers: members.map(u => u.name) };
+    }, [allUsers, teamData, editingTeam]);
+
+    const handleSave = async () => {
+        if (!selectedLeader) {
+            alert('Vui lòng chọn trưởng phòng.');
+            return;
+        }
+        setIsSubmitting(true);
+        const newTeamData = { ...teamData };
+        if (isNewTeam) {
+            newTeamData[selectedLeader] = selectedMembers;
+        } else {
+            // If leader name is changed (should not happen with current UI but good practice)
+            if (editingTeam.leader !== selectedLeader) {
+                delete newTeamData[editingTeam.leader];
+            }
+            newTeamData[selectedLeader] = selectedMembers;
+        }
+        await onSave(newTeamData);
+        setIsSubmitting(false);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
+                <main className="p-6 space-y-4 overflow-y-auto">
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
+                        {isNewTeam ? (
+                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
+                                <option value="" disabled>Chọn một trưởng phòng</option>
+                                {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                        ) : (
+                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
+                        )}
+                    </div>
+                    <div>
+                         <MultiSelectDropdown 
+                            id="team-member-select"
+                            label="Thành viên"
+                            options={availableMembers}
+                            selectedOptions={selectedMembers}
+                            onChange={setSelectedMembers}
+                            icon="fa-users"
+                            displayMode="selection"
+                         />
+                    </div>
+                </main>
+                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
+                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
+                    <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
+                        {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
+
 const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, soldData, onNavigateTo, onShowOrderDetails }) => {
     const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
     
@@ -99,7 +246,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
-    const [selectedStockVehicleForDetail, setSelectedStockVehicleForDetail] = useState<StockVehicle | null>(null);
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
@@ -858,7 +1004,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {renderCurrentView()}
             </div>
             
-            {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} />}
+            {/* FIX: Passed the showToast prop to SuggestionModal to fix a missing property error. */}
+            {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} showToast={showToast} />}
             {invoiceModalState && (
                 <>
                     {/* Invoice Actions */}
@@ -923,153 +1070,5 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         </div>
     );
 };
-
-
-// --- Team Management Components (nested for simplicity) ---
-
-interface TeamManagementProps {
-    teamData: Record<string, string[]>;
-    onEditTeam: (leader: string, members: string[]) => void;
-    onAddNewTeam: () => void;
-    onDeleteTeam: (leader: string) => void;
-}
-
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
-    const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
-
-    return (
-        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
-                <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
-            </div>
-            {sortedTeams.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sortedTeams.map(([leader, members]) => (
-                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-xs text-text-secondary">Trưởng phòng</p>
-                                    <p className="font-bold text-accent-primary">{leader}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
-                                    <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <div className="border-t border-dashed border-border-secondary my-3"></div>
-                            <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
-                            <div className="space-y-2 flex-grow">
-                                {members.length > 0 ? members.map(member => (
-                                    <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
-                                )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-12 text-text-secondary">
-                    <i className="fas fa-users-slash fa-3x mb-4"></i>
-                    <p>Chưa có phòng kinh doanh nào được thiết lập.</p>
-                </div>
-            )}
-        </div>
-    );
-};
-
-interface TeamEditorModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (newTeamData: Record<string, string[]>) => void;
-    teamData: Record<string, string[]>;
-    allUsers: User[];
-    editingTeam: { leader: string; members: string[] } | null;
-}
-
-const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSave, teamData, allUsers, editingTeam }) => {
-    const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
-    const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setSelectedLeader(editingTeam ? editingTeam.leader : '');
-            setSelectedMembers(editingTeam ? editingTeam.members : []);
-        }
-    }, [isOpen, editingTeam]);
-
-    const isNewTeam = !editingTeam;
-
-    const { potentialLeaders, availableMembers } = useMemo(() => {
-        const allLeaders = new Set(Object.keys(teamData));
-        const allMembers = new Set(Object.values(teamData).flat());
-        
-        const leaders = allUsers.filter(u => u.role === 'Trưởng Phòng Kinh Doanh' && (!allLeaders.has(u.name) || u.name === editingTeam?.leader));
-        const members = allUsers.filter(u => u.role === 'Tư vấn bán hàng' && (!allMembers.has(u.name) || editingTeam?.members.includes(u.name)));
-
-        return { potentialLeaders: leaders.map(u => u.name), availableMembers: members.map(u => u.name) };
-    }, [allUsers, teamData, editingTeam]);
-
-    const handleSave = async () => {
-        if (!selectedLeader) {
-            alert('Vui lòng chọn trưởng phòng.');
-            return;
-        }
-        setIsSubmitting(true);
-        const newTeamData = { ...teamData };
-        if (isNewTeam) {
-            newTeamData[selectedLeader] = selectedMembers;
-        } else {
-            // If leader name is changed (should not happen with current UI but good practice)
-            if (editingTeam.leader !== selectedLeader) {
-                delete newTeamData[editingTeam.leader];
-            }
-            newTeamData[selectedLeader] = selectedMembers;
-        }
-        await onSave(newTeamData);
-        setIsSubmitting(false);
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
-                <main className="p-6 space-y-4 overflow-y-auto">
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
-                        {isNewTeam ? (
-                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
-                                <option value="" disabled>Chọn một trưởng phòng</option>
-                                {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
-                            </select>
-                        ) : (
-                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
-                        )}
-                    </div>
-                    <div>
-                         <MultiSelectDropdown 
-                            id="team-member-select"
-                            label="Thành viên"
-                            options={availableMembers}
-                            selectedOptions={selectedMembers}
-                            onChange={setSelectedMembers}
-                            icon="fa-users"
-                            displayMode="selection"
-                         />
-                    </div>
-                </main>
-                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
-                        {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-                    </button>
-                </footer>
-            </div>
-        </div>
-    );
-};
-
 
 export default React.memo(AdminView);

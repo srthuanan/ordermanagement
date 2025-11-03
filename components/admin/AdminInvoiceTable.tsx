@@ -39,14 +39,10 @@ const CopyableField: React.FC<{ text: string; showToast: Function; className?: s
         }).catch(() => showToast('Lỗi', 'Không thể sao chép.', 'error'));
     };
     
-    const textClasses = wrap ? 'cursor-pointer break-words' : 'truncate cursor-pointer';
-
     return (
-        <div className={`group relative flex items-start justify-between ${className}`} title={`Click để sao chép: ${text}`}>
-            <span className={textClasses} onClick={(e) => handleCopy(e)}>{label ? `${label}: ` : ''}{text}</span>
-            <button onClick={handleCopy} className="ml-2 text-text-secondary/50 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 shrink-0">
-                <i className="fas fa-copy text-xs"></i>
-            </button>
+        <div className={`cursor-pointer ${className}`} title={`Click để sao chép: ${text}`} onClick={handleCopy}>
+            <span>{label ? `${label}: ` : ''}</span>
+            <span className={wrap ? 'break-words' : 'truncate'}>{text}</span>
         </div>
     );
 };
@@ -204,7 +200,7 @@ const AdminInvoiceTableRow: React.FC<{
                     <td data-label="Thông Tin Xe" className="px-3 py-4 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
                         <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
-                        <CopyableField text={order.VIN || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="VIN" />
+                        <CopyableField text={order.VIN || ''} showToast={showToast} className="font-bold text-accent-primary text-sm font-mono mt-1 hover:text-accent-primary-hover hover:underline" label="VIN" />
                         <CopyableField text={order["Số động cơ"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="S.MÁY" />
                     </td>
                     <td data-label="Ngày YC / XHĐ" className="px-3 py-4 text-sm">

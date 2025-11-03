@@ -4,9 +4,10 @@ import StockTable from './StockTable';
 import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
+import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
 import * as apiService from '../services/apiService';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -47,6 +48,7 @@ const StockView: React.FC<StockViewProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [processingAction, setProcessingAction] = useState<{ vin: string; initialStatus: string } | null>(null);
     const [view, setView] = useState<'table' | 'grid'>('grid');
+    const [stockVehicleToView, setStockVehicleToView] = useState<StockVehicle | null>(null);
     
     useEffect(() => {
         if (!processingAction) return;
@@ -90,6 +92,10 @@ const StockView: React.FC<StockViewProps> = ({
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') { direction = 'desc'; }
         setSortConfig({ key, direction });
+    };
+
+    const handleShowDetails = (vehicle: StockVehicle) => {
+        setStockVehicleToView(vehicle);
     };
 
     const handleHoldCar = async (vin: string) => {
@@ -203,6 +209,24 @@ const StockView: React.FC<StockViewProps> = ({
         return filteredVehicles;
     }, [stockData, filters, sortConfig]);
 
+    const handleVehicleNavigation = (direction: 'prev' | 'next') => {
+        if (!stockVehicleToView) return;
+    
+        const currentIndex = processedData.findIndex(v => v.VIN === stockVehicleToView.VIN);
+        if (currentIndex === -1) return;
+    
+        let nextIndex;
+        if (direction === 'prev') {
+            nextIndex = currentIndex - 1;
+        } else {
+            nextIndex = currentIndex + 1;
+        }
+    
+        if (nextIndex >= 0 && nextIndex < processedData.length) {
+            setStockVehicleToView(processedData[nextIndex]);
+        }
+    };
+
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
@@ -264,6 +288,7 @@ const StockView: React.FC<StockViewProps> = ({
             onHoldCar: handleHoldCar,
             onReleaseCar: handleReleaseCar,
             onCreateRequestForVehicle,
+            onShowDetails: handleShowDetails,
             currentUser,
             isAdmin,
             showToast,
@@ -316,6 +341,19 @@ const StockView: React.FC<StockViewProps> = ({
     return (
         <>
             {renderContent()}
+            <StockVehicleDetailModal
+                isOpen={!!stockVehicleToView}
+                onClose={() => setStockVehicleToView(null)}
+                vehicle={stockVehicleToView}
+                onHoldCar={handleHoldCar}
+                onReleaseCar={handleReleaseCar}
+                onCreateRequestForVehicle={onCreateRequestForVehicle}
+                currentUser={currentUser}
+                isAdmin={isAdmin}
+                processingVin={processingAction?.vin || null}
+                vehicleList={processedData}
+                onNavigate={handleVehicleNavigation}
+            />
         </>
     );
 }

@@ -53,24 +53,20 @@ const VINDisplay: React.FC<{ vin: string }> = ({ vin }) => {
     };
 
     return (
-        <div className="p-4 rounded-lg bg-slate-800 border border-accent-secondary/30 flex items-center justify-center gap-4 shadow-lg hover:shadow-glow-accent transition-shadow duration-300">
-            {/* Spacer to balance the button */}
-            <div className="w-12 h-12 flex-shrink-0"></div>
-            <div className="flex-1 text-center">
+        <div
+            onClick={handleCopy}
+            className="relative p-4 rounded-lg bg-slate-800 border border-accent-secondary/30 shadow-lg hover:shadow-glow-accent transition-all duration-300 cursor-pointer group"
+            title="Click để sao chép VIN"
+        >
+            <div className="text-left">
                 <p className="text-xs text-slate-400 uppercase tracking-widest">Số Khung (VIN)</p>
-                <p className="text-white font-mono tracking-wider text-2xl break-all">{vin}</p>
+                <p className="text-white font-mono tracking-wider text-2xl break-all group-hover:text-accent-secondary transition-colors">{vin}</p>
             </div>
-            <button 
-                onClick={handleCopy}
-                className={`w-12 h-12 flex-shrink-0 rounded-lg flex items-center justify-center transition-all duration-200 text-xl ${
-                    isCopied 
-                    ? 'bg-success text-white' 
-                    : 'bg-accent-secondary/20 text-accent-secondary hover:bg-accent-secondary hover:text-white'
-                }`}
-                title={isCopied ? "Đã sao chép!" : "Sao chép VIN"}
-            >
-                <i className={`fas ${isCopied ? 'fa-check-circle' : 'fa-copy'}`}></i>
-            </button>
+            {isCopied && (
+                 <div className="absolute top-2 right-2 text-xs font-semibold text-success bg-success-bg px-2 py-1 rounded-full animate-fade-in">
+                    Đã sao chép!
+                </div>
+            )}
         </div>
     );
 };
@@ -89,11 +85,21 @@ const InfoCard: React.FC<{title: string, icon: string, children: React.ReactNode
 
 
 // Main Modal Component
-const OrderDetailsModal: React.FC<{ order: Order | null; onClose: () => void }> = ({ order, onClose }) => {
+interface OrderDetailsModalProps {
+    order: Order | null;
+    onClose: () => void;
+    orderList: Order[];
+    onNavigate: (direction: 'prev' | 'next') => void;
+}
+const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, orderList, onNavigate }) => {
   if (!order) return null;
 
   const statusText = order["Kết quả"] || "Chưa ghép";
   const isCancelled = statusText.toLowerCase().includes('đã hủy') || statusText.toLowerCase().includes('từ chối');
+
+  const currentIndex = orderList.findIndex(o => o['Số đơn hàng'] === order['Số đơn hàng']);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < orderList.length - 1;
 
   // FIX: Correctly calculate the number of days since the VIN was paired using robust parsing.
   // This logic now correctly handles future dates and prevents incorrect calculations.
@@ -121,6 +127,15 @@ const OrderDetailsModal: React.FC<{ order: Order | null; onClose: () => void }> 
         className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 transition-opacity duration-300"
         onClick={onClose}
     >
+        {hasPrev && (
+            <button
+                onClick={(e) => { e.stopPropagation(); onNavigate('prev'); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
+                title="Yêu cầu trước"
+            >
+                <i className="fas fa-chevron-left"></i>
+            </button>
+        )}
         <div 
             className="bg-surface-ground w-full max-w-5xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl animate-fade-in-scale-up overflow-hidden"
             onClick={(e) => e.stopPropagation()}
@@ -192,6 +207,15 @@ const OrderDetailsModal: React.FC<{ order: Order | null; onClose: () => void }> 
                 </button>
             </footer>
         </div>
+        {hasNext && (
+            <button
+                onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
+                title="Yêu cầu tiếp theo"
+            >
+                <i className="fas fa-chevron-right"></i>
+            </button>
+        )}
     </div>
   );
 };

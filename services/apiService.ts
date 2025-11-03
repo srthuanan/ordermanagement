@@ -78,7 +78,7 @@ export const getApi = async (params: Record<string, any>, baseUrl: string = API_
     }
 };
 
-export const getPaginatedData = async (usersToView?: string[], options?: { forceAll: boolean }): Promise<ApiResult> => {
+export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResult> => {
     const filters: Record<string, any> = {};
     if (usersToView && usersToView.length > 0) {
         filters.usersToView = usersToView;

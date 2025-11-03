@@ -16,6 +16,8 @@ interface SoldCarsViewProps {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
+  // FIX: Added showToast to props to pass it down to SoldCarDetailPanel.
+  showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -43,7 +45,7 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
 };
 
 
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error, refetch }) => {
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error, refetch, showToast }) => {
   const [filters, setFilters] = useState({
       keyword: '',
       dateRange: { start: '', end: '' },
@@ -241,7 +243,8 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ soldData, isLoading, error,
               {tableSection}
           </div>
           <div className="lg:col-span-1 hidden lg:block sticky top-24">
-               <SoldCarDetailPanel order={selectedDetailOrder} />
+               {/* FIX: Pass the required 'showToast' prop to the SoldCarDetailPanel component. */}
+               <SoldCarDetailPanel order={selectedDetailOrder} showToast={showToast} />
           </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { extractDateFromImageTesseract } from '../services/ocrService';
 import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../constants';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
+import uncSampleJpg from '/pictures/uynhiemchi.jpg';
 
 interface ImageSource {
     src: string;
@@ -202,7 +203,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     };
     
     const handlePreviewUnc = () => {
-        const uncSampleJpg = '/pictures/uynhiemchi.jpg';
         onOpenImagePreview(
             [{ src: uncSampleJpg, originalUrl: uncSampleJpg, label: 'Mẫu Ủy Nhiệm Chi' }],
             0,

@@ -16,7 +16,7 @@ const getStatusInfo = (statusText: string): { className: string, icon: string, p
         case 'từ chối ycvc': return { className: 'status-tu-choi-ycvc', icon: 'fa-ban', pulse: false };
 
         // Pending / Waiting
-        case 'chưa ghép': case 'chưa tìm thấy vin': return { className: 'status-chua-ghep', icon: 'fa-search', pulse: false };
+        case 'chưa ghép': case 'chưa tìm thấy vin': return { className: 'status-chua-ghep', icon: 'fa-check-circle', pulse: false };
         case 'chờ phê duyệt': return { className: 'status-cho-phe-duyet', icon: 'fa-hourglass-half', pulse: false };
         case 'chờ ký hóa đơn': case 'chờ ký hóa đơn': return { className: 'status-cho-ky-hoa-don', icon: 'fa-file-signature', pulse: false };
         case 'chờ duyệt ycvc': return { className: 'status-cho-duyet-ycvc', icon: 'fa-user-clock', pulse: false };

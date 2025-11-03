@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Order } from '../../types';
 
 const DetailInfoRow: React.FC<{ icon: string, label: string; value?: string | number; valueClassName?: string }> = ({ icon, label, value, valueClassName }) => (
@@ -11,7 +11,26 @@ const DetailInfoRow: React.FC<{ icon: string, label: string; value?: string | nu
     </div>
 );
 
-const SoldCarDetailPanel: React.FC<{ order: Order | null }> = ({ order }) => {
+interface SoldCarDetailPanelProps {
+    order: Order | null;
+    showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+}
+
+
+const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showToast }) => {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopy = (textToCopy: string) => {
+        if (!textToCopy) return;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            setIsCopied(true);
+            showToast('Đã Sao Chép', `Số VIN ${textToCopy} đã được sao chép.`, 'success', 2000);
+            setTimeout(() => setIsCopied(false), 2000);
+        }).catch(() => {
+            showToast('Lỗi Sao Chép', 'Không thể truy cập clipboard.', 'error');
+        });
+    };
+
     return (
         <div className="detail-panel h-full">
             <h3 className="text-lg font-bold text-text-primary mb-0 p-4 border-b border-border-primary flex items-center gap-3 flex-shrink-0">
@@ -22,9 +41,18 @@ const SoldCarDetailPanel: React.FC<{ order: Order | null }> = ({ order }) => {
                 {order ? (
                     <div className="space-y-4">
                         {/* VIN Display */}
-                        <div className="p-3 my-2 rounded-lg bg-slate-800 text-center shadow-lg">
+                        <div 
+                            className="relative p-3 my-2 rounded-lg bg-slate-800 text-center shadow-lg cursor-pointer hover:bg-slate-700 transition-colors"
+                            onClick={() => handleCopy(order.VIN || '')}
+                            title="Click để sao chép VIN"
+                        >
                             <p className="text-xs text-slate-400 uppercase tracking-widest">Số Khung (VIN)</p>
                             <p className="text-white font-mono tracking-wider text-xl break-all">{order.VIN}</p>
+                            {isCopied && (
+                                <div className="absolute top-1 right-1 text-xs font-semibold text-success bg-success-bg/20 px-1.5 py-0.5 rounded-full animate-fade-in">
+                                    ✓
+                                </div>
+                            )}
                         </div>
                         
                         {/* Customer Info */}

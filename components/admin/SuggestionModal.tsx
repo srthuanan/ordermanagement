@@ -8,13 +8,24 @@ interface SuggestionModalProps {
     onConfirm: (orderNumber: string, vin: string) => void;
     order: Order;
     suggestedCars: StockVehicle[];
+// FIX: Added showToast to props to handle VIN copy notifications.
+    showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onConfirm, order, suggestedCars }) => {
+const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onConfirm, order, suggestedCars, showToast }) => {
     const [selectedVin, setSelectedVin] = useState<string>(suggestedCars.length > 0 ? suggestedCars[0].VIN : '');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isOpen) return null;
+
+    const handleCopyVin = (e: React.MouseEvent, vin: string) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(vin).then(() => {
+            showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
+        }).catch(err => {
+            showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
+        });
+    };
 
     const handleSubmit = async () => {
         if (!selectedVin) return;
@@ -69,7 +80,18 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                                 <td className="py-2.5 px-3" data-label="Chọn">
                                                     <input type="radio" name="suggested-vin" value={car.VIN} checked={selectedVin === car.VIN} onChange={() => setSelectedVin(car.VIN)} className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-border-secondary" />
                                                 </td>
-                                                <td className="py-2.5 px-3 font-mono text-text-primary" data-label="Số VIN">{car.VIN}</td>
+                                                <td className="py-2.5 px-3 font-mono text-text-primary" data-label="Số VIN">
+                                                    <div
+                                                        className="group relative inline-flex items-center gap-2 cursor-pointer"
+                                                        title="Click để sao chép VIN"
+                                                        onClick={(e) => handleCopyVin(e, car.VIN)}
+                                                    >
+                                                        <span className="text-accent-primary group-hover:text-accent-primary-hover font-semibold transition-colors">
+                                                            {car.VIN}
+                                                        </span>
+                                                        <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                                    </div>
+                                                </td>
                                                 <td className="py-2.5 px-3 text-text-secondary" data-label="Nội Thất">{car["Nội thất"]}</td>
                                                 <td className="py-2.5 px-3 text-text-secondary" data-label="Ngày Nhập Kho">{car['Thời gian nhập'] ? moment(car['Thời gian nhập']).format('DD/MM/YYYY') : 'N/A'}</td>
                                             </tr>

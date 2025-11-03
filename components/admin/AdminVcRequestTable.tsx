@@ -190,21 +190,19 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                             <td data-label="Khách hàng / SĐH / VIN" className="px-3 py-4 text-sm">
                                 <div className="font-semibold text-text-primary">{req["Tên khách hàng"]}</div>
                                 <div 
-                                    className="text-text-secondary font-mono text-xs mt-1 cursor-pointer group flex items-center gap-2"
+                                    className="text-text-secondary font-mono text-xs mt-1 cursor-pointer hover:underline hover:text-text-primary"
                                     title={`Click để sao chép: ${orderNumber}`}
                                     onClick={(e) => handleCopy(e, orderNumber, 'SĐH')}
                                 >
                                     <span>{orderNumber}</span>
-                                    <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                 </div>
                                 {req.VIN && (
                                     <div 
-                                        className="text-accent-primary font-mono text-xs mt-1 cursor-pointer group flex items-center gap-2"
+                                        className="text-accent-primary font-mono text-base mt-1 cursor-pointer"
                                         title={`Click để sao chép: ${req.VIN}`}
                                         onClick={(e) => handleCopy(e, req.VIN!, 'VIN')}
                                     >
-                                        <span>{req.VIN}</span>
-                                        <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                        <span className="font-bold hover:underline">{req.VIN}</span>
                                     </div>
                                 )}
                             </td>

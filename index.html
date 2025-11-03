@@ -25,6 +25,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/vi.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <!-- REMOVED: Libraries for DOCX generation are no longer needed -->
     <!-- <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script> -->
@@ -59,6 +60,27 @@
               'danger': '#D32F2F', 'danger-hover': '#E53935', 'danger-bg': '#FFEBEE',
               'success': '#388E3C', 'success-bg': '#E8F5E9',
               'warning': '#F57C00', 'warning-bg': '#FFF3E0',
+              // New Muted Colors from Mobile Design
+              "white-bg": "#FFFFFF",
+              "light-card": "#F9FAFB",
+              "dark-text": "#1F2937",
+              "subtle-gray": "#D1D5DB",
+              "muted-green": "#34D399",
+              "muted-orange": "#FDBA74",
+              "muted-blue": "#60A5FA",
+              "muted-red": "#F87171",
+              "muted-gray": "#9CA3AF",
+               // Colors for Stock Card from new design
+              "light-card-bg": "#fcfcfc",
+              "light-text-primary": "#2a2a2a",
+              "light-text-secondary": "#6b7280",
+              "light-border": "#e5e7eb",
+              "light-tag-green-bg": "#dcfce7",
+              "light-tag-green-text": "#16a34a",
+              "light-tag-yellow-bg": "#fefce8",
+              "light-tag-yellow-text": "#b45309",
+              "light-tag-grey-bg": "#e5e7eb",
+              "light-tag-grey-text": "#4b5563",
             },
             boxShadow: {
               'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -196,34 +218,34 @@
         to { transform: rotate(360deg) scale(1.1); }
       }
       .btn-primary {
-        background: linear-gradient(45deg, #0c3483, #a2b6df, #6b8cce, #a2b6df);
+        background-image: linear-gradient(to right, #0D47A1 0%, #1976D2 51%, #0D47A1 100%);
         background-size: 200% auto;
         color: white;
         font-weight: 600;
-        font-size: 0.875rem; /* text-sm */
-        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.75rem;
         padding: 0.625rem 1.25rem;
-        box-shadow: 0 4px 14px 0 rgba(12, 52, 131, 0.38);
+        box-shadow: 0 2px 8px 0 rgba(13, 71, 161, 0.25);
         transition: all 0.3s ease-in-out;
         border: none;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        letter-spacing: 0.025em; /* Added for refinement */
       }
-      .btn-primary:hover {
-        background-position: right center;
+      .btn-primary:hover:not(:disabled) {
+        background-position: right center; /* change the direction of the change here */
         transform: translateY(-2px);
-        box-shadow: 0 7px 20px 0 rgba(12, 52, 131, 0.45);
+        box-shadow: 0 5px 15px 0 rgba(21, 101, 192, 0.4), 0 0 10px 0 rgba(21, 101, 192, 0.2);
       }
       .btn-primary:disabled {
-        background: #E2E8F0;
+        background-image: none;
+        background-color: #E2E8F0;
         color: #94A3B8;
         cursor: not-allowed;
-        animation: none;
         box-shadow: none;
         transform: none;
-        opacity: 0.8;
-        background-image: none;
+        opacity: 0.6;
       }
       .btn-primary .btn-icon {
         transition: transform 0.3s ease;
@@ -232,13 +254,65 @@
         transform: scale(1.15);
       }
       
-      .btn-danger { background-color: #D32F2F; color: white; font-weight: 600; font-size: 0.875rem; border-radius: 0.5rem; padding: 0.625rem 1.25rem; box-shadow: 0 4px 15px 0 rgba(211, 47, 47, 0.25); transition: all 0.2s ease-in-out; }
-      .btn-danger:hover { background-color: #E53935; transform: translateY(-2px); box-shadow: 0 7px 20px 0 rgba(211, 47, 47, 0.3); }
-      .btn-danger:disabled { background-color: #EF9A9A; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.8; }
+      .btn-danger {
+        background-color: #C62828; /* Richer red */
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: 0.75rem;
+        padding: 0.625rem 1.25rem;
+        box-shadow: 0 2px 8px 0 rgba(198, 40, 40, 0.25);
+        transition: all 0.3s ease-in-out;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 0.025em;
+      }
+      .btn-danger:hover:not(:disabled) {
+        background-color: #D32F2F;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px 0 rgba(211, 47, 47, 0.35), 0 0 10px 0 rgba(211, 47, 47, 0.15);
+      }
+      .btn-danger:disabled {
+        background-color: #EF9A9A;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        opacity: 0.6;
+      }
       
-      .btn-secondary { background-color: #FFFFFF; color: #475569; font-weight: 600; font-size: 0.875rem; border-radius: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid #E2E8F0; transition: all 0.2s ease-in-out; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
-      .btn-secondary:hover { background-color: #F8FAFC; transform: translateY(-1px); border-color: #CBD5E1; box-shadow: 0 2px 4px 0 rgba(0,0,0,0.05); }
-      .btn-secondary:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.8;}
+      .btn-secondary {
+        background-color: #FFFFFF;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: 0.75rem;
+        padding: 0.625rem 1.25rem;
+        border: 1px solid #E2E8F0;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 0.025em;
+      }
+      .btn-secondary:hover:not(:disabled) {
+        background-color: #EBF5FF; /* surface-accent */
+        color: #1565C0; /* accent-primary-hover */
+        border-color: #1565C0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px 0 rgba(21, 101, 192, 0.1);
+      }
+      .btn-secondary:disabled {
+        background-color: #F1F5F9;
+        color: #94A3B8;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        opacity: 0.6;
+        border-color: #E2E8F0;
+      }
       
       #root { min-height: 100vh; }
       main { flex-grow: 1; }
@@ -289,7 +363,7 @@
 
       /* --- Color Variants --- */
       .status-da-huy, .status-tu-choi-ycvc { --status-shadow-rgb: 220, 38, 38; --status-bg-color: rgba(220, 38, 38, 0.1); --status-text-color: rgb(220 38 38); }
-      .status-chua-ghep { --status-shadow-rgb: 100, 116, 139; --status-bg-color: rgba(100, 116, 139, 0.1); --status-text-color: rgb(100 116 139); }
+      .status-chua-ghep { --status-shadow-rgb: 22, 163, 74; --status-bg-color: rgba(22, 163, 74, 0.1); --status-text-color: rgb(22 163 74); }
       .status-cho-phe-duyet, .status-cho-duyet-ycvc, .status-cho-check-in { --status-shadow-rgb: 59, 130, 246; --status-bg-color: rgba(59, 130, 246, 0.1); --status-text-color: rgb(59 130 246); }
       .status-cho-ky-hoa-don { --status-shadow-rgb: 6, 182, 212; --status-bg-color: rgba(6, 182, 212, 0.1); --status-text-color: rgb(6 182 212); }
       .status-yeu-cau-bo-sung, .status-cho-xac-thuc-vc { --status-shadow-rgb: 245, 158, 11; --status-bg-color: rgba(245, 158, 11, 0.1); --status-text-color: rgb(245 158 11); }
@@ -298,7 +372,7 @@
       .status-da-phe-duyet { --status-shadow-rgb: 14, 165, 233; --status-bg-color: rgba(14, 165, 233, 0.1); --status-text-color: rgb(14 165 233); } /* Sky Blue */
       .status-da-bo-sung, .status-da-xuat-hoa-don, .status-da-co-vc, .status-da-hoan-tat { --status-shadow-rgb: 22, 163, 74; --status-bg-color: rgba(22, 163, 74, 0.1); --status-text-color: rgb(22 163 74); }
       .status-yeu-cau-vinclub { --status-shadow-rgb: 124, 58, 237; --status-bg-color: rgba(124, 58, 237, 0.1); --status-text-color: rgb(124 58 237); }
-      .status-san-sang { --status-shadow-rgb: 100, 116, 139; --status-bg-color: rgba(100, 116, 139, 0.1); --status-text-color: rgb(100 116 139); }
+      .status-san-sang { --status-shadow-rgb: 22, 163, 74; --status-bg-color: rgba(22, 163, 74, 0.1); --status-text-color: rgb(22 163 74); }
       .status-default { --status-shadow-rgb: 107, 114, 128; --status-bg-color: rgba(107, 114, 128, 0.1); --status-text-color: rgb(107 114 128); }
 
       /* Notification Bell Styles */
@@ -416,7 +490,7 @@
           bottom: 0;
           z-index: -1;
           
-          background-image: url('/pictures/hinhnen.png');
+          background-image: url('pictures/hinhnen.png');
           background-size: contain;
           background-position: center bottom;
           background-repeat: no-repeat;
@@ -459,7 +533,7 @@
           content: "";
           position: absolute;
           top: 0; left: 0; right: 0; bottom: 0;
-          background-image: url('/pictures/modal.png');
+          background-image: url('pictures/modal.png');
           background-size: cover;
           background-position: center;
           background-repeat: no-repeat;
@@ -1181,15 +1255,33 @@
         opacity: 1;
       }
 
+      /* Styles for Stock Card */
+      .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+          font-size: 24px;
+      }
+      .car-image-container {
+          height: 100px; /* Adjusted for smaller cards */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          border-radius: 0.5rem; /* rounded-lg */
+      }
+      .car-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+      }
+
 
       /* === MOBILE RESPONSIVE STYLES === */
       @media (max-width: 767px) {
-        /* General Layout */
         main {
           padding: 0.75rem;
         }
 
-        /* Responsive Tables -> Card View */
+        /* Responsive Tables -> New Card View */
         .responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr {
           display: block;
         }
@@ -1201,20 +1293,29 @@
         }
 
         .responsive-table tbody tr {
-          border: 1px solid var(--tw-color-border-primary);
-          border-radius: 0.75rem;
+          background-color: var(--tw-color-light-card, #F9FAFB);
+          border: 1px solid var(--tw-color-subtle-gray, #D1D5DB);
+          border-radius: 0.75rem; /* rounded-lg */
           margin-bottom: 1rem;
-          background-color: var(--tw-color-surface-card);
-          position: relative; /* For action button positioning */
+          padding: 1rem;
+          position: relative;
+          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
         }
 
         .responsive-table tbody td {
-          border-bottom: 1px dashed var(--tw-color-border-primary);
-          position: relative;
-          padding: 0.75rem 0.75rem 0.75rem 45%;
-          text-align: right;
-          min-height: 2.5rem;
-          display: block;
+          border-bottom: 1px dashed var(--tw-color-subtle-gray, #D1D5DB);
+          padding: 0.75rem 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          text-align: right; /* Value aligns to the right */
+          min-height: auto;
+          font-weight: 500; /* font-medium for value */
+          color: var(--tw-color-dark-text, #1F2937);
+          font-size: 0.875rem; /* text-sm */
         }
         
         .responsive-table tbody tr td:last-of-type {
@@ -1223,16 +1324,13 @@
 
         .responsive-table tbody td:before {
           content: attr(data-label);
-          position: absolute;
-          left: 0.75rem;
-          width: 40%;
-          padding-right: 10px;
+          position: static;
+          width: auto;
+          padding-right: 1rem;
           white-space: nowrap;
           text-align: left;
-          font-weight: 600;
-          color: var(--tw-color-text-secondary);
-          font-size: 0.8rem;
-          top: 0.75rem;
+          font-weight: 400; /* normal weight for label */
+          color: #4B5563; /* gray-600, like dark-text/80 */
         }
         
         /* Hide index and checkbox cells */
@@ -1240,34 +1338,30 @@
         .responsive-table td[data-label="checkbox"] {
           display: none;
         }
-        
-        /* Style the main identifying cell as a card header */
+
+        /* Handle complex cells */
         .responsive-table td[data-label="Khách hàng / SĐH"],
         .responsive-table td[data-label="Người YC / Khách Hàng"],
-        .responsive-table td[data-label="Số VIN"],
-        .responsive-table td[data-label="Tên tệp"],
+        .responsive-table td[data-label="Thông Tin Xe"],
+        .responsive-table td[data-label="Yêu Cầu Xe"],
+        .responsive-table td[data-label="Xe Đã Ghép"],
         .responsive-table td[data-label="Khách hàng / SĐH / VIN"] {
-          display: block;
-          padding: 0.75rem;
-          text-align: left;
-          border-bottom: 1px solid var(--tw-color-border-primary);
-          background-color: var(--tw-color-surface-hover);
-          border-top-left-radius: 0.75rem;
-          border-top-right-radius: 0.75rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.125rem;
+            background-color: transparent;
+            padding: 0;
         }
-        .responsive-table td[data-label="Khách hàng / SĐH"]:before,
-        .responsive-table td[data-label="Người YC / Khách Hàng"]:before,
-        .responsive-table td[data-label="Số VIN"]:before,
-        .responsive-table td[data-label="Tên tệp"]:before,
-        .responsive-table td[data-label="Khách hàng / SĐH / VIN"]:before {
-          display: none; /* Hide label for the header */
+        .responsive-table td[data-label*="SĐH"]::before,
+        .responsive-table td[data-label*="Xe"]::before {
+            display: none;
         }
-
-        /* Absolutely position the action menu in the top right of the card */
+        
+        /* Position actions in top right corner */
         .responsive-table td[data-label="Hành động"] {
           position: absolute;
-          top: 0.25rem;
-          right: 0.25rem;
+          top: 0.75rem;
+          right: 0.5rem;
           border-bottom: none;
           padding: 0;
           display: block;

@@ -12,6 +12,7 @@ interface StockTableProps {
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
+  onShowDetails: (vehicle: StockVehicle) => void;
   currentUser: string;
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -78,7 +79,7 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
     );
 };
 
-const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
+const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, onShowDetails, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
   const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
   const confirmRef = useRef<HTMLDivElement>(null);
 
@@ -144,13 +145,14 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         return (
                             <tr 
                                 key={vehicle.VIN}
-                                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
+                                onClick={() => onShowDetails(vehicle)}
+                                className={`cursor-pointer hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
                                 style={{animationDelay: `${index * 20}ms`}}
                             >
                                 <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                 <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
                                     <span
-                                        className="text-base font-bold text-accent-primary hover:text-accent-primary-hover hover:underline cursor-pointer transition-colors"
+                                        className="text-base font-bold text-accent-primary hover:text-accent-primary-hover transition-colors cursor-pointer hover:underline"
                                         title="Click để sao chép VIN"
                                         onClick={(e) => handleCopyVin(e, vehicle.VIN)}>
                                         {vehicle.VIN}
@@ -163,15 +165,6 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
                                     <div>
                                         <StatusBadge status={vehicle["Trạng thái"]} />
-                                        {isHeld && vehicle["Người Giữ Xe"] && (
-                                            <div className="mt-1.5 text-xs font-medium text-text-primary flex items-center gap-1.5">
-                                                <i className="far fa-user text-text-secondary" title="Người giữ xe"></i>
-                                                <span title={vehicle["Người Giữ Xe"]}>{vehicle["Người Giữ Xe"]}</span>
-                                            </div>
-                                        )}
-                                        {isHeld && vehicle["Thời Gian Hết Hạn Giữ"] && (
-                                            <HoldCountdown expirationTime={vehicle["Thời Gian Hết Hạn Giữ"]} />
-                                        )}
                                     </div>
                                 </td>
                                 <td data-label="Hành động" className="whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">

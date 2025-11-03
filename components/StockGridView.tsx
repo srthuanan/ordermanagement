@@ -1,12 +1,16 @@
 import React from 'react';
-import { StockVehicle } from '../types';
+import { StockVehicle, StockSortConfig } from '../types';
 import StockCard from './StockCard';
 
 interface StockGridViewProps {
   vehicles: StockVehicle[];
+  sortConfig: StockSortConfig | null;
+  onSort: (key: keyof StockVehicle) => void;
+  startIndex: number;
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
+  onShowDetails: (vehicle: StockVehicle) => void;
   currentUser: string;
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -26,7 +30,7 @@ const StockGridView: React.FC<StockGridViewProps> = (props) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
       {props.vehicles.map((vehicle) => (
         <StockCard
           key={vehicle.VIN}

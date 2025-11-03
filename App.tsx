@@ -28,11 +28,11 @@ import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 
-const logohalloVideo = '/pictures/logohallo.mp4';
-const createRequestPng = '/pictures/taoyeucau.png';
-const boxuongGif = '/pictures/boxuong.gif';
-const xacuopGif = '/pictures/xacuop.gif';
-const logoChinh = '/pictures/logochinh.png';
+import logohalloVideo from '/pictures/logohallo.mp4';
+import createRequestPng from '/pictures/taoyeucau.png';
+import boxuongGif from '/pictures/boxuong.gif';
+import xacuopGif from '/pictures/xacuop.gif';
+import logoChinh from '/pictures/logochinh.png';
 
 moment.locale('vi');
 
@@ -545,8 +545,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             return true;
         } catch (error) {
             hideToast();
-            // FIX: This expression is not callable. Type 'String' has no call signatures.
-            // Explicitly cast the error message to a primitive string to avoid potential errors with String objects.
             const message = String(error instanceof Error ? error.message : "Lỗi không xác định");
             showToast('Xác Thực VC Thất Bại', message, 'error');
             return false;
@@ -683,6 +681,19 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
     }, [processedData, currentPage]);
+
+    const handleOrderNavigation = (direction: 'prev' | 'next') => {
+        if (!selectedOrder) return;
+        const list = processedData; // The list is from App's scope
+        const currentIndex = list.findIndex(o => o['Số đơn hàng'] === selectedOrder['Số đơn hàng']);
+        if (currentIndex === -1) return;
+    
+        const nextIndex = direction === 'prev' ? currentIndex - 1 : currentIndex + 1;
+    
+        if (nextIndex >= 0 && nextIndex < list.length) {
+            setSelectedOrder(list[nextIndex]);
+        }
+    };
     
     const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
     const uniqueCarModels = useMemo(() => [...new Set(allHistoryData.map(o => o["Dòng xe"]))].sort(), [allHistoryData]);
@@ -825,7 +836,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
                 );
             case 'sold':
-                return <SoldCarsView />;
+                return <SoldCarsView showToast={showToast} />;
             case 'laithu':
                 return <TestDriveForm
                     showToast={showToast}
@@ -1045,7 +1056,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 showToast={showToast}
                 username={currentUserName}
             />
-            <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+            <OrderDetailsModal 
+                order={selectedOrder} 
+                onClose={() => setSelectedOrder(null)} 
+                orderList={processedData}
+                onNavigate={handleOrderNavigation}
+            />
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
             {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
             {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} />}

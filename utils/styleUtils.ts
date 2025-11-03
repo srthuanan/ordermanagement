@@ -60,7 +60,6 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     return {};
 };
 
-
 const colorMap: { [key: string]: string } = {
     // Exterior
     'white': '#F8F8F8', 'blanc': '#F5F5DC',
@@ -96,4 +95,94 @@ export const getBackgroundColorStyle = (colorName: string | undefined): React.CS
     }
 
     return { backgroundColor: '#E2E8F0' }; // fallback color
+};
+
+// --- NEW DATA-DRIVEN IMAGE LOGIC ---
+
+// Maps the official model name from the sheet to a simplified key for filenames.
+const modelNameToImageKeyMap: Record<string, string> = {
+    "VF 3": "vf3",
+    "VF 5": "vf5",
+    "VF 6": "vf6",
+    "VF 7": "vf7",
+    "VF 8": "vf8",
+    "VF 9": "vf9",
+};
+
+// Maps significant parts of the exterior color string to a simplified key for filenames.
+// This is now the single source of truth for color-to-image mapping.
+const colorNameToImageKeyMap: Record<string, string> = {
+    "red": "red",
+    "white": "white",
+    "blanc": "white",
+    "grey": "grey",
+    "gray": "grey",
+    "black": "black",
+    "blue": "blue",
+    "orange": "orange",
+    "orb": "orange",
+    "green": "green",
+    "mint": "green",
+    "pink": "pink",
+    "berry": "pink",
+    "yellow": "yellow",
+    "zenith": "zenith",
+    "deep ocean": "deepocean",
+};
+
+/**
+ * Returns the ideal image path for a specific car model and color.
+ * This function now prioritizes unique color codes found in parentheses.
+ * @param model - The car's model name (e.g., "VF 6").
+ * @param exteriorColor - The car's full exterior color string (e.g., "Crimson Red (CE1M)").
+ * @returns The constructed image path (e.g., "pictures/vf6-ce1m.png").
+ */
+export const getCarImage = (model?: string, exteriorColor?: string): string => {
+    const modelKey = model ? (modelNameToImageKeyMap[model] || model.toLowerCase().replace(/\s+/g, '')) : 'default';
+    const lowerExterior = exteriorColor?.toLowerCase() || '';
+
+    // 1. Prioritize finding a unique code in parentheses.
+    const codeMatch = lowerExterior.match(/\(([^)]+)\)/);
+    if (codeMatch && codeMatch[1]) {
+        const colorCodeKey = codeMatch[1].trim().toLowerCase();
+        if (colorCodeKey) {
+            return `pictures/${modelKey}-${colorCodeKey}.png`;
+        }
+    }
+    
+    // 2. Fallback to keyword-based mapping if no code is found.
+    let colorKey = '';
+    const sortedColorKeys = Object.keys(colorNameToImageKeyMap).sort((a, b) => b.length - a.length);
+    for (const key of sortedColorKeys) {
+        if (lowerExterior.includes(key)) {
+            colorKey = colorNameToImageKeyMap[key];
+            break;
+        }
+    }
+    
+    if (colorKey) {
+        return `pictures/${modelKey}-${colorKey}.png`;
+    }
+
+    // 3. If no specific color is found by either method, return the model's default image path.
+    return getModelDefaultImage(model);
+};
+
+
+/**
+ * Returns the path to the default image for a given car model.
+ * @param model - The car's model name.
+ * @returns The path to the model's default image (e.g., "pictures/vf6-default.png").
+ */
+export const getModelDefaultImage = (model?: string): string => {
+    const modelKey = model ? (modelNameToImageKeyMap[model] || model.toLowerCase().replace(/\s+/g, '')) : 'default';
+    return `pictures/${modelKey}-default.png`;
+};
+
+/**
+ * Returns the path to the global fallback image.
+ * @returns The path to the global default image.
+ */
+export const getGlobalDefaultImage = (): string => {
+    return 'pictures/default.png'; // A generic placeholder image
 };
