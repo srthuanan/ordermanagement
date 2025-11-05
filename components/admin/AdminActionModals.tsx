@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import { compressImage } from '../../services/ocrService';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 // --- Modal 1: Request with Reason and Optional Image Paste ---
 
@@ -104,7 +106,14 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                         )}
                     </div>
                 </main>
-                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary"><button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button><button onClick={handleSubmit} disabled={isSubmitting} className={currentTheme.btn}>{isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang gửi...</> : 'Gửi Yêu Cầu'}</button></footer>
+                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Gửi Yêu Cầu" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                </footer>
             </div>
         </div>
     );
@@ -167,10 +176,12 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
                     />
                 </main>
                 <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting || !file} className="btn-primary">
-                        {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải lên...</> : <><i className="fas fa-check-circle mr-2"></i> Tải Lên & Hoàn Tất</>}
-                    </button>
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting && file ? handleSubmit : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isSubmitting || !file) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
                 </footer>
             </div>
         </div>

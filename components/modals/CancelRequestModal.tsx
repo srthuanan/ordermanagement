@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Order } from '../../types';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 interface CancelRequestModalProps {
     order: Order;
@@ -52,17 +54,13 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
                         />
                     </div>
                 </main>
-                <footer className="p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">
-                        Không
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!reason.trim() || isSubmitting}
-                        className="btn-danger"
-                    >
-                         {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang hủy...</> : "Xác nhận Hủy"}
-                    </button>
+                <footer className="p-4 border-t border-border-primary flex justify-end gap-3 items-center bg-surface-ground rounded-b-2xl">
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Không" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting && reason.trim() ? handleSubmit : undefined} title="Xác Nhận Hủy" className={`cursor-pointer ${(isSubmitting || !reason.trim()) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
                 </footer>
             </div>
         </div>

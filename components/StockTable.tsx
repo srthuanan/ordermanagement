@@ -3,6 +3,11 @@ import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import { getExteriorColorStyle } from '../utils/styleUtils';
+import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
+// FIX: Added import for the pair car animation.
+import pairCarAnimationUrl from '../pictures/pair-animation.json?url';
+import huygiuAnimationUrl from '../pictures/huygiu.json?url';
+import yesAnimationUrl from '../pictures/yes.json?url';
 
 interface StockTableProps {
   vehicles: StockVehicle[];
@@ -12,7 +17,6 @@ interface StockTableProps {
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
-  onShowDetails: (vehicle: StockVehicle) => void;
   currentUser: string;
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -38,6 +42,7 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
         };
     }, [expirationTime]);
 
+    // FIX: Changed => to = to fix syntax error in useState declaration.
     const [remainingTime, setRemainingTime] = useState(calculateRemainingTime());
 
     useEffect(() => {
@@ -79,19 +84,8 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
     );
 };
 
-const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, onShowDetails, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
+const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
   const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
-  const confirmRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (confirmRef.current && !confirmRef.current.contains(event.target as Node)) {
-        setConfirmAction(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   if (vehicles.length === 0) {
     return (
@@ -145,14 +139,13 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         return (
                             <tr 
                                 key={vehicle.VIN}
-                                onClick={() => onShowDetails(vehicle)}
-                                className={`cursor-pointer hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
+                                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
                                 style={{animationDelay: `${index * 20}ms`}}
                             >
                                 <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                 <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
                                     <span
-                                        className="text-base font-bold text-accent-primary hover:text-accent-primary-hover transition-colors cursor-pointer hover:underline"
+                                        className="text-base font-bold text-accent-primary hover:text-accent-primary-hover hover:underline cursor-pointer transition-colors"
                                         title="Click để sao chép VIN"
                                         onClick={(e) => handleCopyVin(e, vehicle.VIN)}>
                                         {vehicle.VIN}
@@ -165,6 +158,15 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
                                     <div>
                                         <StatusBadge status={vehicle["Trạng thái"]} />
+                                        {isHeld && vehicle["Người Giữ Xe"] && (
+                                            <div className="mt-1.5 text-xs font-medium text-text-primary flex items-center gap-1.5">
+                                                <i className="far fa-user text-text-secondary" title="Người giữ xe"></i>
+                                                <span className="truncate max-w-[120px]" title={vehicle["Người Giữ Xe"]}>{vehicle["Người Giữ Xe"]}</span>
+                                            </div>
+                                        )}
+                                        {isHeld && vehicle["Thời Gian Hết Hạn Giữ"] && (
+                                            <HoldCountdown expirationTime={vehicle["Thời Gian Hết Hạn Giữ"]} />
+                                        )}
                                     </div>
                                 </td>
                                 <td data-label="Hành động" className="whitespace-nowrap py-4 pl-3 pr-4 text-center text-sm font-medium sm:pr-6">
@@ -173,91 +175,94 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                             <div className="flex items-center justify-center w-full h-full">
                                                 <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
                                             </div>
-                                        ) : isAvailable ? (
-                                            <>
-                                                <button
-                                                    className="action-btn hold-action"
-                                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'hold' }); }}
-                                                    title="Giữ xe (tạm thời)"
-                                                >
-                                                    <i className="fas fa-stopwatch-20"></i>
-                                                </button>
-                                            </>
-                                        ) : isHeldByCurrentUser ? (
-                                            <>
-                                                <button
-                                                    className="action-btn release-action"
-                                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'release' }); }}
-                                                    title="Hủy giữ xe"
-                                                >
-                                                    <i className="fas fa-undo"></i>
-                                                </button>
-                                                <button
-                                                    className="action-btn pair-action"
-                                                    onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
-                                                    title="Tạo yêu cầu cho xe đã giữ"
-                                                >
-                                                    <i className="fas fa-link"></i>
-                                                </button>
-                                            </>
-                                        ) : isHeldByOther ? (
-                                            <>
-                                                <button
-                                                    disabled
-                                                    className="action-btn"
-                                                    title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}
-                                                >
-                                                    <i className="fas fa-lock"></i>
-                                                </button>
-                                                {isAdmin && (
-                                                    <button
-                                                        className="action-btn admin-release-action"
-                                                        onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'release' }); }}
-                                                        title="Admin Hủy Giữ"
-                                                    >
-                                                        <i className="fas fa-user-shield"></i>
-                                                    </button>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className="text-xs text-text-secondary">—</span>
-                                        )}
-                                        
-                                        {isConfirmOpen && !isProcessing && confirmAction && (
-                                            <div
-                                                ref={confirmRef}
-                                                onClick={e => e.stopPropagation()}
-                                                className="absolute -top-1 right-full mr-2 z-30 w-64 bg-surface-overlay p-4 rounded-lg shadow-xl border border-border-primary animate-fade-in-scale-up"
-                                                style={{ animationDuration: '150ms' }}
-                                            >
-                                                <p className="text-sm font-semibold text-text-primary text-center">
-                                                {confirmAction.action === 'hold' ? 'Xác nhận giữ xe này?' : 'Xác nhận hủy giữ xe?'}
-                                                </p>
-                                                <p className="text-xs text-text-secondary text-center mt-1">
-                                                VIN: <span className="font-mono">{confirmAction.vin}</span>
-                                                </p>
-                                                <div className="flex justify-center gap-3 mt-4">
-                                                <button
-                                                    onClick={() => setConfirmAction(null)}
-                                                    className="flex-1 btn-secondary !py-1.5 !text-xs"
-                                                >
-                                                    Không
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                    if (confirmAction.action === 'hold') {
-                                                        onHoldCar(confirmAction.vin);
-                                                    } else {
-                                                        onReleaseCar(confirmAction.vin);
-                                                    }
-                                                    setConfirmAction(null);
-                                                    }}
-                                                    className={`flex-1 !py-1.5 !text-xs ${confirmAction.action === 'hold' ? 'btn-primary' : 'btn-danger'}`}
-                                                >
-                                                    Có, Xác nhận
-                                                </button>
+                                        ) : isConfirmOpen && confirmAction ? (
+                                            <div className="flex justify-center items-center gap-2 w-full animate-fade-in" style={{animationDuration: '150ms'}}>
+                                                <div onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }} className="cursor-pointer hover:scale-110 transition-transform" title="Hủy">
+                                                    <lottie-player src={huygiuAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
+                                                </div>
+                                                <div onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirmAction.action === 'hold') {
+                                                            onHoldCar(confirmAction.vin);
+                                                        } else {
+                                                            onReleaseCar(confirmAction.vin);
+                                                        }
+                                                        setConfirmAction(null);
+                                                    }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
+                                                    <lottie-player src={confirmAction.action === 'hold' ? yesAnimationUrl : huygiuAnimationUrl} background="transparent" speed="1" style={{ width: confirmAction.action === 'hold' ? '70px' : '40px', height: confirmAction.action === 'hold' ? '70px' : '40px' }} loop autoplay />
                                                 </div>
                                             </div>
+                                        ) : (
+                                            <>
+                                                {isAvailable ? (
+                                                    <div
+                                                        className="cursor-pointer transition-transform hover:scale-110"
+                                                        onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'hold' }); }}
+                                                        title="Giữ xe (tạm thời)"
+                                                    >
+                                                        <lottie-player
+                                                            src={sandTimerAnimationUrl}
+                                                            background="transparent"
+                                                            speed="1"
+                                                            style={{ width: '36px', height: '36px' }}
+                                                            loop
+                                                            autoplay
+                                                        ></lottie-player>
+                                                    </div>
+                                                ) : isHeldByCurrentUser ? (
+                                                    <>
+                                                        <div
+                                                            className="cursor-pointer transition-transform hover:scale-110"
+                                                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'release' }); }}
+                                                            title="Hủy giữ xe"
+                                                        >
+                                                            <lottie-player
+                                                                src={huygiuAnimationUrl}
+                                                                background="transparent"
+                                                                speed="1"
+                                                                style={{ width: '36px', height: '36px' }}
+                                                                loop
+                                                                autoplay
+                                                            ></lottie-player>
+                                                        </div>
+                                                        <div
+                                                            className="cursor-pointer transition-transform hover:scale-110"
+                                                            onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
+                                                            title="Tạo yêu cầu cho xe đã giữ"
+                                                        >
+                                                            <lottie-player
+                                                                src={pairCarAnimationUrl}
+                                                                background="transparent"
+                                                                speed="1"
+                                                                style={{ width: '42px', height: '42px' }}
+                                                                loop
+                                                                autoplay
+                                                            ></lottie-player>
+                                                        </div>
+                                                    </>
+                                                ) : isHeldByOther ? (
+                                                    <>
+                                                        <button
+                                                            disabled
+                                                            className="action-btn"
+                                                            title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}
+                                                        >
+                                                            <i className="fas fa-lock"></i>
+                                                        </button>
+                                                        {isAdmin && (
+                                                            <button
+                                                                className="action-btn admin-release-action"
+                                                                onClick={(e) => { e.stopPropagation(); setConfirmAction({ vin: vehicle.VIN, action: 'release' }); }}
+                                                                title="Admin Hủy Giữ"
+                                                            >
+                                                                <i className="fas fa-user-shield"></i>
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-text-secondary">—</span>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </td>

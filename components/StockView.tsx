@@ -5,10 +5,12 @@ import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
 import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
-import * as apiService from '../services/apiService';
+// import * as apiService from '../services/apiService'; // FIX: Removed as actions are now handled by props.
 
 const PAGE_SIZE = 12;
 
+// FIX: Updated props to align with how the component is used in App.tsx.
+// Removed `setStockData` and added `onHoldCar`, `onReleaseCar`, and `processingVin`.
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
   hideToast: () => void;
@@ -16,11 +18,13 @@ interface StockViewProps {
   isAdmin: boolean;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
   stockData: StockVehicle[];
-  setStockData: React.Dispatch<React.SetStateAction<StockVehicle[]>>;
   isLoading: boolean;
   error: string | null;
   refetchStock: (isSilent?: boolean) => void;
   highlightedVins: Set<string>;
+  onHoldCar: (vin: string) => void;
+  onReleaseCar: (vin: string) => void;
+  processingVin: string | null;
 }
 
 const StockView: React.FC<StockViewProps> = ({ 
@@ -30,11 +34,13 @@ const StockView: React.FC<StockViewProps> = ({
     isAdmin, 
     onCreateRequestForVehicle,
     stockData,
-    setStockData,
     isLoading,
     error,
     refetchStock,
-    highlightedVins
+    highlightedVins,
+    onHoldCar,
+    onReleaseCar,
+    processingVin
 }) => {
     const [filters, setFilters] = useState({
         keyword: '',
@@ -46,29 +52,10 @@ const StockView: React.FC<StockViewProps> = ({
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
-    const [processingAction, setProcessingAction] = useState<{ vin: string; initialStatus: string } | null>(null);
     const [view, setView] = useState<'table' | 'grid'>('grid');
     const [stockVehicleToView, setStockVehicleToView] = useState<StockVehicle | null>(null);
     
-    useEffect(() => {
-        if (!processingAction) return;
-    
-        const currentVehicle = stockData.find(v => v.VIN === processingAction.vin);
-        // Check if the status has changed
-        if (currentVehicle && currentVehicle['Trạng thái'] !== processingAction.initialStatus) {
-            setProcessingAction(null);
-        }
-    
-        // Add a timeout as a safeguard to prevent spinner from getting stuck
-        const timer = setTimeout(() => {
-            if (processingAction) {
-                console.warn(`Spinner for VIN ${processingAction.vin} timed out after 15 seconds.`);
-                setProcessingAction(null);
-            }
-        }, 15000); // 15s timeout
-    
-        return () => clearTimeout(timer);
-    }, [stockData, processingAction]);
+    // FIX: Removed local processing state and internal action handlers. The component now relies on props from App.tsx.
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -96,62 +83,6 @@ const StockView: React.FC<StockViewProps> = ({
 
     const handleShowDetails = (vehicle: StockVehicle) => {
         setStockVehicleToView(vehicle);
-    };
-
-    const handleHoldCar = async (vin: string) => {
-        const vehicle = stockData.find(v => v.VIN === vin);
-        if (!vehicle) return;
-
-        setProcessingAction({ vin, initialStatus: vehicle['Trạng thái'] });
-        showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading');
-        try {
-            const result = await apiService.holdCar(vin);
-            hideToast();
-            showToast('Giữ Xe Thành Công', result.message, 'success', 3000);
-            
-            if (result.updatedVehicle) {
-                setStockData(currentData =>
-                    currentData.map(vehicle =>
-                        vehicle.VIN === vin ? result.updatedVehicle : vehicle
-                    )
-                );
-            } else {
-                refetchStock(true); // Fallback
-            }
-        } catch (err) {
-            hideToast();
-            const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
-            showToast('Giữ Xe Thất Bại', message, 'error', 5000);
-            setProcessingAction(null);
-        }
-    };
-
-    const handleReleaseCar = async (vin: string) => {
-        const vehicle = stockData.find(v => v.VIN === vin);
-        if (!vehicle) return;
-
-        setProcessingAction({ vin, initialStatus: vehicle['Trạng thái'] });
-        showToast('Đang xử lý...', `Đang hủy giữ xe VIN ${vin}.`, 'loading');
-        try {
-            const result = await apiService.releaseCar(vin);
-            hideToast();
-            showToast('Hủy Giữ Thành Công', result.message, 'info', 3000);
-    
-            if (result.updatedVehicle) {
-                setStockData(currentData =>
-                    currentData.map(vehicle =>
-                        vehicle.VIN === vin ? result.updatedVehicle : vehicle
-                    )
-                );
-            } else {
-                refetchStock(true); // Fallback
-            }
-        } catch (err) {
-            hideToast();
-            const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
-            showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
-            setProcessingAction(null);
-        }
     };
 
     const processedData = useMemo(() => {
@@ -251,18 +182,13 @@ const StockView: React.FC<StockViewProps> = ({
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
             return ( 
-                 <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
-                        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-                            <div className="w-full lg:flex-grow">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <div className="skeleton-item h-8 rounded-lg" style={{flexBasis: '280px', flexGrow: 1}}></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-8 !rounded-lg ml-auto"></div>
-                                </div>
-                            </div>
+                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 mb-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="skeleton-item h-10 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-10 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-10 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-10 w-10 !rounded-full ml-auto"></div>
                         </div>
                     </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -285,53 +211,51 @@ const StockView: React.FC<StockViewProps> = ({
             sortConfig,
             onSort: handleSort,
             startIndex: (currentPage - 1) * PAGE_SIZE,
-            onHoldCar: handleHoldCar,
-            onReleaseCar: handleReleaseCar,
+            onHoldCar: onHoldCar,
+            onReleaseCar: onReleaseCar,
             onCreateRequestForVehicle,
             onShowDetails: handleShowDetails,
             currentUser,
             isAdmin,
             showToast,
             highlightedVins,
-            processingVin: processingAction?.vin || null
+            processingVin: processingVin
         };
         
         return ( 
-            <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
-                    <div className="flex flex-col xl:flex-row gap-4 xl:items-start">
-                        <div className="w-full xl:flex-grow">
-                            <Filters 
-                                filters={filters} 
-                                onFilterChange={handleFilterChange} 
-                                onReset={handleResetFilters} 
-                                dropdowns={dropdownConfigs}
-                                searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
-                                totalCount={processedData.length}
-                                onRefresh={() => refetchStock()}
-                                isLoading={isLoading}
-                                plain={true}
-                                size="compact"
-                                viewSwitcherEnabled={true}
-                                activeView={view}
-                                onViewChange={setView}
-                            />
-                        </div>
-                    </div>
+            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                <div className="flex-shrink-0 mb-0">
+                    <Filters 
+                        filters={filters} 
+                        onFilterChange={handleFilterChange} 
+                        onReset={handleResetFilters} 
+                        dropdowns={dropdownConfigs}
+                        searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
+                        totalCount={processedData.length}
+                        onRefresh={() => refetchStock()}
+                        isLoading={isLoading}
+                        plain={true}
+                        size="compact"
+                        viewSwitcherEnabled={true}
+                        activeView={view}
+                        onViewChange={setView}
+                    />
                 </div>
                 <div className="flex-1 flex flex-col min-h-0">
                     {view === 'table' ? (
                         <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
-                            <div className="flex-grow overflow-auto relative">
+                            <div className="flex-grow overflow-auto relative hidden-scrollbar">
                                 <StockTable vehicles={paginatedData} {...commonProps} />
                             </div>
                             {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                         </div>
                     ) : (
-                        <>
-                            <StockGridView vehicles={paginatedData} {...commonProps} />
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+                            <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
+                                <StockGridView vehicles={paginatedData} {...commonProps} />
+                            </div>
                             {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>
@@ -345,12 +269,12 @@ const StockView: React.FC<StockViewProps> = ({
                 isOpen={!!stockVehicleToView}
                 onClose={() => setStockVehicleToView(null)}
                 vehicle={stockVehicleToView}
-                onHoldCar={handleHoldCar}
-                onReleaseCar={handleReleaseCar}
+                onHoldCar={onHoldCar}
+                onReleaseCar={onReleaseCar}
                 onCreateRequestForVehicle={onCreateRequestForVehicle}
                 currentUser={currentUser}
                 isAdmin={isAdmin}
-                processingVin={processingAction?.vin || null}
+                processingVin={processingVin}
                 vehicleList={processedData}
                 onNavigate={handleVehicleNavigation}
             />

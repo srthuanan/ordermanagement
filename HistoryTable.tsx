@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import moment from 'moment';
-import { Order, SortConfig } from './types';
-import StatusBadge from './components/ui/StatusBadge';
-import ActionMenu from './components/ui/ActionMenu';
-import { getExteriorColorStyle } from './utils/styleUtils';
+import { Order, SortConfig } from '../types';
+import StatusBadge from './ui/StatusBadge';
+import ActionMenu from './ui/ActionMenu';
+import { getExteriorColorStyle } from '../utils/styleUtils';
 
 interface HistoryTableProps {
   orders: Order[];
@@ -11,6 +11,7 @@ interface HistoryTableProps {
   onCancel?: (order: Order) => void;
   onRequestInvoice?: (order: Order) => void;
   onSupplement?: (order: Order) => void;
+  // FIX: Added missing props for VinClub actions.
   onRequestVC?: (order: Order) => void;
   onConfirmVC?: (order: Order) => void;
   sortConfig: SortConfig | null;
@@ -41,6 +42,7 @@ interface HistoryTableRowProps {
     onCancel?: (order: Order) => void; 
     onRequestInvoice?: (order: Order) => void; 
     onSupplement?: (order: Order) => void; 
+    // FIX: Added missing props for VinClub actions.
     onRequestVC?: (order: Order) => void; 
     onConfirmVC?: (order: Order) => void; 
     onRowClick?: (order: Order) => void; 
@@ -51,6 +53,7 @@ interface HistoryTableRowProps {
 
 
 const HistoryTableRow: React.FC<HistoryTableRowProps> = 
+// FIX: Added missing props for VinClub actions to the function signature.
 ({ order, index, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onRowClick, selectedOrder, viewMode, processingOrder }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
@@ -96,6 +99,7 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
                                 onCancel={onCancel!} 
                                 onRequestInvoice={onRequestInvoice!} 
                                 onSupplement={onSupplement!} 
+                                // FIX: Pass VinClub action handlers to ActionMenu.
                                 onRequestVC={onRequestVC!} 
                                 onConfirmVC={onConfirmVC!} 
                                 onToggle={setIsMenuOpen} 
@@ -108,6 +112,7 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
     );
 };
 
+// FIX: Added missing props for VinClub actions to the function signature.
 const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, sortConfig, onSort, startIndex, onRowClick, selectedOrder, viewMode = 'full', processingOrder }) => {
   if (orders.length === 0) {
     return (
@@ -143,8 +148,9 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCa
                             onViewDetails={onViewDetails} 
                             onCancel={onCancel} 
                             onRequestInvoice={onRequestInvoice} 
-                            onSupplement={onSupplement} 
-                            onRequestVC={onRequestVC} 
+                            onSupplement={onSupplement}
+                            // FIX: Pass VinClub action handlers to HistoryTableRow.
+                            onRequestVC={onRequestVC}
                             onConfirmVC={onConfirmVC}
                             onRowClick={onRowClick}
                             selectedOrder={selectedOrder}

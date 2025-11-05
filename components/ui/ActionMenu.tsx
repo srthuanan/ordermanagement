@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Order } from '../../types';
+import animationDataUrl from '../../pictures/loading-animation.json?url';
 
 interface ActionMenuProps {
   order: Order;
@@ -70,14 +71,23 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
         onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen); }}
         className={`group w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50
                    ${isOpen 
-                     ? 'bg-accent-primary/10 text-accent-primary' 
-                     : 'text-text-secondary bg-transparent hover:bg-surface-hover hover:text-text-primary'}`}
+                     ? 'bg-accent-primary/10' 
+                     : 'bg-transparent hover:bg-surface-hover'}`}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-controls="action-menu"
         title="Tùy chọn"
       >
-        <i className={`fas fa-cog text-lg transform transition-transform duration-300 ${isOpen ? 'rotate-45' : ''}`}></i>
+        <lottie-player
+            src={animationDataUrl}
+            background="transparent"
+            speed="1"
+            style={{ width: '28px', height: '28px' }}
+            loop
+            autoplay
+            className={`transition-all duration-300 group-hover:scale-110 group-hover:[filter:drop-shadow(0_0_4px_rgba(66,165,245,0.7))] ${isOpen ? 'scale-105 [filter:drop-shadow(0_0_2px_rgba(66,165,245,0.7))]' : ''}`}
+        >
+        </lottie-player>
       </button>
 
       {isOpen && (

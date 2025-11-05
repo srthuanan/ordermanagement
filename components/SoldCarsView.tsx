@@ -8,16 +8,132 @@ import Leaderboard from './ui/Leaderboard';
 import SalesChart from './ui/SalesChart';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import { MONTHS } from '../constants';
-import * as apiService from '../services/apiService';
-import { useSoldCarsApi } from '../hooks/useSoldCarsApi';
 
 // Chart.js is loaded globally via index.html
 declare const Chart: any;
 
 const PAGE_SIZE = 10;
 
+// --- SKELETON COMPONENTS ---
+
+const SkeletonSummaryCard = () => (
+    <div className="bg-surface-card p-3 rounded-xl border border-border-primary flex items-center gap-3">
+        <div className="skeleton-item flex-shrink-0 w-10 h-10 rounded-md"></div>
+        <div className="min-w-0 flex-1 space-y-2">
+            <div className="skeleton-item h-4 w-20"></div>
+            <div className="skeleton-item h-5 w-28"></div>
+        </div>
+    </div>
+);
+
+const SkeletonLeaderboard = () => (
+    <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md flex flex-col h-96">
+        <div className="skeleton-item h-5 w-1/2 mb-4"></div>
+        <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-2">
+                    <div className="skeleton-item w-8 h-8 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                        <div className="skeleton-item h-4 w-3/4"></div>
+                        <div className="skeleton-item h-2 w-full"></div>
+                    </div>
+                    <div className="skeleton-item h-6 w-8"></div>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+const SkeletonSalesChart = () => (
+    <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md">
+        <div className="skeleton-item h-5 w-1/3 mb-4"></div>
+        <div className="skeleton-item h-80 w-full"></div>
+    </div>
+);
+
+const TotalDashboardSkeleton = () => (
+    <div className="space-y-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SkeletonSummaryCard />
+            <SkeletonSummaryCard />
+            <SkeletonSummaryCard />
+        </div>
+        <SkeletonSalesChart />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SkeletonLeaderboard />
+            <SkeletonLeaderboard />
+        </div>
+    </div>
+);
+
+const SkeletonHistoryTable = () => (
+    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full min-h-[400px]">
+        <div className="p-4 border-b border-border-primary">
+            <div className="skeleton-item h-5 w-1/4"></div>
+        </div>
+        <div className="flex-grow p-4 space-y-3">
+            {Array.from({ length: PAGE_SIZE / 2 }).map((_, i) => (
+                <div key={i} className="skeleton-item h-10 w-full"></div>
+            ))}
+        </div>
+    </div>
+);
+
+const SkeletonDetailPanel = () => (
+     <div className="detail-panel h-full">
+        <div className="p-4 border-b border-border-primary">
+            <div className="skeleton-item h-6 w-1/2"></div>
+        </div>
+        <div className="p-4 space-y-6">
+            <div className="skeleton-item h-20 w-full rounded-lg"></div>
+            <div className="space-y-4 mt-4">
+                <div className="skeleton-item h-5 w-1/3"></div>
+                <div className="pl-4 space-y-3">
+                    <div className="skeleton-item h-8 w-full"></div>
+                    <div className="skeleton-item h-8 w-full"></div>
+                </div>
+            </div>
+            <div className="space-y-4 mt-4">
+                <div className="skeleton-item h-5 w-1/3"></div>
+                <div className="pl-4 space-y-3">
+                    <div className="skeleton-item h-8 w-full"></div>
+                    <div className="skeleton-item h-8 w-full"></div>
+                    <div className="skeleton-item h-8 w-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const MonthViewSkeleton = () => (
+    <div className="space-y-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SkeletonSummaryCard />
+            <SkeletonSummaryCard />
+            <SkeletonSummaryCard />
+        </div>
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+            <div className="skeleton-item h-8 w-full"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start tables-section">
+            <div className="lg:col-span-2">
+                <SkeletonHistoryTable />
+            </div>
+            <div className="lg:col-span-1 hidden lg:block sticky top-24">
+                <SkeletonDetailPanel />
+            </div>
+        </div>
+    </div>
+);
+
+// --- END SKELETON COMPONENTS ---
+
 interface SoldCarsViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+  soldData: Order[];
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -103,16 +219,16 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
     }, [data, filters]);
 
     const stats = useMemo(() => {
-        const carDataAgg = aggregateData(data, 'Dòng xe');
-        const tvbhDataAgg = aggregateData(data, 'Tên tư vấn bán hàng');
+        const carDataAgg = aggregateData(displayData, 'Dòng xe');
+        const tvbhDataAgg = aggregateData(displayData, 'Tên tư vấn bán hàng');
         const topCar = carDataAgg[0] || { key: "—", count: 0 };
         const topSalesperson = tvbhDataAgg[0] || { key: "—", count: 0 };
         return {
-            total: data.length,
+            total: displayData.length,
             topCarDisplay: `${topCar.key} (${topCar.count} xe)`,
             topTvbhDisplay: `${topSalesperson.key} (${topSalesperson.count} xe)`,
         };
-    }, [data]);
+    }, [displayData]);
 
     const handleSort = (key: keyof Order) => {
         setCurrentPage(1);
@@ -144,7 +260,7 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
     const paginatedData = useMemo(() => sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [sortedData, currentPage]);
     const totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
 
-    if (isLoading) return <div className="flex items-center justify-center h-full pt-16"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+    if (isLoading && data.length === 0) return <MonthViewSkeleton />;
     if (error) return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
 
     const dropdownConfigs: DropdownFilterConfig[] = [
@@ -180,10 +296,10 @@ const TotalDashboard: React.FC<{
     isLoading: boolean;
     error: string | null;
     refetch: () => void;
-}> = ({ soldData, isLoading, error, refetch }) => {
-    const carChartRef = useRef<HTMLCanvasElement>(null);
-    const carChartInstance = useRef<any>(null);
-
+    yearlyData: { month: string; count: number }[];
+    onMonthClick: (monthIndex: number | null) => void;
+}> = ({ soldData, isLoading, error, refetch, yearlyData, onMonthClick }) => {
+    
     const stats = useMemo(() => {
         const carDataAgg = aggregateData(soldData, 'Dòng xe');
         const tvbhDataAgg = aggregateData(soldData, 'Tên tư vấn bán hàng');
@@ -193,82 +309,18 @@ const TotalDashboard: React.FC<{
             total: soldData.length,
             topCarDisplay: `${topCar.key} (${topCar.count} xe)`,
             topTvbhDisplay: `${topSalesperson.key} (${topSalesperson.count} xe)`,
-            topCars: carDataAgg.slice(0, 10),
-            topTvbh: tvbhDataAgg.slice(0, 10),
-            carDistribution: carDataAgg,
+            topCars: carDataAgg.slice(0, 5),
+            topTvbh: tvbhDataAgg.slice(0, 5),
         };
     }, [soldData]);
-    
-    // FIX: Added a useEffect to handle chart creation and destruction.
-    useEffect(() => {
-        if (carChartRef.current && stats.carDistribution.length > 0) {
-            const ctx = carChartRef.current.getContext('2d');
-            if (!ctx) return;
-
-            if (carChartInstance.current) {
-                carChartInstance.current.destroy();
-            }
-
-            const chartData = {
-                labels: stats.carDistribution.map(d => d.key),
-                datasets: [{
-                    data: stats.carDistribution.map(d => d.count),
-                    backgroundColor: [
-                        '#42A5F5', '#66BB6A', '#FFA726', '#26A69A', '#AB47BC', 
-                        '#EC407A', '#FF7043', '#78909C', '#5C6BC0', '#8D6E63'
-                    ].slice(0, stats.carDistribution.length),
-                    hoverBackgroundColor: [
-                        '#64B5F6', '#81C784', '#FFB74D', '#4DB6AC', '#BA68C8', 
-                        '#F06292', '#FF8A65', '#90A4AE', '#7986CB', '#A1887F'
-                    ].slice(0, stats.carDistribution.length)
-                }]
-            };
-
-            carChartInstance.current = new Chart(ctx, {
-                type: 'doughnut',
-                data: chartData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 10,
-                                color: '#64748B',
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                         tooltip: {
-                            backgroundColor: '#FFFFFF',
-                            titleColor: '#0F172A',
-                            bodyColor: '#64748B',
-                            borderColor: '#E2E8F0',
-                            borderWidth: 1,
-                        }
-                    },
-                    cutout: '60%',
-                }
-            });
-        }
-        return () => {
-            if (carChartInstance.current) {
-                carChartInstance.current.destroy();
-            }
-        };
-    }, [stats.carDistribution]);
-
 
     if (isLoading && soldData.length === 0) {
-        return <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i></div>;
+        return <TotalDashboardSkeleton />;
     }
     if (error) {
         return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
     }
 
-    // FIX: Added a return statement with JSX to render the dashboard.
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -276,40 +328,30 @@ const TotalDashboard: React.FC<{
                 <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} />
                 <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} />
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                    <Leaderboard title="BXH Dòng Xe (Năm)" icon="fa-trophy" items={stats.topCars} color="blue" />
-                </div>
-                <div className="lg:col-span-1">
-                    <Leaderboard title="BXH TVBH (Năm)" icon="fa-crown" items={stats.topTvbh} color="green" />
-                </div>
-                <div className="lg:col-span-1 bg-surface-card p-4 rounded-xl border border-border-primary shadow-md flex flex-col h-96 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1">
-                    <h3 className="font-bold text-text-primary text-base mb-3">Phân Bổ Dòng Xe</h3>
-                    <div className="h-full flex-grow flex items-center justify-center min-h-0">
-                        <canvas ref={carChartRef}></canvas>
-                    </div>
-                </div>
+             <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md">
+                <h3 className="font-bold text-text-primary text-base mb-3">Doanh Số Toàn Cầu Theo Tháng (Click để xem chi tiết)</h3>
+                <SalesChart salesData={yearlyData} onMonthClick={onMonthClick} selectedMonthIndex={null} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Leaderboard title="BXH Dòng Xe (Top 5 Năm)" icon="fa-trophy" items={stats.topCars} color="blue" />
+                <Leaderboard title="BXH TVBH (Top 5 Năm)" icon="fa-crown" items={stats.topTvbh} color="green" />
             </div>
         </div>
     );
 };
 
 // --- Main View ---
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast }) => {
-    const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-    const { soldData, isLoading, error, refetch } = useSoldCarsApi();
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoading, error, refetch }) => {
+    const [activeTab, setActiveTab] = useState<string>('Tổng Quan');
 
     const monthlyData = useMemo(() => {
         const grouped: Record<string, Order[]> = {};
+        MONTHS.forEach(month => grouped[month] = []);
         soldData.forEach(order => {
             if (order['Thời gian nhập']) {
                 try {
                     const monthName = MONTHS[new Date(order['Thời gian nhập']).getMonth()];
                     if (monthName) {
-                        if (!grouped[monthName]) {
-                            grouped[monthName] = [];
-                        }
                         grouped[monthName].push(order);
                     }
                 } catch {}
@@ -319,49 +361,60 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast }) => {
     }, [soldData]);
 
     const yearlyData = useMemo(() => {
-        const monthlySalesData: Record<string, number> = {};
-        MONTHS.forEach(m => monthlySalesData[m] = 0);
-        Object.entries(monthlyData).forEach(([month, orders]) => {
-            monthlySalesData[month] = orders.length;
-        });
-        return MONTHS.map((month, index) => ({ month: `T${index + 1}`, count: monthlySalesData[month] || 0 }));
+        return MONTHS.map((month, index) => ({ 
+            month: `T${index + 1}`, 
+            count: monthlyData[month]?.length || 0 
+        }));
     }, [monthlyData]);
-
-    const handleMonthChange = (monthIndex: number | null) => {
-        if (monthIndex === null) {
-            setSelectedMonth(null);
-        } else {
-            setSelectedMonth(MONTHS[monthIndex]);
+    
+    const TABS = ['Tổng Quan', ...MONTHS.map((_, i) => `Tháng ${i + 1}`)];
+    
+    const handleMonthClickFromChart = (monthIndex: number | null) => {
+        if (monthIndex !== null) {
+            setActiveTab(`Tháng ${monthIndex + 1}`);
         }
     };
-    
-    const selectedMonthIndex = selectedMonth !== null ? MONTHS.indexOf(selectedMonth) : null;
-
-    if (selectedMonth) {
-        const monthData = monthlyData[selectedMonth] || [];
-        return (
-            <div className="flex flex-col h-full animate-fade-in-up">
-                <header className="flex-shrink-0 flex items-center justify-between mb-4 pb-3 border-b border-border-primary">
-                    <h2 className="text-2xl font-bold text-text-primary">Doanh số Tháng {selectedMonth}</h2>
-                    <button onClick={() => setSelectedMonth(null)} className="btn-secondary">
-                        <i className="fas fa-arrow-left mr-2"></i>Xem Tổng Quan Năm
-                    </button>
-                </header>
-                <div className="flex-grow overflow-y-auto">
-                    <MonthView month={selectedMonth} data={monthData} isLoading={isLoading} error={error} refetch={refetch} showToast={showToast} />
-                </div>
-            </div>
-        );
-    }
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
-            <h2 className="text-2xl font-bold text-text-primary">Tổng Quan Doanh Số Bán Hàng</h2>
-            <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md">
-                <h3 className="font-bold text-text-primary text-base mb-3">Doanh Số Toàn Cầu Theo Tháng (Click để xem chi tiết)</h3>
-                <SalesChart salesData={yearlyData} onMonthClick={handleMonthChange} selectedMonthIndex={selectedMonthIndex} />
+        <div className="flex flex-col h-full animate-fade-in-up">
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
+                <div className="admin-tabs-container p-2 flex items-center border-b border-border-primary overflow-x-auto">
+                     {TABS.map((tab, index) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${activeTab === tab ? 'bg-accent-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface-hover'}`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
             </div>
-            <TotalDashboard soldData={soldData} isLoading={isLoading} error={error} refetch={refetch} />
+
+            <div className="flex-grow overflow-y-auto">
+                <div hidden={activeTab !== 'Tổng Quan'}>
+                     <TotalDashboard 
+                        soldData={soldData}
+                        isLoading={isLoading}
+                        error={error}
+                        refetch={refetch}
+                        yearlyData={yearlyData}
+                        onMonthClick={handleMonthClickFromChart}
+                     />
+                </div>
+                {MONTHS.map((monthName, index) => (
+                    <div key={monthName} hidden={activeTab !== `Tháng ${index + 1}`}>
+                        <MonthView 
+                            month={`Tháng ${index + 1}`}
+                            data={monthlyData[monthName] || []}
+                            isLoading={isLoading}
+                            error={error}
+                            refetch={refetch}
+                            showToast={showToast}
+                        />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

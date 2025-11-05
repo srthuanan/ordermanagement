@@ -485,7 +485,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             
             {activeTab === 'history' && (
                 <div className="flex-grow flex flex-col overflow-hidden print-hidden">
-                    <div className="flex-shrink-0 p-3 border-b border-border-primary bg-surface-ground">
+                    <div className="flex-shrink-0 p-2 border-b border-border-primary bg-surface-ground">
                         <Filters
                             filters={historyFilters}
                             onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}

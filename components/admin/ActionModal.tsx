@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 interface InputConfig {
     id: string;
@@ -92,8 +94,6 @@ const ActionModal: React.FC<ActionModalProps> = ({
         }
     };
     const selectedColor = colorMap[submitColor] || colorMap.primary;
-    const submitButtonClass = `btn-${submitColor === 'primary' ? 'primary' : submitColor}`;
-
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -166,12 +166,13 @@ const ActionModal: React.FC<ActionModalProps> = ({
                     )}
                 </main>
                 
-                <footer className="px-6 py-4 flex justify-end gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button onClick={handleSubmit} disabled={isSubmitting || (inputs.length > 0 && !isFormValid())} className={`${submitButtonClass}`}>
-                        {isSubmitting ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className={`fas ${icon} mr-2`}></i>}
-                        {isSubmitting ? 'Đang xử lý...' : submitText}
-                    </button>
+                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting && isFormValid() ? handleSubmit : undefined} title={submitText} className={`cursor-pointer ${(isSubmitting || (inputs.length > 0 && !isFormValid())) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
                 </footer>
             </div>
         </div>

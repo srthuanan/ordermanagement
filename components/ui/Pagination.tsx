@@ -9,12 +9,26 @@ interface PaginationProps {
   isLastArchive: boolean;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange, onLoadMore, isLoadingArchives, isLastArchive }) => {
+/**
+ * Một component phân trang với phong cách phẳng, nhỏ gọn, không có nền.
+ * Hiển thị các nút số, nút điều hướng và nút "Tải thêm" khi cần thiết.
+ */
+const Pagination: React.FC<PaginationProps> = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange, 
+  onLoadMore, 
+  isLoadingArchives, 
+  isLastArchive 
+}) => {
+  // Nếu chỉ có 1 trang (hoặc 0 trang) VÀ không còn lưu trữ, không hiển thị gì cả.
   if (totalPages <= 1 && isLastArchive) return null;
 
+  // --- LOGIC TÍNH TOÁN SỐ TRANG ---
   const pageNumbers = [];
-  const maxPagesToShow = 5;
+  const maxPagesToShow = 3; // Chỉ hiển thị 3 số một lúc cho gọn
   let startPage: number, endPage: number;
+
   if (totalPages <= maxPagesToShow) {
     startPage = 1;
     endPage = totalPages;
@@ -30,72 +44,96 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
       endPage = currentPage + Math.floor(maxPagesToShow / 2);
     }
   }
-
   for (let i = startPage; i <= endPage; i++) {
     pageNumbers.push(i);
   }
-  
-  const baseButtonClass = "px-3 py-1 text-sm rounded-md border transition-colors duration-200";
-  const defaultButtonClass = "border-border-primary bg-surface-card text-text-secondary hover:bg-surface-hover hover:border-border-secondary";
-  const activeButtonClass = "bg-accent-primary text-white border-accent-primary";
-  const disabledButtonClass = "disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface-input";
+  // --- KẾT THÚC LOGIC SỐ TRANG ---
+
+  // --- CÁC LỚP CSS NHỎ GỌN (KHÔNG NỀN) ---
+  const baseButtonClass = "flex items-center justify-center text-xs font-medium rounded-md transition-colors duration-200";
+  // Lớp CSS cho nút điều hướng (mũi tên) - Nhỏ hơn
+  const arrowButtonClass = `${baseButtonClass} w-7 h-7 text-gray-500 hover:bg-gray-100 hover:text-gray-700`;
+  // Lớp CSS cho nút số (trạng thái bình thường) - Nhỏ hơn
+  const numberButtonClass = `${baseButtonClass} w-7 h-7 text-gray-500 hover:bg-gray-50 hover:text-gray-700`;
+  // Lớp CSS cho nút số (trạng thái active) - "Gradient xanh nhạt"
+  const activeNumberClass = `${baseButtonClass} w-7 h-7 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-semibold shadow-sm hover:from-blue-500 hover:to-blue-600`;
+  // Lớp CSS cho nút "Tải thêm" - Nhỏ hơn
+  const loadMoreButtonClass = `${baseButtonClass} px-2.5 py-1 text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold`;
+  // Lớp CSS cho trạng thái bị vô hiệu hóa
+  const disabledClass = "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-500";
+  // Lớp CSS cho dấu "..." - Nhỏ hơn
+  const ellipsisClass = "w-7 h-7 flex items-center justify-center text-sm font-medium text-gray-400";
+
+  // Biến cờ kiểm tra khi nào hiển thị nút "Tải thêm"
+  const showLoadMore = (totalPages === 0 || currentPage === totalPages) && !isLastArchive;
 
   return (
-    <nav className="mt-4 px-4 py-3 flex items-center justify-center space-x-2 flex-wrap gap-y-2 border-t border-border-primary">
+    <nav className="px-4 py-2 flex items-center justify-center space-x-0.5 flex-wrap gap-y-1">
+      
+      {/* Nút 'Trước' */}
       {totalPages > 1 && (
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={`${arrowButtonClass} ${disabledClass}`}
+          aria-label="Trang trước"
+        >
+          {/* Icon nhỏ hơn */}
+          <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+      )}
+
+      {/* Dấu '...' và số 1 (nếu cần) */}
+      {totalPages > 1 && startPage > 1 && (
         <>
-            <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`${baseButtonClass} ${defaultButtonClass} ${disabledButtonClass}`}
-            >
-                &laquo; Trước
-            </button>
-
-            {startPage > 1 && (
-                <>
-                    <button onClick={() => onPageChange(1)} className={`${baseButtonClass} ${defaultButtonClass}`}>1</button>
-                    {startPage > 2 && <span className="px-2 py-1 text-sm text-text-secondary">...</span>}
-                </>
-            )}
-
-            {pageNumbers.map(number => (
-                <button
-                key={number}
-                onClick={() => onPageChange(number)}
-                className={`${baseButtonClass} ${currentPage === number ? activeButtonClass : defaultButtonClass}`}
-                >
-                {number}
-                </button>
-            ))}
-            
-            {endPage < totalPages && (
-                <>
-                    {endPage < totalPages - 1 && <span className="px-2 py-1 text-sm text-text-secondary">...</span>}
-                    <button onClick={() => onPageChange(totalPages)} className={`${baseButtonClass} ${defaultButtonClass}`}>{totalPages}</button>
-                </>
-            )}
-
-            <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`${baseButtonClass} ${defaultButtonClass} ${disabledButtonClass}`}
-            >
-                Sau &raquo;
-            </button>
+          <button onClick={() => onPageChange(1)} className={numberButtonClass}>1</button>
+          {startPage > 2 && <span className={ellipsisClass}>...</span>}
         </>
       )}
 
-      {(totalPages === 0 || currentPage === totalPages) && !isLastArchive && (
+      {/* Các số trang */}
+      {totalPages > 1 && pageNumbers.map(number => (
         <button
-            onClick={onLoadMore}
-            disabled={isLoadingArchives}
-            className="ml-4 px-4 py-2 text-sm rounded-md border-accent-primary border text-accent-primary font-semibold hover:bg-surface-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          key={number}
+          onClick={() => onPageChange(number)}
+          className={currentPage === number ? activeNumberClass : numberButtonClass}
         >
-            {isLoadingArchives 
-                ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải...</>
-                : <><i className="fas fa-archive mr-2"></i> Tải thêm từ Lưu trữ</>
-            }
+          {number}
+        </button>
+      ))}
+      
+      {/* Dấu '...' và số cuối (nếu cần) */}
+      {totalPages > 1 && endPage < totalPages && (
+        <>
+          {endPage < totalPages - 1 && <span className={ellipsisClass}>...</span>}
+          <button onClick={() => onPageChange(totalPages)} className={numberButtonClass}>{totalPages}</button>
+        </>
+      )}
+
+      {/* Nút 'Sau' */}
+      {totalPages > 1 && (
+         <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={`${arrowButtonClass} ${disabledClass}`}
+          aria-label="Trang sau"
+        >
+          {/* Icon nhỏ hơn */}
+          <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        </button>
+      )}
+
+      {/* Nút Tải thêm từ Lưu trữ */}
+      {showLoadMore && (
+        <button
+          onClick={onLoadMore}
+          disabled={isLoadingArchives}
+          className={`${loadMoreButtonClass} ${disabledClass} ml-2`} // Thêm chút lề
+        >
+          {isLoadingArchives 
+            ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải...</>
+            : <><i className="fas fa-archive mr-2"></i> Tải thêm</>
+          }
         </button>
       )}
     </nav>

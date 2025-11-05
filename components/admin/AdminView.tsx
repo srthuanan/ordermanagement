@@ -14,6 +14,7 @@ import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import TotalViewDashboard from '../ui/TotalViewDashboard';
+import Avatar from '../ui/Avatar';
 
 
 const PAGE_SIZE = 15;
@@ -84,9 +85,12 @@ const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEd
                     {sortedTeams.map(([leader, members]) => (
                         <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-xs text-text-secondary">Trưởng phòng</p>
-                                    <p className="font-bold text-accent-primary">{leader}</p>
+                                <div className="flex items-center gap-3">
+                                    <Avatar name={leader} size="md" />
+                                    <div>
+                                        <p className="text-xs text-text-secondary">Trưởng phòng</p>
+                                        <p className="font-bold text-accent-primary">{leader}</p>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
@@ -97,7 +101,10 @@ const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEd
                             <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
                             <div className="space-y-2 flex-grow">
                                 {members.length > 0 ? members.map(member => (
-                                    <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
+                                    <div key={member} className="flex items-center gap-2 text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">
+                                        <Avatar name={member} size="sm" />
+                                        <span>{member}</span>
+                                    </div>
                                 )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
                             </div>
                         </div>
@@ -775,7 +782,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  return (
                      <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative">
+                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
                             <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
@@ -786,7 +793,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return (
                     <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative">
+                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
                             <AdminVcRequestTable 
                                 requests={paginatedVcData} 
                                 sortConfig={vcSortConfig}
@@ -967,7 +974,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-2">
                 <div className="p-3 flex items-center justify-between gap-2 flex-nowrap">
                     <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
                         {tabs.map(view => (
@@ -997,8 +1004,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )}
                     </div>
                 </div>
-                 { adminView !== 'phongkd' && adminView !== 'dashboard' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
             </div>
+
+            { adminView !== 'phongkd' && adminView !== 'dashboard' && (
+                <div className="flex-shrink-0 px-2">
+                    {renderFilterPanel()}
+                </div>
+            )}
             
             <div className="flex-grow min-h-0 flex flex-col">
                 {renderCurrentView()}

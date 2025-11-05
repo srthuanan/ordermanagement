@@ -142,7 +142,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             const user = sessionStorage.getItem('currentConsultant') || '';
             setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
         }
-    }, [isLoading, allTestDrives, formData.soPhieu, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth, initialFormData]);
+    }, [isLoading, allTestDrives, formData.soPhieu, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth]);
 
     const handleReset = useCallback(() => {
         const latestSoPhieu = getLatestSoPhieuForCurrentMonth(allTestDrives);
@@ -220,7 +220,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             const existingEnd = timeToMinutes(booking.thoiGianTroVe);
 
             if (newStart < (existingEnd + BUFFER_MINUTES) && (newEnd + BUFFER_MINUTES) > existingStart) {
-                setConflictError(`Lịch bị trùng với KH: ${booking.tenKhachHang} (${moment(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment(booking.thoiGianTroVe).format('HH:mm')})`);
+                setConflictError(`Lịch bị trùng với KH: ${booking.tenKhachHang} (${moment(booking.thoiGianKhoiHanh, "HH:mm").format('HH:mm')} - ${moment(booking.thoiGianTroVe, "HH:mm").format('HH:mm')})`);
                 
                 const duration = newEnd - newStart;
                 const nextSlots = findNextAvailableSlots(sortedSchedule, duration);
@@ -485,7 +485,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
             
             {activeTab === 'history' && (
                 <div className="flex-grow flex flex-col overflow-hidden print-hidden">
-                    <div className="flex-shrink-0 p-3 border-b border-border-primary bg-surface-ground">
+                    <div className="flex-shrink-0 p-2 border-b border-border-primary bg-surface-ground">
                         <Filters
                             filters={historyFilters}
                             onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}

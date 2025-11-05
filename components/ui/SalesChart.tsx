@@ -129,7 +129,7 @@ const SalesChart: React.FC<SalesChartProps> = ({ salesData, onMonthClick, select
         };
     }, [salesData, onMonthClick, selectedMonthIndex]);
 
-    return <div className="h-80"><canvas ref={chartRef}></canvas></div>;
+    return <div className="h-64"><canvas ref={chartRef}></canvas></div>;
 };
 
 export default SalesChart;

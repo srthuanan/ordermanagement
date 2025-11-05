@@ -405,6 +405,15 @@
         display: none; /* Safari and Chrome */
       }
 
+      /* Custom class to hide scrollbars while allowing scrolling */
+      .hidden-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      .hidden-scrollbar::-webkit-scrollbar {
+        display: none;  /* Safari and Chrome */
+      }
+
       /* === ELEGANT CUSTOM CHECKBOX V2 --- UPDATED === */
       .custom-checkbox {
         -webkit-appearance: none;
@@ -1451,6 +1460,38 @@
         }
       }
 
+      /* === CHOICES.JS CUSTOMIZATION FOR IMAGES === */
+      .choices__list--dropdown .choices__item--choice {
+        padding: 0 !important;
+      }
+      .choices__list--dropdown .choices__item--choice:hover {
+        background-color: var(--tw-color-surface-hover);
+      }
+      .choices__list--dropdown .choices-custom-item {
+        transition: background-color 0.2s;
+      }
+      .choices[data-type*="select-one"] .choices__inner {
+        padding: 0.5rem 0.75rem !important; /* Adjust padding to match other inputs */
+        background-color: var(--tw-color-surface-ground, #F7F9FC) !important;
+        border: 1px solid var(--tw-color-border-primary, #E2E8F0) !important;
+        min-height: auto;
+      }
+      .is-open .choices__inner {
+        border-color: var(--tw-color-accent-primary, #0D47A1) !important;
+        box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+      }
+      .choices__list--dropdown {
+        border-color: var(--tw-color-accent-primary) !important;
+        box-shadow: 0 4px 15px rgba(13, 71, 161, 0.15);
+        width: 320px;
+      }
+      .choices__list--single .choices__item {
+        color: var(--tw-color-text-primary, #0F172A);
+      }
+      .choices[data-type*="select-one"].is-disabled .choices__inner {
+        background-color: var(--tw-color-surface-input) !important;
+        opacity: 0.7;
+      }
     </style>
 <script type="importmap">
 {
@@ -1463,7 +1504,16 @@
     "moment": "https://aistudiocdn.com/moment@^2.30.1",
     "vite": "https://aistudiocdn.com/vite@^7.1.9",
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4",
-    "chart.js/": "https://aistudiocdn.com/chart.js@^4.5.0/"
+    "chart.js/": "https://aistudiocdn.com/chart.js@^4.5.0/",
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
+    "react-dom/client": "https://next.esm.sh/react-dom@^19.2.0/client?external=rxjs",
+    "react/jsx-runtime": "https://next.esm.sh/react@^19.2.0/jsx-runtime?external=rxjs",
+    "moment/locale/vi": "https://next.esm.sh/moment@^2.30.1/locale/vi?external=rxjs"
   }
 }
 </script>

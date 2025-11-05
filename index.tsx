@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import LoginScreen from './components/LoginScreen';
 import Toast from './components/ui/Toast';
+import SuccessAnimation from './components/ui/SuccessAnimation';
 
 type ToastState = {
     show: boolean;
@@ -12,12 +13,18 @@ type ToastState = {
     duration?: number;
 } | null;
 
+type SuccessInfo = {
+    title: string;
+    message: string;
+} | null;
+
 const Root = () => {
     // TẠM THỜI: Bỏ qua đăng nhập để tạo tài khoản admin đầu tiên.
     // BƯỚC 1 HOÀN TÁC: Sau khi tạo admin xong, hãy đổi `true` thành `false`.
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState<ToastState>(null);
+    const [successInfo, setSuccessInfo] = useState<SuccessInfo>(null);
 
     useEffect(() => {
         
@@ -31,11 +38,16 @@ const Root = () => {
     }, []);
 
     const showToast = useCallback((title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => {
-        const toastDuration = type === 'loading' ? (duration ?? 0) : (duration ?? 5000);
-        setToast({ show: true, title, message, type, duration: toastDuration });
+        if (type === 'success') {
+            setSuccessInfo({ title, message });
+        } else {
+            const toastDuration = type === 'loading' ? (duration ?? 0) : (duration ?? 5000);
+            setToast({ show: true, title, message, type, duration: toastDuration });
+        }
     }, []);
     
     const hideToast = useCallback(() => setToast(null), []);
+    const hideSuccess = useCallback(() => setSuccessInfo(null), []);
 
     const handleLogout = useCallback(() => {
         sessionStorage.clear();
@@ -57,6 +69,7 @@ const Root = () => {
                 <LoginScreen onLoginSuccess={handleLoginSuccess} showToast={showToast} />
             )}
             {toast && <Toast {...toast} onClose={hideToast} />}
+            {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={hideSuccess} duration={3000} />}
         </>
     );
 };
@@ -72,3 +85,5 @@ root.render(
     <Root />
   </React.StrictMode>
 );
+
+// AI Studio always uses an `index.tsx` file for all project types.

@@ -3,6 +3,8 @@ import moment from 'moment';
 // FIX: Imported ActionType from the central types file.
 import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 // FIX: Removed local ActionType definition, as it's now imported from types.ts.
 
@@ -126,22 +128,20 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
                     <p className="text-sm font-semibold text-text-primary text-center">
                         Xác nhận "{confirmAction.label}"?
                     </p>
-                    <div className="flex justify-center gap-3 mt-4">
-                        <button
-                            onClick={() => setConfirmAction(null)}
-                            className="flex-1 btn-secondary !py-1.5 !text-xs"
-                        >
-                            Không
-                        </button>
-                        <button
+                    <div className="flex justify-center items-center gap-3 mt-2">
+                        <div onClick={() => setConfirmAction(null)} title="Không" className="cursor-pointer hover:scale-110 transition-transform">
+                            <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
+                        </div>
+                         <div
                             onClick={() => {
                                 onAction(confirmAction.type);
                                 setConfirmAction(null);
                             }}
-                            className={`flex-1 !py-1.5 !text-xs ${confirmAction.isDanger ? 'btn-danger' : 'btn-primary'}`}
+                            title="Có, Xác nhận"
+                            className="cursor-pointer hover:scale-110 transition-transform"
                         >
-                            Có, Xác nhận
-                        </button>
+                            <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
+                        </div>
                     </div>
                 </div>
             )}

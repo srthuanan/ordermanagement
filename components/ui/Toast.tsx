@@ -63,9 +63,17 @@ const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }
                 <div className={`toast-icon-wrapper ${currentType.bgClass}`}>
                     <i className={`fas ${currentType.icon} ${currentType.textClass}`}></i>
                 </div>
-                <div className="toast-body">
+                <div className="toast-body flex-grow">
                     <p className="toast-title">{title}</p>
+                    {message && <p className="toast-message">{message}</p>}
                 </div>
+                {type !== 'loading' && (
+                     <div className="toast-close">
+                        <button onClick={handleClose}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

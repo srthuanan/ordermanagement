@@ -117,16 +117,16 @@ const Filters: React.FC<FiltersProps> = ({
   const hasActiveFilters = (filters.keyword && filters.keyword.length > 0) || activeFilters.length > 0;
 
   const searchControls = (
-    <div className="relative flex-1 min-w-0" style={{minWidth: '200px'}}>
-      <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder peer-focus:text-accent-primary text-sm"></i>
-      <input
-        type="text"
-        id="search-input-desktop"
-        placeholder={searchPlaceholder}
-        value={localKeyword}
-        onChange={(e) => setLocalKeyword(e.target.value)}
-        className={`peer w-full pl-9 pr-3 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent text-sm ${isCompact ? 'h-8' : 'h-11'}`}
-      />
+    <div className="relative flex-grow flex items-center min-w-[200px] lg:min-w-[300px]">
+        <i className="fas fa-search absolute left-4 text-gray-400"></i>
+        <input
+            type="text"
+            id="search-input-desktop"
+            placeholder={searchPlaceholder}
+            value={localKeyword}
+            onChange={(e) => setLocalKeyword(e.target.value)}
+            className="w-full h-8 pl-11 pr-4 py-1.5 bg-transparent focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
+        />
     </div>
   );
 
@@ -145,62 +145,39 @@ const Filters: React.FC<FiltersProps> = ({
   ));
 
   const desktopContent = (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2 w-full">
-          {!hideSearch && searchControls}
-          {dropdownControls}
-          {(dateRangeEnabled || dateFilterEnabled) && (
-            <div className="relative" ref={datePickerRef}>
-              <button onClick={() => setIsDatePopoverOpen(prev => !prev)} className={`flex items-center gap-2 pl-3 pr-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 ${isCompact ? 'h-8' : 'h-11'} ${dateValue.start ? 'font-semibold text-accent-primary' : ''}`}>
-                 <i className={`fas fa-calendar-alt text-text-placeholder text-sm`}></i>
-                 <span>{dateValue.start ? `${new Date(dateValue.start).toLocaleDateString('vi-VN')}${dateValue.end ? ' - ...' : ''}` : (dateRangeEnabled ? 'Phạm vi Ngày' : 'Chọn ngày')}</span>
-                 <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ml-1 ${isDatePopoverOpen ? 'rotate-180' : ''}`}></i>
-              </button>
-              {isDatePopoverOpen && (
-                <div className="date-range-picker-popover absolute top-full mt-2 right-0 p-4 animate-fade-in-down" style={{animationDuration: '0.2s'}}>
-                    <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
-                        <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
-                        {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
-                    </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-            <span id="total-items-count" className={`text-xs font-medium text-text-secondary bg-surface-ground rounded-lg border border-border-primary whitespace-nowrap flex items-center ${isCompact ? 'px-2.5 h-8' : 'px-4 h-11'}`}>
-              {totalCount} kết quả
-            </span>
-            {viewSwitcherEnabled && (
-                <div className="flex items-center bg-surface-ground rounded-lg border border-border-primary p-0.5">
-                    <button onClick={() => onViewChange?.('table')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'table' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} title="Xem dạng bảng"><i className="fas fa-list"></i></button>
-                    <button onClick={() => onViewChange?.('grid')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'grid' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
-                </div>
-            )}
-            {extraActionButton}
-            <button onClick={onRefresh} disabled={isLoading} id="refresh-btn" className={`flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50 ${isCompact ? 'w-8 h-8' : 'w-11 h-11'}`} aria-label="Làm mới" title="Làm mới">
-              <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-            </button>
+      <div className="bg-white rounded-full shadow-lg p-0.5 flex items-center gap-2 w-full border border-gray-200/80">
+        {!hideSearch && searchControls}
+        
+        {dropdowns.map(dropdown => (
+            <MultiSelectDropdown
+              key={dropdown.id}
+              id={dropdown.id}
+              label={dropdown.label}
+              options={dropdown.options}
+              selectedOptions={(filters[dropdown.key] || []) as string[]}
+              onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+              icon={dropdown.icon}
+              displayMode="count"
+              size="compact"
+            />
+          ))}
+  
+        <span className="text-sm font-medium text-gray-500 px-3 whitespace-nowrap border-l border-gray-200 ml-1">
+          {totalCount} kết quả
+        </span>
+        
+        {viewSwitcherEnabled && (
+          <div className="flex items-center p-1 bg-white border border-gray-200 rounded-lg">
+              <button onClick={() => onViewChange?.('table')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'table' ? 'bg-accent-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
+              <button onClick={() => onViewChange?.('grid')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'grid' ? 'bg-accent-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`} title="Xem dạng lưới"><i className="fas fa-table-cells"></i></button>
           </div>
-      </div>
-      {hasActiveFilters && (
-        <div className="pt-2 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-text-secondary">Đang lọc:</span>
-            {filters.keyword && (
-                <div className="active-filter-chip">
-                    <span>Từ khóa: "{filters.keyword}"</span>
-                    <button onClick={() => onFilterChange({ keyword: '' })}><i className="fas fa-times text-xs"></i></button>
-                </div>
-            )}
-            {activeFilters.map(filter => (
-                <div key={filter.key} className="active-filter-chip">
-                    <span className="chip-label">{filter.label}:</span>
-                    <span>{filter.value}</span>
-                    <button onClick={filter.onRemove}><i className="fas fa-times text-xs"></i></button>
-                </div>
-            ))}
-            <button onClick={onReset} className="text-xs text-danger hover:underline font-semibold ml-2">Xóa tất cả</button>
-        </div>
-      )}
+        )}
+  
+        {extraActionButton}
+  
+        <button onClick={onRefresh} disabled={isLoading} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50" aria-label="Làm mới" title="Làm mới">
+              <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+        </button>
     </div>
   );
   

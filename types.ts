@@ -1,6 +1,10 @@
 // FIX: Replaced the entire content of this file which was an incorrect copy of index.tsx.
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
+
+// FIX: Add React import for type definitions.
+import type React from 'react';
+
 export interface Order {
     "Số đơn hàng": string;
     "Tên khách hàng": string;
@@ -56,6 +60,7 @@ export interface StockVehicle {
     "Người Giữ Xe"?: string;
     "Thời Gian Hết Hạn Giữ"?: string; // ISO Date string
     "Vị trí"?: string;
+    "Thời gian nhập"?: string; // ISO Date string
     [key: string]: any; // Allow for other properties
 }
 

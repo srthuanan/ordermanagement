@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { Order, SortConfig, Notification, NotificationType, StockVehicle, AnalyticsData } from './types';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle, AnalyticsData, VcRequest } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
@@ -20,6 +20,7 @@ import FilePreviewModal from './components/modals/FilePreviewModal';
 import PendingStatsModal from './components/modals/PendingStatsModal';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import Pagination from './components/ui/Pagination';
+import Avatar from './components/ui/Avatar';
 import { useVinFastApi } from './hooks/useVinFastApi';
 import { useStockApi } from './hooks/useStockApi';
 import { useSoldCarsApi } from './hooks/useSoldCarsApi';
@@ -27,16 +28,17 @@ import { useTestDriveApi } from './hooks/useTestDriveApi';
 import * as apiService from './services/apiService';
 import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
+import OrderGridView from './components/OrderGridView';
 
 import logohalloVideo from '/pictures/logohallo.mp4';
-import createRequestPng from '/pictures/taoyeucau.png';
+import yeucauAnimationUrl from './pictures/yeucau.json?url';
 import boxuongGif from '/pictures/boxuong.gif';
 import xacuopGif from '/pictures/xacuop.gif';
 import logoChinh from '/pictures/logochinh.png';
 
 moment.locale('vi');
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu';
 
@@ -75,6 +77,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isLoadingArchives, setIsLoadingArchives] = useState(false);
     
     const [processingOrder, setProcessingOrder] = useState<string | null>(null);
+    const [processingVin, setProcessingVin] = useState<string | null>(null);
+
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -93,16 +97,52 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [allUsers, setAllUsers] = useState<{name: string, role: string, username: string}[]>([]);
 
     const [currentGif, setCurrentGif] = useState(boxuongGif);
+    
+    const [orderView, setOrderView] = useState<'table' | 'grid'>('grid');
 
-    useEffect(() => {
-        const gifInterval = setInterval(() => {
-            setCurrentGif((prevGif: string) => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
-        }, 5000); // Change every 5 seconds
+    // --- CENTRALIZED DATA FETCHING ---
+    const { historyData: allHistoryData, setHistoryData: setAllHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi();
+    const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
+    const { soldData, isLoading: isLoadingSold, error: errorSold, refetch: refetchSold } = useSoldCarsApi();
+    const { testDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
 
-        return () => clearInterval(gifInterval);
+    const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
+    const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
+    const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
+    
+    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
+    const [isLoadingVc, setIsLoadingVc] = useState(true);
+    const [errorVc, setErrorVc] = useState<string | null>(null);
+    
+    const refetchXuathoadon = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingXuathoadon(true);
+        setErrorXuathoadon(null);
+        try {
+            const result = await apiService.getXuathoadonData();
+            setXuathoadonData(result.data || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'An unknown error occurred';
+            setErrorXuathoadon(message);
+        } finally {
+            if (!isSilent) setIsLoadingXuathoadon(false);
+        }
     }, []);
 
-    const fetchAdminData = useCallback(async () => {
+    const refetchVcData = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingVc(true);
+        setErrorVc(null);
+        try {
+            const result = await apiService.getYeuCauVcData();
+            setVcRequestsData(result.data || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
+            setErrorVc(message);
+        } finally {
+            if (!isSilent) setIsLoadingVc(false);
+        }
+    }, []);
+
+    const fetchAdminData = useCallback(async (isSilent = false) => {
         if (!isCurrentUserAdmin && userRole !== 'Trưởng Phòng Kinh Doanh') return;
         try {
             const [teamsResult, usersResult] = await Promise.all([
@@ -123,14 +163,25 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             }
         } catch (error) {
             console.error("Failed to fetch admin data:", error);
-            showToast('Lỗi Tải Dữ Liệu', 'Không thể tải dữ liệu quản trị phòng ban.', 'error');
+            if (!isSilent) showToast('Lỗi Tải Dữ Liệu', 'Không thể tải dữ liệu quản trị phòng ban.', 'error');
         }
     }, [isCurrentUserAdmin, userRole, showToast]);
-    
+
     useEffect(() => {
         fetchAdminData();
-    }, [fetchAdminData]);
+        refetchXuathoadon();
+        refetchVcData();
+    }, [fetchAdminData, refetchXuathoadon, refetchVcData]);
 
+
+    useEffect(() => {
+        const gifInterval = setInterval(() => {
+            setCurrentGif((prevGif: string) => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
+        }, 5000); // Change every 5 seconds
+
+        return () => clearInterval(gifInterval);
+    }, []);
+    
     const usersToView = useMemo(() => {
         if (userRole !== 'Trưởng Phòng Kinh Doanh') {
             return undefined;
@@ -148,9 +199,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     }, [currentUser, userRole, teamData]);
 
 
-    // Centralized data fetching
-    const { historyData: allHistoryData, setHistoryData: setAllHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi();
-    
+    // Filtered data for current user/team
     const historyData = useMemo(() => {
         if (isCurrentUserAdmin) {
             return allHistoryData;
@@ -164,13 +213,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         return allHistoryData.filter(order => normalizeName(order['Tên tư vấn bán hàng']) === normalizedCurrentUser);
     }, [allHistoryData, isCurrentUserAdmin, userRole, usersToView, currentUser]);
 
-    const { stockData, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
-    // The useSoldCarsApi hook is now only used inside the SoldCarsView component.
-    const { soldData } = useSoldCarsApi(); // Keep this for Admin dashboard stats for now.
-    const { testDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
-    const [xuathoadonData, setXuathoadonData] = useState<Order[]>([]);
-    const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
-    const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
     
     const [isLastArchive, setIsLastArchive] = useState(archivesLoadedFromCache);
 
@@ -178,24 +220,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setIsLastArchive(archivesLoadedFromCache);
     }, [archivesLoadedFromCache]);
 
-
-    const refetchXuathoadon = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingXuathoadon(true);
-        setErrorXuathoadon(null);
-        try {
-            const result = await apiService.getXuathoadonData();
-            setXuathoadonData(result.data || []);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            setErrorXuathoadon(message);
-        } finally {
-            if (!isSilent) setIsLoadingXuathoadon(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        refetchXuathoadon();
-    }, [refetchXuathoadon]);
 
     const vehicleAnalyticsData = useMemo((): AnalyticsData => {
         const pendingRequests = allHistoryData.filter(o => o['Kết quả']?.toLowerCase().includes('chưa'));
@@ -410,6 +434,42 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setIsNotificationPanelOpen(false);
     };
     
+    // --- ACTION HANDLERS ---
+    
+    const handleHoldCar = async (vin: string) => {
+        setProcessingVin(vin);
+        showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading');
+        try {
+            const result = await apiService.holdCar(vin);
+            hideToast();
+            showToast('Giữ Xe Thành Công', result.message, 'success', 3000);
+            refetchStock(true);
+        } catch (err) {
+            hideToast();
+            const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
+            showToast('Giữ Xe Thất Bại', message, 'error', 5000);
+        } finally {
+            setProcessingVin(null);
+        }
+    };
+
+    const handleReleaseCar = async (vin: string) => {
+        setProcessingVin(vin);
+        showToast('Đang xử lý...', `Đang hủy giữ xe VIN ${vin}.`, 'loading');
+        try {
+            const result = await apiService.releaseCar(vin);
+            hideToast();
+            showToast('Hủy Giữ Thành Công', result.message, 'info', 3000);
+            refetchStock(true);
+        } catch (err) {
+            hideToast();
+            const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
+            showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
+        } finally {
+            setProcessingVin(null);
+        }
+    };
+
     const handleViewDetails = (order: Order) => setSelectedOrder(order);
     const handleCancelOrder = async (order: Order, reason: string) => {
         setProcessingOrder(order["Số đơn hàng"]);
@@ -713,8 +773,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const pendingStatsButton = (
             <button
                 onClick={() => setIsPendingStatsModalOpen(true)}
-                className="flex-shrink-0 flex items-center gap-2 px-4 h-8 rounded-full bg-accent-primary text-white text-xs font-bold shadow-md hover:bg-accent-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-primary transition-all duration-300 animate-pulse-glow"
-                style={{ '--glow-color': 'rgba(13, 71, 161, 0.5)' } as React.CSSProperties}
+                className="flex-shrink-0 flex items-center gap-2 px-4 h-9 rounded-full bg-accent-primary text-white text-sm font-semibold shadow-md hover:bg-accent-primary-hover transition-all"
                 title="Xem thống kê các xe đang có yêu cầu chờ ghép"
             >
                 <i className="fas fa-chart-pie"></i>
@@ -745,13 +804,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </tr>
             ));
             return ( 
-                 <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 mb-2 px-2">
                         <div className="flex flex-wrap items-center gap-2">
-                            <div className="skeleton-item h-8 rounded-lg" style={{flexBasis: '280px', flexGrow: 1}}></div>
-                            <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                            <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                            <div className="skeleton-item h-8 w-8 !rounded-lg ml-auto"></div>
+                            <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-12 !rounded-full ml-auto"></div>
                         </div>
                     </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -768,12 +827,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fa-solid fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
-            <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
-                    <Filters 
-                        filters={filters} 
-                        onFilterChange={handleFilterChange} 
-                        onReset={handleResetFilters} 
+            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                <div className="flex-shrink-0 mb-2 px-2">
+                    <Filters
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onReset={handleResetFilters}
                         dropdowns={dropdownConfigs}
                         searchPlaceholder="Tìm kiếm SĐH, tên khách hàng, số VIN..."
                         totalCount={processedData.length}
@@ -782,27 +841,48 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         size="compact"
                         plain={true}
                         extraActionButton={pendingStatsButton}
+                        viewSwitcherEnabled={true}
+                        activeView={orderView}
+                        onViewChange={setOrderView}
                     />
                 </div>
-                <div className="flex-1 grid grid-cols-1 gap-6 min-h-0">
-                    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 h-full">
-                        <div className="flex-grow overflow-auto relative">
-                             <HistoryTable 
-                                 orders={paginatedData} 
-                                 onViewDetails={handleViewDetails} 
-                                 onCancel={setOrderToCancel} 
-                                 onRequestInvoice={setOrderToRequestInvoice} 
-                                 onSupplement={setOrderToSupplement}
-                                 onRequestVC={setOrderToRequestVC}
-                                 onConfirmVC={setOrderToConfirmVC}
-                                 sortConfig={sortConfig} 
-                                 onSort={handleSort} 
-                                 startIndex={(currentPage - 1) * PAGE_SIZE}
-                                 processingOrder={processingOrder} 
-                             />
+                <div className="flex-1 flex flex-col min-h-0">
+                    {orderView === 'table' ? (
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                            <div className="overflow-auto relative hidden-scrollbar">
+                                <HistoryTable
+                                    orders={paginatedData}
+                                    onViewDetails={handleViewDetails}
+                                    onCancel={setOrderToCancel}
+                                    onRequestInvoice={setOrderToRequestInvoice}
+                                    onSupplement={setOrderToSupplement}
+                                    onRequestVC={setOrderToRequestVC}
+                                    onConfirmVC={setOrderToConfirmVC}
+                                    sortConfig={sortConfig}
+                                    onSort={handleSort}
+                                    startIndex={(currentPage - 1) * PAGE_SIZE}
+                                    processingOrder={processingOrder}
+                                />
+                            </div>
+                            {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                         </div>
-                        {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
-                    </div>
+                    ) : (
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                            <div className="overflow-y-auto hidden-scrollbar p-1">
+                                <OrderGridView
+                                    orders={paginatedData}
+                                    onViewDetails={handleViewDetails}
+                                    onCancel={setOrderToCancel}
+                                    onRequestInvoice={setOrderToRequestInvoice}
+                                    onSupplement={setOrderToSupplement}
+                                    onRequestVC={setOrderToRequestVC}
+                                    onConfirmVC={setOrderToConfirmVC}
+                                    processingOrder={processingOrder}
+                                />
+                            </div>
+                           {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -814,65 +894,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`;
         
     const mainContentPadding = isSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72';
-
-    const renderActiveView = () => {
-        switch (activeView) {
-            case 'orders':
-                return renderOrdersContent();
-            case 'stock':
-                return (
-                    <StockView 
-                        stockData={stockData}
-                        setStockData={setStockData}
-                        isLoading={isLoadingStock}
-                        error={errorStock}
-                        refetchStock={refetchStock}
-                        highlightedVins={highlightedVins}
-                        showToast={showToast} 
-                        hideToast={hideToast} 
-                        currentUser={currentUser} 
-                        isAdmin={isCurrentUserAdmin} 
-                        onCreateRequestForVehicle={handleCreateRequestForVehicle}
-                    />
-                );
-            case 'sold':
-                return <SoldCarsView showToast={showToast} />;
-            case 'laithu':
-                return <TestDriveForm
-                    showToast={showToast}
-                    onOpenImagePreview={openImagePreviewModal}
-                    currentUser={currentUser}
-                    isAdmin={isCurrentUserAdmin}
-                    allTestDrives={testDriveData}
-                    setAllTestDrives={setTestDriveData}
-                    isLoading={isLoadingTestDrive}
-                    refetch={refetchTestDrive}
-                />;
-            case 'admin':
-                return isCurrentUserAdmin ? <AdminView 
-                    showToast={showToast} 
-                    hideToast={hideToast} 
-                    refetchHistory={refetchHistory} 
-                    refetchStock={refetchStock}
-                    allOrders={allHistoryData}
-                    xuathoadonData={xuathoadonData}
-                    refetchXuathoadon={refetchXuathoadon}
-                    stockData={stockData}
-                    isLoadingXuathoadon={isLoadingXuathoadon}
-                    errorXuathoadon={errorXuathoadon}
-                    onOpenImagePreview={openImagePreviewModal}
-                    onOpenFilePreview={openFilePreviewModal}
-                    teamData={teamData}
-                    allUsers={allUsers}
-                    refetchAdminData={fetchAdminData}
-                    soldData={soldData}
-                    onNavigateTo={setActiveView}
-                    onShowOrderDetails={setSelectedOrder}
-                    /> : renderOrdersContent();
-            default:
-                return renderOrdersContent();
-        }
-    };
 
     return (
         <>
@@ -906,7 +927,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         </a>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
                             <i className={`fa-solid fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Xe Đã Bán</span>
+                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Lịch Sử Bán Hàng</span>
                         </a>
                         {isCurrentUserAdmin && (
                             <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
@@ -951,9 +972,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors hover:bg-surface-hover ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}
                         >
                             <div className="relative flex-shrink-0">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-bold text-lg">
-                                    {currentUser ? currentUser.charAt(0) : 'A'}
-                                </div>
+                                <Avatar name={currentUser} size="md" />
                                 <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-success ring-2 ring-white"></span>
                             </div>
                             <div className={`transition-opacity duration-200 min-w-0 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
@@ -969,7 +988,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             </aside>
             
              <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out ${mainContentPadding} ${isMobileMenuOpen ? 'translate-x-64' : ''}`}>
-                <header className={`relative sticky top-0 w-full z-20 h-16 bg-surface-card/70 backdrop-blur-xl border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6`}>
+                <header className={`relative sticky top-0 w-full z-20 h-14 bg-surface-card/70 backdrop-blur-xl border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6`}>
                     <div className="flex items-center gap-4">
                          <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-text-secondary hover:text-text-primary text-xl">
                             <i className="fa-solid fa-bars"></i>
@@ -990,13 +1009,20 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-                        <button 
-                            onClick={() => setCreateRequestData({ isOpen: true })} 
-                            className="group transition-transform duration-200 ease-in-out hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50 rounded-lg"
+                        <div
+                            onClick={() => setCreateRequestData({ isOpen: true })}
                             title="Tạo Yêu Cầu Mới"
+                            className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
                         >
-                            <img src={createRequestPng} alt="Tạo Yêu Cầu" className="h-12 object-contain" />
-                        </button>
+                            <lottie-player
+                                src={yeucauAnimationUrl}
+                                background="transparent"
+                                speed="1"
+                                style={{ width: '120px', height: '90px', marginTop: '-10px', marginBottom: '-10px' }}
+                                loop
+                                autoplay
+                            />
+                        </div>
                         
                         <div ref={notificationContainerRef} className="relative notification-bell-container">
                             <button onClick={toggleNotificationPanel} className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-accent-primary transition-colors" title="Thông báo">
@@ -1033,9 +1059,74 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                 </header>
 
-                <main className={`flex-1 p-4 sm:p-6 flex flex-col overflow-y-auto`}>
-                    {renderActiveView()}
+                <main className={`flex-1 p-2 sm:p-3 flex flex-col overflow-y-auto mb-1`}>
+                    <div hidden={activeView !== 'orders'} className="h-full">
+                        {renderOrdersContent()}
+                    </div>
+                    <div hidden={activeView !== 'stock'} className="h-full">
+                        <StockView 
+                            stockData={stockData}
+                            isLoading={isLoadingStock}
+                            error={errorStock}
+                            refetchStock={refetchStock}
+                            highlightedVins={highlightedVins}
+                            showToast={showToast} 
+                            hideToast={hideToast} 
+                            currentUser={currentUser} 
+                            isAdmin={isCurrentUserAdmin} 
+                            onCreateRequestForVehicle={handleCreateRequestForVehicle}
+                            onHoldCar={handleHoldCar}
+                            onReleaseCar={handleReleaseCar}
+                            processingVin={processingVin}
+                        />
+                    </div>
+                    <div hidden={activeView !== 'sold'} className="h-full">
+                        <SoldCarsView
+                          showToast={showToast}
+                          soldData={soldData}
+                          isLoading={isLoadingSold}
+                          error={errorSold}
+                          refetch={refetchSold}
+                        />
+                    </div>
+                    <div hidden={activeView !== 'laithu'} className="h-full">
+                        <TestDriveForm
+                            showToast={showToast}
+                            onOpenImagePreview={openImagePreviewModal}
+                            currentUser={currentUser}
+                            isAdmin={isCurrentUserAdmin}
+                            allTestDrives={testDriveData}
+                            setAllTestDrives={setTestDriveData}
+                            isLoading={isLoadingTestDrive}
+                            refetch={refetchTestDrive}
+                        />
+                    </div>
+                    <div hidden={activeView !== 'admin'} className="h-full">
+                        {isCurrentUserAdmin && <AdminView 
+                            showToast={showToast} 
+                            hideToast={hideToast} 
+                            refetchHistory={refetchHistory} 
+                            refetchStock={refetchStock}
+                            allOrders={allHistoryData}
+                            xuathoadonData={xuathoadonData}
+                            refetchXuathoadon={refetchXuathoadon}
+                            stockData={stockData}
+                            isLoadingXuathoadon={isLoadingXuathoadon}
+                            errorXuathoadon={errorXuathoadon}
+                            onOpenImagePreview={openImagePreviewModal}
+                            onOpenFilePreview={openFilePreviewModal}
+                            teamData={teamData}
+                            allUsers={allUsers}
+                            refetchAdminData={fetchAdminData}
+                            soldData={soldData}
+                            onNavigateTo={setActiveView}
+                            onShowOrderDetails={setSelectedOrder}
+                        />}
+                    </div>
                 </main>
+                <footer className="flex-shrink-0 h-8 bg-surface-card/70 backdrop-blur-xl border-t border-border-primary/50 flex items-center justify-center px-4 sm:px-6">
+                    <p className="text-xs text-text-secondary">&copy; {new Date().getFullYear()} Order Management</p>
+                </footer>
             </div>
             
             <CreateRequestModal
@@ -1061,6 +1152,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 onClose={() => setSelectedOrder(null)} 
                 orderList={processedData}
                 onNavigate={handleOrderNavigation}
+                onCancel={setOrderToCancel}
+                onRequestInvoice={setOrderToRequestInvoice}
+                onSupplement={setOrderToSupplement}
+                onRequestVC={setOrderToRequestVC}
+                onConfirmVC={setOrderToConfirmVC}
             />
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
             {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}

@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import * as apiService from '../../services/apiService';
 import { compressImage } from '../../services/ocrService';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 interface BulkUploadModalProps {
     isOpen: boolean;
@@ -29,6 +31,14 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const [files, setFiles] = useState<UploadableFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // FIX: Defined handleClose function to reset state and call the onClose prop.
+    const handleClose = useCallback(() => {
+        setFiles([]);
+        setIsUploading(false);
+        onClose();
+    }, [onClose]);
 
     const handleFiles = useCallback(async (incomingFiles: FileList | null) => {
         if (!incomingFiles) return;
@@ -100,6 +110,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             showToast('Hoàn tất!', result.message, result.status === 'SUCCESS' ? 'success' : 'warning', 10000);
             if (result.status === 'SUCCESS') {
                 onSuccess();
+                // FIX: Call the defined handleClose function to resolve "Cannot find name" error.
                 handleClose();
             }
         } catch (error) {
@@ -110,65 +121,61 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             setIsUploading(false);
         }
     };
-    
-    const handleClose = () => {
-        setFiles([]);
-        onClose();
-    }
 
-    const validFileCount = useMemo(() => files.filter(f => f.status === 'valid').length, [files]);
-
+    // FIX: Moved JSX return structure inside the component to fix the 'not assignable to FC' error.
     if (!isOpen) return null;
+
+    const validFiles = files.filter(f => f.status === 'valid');
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
-                <header className="flex items-center justify-between p-5 border-b border-border-primary">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100"><i className="fas fa-file-upload text-lg text-accent-primary"></i></div>
-                        <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
-                    </div>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
                     <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-6 space-y-4 overflow-y-auto">
-                    <div onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} className="relative">
-                        <input type="file" id="bulk-invoice-upload" multiple onChange={handleChange} className="hidden" accept=".pdf,image/*" />
-                        <label htmlFor="bulk-invoice-upload" className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary hover:border-accent-primary'}`}>
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-                                <i className="fas fa-cloud-upload-alt text-4xl text-text-placeholder mb-3"></i>
-                                <p className="mb-2 text-sm text-text-secondary"><span className="font-semibold">Nhấn để chọn</span> hoặc kéo thả file vào đây</p>
-                                <p className="text-xs text-text-placeholder">Định dạng tên tệp: SỐ_ĐƠN_HÀNG.pdf (VD: N12345-VSO-24-05-0001.pdf)</p>
+                <main className="p-6 flex-grow overflow-y-auto">
+                    <div onDragEnter={handleDrag} className="w-full">
+                        <input ref={inputRef} type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={handleChange} />
+                        <div 
+                            className={`relative w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}`}
+                            onClick={() => inputRef.current?.click()}
+                            onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+                        >
+                            <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
+                                <i className="fas fa-file-upload fa-3x mb-2 group-hover:text-accent-primary"></i>
+                                <p className="font-semibold text-text-primary">Kéo & thả hoặc nhấn để tải file</p>
+                                <p className="text-xs">Định dạng tên file: SỐ_ĐƠN_HÀNG.pdf (VD: N31913-VSO-25-01-0001.pdf)</p>
                             </div>
-                        </label>
+                        </div>
                     </div>
+
                     {files.length > 0 && (
-                        <div className="mt-4 max-h-64 overflow-y-auto border border-border-primary rounded-lg">
-                            <table className="min-w-full text-sm responsive-table">
-                                <thead className="bg-surface-hover sticky top-0"><tr><th className="py-2 px-3 text-left">Tên tệp</th><th className="py-2 px-3 text-left">Số Đơn Hàng</th><th className="py-2 px-3 text-left">Trạng thái</th><th className="py-2 px-3 text-right"></th></tr></thead>
-                                <tbody className="divide-y divide-border-primary bg-surface-card">
-                                    {files.map(({ file, orderNumber, status }) => (
-                                        <tr key={file.name} className={status === 'invalid_name' ? 'bg-danger-bg/50' : ''}>
-                                            <td data-label="Tên tệp" className="py-2 px-3 font-medium text-text-primary truncate max-w-xs">{file.name}</td>
-                                            <td data-label="Số Đơn Hàng" className="py-2 px-3 font-mono">{orderNumber || 'N/A'}</td>
-                                            <td data-label="Trạng thái" className="py-2 px-3">
-                                                {status === 'valid' && <span className="text-xs font-semibold text-success">✓ Hợp lệ</span>}
-                                                {status === 'invalid_name' && <span className="text-xs font-semibold text-danger">✗ Tên tệp sai</span>}
-                                            </td>
-                                            <td data-label="Hành động" className="py-2 px-3 text-right"><button onClick={() => handleRemoveFile(file.name)} className="text-danger hover:opacity-70 text-xs"><i className="fas fa-trash-alt"></i></button></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="mt-4">
+                            <h3 className="text-sm font-semibold mb-2">Tệp đã chọn: ({files.length})</h3>
+                            <div className="max-h-60 overflow-y-auto space-y-2 border p-2 rounded-lg bg-surface-ground">
+                                {files.map((f, i) => (
+                                    <div key={i} className={`flex items-center gap-3 p-2 rounded-md border ${f.status === 'invalid_name' ? 'bg-danger-bg border-danger-bg' : 'bg-white border-border-secondary'}`}>
+                                        <i className={`fas ${f.status === 'invalid_name' ? 'fa-exclamation-triangle text-danger' : 'fa-file-alt text-accent-secondary'}`}></i>
+                                        <div className="flex-grow min-w-0">
+                                            <p className="text-sm font-medium truncate">{f.file.name}</p>
+                                            <p className={`text-xs ${f.status === 'invalid_name' ? 'text-danger font-semibold' : 'text-text-secondary'}`}>
+                                                {f.status === 'invalid_name' ? `Sai định dạng SĐH` : `SĐH: ${f.orderNumber}`}
+                                            </p>
+                                        </div>
+                                        <button onClick={() => handleRemoveFile(f.file.name)} className="flex-shrink-0 w-6 h-6 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-times text-xs"></i></button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </main>
-                <footer className="p-4 border-t flex justify-between items-center bg-surface-ground rounded-b-2xl">
-                    <span className="text-sm text-text-secondary">Đã chọn: {files.length} tệp ({validFileCount} hợp lệ)</span>
-                    <div className="flex gap-4">
-                        <button onClick={handleClose} disabled={isUploading} className="btn-secondary">Đóng</button>
-                        <button onClick={handleUpload} disabled={isUploading || validFileCount === 0} className="btn-primary">
-                            {isUploading ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải lên...</> : <><i className="fas fa-upload mr-2"></i>Bắt đầu Tải lên</>}
-                        </button>
+                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl">
+                    <div onClick={!isUploading ? handleClose : undefined} title="Hủy" className={`cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isUploading && validFiles.length > 0 ? handleUpload : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isUploading || validFiles.length === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
                     </div>
                 </footer>
             </div>
@@ -176,4 +183,5 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     );
 };
 
+// FIX: Added a default export to resolve module import errors.
 export default BulkUploadModal;

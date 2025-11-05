@@ -3,13 +3,20 @@ import { StockVehicle } from '../../types';
 import moment from 'moment';
 import CarImage from './CarImage'; // Import the new component
 import StatusBadge from './StatusBadge';
+import { getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
 
-const InfoRow: React.FC<{ label: string; value?: string | number; isMono?: boolean, icon: string }> = ({ label, value, isMono, icon }) => (
+const InfoRow: React.FC<{ label: string; value?: string | number; isMono?: boolean, icon: string, valueStyle?: React.CSSProperties }> = ({ label, value, isMono, icon, valueStyle }) => (
     <div className="flex items-start gap-3 py-2">
         <i className={`fas ${icon} text-accent-secondary text-sm w-5 text-center mt-0.5 flex-shrink-0`}></i>
         <div className="flex-1 min-w-0">
             <p className="text-xs text-text-secondary">{label}</p>
-            <p className={`text-sm font-semibold text-text-primary truncate ${isMono ? 'font-mono' : ''}`} title={String(value || '')}>{value || 'N/A'}</p>
+            <p 
+                className={`text-sm font-semibold text-text-primary truncate ${isMono ? 'font-mono' : ''}`} 
+                title={String(value || '')}
+                style={valueStyle}
+            >
+                {value || 'N/A'}
+            </p>
         </div>
     </div>
 );
@@ -150,8 +157,8 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                         <InfoRow label="Dòng xe" value={vehicle['Dòng xe']} icon="fa-car-side" />
                         <InfoRow label="Phiên bản" value={vehicle['Phiên bản']} icon="fa-cogs" />
-                        <InfoRow label="Ngoại thất" value={vehicle['Ngoại thất']} icon="fa-palette" />
-                        <InfoRow label="Nội thất" value={vehicle['Nội thất']} icon="fa-chair" />
+                        <InfoRow label="Ngoại thất" value={vehicle['Ngoại thất']} icon="fa-palette" valueStyle={getExteriorColorStyle(vehicle['Ngoại thất'])} />
+                        <InfoRow label="Nội thất" value={vehicle['Nội thất']} icon="fa-chair" valueStyle={getInteriorColorStyle(vehicle['Nội thất'])} />
                     </div>
 
                     <div className="pt-4 mt-4 border-t border-border-primary">

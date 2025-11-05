@@ -76,6 +76,11 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
   
   const isCompact = size === 'compact';
   const areAllFilteredSelected = filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
+  
+  const buttonClasses = isCompact
+    ? `flex items-center justify-between gap-1.5 px-2.5 h-8 rounded-md bg-gray-50 border border-gray-200 text-xs font-medium text-text-secondary hover:bg-gray-100 hover:border-gray-300 focus:outline-none transition-all`
+    : `w-full flex items-center justify-between pl-3 pr-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 md:w-52 h-11`;
+
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -83,10 +88,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
         <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className={`w-full flex items-center justify-between pl-3 pr-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 ${isCompact ? 'md:w-auto h-8' : 'md:w-52 h-11'}`}
+            className={buttonClasses}
         >
-            <div className="flex items-center gap-2 min-w-0">
-                 <i className={`fas ${icon} text-text-placeholder text-sm`}></i>
+            <div className="flex items-center gap-1.5 min-w-0">
+                 <i className={`fas ${icon} text-text-placeholder text-xs`}></i>
                  <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold text-accent-primary' : ''}`}>{displayLabel}</span>
             </div>
             <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`}></i>

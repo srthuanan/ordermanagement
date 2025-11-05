@@ -8,7 +8,6 @@ interface SuggestionModalProps {
     onConfirm: (orderNumber: string, vin: string) => void;
     order: Order;
     suggestedCars: StockVehicle[];
-// FIX: Added showToast to props to handle VIN copy notifications.
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
@@ -23,6 +22,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
         navigator.clipboard.writeText(vin).then(() => {
             showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
         }).catch(err => {
+            console.error('Lỗi sao chép VIN: ', err);
             showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
         });
     };

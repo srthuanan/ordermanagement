@@ -8,7 +8,7 @@ interface SuggestionModalProps {
     onConfirm: (orderNumber: string, vin: string) => void;
     order: Order;
     suggestedCars: StockVehicle[];
-// FIX: Added showToast to props to handle VIN copy notifications.
+    // FIX: Added missing showToast prop to the interface.
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
@@ -23,6 +23,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
         navigator.clipboard.writeText(vin).then(() => {
             showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
         }).catch(err => {
+            console.error('Lỗi sao chép VIN: ', err);
             showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
         });
     };
@@ -82,13 +83,14 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                                 </td>
                                                 <td className="py-2.5 px-3 font-mono text-text-primary" data-label="Số VIN">
                                                     <div
-                                                        className="cursor-pointer"
+                                                        className="group relative inline-flex items-center gap-2 cursor-pointer"
                                                         title="Click để sao chép VIN"
                                                         onClick={(e) => handleCopyVin(e, car.VIN)}
                                                     >
-                                                        <span className="text-accent-primary hover:text-accent-primary-hover hover:underline font-semibold transition-colors">
+                                                        <span className="text-accent-primary group-hover:text-accent-primary-hover font-semibold transition-colors">
                                                             {car.VIN}
                                                         </span>
+                                                        <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
                                                     </div>
                                                 </td>
                                                 <td className="py-2.5 px-3 text-text-secondary" data-label="Nội Thất">{car["Nội thất"]}</td>

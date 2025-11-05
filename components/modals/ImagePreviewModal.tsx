@@ -28,19 +28,21 @@ const getFilename = (customerName?: string, fileLabel?: string): string => {
 const toHighQualityDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) return url;
 
-    // If it's already a thumbnail URL, just increase the size parameter for high quality.
+    // Try to extract file ID from various formats
+    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
+    if (idMatch && (idMatch[1] || idMatch[2])) {
+        const fileId = idMatch[1] || idMatch[2];
+        // The /thumbnail endpoint is more reliable for direct embedding than /uc.
+        // Request a large size for the main view.
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=s2048`;
+    }
+    
+    // If it's already a thumbnail URL, just ensure it has a large size.
     if (url.includes('/thumbnail?id=')) {
         if (url.includes('&sz=')) {
             return url.replace(/(&sz=)[^&]+/, '&sz=s2048');
         }
         return `${url}&sz=s2048`;
-    }
-
-    // For other Drive URLs (/d/, /view, /uc), extract the ID and construct a thumbnail URL.
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
-        // The thumbnail service is generally more reliable for direct embedding.
-        return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=s2048`;
     }
     
     // Fallback for URLs that don't match expected formats.
@@ -60,9 +62,10 @@ const toThumbnailDriveUrl = (url: string): string => {
     }
 
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
+     if (idMatch && (idMatch[1] || idMatch[2])) {
+        const fileId = idMatch[1] || idMatch[2];
         // Request a slightly larger thumbnail for better clarity in the filmstrip.
-        return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w320`;
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
     }
     return url;
 };
@@ -70,8 +73,9 @@ const toThumbnailDriveUrl = (url: string): string => {
 const toDownloadableDriveUrl = (url: string): string | null => {
     if (!url || !url.includes('drive.google.com')) return null;
     const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
-        return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+    if (idMatch && (idMatch[1] || idMatch[2])) {
+        const fileId = idMatch[1] || idMatch[2];
+        return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
     return null;
 }
@@ -196,8 +200,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
 
     if (!isOpen) return null;
 
-    const currentImage = images[currentIndex];
-    const downloadUrl = toDownloadableDriveUrl(currentImage?.originalUrl || currentImage?.src);
+    const currentImage = images.length > 0 ? images[currentIndex] : null;
+    const downloadUrl = currentImage ? (toDownloadableDriveUrl(currentImage.originalUrl || currentImage.src)) : null;
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col p-0 sm:p-4 animate-fade-in" onWheel={handleWheel} onMouseMove={handleMouseMove} onMouseUp={handleMouseUpOrLeave} onMouseLeave={handleMouseUpOrLeave}>
@@ -218,7 +222,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
             <main className="flex-grow flex items-center justify-center relative overflow-hidden" onClick={onClose}>
                 {isLoading && <i className="fas fa-spinner fa-spin text-4xl text-white"></i>}
                 {error && !isLoading && (
-                    <div className="text-center p-8 bg-red-800 rounded-lg shadow-2xl max-w-sm mx-4 text-white" onClick={e => e.stopPropagation()}>
+                    <div className="text-center p-8 bg-red-800/90 rounded-lg shadow-2xl max-w-sm mx-4 text-white" onClick={e => e.stopPropagation()}>
                         <i className="fas fa-exclamation-triangle text-5xl text-amber-300 mb-4"></i>
                         {error === 'IMAGE_LOAD_FAILED' ? (
                             <div className="space-y-3">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 interface RequestInvoiceModalProps {
     order: Order;
@@ -35,6 +37,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         setIsSubmitting(true);
         onConfirm(order, contractFile, proposalFile);
     };
+
+    const isFormValid = contractFile && proposalFile && vinClubConfirmed;
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -92,15 +96,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </div>
                 </main>
                 
-                <footer className="p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!contractFile || !proposalFile || !vinClubConfirmed || isSubmitting}
-                        className="btn-primary"
-                    >
-                         {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</> : <><i className="fas fa-paper-plane mr-2"></i> Xác nhận & Gửi</>}
-                    </button>
+                <footer className="p-4 border-t border-border-primary flex justify-end gap-3 items-center bg-surface-ground rounded-b-2xl">
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting && isFormValid ? handleSubmit : undefined} title="Xác nhận & Gửi" className={`cursor-pointer ${(isSubmitting || !isFormValid) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    </div>
                 </footer>
             </div>
         </div>
