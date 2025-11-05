@@ -1,7 +1,5 @@
 // This file is for Vite environment-specific type declarations.
 
-import type React from 'react';
-
 declare module '*.png' {
     const src: string;
     export default src;
@@ -27,7 +25,7 @@ declare module '*.json?url' {
     export default src;
 }
 
-// FIX: Add a global JSX type definition for the 'lottie-player' custom element to resolve all related TypeScript errors.
+// Add a global JSX type definition for the 'lottie-player' custom element to resolve all related TypeScript errors.
 // This augmentation informs TypeScript about the custom element and its props.
 declare global {
   namespace JSX {
@@ -45,5 +43,5 @@ declare global {
   }
 }
 
-// Add an export statement to treat this file as a module. This can help with type resolution for vite/client if it's ever re-added.
+// FIX: Make this file a module to allow global augmentation.
 export {};

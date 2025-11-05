@@ -6,7 +6,7 @@ import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
 import AdminView from './components/admin/AdminView';
-import TestDriveForm from './components/TestDriveForm';
+import TestDriveForm from './components/testdrive/TestDriveForm';
 import OrderDetailsModal from './components/modals/OrderDetailsModal';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
@@ -30,11 +30,11 @@ import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 import OrderGridView from './components/OrderGridView';
 
-import logohalloVideo from '/pictures/logohallo.mp4';
+import logohalloVideo from './pictures/logohallo.mp4';
 import yeucauAnimationUrl from './pictures/yeucau.json?url';
-import boxuongGif from '/pictures/boxuong.gif';
-import xacuopGif from '/pictures/xacuop.gif';
-import logoChinh from '/pictures/logochinh.png';
+import boxuongGif from './pictures/boxuong.gif';
+import xacuopGif from './pictures/xacuop.gif';
+import logoChinh from './pictures/logochinh.png';
 
 moment.locale('vi');
 
@@ -110,10 +110,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isLoadingXuathoadon, setIsLoadingXuathoadon] = useState(true);
     const [errorXuathoadon, setErrorXuathoadon] = useState<string | null>(null);
     
-    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
-    const [isLoadingVc, setIsLoadingVc] = useState(true);
-    const [errorVc, setErrorVc] = useState<string | null>(null);
-    
     const refetchXuathoadon = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingXuathoadon(true);
         setErrorXuathoadon(null);
@@ -125,20 +121,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             setErrorXuathoadon(message);
         } finally {
             if (!isSilent) setIsLoadingXuathoadon(false);
-        }
-    }, []);
-
-    const refetchVcData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingVc(true);
-        setErrorVc(null);
-        try {
-            const result = await apiService.getYeuCauVcData();
-            setVcRequestsData(result.data || []);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
-            setErrorVc(message);
-        } finally {
-            if (!isSilent) setIsLoadingVc(false);
         }
     }, []);
 
@@ -170,8 +152,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     useEffect(() => {
         fetchAdminData();
         refetchXuathoadon();
-        refetchVcData();
-    }, [fetchAdminData, refetchXuathoadon, refetchVcData]);
+    }, [fetchAdminData, refetchXuathoadon]);
 
 
     useEffect(() => {
@@ -1064,6 +1045,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         {renderOrdersContent()}
                     </div>
                     <div hidden={activeView !== 'stock'} className="h-full">
+{/* FIX: Removed the `hideToast` prop as it is not defined in StockViewProps */}
                         <StockView 
                             stockData={stockData}
                             isLoading={isLoadingStock}
@@ -1071,7 +1053,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             refetchStock={refetchStock}
                             highlightedVins={highlightedVins}
                             showToast={showToast} 
-                            hideToast={hideToast} 
                             currentUser={currentUser} 
                             isAdmin={isCurrentUserAdmin} 
                             onCreateRequestForVehicle={handleCreateRequestForVehicle}

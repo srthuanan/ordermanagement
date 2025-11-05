@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { StockVehicle, StockSortConfig } from '../types';
-import StockTable from './StockTable';
-import StockGridView from './StockGridView';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
-import Pagination from './ui/Pagination';
-import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
+import StockTable from './components/StockTable';
+import StockGridView from './components/StockGridView';
+import Filters, { DropdownFilterConfig } from './components/ui/Filters';
+import Pagination from './components/ui/Pagination';
+import StockVehicleDetailModal from './components/ui/StockVehicleDetailModal';
 // import * as apiService from '../services/apiService'; // FIX: Removed as actions are now handled by props.
 
 const PAGE_SIZE = 12;
@@ -13,7 +13,6 @@ const PAGE_SIZE = 12;
 // Removed `setStockData` and added `onHoldCar`, `onReleaseCar`, and `processingVin`.
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-  hideToast: () => void;
   currentUser: string;
   isAdmin: boolean;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
@@ -29,7 +28,6 @@ interface StockViewProps {
 
 const StockView: React.FC<StockViewProps> = ({ 
     showToast, 
-    hideToast, 
     currentUser, 
     isAdmin, 
     onCreateRequestForVehicle,

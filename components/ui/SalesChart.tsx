@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-// FIX: Removed the module import for Chart.js and declared it as a global
-// constant to align with how external libraries are loaded in this project.
+// Chart.js is loaded globally via index.html
 declare const Chart: any;
 
 interface SalesChartProps {
@@ -12,7 +11,6 @@ interface SalesChartProps {
 
 const SalesChart: React.FC<SalesChartProps> = ({ salesData, onMonthClick, selectedMonthIndex }) => {
     const chartRef = useRef<HTMLCanvasElement>(null);
-    // FIX: Changed the type of the ref to `any` to match the global Chart object.
     const chartInstanceRef = useRef<any | null>(null);
 
     useEffect(() => {

@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Order, SortConfig } from '../types';
-import HistoryTable from './HistoryTable';
-import Pagination from './ui/Pagination';
-import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
-import SummaryCard from './ui/SummaryCard';
-import Leaderboard from './ui/Leaderboard';
-import SalesChart from './ui/SalesChart';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
+import HistoryTable from './components/HistoryTable';
+import Pagination from './components/ui/Pagination';
+import SoldCarDetailPanel from './components/ui/SoldCarDetailPanel';
+import SummaryCard from './components/ui/SummaryCard';
+import Leaderboard from './components/ui/Leaderboard';
+import SalesChart from './components/ui/SalesChart';
+import Filters, { DropdownFilterConfig } from './components/ui/Filters';
 import { MONTHS } from '../constants';
 
 // Chart.js is loaded globally via index.html
@@ -309,8 +309,8 @@ const TotalDashboard: React.FC<{
             total: soldData.length,
             topCarDisplay: `${topCar.key} (${topCar.count} xe)`,
             topTvbhDisplay: `${topSalesperson.key} (${topSalesperson.count} xe)`,
-            topCars: carDataAgg.slice(0, 5),
-            topTvbh: tvbhDataAgg.slice(0, 5),
+            topCars: carDataAgg.slice(0, 10),
+            topTvbh: tvbhDataAgg.slice(0, 10),
         };
     }, [soldData]);
 
@@ -333,8 +333,8 @@ const TotalDashboard: React.FC<{
                 <SalesChart salesData={yearlyData} onMonthClick={onMonthClick} selectedMonthIndex={null} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Leaderboard title="BXH Dòng Xe (Top 5 Năm)" icon="fa-trophy" items={stats.topCars} color="blue" />
-                <Leaderboard title="BXH TVBH (Top 5 Năm)" icon="fa-crown" items={stats.topTvbh} color="green" />
+                <Leaderboard title="BXH Dòng Xe (Năm)" icon="fa-trophy" items={stats.topCars} color="blue" />
+                <Leaderboard title="BXH TVBH (Năm)" icon="fa-crown" items={stats.topTvbh} color="green" />
             </div>
         </div>
     );
@@ -379,7 +379,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
                 <div className="admin-tabs-container p-2 flex items-center border-b border-border-primary overflow-x-auto">
-                     {TABS.map((tab, index) => (
+                     {TABS.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}

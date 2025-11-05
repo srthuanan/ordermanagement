@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import * as apiService from '../../services/apiService';
 import { compressImage } from '../../services/ocrService';
 import yesAnimationUrl from '../../pictures/yes.json?url';

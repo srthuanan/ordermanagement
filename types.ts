@@ -1,9 +1,5 @@
-// FIX: Replaced the entire content of this file which was an incorrect copy of index.tsx.
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
-
-// FIX: Add React import for type definitions.
-import type React from 'react';
 
 export interface Order {
     "Số đơn hàng": string;
@@ -33,7 +29,6 @@ export interface Order {
     [key: string]: any; // Allow for other properties
 }
 
-// FIX: Added VcRequest interface for VC request management.
 export interface VcRequest {
     "Số đơn hàng": string;
     "Tên khách hàng": string;
@@ -65,8 +60,6 @@ export interface StockVehicle {
 }
 
 // Defines the structure for a test drive booking record.
-// FIX: Expanded the TestDriveBooking interface to include all fields from the test drive form.
-// This resolves type errors when assigning a booking object to state that expects the full form data structure.
 export interface TestDriveBooking {
     soPhieu: string;
     ngayThuXe: string;
@@ -102,7 +95,6 @@ export interface StockSortConfig {
     direction: 'asc' | 'desc';
 }
 
-// FIX: Added VcSortConfig for sorting VC requests.
 export interface VcSortConfig {
     key: keyof VcRequest;
     direction: 'asc' | 'desc';
@@ -130,5 +122,4 @@ export interface Notification {
     type: NotificationType;
 }
 
-// FIX: Added 'approveVc', 'rejectVc', 'vinclub', and 'confirmVc' to the ActionType to support the VinClub feature workflow.
 export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc';

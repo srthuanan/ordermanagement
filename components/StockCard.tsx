@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
 import CarImage from './ui/CarImage'; // Import the new component

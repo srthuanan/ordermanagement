@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import { getExteriorColorStyle } from '../utils/styleUtils';
 import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
-// FIX: Added import for the pair car animation.
 import pairCarAnimationUrl from '../pictures/pair-animation.json?url';
 import huygiuAnimationUrl from '../pictures/huygiu.json?url';
 import yesAnimationUrl from '../pictures/yes.json?url';
@@ -42,10 +41,9 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
         };
     }, [expirationTime]);
 
-    // FIX: Changed => to = to fix syntax error in useState declaration.
     const [remainingTime, setRemainingTime] = useState(calculateRemainingTime());
 
-    useEffect(() => {
+    React.useEffect(() => {
         const timer = setInterval(() => {
             setRemainingTime(calculateRemainingTime());
         }, 1000);
@@ -189,7 +187,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                         }
                                                         setConfirmAction(null);
                                                     }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
-                                                    <lottie-player src={confirmAction.action === 'hold' ? yesAnimationUrl : huygiuAnimationUrl} background="transparent" speed="1" style={{ width: confirmAction.action === 'hold' ? '70px' : '40px', height: confirmAction.action === 'hold' ? '70px' : '40px' }} loop autoplay />
+                                                    <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '70px', height: '70px' }} loop autoplay />
                                                 </div>
                                             </div>
                                         ) : (
