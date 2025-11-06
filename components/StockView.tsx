@@ -1,16 +1,11 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { StockVehicle, StockSortConfig } from '../types';
-import StockTable from './components/StockTable';
-import StockGridView from './components/StockGridView';
-import Filters, { DropdownFilterConfig } from './components/ui/Filters';
-import Pagination from './components/ui/Pagination';
-import StockVehicleDetailModal from './components/ui/StockVehicleDetailModal';
-// import * as apiService from '../services/apiService'; // FIX: Removed as actions are now handled by props.
+import StockTable from './StockTable';
+import StockGridView from './StockGridView';
+import Filters, { DropdownFilterConfig } from './ui/Filters';
+import Pagination from './ui/Pagination';
+import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
 
-const PAGE_SIZE = 12;
-
-// FIX: Updated props to align with how the component is used in App.tsx.
-// Removed `setStockData` and added `onHoldCar`, `onReleaseCar`, and `processingVin`.
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
   currentUser: string;
@@ -24,6 +19,7 @@ interface StockViewProps {
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   processingVin: string | null;
+  isSidebarCollapsed: boolean;
 }
 
 const StockView: React.FC<StockViewProps> = ({ 
@@ -38,8 +34,11 @@ const StockView: React.FC<StockViewProps> = ({
     highlightedVins,
     onHoldCar,
     onReleaseCar,
-    processingVin
+    processingVin,
+    isSidebarCollapsed
 }) => {
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+
     const [filters, setFilters] = useState({
         keyword: '',
         carModel: [] as string[],
@@ -52,8 +51,6 @@ const StockView: React.FC<StockViewProps> = ({
     const [currentPage, setCurrentPage] = useState(1);
     const [view, setView] = useState<'table' | 'grid'>('grid');
     const [stockVehicleToView, setStockVehicleToView] = useState<StockVehicle | null>(null);
-    
-    // FIX: Removed local processing state and internal action handlers. The component now relies on props from App.tsx.
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -155,13 +152,20 @@ const StockView: React.FC<StockViewProps> = ({
             setStockVehicleToView(processedData[nextIndex]);
         }
     };
+    
+    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
 
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [processedData, currentPage]);
+    }, [processedData, currentPage, PAGE_SIZE]);
     
-    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]))].sort(), [stockData]);
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]))].sort(), [stockData]);
@@ -180,13 +184,13 @@ const StockView: React.FC<StockViewProps> = ({
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
             return ( 
-                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 mb-0">
+                 <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 px-2">
                         <div className="flex flex-wrap items-center gap-2">
-                            <div className="skeleton-item h-10 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
-                            <div className="skeleton-item h-10 w-32 rounded-full"></div>
-                            <div className="skeleton-item h-10 w-32 rounded-full"></div>
-                            <div className="skeleton-item h-10 w-10 !rounded-full ml-auto"></div>
+                            <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-12 !rounded-full ml-auto"></div>
                         </div>
                     </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -221,8 +225,8 @@ const StockView: React.FC<StockViewProps> = ({
         };
         
         return ( 
-            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 mb-0">
+            <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
+                <div className="flex-shrink-0 px-2">
                     <Filters 
                         filters={filters} 
                         onFilterChange={handleFilterChange} 

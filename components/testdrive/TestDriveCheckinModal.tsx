@@ -56,10 +56,13 @@ const toEmbeddableDriveUrl = (url: string): string => {
     if (url.includes('/thumbnail?id=')) {
         return url.replace(/(&sz=)[^&]+/, '&sz=w200');
     }
-    // Try to extract file ID from other formats like /uc?id= or /d/
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
-        return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200`;
+    // Try to extract file ID from various formats like /uc?id= or /d/
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    if (idMatch) {
+        const fileId = idMatch[1] || idMatch[2];
+        if (fileId) {
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+        }
     }
     // Return original URL as a fallback if no ID is found
     return url;

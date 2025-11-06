@@ -28,21 +28,21 @@ const getFilename = (customerName?: string, fileLabel?: string): string => {
 const toHighQualityDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) return url;
 
-    // Try to extract file ID from various formats
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && (idMatch[1] || idMatch[2])) {
-        const fileId = idMatch[1] || idMatch[2];
-        // The /thumbnail endpoint is more reliable for direct embedding than /uc.
-        // Request a large size for the main view.
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=s2048`;
-    }
-    
     // If it's already a thumbnail URL, just ensure it has a large size.
     if (url.includes('/thumbnail?id=')) {
         if (url.includes('&sz=')) {
             return url.replace(/(&sz=)[^&]+/, '&sz=s2048');
         }
         return `${url}&sz=s2048`;
+    }
+
+    // Try to extract file ID from various formats like /d/FILE_ID/ or ?id=FILE_ID
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    if (idMatch) {
+        const fileId = idMatch[1] || idMatch[2];
+        if (fileId) {
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=s2048`;
+        }
     }
     
     // Fallback for URLs that don't match expected formats.
@@ -61,21 +61,25 @@ const toThumbnailDriveUrl = (url: string): string => {
         return `${url}&sz=w320`;
     }
 
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-     if (idMatch && (idMatch[1] || idMatch[2])) {
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+     if (idMatch) {
         const fileId = idMatch[1] || idMatch[2];
-        // Request a slightly larger thumbnail for better clarity in the filmstrip.
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
+        if (fileId) {
+            // Request a slightly larger thumbnail for better clarity in the filmstrip.
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
+        }
     }
     return url;
 };
 
 const toDownloadableDriveUrl = (url: string): string | null => {
     if (!url || !url.includes('drive.google.com')) return null;
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && (idMatch[1] || idMatch[2])) {
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    if (idMatch) {
         const fileId = idMatch[1] || idMatch[2];
-        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        if (fileId) {
+            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
     }
     return null;
 }

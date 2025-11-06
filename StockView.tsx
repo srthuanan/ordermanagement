@@ -1,16 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { StockVehicle, StockSortConfig } from './types';
-import StockTable from './components/StockTable';
-import StockGridView from './components/StockGridView';
-import Filters, { DropdownFilterConfig } from './components/ui/Filters';
-import Pagination from './components/ui/Pagination';
-import StockVehicleDetailModal from './components/ui/StockVehicleDetailModal';
-
-const PAGE_SIZE = 12;
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { StockVehicle, StockSortConfig } from '../types';
+import StockTable from './StockTable';
+import StockGridView from './StockGridView';
+import Filters, { DropdownFilterConfig } from './ui/Filters';
+import Pagination from './ui/Pagination';
+import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
 
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-  hideToast: () => void;
   currentUser: string;
   isAdmin: boolean;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
@@ -22,11 +19,11 @@ interface StockViewProps {
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   processingVin: string | null;
+  isSidebarCollapsed: boolean;
 }
 
 const StockView: React.FC<StockViewProps> = ({ 
     showToast, 
-    hideToast, 
     currentUser, 
     isAdmin, 
     onCreateRequestForVehicle,
@@ -37,8 +34,11 @@ const StockView: React.FC<StockViewProps> = ({
     highlightedVins,
     onHoldCar,
     onReleaseCar,
-    processingVin
+    processingVin,
+    isSidebarCollapsed
 }) => {
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+
     const [filters, setFilters] = useState({
         keyword: '',
         carModel: [] as string[],
@@ -152,13 +152,20 @@ const StockView: React.FC<StockViewProps> = ({
             setStockVehicleToView(processedData[nextIndex]);
         }
     };
+    
+    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
 
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [processedData, currentPage]);
+    }, [processedData, currentPage, PAGE_SIZE]);
     
-    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]))].sort(), [stockData]);
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]))].sort(), [stockData]);
@@ -177,18 +184,13 @@ const StockView: React.FC<StockViewProps> = ({
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
             return ( 
-                 <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
-                        <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
-                            <div className="w-full lg:flex-grow">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <div className="skeleton-item h-8 rounded-lg" style={{flexBasis: '280px', flexGrow: 1}}></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-24 rounded-lg"></div>
-                                    <div className="skeleton-item h-8 w-8 !rounded-lg ml-auto"></div>
-                                </div>
-                            </div>
+                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 mb-1 px-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-32 rounded-full"></div>
+                            <div className="skeleton-item h-12 w-12 !rounded-full ml-auto"></div>
                         </div>
                     </div>
                      <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
@@ -223,43 +225,39 @@ const StockView: React.FC<StockViewProps> = ({
         };
         
         return ( 
-            <div className={`flex flex-col gap-4 sm:gap-6 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
-                    <div className="flex flex-col xl:flex-row gap-4 xl:items-start">
-                        <div className="w-full xl:flex-grow">
-                            <Filters 
-                                filters={filters} 
-                                onFilterChange={handleFilterChange} 
-                                onReset={handleResetFilters} 
-                                dropdowns={dropdownConfigs}
-                                searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
-                                totalCount={processedData.length}
-                                onRefresh={() => refetchStock()}
-                                isLoading={isLoading}
-                                plain={true}
-                                size="compact"
-                                viewSwitcherEnabled={true}
-                                activeView={view}
-                                onViewChange={setView}
-                            />
-                        </div>
-                    </div>
+            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
+                <div className="flex-shrink-0 mb-1 px-2">
+                    <Filters 
+                        filters={filters} 
+                        onFilterChange={handleFilterChange} 
+                        onReset={handleResetFilters} 
+                        dropdowns={dropdownConfigs}
+                        searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
+                        totalCount={processedData.length}
+                        onRefresh={() => refetchStock()}
+                        isLoading={isLoading}
+                        plain={true}
+                        size="compact"
+                        viewSwitcherEnabled={true}
+                        activeView={view}
+                        onViewChange={setView}
+                    />
                 </div>
                 <div className="flex-1 flex flex-col min-h-0">
                     {view === 'table' ? (
                         <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
-                            <div className="flex-grow overflow-auto relative">
+                            <div className="flex-grow overflow-auto relative hidden-scrollbar">
                                 <StockTable vehicles={paginatedData} {...commonProps} />
                             </div>
                             {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                         </div>
                     ) : (
-                        <>
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
                             <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
                                 <StockGridView vehicles={paginatedData} {...commonProps} />
                             </div>
                             {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>

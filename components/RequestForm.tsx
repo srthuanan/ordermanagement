@@ -223,7 +223,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 </div>
             )}
 
-            <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-x-6 xl:gap-x-8">
+            <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-x-6 xl:gap-x-8 gap-y-8">
                 {/* Column 1: Vehicle Config */}
                 <section>
                     <SectionHeader icon="fa-cogs" title="1. Cấu hình Xe" />
@@ -296,11 +296,11 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 </section>
             </div>
 
-            <div className="flex-shrink-0 flex justify-between items-center pt-6 mt-6 border-t border-border-primary">
-                <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="btn-secondary">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end items-center gap-3 pt-4 mt-4 sm:pt-6 sm:mt-6 border-t border-border-primary">
+                <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="btn-secondary w-full sm:w-auto order-2 sm:order-1">
                     <i className="fas fa-eraser mr-2"></i><span>Xóa Nháp</span>
                 </button>
-                <button type="submit" disabled={isSubmitting} className="btn-primary">
+                <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto order-1 sm:order-2">
                     {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</> : <><i className="fas fa-paper-plane mr-2"></i> Xác nhận & Gửi</>}
                 </button>
             </div>

@@ -26,29 +26,29 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
 
     return (
         <div 
-            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4 animate-fade-in"
             onClick={onClose}
         >
             <div 
-                className="bg-surface-card w-full max-w-7xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl animate-fade-in-scale-up"
+                className="bg-surface-card w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-7xl flex flex-col sm:rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
             >
-                <header className="flex items-center justify-center p-5 border-b border-border-primary flex-shrink-0 relative">
+                <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative">
                     <div className="text-center animate-fade-in-down">
-                        <h2 className="text-2xl font-bold text-gradient">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gradient">
                             Yêu Cầu Ghép Xe
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">Điền thông tin và tải lên Ủy nhiệm chi để gửi yêu cầu.</p>
                     </div>
                     <button 
                         onClick={onClose}
-                        className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                        className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                     >
                         <i className="fas fa-times text-lg"></i>
                     </button>
                 </header>
 
-                <main className="flex-grow p-6 sm:p-8">
+                <main className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
                     <RequestForm
                         onSuccess={onSuccess}
                         showToast={showToast}

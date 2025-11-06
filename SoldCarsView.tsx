@@ -1,18 +1,16 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Order, SortConfig } from './types';
-import HistoryTable from './components/HistoryTable';
-import Pagination from './components/ui/Pagination';
-import SoldCarDetailPanel from './components/ui/SoldCarDetailPanel';
-import SummaryCard from './components/ui/SummaryCard';
-import Leaderboard from './components/ui/Leaderboard';
-import SalesChart from './components/ui/SalesChart';
-import Filters, { DropdownFilterConfig } from './components/ui/Filters';
-import { MONTHS } from './constants';
+import { Order, SortConfig } from '../types';
+import HistoryTable from './HistoryTable';
+import Pagination from './ui/Pagination';
+import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
+import SummaryCard from './ui/SummaryCard';
+import Leaderboard from './ui/Leaderboard';
+import SalesChart from './ui/SalesChart';
+import Filters, { DropdownFilterConfig } from './ui/Filters';
+import { MONTHS } from '../constants';
 
 // Chart.js is loaded globally via index.html
 declare const Chart: any;
-
-const PAGE_SIZE = 10;
 
 // --- SKELETON COMPONENTS ---
 
@@ -72,7 +70,7 @@ const SkeletonHistoryTable = () => (
             <div className="skeleton-item h-5 w-1/4"></div>
         </div>
         <div className="flex-grow p-4 space-y-3">
-            {Array.from({ length: PAGE_SIZE / 2 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="skeleton-item h-10 w-full"></div>
             ))}
         </div>
@@ -134,6 +132,7 @@ interface SoldCarsViewProps {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
+  isSidebarCollapsed: boolean;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -169,8 +168,11 @@ interface MonthViewProps {
     error: string | null;
     refetch: () => void;
     showToast: SoldCarsViewProps['showToast'];
+    isSidebarCollapsed: boolean;
 }
-const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, showToast }) => {
+const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, showToast, isSidebarCollapsed }) => {
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+
     const [filters, setFilters] = useState({ keyword: '', tvbh: [] as string[], carModel: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
@@ -256,9 +258,16 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
         }
     }, [sortedData]);
 
-
-    const paginatedData = useMemo(() => sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [sortedData, currentPage]);
     const totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
+
+    const paginatedData = useMemo(() => sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [sortedData, currentPage, PAGE_SIZE]);
+    
 
     if (isLoading && data.length === 0) return <MonthViewSkeleton />;
     if (error) return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
@@ -341,7 +350,7 @@ const TotalDashboard: React.FC<{
 };
 
 // --- Main View ---
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoading, error, refetch }) => {
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoading, error, refetch, isSidebarCollapsed }) => {
     const [activeTab, setActiveTab] = useState<string>('Tổng Quan');
 
     const monthlyData = useMemo(() => {
@@ -379,7 +388,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
                 <div className="admin-tabs-container p-2 flex items-center border-b border-border-primary overflow-x-auto">
-                     {TABS.map((tab, index) => (
+                     {TABS.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -411,6 +420,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
                             error={error}
                             refetch={refetch}
                             showToast={showToast}
+                            isSidebarCollapsed={isSidebarCollapsed}
                         />
                     </div>
                 ))}

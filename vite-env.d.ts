@@ -1,4 +1,6 @@
 // This file is for Vite environment-specific type declarations.
+// FIX: Added a type-only import for React to bring its types into scope for the global augmentation below.
+import type React from 'react';
 
 declare module '*.png' {
     const src: string;
@@ -25,8 +27,9 @@ declare module '*.json?url' {
     export default src;
 }
 
-// Add a global JSX type definition for the 'lottie-player' custom element to resolve all related TypeScript errors.
-// This augmentation informs TypeScript about the custom element and its props.
+// FIX: Add a global JSX type definition for the 'lottie-player' custom element.
+// This augmentation informs TypeScript about the custom element and its props,
+// resolving all 'Property 'lottie-player' does not exist' errors across the application.
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -43,5 +46,5 @@ declare global {
   }
 }
 
-// FIX: Make this file a module to allow global augmentation.
+// Make this file a module to allow global augmentation.
 export {};

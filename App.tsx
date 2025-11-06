@@ -38,8 +38,6 @@ import logoChinh from './pictures/logochinh.png';
 
 moment.locale('vi');
 
-const PAGE_SIZE = 12;
-
 type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu';
 
 interface ImageSource {
@@ -99,6 +97,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [currentGif, setCurrentGif] = useState(boxuongGif);
     
     const [orderView, setOrderView] = useState<'table' | 'grid'>('grid');
+    
+    const PAGE_SIZE = useMemo(() => {
+        if (activeView === 'orders' && orderView === 'grid') {
+            return isSidebarCollapsed ? 15 : 12;
+        }
+        return isSidebarCollapsed ? 14 : 12;
+    }, [activeView, orderView, isSidebarCollapsed]);
 
     // --- CENTRALIZED DATA FETCHING ---
     const { historyData: allHistoryData, setHistoryData: setAllHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi();
@@ -717,11 +722,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         return result.sort((a, b) => b.total - a.total);
     }, [allHistoryData]);
 
+    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage, PAGE_SIZE]);
 
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [processedData, currentPage]);
+    }, [processedData, currentPage, PAGE_SIZE]);
 
     const handleOrderNavigation = (direction: 'prev' | 'next') => {
         if (!selectedOrder) return;
@@ -736,7 +748,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     };
     
-    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
     const uniqueCarModels = useMemo(() => [...new Set(allHistoryData.map(o => o["Dòng xe"]))].sort(), [allHistoryData]);
     const uniqueStatuses = useMemo(() => [...new Set(allHistoryData.map(o => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép"))].sort(), [allHistoryData]);
 
@@ -785,8 +796,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </tr>
             ));
             return ( 
-                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 mb-2 px-2">
+                 <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 px-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
@@ -808,8 +819,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fa-solid fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
-            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 mb-2 px-2">
+            <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
+                <div className="flex-shrink-0 px-2">
                     <Filters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -874,7 +885,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         ${isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`;
         
-    const mainContentPadding = isSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-72';
+    const mainContentPadding = isSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-[17.5rem]';
 
     return (
         <>
@@ -1040,12 +1051,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                 </header>
 
-                <main className={`flex-1 p-2 sm:p-3 flex flex-col overflow-y-auto mb-1`}>
+                <main className={`flex-1 p-2 flex flex-col overflow-y-auto`}>
                     <div hidden={activeView !== 'orders'} className="h-full">
                         {renderOrdersContent()}
                     </div>
                     <div hidden={activeView !== 'stock'} className="h-full">
-{/* FIX: Removed the `hideToast` prop as it is not defined in StockViewProps */}
                         <StockView 
                             stockData={stockData}
                             isLoading={isLoadingStock}
@@ -1059,6 +1069,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             onHoldCar={handleHoldCar}
                             onReleaseCar={handleReleaseCar}
                             processingVin={processingVin}
+                            isSidebarCollapsed={isSidebarCollapsed}
                         />
                     </div>
                     <div hidden={activeView !== 'sold'} className="h-full">
@@ -1068,6 +1079,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                           isLoading={isLoadingSold}
                           error={errorSold}
                           refetch={refetchSold}
+                          isSidebarCollapsed={isSidebarCollapsed}
                         />
                     </div>
                     <div hidden={activeView !== 'laithu'} className="h-full">
@@ -1102,6 +1114,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             soldData={soldData}
                             onNavigateTo={setActiveView}
                             onShowOrderDetails={setSelectedOrder}
+                            isSidebarCollapsed={isSidebarCollapsed}
                         />}
                     </div>
                 </main>

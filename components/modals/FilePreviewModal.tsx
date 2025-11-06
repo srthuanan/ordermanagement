@@ -9,19 +9,15 @@ interface FilePreviewModalProps {
 
 const toEmbeddableDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) {
-        // For non-google drive URLs, including data URLs, return as is.
-        // Browsers can often display them in iframes.
         return url;
     }
-    
-    // Use the /preview URL for embedding in an iframe
-    // Handles /d/ and /uc?id= formats
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
-        return `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    if (idMatch) {
+        const fileId = idMatch[1] || idMatch[2];
+        if (fileId) {
+            return `https://drive.google.com/file/d/${fileId}/preview`;
+        }
     }
-    
-    // Fallback if no ID is found or it's another format (like /open?id=)
     return url.replace('/open?', '/preview?');
 };
 
@@ -29,9 +25,12 @@ const toDownloadableDriveUrl = (url: string): string => {
     if (!url || !url.includes('drive.google.com')) {
         return url;
     }
-    const idMatch = url.match(/id=([a-zA-Z0-9_-]{25,})/) || url.match(/\/d\/([a-zA-Z0-9_-]{25,})/);
-    if (idMatch && idMatch[1]) {
-        return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    if (idMatch) {
+        const fileId = idMatch[1] || idMatch[2];
+        if (fileId) {
+            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
     }
     return url;
 };
