@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '../../types';
 
 const DetailInfoRow: React.FC<{ icon: string, label: string; value?: string | number; valueClassName?: string }> = ({ icon, label, value, valueClassName }) => (
-    <div className="flex items-start gap-4 py-3 border-b border-dashed border-border-primary/50">
+    <div className="flex items-start gap-2 py-2 border-b border-dashed border-border-primary/50">
         <i className={`fas ${icon} text-accent-secondary text-base w-5 text-center mt-1`}></i>
         <div className="flex-1">
             <p className="text-xs text-text-secondary">{label}</p>
@@ -33,16 +33,16 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showToas
 
     return (
         <div className="detail-panel h-full">
-            <h3 className="text-lg font-bold text-text-primary mb-0 p-4 border-b border-border-primary flex items-center gap-3 flex-shrink-0">
+            <h3 className="text-lg font-bold text-text-primary mb-0 p-2 border-b border-border-primary flex items-center gap-3 flex-shrink-0">
                 <i className="fas fa-file-invoice text-accent-primary"></i>
                 Chi Tiết Đơn Hàng
             </h3>
-            <div className="detail-panel-body flex-grow">
+            <div className="detail-panel-body flex-grow hidden-scrollbar">
                 {order ? (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         {/* VIN Display */}
                         <div 
-                            className="relative p-3 my-2 rounded-lg bg-slate-800 text-center shadow-lg cursor-pointer hover:bg-slate-700 transition-colors"
+                            className="relative p-2 my-1 rounded-lg bg-slate-800 text-center shadow-lg cursor-pointer hover:bg-slate-700 transition-colors"
                             onClick={() => handleCopy(order.VIN || '')}
                             title="Click để sao chép VIN"
                         >
@@ -57,11 +57,11 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showToas
                         
                         {/* Customer Info */}
                         <div>
-                            <h4 className="font-semibold text-text-primary mb-2 mt-2">
+                            <h4 className="font-semibold text-text-primary mb-1 mt-1">
                                 <i className="fas fa-user-circle mr-2 text-accent-secondary"></i>
                                 Thông tin Khách Hàng
                             </h4>
-                            <div className="pl-4">
+                            <div className="pl-2">
                                <DetailInfoRow icon="fa-user" label="Tên Khách Hàng" value={order["Tên khách hàng"]} />
                                <DetailInfoRow icon="fa-barcode" label="Số Đơn Hàng" value={order["Số đơn hàng"]} valueClassName="font-mono" />
                                <DetailInfoRow icon="fa-user-tie" label="Tư Vấn Bán Hàng" value={order["Tên tư vấn bán hàng"]} />
@@ -70,11 +70,11 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showToas
 
                         {/* Vehicle Info */}
                         <div>
-                            <h4 className="font-semibold text-text-primary mb-2 mt-4">
+                            <h4 className="font-semibold text-text-primary mb-1 mt-2">
                                 <i className="fas fa-car mr-2 text-accent-secondary"></i>
                                 Chi tiết Xe
                             </h4>
-                             <div className="pl-4">
+                             <div className="pl-2">
                                 <DetailInfoRow icon="fa-car-side" label="Dòng Xe" value={order["Dòng xe"]} />
                                 <DetailInfoRow icon="fa-cogs" label="Phiên Bản" value={order["Phiên bản"]} />
                                 <DetailInfoRow icon="fa-palette" label="Ngoại Thất" value={order["Ngoại thất"]} />

@@ -13,15 +13,12 @@ import BulkUploadModal from './BulkUploadModal';
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
-import TotalViewDashboard from '../ui/TotalViewDashboard';
-import Avatar from '../ui/Avatar';
 
 
 const PAGE_SIZE = 15;
 
-type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu';
 // FIX: Defined the User type used for team management.
-type User = { name: string; role: string; username: string };
+type User = { name: string, role: string, username: string };
 
 interface ImageSource {
     src: string;
@@ -40,14 +37,17 @@ interface AdminViewProps {
     allOrders: Order[];
     xuathoadonData: Order[];
     stockData: StockVehicle[];
+    // FIX: Add missing soldData prop to fix type error in App.tsx
+    soldData: Order[];
     teamData: Record<string, string[]>;
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onOpenFilePreview: (url: string, label: string) => void;
-    soldData: Order[];
-    onNavigateTo?: (view: ActiveView) => void;
+    isSidebarCollapsed: boolean;
+    // FIX: Add missing onNavigateTo and onShowOrderDetails props to fix type error in App.tsx
+    onNavigateTo: (view: 'orders' | 'stock' | 'sold' | 'admin' | 'laithu') => void;
     onShowOrderDetails: (order: Order) => void;
 }
 
@@ -57,166 +57,13 @@ type ModalState = {
 } | null;
 
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
-type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
+type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 type DateRange = { start: string; end: string; };
 
-// FIX: Moved Team Management components before AdminView to resolve scope issues.
-// --- Team Management Components (nested for simplicity) ---
-
-interface TeamManagementProps {
-    teamData: Record<string, string[]>;
-    onEditTeam: (leader: string, members: string[]) => void;
-    onAddNewTeam: () => void;
-    onDeleteTeam: (leader: string) => void;
-}
-
-const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
-    const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
-
-    return (
-        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
-                <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
-            </div>
-            {sortedTeams.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sortedTeams.map(([leader, members]) => (
-                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={leader} size="md" />
-                                    <div>
-                                        <p className="text-xs text-text-secondary">Trưởng phòng</p>
-                                        <p className="font-bold text-accent-primary">{leader}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
-                                    <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <div className="border-t border-dashed border-border-secondary my-3"></div>
-                            <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
-                            <div className="space-y-2 flex-grow">
-                                {members.length > 0 ? members.map(member => (
-                                    <div key={member} className="flex items-center gap-2 text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">
-                                        <Avatar name={member} size="sm" />
-                                        <span>{member}</span>
-                                    </div>
-                                )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-12 text-text-secondary">
-                    <i className="fas fa-users-slash fa-3x mb-4"></i>
-                    <p>Chưa có phòng kinh doanh nào được thiết lập.</p>
-                </div>
-            )}
-        </div>
-    );
-};
-
-interface TeamEditorModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (newTeamData: Record<string, string[]>) => void;
-    teamData: Record<string, string[]>;
-    allUsers: User[];
-    editingTeam: { leader: string; members: string[] } | null;
-}
-
-const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSave, teamData, allUsers, editingTeam }) => {
-    const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
-    const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setSelectedLeader(editingTeam ? editingTeam.leader : '');
-            setSelectedMembers(editingTeam ? editingTeam.members : []);
-        }
-    }, [isOpen, editingTeam]);
-
-    const isNewTeam = !editingTeam;
-
-    const { potentialLeaders, availableMembers } = useMemo(() => {
-        const allLeaders = new Set(Object.keys(teamData));
-        const allMembers = new Set(Object.values(teamData).flat());
-        
-        const leaders = allUsers.filter(u => u.role === 'Trưởng Phòng Kinh Doanh' && (!allLeaders.has(u.name) || u.name === editingTeam?.leader));
-        const members = allUsers.filter(u => u.role === 'Tư vấn bán hàng' && (!allMembers.has(u.name) || editingTeam?.members.includes(u.name)));
-
-        return { potentialLeaders: leaders.map(u => u.name), availableMembers: members.map(u => u.name) };
-    }, [allUsers, teamData, editingTeam]);
-
-    const handleSave = async () => {
-        if (!selectedLeader) {
-            alert('Vui lòng chọn trưởng phòng.');
-            return;
-        }
-        setIsSubmitting(true);
-        const newTeamData = { ...teamData };
-        if (isNewTeam) {
-            newTeamData[selectedLeader] = selectedMembers;
-        } else {
-            // If leader name is changed (should not happen with current UI but good practice)
-            if (editingTeam.leader !== selectedLeader) {
-                delete newTeamData[editingTeam.leader];
-            }
-            newTeamData[selectedLeader] = selectedMembers;
-        }
-        await onSave(newTeamData);
-        setIsSubmitting(false);
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
-                <main className="p-6 space-y-4 overflow-y-auto">
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
-                        {isNewTeam ? (
-                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
-                                <option value="" disabled>Chọn một trưởng phòng</option>
-                                {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
-                            </select>
-                        ) : (
-                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
-                        )}
-                    </div>
-                    <div>
-                         <MultiSelectDropdown 
-                            id="team-member-select"
-                            label="Thành viên"
-                            options={availableMembers}
-                            selectedOptions={selectedMembers}
-                            onChange={setSelectedMembers}
-                            icon="fa-users"
-                            displayMode="selection"
-                         />
-                    </div>
-                </main>
-                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
-                        {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-                    </button>
-                </footer>
-            </div>
-        </div>
-    );
-};
-
-
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, soldData, onNavigateTo, onShowOrderDetails }) => {
-    const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed }) => {
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+    const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -281,23 +128,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
     
-    const handleTabChange = useCallback((view: AdminSubView, filters?: any) => {
-        setAdminView(view);
-        if (view === 'invoices' && filters?.trangThai) {
-            setInvoiceFilters({
-                keyword: '',
-                tvbh: [],
-                dongXe: [],
-                trangThai: filters.trangThai,
-            });
-        }
-        setSelectedRows(new Set());
-        setCurrentPage(1);
-        setPendingCurrentPage(1);
-        setPairedCurrentPage(1);
-        setVcCurrentPage(1);
-    }, []);
-
      const handleFilterChange = useCallback((newFilters: Partial<{ [key: string]: string | string[] | DateRange | undefined; keyword?: string | undefined; dateRange?: DateRange | undefined; }>) => {
         if (adminView === 'invoices') {
             setInvoiceFilters(prev => ({ ...prev, ...newFilters }));
@@ -487,16 +317,40 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         };
     }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
 
-    const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
-    const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
-    const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage]);
-    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage]);
+    const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage, PAGE_SIZE]);
+    const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage, PAGE_SIZE]);
+    const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage, PAGE_SIZE]);
+    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage, PAGE_SIZE]);
     
     const totalInvoicePages = Math.ceil(invoiceRequests.length / PAGE_SIZE);
     const totalPendingPages = Math.ceil(pendingData.length / PAGE_SIZE);
     const totalPairedPages = Math.ceil(pairedData.length / PAGE_SIZE);
     const totalVcPages = Math.ceil(vcRequests.length / PAGE_SIZE);
     
+    useEffect(() => {
+        if (currentPage > totalInvoicePages && totalInvoicePages > 0) {
+            setCurrentPage(totalInvoicePages);
+        }
+    }, [currentPage, totalInvoicePages]);
+
+    useEffect(() => {
+        if (pendingCurrentPage > totalPendingPages && totalPendingPages > 0) {
+            setPendingCurrentPage(totalPendingPages);
+        }
+    }, [pendingCurrentPage, totalPendingPages]);
+
+    useEffect(() => {
+        if (pairedCurrentPage > totalPairedPages && totalPairedPages > 0) {
+            setPairedCurrentPage(totalPairedPages);
+        }
+    }, [pairedCurrentPage, totalPairedPages]);
+
+    useEffect(() => {
+        if (vcCurrentPage > totalVcPages && totalVcPages > 0) {
+            setVcCurrentPage(totalVcPages);
+        }
+    }, [vcCurrentPage, totalVcPages]);
+
     const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map(o => o['Số đơn hàng']), [invoiceRequests]);
     const allPendingOrderNumbers = useMemo(() => pendingData.map(o => o['Số đơn hàng']), [pendingData]);
     const allPairedOrderNumbers = useMemo(() => pairedData.map(o => o['Số đơn hàng']), [pairedData]);
@@ -584,35 +438,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     
     const handleAction = (type: ActionType, order: Order | VcRequest) => {
-        const directExecutionActions: ActionType[] = [
-            'approve', 'pendingSignature', 'resend', 'approveVc'
-        ];
-
-        if (type === 'requestInvoice') {
-            showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
-            return;
-        }
-
-        if (directExecutionActions.includes(type)) {
-            switch (type) {
-                case 'approve':
-                    handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.');
-                    break;
-                case 'pendingSignature':
-                    handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([order['Số đơn hàng']]) }, 'Đã chuyển trạng thái.');
-                    break;
-                case 'resend':
-                    handleAdminSubmit('resendEmail', { orderNumbers: JSON.stringify([order['Số đơn hàng']]), emailType: 'invoice_issued' }, 'Đã gửi lại email.');
-                    break;
-                case 'approveVc':
-                     handleAdminSubmit('approveVcRequest', { orderNumber: order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.');
-                    break;
-            }
-        } else if (type === 'manualMatch') {
+        if (type === 'manualMatch') {
             const suggestedCars = suggestionsMap.get(order['Số đơn hàng']) || [];
             setSuggestionModalState({ order: order as Order, cars: suggestedCars });
-        } else {
-            // All other actions need a modal for additional input
+        } else if (type === 'requestInvoice') {
+            const orderToRequest = allOrders.find(o => o['Số đơn hàng'] === order['Số đơn hàng']);
+            if(orderToRequest) {
+                console.log("Requesting invoice for:", orderToRequest);
+                showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
+            }
+        }
+        else {
             setInvoiceModalState({ type, order });
         }
     };
@@ -757,17 +593,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
 
         switch(adminView) {
-            case 'dashboard':
-                return <TotalViewDashboard 
-                    allOrders={allOrders} 
-                    stockData={stockData} 
-                    soldData={soldData} 
-                    teamData={teamData}
-                    allUsers={allUsers}
-                    onTabChange={handleTabChange}
-                    onNavigateTo={onNavigateTo}
-                    onShowOrderDetails={onShowOrderDetails}
-                />;
             case 'invoices':
             case 'pending':
             case 'paired': {
@@ -782,7 +607,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                  return (
                      <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
+                        <div className="flex-grow overflow-auto relative">
                             <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
                         </div>
                         {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
@@ -793,9 +618,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return (
                     <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
+                        <div className="flex-grow overflow-auto relative">
                             <AdminVcRequestTable 
-                                requests={paginatedVcData} 
+                                requests={vcRequests} 
                                 sortConfig={vcSortConfig}
                                 onSort={(key: keyof VcRequest) => setVcSortConfig((p: VcSortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
                                 selectedRows={selectedRows} 
@@ -807,7 +632,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 onDownloadAll={handleDownloadAllVcImages}
                             />
                         </div>
-                         {totalVcPages > 0 && <Pagination currentPage={vcCurrentPage} totalPages={totalVcPages} onPageChange={setVcCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 );
             }
@@ -828,7 +652,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
-        dashboard: [],
         invoices: [
             { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
             { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
@@ -968,13 +791,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         );
     };
 
-    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-    const counts: Record<AdminSubView, number> = { dashboard: 0, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    const tabs: AdminSubView[] = ['invoices', 'pending', 'paired', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-2">
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
                 <div className="p-3 flex items-center justify-between gap-2 flex-nowrap">
                     <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
                         {tabs.map(view => (
@@ -984,7 +807,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                             >
                                 {labels[view]}
-                                {view !== 'dashboard' && <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>}
+                                <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
                             </button>
                         ))}
                     </div>
@@ -1004,13 +827,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )}
                     </div>
                 </div>
+                 { adminView !== 'phongkd' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
             </div>
-
-            { adminView !== 'phongkd' && adminView !== 'dashboard' && (
-                <div className="flex-shrink-0 px-2">
-                    {renderFilterPanel()}
-                </div>
-            )}
             
             <div className="flex-grow min-h-0 flex flex-col">
                 {renderCurrentView()}
@@ -1082,5 +900,153 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         </div>
     );
 };
+
+
+// --- Team Management Components (nested for simplicity) ---
+
+interface TeamManagementProps {
+    teamData: Record<string, string[]>;
+    onEditTeam: (leader: string, members: string[]) => void;
+    onAddNewTeam: () => void;
+    onDeleteTeam: (leader: string) => void;
+}
+
+const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+    const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
+
+    return (
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
+                <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
+            </div>
+            {sortedTeams.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sortedTeams.map(([leader, members]) => (
+                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-text-secondary">Trưởng phòng</p>
+                                    <p className="font-bold text-accent-primary">{leader}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => onEditTeam(leader, members)} className="w-8 h-8 rounded-full hover:bg-surface-hover text-text-secondary" title="Chỉnh sửa"><i className="fas fa-pen"></i></button>
+                                    <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div className="border-t border-dashed border-border-secondary my-3"></div>
+                            <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
+                            <div className="space-y-2 flex-grow">
+                                {members.length > 0 ? members.map(member => (
+                                    <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
+                                )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 text-text-secondary">
+                    <i className="fas fa-users-slash fa-3x mb-4"></i>
+                    <p>Chưa có phòng kinh doanh nào được thiết lập.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+interface TeamEditorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (newTeamData: Record<string, string[]>) => void;
+    teamData: Record<string, string[]>;
+    allUsers: User[];
+    editingTeam: { leader: string; members: string[] } | null;
+}
+
+const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSave, teamData, allUsers, editingTeam }) => {
+    const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
+    const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedLeader(editingTeam ? editingTeam.leader : '');
+            setSelectedMembers(editingTeam ? editingTeam.members : []);
+        }
+    }, [isOpen, editingTeam]);
+
+    const isNewTeam = !editingTeam;
+
+    const { potentialLeaders, availableMembers } = useMemo(() => {
+        const allLeaders = new Set(Object.keys(teamData));
+        const allMembers = new Set(Object.values(teamData).flat());
+        
+        const leaders = allUsers.filter(u => u.role === 'Trưởng Phòng Kinh Doanh' && (!allLeaders.has(u.name) || u.name === editingTeam?.leader));
+        const members = allUsers.filter(u => u.role === 'Tư vấn bán hàng' && (!allMembers.has(u.name) || editingTeam?.members.includes(u.name)));
+
+        return { potentialLeaders: leaders.map(u => u.name), availableMembers: members.map(u => u.name) };
+    }, [allUsers, teamData, editingTeam]);
+
+    const handleSave = async () => {
+        if (!selectedLeader) {
+            alert('Vui lòng chọn trưởng phòng.');
+            return;
+        }
+        setIsSubmitting(true);
+        const newTeamData = { ...teamData };
+        if (isNewTeam) {
+            newTeamData[selectedLeader] = selectedMembers;
+        } else {
+            // If leader name is changed (should not happen with current UI but good practice)
+            if (editingTeam.leader !== selectedLeader) {
+                delete newTeamData[editingTeam.leader];
+            }
+            newTeamData[selectedLeader] = selectedMembers;
+        }
+        await onSave(newTeamData);
+        setIsSubmitting(false);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
+                <main className="p-6 space-y-4 overflow-y-auto">
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
+                        {isNewTeam ? (
+                            <select value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input">
+                                <option value="" disabled>Chọn một trưởng phòng</option>
+                                {potentialLeaders.map(name => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                        ) : (
+                            <input type="text" value={selectedLeader} readOnly className="w-full bg-surface-input border border-border-primary rounded-lg p-2.5 futuristic-input cursor-not-allowed" />
+                        )}
+                    </div>
+                    <div>
+                         <MultiSelectDropdown 
+                            id="team-member-select"
+                            label="Thành viên"
+                            options={availableMembers}
+                            selectedOptions={selectedMembers}
+                            onChange={setSelectedMembers}
+                            icon="fa-users"
+                            displayMode="selection"
+                         />
+                    </div>
+                </main>
+                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
+                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
+                    <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
+                        {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
 
 export default React.memo(AdminView);

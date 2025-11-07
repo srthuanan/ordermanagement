@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
@@ -43,7 +43,7 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
 
     const [remainingTime, setRemainingTime] = useState(calculateRemainingTime());
 
-    React.useEffect(() => {
+    useEffect(() => {
         const timer = setInterval(() => {
             setRemainingTime(calculateRemainingTime());
         }, 1000);

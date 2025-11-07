@@ -765,10 +765,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const pendingStatsButton = (
             <button
                 onClick={() => setIsPendingStatsModalOpen(true)}
-                className="flex-shrink-0 flex items-center gap-2 px-4 h-9 rounded-full bg-accent-primary text-white text-sm font-semibold shadow-md hover:bg-accent-primary-hover transition-all"
+                className="btn-filter h-9 px-4 text-sm font-semibold !text-accent-primary active"
                 title="Xem thống kê các xe đang có yêu cầu chờ ghép"
             >
-                <i className="fas fa-chart-pie"></i>
+                <i className="fas fa-chart-pie mr-2"></i>
                 <span>Thống Kê</span>
             </button>
         );
@@ -796,8 +796,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </tr>
             ));
             return ( 
-                 <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 px-2">
+                 <div className={`flex flex-col h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
@@ -819,8 +819,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fa-solid fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetch()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
         return ( 
-            <div className={`flex flex-col gap-2 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 px-2">
+            <div className={`flex flex-col h-full ${animationClass}`}>
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
                     <Filters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -1010,7 +1010,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 src={yeucauAnimationUrl}
                                 background="transparent"
                                 speed="1"
-                                style={{ width: '120px', height: '90px', marginTop: '-10px', marginBottom: '-10px' }}
+                                style={{ width: '250px', height: '120px', marginTop: '-10px', marginBottom: '-10px' }}
                                 loop
                                 autoplay
                             />

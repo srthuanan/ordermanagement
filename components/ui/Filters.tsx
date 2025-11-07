@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MultiSelectDropdown, { DropdownFilterConfig } from './MultiSelectDropdown';
+import moment from 'moment';
 
 // FIX: Re-export DropdownFilterConfig to make it available to other components that import Filters.
 export type { DropdownFilterConfig };
@@ -44,7 +45,7 @@ const DatePicker: React.FC<{
             type="date"
             value={value}
             onChange={e => onChange(e.target.value)}
-            className="w-full bg-surface-input border border-border-primary rounded-md p-2 text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary"
+            className="w-full bg-surface-input border border-border-primary rounded-md p-2 text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary futuristic-input"
         />
     </div>
 );
@@ -116,20 +117,6 @@ const Filters: React.FC<FiltersProps> = ({
   if (activeDateFilter) activeFilters.push(activeDateFilter);
   const hasActiveFilters = (filters.keyword && filters.keyword.length > 0) || activeFilters.length > 0;
 
-  const searchControls = (
-    <div className="relative flex-grow flex items-center min-w-[200px] lg:min-w-[300px]">
-        <i className="fas fa-search absolute left-4 text-gray-400"></i>
-        <input
-            type="text"
-            id="search-input-desktop"
-            placeholder={searchPlaceholder}
-            value={localKeyword}
-            onChange={(e) => setLocalKeyword(e.target.value)}
-            className="w-full h-8 pl-11 pr-4 py-1.5 bg-transparent focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
-        />
-    </div>
-  );
-
   const dropdownControls = dropdowns.map(dropdown => (
     <MultiSelectDropdown
       key={dropdown.id}
@@ -144,45 +131,68 @@ const Filters: React.FC<FiltersProps> = ({
     />
   ));
 
-  const desktopContent = (
-      <div className="bg-white rounded-full shadow-lg p-0.5 flex items-center gap-2 w-full border border-gray-200/80">
-        {!hideSearch && searchControls}
+ const desktopContent = (
+    <div className={`filter-bar-neumorphic ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}>
+        {!hideSearch && (
+            <div className="relative flex-grow flex items-center min-w-[200px] lg:min-w-[300px]">
+                <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
+                <input
+                    type="text"
+                    id="search-input-desktop"
+                    placeholder={searchPlaceholder}
+                    value={localKeyword}
+                    onChange={(e) => setLocalKeyword(e.target.value)}
+                    className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
+                />
+            </div>
+        )}
         
-        {dropdowns.map(dropdown => (
-            <MultiSelectDropdown
-              key={dropdown.id}
-              id={dropdown.id}
-              label={dropdown.label}
-              options={dropdown.options}
-              selectedOptions={(filters[dropdown.key] || []) as string[]}
-              onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-              icon={dropdown.icon}
-              displayMode="count"
-              size="compact"
-            />
-          ))}
+        {dropdownControls}
   
-        <span className="text-sm font-medium text-gray-500 px-3 whitespace-nowrap border-l border-gray-200 ml-1">
+        {dateRangeEnabled && (
+          <div className="relative" ref={datePickerRef}>
+            <button
+              type="button"
+              onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+              className={`btn-filter h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'active' : ''}`}
+            >
+              <i className="fas fa-calendar-alt text-text-placeholder text-xs mr-2"></i>
+              <span className={`${dateValue.start && dateValue.end ? 'font-semibold' : ''}`}>
+                {dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Chọn ngày'}
+              </span>
+            </button>
+            {isDatePopoverOpen && (
+              <div className="absolute top-full mt-2 right-0 z-20 bg-surface-card p-4 rounded-lg shadow-lg border border-border-primary date-range-picker-popover">
+                <div className="space-y-3">
+                  <DatePicker label="Từ ngày" value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
+                  <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <span className="text-sm font-medium text-text-secondary px-3 whitespace-nowrap border-l border-border-primary/50 ml-auto">
           {totalCount} kết quả
         </span>
         
         {viewSwitcherEnabled && (
-          <div className="flex items-center p-1 bg-white border border-gray-200 rounded-lg">
-              <button onClick={() => onViewChange?.('table')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'table' ? 'bg-accent-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
-              <button onClick={() => onViewChange?.('grid')} className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${activeView === 'grid' ? 'bg-accent-primary text-white' : 'text-gray-500 hover:bg-gray-100'}`} title="Xem dạng lưới"><i className="fas fa-table-cells"></i></button>
+          <div className="view-switcher-group">
+              <button onClick={() => onViewChange?.('table')} className={`btn-filter ${activeView === 'table' ? 'active' : ''}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
+              <button onClick={() => onViewChange?.('grid')} className={`btn-filter ${activeView === 'grid' ? 'active' : ''}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
           </div>
         )}
   
         {extraActionButton}
   
-        <button onClick={onRefresh} disabled={isLoading} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50" aria-label="Làm mới" title="Làm mới">
+        <button onClick={onRefresh} disabled={isLoading} className="btn-filter w-9 h-9 flex-shrink-0" aria-label="Làm mới" title="Làm mới">
               <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
         </button>
     </div>
   );
   
   const finalDesktopContent = (
-    <div className={`hidden md:block flex-shrink-0 ${!plain && 'bg-surface-card rounded-xl shadow-md border border-border-primary'} ${isCompact ? 'p-2' : 'p-4'}`}>
+    <div className={`hidden md:block flex-shrink-0 ${!plain && 'p-2'}`}>
       {desktopContent}
     </div>
   );
@@ -190,15 +200,27 @@ const Filters: React.FC<FiltersProps> = ({
   return (
       <>
           {/* --- Mobile View --- */}
-          <div className="md:hidden flex w-full items-center gap-2">
-              {!hideSearch && React.cloneElement(searchControls, {id: 'search-input-mobile'})}
-              <button onClick={() => setIsMobilePanelOpen(true)} className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-surface-ground rounded-lg border border-border-primary relative">
+          <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : 'filter-bar-neumorphic'}`}>
+              {!hideSearch && (
+                <div className="relative flex-grow flex items-center min-w-0">
+                  <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
+                  <input
+                    type="text"
+                    id="search-input-mobile"
+                    placeholder={searchPlaceholder}
+                    value={localKeyword}
+                    onChange={(e) => setLocalKeyword(e.target.value)}
+                    className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
+                  />
+                </div>
+              )}
+              <button onClick={() => setIsMobilePanelOpen(true)} className="btn-filter flex-shrink-0 w-9 h-9 relative">
                   <i className="fas fa-filter text-accent-primary"></i>
                   {activeFilters.length > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 bg-accent-primary text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-surface-card">{activeFilters.length}</span>
+                      <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-surface-ground">{activeFilters.length}</span>
                   )}
               </button>
-               <button onClick={onRefresh} disabled={isLoading} className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all disabled:opacity-50`} aria-label="Làm mới" title="Làm mới">
+               <button onClick={onRefresh} disabled={isLoading} className={`btn-filter flex-shrink-0 w-9 h-9`} aria-label="Làm mới" title="Làm mới">
                   <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
               </button>
           </div>
@@ -247,11 +269,7 @@ const Filters: React.FC<FiltersProps> = ({
           )}
 
           {/* --- Desktop View --- */}
-          {plain ? (
-              <div className="hidden md:block w-full">{desktopContent}</div>
-          ) : (
-              finalDesktopContent
-          )}
+          {finalDesktopContent}
       </>
   );
 };

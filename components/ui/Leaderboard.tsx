@@ -42,16 +42,16 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ title, icon, items, color }) 
     };
 
     return (
-        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md flex flex-col transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1">
-            <h3 className={`font-bold text-text-primary text-base mb-3 flex items-center gap-3`}>
+        <div className="bg-surface-card p-2 rounded-xl border border-border-primary shadow-md flex flex-col transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1">
+            <h3 className={`font-bold text-text-primary text-base mb-2 flex items-center gap-3`}>
                 <i className={`fas ${icon} ${selectedColor.icon}`}></i>
                 {title}
             </h3>
-            <div className="flex-grow min-h-0 overflow-y-auto pr-2 space-y-1">
+            <div className="flex-grow min-h-0 overflow-y-auto pr-2 space-y-1 hidden-scrollbar">
                 {items.length > 0 ? items.map((item, index) => (
                     <div 
                         key={item.key} 
-                        className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 p-2 rounded-lg transition-all duration-200 hover:bg-surface-hover animate-fade-in-up"
+                        className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-2 p-1 rounded-lg transition-all duration-200 hover:bg-surface-hover animate-fade-in-up"
                         style={{animationDelay: `${index * 50}ms`}}
                     >
                         {/* Rank */}

@@ -37,12 +37,18 @@ interface AdminViewProps {
     allOrders: Order[];
     xuathoadonData: Order[];
     stockData: StockVehicle[];
+    // FIX: Add missing soldData prop to fix type error in App.tsx
+    soldData: Order[];
     teamData: Record<string, string[]>;
     allUsers: User[];
     isLoadingXuathoadon: boolean;
     errorXuathoadon: string | null;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onOpenFilePreview: (url: string, label: string) => void;
+    isSidebarCollapsed: boolean;
+    // FIX: Add missing onNavigateTo and onShowOrderDetails props to fix type error in App.tsx
+    onNavigateTo: (view: 'orders' | 'stock' | 'sold' | 'admin' | 'laithu') => void;
+    onShowOrderDetails: (order: Order) => void;
 }
 
 type ModalState = {
@@ -55,7 +61,8 @@ type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 type DateRange = { start: string; end: string; };
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed }) => {
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
     const [adminView, setAdminView] = useState<AdminSubView>('invoices');
     
     // State for sorting
@@ -310,16 +317,40 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         };
     }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
 
-    const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage]);
-    const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage]);
-    const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage]);
-    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage]);
+    const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage, PAGE_SIZE]);
+    const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage, PAGE_SIZE]);
+    const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage, PAGE_SIZE]);
+    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage, PAGE_SIZE]);
     
     const totalInvoicePages = Math.ceil(invoiceRequests.length / PAGE_SIZE);
     const totalPendingPages = Math.ceil(pendingData.length / PAGE_SIZE);
     const totalPairedPages = Math.ceil(pairedData.length / PAGE_SIZE);
     const totalVcPages = Math.ceil(vcRequests.length / PAGE_SIZE);
     
+    useEffect(() => {
+        if (currentPage > totalInvoicePages && totalInvoicePages > 0) {
+            setCurrentPage(totalInvoicePages);
+        }
+    }, [currentPage, totalInvoicePages]);
+
+    useEffect(() => {
+        if (pendingCurrentPage > totalPendingPages && totalPendingPages > 0) {
+            setPendingCurrentPage(totalPendingPages);
+        }
+    }, [pendingCurrentPage, totalPendingPages]);
+
+    useEffect(() => {
+        if (pairedCurrentPage > totalPairedPages && totalPairedPages > 0) {
+            setPairedCurrentPage(totalPairedPages);
+        }
+    }, [pairedCurrentPage, totalPairedPages]);
+
+    useEffect(() => {
+        if (vcCurrentPage > totalVcPages && totalVcPages > 0) {
+            setVcCurrentPage(totalVcPages);
+        }
+    }, [vcCurrentPage, totalVcPages]);
+
     const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map(o => o['Số đơn hàng']), [invoiceRequests]);
     const allPendingOrderNumbers = useMemo(() => pendingData.map(o => o['Số đơn hàng']), [pendingData]);
     const allPairedOrderNumbers = useMemo(() => pairedData.map(o => o['Số đơn hàng']), [pairedData]);
@@ -589,7 +620,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative">
                             <AdminVcRequestTable 
-                                requests={paginatedVcData} 
+                                requests={vcRequests} 
                                 sortConfig={vcSortConfig}
                                 onSort={(key: keyof VcRequest) => setVcSortConfig((p: VcSortConfig | null) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
                                 selectedRows={selectedRows} 
@@ -601,7 +632,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 onDownloadAll={handleDownloadAllVcImages}
                             />
                         </div>
-                         {totalVcPages > 0 && <Pagination currentPage={vcCurrentPage} totalPages={totalVcPages} onPageChange={setVcCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 );
             }

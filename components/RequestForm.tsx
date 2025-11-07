@@ -297,10 +297,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
             </div>
 
             <div className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end items-center gap-3 pt-4 mt-4 sm:pt-6 sm:mt-6 border-t border-border-primary">
-                <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="btn-secondary w-full sm:w-auto order-2 sm:order-1">
+                <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-1 px-4 py-2.5 text-sm font-semibold text-text-primary bg-white border border-border-primary rounded-md shadow-sm transition-all duration-150 hover:bg-surface-hover hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
                     <i className="fas fa-eraser mr-2"></i><span>Xóa Nháp</span>
                 </button>
-                <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto order-1 sm:order-2">
+                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-2 px-4 py-2.5 text-sm font-semibold text-text-primary bg-white border border-border-primary rounded-md shadow-sm transition-all duration-150 hover:bg-surface-accent hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
                     {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</> : <><i className="fas fa-paper-plane mr-2"></i> Xác nhận & Gửi</>}
                 </button>
             </div>

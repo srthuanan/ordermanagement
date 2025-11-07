@@ -184,8 +184,8 @@ const StockView: React.FC<StockViewProps> = ({
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
             return ( 
-                 <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 mb-1 px-2">
+                 <div className={`flex flex-col h-full ${animationClass}`}>
+                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
@@ -225,8 +225,8 @@ const StockView: React.FC<StockViewProps> = ({
         };
         
         return ( 
-            <div className={`flex flex-col gap-2 sm:gap-3 h-full ${animationClass}`}>
-                <div className="flex-shrink-0 mb-1 px-2">
+            <div className={`flex flex-col h-full ${animationClass}`}>
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
                     <Filters 
                         filters={filters} 
                         onFilterChange={handleFilterChange} 

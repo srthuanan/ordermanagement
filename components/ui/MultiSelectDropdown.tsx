@@ -77,9 +77,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
   const isCompact = size === 'compact';
   const areAllFilteredSelected = filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
   
-  const buttonClasses = isCompact
-    ? `flex items-center justify-between gap-1.5 px-2.5 h-8 rounded-md bg-gray-50 border border-gray-200 text-xs font-medium text-text-secondary hover:bg-gray-100 hover:border-gray-300 focus:outline-none transition-all`
-    : `w-full flex items-center justify-between pl-3 pr-2.5 text-sm font-medium rounded-lg border transition-all bg-surface-ground text-text-primary border-border-primary hover:border-accent-primary/50 focus:outline-none focus:ring-2 focus:ring-accent-primary/20 md:w-52 h-11`;
+ const buttonClasses = useMemo(() => {
+    const base = 'btn-filter justify-between';
+    const sizeClass = isCompact ? 'px-3 h-9 text-xs' : 'w-full pl-3 pr-2.5 text-sm md:w-52 h-11 !rounded-lg';
+    const activeState = isOpen || selectedOptions.length > 0 ? 'active' : '';
+    return `${base} ${sizeClass} ${activeState}`;
+}, [isCompact, isOpen, selectedOptions.length]);
 
 
   return (
@@ -92,7 +95,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
         >
             <div className="flex items-center gap-1.5 min-w-0">
                  <i className={`fas ${icon} text-text-placeholder text-xs`}></i>
-                 <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold text-accent-primary' : ''}`}>{displayLabel}</span>
+                 <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold' : ''}`}>{displayLabel}</span>
             </div>
             <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`}></i>
         </button>
@@ -109,7 +112,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
                             autoFocus
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow focus:shadow-glow-accent"
+                            className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow futuristic-input"
                         />
                     </div>
                 </div>

@@ -50,14 +50,14 @@ const SkeletonSalesChart = () => (
 );
 
 const TotalDashboardSkeleton = () => (
-    <div className="space-y-6 animate-fade-in">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-3 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <SkeletonSummaryCard />
             <SkeletonSummaryCard />
             <SkeletonSummaryCard />
         </div>
         <SkeletonSalesChart />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SkeletonLeaderboard />
             <SkeletonLeaderboard />
         </div>
@@ -66,10 +66,10 @@ const TotalDashboardSkeleton = () => (
 
 const SkeletonHistoryTable = () => (
     <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full min-h-[400px]">
-        <div className="p-4 border-b border-border-primary">
+        <div className="p-2 border-b border-border-primary">
             <div className="skeleton-item h-5 w-1/4"></div>
         </div>
-        <div className="flex-grow p-4 space-y-3">
+        <div className="flex-grow p-2 space-y-1.5">
             {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="skeleton-item h-10 w-full"></div>
             ))}
@@ -79,21 +79,21 @@ const SkeletonHistoryTable = () => (
 
 const SkeletonDetailPanel = () => (
      <div className="detail-panel h-full">
-        <div className="p-4 border-b border-border-primary">
+        <div className="p-2 border-b border-border-primary">
             <div className="skeleton-item h-6 w-1/2"></div>
         </div>
-        <div className="p-4 space-y-6">
+        <div className="p-2 space-y-3">
             <div className="skeleton-item h-20 w-full rounded-lg"></div>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-2 mt-2">
                 <div className="skeleton-item h-5 w-1/3"></div>
-                <div className="pl-4 space-y-3">
+                <div className="pl-2 space-y-1.5">
                     <div className="skeleton-item h-8 w-full"></div>
                     <div className="skeleton-item h-8 w-full"></div>
                 </div>
             </div>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-2 mt-2">
                 <div className="skeleton-item h-5 w-1/3"></div>
-                <div className="pl-4 space-y-3">
+                <div className="pl-2 space-y-1.5">
                     <div className="skeleton-item h-8 w-full"></div>
                     <div className="skeleton-item h-8 w-full"></div>
                     <div className="skeleton-item h-8 w-full"></div>
@@ -104,16 +104,16 @@ const SkeletonDetailPanel = () => (
 );
 
 const MonthViewSkeleton = () => (
-    <div className="space-y-6 animate-fade-in">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-3 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <SkeletonSummaryCard />
             <SkeletonSummaryCard />
             <SkeletonSummaryCard />
         </div>
-        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-2">
             <div className="skeleton-item h-8 w-full"></div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start tables-section">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start tables-section">
             <div className="lg:col-span-2">
                 <SkeletonHistoryTable />
             </div>
@@ -132,7 +132,6 @@ interface SoldCarsViewProps {
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
-  // FIX: Added missing isSidebarCollapsed prop to support dynamic page size.
   isSidebarCollapsed: boolean;
 }
 
@@ -279,19 +278,19 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SummaryCard icon="fa-car" title="Tổng Xe Bán (Tháng)" value={stats.total} />
-                <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} />
-                <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} />
+        <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <SummaryCard icon="fa-car" title="Tổng Xe Bán (Tháng)" value={stats.total} size="compact" />
+                <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} size="compact" />
+                <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} size="compact" />
             </div>
-            <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-4">
+            <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-2">
                 <Filters filters={filters} onFilterChange={handleFilterChange} onReset={handleResetFilters} dropdowns={dropdownConfigs} searchPlaceholder="Tìm SĐH, Tên KH, VIN..." totalCount={sortedData.length} onRefresh={refetch} isLoading={isLoading} plain size="compact" />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start tables-section">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start tables-section">
                 <div className="lg:col-span-2 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full min-h-[400px]">
-                    <div className="p-4 border-b border-border-primary"><h3 className="font-bold text-base">Chi Tiết Giao Dịch</h3></div>
-                    <div className="flex-grow overflow-auto"><HistoryTable orders={paginatedData} onRowClick={setSelectedDetailOrder} selectedOrder={selectedDetailOrder} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} viewMode="sold" /></div>
+                    <div className="p-2 border-b border-border-primary"><h3 className="font-bold text-base">Chi Tiết Giao Dịch</h3></div>
+                    <div className="flex-grow overflow-auto hidden-scrollbar"><HistoryTable orders={paginatedData} onRowClick={setSelectedDetailOrder} selectedOrder={selectedDetailOrder} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} viewMode="sold" /></div>
                     {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                 </div>
                 <div className="lg:col-span-1 hidden lg:block sticky top-24 detail-panel"><SoldCarDetailPanel order={selectedDetailOrder} showToast={showToast} /></div>
@@ -332,17 +331,17 @@ const TotalDashboard: React.FC<{
     }
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SummaryCard icon="fa-car" title="Tổng Xe Bán (năm)" value={stats.total} />
-                <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} />
-                <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} />
+        <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <SummaryCard icon="fa-car" title="Tổng Xe Bán (năm)" value={stats.total} size="compact" />
+                <SummaryCard icon="fa-star" title="Dòng Xe Bán Chạy" value={stats.topCarDisplay} size="compact" />
+                <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc" value={stats.topTvbhDisplay} size="compact" />
             </div>
-             <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-md">
-                <h3 className="font-bold text-text-primary text-base mb-3">Doanh Số Toàn Cầu Theo Tháng (Click để xem chi tiết)</h3>
+             <div className="bg-surface-card p-2 rounded-xl border border-border-primary shadow-md">
+                <h3 className="font-bold text-text-primary text-base mb-2">Doanh Số Toàn Cầu Theo Tháng (Click để xem chi tiết)</h3>
                 <SalesChart salesData={yearlyData} onMonthClick={onMonthClick} selectedMonthIndex={null} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Leaderboard title="BXH Dòng Xe (Năm)" icon="fa-trophy" items={stats.topCars} color="blue" />
                 <Leaderboard title="BXH TVBH (Năm)" icon="fa-crown" items={stats.topTvbh} color="green" />
             </div>
@@ -387,21 +386,23 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
 
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
-                <div className="admin-tabs-container p-2 flex items-center border-b border-border-primary overflow-x-auto">
-                     {TABS.map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${activeTab === tab ? 'bg-accent-primary text-white shadow-sm' : 'text-text-secondary hover:bg-surface-hover'}`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-2">
+                <div className="p-2">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto hidden-scrollbar">
+                         {TABS.map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-3 py-1.5 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === tab ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto">
+            <div className="flex-grow overflow-y-auto hidden-scrollbar">
                 <div hidden={activeTab !== 'Tổng Quan'}>
                      <TotalDashboard 
                         soldData={soldData}

@@ -14,7 +14,7 @@ interface SummaryCardProps {
 const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, iconBgClass = 'bg-accent-primary/10', valueClassName = '', className = '', colorClass = 'text-accent-primary', size = 'default' }) => {
     if (size === 'compact') {
         return (
-            <div className={`bg-surface-card p-3 rounded-xl border border-border-primary flex items-center gap-3 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1 ${className}`}>
+            <div className={`bg-surface-card p-2 rounded-xl border border-border-primary flex items-center gap-2 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1 ${className}`}>
                 <div className={`flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center ${iconBgClass}`}>
                     <i className={`fas ${icon} ${colorClass} text-lg`}></i>
                 </div>
@@ -27,7 +27,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, iconBgCla
     }
 
     return (
-        <div className={`bg-surface-card p-4 rounded-xl border border-border-primary flex items-center gap-4 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1 ${className}`}>
+        <div className={`bg-surface-card p-2 rounded-xl border border-border-primary flex items-center gap-2 transition-all duration-300 hover:shadow-glow-accent hover:-translate-y-1 ${className}`}>
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconBgClass}`}>
                 <i className={`fas ${icon} ${colorClass} text-xl`}></i>
             </div>
