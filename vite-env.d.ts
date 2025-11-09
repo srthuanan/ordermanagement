@@ -1,7 +1,5 @@
-// FIX: Re-added the triple-slash directive below. Its absence prevented TypeScript from recognizing
-// the JSX type definitions for <lottie-player>, causing numerous errors across the app. This directive
-// is standard for Vite projects and ensures global types are correctly processed.
-/// <reference types="vite/client" />
+// Fix: Removed vite/client reference that was causing a "Cannot find type definition file" error.
+// The global JSX augmentation for <lottie-player> is now correctly processed.
 
 // This file adds a global JSX augmentation to define the <lottie-player> custom element,
 // which resolves all TypeScript errors related to it not being a known JSX element.

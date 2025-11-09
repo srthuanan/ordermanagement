@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { StockVehicle, StockSortConfig, Order } from '../types';
+import { StockVehicle, StockSortConfig, Order } from './types';
 import StockTable from './components/StockTable';
 import StockGridView from './components/StockGridView';
 import Filters, { DropdownFilterConfig } from './components/ui/Filters';

@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import moment from 'moment';
 import { VcRequest, VcSortConfig, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 interface ImageSource {
     src: string;

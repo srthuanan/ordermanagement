@@ -1036,7 +1036,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 speed="1"
                                 style={{ width: '250px', height: '120px', marginTop: '-10px', marginBottom: '-10px' }}
                                 loop
-                                autoPlay
+                                autoplay
                             />
                         </div>
                         

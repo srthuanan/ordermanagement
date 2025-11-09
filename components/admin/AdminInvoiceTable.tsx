@@ -3,8 +3,6 @@ import moment from 'moment';
 // FIX: Imported ActionType from the central types file.
 import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
 
 // FIX: Removed local ActionType definition, as it's now imported from types.ts.
 
