@@ -26,7 +26,7 @@ interface AdminInvoiceTableProps {
 const SortableHeader: React.FC<{ colKey: keyof Order, title: string, sortConfig: SortConfig | null, onSort: (key: keyof Order) => void }> = ({ colKey, title, sortConfig, onSort }) => {
     const isSorted = sortConfig?.key === colKey;
     const icon = isSorted ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '';
-    return <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
+    return <th className="py-2 px-1.5 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
 const CopyableField: React.FC<{ text: string; showToast: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, showToast, className, label, wrap = false }) => {
@@ -51,10 +51,7 @@ const CopyableField: React.FC<{ text: string; showToast: Function; className?: s
 
 const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pending' | 'paired', onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void }> = ({ status, viewType, onAction, onToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<{ type: ActionType; label: string; isDanger?: boolean } | null>(null);
     const menuRef = React.useRef<HTMLDivElement>(null);
-    const confirmRef = React.useRef<HTMLDivElement>(null);
-
 
     const setOpenState = (newIsOpen: boolean) => {
         setIsOpen(newIsOpen);
@@ -62,13 +59,9 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
     };
 
     React.useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => { 
-            if (
-                menuRef.current && !menuRef.current.contains(e.target as Node) &&
-                (!confirmRef.current || !confirmRef.current.contains(e.target as Node))
-            ) {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
                 setOpenState(false);
-                setConfirmAction(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -103,54 +96,20 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
     ).filter(a => a.condition);
 
     const handleActionClick = (action: typeof actions[0]) => {
-        const simpleActions: ActionType[] = ['approve', 'pendingSignature', 'resend', 'requestInvoice'];
-        
-        if (simpleActions.includes(action.type as ActionType)) {
-            setOpenState(false);
-            setConfirmAction({ type: action.type as ActionType, label: action.label, isDanger: action.isDanger });
-        } else {
-            onAction(action.type as ActionType);
-            setOpenState(false);
-        }
+        onAction(action.type as ActionType);
+        setOpenState(false);
     };
 
 
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button onClick={(e) => { e.stopPropagation(); setConfirmAction(null); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
-            
-            {confirmAction && (
-                <div
-                    ref={confirmRef}
-                    className="absolute top-1/2 -translate-y-1/2 right-full mr-2 z-30 w-64 bg-surface-overlay p-4 rounded-lg shadow-xl border border-border-primary animate-fade-in-scale-up"
-                    style={{ animationDuration: '150ms' }}
-                >
-                    <p className="text-sm font-semibold text-text-primary text-center">
-                        Xác nhận "{confirmAction.label}"?
-                    </p>
-                    <div className="flex justify-center items-center gap-3 mt-2">
-                        <div onClick={() => setConfirmAction(null)} title="Không" className="cursor-pointer hover:scale-110 transition-transform">
-                            <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
-                        </div>
-                         <div
-                            onClick={() => {
-                                onAction(confirmAction.type);
-                                setConfirmAction(null);
-                            }}
-                            title="Có, Xác nhận"
-                            className="cursor-pointer hover:scale-110 transition-transform"
-                        >
-                            <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
-                        </div>
-                    </div>
-                </div>
-            )}
+            <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
             
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
+                <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-0.5 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
                     {actions.map((action) => (
                         <button key={action.type} onClick={() => handleActionClick(action)}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                            className={`flex items-center gap-3 w-full text-left px-2 py-1.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
                         >
                             <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
                             <span>{action.label}</span>
@@ -182,13 +141,13 @@ const AdminInvoiceTableRow: React.FC<{
 
     return (
         <tr className={`hover:bg-surface-hover transition-colors ${isMenuOpen ? 'relative z-20' : ''}`}>
-            <td data-label="checkbox" className="pl-4 w-12 sm:pl-6" onClick={e => e.stopPropagation()}>
+            <td data-label="checkbox" className="pl-2 w-12 sm:pl-3" onClick={e => e.stopPropagation()}>
                 <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} />
             </td>
-            <td data-label="#" className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
+            <td data-label="#" className="px-1.5 py-2 text-sm text-center text-text-secondary">{index + 1}</td>
             
             {/* Customer/Order Info */}
-            <td data-label="Khách Hàng / SĐH" className="px-3 py-4 text-sm">
+            <td data-label="Khách Hàng / SĐH" className="px-1.5 py-2 text-sm">
                 <CopyableField text={order["Tên khách hàng"]} showToast={showToast} className="font-semibold text-text-primary" wrap={true} />
                 <CopyableField text={orderNumber} showToast={showToast} className="text-text-secondary font-mono text-xs" />
                 <div className="text-text-secondary text-xs mt-1">TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}</div>
@@ -197,13 +156,13 @@ const AdminInvoiceTableRow: React.FC<{
             {/* Dynamic Columns */}
             {viewType === 'invoices' && (
                 <>
-                    <td data-label="Thông Tin Xe" className="px-3 py-4 text-sm">
+                    <td data-label="Thông Tin Xe" className="px-1.5 py-2 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
                         <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                         <CopyableField text={order.VIN || ''} showToast={showToast} className="font-bold text-accent-primary text-sm font-mono mt-1 hover:text-accent-primary-hover hover:underline" label="VIN" />
                         <CopyableField text={order["Số động cơ"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="S.MÁY" />
                     </td>
-                    <td data-label="Ngày YC / XHĐ" className="px-3 py-4 text-sm">
+                    <td data-label="Ngày YC / XHĐ" className="px-1.5 py-2 text-sm">
                         <div className="text-text-primary" title={`Yêu cầu: ${order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
                             {order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('DD/MM/YYYY') : 'N/A'}
                         </div>
@@ -211,12 +170,12 @@ const AdminInvoiceTableRow: React.FC<{
                             {order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"]).format('DD/MM/YYYY') : 'Chưa XHĐ'}
                         </div>
                     </td>
-                    <td data-label="Chính Sách / PO" className="px-3 py-4 text-sm">
+                    <td data-label="Chính Sách / PO" className="px-1.5 py-2 text-sm">
                         <div className="text-xs font-medium text-text-primary" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
                         <CopyableField text={order["PO PIN"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="PO" />
                     </td>
-                    <td data-label="Hồ Sơ" className="px-3 py-4 text-sm">
-                        <div className="flex items-center gap-3">
+                    <td data-label="Hồ Sơ" className="px-1.5 py-2 text-sm">
+                        <div className="flex items-center gap-1.5">
                             {[ { key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar' }].map(file => {
                                 const url = order[file.key] as string | undefined;
                                 return (
@@ -232,7 +191,7 @@ const AdminInvoiceTableRow: React.FC<{
                                         title={file.label + (url ? '' : ' (chưa có)')}
                                         disabled={!url}
                                     >
-                                        <i className={`fas ${file.icon} fa-fw text-lg w-6 text-center ${url ? 'text-text-secondary' : 'text-text-placeholder/50'}`}></i>
+                                        <i className={`fas ${file.icon} fa-fw text-lg w-5 text-center ${url ? 'text-text-secondary' : 'text-text-placeholder/50'}`}></i>
                                     </button>
                                 );
                             })}
@@ -242,28 +201,43 @@ const AdminInvoiceTableRow: React.FC<{
             )}
              {viewType === 'pending' && (
                 <>
-                    <td data-label="Yêu Cầu Xe" className="px-3 py-4 text-sm">
+                    <td data-label="Yêu Cầu Xe" className="px-1.5 py-2 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
                         <div className="text-text-secondary text-xs">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                     </td>
-                    <td data-label="Ngày Yêu Cầu" className="px-3 py-4 text-sm"><div className="text-text-primary">{moment(order["Thời gian nhập"]).format('DD/MM/YYYY')}</div></td>
+                    <td data-label="Ngày Cọc / Yêu Cầu" className="px-1.5 py-2 text-sm">
+                        <div className="text-text-primary" title={`Cọc: ${order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
+                            {order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('DD/MM/YYYY') : 'N/A'}
+                        </div>
+                        <div className="text-text-secondary text-xs mt-1" title={`Yêu cầu: ${order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
+                            {order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('DD/MM/YYYY') : 'Chưa có'}
+                        </div>
+                    </td>
                 </>
             )}
              {viewType === 'paired' && (
                 <>
-                    <td data-label="Xe Đã Ghép" className="px-3 py-4 text-sm">
+                    <td data-label="Thông Tin Xe" className="px-1.5 py-2 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
-                        <CopyableField text={order.VIN || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="VIN" />
+                        <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
+                        <CopyableField text={order.VIN || ''} showToast={showToast} className="font-bold text-accent-primary text-sm font-mono mt-1 hover:text-accent-primary-hover hover:underline" label="VIN" />
                     </td>
-                    <td data-label="Ngày Ghép" className="px-3 py-4 text-sm"><div className="text-text-primary">{order["Thời gian ghép"] ? moment(order["Thời gian ghép"]).format('DD/MM/YYYY') : 'N/A'}</div></td>
+                    <td data-label="Ngày Cọc / Ghép" className="px-1.5 py-2 text-sm">
+                        <div className="text-text-primary" title={`Cọc: ${order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
+                            {order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('DD/MM/YYYY') : 'N/A'}
+                        </div>
+                        <div className="text-text-secondary text-xs mt-1" title={order["Thời gian ghép"] ? `Ghép: ${moment(order["Thời gian ghép"]).format('HH:mm DD/MM/YYYY')}` : 'Chưa ghép'}>
+                            {order["Thời gian ghép"] ? moment(order["Thời gian ghép"]).format('DD/MM/YYYY') : 'Chưa ghép'}
+                        </div>
+                    </td>
                 </>
             )}
 
             {/* Status */}
-            <td data-label="Trạng Thái" className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
+            <td data-label="Trạng Thái" className="px-1.5 py-2 text-sm"><StatusBadge status={status} /></td>
             
             {/* Actions */}
-            <td data-label="Hành Động" className="px-3 py-4 text-center">
+            <td data-label="Hành Động" className="px-1.5 py-2 text-center">
                 <div className="flex items-center justify-center gap-2">
                     {viewType === 'pending' && matchingCars && matchingCars.length > 0 && onShowSuggestions && (
                         <button onClick={(e) => { e.stopPropagation(); onShowSuggestions(order, matchingCars); }} className="action-btn hold-action" title={`Có ${matchingCars.length} xe gợi ý`}>
@@ -292,13 +266,13 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
         pending: [
             { key: 'Tên khách hàng', title: 'Khách Hàng / SĐH', sortable: true },
             { key: 'Dòng xe', title: 'Yêu Cầu Xe', sortable: true },
-            { key: 'Thời gian nhập', title: 'Ngày Yêu Cầu', sortable: true },
+            { key: 'Thời gian nhập', title: 'Ngày Cọc / Yêu Cầu', sortable: true },
             { key: 'Kết quả', title: 'Trạng Thái', sortable: true },
         ],
         paired: [
             { key: 'Tên khách hàng', title: 'Khách Hàng / SĐH', sortable: true },
-            { key: 'Dòng xe', title: 'Xe Đã Ghép', sortable: true },
-            { key: 'Thời gian ghép', title: 'Ngày Ghép', sortable: true },
+            { key: 'Dòng xe', title: 'Thông Tin Xe', sortable: true },
+            { key: 'Thời gian ghép', title: 'Ngày Cọc / Ghép', sortable: true },
             { key: 'Kết quả', title: 'Trạng Thái', sortable: true },
         ]
     };
@@ -309,12 +283,12 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
         <table className="min-w-full divide-y divide-border-primary responsive-table">
             <thead className="bg-surface-hover sticky top-0 z-10">
                 <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 w-12 sm:pl-6">
+                    <th scope="col" className="py-2 pl-2 pr-1.5 text-left text-sm font-semibold text-gray-900 w-12 sm:pl-3">
                         <input type="checkbox" className="custom-checkbox" checked={isAllSelected} onChange={onToggleAllRows} />
                     </th>
-                    <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary w-12 uppercase tracking-wider">#</th>
-                    {currentHeaders.map(h => h.sortable ? <SortableHeader key={h.key} colKey={h.key as keyof Order} title={h.title} sortConfig={sortConfig} onSort={onSort} /> : <th key={h.key} className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">{h.title}</th>)}
-                    <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành Động</th>
+                    <th scope="col" className="py-2 px-1.5 text-center text-xs font-bold text-text-secondary w-12 uppercase tracking-wider">#</th>
+                    {currentHeaders.map(h => h.sortable ? <SortableHeader key={h.key} colKey={h.key as keyof Order} title={h.title} sortConfig={sortConfig} onSort={onSort} /> : <th key={h.key} className="py-2 px-1.5 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">{h.title}</th>)}
+                    <th scope="col" className="py-2 px-1.5 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành Động</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-border-primary bg-surface-card">

@@ -12,7 +12,8 @@ interface SuccessAnimationProps {
 const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ title, message, onClose, duration = 3000 }) => {
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<number | null>(null);
-    const playerRef = useRef<any>(null);
+    // FIX: Use the globally declared LottiePlayer type for the ref for improved type safety.
+    const playerRef = useRef<LottiePlayer | null>(null);
 
     const handleClose = useCallback(() => {
         if (timeoutRef.current) {

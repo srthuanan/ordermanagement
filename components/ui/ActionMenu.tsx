@@ -8,13 +8,14 @@ interface ActionMenuProps {
   onCancel: (order: Order) => void;
   onRequestInvoice: (order: Order) => void;
   onSupplement: (order: Order) => void;
+  onEdit?: (order: Order) => void;
   // FIX: Added optional props for VinClub actions.
   onRequestVC?: (order: Order) => void;
   onConfirmVC?: (order: Order) => void;
   onToggle?: (isOpen: boolean) => void;
 }
 
-const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onToggle }) => {
+const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit, onToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +42,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(generalStatus);
   const canRequestInvoice = generalStatus === 'đã ghép';
   const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
+  const canEdit = !['đã xuất hóa đơn', 'đã hủy', 'chờ ký hóa đơn'].includes(generalStatus);
   // Allow requesting VC if invoiced and the VC process is not active or completed
   const canRequestVC = (generalStatus === 'đã xuất hóa đơn' || vcStatus === 'từ chối ycvc') && !['yêu cầu vinclub', 'chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
   const canConfirmVC = status === 'chờ xác thực vc (tvbh)';
@@ -56,6 +58,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   // FIX: Added new menu items for VinClub actions.
   const menuItems = [
     { label: 'Xem chi tiết', icon: 'fa-eye text-accent-primary', action: onViewDetails, condition: true, title: 'Xem chi tiết đơn hàng' },
+    { label: 'Chỉnh Sửa', icon: 'fa-pencil-alt text-blue-500', action: onEdit!, condition: !!onEdit && canEdit, title: 'Chỉnh sửa thông tin đơn hàng' },
     { label: 'Yêu cầu Xuất Hóa Đơn', icon: 'fa-file-invoice-dollar text-green-500', action: onRequestInvoice, condition: canRequestInvoice, title: 'Tải lên hợp đồng và đề nghị để xuất hóa đơn' },
     { label: 'Bổ Sung File', icon: 'fa-edit text-orange-500', action: onSupplement, condition: canAddSupplement, title: 'Bổ sung hoặc thay thế tệp đã gửi' },
     { label: 'Yêu Cầu Cấp VC', icon: 'fa-id-card text-blue-500', action: onRequestVC!, condition: !!onRequestVC && canRequestVC, title: 'Yêu cầu cấp tài khoản VinClub' },

@@ -91,8 +91,6 @@ const Filters: React.FC<FiltersProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [localKeyword, filters.keyword, onFilterChange]);
-
-  const isCompact = size === 'compact';
   
   const activeDropdownFilters = dropdowns.flatMap(d => {
       const selected = (filters[d.key] || []) as string[];

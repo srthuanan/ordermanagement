@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
 import Pagination from './ui/Pagination';
@@ -234,7 +234,7 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
 
     const handleSort = (key: keyof Order) => {
         setCurrentPage(1);
-        setSortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+        setSortConfig((prev: SortConfig | null) => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
     };
 
     const sortedData = useMemo(() => {
@@ -355,7 +355,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
 
     const monthlyData = useMemo(() => {
         const grouped: Record<string, Order[]> = {};
-        MONTHS.forEach(month => grouped[month] = []);
+        MONTHS.forEach((month: string) => grouped[month] = []);
         soldData.forEach(order => {
             if (order['Thời gian nhập']) {
                 try {
@@ -370,13 +370,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
     }, [soldData]);
 
     const yearlyData = useMemo(() => {
-        return MONTHS.map((month, index) => ({ 
+        return MONTHS.map((month: string, index: number) => ({ 
             month: `T${index + 1}`, 
             count: monthlyData[month]?.length || 0 
         }));
     }, [monthlyData]);
     
-    const TABS = ['Tổng Quan', ...MONTHS.map((_, i) => `Tháng ${i + 1}`)];
+    const TABS = ['Tổng Quan', ...MONTHS.map((_: string, i: number) => `Tháng ${i + 1}`)];
     
     const handleMonthClickFromChart = (monthIndex: number | null) => {
         if (monthIndex !== null) {
@@ -413,7 +413,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
                         onMonthClick={handleMonthClickFromChart}
                      />
                 </div>
-                {MONTHS.map((monthName, index) => (
+                {MONTHS.map((monthName: string, index: number) => (
                     <div key={monthName} hidden={activeTab !== `Tháng ${index + 1}`}>
                         <MonthView 
                             month={`Tháng ${index + 1}`}

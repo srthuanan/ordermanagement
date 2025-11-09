@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
+import yesAnimationUrl from '/pictures/yes.json?url';
+import noAnimationUrl from '/pictures/no-animation.json?url';
 
 interface InputConfig {
     id: string;
@@ -96,15 +96,15 @@ const ActionModal: React.FC<ActionModalProps> = ({
     const selectedColor = colorMap[submitColor] || colorMap.primary;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
             <div
                 className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className={`h-1.5 rounded-t-2xl ${selectedColor.bg}`}></div>
 
-                <header className="p-6 flex items-start gap-4">
-                    <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg ${selectedColor.iconBg}`}>
+                <header className="p-3 flex items-start gap-2">
+                    <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${selectedColor.iconBg}`}>
                         <i className={`fas ${icon} text-2xl ${selectedColor.iconText}`}></i>
                     </div>
                     <div>
@@ -113,18 +113,18 @@ const ActionModal: React.FC<ActionModalProps> = ({
                     </div>
                 </header>
 
-                <main className="px-6 pb-6 space-y-4">
+                <main className="px-3 pb-3 space-y-2">
                     {targetId && (
-                        <div className="bg-surface-ground border border-border-primary rounded-md p-3 text-center">
+                        <div className="bg-surface-ground border border-border-primary rounded-md p-1.5 text-center">
                             <p className="text-xs text-text-secondary">Thực hiện cho:</p>
-                            <p className="text-sm font-semibold text-text-primary font-mono mt-0.5">{targetId}</p>
+                            <p className="text-sm font-semibold text-text-primary font-mono">{targetId}</p>
                         </div>
                     )}
                     {inputs.length > 0 && (
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             {inputs.map(input => (
                                 <div key={input.id}>
-                                    <label htmlFor={input.id} className="block text-sm font-medium text-text-secondary mb-1.5">{input.label}</label>
+                                    <label htmlFor={input.id} className="block text-sm font-medium text-text-secondary mb-1">{input.label}</label>
                                     {input.type === 'textarea' ? (
                                         <textarea
                                             id={input.id}
@@ -133,7 +133,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                                             onChange={handleInputChange}
                                             placeholder={input.placeholder}
                                             rows={3}
-                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
                                         />
                                     ) : input.type === 'select' ? (
                                         <select
@@ -141,23 +141,21 @@ const ActionModal: React.FC<ActionModalProps> = ({
                                             name={input.id}
                                             value={formData[input.id] || ''}
                                             onChange={handleInputChange}
-                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
                                         >
                                             <option value="" disabled>{input.placeholder || 'Chọn một tùy chọn'}</option>
-                                            {input.options?.map(option => (
-                                                <option key={option} value={option}>{option}</option>
-                                            ))}
+                                            {input.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                         </select>
                                     ) : (
                                         <input
                                             id={input.id}
                                             name={input.id}
-                                            type="text"
+                                            type={input.type || 'text'}
                                             value={formData[input.id] || ''}
                                             onChange={handleInputChange}
                                             placeholder={input.placeholder}
                                             maxLength={input.isVIN ? 17 : undefined}
-                                            className={`w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2.5 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input ${input.isVIN ? 'font-mono' : ''}`}
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg shadow-inner-sm p-2 focus:ring-accent-primary focus:border-accent-primary transition futuristic-input"
                                         />
                                     )}
                                 </div>
@@ -165,13 +163,16 @@ const ActionModal: React.FC<ActionModalProps> = ({
                         </div>
                     )}
                 </main>
-                
-                <footer className="px-6 py-4 flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
                     <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
-                    <div onClick={!isSubmitting && isFormValid() ? handleSubmit : undefined} title={submitText} className={`cursor-pointer ${(isSubmitting || (inputs.length > 0 && !isFormValid())) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                    <div
+                        onClick={!isSubmitting ? handleSubmit : undefined}
+                        title={submitText}
+                        className={`cursor-pointer ${(isSubmitting || (inputs.length > 0 && !isFormValid())) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}
+                    >
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
                 </footer>
             </div>
@@ -179,4 +180,4 @@ const ActionModal: React.FC<ActionModalProps> = ({
     );
 };
 
-export default React.memo(ActionModal);
+export default ActionModal;

@@ -1,63 +1,36 @@
-/// <reference types="react" />
+// FIX: Re-added the triple-slash directive below. Its absence prevented TypeScript from recognizing
+// the JSX type definitions for <lottie-player>, causing numerous errors across the app. This directive
+// is standard for Vite projects and ensures global types are correctly processed.
+/// <reference types="vite/client" />
 
-// This file is for Vite environment-specific type declarations.
-// FIX: Commented out the reference to 'vite/client' to resolve a "Cannot find type definition file" error.
-// /// <reference types="vite/client" />
-// FIX: Added a triple-slash reference to React's types. This brings React's global
-// JSX namespace into scope, resolving errors where standard HTML elements like 'div'
-// were not recognized in TSX files.
-// The reference is now at the top of the file to ensure it's processed first.
+// This file adds a global JSX augmentation to define the <lottie-player> custom element,
+// which resolves all TypeScript errors related to it not being a known JSX element.
 
-// FIX: Removed type-only import and used React namespace directly for robustness.
-
-declare module '*.png' {
-    const src: string;
-    export default src;
-}
-declare module '*.gif' {
-    const src: string;
-    export default src;
-}
-declare module '*.mp4' {
-    const src: string;
-    export default src;
-}
-declare module '*.jpg' {
-    const src: string;
-    export default src;
-}
-declare module '*.jpeg' {
-    const src: string;
-    export default src;
-}
-declare module '*.json?url' {
-    const src: string;
-    export default src;
-}
-
-// FIX: Add a global JSX type definition for the 'lottie-player' custom element.
-// This augmentation informs TypeScript about the custom element and its props,
-// resolving all 'Property 'lottie-player' does not exist' errors across the application.
-// This improved definition also includes methods for better type safety with refs.
 declare global {
-  // This makes the LottiePlayer type available globally for use with refs.
+  // This interface allows using refs with the custom element's methods (e.g., ref.current.play()).
   interface LottiePlayer extends HTMLElement {
     play(): void;
     stop(): void;
+    getLottie(): any;
   }
 
   namespace JSX {
     interface IntrinsicElements {
-      'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<LottiePlayer> & {
-        src?: string;
-        background?: string;
-        speed?: string;
-        loop?: boolean | string;
-        autoplay?: boolean | string;
-      }, LottiePlayer>;
+      // This defines 'lottie-player' as a known JSX tag with its specific props.
+      'lottie-player': React.DetailedHTMLProps<
+        React.HTMLAttributes<LottiePlayer> & {
+          src?: string;
+          background?: string;
+          speed?: string;
+          loop?: boolean | string;
+          autoplay?: boolean | string;
+        },
+        LottiePlayer
+      >;
     }
   }
 }
 
-// Make this file a module to allow global augmentation.
+// This empty export is crucial to turn this file into a module,
+// which is a requirement for 'declare global' to work correctly.
 export {};

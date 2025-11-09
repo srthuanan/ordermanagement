@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import 'moment/locale/vi';
 // FIX: Imported VcRequest and VcSortConfig to support the new "Xử Lý VC" view.
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig } from '../../types';
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig, AdminSubView } from '../../types';
 import Pagination from '../ui/Pagination';
 import AdminInvoiceTable from './AdminInvoiceTable';
 import AdminVcRequestTable from './AdminVcRequestTable';
+import TotalViewDashboard from './TotalViewDashboard';
 import ActionModal from './ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './AdminActionModals';
 import OrderTimelineModal from './OrderTimelineModal';
@@ -13,9 +14,6 @@ import BulkUploadModal from './BulkUploadModal';
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
-
-
-const PAGE_SIZE = 15;
 
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
@@ -46,7 +44,8 @@ interface AdminViewProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onOpenFilePreview: (url: string, label: string) => void;
     isSidebarCollapsed: boolean;
-    // FIX: Add missing onNavigateTo and onShowOrderDetails props to fix type error in App.tsx
+    initialState: { targetTab?: AdminSubView; orderToShow?: Order } | null;
+    clearInitialState: () => void;
     onNavigateTo: (view: 'orders' | 'stock' | 'sold' | 'admin' | 'laithu') => void;
     onShowOrderDetails: (order: Order) => void;
 }
@@ -57,13 +56,12 @@ type ModalState = {
 } | null;
 
 type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'timeline' | 'addUser';
-type AdminSubView = 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 type DateRange = { start: string; end: string; };
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, soldData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, onNavigateTo, onShowOrderDetails }) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
-    const [adminView, setAdminView] = useState<AdminSubView>('invoices');
+    const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
     
     // State for sorting
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -71,11 +69,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [pairedSortConfig, setPairedSortConfig] = useState<SortConfig | null>({ key: 'Thời gian ghép', direction: 'desc' });
     const [vcSortConfig, setVcSortConfig] = useState<VcSortConfig | null>({ key: 'Thời gian YC', direction: 'desc' });
 
-    // State for pagination
+    // State for pagination (only for invoices now)
     const [currentPage, setCurrentPage] = useState(1);
-    const [pendingCurrentPage, setPendingCurrentPage] = useState(1);
-    const [pairedCurrentPage, setPairedCurrentPage] = useState(1);
-    const [vcCurrentPage, setVcCurrentPage] = useState(1);
     
     // State for VC tab data
     const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
@@ -100,6 +95,53 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
+
+    useEffect(() => {
+        if (initialState) {
+            // Always set the target tab if provided
+            if (initialState.targetTab) {
+                setAdminView(initialState.targetTab);
+            }
+    
+            if (initialState.orderToShow) {
+                const order = initialState.orderToShow;
+    
+                // Determine the correct tab for the order, but prioritize the explicitly passed tab
+                let targetTab = initialState.targetTab;
+                if (!targetTab) {
+                    const orderStatus = (order as any)['Trạng thái xử lý'] || order['Kết quả'] || 'N/A';
+                    const s = orderStatus.toLowerCase();
+                    if (s.includes('chưa')) {
+                        targetTab = 'pending';
+                    } else if (s === 'đã ghép') {
+                        targetTab = 'paired';
+                    } else {
+                        targetTab = 'invoices'; // Fallback for statuses like 'chờ phê duyệt', etc.
+                    }
+                }
+                setAdminView(targetTab);
+    
+                // Reset all filters first to ensure a clean slate
+                setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
+                setPendingFilters({ keyword: '', tvbh: [], dongXe: [] });
+                setPairedFilters({ keyword: '', tvbh: [], dongXe: [] });
+                setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
+    
+                // Now, apply the specific filter for the target tab
+                const keyword = order['Số đơn hàng'];
+                if (targetTab === 'invoices') {
+                    setInvoiceFilters(prev => ({ ...prev, keyword }));
+                } else if (targetTab === 'pending') {
+                    setPendingFilters(prev => ({ ...prev, keyword }));
+                } else if (targetTab === 'paired') {
+                    setPairedFilters(prev => ({ ...prev, keyword }));
+                }
+            }
+            
+            // Clear the state in App.tsx so it doesn't trigger again on re-render
+            clearInitialState();
+        }
+    }, [initialState, clearInitialState]);
 
     const fetchVcData = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingVc(true);
@@ -140,9 +182,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
         
         setCurrentPage(1);
-        setPendingCurrentPage(1);
-        setPairedCurrentPage(1);
-        setVcCurrentPage(1);
     }, [adminView]);
 
     const handleReset = useCallback(() => {
@@ -156,12 +195,23 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
         }
         setCurrentPage(1);
-        setPendingCurrentPage(1);
-        setPairedCurrentPage(1);
-        setVcCurrentPage(1);
     }, [adminView]);
 
+    const handleTabChangeFromDashboard = useCallback((view: AdminSubView, filters: any = {}) => {
+        setAdminView(view);
+        if (view === 'invoices') {
+            setInvoiceFilters(prev => ({ ...prev, ...filters }));
+        }
+        if (view === 'pending') {
+            setPendingFilters(prev => ({ ...prev, ...filters }));
+        }
+        if (view === 'paired') {
+            setPairedFilters(prev => ({ ...prev, ...filters }));
+        }
+    }, []);
+
     const { 
+        processedInvoices,
         invoiceRequests, 
         pendingData,
         pairedData,
@@ -303,6 +353,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         };
         
         return { 
+            processedInvoices,
             invoiceRequests: applySort(filteredInvoices, sortConfig) as Order[],
             pendingData: applySort(filteredPending, pendingSortConfig) as Order[],
             pairedData: applySort(filteredPaired, pairedSortConfig) as Order[],
@@ -318,38 +369,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage, PAGE_SIZE]);
-    const paginatedPendingData = useMemo(() => pendingData.slice((pendingCurrentPage - 1) * PAGE_SIZE, pendingCurrentPage * PAGE_SIZE), [pendingData, pendingCurrentPage, PAGE_SIZE]);
-    const paginatedPairedData = useMemo(() => pairedData.slice((pairedCurrentPage - 1) * PAGE_SIZE, pairedCurrentPage * PAGE_SIZE), [pairedData, pairedCurrentPage, PAGE_SIZE]);
-    const paginatedVcData = useMemo(() => vcRequests.slice((vcCurrentPage - 1) * PAGE_SIZE, vcCurrentPage * PAGE_SIZE), [vcRequests, vcCurrentPage, PAGE_SIZE]);
     
     const totalInvoicePages = Math.ceil(invoiceRequests.length / PAGE_SIZE);
-    const totalPendingPages = Math.ceil(pendingData.length / PAGE_SIZE);
-    const totalPairedPages = Math.ceil(pairedData.length / PAGE_SIZE);
-    const totalVcPages = Math.ceil(vcRequests.length / PAGE_SIZE);
     
     useEffect(() => {
         if (currentPage > totalInvoicePages && totalInvoicePages > 0) {
             setCurrentPage(totalInvoicePages);
         }
     }, [currentPage, totalInvoicePages]);
-
-    useEffect(() => {
-        if (pendingCurrentPage > totalPendingPages && totalPendingPages > 0) {
-            setPendingCurrentPage(totalPendingPages);
-        }
-    }, [pendingCurrentPage, totalPendingPages]);
-
-    useEffect(() => {
-        if (pairedCurrentPage > totalPairedPages && totalPairedPages > 0) {
-            setPairedCurrentPage(totalPairedPages);
-        }
-    }, [pairedCurrentPage, totalPairedPages]);
-
-    useEffect(() => {
-        if (vcCurrentPage > totalVcPages && totalVcPages > 0) {
-            setVcCurrentPage(totalVcPages);
-        }
-    }, [vcCurrentPage, totalVcPages]);
 
     const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map(o => o['Số đơn hàng']), [invoiceRequests]);
     const allPendingOrderNumbers = useMemo(() => pendingData.map(o => o['Số đơn hàng']), [pendingData]);
@@ -593,24 +620,36 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
 
         switch(adminView) {
+            case 'dashboard': {
+                return (
+                    <TotalViewDashboard 
+                        allOrders={allOrders}
+                        stockData={stockData}
+                        soldData={soldData}
+                        teamData={teamData}
+                        allUsers={allUsers}
+                        onTabChange={handleTabChangeFromDashboard}
+                        onNavigateTo={onNavigateTo}
+                        onShowOrderDetails={onShowOrderDetails}
+                        invoiceData={processedInvoices}
+                    />
+                );
+            }
             case 'invoices':
             case 'pending':
             case 'paired': {
-                 const data = adminView === 'invoices' ? paginatedInvoices : adminView === 'pending' ? paginatedPendingData : paginatedPairedData;
+                 const data = adminView === 'invoices' ? paginatedInvoices : adminView === 'pending' ? pendingData : pairedData;
                  const allIds = adminView === 'invoices' ? allInvoiceOrderNumbers : adminView === 'pending' ? allPendingOrderNumbers : allPairedOrderNumbers;
-                 const totalPages = adminView === 'invoices' ? totalInvoicePages : adminView === 'pending' ? totalPendingPages : totalPairedPages;
-                 const activePage = adminView === 'invoices' ? currentPage : adminView === 'pending' ? pendingCurrentPage : pairedCurrentPage;
-                 const onPageChange = adminView === 'invoices' ? setCurrentPage : adminView === 'pending' ? setPendingCurrentPage : setPairedCurrentPage;
                  const sortConf = adminView === 'invoices' ? sortConfig : adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
                  const onSortHandler = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
 
                  return (
                      <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative">
+                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
                             <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
                         </div>
-                        {totalPages > 0 && <Pagination currentPage={activePage} totalPages={totalPages} onPageChange={onPageChange} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                        {adminView === 'invoices' && totalInvoicePages > 0 && <Pagination currentPage={currentPage} totalPages={totalInvoicePages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                  );
             }
@@ -618,7 +657,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 return (
                     <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
-                        <div className="flex-grow overflow-auto relative">
+                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
                             <AdminVcRequestTable 
                                 requests={vcRequests} 
                                 sortConfig={vcSortConfig}
@@ -652,6 +691,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
+        dashboard: [],
         invoices: [
             { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
             { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
@@ -684,25 +724,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         if (actions.length === 0) return null;
     
         return (
-            <div className="relative z-10 p-3 border-b border-border-primary flex items-center justify-between bg-surface-accent animate-fade-in-down">
+            <div className="relative z-10 p-1.5 border-b border-border-primary flex items-center justify-between bg-surface-accent animate-fade-in-down">
                 <span className="text-sm font-semibold text-text-primary">
                     Đã chọn: <span className="font-bold text-accent-primary">{selectedRows.size}</span>
                 </span>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setSelectedRows(new Set())} className="btn-secondary !text-xs !py-1 !px-2.5">
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setSelectedRows(new Set())} className="btn-secondary !text-xs !py-0.5 !px-2">
                         <i className="fas fa-times mr-1"></i> Bỏ chọn
                     </button>
                     <div className="relative" ref={menuRef}>
-                        <button onClick={() => setIsMenuOpen(p => !p)} className="btn-primary !text-xs !py-1 !px-3 flex items-center">
+                        <button onClick={() => setIsMenuOpen(p => !p)} className="btn-primary !text-xs !py-0.5 !px-2.5 flex items-center">
                             Thao tác hàng loạt <i className={`fas fa-chevron-down ml-2 text-xs transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}></i>
                         </button>
                         {isMenuOpen && (
-                            <div className="absolute right-0 mt-1 w-52 bg-surface-card border rounded-lg shadow-lg z-20 p-1">
+                            <div className="absolute right-0 mt-1 w-52 bg-surface-card border rounded-lg shadow-lg z-20 p-0.5">
                                 {actions.map(action => (
                                     <button 
                                         key={action.type} 
                                         onClick={() => { setBulkActionModal({ type: action.type as ActionType }); setIsMenuOpen(false); }}
-                                        className={`flex items-center gap-3 w-full text-left px-3 py-2 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                                        className={`flex items-center gap-2 w-full text-left px-2 py-1.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
                                     >
                                         <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
                                         <span>{action.label}</span>
@@ -717,6 +757,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
     
     const renderFilterPanel = () => {
+        if (adminView === 'dashboard' || adminView === 'phongkd') {
+            return null;
+        }
+
         let currentFilters: any;
         let dropdownConfigs: DropdownFilterConfig[] = [];
         let searchPlaceholder = "Tìm kiếm...";
@@ -791,34 +835,37 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         );
     };
 
-    const tabs: AdminSubView[] = ['invoices', 'pending', 'paired', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-    const counts: Record<AdminSubView, number> = { invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-4">
-                <div className="p-3 flex items-center justify-between gap-2 flex-nowrap">
-                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto">
-                        {tabs.map(view => (
-                            <button
-                                key={view}
-                                onClick={() => setAdminView(view)}
-                                className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-                            >
-                                {labels[view]}
-                                <span className="text-xs font-mono ml-1 px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">{counts[view]}</span>
-                            </button>
-                        ))}
+            <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-2">
+                <div className="p-2 flex items-center justify-between gap-1 flex-nowrap">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto hidden-scrollbar">
+                        {tabs.map(view => {
+                            const count = counts[view];
+                            return (
+                                <button
+                                    key={view}
+                                    onClick={() => setAdminView(view)}
+                                    className={`px-2 py-1 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                                >
+                                    {labels[view]}
+                                    {count !== null && <span className="text-xs font-mono ml-1 px-1 py-0.5 rounded-full bg-black/5 text-black/50">{count}</span>}
+                                </button>
+                            )
+                        })}
                     </div>
                     <div className="relative" ref={actionMenuRef}>
-                        <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
+                        <button onClick={() => setIsActionMenuOpen(prev => !prev)} title="Thao Tác Nhanh" className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent transition-all">
                             <i className="fas fa-bolt text-lg text-accent-primary"></i>
                         </button>
                         {isActionMenuOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-1 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
+                            <div className="absolute top-full right-0 mt-2 w-64 bg-surface-card border shadow-lg rounded-lg z-30 p-0.5 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
                                 {adminTools.map(tool => (
-                                    <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-md text-text-primary hover:bg-surface-hover">
+                                    <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-2 w-full text-left px-2 py-1.5 text-sm rounded-md text-text-primary hover:bg-surface-hover">
                                         <i className={`fas ${tool.icon} fa-fw w-5 text-center text-accent-secondary`}></i>
                                         <span>{tool.title}</span>
                                     </button>
@@ -827,7 +874,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )}
                     </div>
                 </div>
-                 { adminView !== 'phongkd' && <div className="p-3 border-t border-border-primary">{renderFilterPanel()}</div> }
+                { (adminView !== 'dashboard' && adminView !== 'phongkd') && <div className="p-1.5 border-t border-border-primary">{renderFilterPanel()}</div> }
             </div>
             
             <div className="flex-grow min-h-0 flex flex-col">
@@ -915,15 +962,15 @@ const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEd
     const sortedTeams = useMemo(() => Object.entries(teamData).sort(([leaderA], [leaderB]) => leaderA.localeCompare(leaderB)), [teamData]);
 
     return (
-        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary p-3">
+            <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-bold text-text-primary">Quản lý Phòng Kinh Doanh</h3>
                 <button onClick={onAddNewTeam} className="btn-primary"><i className="fas fa-plus mr-2"></i>Tạo Phòng Mới</button>
             </div>
             {sortedTeams.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {sortedTeams.map(([leader, members]) => (
-                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-4 flex flex-col">
+                        <div key={leader} className="bg-surface-ground border border-border-primary rounded-lg p-2 flex flex-col">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-xs text-text-secondary">Trưởng phòng</p>
@@ -934,9 +981,9 @@ const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEd
                                     <button onClick={() => onDeleteTeam(leader)} className="w-8 h-8 rounded-full hover:bg-danger-bg text-text-secondary hover:text-danger" title="Xóa phòng"><i className="fas fa-trash"></i></button>
                                 </div>
                             </div>
-                            <div className="border-t border-dashed border-border-secondary my-3"></div>
+                            <div className="border-t border-dashed border-border-secondary my-1.5"></div>
                             <p className="text-xs text-text-secondary mb-2">Thành viên ({members.length})</p>
-                            <div className="space-y-2 flex-grow">
+                            <div className="space-y-1 flex-grow">
                                 {members.length > 0 ? members.map(member => (
                                     <div key={member} className="text-sm text-text-primary bg-white p-2 rounded-md shadow-sm">{member}</div>
                                 )) : <p className="text-sm text-text-secondary italic">Chưa có thành viên.</p>}
@@ -1010,10 +1057,10 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
             <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <header className="p-5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
-                <main className="p-6 space-y-4 overflow-y-auto">
+                <header className="p-2.5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
+                <main className="p-3 space-y-2 overflow-y-auto hidden-scrollbar">
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-2">Trưởng Phòng</label>
                         {isNewTeam ? (
@@ -1037,7 +1084,7 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
                          />
                     </div>
                 </main>
-                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
+                <footer className="p-2 border-t flex justify-end gap-2 bg-surface-ground rounded-b-2xl">
                     <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                     <button onClick={handleSave} disabled={isSubmitting || !selectedLeader} className="btn-primary">
                         {isSubmitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}

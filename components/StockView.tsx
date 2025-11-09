@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { StockVehicle, StockSortConfig } from '../types';
+import { StockVehicle, StockSortConfig, Order, AdminSubView } from '../types';
 import StockTable from './StockTable';
 import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
@@ -20,6 +20,9 @@ interface StockViewProps {
   onReleaseCar: (vin: string) => void;
   processingVin: string | null;
   isSidebarCollapsed: boolean;
+  allOrders: Order[];
+  showOrderInAdmin: (order: Order, targetTab: AdminSubView) => void;
+  showAdminTab: (targetTab: AdminSubView) => void;
 }
 
 const StockView: React.FC<StockViewProps> = ({ 
@@ -35,7 +38,10 @@ const StockView: React.FC<StockViewProps> = ({
     onHoldCar,
     onReleaseCar,
     processingVin,
-    isSidebarCollapsed
+    isSidebarCollapsed,
+    allOrders,
+    showOrderInAdmin,
+    showAdminTab
 }) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
@@ -77,7 +83,26 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleShowDetails = (vehicle: StockVehicle) => {
-        setStockVehicleToView(vehicle);
+        const status = vehicle['Trạng thái'];
+    
+        if (isAdmin && status !== 'Chưa ghép') {
+            if (status === 'Đã ghép') {
+                const order = allOrders.find(o => o.VIN === vehicle.VIN);
+                if (order) {
+                    showOrderInAdmin(order, 'paired');
+                } else {
+                    showToast('Không Tìm Thấy', `Không tìm thấy đơn hàng đã ghép với xe VIN ${vehicle.VIN}.`, 'warning', 4000);
+                    // Fallback to showing stock details if order not found
+                    setStockVehicleToView(vehicle);
+                }
+            } else if (status === 'Đang giữ') {
+                // Navigate to the "Pending" tab in Admin view
+                showAdminTab('pending');
+            }
+        } else {
+            // Default behavior for "Chưa ghép" or non-admins
+            setStockVehicleToView(vehicle);
+        }
     };
 
     const processedData = useMemo(() => {

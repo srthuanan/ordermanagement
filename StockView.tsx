@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { StockVehicle, StockSortConfig } from '../types';
-import StockTable from './StockTable';
-import StockGridView from './StockGridView';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
-import Pagination from './ui/Pagination';
-import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
+import { StockVehicle, StockSortConfig, Order } from '../types';
+import StockTable from './components/StockTable';
+import StockGridView from './components/StockGridView';
+import Filters, { DropdownFilterConfig } from './components/ui/Filters';
+import Pagination from './components/ui/Pagination';
+import StockVehicleDetailModal from './components/ui/StockVehicleDetailModal';
 
 interface StockViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -20,6 +20,9 @@ interface StockViewProps {
   onReleaseCar: (vin: string) => void;
   processingVin: string | null;
   isSidebarCollapsed: boolean;
+  allOrders: Order[];
+  onNavigateTo: (view: 'orders' | 'stock' | 'sold' | 'admin' | 'laithu') => void;
+  onShowOrderDetails: (order: Order) => void;
 }
 
 const StockView: React.FC<StockViewProps> = ({ 
@@ -35,7 +38,10 @@ const StockView: React.FC<StockViewProps> = ({
     onHoldCar,
     onReleaseCar,
     processingVin,
-    isSidebarCollapsed
+    isSidebarCollapsed,
+    allOrders,
+    onNavigateTo,
+    onShowOrderDetails
 }) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
@@ -77,7 +83,19 @@ const StockView: React.FC<StockViewProps> = ({
     };
 
     const handleShowDetails = (vehicle: StockVehicle) => {
-        setStockVehicleToView(vehicle);
+        if (isAdmin && vehicle['Trạng thái'] === 'Đã ghép') {
+            const order = allOrders.find(o => o.VIN === vehicle.VIN);
+            if (order) {
+                onNavigateTo('admin');
+                onShowOrderDetails(order);
+            } else {
+                showToast('Không Tìm Thấy', `Không tìm thấy đơn hàng đã ghép với xe VIN ${vehicle.VIN}.`, 'warning', 4000);
+                // Fallback to showing stock details if order not found
+                setStockVehicleToView(vehicle);
+            }
+        } else {
+            setStockVehicleToView(vehicle);
+        }
     };
 
     const processedData = useMemo(() => {
@@ -185,7 +203,7 @@ const StockView: React.FC<StockViewProps> = ({
         if (isLoading && stockData.length === 0) {
             return ( 
                  <div className={`flex flex-col h-full ${animationClass}`}>
-                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
+                    <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
@@ -226,7 +244,7 @@ const StockView: React.FC<StockViewProps> = ({
         
         return ( 
             <div className={`flex flex-col h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-4">
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
                     <Filters 
                         filters={filters} 
                         onFilterChange={handleFilterChange} 

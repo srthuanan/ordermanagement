@@ -11,12 +11,13 @@ interface OrderCardProps {
     onCancel: (order: Order) => void;
     onRequestInvoice: (order: Order) => void;
     onSupplement: (order: Order) => void;
+    onEdit?: (order: Order) => void;
     onRequestVC: (order: Order) => void;
     onConfirmVC: (order: Order) => void;
     processingOrder: string | null;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, processingOrder }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, onCancel, onRequestInvoice, onSupplement, onEdit, onRequestVC, onConfirmVC, processingOrder }) => {
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
     const isProcessing = processingOrder === order["Số đơn hàng"];
 
@@ -57,6 +58,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, onCancel, o
                                 onCancel={onCancel}
                                 onRequestInvoice={onRequestInvoice}
                                 onSupplement={onSupplement}
+                                onEdit={onEdit}
                                 onRequestVC={onRequestVC}
                                 onConfirmVC={onConfirmVC}
                             />

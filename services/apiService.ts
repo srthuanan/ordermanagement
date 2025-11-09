@@ -101,6 +101,10 @@ export const getXuathoadonData = async (): Promise<ApiResult> => {
     return getApi({ action: 'getXuathoadonData' });
 };
 
+export const getSalesPolicies = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getChinhSachData' });
+};
+
 export const getYeuCauVcData = async (): Promise<ApiResult> => {
     return getApi({ action: 'getYeuCauVcData' });
 };
@@ -179,7 +183,7 @@ export const cancelRequest = async (orderNumber: string, reason: string) => {
     return postApi(payload);
 };
 
-export const requestInvoice = async (orderNumber: string, contractFile: File, proposalFile: File) => {
+export const requestInvoice = async (orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string) => {
     const [contractBase64, proposalBase64] = await Promise.all([
         fileToBase64(contractFile),
         fileToBase64(proposalFile)
@@ -195,6 +199,8 @@ export const requestInvoice = async (orderNumber: string, contractFile: File, pr
         denghi_xhd_file_base64: proposalBase64,
         denghi_xhd_file_name: proposalFile.name,
         denghi_xhd_file_type: proposalFile.type,
+        selectedPolicies: policy,
+        commissionAmount: commission,
     };
     
     return postApi(payload);
@@ -218,6 +224,16 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
         payload.denghi_xhd_file_type = proposalFile.type;
     }
 
+    return postApi(payload);
+};
+
+export const updateOrderDetails = async (orderNumber: string, details: Partial<Order>): Promise<ApiResult> => {
+    const payload = {
+        action: 'updateOrderDetails',
+        updatedBy: sessionStorage.getItem("currentConsultant") || "Unknown User",
+        orderNumber,
+        ...details
+    };
     return postApi(payload);
 };
 

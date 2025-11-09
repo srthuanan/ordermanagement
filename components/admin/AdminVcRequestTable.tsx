@@ -27,14 +27,12 @@ interface AdminVcRequestTableProps {
 const SortableHeader: React.FC<{ colKey: keyof VcRequest, title: string, sortConfig: VcSortConfig | null, onSort: (key: keyof VcRequest) => void }> = ({ colKey, title, sortConfig, onSort }) => {
     const isSorted = sortConfig?.key === colKey;
     const icon = isSorted ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '';
-    return <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
+    return <th className="py-2 px-1.5 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider" onClick={() => onSort(colKey)}>{title} {icon}</th>;
 };
 
 const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void }> = ({ status, onAction, onToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<{ type: ActionType; label: string; isDanger?: boolean } | null>(null);
     const menuRef = React.useRef<HTMLDivElement>(null);
-    const confirmRef = React.useRef<HTMLDivElement>(null);
     
     const setOpenState = (newIsOpen: boolean) => {
         setIsOpen(newIsOpen);
@@ -43,12 +41,8 @@ const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) =
 
     React.useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => { 
-            if (
-                menuRef.current && !menuRef.current.contains(e.target as Node) &&
-                (!confirmRef.current || !confirmRef.current.contains(e.target as Node))
-            ) {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
                 setOpenState(false);
-                setConfirmAction(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -62,53 +56,19 @@ const AdminActionMenu: React.FC<{ status: string; onAction: (type: ActionType) =
     ].filter(a => a.condition);
 
     const handleActionClick = (action: typeof actions[0]) => {
-        const simpleActions: ActionType[] = ['approveVc'];
-        
-        if (simpleActions.includes(action.type as ActionType)) {
-            setOpenState(false);
-            setConfirmAction({ type: action.type as ActionType, label: action.label, isDanger: action.isDanger });
-        } else {
-            onAction(action.type as ActionType);
-            setOpenState(false);
-        }
+        onAction(action.type as ActionType);
+        setOpenState(false);
     };
 
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button onClick={(e) => { e.stopPropagation(); setConfirmAction(null); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
+            <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
             
-            {confirmAction && (
-                <div
-                    ref={confirmRef}
-                    className="absolute top-1/2 -translate-y-1/2 right-full mr-2 z-30 w-64 bg-surface-overlay p-4 rounded-lg shadow-xl border border-border-primary animate-fade-in-scale-up"
-                    style={{ animationDuration: '150ms' }}
-                >
-                    <p className="text-sm font-semibold text-text-primary text-center">
-                        Xác nhận "{confirmAction.label}"?
-                    </p>
-                    <div className="flex justify-center items-center gap-3 mt-2">
-                         <div onClick={() => setConfirmAction(null)} title="Không" className="cursor-pointer hover:scale-110 transition-transform">
-                            <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
-                        </div>
-                         <div
-                            onClick={() => {
-                                onAction(confirmAction.type);
-                                setConfirmAction(null);
-                            }}
-                            title="Có, Xác nhận"
-                            className="cursor-pointer hover:scale-110 transition-transform"
-                        >
-                            <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-40 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-1 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
+                <div className="absolute right-0 mt-1 w-40 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-0.5 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
                     {actions.map((action) => (
                         <button key={action.type} onClick={() => handleActionClick(action)}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                            className={`flex items-center gap-3 w-full text-left px-2 py-1.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
                         >
                             <i className={`fas ${action.icon} fa-fw w-5 text-center`}></i>
                             <span>{action.label}</span>
@@ -141,16 +101,16 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
         <table className="min-w-full divide-y divide-border-primary responsive-table">
             <thead className="bg-surface-hover sticky top-0 z-10">
                 <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 w-12 sm:pl-6">
+                    <th scope="col" className="py-2 pl-2 pr-1.5 text-left text-sm font-semibold text-gray-900 w-12 sm:pl-3">
                         <input type="checkbox" className="custom-checkbox" checked={isAllSelected} onChange={onToggleAllRows} />
                     </th>
-                    <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary w-12 uppercase tracking-wider">#</th>
+                    <th scope="col" className="py-2 px-1.5 text-center text-xs font-bold text-text-secondary w-12 uppercase tracking-wider">#</th>
                     <SortableHeader colKey="Tên khách hàng" title="Khách Hàng / SĐH / VIN" sortConfig={sortConfig} onSort={onSort} />
                     <SortableHeader colKey="Người YC" title="Người Yêu Cầu" sortConfig={sortConfig} onSort={onSort} />
                     <SortableHeader colKey="Thời gian YC" title="Thời Gian YC" sortConfig={sortConfig} onSort={onSort} />
-                    <th className="py-3.5 px-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">Hồ sơ & Ghi chú</th>
+                    <th className="py-2 px-1.5 text-left text-xs font-bold text-text-secondary uppercase tracking-wider">Hồ sơ & Ghi chú</th>
                     <SortableHeader colKey="Trạng thái xử lý" title="Trạng Thái" sortConfig={sortConfig} onSort={onSort} />
-                    <th scope="col" className="py-3.5 px-3 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành Động</th>
+                    <th scope="col" className="py-2 px-1.5 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành Động</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-border-primary bg-surface-card">
@@ -182,12 +142,12 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
 
                     return (
                         <tr key={orderNumber} className={`hover:bg-surface-hover transition-colors ${isMenuOpen ? 'relative z-20' : ''}`}>
-                            <td data-label="checkbox" className="pl-4 w-12 sm:pl-6" onClick={e => e.stopPropagation()}>
+                            <td data-label="checkbox" className="pl-2 w-12 sm:pl-3" onClick={e => e.stopPropagation()}>
                                 <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} />
                             </td>
-                            <td data-label="#" className="px-3 py-4 text-sm text-center text-text-secondary">{index + 1}</td>
+                            <td data-label="#" className="px-1.5 py-2 text-sm text-center text-text-secondary">{index + 1}</td>
                             
-                            <td data-label="Khách hàng / SĐH / VIN" className="px-3 py-4 text-sm">
+                            <td data-label="Khách hàng / SĐH / VIN" className="px-1.5 py-2 text-sm">
                                 <div className="font-semibold text-text-primary">{req["Tên khách hàng"]}</div>
                                 <div 
                                     className="text-text-secondary font-mono text-xs mt-1 cursor-pointer hover:underline hover:text-text-primary"
@@ -207,11 +167,11 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                                 )}
                             </td>
                             
-                            <td data-label="Người Yêu Cầu" className="px-3 py-4 text-sm text-text-primary">{req["Người YC"]}</td>
-                            <td data-label="Thời gian YC" className="px-3 py-4 text-sm text-text-primary">{moment(req["Thời gian YC"]).format('HH:mm DD/MM/YYYY')}</td>
-                            <td data-label="Hồ sơ & Ghi chú" className="px-3 py-4 text-sm text-text-secondary">
+                            <td data-label="Người Yêu Cầu" className="px-1.5 py-2 text-sm text-text-primary">{req["Người YC"]}</td>
+                            <td data-label="Thời gian YC" className="px-1.5 py-2 text-sm text-text-primary">{moment(req["Thời gian YC"]).format('HH:mm DD/MM/YYYY')}</td>
+                            <td data-label="Hồ sơ & Ghi chú" className="px-1.5 py-2 text-sm text-text-secondary">
                                 {dmsCode && <div className="text-xs font-mono font-semibold text-text-primary">DMS: {dmsCode}</div>}
-                                <div className="flex items-center gap-3 mt-1">
+                                <div className="flex items-center gap-1.5 mt-0.5">
                                     {docEntries.map(([key], docIndex) => {
                                         const doc = docLabels[key] || { label: key, icon: 'fa-file' };
                                         return (
@@ -223,9 +183,9 @@ const AdminVcRequestTable: React.FC<AdminVcRequestTableProps> = ({ requests, sor
                                 </div>
                                 <p className="truncate text-xs mt-1" title={req['Ghi chú']}>{req['Ghi chú'] || '—'}</p>
                             </td>
-                            <td data-label="Trạng Thái" className="px-3 py-4 text-sm"><StatusBadge status={status} /></td>
+                            <td data-label="Trạng Thái" className="px-1.5 py-2 text-sm"><StatusBadge status={status} /></td>
                             
-                            <td data-label="Hành Động" className="px-3 py-4 text-center">
+                            <td data-label="Hành Động" className="px-1.5 py-2 text-center">
                                 <div className="flex items-center justify-center gap-2">
                                      <button
                                         onClick={(e) => { e.stopPropagation(); onDownloadAll(req); }}

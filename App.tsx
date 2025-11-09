@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { Order, SortConfig, Notification, NotificationType, StockVehicle, AnalyticsData, VcRequest } from './types';
+import { Order, SortConfig, Notification, NotificationType, StockVehicle, AnalyticsData, AdminSubView } from './types';
 import HistoryTable from './components/HistoryTable';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
@@ -12,6 +12,7 @@ import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
 import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
 import CreateRequestModal from './components/modals/CreateRequestModal';
+import EditOrderModal from './components/modals/EditOrderModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import ImagePreviewModal from './components/modals/ImagePreviewModal';
 import ActionModal from './components/admin/ActionModal';
@@ -30,11 +31,11 @@ import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 import OrderGridView from './components/OrderGridView';
 
-import logohalloVideo from './pictures/logohallo.mp4';
-import yeucauAnimationUrl from './pictures/yeucau.json?url';
-import boxuongGif from './pictures/boxuong.gif';
-import xacuopGif from './pictures/xacuop.gif';
-import logoChinh from './pictures/logochinh.png';
+import logohalloVideo from '/pictures/logohallo.mp4';
+import yeucauAnimationUrl from '/pictures/yeucau.json?url';
+import boxuongGif from '/pictures/boxuong.gif';
+import xacuopGif from '/pictures/xacuop.gif';
+import logoChinh from '/pictures/logochinh.png';
 
 moment.locale('vi');
 
@@ -61,6 +62,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
     const [orderToRequestInvoice, setOrderToRequestInvoice] = useState<Order | null>(null);
     const [orderToSupplement, setOrderToSupplement] = useState<Order | null>(null);
+    const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
     const [orderToRequestVC, setOrderToRequestVC] = useState<Order | null>(null);
     const [orderToConfirmVC, setOrderToConfirmVC] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
@@ -68,6 +70,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [imagePreview, setImagePreview] = useState<{ images: ImageSource[], startIndex: number, customerName: string } | null>(null);
     const [filePreview, setFilePreview] = useState<{ url: string, label: string } | null>(null);
     const [isPendingStatsModalOpen, setIsPendingStatsModalOpen] = useState(false);
+    const [initialAdminState, setInitialAdminState] = useState<{ targetTab?: AdminSubView; orderToShow?: Order } | null>(null);
+
 
     const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -475,13 +479,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     };
     
-    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File) => {
+    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string) => {
         setProcessingOrder(order["Số đơn hàng"]);
         setOrderToRequestInvoice(null);
         showToast('Đang Gửi Chứng Từ', 'Quá trình này có thể mất một lúc. Vui lòng không đóng trang.', 'loading');
 
         try {
-            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile);
+            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, JSON.stringify(policy), commission);
             await refetchHistory();
             hideToast();
             showToast('Gửi Thành Công', result.message, 'success', 3000);
@@ -510,6 +514,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
              setOrderToSupplement(null);
              setProcessingOrder(null);
         }
+    };
+    
+    const handleEditSuccess = (message: string) => {
+        setOrderToEdit(null);
+        showToast('Cập nhật thành công!', message, 'success');
+        refetchHistory(true);
+        refetchStock(true);
     };
 
     const handleConfirmRequestVC = async (payload: any, vin?: string): Promise<boolean> => {
@@ -662,6 +673,17 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const openFilePreviewModal = useCallback((url: string, label: string) => {
         setFilePreview({ url, label });
     }, []);
+    
+    const showOrderInAdmin = (order: Order, targetTab: AdminSubView) => {
+        setActiveView('admin');
+        setInitialAdminState({ orderToShow: order, targetTab });
+    };
+
+    const showAdminTab = (targetTab: AdminSubView) => {
+        setActiveView('admin');
+        setInitialAdminState({ targetTab });
+    };
+
 
     const processedData = useMemo(() => {
         let filteredOrders = [...historyData];
@@ -848,6 +870,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onCancel={setOrderToCancel}
                                     onRequestInvoice={setOrderToRequestInvoice}
                                     onSupplement={setOrderToSupplement}
+                                    onEdit={setOrderToEdit}
                                     onRequestVC={setOrderToRequestVC}
                                     onConfirmVC={setOrderToConfirmVC}
                                     sortConfig={sortConfig}
@@ -867,6 +890,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onCancel={setOrderToCancel}
                                     onRequestInvoice={setOrderToRequestInvoice}
                                     onSupplement={setOrderToSupplement}
+                                    onEdit={setOrderToEdit}
                                     onRequestVC={setOrderToRequestVC}
                                     onConfirmVC={setOrderToConfirmVC}
                                     processingOrder={processingOrder}
@@ -1012,7 +1036,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 speed="1"
                                 style={{ width: '250px', height: '120px', marginTop: '-10px', marginBottom: '-10px' }}
                                 loop
-                                autoplay
+                                autoPlay
                             />
                         </div>
                         
@@ -1070,6 +1094,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             onReleaseCar={handleReleaseCar}
                             processingVin={processingVin}
                             isSidebarCollapsed={isSidebarCollapsed}
+                            allOrders={allHistoryData}
+                            showOrderInAdmin={showOrderInAdmin}
+                            showAdminTab={showAdminTab}
                         />
                     </div>
                     <div hidden={activeView !== 'sold'} className="h-full">
@@ -1112,9 +1139,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             allUsers={allUsers}
                             refetchAdminData={fetchAdminData}
                             soldData={soldData}
+                            isSidebarCollapsed={isSidebarCollapsed}
+                            initialState={initialAdminState}
+                            clearInitialState={() => setInitialAdminState(null)}
+                            // FIX: Pass missing onNavigateTo and onShowOrderDetails props to AdminView.
                             onNavigateTo={setActiveView}
                             onShowOrderDetails={setSelectedOrder}
-                            isSidebarCollapsed={isSidebarCollapsed}
                         />}
                     </div>
                 </main>
@@ -1151,6 +1181,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 onSupplement={setOrderToSupplement}
                 onRequestVC={setOrderToRequestVC}
                 onConfirmVC={setOrderToConfirmVC}
+                onEdit={setOrderToEdit}
+            />
+            <EditOrderModal
+                isOpen={!!orderToEdit}
+                onClose={() => setOrderToEdit(null)}
+                onSuccess={handleEditSuccess}
+                order={orderToEdit}
+                showToast={showToast}
+                existingOrderNumbers={allHistoryData
+                    .map(o => o["Số đơn hàng"])
+                    .filter(num => num !== orderToEdit?.["Số đơn hàng"])
+                }
             />
             {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
             {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}

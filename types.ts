@@ -1,6 +1,8 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
+export type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
+
 export interface Order {
     "Số đơn hàng": string;
     "Tên khách hàng": string;
@@ -21,6 +23,7 @@ export interface Order {
     "Ngày xuất hóa đơn"?: string;
     "PO PIN"?: string;
     "CHÍNH SÁCH"?: string;
+    "Số tiền hoa hồng ứng trước"?: number;
     "Ngày cọc"?: string;
     "BÁO BÁN"?: boolean | string;
     "KẾT QUẢ GỬI MAIL"?: string;
@@ -122,4 +125,4 @@ export interface Notification {
     type: NotificationType;
 }
 
-export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc';
+export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit';

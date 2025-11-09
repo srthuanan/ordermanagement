@@ -128,17 +128,17 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const validFiles = files.filter(f => f.status === 'valid');
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={handleClose}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={handleClose}>
             <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
+                <header className="flex-shrink-0 p-2.5 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
                     <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-6 flex-grow overflow-y-auto">
+                <main className="p-3 flex-grow overflow-y-auto hidden-scrollbar">
                     <div onDragEnter={handleDrag} className="w-full">
                         <input ref={inputRef} type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={handleChange} />
                         <div 
-                            className={`relative w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}`}
+                            className={`relative w-full h-40 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}`}
                             onClick={() => inputRef.current?.click()}
                             onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
                         >
@@ -153,9 +153,9 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     {files.length > 0 && (
                         <div className="mt-4">
                             <h3 className="text-sm font-semibold mb-2">Tệp đã chọn: ({files.length})</h3>
-                            <div className="max-h-60 overflow-y-auto space-y-2 border p-2 rounded-lg bg-surface-ground">
+                            <div className="max-h-60 overflow-y-auto space-y-2 border p-1 rounded-lg bg-surface-ground hidden-scrollbar">
                                 {files.map((f, i) => (
-                                    <div key={i} className={`flex items-center gap-3 p-2 rounded-md border ${f.status === 'invalid_name' ? 'bg-danger-bg border-danger-bg' : 'bg-white border-border-secondary'}`}>
+                                    <div key={i} className={`flex items-center gap-1.5 p-1 rounded-md border ${f.status === 'invalid_name' ? 'bg-danger-bg border-danger-bg' : 'bg-white border-border-secondary'}`}>
                                         <i className={`fas ${f.status === 'invalid_name' ? 'fa-exclamation-triangle text-danger' : 'fa-file-alt text-accent-secondary'}`}></i>
                                         <div className="flex-grow min-w-0">
                                             <p className="text-sm font-medium truncate">{f.file.name}</p>
@@ -170,12 +170,12 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                         </div>
                     )}
                 </main>
-                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl">
+                <footer className="flex-shrink-0 p-2 border-t border-border-primary flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl">
                     <div onClick={!isUploading ? handleClose : undefined} title="Hủy" className={`cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
                     <div onClick={!isUploading && validFiles.length > 0 ? handleUpload : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isUploading || validFiles.length === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
                 </footer>
             </div>

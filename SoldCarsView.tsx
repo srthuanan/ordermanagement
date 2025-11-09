@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Order, SortConfig } from '../types';
-import HistoryTable from './HistoryTable';
-import Pagination from './ui/Pagination';
-import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
-import SummaryCard from './ui/SummaryCard';
-import Leaderboard from './ui/Leaderboard';
-import SalesChart from './ui/SalesChart';
-import Filters, { DropdownFilterConfig } from './ui/Filters';
-import { MONTHS } from '../constants';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { Order, SortConfig } from './types';
+import HistoryTable from './components/HistoryTable';
+import Pagination from './components/ui/Pagination';
+import SoldCarDetailPanel from './components/ui/SoldCarDetailPanel';
+import SummaryCard from './components/ui/SummaryCard';
+import Leaderboard from './components/ui/Leaderboard';
+import SalesChart from './components/ui/SalesChart';
+import Filters, { DropdownFilterConfig } from './components/ui/Filters';
+import { MONTHS } from './constants';
 
 // Chart.js is loaded globally via index.html
 declare const Chart: any;
@@ -65,7 +65,7 @@ const TotalDashboardSkeleton = () => (
 );
 
 const SkeletonHistoryTable = () => (
-    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full min-h-[400px]">
         <div className="p-2 border-b border-border-primary">
             <div className="skeleton-item h-5 w-1/4"></div>
         </div>
@@ -171,7 +171,7 @@ interface MonthViewProps {
     isSidebarCollapsed: boolean;
 }
 const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, showToast, isSidebarCollapsed }) => {
-    const PAGE_SIZE = isSidebarCollapsed ? 22 : 20;
+    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
     const [filters, setFilters] = useState({ keyword: '', tvbh: [] as string[], carModel: [] as string[] });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
@@ -234,7 +234,7 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
 
     const handleSort = (key: keyof Order) => {
         setCurrentPage(1);
-        setSortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+        setSortConfig((prev: SortConfig | null) => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
     };
 
     const sortedData = useMemo(() => {
@@ -288,9 +288,9 @@ const MonthView: React.FC<MonthViewProps> = ({ data, isLoading, error, refetch, 
                 <Filters filters={filters} onFilterChange={handleFilterChange} onReset={handleResetFilters} dropdowns={dropdownConfigs} searchPlaceholder="Tìm SĐH, Tên KH, VIN..." totalCount={sortedData.length} onRefresh={refetch} isLoading={isLoading} plain size="compact" />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start tables-section">
-                <div className="lg:col-span-2 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+                <div className="lg:col-span-2 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full min-h-[400px]">
                     <div className="p-2 border-b border-border-primary"><h3 className="font-bold text-base">Chi Tiết Giao Dịch</h3></div>
-                    <div className="flex-grow overflow-auto"><HistoryTable orders={paginatedData} onRowClick={setSelectedDetailOrder} selectedOrder={selectedDetailOrder} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} viewMode="sold" /></div>
+                    <div className="flex-grow overflow-auto hidden-scrollbar"><HistoryTable orders={paginatedData} onRowClick={setSelectedDetailOrder} selectedOrder={selectedDetailOrder} sortConfig={sortConfig} onSort={handleSort} startIndex={(currentPage - 1) * PAGE_SIZE} viewMode="sold" /></div>
                     {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                 </div>
                 <div className="lg:col-span-1 hidden lg:block sticky top-24 detail-panel"><SoldCarDetailPanel order={selectedDetailOrder} showToast={showToast} /></div>
@@ -355,7 +355,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
 
     const monthlyData = useMemo(() => {
         const grouped: Record<string, Order[]> = {};
-        MONTHS.forEach(month => grouped[month] = []);
+        MONTHS.forEach((month: string) => grouped[month] = []);
         soldData.forEach(order => {
             if (order['Thời gian nhập']) {
                 try {
@@ -370,13 +370,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
     }, [soldData]);
 
     const yearlyData = useMemo(() => {
-        return MONTHS.map((month, index) => ({ 
+        return MONTHS.map((month: string, index: number) => ({ 
             month: `T${index + 1}`, 
             count: monthlyData[month]?.length || 0 
         }));
     }, [monthlyData]);
     
-    const TABS = ['Tổng Quan', ...MONTHS.map((_, i) => `Tháng ${i + 1}`)];
+    const TABS = ['Tổng Quan', ...MONTHS.map((_: string, i: number) => `Tháng ${i + 1}`)];
     
     const handleMonthClickFromChart = (monthIndex: number | null) => {
         if (monthIndex !== null) {
@@ -387,16 +387,18 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary mb-2">
-                <div className="admin-tabs-container p-1 flex items-center border-b border-border-primary overflow-x-auto hidden-scrollbar">
-                     {TABS.map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-3 py-1.5 rounded-md text-sm font-semibold whitespace-nowrap transition-all duration-300 ease-in-out ${activeTab === tab ? 'bg-gradient-to-r from-accent-primary to-accent-secondary text-white shadow-lg transform -translate-y-0.5 scale-105' : 'text-text-secondary hover:bg-surface-hover'}`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
+                <div className="p-2">
+                    <div className="admin-tabs-container flex items-center border border-border-primary rounded-lg bg-surface-ground p-0.5 overflow-x-auto hidden-scrollbar">
+                         {TABS.map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-3 py-1.5 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === tab ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -411,7 +413,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
                         onMonthClick={handleMonthClickFromChart}
                      />
                 </div>
-                {MONTHS.map((monthName, index) => (
+                {MONTHS.map((monthName: string, index: number) => (
                     <div key={monthName} hidden={activeTab !== `Tháng ${index + 1}`}>
                         <MonthView 
                             month={`Tháng ${index + 1}`}

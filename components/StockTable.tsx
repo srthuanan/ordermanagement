@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
@@ -16,6 +16,7 @@ interface StockTableProps {
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
+  onShowDetails: (vehicle: StockVehicle) => void;
   currentUser: string;
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -82,7 +83,7 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
     );
 };
 
-const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
+const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, onShowDetails, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
   const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
 
   if (vehicles.length === 0) {
@@ -137,8 +138,9 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                         return (
                             <tr 
                                 key={vehicle.VIN}
-                                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
+                                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up cursor-pointer ${isHighlighted ? 'highlight-row' : ''} ${isConfirmOpen ? 'relative z-20' : ''}`} 
                                 style={{animationDelay: `${index * 20}ms`}}
+                                onClick={() => onShowDetails(vehicle)}
                             >
                                 <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                 <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">

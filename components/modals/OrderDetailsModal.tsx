@@ -105,8 +105,9 @@ interface OrderDetailsModalProps {
     onSupplement: (order: Order) => void;
     onRequestVC: (order: Order) => void;
     onConfirmVC: (order: Order) => void;
+    onEdit?: (order: Order) => void;
 }
-const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC }) => {
+const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit }) => {
     if (!order) return null;
 
     const generalStatus = (order["Kết quả"] || "chưa ghép").toLowerCase().trim().normalize('NFC');
@@ -116,6 +117,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
     const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(generalStatus);
     const canRequestInvoice = generalStatus === 'đã ghép';
     const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
+    const canEdit = !!onEdit && !['đã xuất hóa đơn', 'đã hủy', 'chờ ký hóa đơn'].includes(generalStatus);
     const canRequestVC = (generalStatus === 'đã xuất hóa đơn' || vcStatus === 'từ chối ycvc') && !['yêu cầu vinclub', 'chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
     const canConfirmVC = status === 'chờ xác thực vc (tvbh)';
     const canDownloadInvoice = !!order.LinkHoaDonDaXuat;
@@ -149,6 +151,15 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
         }
     }
 
+    // --- NEUMORPHIC BUTTON STYLES ---
+    const btnBase = "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 ease-in-out bg-surface-ground";
+    const btnEffect = "shadow-[4px_4px_8px_#d1d9e6,-4px_-4px_8px_#ffffff] hover:shadow-[6px_6px_12px_#d1d9e6,-6px_-6px_12px_#ffffff] hover:-translate-y-px active:shadow-[inset_2px_2px_5px_#d1d9e6,inset_-2px_-2px_5px_#ffffff] active:translate-y-0.5";
+    
+    const btnClose = `${btnBase} ${btnEffect} text-text-secondary hover:text-text-primary`;
+    const btnEdit = `${btnBase} ${btnEffect} text-blue-700 hover:text-blue-800`;
+    const btnCancel = `${btnBase} ${btnEffect} text-red-700 hover:text-red-800`;
+    const btnPrimary = `${btnBase} ${btnEffect} text-accent-primary hover:text-accent-primary-hover font-bold`;
+    const btnDownload = `${btnBase} ${btnEffect} text-gray-700 hover:text-gray-800`;
 
     return (
         <div
@@ -237,72 +248,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                     </div>
                 </main>
                 
-                {/* === PHẦN ĐÃ SỬA ĐỔI === */}
-                <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-3 p-4 border-t border-border-primary bg-surface-ground rounded-b-2xl">
-                    <button 
-                        onClick={onClose} 
-                        className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400"
-                    >
-                        Đóng
-                    </button>
-                    
-                    {canCancel && (
-                        <button 
-                            onClick={() => handleAction(onCancel)} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-400"
-                        >
-                            <i className="fas fa-trash-alt"></i>Hủy Yêu Cầu
-                        </button>
-                    )}
-                    
-                    {canRequestInvoice && (
-                        <button 
-                            onClick={() => handleAction(onRequestInvoice)} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500"
-                        >
-                            <i className="fas fa-file-invoice-dollar"></i>Y/C Xuất Hóa Đơn
-                        </button>
-                    )}
-                    
-                    {canAddSupplement && (
-                        <button 
-                            onClick={() => handleAction(onSupplement)} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500"
-                        >
-                            <i className="fas fa-edit"></i>Bổ Sung File
-                        </button>
-                    )}
-                    
-                    {canRequestVC && (
-                        <button 
-                            onClick={() => handleAction(onRequestVC)} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500"
-                        >
-                            <i className="fas fa-id-card"></i>Y/C Cấp VC
-                        </button>
-                    )}
-                    
-                    {canConfirmVC && (
-                        <button 
-                            onClick={() => handleAction(onConfirmVC)} 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500"
-                        >
-                            <i className="fas fa-check"></i>Xác Thực UNC VC
-                        </button>
-                    )}
-                    
+                <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-4 p-5 border-t border-border-primary bg-surface-ground rounded-b-2xl">
+                    <button onClick={onClose} className={btnClose}>Đóng</button>
                     {canDownloadInvoice && (
-                        <a 
-                            href={order.LinkHoaDonDaXuat} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400"
-                        >
-                            <i className="fas fa-download"></i>Tải Hóa Đơn
-                        </a>
+                        <a href={order.LinkHoaDonDaXuat} target="_blank" rel="noopener noreferrer" className={btnDownload}><i className="fas fa-download"></i>Tải Hóa Đơn</a>
                     )}
+                    {canEdit && (<button onClick={() => handleAction(onEdit!)} className={btnEdit}><i className="fas fa-pencil-alt"></i>Chỉnh Sửa</button>)}
+                    {canCancel && (<button onClick={() => handleAction(onCancel)} className={btnCancel}><i className="fas fa-trash-alt"></i>Hủy Yêu Cầu</button>)}
+                    {canRequestInvoice && (<button onClick={() => handleAction(onRequestInvoice)} className={btnPrimary}><i className="fas fa-file-invoice-dollar"></i>Y/C Xuất Hóa Đơn</button>)}
+                    {canAddSupplement && (<button onClick={() => handleAction(onSupplement)} className={btnPrimary}><i className="fas fa-edit"></i>Bổ Sung File</button>)}
+                    {canRequestVC && (<button onClick={() => handleAction(onRequestVC)} className={btnPrimary}><i className="fas fa-id-card"></i>Y/C Cấp VC</button>)}
+                    {canConfirmVC && (<button onClick={() => handleAction(onConfirmVC)} className={btnPrimary}><i className="fas fa-check"></i>Xác Thực UNC VC</button>)}
                 </footer>
-                {/* === HẾT PHẦN SỬA ĐỔI === */}
             </div>
              {hasNext && (
                 <button

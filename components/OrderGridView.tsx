@@ -8,6 +8,7 @@ interface OrderGridViewProps {
     onCancel: (order: Order) => void;
     onRequestInvoice: (order: Order) => void;
     onSupplement: (order: Order) => void;
+    onEdit?: (order: Order) => void;
     onRequestVC: (order: Order) => void;
     onConfirmVC: (order: Order) => void;
     processingOrder: string | null;
