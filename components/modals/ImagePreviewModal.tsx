@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { toEmbeddableUrl, toDownloadableUrl, getSanitizedFilename } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -12,76 +13,6 @@ interface ImagePreviewModalProps {
     images: ImageSource[];
     startIndex?: number;
     customerName?: string;
-}
-
-// Helper to create a clean filename
-const getFilename = (customerName?: string, fileLabel?: string): string => {
-    if (!customerName || !fileLabel) return 'image';
-    
-    const removeDiacritics = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/Đ/g, "D").replace(/đ/g, "d");
-    const cleanCustomer = removeDiacritics(customerName).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    const cleanLabel = fileLabel.replace(/\s+/g, '_');
-    return `${cleanCustomer}_${cleanLabel}`;
-};
-
-// Helper to get a high-quality viewable URL from Google Drive that works in <img> tags
-const toHighQualityDriveUrl = (url: string): string => {
-    if (!url || !url.includes('drive.google.com')) return url;
-
-    // If it's already a thumbnail URL, just ensure it has a large size.
-    if (url.includes('/thumbnail?id=')) {
-        if (url.includes('&sz=')) {
-            return url.replace(/(&sz=)[^&]+/, '&sz=s2048');
-        }
-        return `${url}&sz=s2048`;
-    }
-
-    // Try to extract file ID from various formats like /d/FILE_ID/ or ?id=FILE_ID
-    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
-    if (idMatch) {
-        const fileId = idMatch[1] || idMatch[2];
-        if (fileId) {
-            return `https://drive.google.com/thumbnail?id=${fileId}&sz=s2048`;
-        }
-    }
-    
-    // Fallback for URLs that don't match expected formats.
-    return url;
-};
-
-
-// Helper to get a thumbnail URL for performance in the strip
-const toThumbnailDriveUrl = (url: string): string => {
-    if (!url || !url.includes('drive.google.com')) return url;
-    
-    if (url.includes('/thumbnail?id=')) {
-        if (url.includes('&sz=')) {
-            return url.replace(/(&sz=)[^&]+/, '&sz=w320');
-        }
-        return `${url}&sz=w320`;
-    }
-
-    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
-     if (idMatch) {
-        const fileId = idMatch[1] || idMatch[2];
-        if (fileId) {
-            // Request a slightly larger thumbnail for better clarity in the filmstrip.
-            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
-        }
-    }
-    return url;
-};
-
-const toDownloadableDriveUrl = (url: string): string | null => {
-    if (!url || !url.includes('drive.google.com')) return null;
-    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
-    if (idMatch) {
-        const fileId = idMatch[1] || idMatch[2];
-        if (fileId) {
-            return `https://drive.google.com/uc?export=download&id=${fileId}`;
-        }
-    }
-    return null;
 }
 
 const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, images = [], startIndex = 0, customerName }) => {
@@ -123,7 +54,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         const currentImage = images[currentIndex];
         if (!currentImage) return; // Safeguard against race conditions
 
-        const url = toHighQualityDriveUrl(currentImage.src);
+        const url = toEmbeddableUrl(currentImage.src, 1920); // Request high-res version
         setDisplayUrl(url);
 
     }, [isOpen, images, currentIndex]);
@@ -191,12 +122,14 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
 
     const handleDownload = () => {
         const currentImage = images[currentIndex];
-        const downloadUrl = toDownloadableDriveUrl(currentImage.originalUrl || currentImage.src) || currentImage.src;
+        if (!currentImage) return;
+
+        const downloadUrl = toDownloadableUrl(currentImage.originalUrl || currentImage.src);
+        const filename = getSanitizedFilename(customerName, currentImage.label);
+
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.setAttribute('download', getFilename(customerName, currentImage.label));
-        // For data URLs or blobs, we might not want to set download attribute.
-        // For external URLs, this is fine. For cross-origin, may need more handling.
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -205,7 +138,6 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     const currentImage = images.length > 0 ? images[currentIndex] : null;
-    const downloadUrl = currentImage ? (toDownloadableDriveUrl(currentImage.originalUrl || currentImage.src)) : null;
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col p-0 sm:p-4 animate-fade-in" onWheel={handleWheel} onMouseMove={handleMouseMove} onMouseUp={handleMouseUpOrLeave} onMouseLeave={handleMouseUpOrLeave}>
@@ -216,7 +148,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                     <p className="text-sm opacity-80 truncate">{customerName} ({images.length > 0 ? currentIndex + 1 : 0} / {images.length})</p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4">
-                    {downloadUrl && <button onClick={handleDownload} title="Tải về" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-download"></i></button>}
+                    <button onClick={handleDownload} title="Tải về" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-download"></i></button>
                     <a href={currentImage?.originalUrl || currentImage?.src} target="_blank" rel="noopener noreferrer" title="Mở trong tab mới" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-external-link-alt"></i></a>
                     <button onClick={onClose} title="Đóng (Esc)" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-xl"><i className="fas fa-times"></i></button>
                 </div>
@@ -303,7 +235,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                                     onClick={() => goTo(index)}
                                     className={`w-16 h-16 flex-shrink-0 rounded-md border-2 bg-black/20 transition-all duration-200 ${currentIndex === index ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                 >
-                                    <img src={toThumbnailDriveUrl(img.src)} alt={img.label} className="w-full h-full object-cover rounded-sm" />
+                                    <img src={toEmbeddableUrl(img.src, 320)} alt={img.label} className="w-full h-full object-cover rounded-sm" />
                                 </button>
                             ))}
                         </div>

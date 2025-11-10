@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { TestDriveBooking } from '../../types';
 import { normalizeName } from '../../services/authService';
 import { compressImage } from '../../services/ocrService';
+import { toEmbeddableUrl } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -38,34 +39,6 @@ const fileToBase64 = (file: File): Promise<string> => {
     };
     reader.onerror = error => reject(error);
   });
-};
-
-
-// Helper to get a high-quality viewable URL from Google Drive that works in <img> tags
-const toEmbeddableDriveUrl = (url: string): string => {
-    if (!url) return '';
-    // If it's a data URL, return it directly. It's already embeddable.
-    if (url.startsWith('data:image')) {
-        return url;
-    }
-    // If it's not a google drive url, return it
-    if (!url.includes('drive.google.com')) {
-        return url;
-    }
-    // If it's already a thumbnail URL, return it, but request a slightly larger size
-    if (url.includes('/thumbnail?id=')) {
-        return url.replace(/(&sz=)[^&]+/, '&sz=w200');
-    }
-    // Try to extract file ID from various formats like /uc?id= or /d/
-    const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
-    if (idMatch) {
-        const fileId = idMatch[1] || idMatch[2];
-        if (fileId) {
-            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
-        }
-    }
-    // Return original URL as a fallback if no ID is found
-    return url;
 };
 
 
@@ -185,7 +158,7 @@ const ImageGallery: React.FC<{
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {images.map((url, index) => (
                 <div key={index} className="relative group aspect-square cursor-pointer" onClick={() => onImageClick(url, index)}>
-                    <img src={toEmbeddableDriveUrl(url)} alt={`${label} ${index + 1}`} className="w-full h-full object-cover rounded-md border border-border-primary" />
+                    <img src={toEmbeddableUrl(url, 200)} alt={`${label} ${index + 1}`} className="w-full h-full object-cover rounded-md border border-border-primary" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
                         <i className="fas fa-search-plus text-white text-2xl"></i>
                     </div>

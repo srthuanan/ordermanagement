@@ -4,6 +4,7 @@ import App from './App';
 import LoginScreen from './components/LoginScreen';
 import Toast from './components/ui/Toast';
 import SuccessAnimation from './components/ui/SuccessAnimation';
+import * as apiService from './services/apiService';
 
 type ToastState = {
     show: boolean;
@@ -31,7 +32,14 @@ const Root = () => {
         const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
         setIsAuthenticated(loggedIn);
         setIsLoading(false);
-    }, []);
+
+        if (loggedIn) {
+            // Start sending presence heartbeats if logged in
+            apiService.recordUserPresence(); // Initial call
+            const presenceInterval = setInterval(apiService.recordUserPresence, 2 * 60 * 1000); // Every 2 minutes
+            return () => clearInterval(presenceInterval);
+        }
+    }, [isAuthenticated]);
 
     const handleLoginSuccess = useCallback(() => {
         setIsAuthenticated(true);

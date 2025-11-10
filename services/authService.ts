@@ -15,11 +15,25 @@ export const normalizeName = (name: string): string => {
         .normalize('NFC'); // Normalize Unicode characters
 };
 
+// Định nghĩa cấu trúc dữ liệu trả về khi đăng nhập thành công
+interface AuthResponse {
+    success: boolean;
+    username: string;
+    consultantName: string;
+    role: string;
+    email?: string; // Thêm trường email
+}
 
 interface LoginResult {
     success: boolean;
     message?: string;
+    // Mở rộng để trả về đầy đủ thông tin AuthResponse
+    username?: string;
+    consultantName?: string;
+    role?: string;
+    email?: string;
 }
+
 
 const postAuthRequest = async (params: Record<string, string>): Promise<any> => {
     const body = new URLSearchParams(params);
@@ -30,20 +44,35 @@ const postAuthRequest = async (params: Record<string, string>): Promise<any> => 
 
 export const login = async (username: string, password: string): Promise<LoginResult> => {
     try {
-        const data = await postAuthRequest({ action: "login", username: username.toLowerCase(), password });
-        if (data.success) {
-            // Get consultant name and role from the API response.
-            // Fallback to username and a default role if not provided.
+        // data sẽ có kiểu AuthResponse từ backend
+        const data: AuthResponse = await postAuthRequest({ action: "login", username: username.toLowerCase(), password });
+        
+        if (data.success && data.username && data.consultantName) {
+            // Lấy consultant name và role từ API response.
+            // Fallback về username và vai trò mặc định nếu không có.
             const consultantName = data.consultantName || data.username;
             const role = data.role || 'Tư vấn bán hàng';
+            const email = data.email; // Lấy email từ phản hồi
 
             sessionStorage.setItem("isLoggedIn", "true");
             sessionStorage.setItem("currentUser", data.username);
             sessionStorage.setItem("currentConsultant", consultantName);
             sessionStorage.setItem("userRole", role);
-            return { success: true };
+            
+            // LƯU EMAIL VÀO SESSIONSTORAGE
+            if (email) {
+                sessionStorage.setItem("userEmail", email);
+            }
+            
+            return { 
+                success: true, 
+                username: data.username, 
+                consultantName: consultantName, 
+                role: role, 
+                email: email 
+            };
         } else {
-            return { success: false, message: data.message || "Tên đăng nhập hoặc mật khẩu không đúng." };
+            return { success: false, message: (data as any).message || "Tên đăng nhập hoặc mật khẩu không đúng." };
         }
     } catch (error) {
         console.error("Login API error:", error);

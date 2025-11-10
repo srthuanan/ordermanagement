@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import moment from 'moment';
 import 'moment/locale/vi';
 // FIX: Imported VcRequest and VcSortConfig to support the new "Xử Lý VC" view.
-import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig, AdminSubView } from '../../types';
+import { Order, SortConfig, StockVehicle, VcRequest, ActionType, VcSortConfig, AdminSubView, LogEntry, ActiveUser } from '../../types';
 import Pagination from '../ui/Pagination';
 import AdminInvoiceTable from './AdminInvoiceTable';
 import AdminVcRequestTable from './AdminVcRequestTable';
@@ -14,6 +15,7 @@ import BulkUploadModal from './BulkUploadModal';
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
+import Avatar from '../ui/Avatar';
 
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
@@ -83,6 +85,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: DateRange }>({ keyword: '', tvbh: [], dongXe: [] });
     const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: DateRange }>({ keyword: '', nguoiyc: [], trangthai: [] });
 
+    // State for new tabs
+    const [logData, setLogData] = useState<LogEntry[]>([]);
+    const [isLoadingLog, setIsLoadingLog] = useState(false);
+    const [errorLog, setErrorLog] = useState<string | null>(null);
+    const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+    const [errorUsers, setErrorUsers] = useState<string | null>(null);
 
     // Other states
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -95,6 +104,24 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
+
+    // ===== BẮT ĐẦU THÊM MỚI (FIX CHO TAB "ĐANG TRUY CẬP") =====
+    // useEffect này dùng để báo cáo sự hiện diện (heartbeat)
+    useEffect(() => {
+        // Báo cáo sự hiện diện ngay lập tức khi vào trang Admin
+        apiService.recordUserPresence();
+
+        // Thiết lập một "heartbeat" lặp lại mỗi 2 phút (120,000 ms)
+        // để duy trì trạng thái "đang hoạt động".
+        // (Thời gian hết hạn ở backend là 5 phút)
+        const presenceInterval = setInterval(() => {
+            apiService.recordUserPresence();
+        }, 120000); 
+
+        // Dọn dẹp interval khi component bị unmount (rời khỏi trang)
+        return () => clearInterval(presenceInterval);
+    }, []); // Mảng rỗng đảm bảo useEffect này chỉ chạy một lần khi mount
+    // ===== KẾT THÚC THÊM MỚI =====
 
     useEffect(() => {
         if (initialState) {
@@ -157,9 +184,43 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     }, []);
 
+    const fetchLogData = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingLog(true);
+        setErrorLog(null);
+        try {
+            const result = await apiService.getLogData();
+            setLogData(result.data || []);
+        } catch (err) {
+            setErrorLog(err instanceof Error ? err.message : 'Lỗi tải nhật ký hoạt động.');
+        } finally {
+            if (!isSilent) setIsLoadingLog(false);
+        }
+    }, []);
+
+    const fetchActiveUsers = useCallback(async (isSilent = false) => {
+        if (!isSilent) setIsLoadingUsers(true);
+        setErrorUsers(null);
+        try {
+            const result = await apiService.getActiveUsers();
+            setActiveUsers(result.users || []);
+        } catch (err) {
+            setErrorUsers(err instanceof Error ? err.message : 'Lỗi tải danh sách người dùng hoạt động.');
+        } finally {
+            if (!isSilent) setIsLoadingUsers(false);
+        }
+    }, []);
+
     useEffect(() => {
-        fetchVcData();
-    }, [fetchVcData]);
+        if (adminView === 'vc') {
+            fetchVcData();
+        } else if (adminView === 'activityLog') {
+            fetchLogData();
+        } else if (adminView === 'activeUsers') {
+            fetchActiveUsers();
+            const intervalId = setInterval(() => fetchActiveUsers(true), 30000); // Refresh every 30s
+            return () => clearInterval(intervalId);
+        }
+    }, [adminView, fetchVcData, fetchLogData, fetchActiveUsers]);
 
 
      useEffect(() => {
@@ -421,7 +482,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             if (refetchType === 'admin') {
                 refetchAdminData(true);
             }
-            if (action.toLowerCase().includes('vcrequest')) {
+            if (action.toLowerCase().includes('vcrequest') || action.toLowerCase().includes('vc')) {
                 fetchVcData(true);
             }
             return true;
@@ -686,10 +747,87 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
                 );
             }
+            case 'activityLog': {
+                return (
+                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
+                        <div className="p-3 border-b border-border-primary flex justify-between items-center">
+                            <h3 className="font-bold text-base">Nhật Ký Hoạt Động Hệ Thống</h3>
+                            <button onClick={() => fetchLogData()} disabled={isLoadingLog} className="btn-secondary !text-xs !py-1 !px-3">
+                                <i className={`fas fa-sync-alt ${isLoadingLog ? 'animate-spin' : ''} mr-2`}></i>Làm mới
+                            </button>
+                        </div>
+                        <div className="flex-grow overflow-auto hidden-scrollbar">
+                            {isLoadingLog && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
+                            {errorLog && <div className="text-center p-8 text-danger">{errorLog}</div>}
+                            {!isLoadingLog && !errorLog && (
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-surface-hover sticky top-0 z-10">
+                                        <tr>
+                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary w-48">Thời Gian</th>
+                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary w-48">Hành Động</th>
+                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary">Chi Tiết</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border-primary">
+                                        {logData.map((log, index) => (
+                                            <tr key={index} className="hover:bg-surface-hover">
+                                                <td className="px-3 py-2 whitespace-nowrap text-text-secondary font-mono" title={moment(log['Thời gian']).format('YYYY-MM-DD HH:mm:ss')}>{moment(log['Thời gian']).fromNow()}</td>
+                                                <td className="px-3 py-2 font-semibold text-text-primary">{log['Hành động']}</td>
+                                                <td className="px-3 py-2 text-text-secondary break-words">{log['Chi tiết']}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+            case 'activeUsers': {
+                return (
+                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
+                        <div className="p-3 border-b border-border-primary flex justify-between items-center">
+                            <h3 className="font-bold text-base">Người Dùng Đang Hoạt Động ({activeUsers.length})</h3>
+                            <button onClick={() => fetchActiveUsers()} disabled={isLoadingUsers} className="btn-secondary !text-xs !py-1 !px-3">
+                                <i className={`fas fa-sync-alt ${isLoadingUsers ? 'animate-spin' : ''} mr-2`}></i>Làm mới
+                            </button>
+                        </div>
+                        <div className="flex-grow overflow-auto p-3 hidden-scrollbar">
+                            {isLoadingUsers && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
+                            {errorUsers && <div className="text-center p-8 text-danger">{errorUsers}</div>}
+                            {!isLoadingUsers && !errorUsers && (
+                                <div className="space-y-2">
+                                    {activeUsers.length > 0 ? activeUsers
+                                        .sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())
+                                        .map(user => (
+                                        <div key={user.email} className="flex items-center gap-3 p-2 bg-surface-ground rounded-lg border border-border-primary">
+                                            {/* ----- BẮT ĐẦU THAY ĐỔI ----- */}
+                                            <Avatar name={user.fullName || user.email} size="md" />
+                                            <div className="flex-grow">
+                                                {/* Ưu tiên hiển thị Tên, nếu không có thì hiển thị email */}
+                                                <p className="font-semibold text-text-primary text-sm">{user.fullName || user.email}</p>
+                                            {/* ----- KẾT THÚC THAY ĐỔI ----- */}
+                                                <p className="text-xs text-text-secondary">Hoạt động lần cuối: {moment(user.lastSeen).fromNow()}</p>
+                                            </div>
+                                            <div className="w-3 h-3 rounded-full bg-success animate-pulse" title="Online"></div>
+                                        </div>
+                                    )) : (
+                                        <div className="text-center text-text-secondary py-12">
+                                            <i className="fas fa-ghost fa-3x mb-4"></i>
+                                            <p>Không có người dùng nào đang hoạt động.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
             default: return null;
         }
     };
 
+    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
     const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
         dashboard: [],
         invoices: [
@@ -701,9 +839,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         pending: [
             { type: 'cancel', label: 'Hủy Yêu cầu (Xóa)', icon: 'fa-trash-alt', isDanger: true },
         ],
-        paired: [], // No bulk actions for paired view based on GAS
-        vc: [],     // No bulk actions for VC view based on GAS
+        paired: [],
+        vc: [],
         phongkd: [],
+        activityLog: [],
+        activeUsers: [],
     };
     
     const BulkActionBar = ({ view }: { view: AdminSubView }) => {
@@ -757,7 +897,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
     
     const renderFilterPanel = () => {
-        if (adminView === 'dashboard' || adminView === 'phongkd') {
+        if (['dashboard', 'phongkd', 'activityLog', 'activeUsers'].includes(adminView)) {
             return null;
         }
 
@@ -835,9 +975,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         );
     };
 
-    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd', 'activityLog', 'activeUsers'];
+    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD', activityLog: 'Nhật Ký', activeUsers: 'Đang Truy Cập' };
+    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
+    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length, activityLog: null, activeUsers: activeUsers.length };
     
     return (
         <div className="flex flex-col h-full animate-fade-in-up">
@@ -874,7 +1016,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )}
                     </div>
                 </div>
-                { (adminView !== 'dashboard' && adminView !== 'phongkd') && <div className="p-1.5 border-t border-border-primary">{renderFilterPanel()}</div> }
+                {renderFilterPanel()}
             </div>
             
             <div className="flex-grow min-h-0 flex flex-col">

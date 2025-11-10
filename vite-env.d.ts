@@ -1,8 +1,34 @@
-// Fix: Removed vite/client reference that was causing a "Cannot find type definition file" error.
-// The global JSX augmentation for <lottie-player> is now correctly processed.
+// FIX: The reference to "vite/client" can cause resolution errors in some build environments,
+// which prevents the global 'lottie-player' type declarations in this file from being processed.
+// The line is commented out below to fix this. Manual type declarations for common asset
+// imports (e.g., '.mp4', '.json?url') are provided as a robust fallback.
+// /// <reference types="vite/client" />
 
-// This file adds a global JSX augmentation to define the <lottie-player> custom element,
-// which resolves all TypeScript errors related to it not being a known JSX element.
+// FIX: Changed to a standard import to ensure JSX namespace is correctly augmented.
+import React from 'react';
+
+// Manual declarations for asset types as a fallback for vite/client.
+declare module '*.mp4' {
+  const src: string;
+  export default src;
+}
+declare module '*.json?url' {
+  const src: string;
+  export default src;
+}
+declare module '*.gif' {
+  const src: string;
+  export default src;
+}
+declare module '*.png' {
+  const src: string;
+  export default src;
+}
+declare module '*.jpg' {
+  const src: string;
+  export default src;
+}
+
 
 declare global {
   // This interface allows using refs with the custom element's methods (e.g., ref.current.play()).

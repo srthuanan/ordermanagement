@@ -17,6 +17,7 @@ interface ImageSource {
 
 interface TestDriveFormProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    hideToast: () => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     currentUser: string;
     isAdmin: boolean;
@@ -77,7 +78,7 @@ const getStatus = (booking: TestDriveBooking): string => {
     return 'Chờ Check-in';
 };
 
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, refetch: fetchSchedule }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, refetch: fetchSchedule }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
         const user = sessionStorage.getItem('currentConsultant') || '';
         return { ...initialFormData, tenTuVan: user };
@@ -89,7 +90,6 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
     const [selectedBookingForPreview, setSelectedBookingForPreview] = useState<TestDriveBooking | null>(null);
     const [dataForPrinting, setDataForPrinting] = useState<TestDriveBooking>(formData);
-    const [isPrinting, setIsPrinting] = useState(false);
     const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view' } | null>(null);
     const [bookingToDelete, setBookingToDelete] = useState<TestDriveBooking | null>(null);
 
@@ -152,15 +152,79 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
         setActiveTab('create');
     }, [allTestDrives, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth]);
 
-    useEffect(() => {
-        if (isPrinting) {
-            window.print();
-            setIsPrinting(false);
-            if (activeTab === 'create') {
-                handleReset();
+    const triggerPrint = useCallback((bookingData: TestDriveBooking) => {
+        setDataForPrinting(bookingData);
+        showToast('Đang chuẩn bị...', 'Vui lòng chờ trong khi tài liệu in đang được tạo.', 'loading');
+
+        setTimeout(() => {
+            const printContents = document.getElementById('print-container')?.innerHTML;
+            if (!printContents) {
+                hideToast();
+                showToast('Lỗi In', 'Không tìm thấy nội dung để in.', 'error');
+                return;
             }
-        }
-    }, [isPrinting, activeTab, handleReset]);
+
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.src = "about:blank";
+            document.body.appendChild(iframe);
+            
+            const iframeDoc = iframe.contentWindow?.document;
+            if (!iframeDoc) {
+                hideToast();
+                showToast('Lỗi In', 'Không thể tạo tài liệu in.', 'error');
+                document.body.removeChild(iframe);
+                return;
+            }
+
+            iframeDoc.open();
+            iframeDoc.write('<html><head><title>In Phiếu Lái Thử</title>');
+
+            const links = document.getElementsByTagName('link');
+            for (let i = 0; i < links.length; i++) {
+                if (links[i].rel === 'stylesheet') {
+                    iframeDoc.write(links[i].outerHTML);
+                }
+            }
+            const styles = document.getElementsByTagName('style');
+            for (let i = 0; i < styles.length; i++) {
+                iframeDoc.write(styles[i].outerHTML);
+            }
+            
+            iframeDoc.write('</head><body>');
+            // FIX: The original code copied only the innerHTML, losing the #print-container ID
+            // which is essential for the print CSS rules to apply correctly. By wrapping the
+            // contents in a div with the correct ID, we ensure the print styles can target
+            // and display the content.
+            iframeDoc.write('<div id="print-container">' + printContents + '</div>');
+            iframeDoc.write('</body></html>');
+            iframeDoc.close();
+
+            const handleIframeLoad = () => {
+                hideToast();
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    if (activeTab === 'create') {
+                        handleReset();
+                    }
+                }, 1000);
+            };
+            
+            if (iframe.contentWindow) {
+                iframe.contentWindow.onload = handleIframeLoad;
+            } else {
+                setTimeout(handleIframeLoad, 500);
+            }
+
+        }, 200);
+    }, [activeTab, handleReset, hideToast, showToast]);
+
 
     const scheduleForSelectedCar = useMemo(() => {
         if (!formData.ngayThuXe || !formData.loaiXe) return [];
@@ -282,8 +346,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
                 showToast('Lưu Thành Công', 'Lịch lái thử đã được lưu. Chuẩn bị in...', 'success');
                 setAllTestDrives(prev => [...prev, result.newRecord].sort((a,b) => b.ngayThuXe.localeCompare(a.ngayThuXe)));
                 
-                setDataForPrinting(formData);
-                setIsPrinting(true); 
+                triggerPrint(formData); 
 
             } else {
                 throw new Error(result.message || 'Lưu lịch thất bại.');
@@ -298,8 +361,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, onOpenImagePre
     
     const handleReprint = () => {
         if (selectedBookingForPreview) {
-            setDataForPrinting(selectedBookingForPreview);
-            setIsPrinting(true);
+            triggerPrint(selectedBookingForPreview);
         }
     };
 

@@ -78,6 +78,26 @@ export const getApi = async (params: Record<string, any>, baseUrl: string = API_
     }
 };
 
+export const getLogData = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getLogData' });
+};
+
+export const getActiveUsers = async (): Promise<ApiResult> => {
+    return getApi({ action: 'getActiveUsers' });
+};
+
+export const recordUserPresence = async (): Promise<void> => {
+    try {
+        const userEmail = sessionStorage.getItem("userEmail");
+        if (userEmail) {
+            // This is a fire-and-forget call, so no need to await or handle response
+            postApi({ action: 'recordUserPresence', userEmail });
+        }
+    } catch (error) {
+        console.warn('Failed to record user presence:', error);
+    }
+};
+
 export const getPaginatedData = async (usersToView?: string[]): Promise<ApiResult> => {
     const filters: Record<string, any> = {};
     if (usersToView && usersToView.length > 0) {

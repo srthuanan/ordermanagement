@@ -1112,6 +1112,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     <div hidden={activeView !== 'laithu'} className="h-full">
                         <TestDriveForm
                             showToast={showToast}
+                            hideToast={hideToast}
                             onOpenImagePreview={openImagePreviewModal}
                             currentUser={currentUser}
                             isAdmin={isCurrentUserAdmin}

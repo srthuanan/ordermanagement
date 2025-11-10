@@ -33,7 +33,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // FIX: Defined handleClose function to reset state and call the onClose prop.
     const handleClose = useCallback(() => {
         setFiles([]);
         setIsUploading(false);
@@ -110,7 +109,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             showToast('Hoàn tất!', result.message, result.status === 'SUCCESS' ? 'success' : 'warning', 10000);
             if (result.status === 'SUCCESS') {
                 onSuccess();
-                // FIX: Call the defined handleClose function to resolve "Cannot find name" error.
                 handleClose();
             }
         } catch (error) {
@@ -122,7 +120,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         }
     };
 
-    // FIX: Moved JSX return structure inside the component to fix the 'not assignable to FC' error.
     if (!isOpen) return null;
 
     const validFiles = files.filter(f => f.status === 'valid');
@@ -183,5 +180,4 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     );
 };
 
-// FIX: Added a default export to resolve module import errors.
 export default BulkUploadModal;
