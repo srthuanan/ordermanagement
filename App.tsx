@@ -31,11 +31,11 @@ import { normalizeName } from './services/authService';
 import { ADMIN_USER } from './constants';
 import OrderGridView from './components/OrderGridView';
 
-import logohalloVideo from '/pictures/logohallo.mp4';
-import yeucauAnimationUrl from '/pictures/yeucau.json?url';
-import boxuongGif from '/pictures/boxuong.gif';
-import xacuopGif from '/pictures/xacuop.gif';
-import logoChinh from '/pictures/logochinh.png';
+import logoxmasImg from './pictures/logoxmas.png';
+import slidebarnoelImg from './pictures/slidebarnoel.png';
+import yeucauAnimationUrl from './pictures/yeucau.json?url';
+import noel1Gif from './pictures/noel1.gif';
+import noel2Gif from './pictures/noel2.gif';
 
 moment.locale('vi');
 
@@ -54,6 +54,11 @@ interface AppProps {
 }
 
 const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
+    // --- CẤU HÌNH LOGO ---
+    // Bạn có thể thay đổi hình ảnh riêng cho Sidebar và Header tại đây
+    const SidebarLogo = slidebarnoelImg;
+    const HeaderLogo = logoxmasImg; 
+
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeView, setActiveView] = useState<ActiveView>('orders');
@@ -90,6 +95,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
 
+    // State cho slideshow ảnh Noel
+    const [noelImageIndex, setNoelImageIndex] = useState(0);
+
     const currentUser = sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const currentUserName = sessionStorage.getItem("currentUser") || "User";
     const userRole = sessionStorage.getItem("userRole") || (currentUserName.toLowerCase() === 'admin' ? 'Quản trị viên' : 'Tư vấn bán hàng');
@@ -98,8 +106,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [teamData, setTeamData] = useState<Record<string, string[]>>({});
     const [allUsers, setAllUsers] = useState<{name: string, role: string, username: string}[]>([]);
 
-    const [currentGif, setCurrentGif] = useState(boxuongGif);
-    
     const [orderView, setOrderView] = useState<'table' | 'grid'>('grid');
     
     const PAGE_SIZE = useMemo(() => {
@@ -163,15 +169,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         refetchXuathoadon();
     }, [fetchAdminData, refetchXuathoadon]);
 
-
+    // Effect cho slideshow ảnh Noel
     useEffect(() => {
-        const gifInterval = setInterval(() => {
-            setCurrentGif((prevGif: string) => (prevGif === boxuongGif ? xacuopGif : boxuongGif));
-        }, 5000); // Change every 5 seconds
-
-        return () => clearInterval(gifInterval);
+        const interval = setInterval(() => {
+            setNoelImageIndex(prev => (prev === 0 ? 1 : 0));
+        }, 4000); // Chuyển ảnh mỗi 4 giây
+        return () => clearInterval(interval);
     }, []);
-    
+
     const usersToView = useMemo(() => {
         if (userRole !== 'Trưởng Phòng Kinh Doanh') {
             return undefined;
@@ -920,14 +925,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <aside className={sidebarClasses}>
                 <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
                     <a href="#" onClick={(e) => e.preventDefault()} className="flex items-center justify-center h-full group">
-                        <img src={logoChinh} alt="Order Management Logo" className={`object-contain transition-all duration-300 group-hover:scale-105 ${isSidebarCollapsed ? 'h-10' : 'h-13'}`} />
+                        <img src={SidebarLogo} alt="Order Management Logo" className={`object-contain transition-all duration-300 group-hover:scale-105 ${isSidebarCollapsed ? 'h-10' : 'h-13'}`} />
                     </a>
                     <button onClick={toggleSidebar} className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-surface-hover text-text-secondary hover:text-text-primary ml-auto">
                         <i className={`fa-solid fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
                     </button>
                 </div>
 
-                <nav className="p-2 flex flex-col flex-grow overflow-y-auto">
+                <nav className="p-2 flex flex-col flex-grow overflow-y-auto relative">
                     <div className="space-y-1">
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
                             <i className={`fa-solid fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
@@ -952,9 +957,21 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             </a>
                         )}
                     </div>
-
-                    <div className={`px-2 pt-4 pb-2 transition-opacity duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>
-                        <img src={currentGif} alt="Halloween decoration" className="w-full h-auto object-contain" />
+                    
+                    {/* Animated Noel Images */}
+                    <div className={`mt-auto w-full overflow-hidden rounded-lg transition-all duration-300 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>
+                        <div className="relative w-full" style={{ height: '250px' }}>
+                            <img 
+                                src={noel1Gif} 
+                                alt="Noel 1" 
+                                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out ${noelImageIndex === 0 ? 'opacity-100' : 'opacity-0'}`}
+                            />
+                            <img 
+                                src={noel2Gif} 
+                                alt="Noel 2" 
+                                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out ${noelImageIndex === 1 ? 'opacity-100' : 'opacity-0'}`}
+                            />
+                        </div>
                     </div>
                 </nav>
 
@@ -1012,16 +1029,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </div>
                     
                     <div className={`absolute -translate-x-1/2 hidden sm:flex items-center left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>
-                       <video
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
+                       <img
+                            src={HeaderLogo}
+                            alt="Order Management Logo"
                             className="h-14 object-contain"
-                            src={logohalloVideo}
-                            aria-label="Order Management Logo"
-                        >
-                        </video>
+                        />
                     </div>
                     
                     <div className="flex items-center justify-end space-x-2 sm:space-x-4">

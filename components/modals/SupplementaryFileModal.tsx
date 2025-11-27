@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface SupplementaryFileModalProps {
     order: Order;
@@ -22,6 +23,7 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const handleSubmit = () => {
         if (!contractFile && !proposalFile) {
@@ -36,7 +38,7 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                     <div className="animate-fade-in-down">
                         <h2 className="text-xl font-bold text-gradient">Bổ Sung Chứng Từ</h2>

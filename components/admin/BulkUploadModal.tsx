@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
 import * as apiService from '../../services/apiService';
-import { compressImage } from '../../services/ocrService';
+import { compressImage, compressPdf } from '../../services/ocrService';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface BulkUploadModalProps {
     isOpen: boolean;
@@ -32,6 +33,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const [isUploading, setIsUploading] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const bgStyle = useModalBackground();
 
     const handleClose = useCallback(() => {
         setFiles([]);
@@ -53,6 +55,15 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     console.error('Lỗi nén ảnh cho:', file.name, e);
                     showToast('Lỗi Nén Ảnh', `Không thể nén tệp ${file.name}.`, 'warning');
                     return file; // fallback to original on error
+                }
+            }
+            if (file.type === 'application/pdf') {
+                try {
+                    return await compressPdf(file);
+                } catch(e) {
+                    console.error('Lỗi nén PDF cho:', file.name, e);
+                    showToast('Lỗi Nén PDF', `Không thể nén tệp ${file.name}.`, 'warning');
+                    return file;
                 }
             }
             return file;
@@ -126,7 +137,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 p-2.5 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
                     <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>

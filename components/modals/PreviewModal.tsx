@@ -1,4 +1,5 @@
 import React from 'react';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface PreviewModalProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ const formatDateTime = (dateString?: string) => {
 };
 
 const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, onConfirm, data, fileName, isSubmitting }) => {
+    const bgStyle = useModalBackground();
     if (!isOpen) return null;
 
     return (
@@ -40,6 +42,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, onConfirm,
             <div 
                 className="bg-surface-card w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="flex items-center justify-between p-5 border-b border-border-primary">
                     <h2 className="text-xl font-bold text-text-primary">Xác Nhận Thông Tin</h2>

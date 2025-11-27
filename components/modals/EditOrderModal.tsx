@@ -5,6 +5,7 @@ import * as apiService from '../../services/apiService';
 import moment from 'moment';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 const InputGroup: React.FC<{icon: string; children: React.ReactNode; label: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
     <div>
@@ -29,6 +30,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
     const [formData, setFormData] = useState<Partial<Order>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultExteriors);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (order) {
@@ -146,7 +148,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <form onSubmit={handleSubmit} className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <form onSubmit={handleSubmit} className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-center justify-between p-5 border-b border-border-primary">
                     <h2 className="text-xl font-bold text-text-primary">Chỉnh Sửa Đơn Hàng</h2>
                     <button type="button" onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>

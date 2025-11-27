@@ -16,6 +16,7 @@ import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import Avatar from '../ui/Avatar';
+import { useModalBackground } from '../../utils/styleUtils';
 
 // FIX: Defined the User type used for team management.
 type User = { name: string, role: string, username: string };
@@ -338,7 +339,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         const suggestions = new Map<string, StockVehicle[]>();
         if(stockData && allPending.length > 0) {
             const availableCars = stockData.filter(car => car['Trạng thái']?.toLowerCase() === 'chưa ghép');
-            const normalize = (str?: string) => str?.toLowerCase().trim().normalize('NFC') || '';
+            const normalize = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
             availableCars.forEach(car => {
                 allPending.forEach(order => {
                     if (normalize(car['Dòng xe']) === normalize(order['Dòng xe']) && normalize(car['Phiên bản']) === normalize(order['Phiên bản']) && normalize(car['Ngoại thất']) === normalize(order['Ngoại thất']) && normalize(order['Nội thất']).includes(normalize(car['Nội thất']))) {
@@ -748,6 +749,28 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 );
             }
             case 'activityLog': {
+                const groupedLogs = useMemo(() => {
+                    if (!logData) return {} as Record<string, LogEntry[]>;
+                    return logData.reduce((acc, log) => {
+                        const date = moment(log['Thời gian']).format('YYYY-MM-DD');
+                        if (!acc[date]) acc[date] = [];
+                        acc[date].push(log);
+                        return acc;
+                    }, {} as Record<string, LogEntry[]>);
+                }, [logData]);
+
+                const getActionIcon = (action: string) => {
+                    const lowerAction = action.toLowerCase();
+                    if (lowerAction.includes('thêm') || lowerAction.includes('tạo') || lowerAction.includes('add') || lowerAction.includes('create')) return { icon: 'fa-plus-circle', color: 'text-success' };
+                    if (lowerAction.includes('cập nhật') || lowerAction.includes('edit') || lowerAction.includes('update')) return { icon: 'fa-pencil-alt', color: 'text-sky-500' };
+                    if (lowerAction.includes('xóa') || lowerAction.includes('hủy') || lowerAction.includes('delete') || lowerAction.includes('cancel')) return { icon: 'fa-trash-alt', color: 'text-danger' };
+                    if (lowerAction.includes('ghép') || lowerAction.includes('match')) return { icon: 'fa-link', color: 'text-cyan-500' };
+                    if (lowerAction.includes('tải lên') || lowerAction.includes('upload')) return { icon: 'fa-upload', color: 'text-indigo-500' };
+                    if (lowerAction.includes('đăng nhập') || lowerAction.includes('login')) return { icon: 'fa-sign-in-alt', color: 'text-text-secondary' };
+                    if (lowerAction.includes('lưu trữ') || lowerAction.includes('archive')) return { icon: 'fa-archive', color: 'text-purple-500' };
+                    return { icon: 'fa-info-circle', color: 'text-text-secondary' };
+                };
+                
                 return (
                     <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         <div className="p-3 border-b border-border-primary flex justify-between items-center">
@@ -756,28 +779,44 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <i className={`fas fa-sync-alt ${isLoadingLog ? 'animate-spin' : ''} mr-2`}></i>Làm mới
                             </button>
                         </div>
-                        <div className="flex-grow overflow-auto hidden-scrollbar">
+                        <div className="flex-grow overflow-auto hidden-scrollbar p-4 space-y-6">
                             {isLoadingLog && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
                             {errorLog && <div className="text-center p-8 text-danger">{errorLog}</div>}
-                            {!isLoadingLog && !errorLog && (
-                                <table className="min-w-full text-sm">
-                                    <thead className="bg-surface-hover sticky top-0 z-10">
-                                        <tr>
-                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary w-48">Thời Gian</th>
-                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary w-48">Hành Động</th>
-                                            <th className="py-2 px-3 text-left font-semibold text-text-secondary">Chi Tiết</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border-primary">
-                                        {logData.map((log, index) => (
-                                            <tr key={index} className="hover:bg-surface-hover">
-                                                <td className="px-3 py-2 whitespace-nowrap text-text-secondary font-mono" title={moment(log['Thời gian']).format('YYYY-MM-DD HH:mm:ss')}>{moment(log['Thời gian']).fromNow()}</td>
-                                                <td className="px-3 py-2 font-semibold text-text-primary">{log['Hành động']}</td>
-                                                <td className="px-3 py-2 text-text-secondary break-words">{log['Chi tiết']}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            {!isLoadingLog && !errorLog && Object.entries(groupedLogs).length > 0 ? (
+                                (Object.entries(groupedLogs) as [string, LogEntry[]][]).map(([date, logs]) => (
+                                    <div key={date}>
+                                        <div className="sticky top-0 bg-surface-card/80 backdrop-blur-sm z-10 py-2 -ml-4 pl-4 border-b border-border-primary">
+                                            <h4 className="font-bold text-text-primary capitalize">{moment(date).calendar(null, {
+                                                sameDay: '[Hôm nay]',
+                                                lastDay: '[Hôm qua]',
+                                                lastWeek: 'dddd, DD/MM/YYYY',
+                                                sameElse: 'DD/MM/YYYY'
+                                            })}</h4>
+                                        </div>
+                                        <div className="relative border-l-2 border-border-secondary ml-4 mt-4">
+                                            {logs.map((log, index) => {
+                                                const { icon, color } = getActionIcon(log['Hành động']);
+                                                return (
+                                                    <div key={index} className="relative pl-8 pb-6 group last:pb-2">
+                                                        <div className={`absolute top-1 -left-[9px] w-4 h-4 rounded-full bg-surface-card border-2 border-border-secondary group-hover:border-accent-primary transition-colors flex items-center justify-center`}>
+                                                           <i className={`fas ${icon} ${color} text-xs`}></i>
+                                                        </div>
+                                                        <div className="flex-grow min-w-0">
+                                                            <p className="font-semibold text-sm text-text-primary">{log['Hành động']}</p>
+                                                            <p className="text-sm text-text-secondary mt-1 break-words">{log['Chi tiết']}</p>
+                                                            <p className="text-xs text-text-secondary font-mono mt-2">{moment(log['Thời gian']).format('HH:mm:ss')}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                !isLoadingLog && <div className="text-center text-text-secondary py-12">
+                                    <i className="fas fa-file-alt fa-3x mb-4"></i>
+                                    <p>Không có hoạt động nào được ghi lại.</p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -796,23 +835,31 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             {isLoadingUsers && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
                             {errorUsers && <div className="text-center p-8 text-danger">{errorUsers}</div>}
                             {!isLoadingUsers && !errorUsers && (
-                                <div className="space-y-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                                     {activeUsers.length > 0 ? activeUsers
                                         .sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())
                                         .map(user => (
-                                        <div key={user.email} className="flex items-center gap-3 p-2 bg-surface-ground rounded-lg border border-border-primary">
-                                            {/* ----- BẮT ĐẦU THAY ĐỔI ----- */}
-                                            <Avatar name={user.fullName || user.email} size="md" />
-                                            <div className="flex-grow">
-                                                {/* Ưu tiên hiển thị Tên, nếu không có thì hiển thị email */}
-                                                <p className="font-semibold text-text-primary text-sm">{user.fullName || user.email}</p>
-                                            {/* ----- KẾT THÚC THAY ĐỔI ----- */}
-                                                <p className="text-xs text-text-secondary">Hoạt động lần cuối: {moment(user.lastSeen).fromNow()}</p>
+                                        <div key={user.email} className="flex flex-col gap-3 p-3 bg-surface-ground rounded-lg border border-border-primary hover:shadow-md transition-shadow">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative flex-shrink-0">
+                                                    <Avatar name={user.fullName || user.email} size="md" />
+                                                    <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success ring-2 ring-surface-ground" title="Online"></div>
+                                                </div>
+                                                <div className="flex-grow min-w-0">
+                                                    <p className="font-semibold text-text-primary text-sm truncate" title={user.fullName || user.email}>{user.fullName || user.email}</p>
+                                                    <p className="text-xs text-text-secondary truncate" title={user.email}>{user.email}</p>
+                                                </div>
                                             </div>
-                                            <div className="w-3 h-3 rounded-full bg-success animate-pulse" title="Online"></div>
+                                            <div className="text-xs text-text-secondary border-t border-border-secondary pt-2 space-y-1">
+                                                <p className="font-semibold">Hoạt động lần cuối:</p>
+                                                <div>
+                                                    <p className="font-mono text-text-primary">{moment(user.lastSeen).format('HH:mm:ss [ngày] DD/MM/YYYY')}</p>
+                                                    <p>({moment(user.lastSeen).fromNow()})</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     )) : (
-                                        <div className="text-center text-text-secondary py-12">
+                                        <div className="sm:col-span-2 md:col-span-3 xl:col-span-4 text-center text-text-secondary py-12">
                                             <i className="fas fa-ghost fa-3x mb-4"></i>
                                             <p>Không có người dùng nào đang hoạt động.</p>
                                         </div>
@@ -827,7 +874,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
 
-    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
     const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
         dashboard: [],
         invoices: [
@@ -976,9 +1022,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd', 'activityLog', 'activeUsers'];
-    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
     const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD', activityLog: 'Nhật Ký', activeUsers: 'Đang Truy Cập' };
-    // FIX: Added missing keys `activityLog` and `activeUsers` to satisfy the `Record<AdminSubView, ...>` type.
     const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length, activityLog: null, activeUsers: activeUsers.length };
     
     return (
@@ -1156,6 +1200,7 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
     const [selectedLeader, setSelectedLeader] = useState(editingTeam ? editingTeam.leader : '');
     const [selectedMembers, setSelectedMembers] = useState(editingTeam ? editingTeam.members : []);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (isOpen) {
@@ -1200,7 +1245,7 @@ const TeamEditorModal: React.FC<TeamEditorModalProps> = ({ isOpen, onClose, onSa
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="p-2.5 border-b"><h2 className="text-xl font-bold text-text-primary">{isNewTeam ? 'Tạo Phòng Mới' : `Chỉnh Sửa Phòng: ${editingTeam.leader}`}</h2></header>
                 <main className="p-3 space-y-2 overflow-y-auto hidden-scrollbar">
                     <div>

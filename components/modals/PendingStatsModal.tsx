@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface Variant {
     variant: string;
@@ -31,6 +32,7 @@ const RankIndicator: React.FC<{ rank: number }> = ({ rank }) => {
 
 
 const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, stats }) => {
+    const bgStyle = useModalBackground();
     
     const flattenedStats = useMemo(() => {
         return stats
@@ -61,6 +63,7 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
             <div
                 className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="flex-shrink-0 flex items-center justify-between p-5 border-b border-border-primary">
                     <div className="flex items-center gap-3">

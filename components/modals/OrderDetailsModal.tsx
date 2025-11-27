@@ -4,7 +4,7 @@ import 'moment/locale/vi';
 import { Order } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
-import { getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle, useModalBackground } from '../../utils/styleUtils';
 
 moment.locale('vi');
 
@@ -108,6 +108,7 @@ interface OrderDetailsModalProps {
     onEdit?: (order: Order) => void;
 }
 const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit }) => {
+    const bgStyle = useModalBackground();
     if (!order) return null;
 
     const generalStatus = (order["Kết quả"] || "chưa ghép").toLowerCase().trim().normalize('NFC');
@@ -178,6 +179,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
             <div
                 className="bg-surface-ground w-full max-w-4xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="flex-shrink-0 flex items-start justify-between p-5 border-b border-border-primary">
                     <div>

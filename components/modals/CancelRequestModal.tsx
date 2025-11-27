@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Order } from '../../types';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface CancelRequestModalProps {
     order: Order;
@@ -12,6 +13,7 @@ interface CancelRequestModalProps {
 const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose, onConfirm }) => {
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const handleSubmit = () => {
         if (!reason.trim()) {
@@ -27,6 +29,7 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
             <div 
                 className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                     <div className="animate-fade-in-down">
@@ -55,10 +58,10 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
                     </div>
                 </main>
                 <footer className="p-4 border-t border-border-primary flex justify-end gap-3 items-center bg-surface-ground rounded-b-2xl">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Không" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
                     </div>
-                    <div onClick={!isSubmitting && reason.trim() ? handleSubmit : undefined} title="Xác Nhận Hủy" className={`cursor-pointer ${(isSubmitting || !reason.trim()) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Xác Nhận Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
                     </div>
                 </footer>

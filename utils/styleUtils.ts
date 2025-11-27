@@ -1,4 +1,9 @@
 import React from 'react';
+import modal1 from '../pictures/modal1.png';
+import modal2 from '../pictures/modal2.png';
+import modal3 from '../pictures/modal3.png';
+import modal4 from '../pictures/modal4.png';
+import modal5 from '../pictures/modal5.png';
 
 // Centralized helper function to apply dynamic styles based on exterior color text.
 export const getExteriorColorStyle = (exteriorValue: string | undefined): React.CSSProperties => {
@@ -222,4 +227,14 @@ export const generateColorFromName = (name: string): string => {
   }
   const index = Math.abs(hash % avatarColors.length);
   return avatarColors[index];
+};
+
+// Hook for random modal background
+export const useModalBackground = () => {
+    const bg = React.useMemo(() => {
+        const images = [modal1, modal2, modal3, modal4, modal5];
+        const randomImg = images[Math.floor(Math.random() * images.length)];
+        return { '--modal-bg-image': `url(${randomImg})` } as React.CSSProperties;
+    }, []);
+    return bg;
 };

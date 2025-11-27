@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import * as apiService from '../../services/apiService';
 import { versionsMap } from '../../constants';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface RequestInvoiceModalProps {
     order: Order;
@@ -56,6 +57,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     
     const [salesPoliciesOptions, setSalesPoliciesOptions] = useState<string[]>([]);
     const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         const fetchPolicies = async () => {
@@ -134,7 +136,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="relative flex-shrink-0 flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <div className="animate-fade-in-down">
                         <h2 className="text-xl font-bold text-gradient">Yêu Cầu Xuất Hóa Đơn</h2>

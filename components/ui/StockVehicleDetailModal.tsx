@@ -3,7 +3,7 @@ import { StockVehicle } from '../../types';
 import moment from 'moment';
 import CarImage from './CarImage'; // Import the new component
 import StatusBadge from './StatusBadge';
-import { getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle, useModalBackground } from '../../utils/styleUtils';
 
 const InfoRow: React.FC<{ label: string; value?: string | number; isMono?: boolean, icon: string, valueStyle?: React.CSSProperties }> = ({ label, value, isMono, icon, valueStyle }) => (
     <div className="flex items-start gap-3 py-2">
@@ -84,6 +84,7 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
 
 
 const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpen, onClose, vehicle, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, processingVin, vehicleList, onNavigate }) => {
+    const bgStyle = useModalBackground();
     if (!isOpen || !vehicle) return null;
 
     const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
@@ -134,7 +135,7 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                     <i className="fas fa-chevron-left"></i>
                 </button>
             )}
-            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-start justify-between p-5 border-b border-border-primary">
                     <div>
                         <h2 className="text-xl font-bold text-text-primary">Chi Tiết Xe</h2>

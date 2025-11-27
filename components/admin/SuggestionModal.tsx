@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { Order, StockVehicle } from '../../types';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface SuggestionModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface SuggestionModalProps {
 const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onConfirm, order, suggestedCars, showToast }) => {
     const [selectedVin, setSelectedVin] = useState<string>(suggestedCars.length > 0 ? suggestedCars[0].VIN : '');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     if (!isOpen) return null;
 
@@ -38,7 +40,7 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className="h-1.5 rounded-t-2xl bg-warning"></div>
                 <header className="flex-shrink-0 flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">

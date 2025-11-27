@@ -105,6 +105,24 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
     const [isAddingNewTeam, setIsAddingNewTeam] = useState(false);
 
+    // ===== BẮT ĐẦU THÊM MỚI (FIX CHO TAB "ĐANG TRUY CẬP") =====
+    // useEffect này dùng để báo cáo sự hiện diện (heartbeat)
+    useEffect(() => {
+        // Báo cáo sự hiện diện ngay lập tức khi vào trang Admin
+        apiService.recordUserPresence();
+
+        // Thiết lập một "heartbeat" lặp lại mỗi 2 phút (120,000 ms)
+        // để duy trì trạng thái "đang hoạt động".
+        // (Thời gian hết hạn ở backend là 5 phút)
+        const presenceInterval = setInterval(() => {
+            apiService.recordUserPresence();
+        }, 120000); 
+
+        // Dọn dẹp interval khi component bị unmount (rời khỏi trang)
+        return () => clearInterval(presenceInterval);
+    }, []); // Mảng rỗng đảm bảo useEffect này chỉ chạy một lần khi mount
+    // ===== KẾT THÚC THÊM MỚI =====
+
     useEffect(() => {
         if (initialState) {
             // Always set the target tab if provided
@@ -320,7 +338,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         const suggestions = new Map<string, StockVehicle[]>();
         if(stockData && allPending.length > 0) {
             const availableCars = stockData.filter(car => car['Trạng thái']?.toLowerCase() === 'chưa ghép');
-            const normalize = (str?: string) => str?.toLowerCase().trim().normalize('NFC') || '';
+            const normalize = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
             availableCars.forEach(car => {
                 allPending.forEach(order => {
                     if (normalize(car['Dòng xe']) === normalize(order['Dòng xe']) && normalize(car['Phiên bản']) === normalize(order['Phiên bản']) && normalize(car['Ngoại thất']) === normalize(order['Ngoại thất']) && normalize(order['Nội thất']).includes(normalize(car['Nội thất']))) {
@@ -731,7 +749,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
             case 'activityLog': {
                 const groupedLogs = useMemo(() => {
-                    if (!logData) return {};
+                    if (!logData) return {} as Record<string, LogEntry[]>;
                     return logData.reduce((acc, log) => {
                         const date = moment(log['Thời gian']).format('YYYY-MM-DD');
                         if (!acc[date]) acc[date] = [];
@@ -764,7 +782,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             {isLoadingLog && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
                             {errorLog && <div className="text-center p-8 text-danger">{errorLog}</div>}
                             {!isLoadingLog && !errorLog && Object.entries(groupedLogs).length > 0 ? (
-                                Object.entries(groupedLogs).map(([date, logs]) => (
+// FIX: Explicitly type the 'logs' parameter to resolve "'map' does not exist on type 'unknown'".
+                                Object.entries(groupedLogs).map(([date, logs]: [string, LogEntry[]]) => (
                                     <div key={date}>
                                         <div className="sticky top-0 bg-surface-card/80 backdrop-blur-sm z-10 py-2 -ml-4 pl-4 border-b border-border-primary">
                                             <h4 className="font-bold text-text-primary capitalize">{moment(date).calendar(null, {

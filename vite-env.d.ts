@@ -1,37 +1,17 @@
-// FIX: The reference to "vite/client" can cause resolution errors in some build environments,
-// which prevents the global 'lottie-player' type declarations in this file from being processed.
-// The line is commented out below to fix this. Manual type declarations for common asset
-// imports (e.g., '.mp4', '.json?url') are provided as a robust fallback.
-// /// <reference types="vite/client" />
+/// <reference types="vite/client" />
 
-// FIX: Changed to a standard import to ensure JSX namespace is correctly augmented.
 import React from 'react';
 
-// Manual declarations for asset types as a fallback for vite/client.
-declare module '*.mp4' {
-  const src: string;
-  export default src;
-}
-declare module '*.json?url' {
-  const src: string;
-  export default src;
-}
-declare module '*.gif' {
-  const src: string;
-  export default src;
-}
-declare module '*.png' {
-  const src: string;
-  export default src;
-}
-declare module '*.jpg' {
-  const src: string;
-  export default src;
-}
-
+export {};
 
 declare global {
-  // This interface allows using refs with the custom element's methods (e.g., ref.current.play()).
+  const PDFLib: any;
+  const Tesseract: any;
+  const axios: any;
+  const Chart: any;
+  const Choices: any;
+
+  // Lottie player interface extending standard HTMLElement
   interface LottiePlayer extends HTMLElement {
     play(): void;
     stop(): void;
@@ -40,21 +20,51 @@ declare global {
 
   namespace JSX {
     interface IntrinsicElements {
-      // This defines 'lottie-player' as a known JSX tag with its specific props.
-      'lottie-player': React.DetailedHTMLProps<
-        React.HTMLAttributes<LottiePlayer> & {
-          src?: string;
-          background?: string;
-          speed?: string;
-          loop?: boolean | string;
-          autoplay?: boolean | string;
-        },
-        LottiePlayer
-      >;
+      'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        background?: string;
+        speed?: string | number;
+        style?: React.CSSProperties;
+        loop?: boolean;
+        autoplay?: boolean;
+        mode?: string;
+        direction?: string | number;
+        hover?: boolean;
+        controls?: boolean;
+        ref?: any;
+        class?: string;
+        [key: string]: any;
+      };
     }
   }
 }
 
-// This empty export is crucial to turn this file into a module,
-// which is a requirement for 'declare global' to work correctly.
-export {};
+// Asset module declarations
+declare module '*.png' {
+  const value: string;
+  export default value;
+}
+declare module '*.jpg' {
+  const value: string;
+  export default value;
+}
+declare module '*.jpeg' {
+  const value: string;
+  export default value;
+}
+declare module '*.gif' {
+  const value: string;
+  export default value;
+}
+declare module '*.svg' {
+  const value: string;
+  export default value;
+}
+declare module '*.mp4' {
+  const value: string;
+  export default value;
+}
+declare module '*.json?url' {
+  const value: string;
+  export default value;
+}

@@ -80,6 +80,38 @@ export const compressImage = (
   });
 };
 
+/**
+ * "Compresses" a PDF file by re-saving it, which can optimize its structure and reduce file size.
+ * @param file The original PDF File object.
+ * @returns A promise that resolves to the processed PDF as a new File object. Returns the original if compression fails or doesn't reduce size.
+ */
+export const compressPdf = async (file: File): Promise<File> => {
+    if (typeof PDFLib === 'undefined') {
+        console.warn('PDF-Lib is not loaded. Skipping PDF compression.');
+        return file;
+    }
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+        // This is a basic form of size reduction. It restructures the PDF.
+        const pdfBytes = await pdfDoc.save();
+
+        const newFile = new File([pdfBytes], file.name, { type: 'application/pdf', lastModified: Date.now() });
+
+        // Only return the new file if it's smaller
+        if (newFile.size < file.size) {
+            return newFile;
+        } else {
+            return file;
+        }
+    } catch (error) {
+        console.error('Error during PDF compression:', error);
+        // Return original file on error
+        return file;
+    }
+};
+
 
 const parseAndValidateDate = (
     dayStr: string, 

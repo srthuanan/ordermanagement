@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface VcRequestPayload {
     orderNumber: string;
@@ -30,6 +31,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
     const [regFront, setRegFront] = useState<File | null>(null);
     const [regBack, setRegBack] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (!order) {
@@ -88,7 +90,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-3xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-3xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 relative flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <h2 className="text-xl font-bold text-gradient">Yêu Cầu Cấp VinClub</h2>
                     <p className="text-sm text-text-secondary mt-1">Cung cấp chứng từ để tạo tài khoản VinClub cho khách hàng.</p>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Order } from '../../types';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 // Choices.js is loaded globally from index.html, declare it for TypeScript
 declare const Choices: any;
@@ -19,6 +20,7 @@ const PairOrderModal: React.FC<PairOrderModalProps> = ({ vin, pendingOrders, onC
     const [isSubmitting, setIsSubmitting] = useState(false);
     const selectRef = useRef<HTMLSelectElement>(null);
     const choicesRef = useRef<any>(null);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (selectRef.current && pendingOrders.length > 0) {
@@ -69,6 +71,7 @@ const PairOrderModal: React.FC<PairOrderModalProps> = ({ vin, pendingOrders, onC
             <div 
                 className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                     <div className="animate-fade-in-down">

@@ -1,6 +1,7 @@
 import React from 'react';
 import RequestForm from '../RequestForm';
 import { AnalyticsData, Order, StockVehicle } from '../../types';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface ImageSource {
     src: string;
@@ -22,6 +23,7 @@ interface CreateRequestModalProps {
 }
 
 const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose, onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
+    const bgStyle = useModalBackground();
     if (!isOpen) return null;
 
     return (
@@ -32,6 +34,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
             <div 
                 className="bg-surface-card w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-7xl flex flex-col sm:rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative">
                     <div className="text-center animate-fade-in-down">

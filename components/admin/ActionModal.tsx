@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import yesAnimationUrl from '/pictures/yes.json?url';
-import noAnimationUrl from '/pictures/no-animation.json?url';
+import yesAnimationUrl from '../../pictures/yes.json?url';
+import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface InputConfig {
     id: string;
@@ -29,6 +30,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
 }) => {
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (isOpen) {
@@ -100,6 +102,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
             <div
                 className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
+                style={bgStyle}
             >
                 <div className={`h-1.5 rounded-t-2xl ${selectedColor.bg}`}></div>
 

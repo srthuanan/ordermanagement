@@ -1,14 +1,16 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useMemo } from 'react';
 import * as authService from '../services/authService';
-import loginVideo from '/pictures/1111.mp4';
-import logoNhaGiao from '/pictures/logonhagiao.png';
-import icon1 from '/pictures/icon1.gif';
-import icon2 from '/pictures/icon2.gif';
+import bgVideo from '../pictures/nennoel.mp4';
+import logoNoel from '../pictures/logonoel.png';
 
 interface LoginScreenProps {
     onLoginSuccess: () => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
+
+const Snowflake: React.FC<{ style: React.CSSProperties }> = ({ style }) => (
+    <div className="snowflake" style={style}></div>
+);
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +21,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
+    const snowflakes = useMemo(() => {
+        return Array.from({ length: 50 }).map((_, i) => {
+            const size = Math.random() * 3 + 1;
+            const style = {
+                left: `${Math.random() * 100}vw`,
+                width: `${size}px`,
+                height: `${size}px`,
+                animationDuration: `${Math.random() * 10 + 10}s`,
+                animationDelay: `${Math.random() * 5}s`,
+            };
+            return <Snowflake key={i} style={style} />;
+        });
+    }, []);
 
     const handleLoginSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -85,7 +101,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     };
 
     return (
-        <div className="teachers-day relative h-screen w-screen overflow-hidden flex items-center justify-center p-4">
+        <div className="frosty-christmas relative h-screen w-screen overflow-hidden flex items-center justify-center p-4">
+            {/* Video Background */}
             <video
                 autoPlay
                 loop
@@ -93,54 +110,49 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover z-0"
             >
-                <source src={loginVideo} type="video/mp4" />
+                <source src={bgVideo} type="video/mp4" />
             </video>
-            {/* --- Dark Overlay --- */}
-            <div className="absolute inset-0 bg-black/40 z-5"></div>
+            
+            {/* Animated Snowflakes Overlay */}
+            <div id="snowflakes" aria-hidden="true">{snowflakes}</div>
 
-            {/* --- Main Content Grid --- */}
-            <div className="relative z-20 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 lg:gap-8 items-center">
+            <div className="relative z-20 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-8 items-center">
                 
-                {/* --- Left Cinematic Panel --- */}
-                <div className="hidden lg:col-span-2 lg:flex flex-col items-center justify-center text-center p-8 text-shadow">
-                    <i className="fas fa-quote-left text-4xl text-white/80 mb-4"></i>
-                    <p className="text-3xl italic text-white leading-relaxed">
-                        "Một gánh sách không bằng một người thầy giỏi."
+                <div className="hidden lg:col-span-1 lg:flex flex-col items-center justify-center text-center p-8 text-shadow">
+                    <p className="text-5xl italic text-white/90 leading-tight font-serif drop-shadow-lg">
+                        "The future is forged in <br/> <span className="text-blue-300">winter's heart</span>."
                     </p>
-                    <p className="text-xl text-white/90 mt-4">- Ngạn ngữ Việt Nam -</p>
+                    <div className="w-24 h-1 bg-blue-400/50 my-6 rounded-full"></div>
+                    <p className="text-xl text-white/70 tracking-widest uppercase font-light">- Frost & Co. -</p>
                 </div>
                 
-                {/* --- Right Form Panel --- */}
-                <div className="form-panel-teachers w-full max-w-sm mx-auto lg:max-w-none lg:mx-0 rounded-2xl flex flex-col justify-center p-8 sm:p-10">
+                <div className="form-panel-frosty w-full max-w-[300px] mx-auto lg:max-w-[300px] lg:mx-0 rounded-xl flex flex-col justify-center p-5 relative overflow-hidden">
+                    {/* Decorative ice glint */}
+                    <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+
                     {viewMode === 'login' && (
                         <div className="w-full animate-fade-in-up">
-                            <div className="text-center mb-8 animate-fade-in-down">
-                                <img src={logoNhaGiao} alt="Tri Ân Thầy Cô" className="h-26 mx-auto filter drop-shadow-lg animate-zoom-in-out" />
-                                <h1 className="text-3xl font-bold text-white mt-3 text-shadow">
-                                    Tri Ân Thầy Cô
-                                </h1>
-                                <p className="text-lg font-semibold text-white/80 tracking-widest"></p>
+                            <div className="text-center mb-2 animate-fade-in-down flex justify-center">
+                                <img 
+                                    src={logoNoel} 
+                                    alt="Logo Noel" 
+                                    className="max-h-28 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+                                />
                             </div>
-                            <form onSubmit={handleLoginSubmit} className="space-y-6">
-                                <div className="energy-input-container">
-                                    <img src={icon1} alt="Username" className="energy-input-icon" />
-                                    <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Tên đăng nhập" autoComplete="username" className="energy-input"/>
+                            <form onSubmit={handleLoginSubmit} className="space-y-3">
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-user frosty-input-icon text-xs"></i>
+                                    <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Username" autoComplete="username" className="frosty-input text-sm h-10"/>
                                 </div>
-                                <div className="energy-input-container">
-                                    <img src={icon2} alt="Password" className="energy-input-icon" />
-                                    <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Mật khẩu" autoComplete="current-password" className="energy-input"/>
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-key frosty-input-icon text-xs"></i>
+                                    <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" autoComplete="current-password" className="frosty-input text-sm h-10"/>
                                 </div>
-                                <div className="flex items-center justify-end pt-2">
-                                    <button type="button" onClick={() => setViewMode('forgot')} className="text-sm font-semibold forgot-password-link hover:underline focus:outline-none">Quên mật khẩu?</button>
+                                <div className="flex items-center justify-end pt-0.5">
+                                    <button type="button" onClick={() => setViewMode('forgot')} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors hover:underline focus:outline-none">Forgot password?</button>
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="teachers-day-button w-full mt-2">
-                                    {isSubmitting ? (
-                                        <>
-                                            <i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...
-                                        </>
-                                    ) : (
-                                        'Đăng Nhập'
-                                    )}
+                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">
+                                    {isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Wait...</> : 'Log In'}
                                 </button>
                             </form>
                         </div>
@@ -148,46 +160,52 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
                     {viewMode === 'forgot' && (
                         <div className="w-full animate-fade-in-up">
-                            <h2 className="text-3xl font-extrabold mb-2 text-center tracking-tight text-white text-shadow">Quên Mật Khẩu</h2>
-                            <p className="text-md text-slate-300 mb-10 text-center">Nhập email để nhận mã khôi phục.</p>
-                            <form onSubmit={handleForgotPasswordSubmit} className="space-y-6">
-                                <div className="energy-input-container">
-                                    <i className="fas fa-envelope energy-input-icon"></i>
-                                    <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email đăng ký" required className="energy-input"/>
+                            <div className="text-center mb-4">
+                                <i className="fas fa-lock-open text-2xl text-blue-200 mb-2 opacity-80"></i>
+                                <h2 className="text-lg font-bold text-white tracking-tight text-shadow">Forgot Password</h2>
+                                <p className="text-[10px] text-blue-200/70 mt-0.5">Enter your email to receive a reset code.</p>
+                            </div>
+                            <form onSubmit={handleForgotPasswordSubmit} className="space-y-3">
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-envelope frosty-input-icon text-xs"></i>
+                                    <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Registered Email" required className="frosty-input text-sm h-10"/>
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="teachers-day-button w-full mt-4">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang gửi...</> : 'Gửi Mã OTP'}</button>
-                                <div className="text-center mt-4"><button type="button" onClick={handleBackToLogin} className="text-sm font-semibold text-slate-300 hover:text-white hover:underline"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
+                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Sending...</> : 'Send OTP'}</button>
+                                <div className="text-center mt-3"><button type="button" onClick={handleBackToLogin} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors"><i className="fas fa-arrow-left mr-1"></i>Back to Login</button></div>
                             </form>
                         </div>
                     )}
 
                      {viewMode === 'reset' && (
                         <div className="w-full animate-fade-in-up">
-                            <h2 className="text-3xl font-extrabold mb-2 text-center tracking-tight text-white text-shadow">Đặt Lại Mật Khẩu</h2>
-                            <p className="text-sm text-slate-300 mb-8 text-center">Mã OTP đã được gửi tới <strong className="text-white">{email}</strong>.</p>
-                            <form onSubmit={handleResetPasswordSubmit} className="space-y-6">
-                                <div className="energy-input-container">
-                                    <i className="fas fa-key energy-input-icon"></i>
-                                    <input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="Mã OTP" required className="energy-input"/>
+                            <div className="text-center mb-4">
+                                <i className="fas fa-shield-alt text-2xl text-blue-200 mb-2 opacity-80"></i>
+                                <h2 className="text-lg font-bold text-white tracking-tight text-shadow">Reset Password</h2>
+                                <p className="text-[10px] text-blue-200/70 mt-0.5">OTP sent to <strong className="text-white">{email}</strong>.</p>
+                            </div>
+                            <form onSubmit={handleResetPasswordSubmit} className="space-y-3">
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-key frosty-input-icon text-xs"></i>
+                                    <input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="OTP Code" required className="frosty-input text-sm h-10"/>
                                 </div>
-                                <div className="energy-input-container">
-                                    <i className="fas fa-lock energy-input-icon"></i>
-                                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="Mật khẩu mới (tối thiểu 6 ký tự)" required className="energy-input"/>
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-lock frosty-input-icon text-xs"></i>
+                                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New Password" required className="frosty-input text-sm h-10"/>
                                 </div>
-                                <div className="energy-input-container">
-                                    <i className="fas fa-check-circle energy-input-icon"></i>
-                                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Xác nhận mật khẩu mới" required className="energy-input"/>
+                                <div className="frosty-input-container">
+                                    <i className="fas fa-check-circle frosty-input-icon text-xs"></i>
+                                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Confirm Password" required className="frosty-input text-sm h-10"/>
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="teachers-day-button w-full mt-4">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Đang xử lý...</> : 'Xác Nhận'}</button>
-                                <div className="text-center pt-2"><button type="button" onClick={handleBackToLogin} className="text-sm font-semibold text-slate-300 hover:text-white hover:underline"><i className="fas fa-arrow-left mr-2"></i>Quay lại Đăng nhập</button></div>
+                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Confirming...</> : 'Confirm Reset'}</button>
+                                <div className="text-center mt-3"><button type="button" onClick={handleBackToLogin} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors"><i className="fas fa-arrow-left mr-1"></i>Back to Login</button></div>
                             </form>
                         </div>
                     )}
                 </div>
 
             </div>
-            <footer className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-[10px] font-medium text-white/70 z-20 text-shadow">
-                &copy; {new Date().getFullYear()} OrderManagement. All Rights Reserved.
+            <footer className="absolute bottom-2 left-1/2 -translate-x-1/2 text-center text-[10px] font-medium text-white/30 z-20">
+                &copy; {new Date().getFullYear()} OrderManagement
             </footer>
         </div>
     );

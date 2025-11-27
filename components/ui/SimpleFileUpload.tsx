@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { compressImage } from '../../services/ocrService';
+import React, { useState, useRef, useCallback } from 'react';
+import { compressImage, compressPdf } from '../../services/ocrService';
 
 interface SimpleFileUploadProps {
   id: string;
@@ -13,8 +13,9 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const validateFile = (file: File) => {
+  const validateFile = useCallback((file: File) => {
     if (accept) {
       const fileType = file.type;
       const acceptedTypes = accept.split(',').map(t => t.trim());
@@ -33,9 +34,9 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
       }
     }
     return true;
-  }
+  }, [accept]);
 
-  const handleFile = async (file: File | null) => {
+  const handleFile = useCallback(async (file: File | null) => {
     if (file) {
       if (!validateFile(file)) {
         setSelectedFile(null);
@@ -44,27 +45,31 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
         return;
       }
 
-      if (file.type.startsWith('image/')) {
-        try {
-          const compressedFile = await compressImage(file);
-          setSelectedFile(compressedFile);
-          onFileSelect(compressedFile);
-        } catch (error) {
-          console.error("Image compression failed:", error);
-          alert('Lỗi nén ảnh. Vui lòng thử lại với ảnh khác.');
-          setSelectedFile(null);
-          onFileSelect(null);
-          if (inputRef.current) inputRef.current.value = '';
+      setIsProcessing(true);
+      try {
+        let processedFile: File;
+        if (file.type.startsWith('image/')) {
+          processedFile = await compressImage(file);
+        } else if (file.type === 'application/pdf') {
+          processedFile = await compressPdf(file);
+        } else {
+          processedFile = file;
         }
-      } else {
-        setSelectedFile(file);
-        onFileSelect(file);
+        setSelectedFile(processedFile);
+        onFileSelect(processedFile);
+      } catch (error) {
+        console.error("File processing failed:", error);
+        alert('Lỗi xử lý file. Vui lòng thử lại.');
+        setSelectedFile(null);
+        onFileSelect(null);
+      } finally {
+        setIsProcessing(false);
       }
     } else {
       setSelectedFile(null);
       onFileSelect(null);
     }
-  }
+  }, [onFileSelect, validateFile]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleFile(event.target.files?.[0] || null);
@@ -73,6 +78,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
   const handleRemoveFile = (e: React.MouseEvent) => {
       e.stopPropagation();
       handleFile(null);
+      if (inputRef.current) inputRef.current.value = '';
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -102,7 +108,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
   };
 
   return (
-    <div>
+    <div className="relative">
       <label className="block text-sm font-medium text-text-primary mb-2">
         {label}
         {required && <span className="text-danger ml-1">*</span>}
@@ -114,7 +120,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
                     <p className="text-sm font-semibold text-text-primary truncate" title={selectedFile.name}>{selectedFile.name}</p>
                     <p className="text-xs text-text-secondary">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                 </div>
-                <button type="button" onClick={handleRemoveFile} className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors"><i className="fas fa-times"></i></button>
+                <button type="button" onClick={handleRemoveFile} disabled={isProcessing} className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors disabled:opacity-50"><i className="fas fa-times"></i></button>
             </div>
       ) : (
           <div 
@@ -139,6 +145,12 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
               <p className="text-xs text-text-placeholder">{getAcceptHint()}</p>
             </div>
           </div>
+      )}
+      {isProcessing && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-20">
+            <i className="fas fa-spinner fa-spin text-2xl text-accent-primary"></i>
+            <p className="text-sm font-semibold text-accent-primary mt-2">Đang xử lý...</p>
+        </div>
       )}
     </div>
   );

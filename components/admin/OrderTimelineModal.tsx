@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import moment from 'moment';
 import * as apiService from '../../services/apiService';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface TimelineItemData {
     'Thời gian': string;
@@ -35,6 +36,7 @@ const OrderTimelineModal: React.FC<OrderTimelineModalProps> = ({ isOpen, onClose
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [history, setHistory] = useState<TimelineItemData[] | null>(null);
+    const bgStyle = useModalBackground();
 
     const handleSearch = useCallback(async () => {
         if (!orderNumber.trim()) {
@@ -71,7 +73,7 @@ const OrderTimelineModal: React.FC<OrderTimelineModalProps> = ({ isOpen, onClose
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-center justify-between p-2.5 border-b border-border-primary flex-shrink-0">
                      <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100">

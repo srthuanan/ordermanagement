@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import * as authService from '../../services/authService';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface ChangePasswordModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,7 +62,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <form onSubmit={handleSubmit}>
                     <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                         <div className="animate-fade-in-down">

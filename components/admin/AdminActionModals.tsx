@@ -4,6 +4,7 @@ import SimpleFileUpload from '../ui/SimpleFileUpload';
 import { compressImage } from '../../services/ocrService';
 import yesAnimationUrl from '../../pictures/yes.json?url';
 import noAnimationUrl from '../../pictures/no-animation.json?url';
+import { useModalBackground } from '../../utils/styleUtils';
 
 // --- Modal 1: Request with Reason and Optional Image Paste ---
 
@@ -22,6 +23,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     const [reason, setReason] = useState('');
     const [images, setImages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const handleImagePaste = useCallback(async (event: React.ClipboardEvent<HTMLDivElement>) => {
         const items = event.clipboardData.items;
@@ -75,7 +77,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     return (
          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className={`h-1.5 rounded-t-2xl ${currentTheme.barBg}`}></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
@@ -132,6 +134,7 @@ interface UploadInvoiceModalProps {
 export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, onClose, onSubmit, order }) => {
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const handleSubmit = async () => {
         if (!file) {
@@ -152,7 +155,7 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                  <div className="h-1.5 rounded-t-2xl bg-success"></div>
                  <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
