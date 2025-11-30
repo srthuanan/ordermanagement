@@ -4,8 +4,14 @@
  * @returns The extracted file ID or null if not found.
  */
 export const getDriveFileId = (url: string): string | null => {
-    if (!url || typeof url !== 'string' || !url.includes('drive.google.com')) {
+    if (!url || typeof url !== 'string') {
         return null;
+    }
+    // Relaxed check to support both drive.google.com and docs.google.com
+    if (!url.includes('google.com')) {
+        // If it doesn't look like a google url, we might still want to check regex if we are sure, 
+        // but for now let's keep it safe.
+        // return null; 
     }
     // Tries to match /d/FILE_ID, /file/d/FILE_ID, and ?id=FILE_ID or &id=FILE_ID
     const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|[?&]id=([a-zA-Z0-9_-]{25,})/);
@@ -17,8 +23,8 @@ export const getDriveFileId = (url: string): string | null => {
 };
 
 /**
- * Transforms a Google Drive URL into a directly embeddable image URL using the Google User Content endpoint.
- * This is often the most reliable method.
+ * Transforms a Google Drive URL into a directly embeddable image URL using the Google Drive Thumbnail endpoint.
+ * This endpoint is more reliable than lh3.googleusercontent.com as it handles auth cookies better.
  * @param url The original Google Drive URL.
  * @param size Optional desired width for the image.
  * @returns An embeddable image URL.
@@ -30,11 +36,10 @@ export const toEmbeddableUrl = (url: string, size?: number): string => {
     }
     const fileId = getDriveFileId(url);
     if (fileId) {
-        let embedUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
-        if (size) {
-            embedUrl += `=w${size}`; // Append size parameter for optimization
-        }
-        return embedUrl;
+        // Use the thumbnail endpoint which supports resizing via sz parameter
+        // sz=w{width}
+        const sizeParam = size ? `w${size}` : 'w1920';
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sizeParam}`;
     }
     // If it's not a known Google Drive URL, return it as is.
     return url;
@@ -61,7 +66,7 @@ export const toDownloadableUrl = (url: string): string => {
  */
 export const getSanitizedFilename = (customerName?: string, fileLabel?: string): string => {
     if (!customerName || !fileLabel) return 'image.jpg';
-    
+
     const removeDiacritics = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/Đ/g, "D").replace(/đ/g, "d");
     const cleanCustomer = removeDiacritics(customerName).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
     const cleanLabel = fileLabel.replace(/\s+/g, '_');

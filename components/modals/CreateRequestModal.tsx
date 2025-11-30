@@ -27,11 +27,11 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
     if (!isOpen) return null;
 
     return (
-        <div 
-            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-0 sm:p-4 animate-fade-in"
+        <div
+            className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-0 sm:p-4 animate-fade-in"
             onClick={onClose}
         >
-            <div 
+            <div
                 className="bg-surface-card w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-7xl flex flex-col sm:rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
@@ -43,7 +43,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">Điền thông tin và tải lên Ủy nhiệm chi để gửi yêu cầu.</p>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                     >

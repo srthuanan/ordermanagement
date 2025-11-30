@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 const SnowEffect: React.FC = () => {
     // Generate static random values once to avoid recalculation on re-renders
     const particles = useMemo(() => {
-        // Standard small snow dots (Increased quantity for "denser" effect)
-        const smallSnow = Array.from({ length: 120 }).map((_, i) => ({
+        // Standard small snow dots (Reduced quantity for performance)
+        const smallSnow = Array.from({ length: 40 }).map((_, i) => ({
             id: `small-${i}`,
             left: `${Math.random() * 100}vw`,
             animationDuration: `${Math.random() * 8 + 5}s`, // 5-13s (falling slightly faster)
@@ -15,8 +15,8 @@ const SnowEffect: React.FC = () => {
             type: 'dot'
         }));
 
-        // Large detailed snowflakes (Increased quantity)
-        const bigFlakes = Array.from({ length: 15 }).map((_, i) => ({
+        // Large detailed snowflakes (Reduced quantity)
+        const bigFlakes = Array.from({ length: 5 }).map((_, i) => ({
             id: `big-${i}`,
             left: `${Math.random() * 95}vw`, // Keep slightly away from edges
             animationDuration: `${Math.random() * 12 + 10}s`, // 10-22s
@@ -31,11 +31,11 @@ const SnowEffect: React.FC = () => {
 
     // Generate random mounds for the uneven snow pile effect
     const mounds = useMemo(() => {
-        return Array.from({ length: 8 }).map((_, i) => ({
+        return Array.from({ length: 5 }).map((_, i) => ({
             id: `mound-${i}`,
             left: `${Math.random() * 100 - 10}%`, // Allow slight overflow to cover edges
             width: `${Math.random() * 30 + 20}%`, // 20-50% width
-            height: `${Math.random() * 40 + 20}px`, // 20-60px height
+            height: `${Math.random() * 30 + 10}px`, // Reduced height
             animationDuration: `${Math.random() * 30 + 45}s`, // 45-75s for full accumulation
             animationDelay: `${Math.random() * 10}s`, // Staggered starts
             zIndex: Math.floor(Math.random() * 5),
@@ -51,15 +51,15 @@ const SnowEffect: React.FC = () => {
                 }
                 .snow-mound {
                     position: absolute;
-                    bottom: -10px; /* Slight overlap with bottom edge */
-                    background: radial-gradient(circle at 50% 0, #FFFFFF, rgba(255, 255, 255, 0.9));
-                    box-shadow: 0 -2px 10px rgba(200, 200, 200, 0.3);
-                    border-radius: 100% 100% 0 0; /* Semi-circle shape */
-                    filter: blur(2px);
+                    bottom: -5px; /* Slight overlap */
+                    /* Softer gradient for a fluffy look */
+                    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 1) 40%);
+                    box-shadow: 0 -4px 15px rgba(255, 255, 255, 0.5); /* Soft glow */
+                    border-radius: 50% 50% 0 0 / 100% 100% 0 0; /* Flatter, wider curve */
                     animation: accumulate ease-out forwards;
                 }
             `}</style>
-            
+
             {/* Falling Particles */}
             {particles.map((p) => (
                 <div
@@ -76,8 +76,10 @@ const SnowEffect: React.FC = () => {
                         // Styling for white snow
                         backgroundColor: p.type === 'dot' ? '#FFFFFF' : undefined,
                         color: p.type === 'flake' ? '#FFFFFF' : undefined,
-                        // Add a slight shadow to make it visible on white backgrounds without being blue
-                        filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15))', 
+                        // REMOVED expensive drop-shadow filter
+                        // filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15))', 
+                        textShadow: p.type === 'flake' ? '0 1px 2px rgba(0,0,0,0.1)' : undefined, // Cheaper alternative for text
+                        boxShadow: p.type === 'dot' ? '0 1px 2px rgba(0,0,0,0.1)' : undefined, // Cheaper alternative for box
                     }}
                 >
                     {p.type === 'flake' && <i className="fas fa-snowflake"></i>}
@@ -87,8 +89,8 @@ const SnowEffect: React.FC = () => {
             {/* Uneven Snow Pile Accumulation */}
             <div className="absolute bottom-0 left-0 right-0 h-0 w-full">
                 {/* Base layer to fill gaps */}
-                <div className="absolute bottom-0 left-0 w-full h-[15px] bg-white blur-sm opacity-80" style={{ animation: 'accumulate 60s ease-out forwards' }}></div>
-                
+                <div className="absolute bottom-0 left-0 w-full h-[15px] bg-white opacity-80" style={{ animation: 'accumulate 60s ease-out forwards' }}></div>
+
                 {/* Random mounds */}
                 {mounds.map((m) => (
                     <div

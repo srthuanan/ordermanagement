@@ -1,13 +1,13 @@
-export const API_URL = "https://script.google.com/macros/s/AKfycbzWpuFGIWZuG61cuZdR0ZoY03mw0ZAYBU5zv39ohc-xgk2i4XvcEG5Exp3WLYToCJG4/exec";
+export const API_URL = "https://script.google.com/macros/s/AKfycbxNGSHVB5ska6T9QltHUyDQNVeHTyfqqOS8saOJB09KlgaIfZqRUJQkaef0_42EsvBSOA/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";
 
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export const versionsMap = {
-    "VF 3": ["Base"], 
+    "VF 3": ["Base", "Base Tiêu chuẩn 2"],
     "VF 5": ["Plus"],
     "VF 6": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2"],
-    "VF 7": ["Eco", "Eco_HUD", "Plus_Metal Nâng cấp", "Plus_Metal Tiêu chuẩn", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2", "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2", "Plus Tiêu chuẩn 2", "Plus Tiêu chuẩn 1"],
+    "VF 7": ["Eco", "Eco_HUD", "Plus_Metal Nâng cấp", "Plus_Metal Tiêu chuẩn", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2", "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2", "Plus Tiêu chuẩn 2", "Plus Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 1 (FWD)", "Plus_Metal Tiêu chuẩn 1 (AWD)"],
     "VF 8": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus"],
     "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
     "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"],
@@ -18,8 +18,9 @@ export const allPossibleVersions = [
     "Base", "Plus", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco", "Eco_HUD", "Eco Tiêu chuẩn", "Eco Nâng cấp",
     "Plus_Metal Tiêu chuẩn", "Plus_Metal Nâng cấp", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES",
     "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO",
-    "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2", 
+    "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2",
     "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2",
+    "Base Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1 (FWD)", "Plus_Metal Tiêu chuẩn 1 (AWD)",
     "EC Van"
 ];
 
@@ -47,7 +48,7 @@ export const defaultInteriors = ["Black", "Brown", "Beige"];
 
 export const interiorColorRules = [
     { models: ["vf 3", "vf 5"], colors: ["Black"] },
-    { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["plus tiêu chuẩn", "plus nâng cấp", "plus", "plus_metal nâng cấp", "plus_metal tiêu chuẩn", "plus_cap_metal_3zones", "plus_metal_3zones", "plus_cap_metal", "plus_metal", "plus_us", "plus tiêu chuẩn 1", "plus tiêu chuẩn 2", "plus_metal tiêu chuẩn 1", "plus_metal tiêu chuẩn 2"], colors: ["Black", "Brown", "Beige"] },
+    { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["plus tiêu chuẩn", "plus nâng cấp", "plus", "plus_metal nâng cấp", "plus_metal tiêu chuẩn", "plus_cap_metal_3zones", "plus_metal_3zones", "plus_cap_metal", "plus_metal", "plus_us", "plus tiêu chuẩn 1", "plus tiêu chuẩn 2", "plus_metal tiêu chuẩn 1", "plus_metal tiêu chuẩn 2", "plus_metal tiêu chuẩn 1 (fwd)", "plus_metal tiêu chuẩn 1 (awd)"], colors: ["Black", "Brown", "Beige"] },
     { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["eco tiêu chuẩn", "eco nâng cấp", "eco", "eco_hud", "eco_3zones", "eco tiêu chuẩn 1", "eco tiêu chuẩn 2", "eco_hud tiêu chuẩn 1", "eco_hud tiêu chuẩn 2"], colors: ["Black"] },
     { models: ["herio", "nerio", "limo", "minio", "ec van"], colors: ["Black"] }
 ];
