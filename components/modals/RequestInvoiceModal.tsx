@@ -8,7 +8,7 @@ import { useModalBackground } from '../../utils/styleUtils';
 interface RequestInvoiceModalProps {
     order: Order;
     onClose: () => void;
-    onConfirm: (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string) => void;
+    onConfirm: (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => void;
 }
 
 const InfoRow: React.FC<{ label: string; value: string; icon: string; isMono?: boolean }> = ({ label, value, icon, isMono = false }) => (
@@ -54,6 +54,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [policy, setPolicy] = useState<string[]>([]);
     const [commission, setCommission] = useState('');
+    const [vpoint, setVpoint] = useState('');
     
     const [salesPoliciesOptions, setSalesPoliciesOptions] = useState<string[]>([]);
     const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
@@ -131,7 +132,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             return;
         }
         setIsSubmitting(true);
-        onConfirm(order, contractFile, proposalFile, policy, commission);
+        onConfirm(order, contractFile, proposalFile, policy, commission, vpoint);
     };
 
     return (
@@ -208,6 +209,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     placeholder="Nhập số tiền" min="0" required
                                 />
                             </div>
+                            <div>
+                                <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
+                                    Số điểm Vpoint sử dụng (Điểm)
+                                </label>
+                                <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
+                                    className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                    placeholder="Nhập số điểm (nếu có)" min="0"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -226,9 +236,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                 <p className="text-xs text-text-secondary">Chính sách bán hàng</p>
                                 <p className="font-semibold text-text-primary">{policy.join(', ') || 'Chưa chọn'}</p>
                             </div>
-                            <div>
-                                <p className="text-xs text-text-secondary">Hoa hồng ứng trước</p>
-                                <p className="font-semibold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-text-secondary">Hoa hồng ứng trước</p>
+                                    <p className="font-semibold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</p>
+                                </div>
+                                {vpoint && (
+                                    <div className="text-right">
+                                        <p className="text-xs text-text-secondary">Vpoint sử dụng</p>
+                                        <p className="font-semibold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</p>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <p className="text-xs text-text-secondary">Tệp đã tải lên</p>

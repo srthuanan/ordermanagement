@@ -11,7 +11,9 @@ import ActionModal from './ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './AdminActionModals';
 import OrderTimelineModal from './OrderTimelineModal';
 import SuggestionModal from './SuggestionModal';
+import MatchingSuggestionsModal from './MatchingSuggestionsModal';
 import BulkUploadModal from './BulkUploadModal';
+import EditOrderModal from '../modals/EditOrderModal';
 import * as apiService from '../../services/apiService';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
@@ -43,6 +45,7 @@ interface AdminViewProps {
     teamData: Record<string, string[]>;
     allUsers: User[];
     isLoadingXuathoadon: boolean;
+    isLoadingHistory: boolean;
     errorXuathoadon: string | null;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onOpenFilePreview: (url: string, label: string) => void;
@@ -62,7 +65,7 @@ type AdminModalType = 'archive' | 'addCar' | 'deleteCar' | 'restoreCar' | 'delet
 
 type DateRange = { start: string; end: string; };
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, soldData, teamData, allUsers, isLoadingXuathoadon, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, onNavigateTo, onShowOrderDetails }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, soldData, teamData, allUsers, isLoadingXuathoadon, isLoadingHistory, errorXuathoadon, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, onNavigateTo, onShowOrderDetails }) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
     const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
     
@@ -87,9 +90,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: DateRange }>({ keyword: '', nguoiyc: [], trangthai: [] });
 
     // State for new tabs
-    const [logData, setLogData] = useState<LogEntry[]>([]);
-    const [isLoadingLog, setIsLoadingLog] = useState(false);
-    const [errorLog, setErrorLog] = useState<string | null>(null);
     const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
     const [errorUsers, setErrorUsers] = useState<string | null>(null);
@@ -99,7 +99,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [invoiceModalState, setInvoiceModalState] = useState<ModalState>(null);
     const [bulkActionModal, setBulkActionModal] = useState<{ type: ActionType } | null>(null);
     const [suggestionModalState, setSuggestionModalState] = useState<{ order: Order; cars: StockVehicle[] } | null>(null);
+    const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [adminModal, setAdminModal] = useState<AdminModalType | null>(null);
+    const [editingOrder, setEditingOrder] = useState<Order | null>(null); // State for general order editing
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
@@ -185,19 +187,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     }, []);
 
-    const fetchLogData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingLog(true);
-        setErrorLog(null);
-        try {
-            const result = await apiService.getLogData();
-            setLogData(result.data || []);
-        } catch (err) {
-            setErrorLog(err instanceof Error ? err.message : 'Lỗi tải nhật ký hoạt động.');
-        } finally {
-            if (!isSilent) setIsLoadingLog(false);
-        }
-    }, []);
-
     const fetchActiveUsers = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoadingUsers(true);
         setErrorUsers(null);
@@ -214,14 +203,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     useEffect(() => {
         if (adminView === 'vc') {
             fetchVcData();
-        } else if (adminView === 'activityLog') {
-            fetchLogData();
         } else if (adminView === 'activeUsers') {
             fetchActiveUsers();
             const intervalId = setInterval(() => fetchActiveUsers(true), 30000); // Refresh every 30s
             return () => clearInterval(intervalId);
         }
-    }, [adminView, fetchVcData, fetchLogData, fetchActiveUsers]);
+    }, [adminView, fetchVcData, fetchActiveUsers]);
 
 
      useEffect(() => {
@@ -259,19 +246,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         setCurrentPage(1);
     }, [adminView]);
 
-    const handleTabChangeFromDashboard = useCallback((view: AdminSubView, filters: any = {}) => {
-        setAdminView(view);
-        if (view === 'invoices') {
-            setInvoiceFilters(prev => ({ ...prev, ...filters }));
-        }
-        if (view === 'pending') {
-            setPendingFilters(prev => ({ ...prev, ...filters }));
-        }
-        if (view === 'paired') {
-            setPairedFilters(prev => ({ ...prev, ...filters }));
-        }
-    }, []);
-
     const { 
         processedInvoices,
         invoiceRequests, 
@@ -280,6 +254,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         vcRequests,
         suggestionsMap,
         filterOptions,
+        ordersWithMatches
     } = useMemo(() => {
         const orderStatusMap = new Map<string, Order>();
         allOrders.forEach(order => { if (order['Số đơn hàng']) orderStatusMap.set(order['Số đơn hàng'], order); });
@@ -351,6 +326,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             suggestions.forEach((cars) => cars.sort((a, b) => new Date(a['Thời gian nhập'] || 0).getTime() - new Date(b['Thời gian nhập'] || 0).getTime()));
         }
 
+        // Prepare matching suggestions list for the modal
+        const ordersWithMatches = allPending
+            .filter(order => suggestions.has(order['Số đơn hàng']))
+            .map(order => ({ order, cars: suggestions.get(order['Số đơn hàng']) || [] }));
+
+
         const applyFilters = (data: (Order | VcRequest)[], filters: Record<string, any>, view: AdminSubView) => {
             const lowerKeyword = filters.keyword?.toLowerCase() ?? '';
 
@@ -400,6 +381,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             return sorted;
         };
 
+        const sortedPending = applySort(filteredPending, pendingSortConfig) as Order[];
+        
+        // Priority Sort: Items with suggestions come first
+        sortedPending.sort((a, b) => {
+            const aHas = suggestions.has(a['Số đơn hàng']);
+            const bHas = suggestions.has(b['Số đơn hàng']);
+            if (aHas && !bHas) return -1;
+            if (!aHas && bHas) return 1;
+            return 0; // Maintain existing sort for other items
+        });
+
         const getFilterOptions = (data: any[], keys: string[]) => {
             const options: Record<string, Set<string>> = {};
             keys.forEach(key => options[key] = new Set());
@@ -417,10 +409,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return { 
             processedInvoices,
             invoiceRequests: applySort(filteredInvoices, sortConfig) as Order[],
-            pendingData: applySort(filteredPending, pendingSortConfig) as Order[],
+            pendingData: sortedPending,
             pairedData: applySort(filteredPaired, pairedSortConfig) as Order[],
             vcRequests: applySort(filteredVc, vcSortConfig) as VcRequest[],
             suggestionsMap: suggestions,
+            ordersWithMatches: ordersWithMatches,
             filterOptions: {
                 invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Kết quả']),
                 pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe']),
@@ -429,6 +422,31 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
         };
     }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
+
+    const handleTabChangeFromDashboard = useCallback((view: AdminSubView, filters: any = {}) => {
+        setAdminView(view);
+        if (view === 'invoices') {
+            setInvoiceFilters(prev => ({ ...prev, ...filters }));
+        }
+        if (view === 'pending') {
+            setPendingFilters(prev => ({ ...prev, ...filters }));
+            // Trigger the matching modal if there are pending matches
+            if (ordersWithMatches.length > 0) {
+                setShowMatchingModal(true);
+            }
+        }
+        if (view === 'paired') {
+            setPairedFilters(prev => ({ ...prev, ...filters }));
+        }
+    }, [ordersWithMatches.length]);
+
+    const handleManualTabChange = (view: AdminSubView) => {
+        setAdminView(view);
+        // If clicking on pending tab and there are matches, show the summary modal
+        if (view === 'pending' && ordersWithMatches.length > 0) {
+            setShowMatchingModal(true);
+        }
+    };
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage, PAGE_SIZE]);
     
@@ -469,6 +487,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             setSuggestionModalState(null);
             setSelectedRows(new Set());
             setBulkActionModal(null);
+            setShowMatchingModal(false);
             
             hideToast();
             showToast('Thành công!', result.message || successMessage, 'success');
@@ -494,6 +513,26 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             return false;
         }
     }, [showToast, hideToast, refetchHistory, refetchXuathoadon, refetchStock, refetchAdminData, fetchVcData]);
+
+    const handleEditSuccess = useCallback((message: string) => {
+        setEditingOrder(null);
+        showToast('Thành công!', message, 'success');
+        refetchHistory(true);
+        refetchXuathoadon(true);
+    }, [showToast, refetchHistory, refetchXuathoadon]);
+    
+    // Inline edit handler passed to the table
+    const handleEditInvoiceDetails = useCallback(async (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => {
+        // Use the updateRowData API action which allows targeting specific sheets and columns
+        return handleAdminSubmit('updateRowData', {
+            sheetName: 'Xuathoadon',
+            primaryKeyColumn: 'SỐ ĐƠN HÀNG',
+            primaryKeyValue: orderNumber,
+            "SỐ ĐỘNG CƠ": data.engineNumber,
+            "CHÍNH SÁCH": data.policy,
+            "PO PIN": data.po
+        }, 'Đã cập nhật thông tin hóa đơn.', 'history');
+    }, [handleAdminSubmit]);
 
      const handleBulkActionSubmit = useCallback(async (action: ActionType, params: Record<string, any> = {}) => {
         if (selectedRows.size === 0) {
@@ -536,8 +575,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 console.log("Requesting invoice for:", orderToRequest);
                 showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
             }
-        }
-        else {
+        } else if (type === 'edit') {
+            if (adminView === 'invoices') {
+                // Inline edit is handled in the table row now, this is just a fallback or for other views
+                setEditingOrder(order as Order);
+            } else {
+                setEditingOrder(order as Order);
+            }
+        } else {
             setInvoiceModalState({ type, order });
         }
     };
@@ -640,6 +685,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
         { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
     ], []);
+    // FIX: Memoize input configurations to avoid re-renders resetting data in ActionModal
+    const cancelRequestInputs = useMemo(() => [{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' as const }], []);
+    const unmatchInputs = useMemo(() => [{ id: 'reason', label: 'Lý do hủy ghép (bắt buộc)', placeholder: 'VD: Sai thông tin xe...', type: 'textarea' as const }], []);
 
     const handleArchiveSubmit = useCallback(() => handleAdminSubmit('archiveInvoicedOrdersMonthly', {}, 'Đã lưu trữ hóa đơn thành công.', 'history'), [handleAdminSubmit]);
     const handleAddCarSubmit = useCallback((data: Record<string, string>) => handleAdminSubmit('findAndAddCarByVin', { vin: data.vin }, 'Thêm xe thành công.', 'stock'), [handleAdminSubmit]);
@@ -709,7 +757,21 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                      <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
                         {selectedRows.size > 0 && <BulkActionBar view={adminView} />}
                         <div className="flex-grow overflow-auto relative hidden-scrollbar">
-                            <AdminInvoiceTable viewType={adminView} orders={data} sortConfig={sortConf} onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} selectedRows={selectedRows} onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} onToggleAllRows={() => handleToggleAll(allIds)} onAction={handleAction} showToast={showToast} suggestions={suggestionsMap} onShowSuggestions={handleShowSuggestions} onOpenFilePreview={onOpenFilePreview} />
+                            <AdminInvoiceTable 
+                                viewType={adminView} 
+                                orders={data} 
+                                sortConfig={sortConf} 
+                                onSort={(sortKey: keyof Order) => onSortHandler((p: SortConfig | null) => ({ key: sortKey, direction: p?.key === sortKey && p.direction === 'asc' ? 'desc' : 'asc' }))} 
+                                selectedRows={selectedRows} 
+                                onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })} 
+                                onToggleAllRows={() => handleToggleAll(allIds)} 
+                                onAction={handleAction} 
+                                showToast={showToast} 
+                                suggestions={suggestionsMap} 
+                                onShowSuggestions={handleShowSuggestions} 
+                                onOpenFilePreview={onOpenFilePreview}
+                                onUpdateInvoiceDetails={handleEditInvoiceDetails}
+                            />
                         </div>
                         {adminView === 'invoices' && totalInvoicePages > 0 && <Pagination currentPage={currentPage} totalPages={totalInvoicePages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
@@ -745,80 +807,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             onAddNewTeam={() => setIsAddingNewTeam(true)}
                             onDeleteTeam={handleDeleteTeam}
                         />
-                    </div>
-                );
-            }
-            case 'activityLog': {
-                const groupedLogs = useMemo(() => {
-                    if (!logData) return {} as Record<string, LogEntry[]>;
-                    return logData.reduce((acc, log) => {
-                        const date = moment(log['Thời gian']).format('YYYY-MM-DD');
-                        if (!acc[date]) acc[date] = [];
-                        acc[date].push(log);
-                        return acc;
-                    }, {} as Record<string, LogEntry[]>);
-                }, [logData]);
-
-                const getActionIcon = (action: string) => {
-                    const lowerAction = action.toLowerCase();
-                    if (lowerAction.includes('thêm') || lowerAction.includes('tạo') || lowerAction.includes('add') || lowerAction.includes('create')) return { icon: 'fa-plus-circle', color: 'text-success' };
-                    if (lowerAction.includes('cập nhật') || lowerAction.includes('edit') || lowerAction.includes('update')) return { icon: 'fa-pencil-alt', color: 'text-sky-500' };
-                    if (lowerAction.includes('xóa') || lowerAction.includes('hủy') || lowerAction.includes('delete') || lowerAction.includes('cancel')) return { icon: 'fa-trash-alt', color: 'text-danger' };
-                    if (lowerAction.includes('ghép') || lowerAction.includes('match')) return { icon: 'fa-link', color: 'text-cyan-500' };
-                    if (lowerAction.includes('tải lên') || lowerAction.includes('upload')) return { icon: 'fa-upload', color: 'text-indigo-500' };
-                    if (lowerAction.includes('đăng nhập') || lowerAction.includes('login')) return { icon: 'fa-sign-in-alt', color: 'text-text-secondary' };
-                    if (lowerAction.includes('lưu trữ') || lowerAction.includes('archive')) return { icon: 'fa-archive', color: 'text-purple-500' };
-                    return { icon: 'fa-info-circle', color: 'text-text-secondary' };
-                };
-                
-                return (
-                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
-                        <div className="p-3 border-b border-border-primary flex justify-between items-center">
-                            <h3 className="font-bold text-base">Nhật Ký Hoạt Động Hệ Thống</h3>
-                            <button onClick={() => fetchLogData()} disabled={isLoadingLog} className="btn-secondary !text-xs !py-1 !px-3">
-                                <i className={`fas fa-sync-alt ${isLoadingLog ? 'animate-spin' : ''} mr-2`}></i>Làm mới
-                            </button>
-                        </div>
-                        <div className="flex-grow overflow-auto hidden-scrollbar p-4 space-y-6">
-                            {isLoadingLog && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
-                            {errorLog && <div className="text-center p-8 text-danger">{errorLog}</div>}
-                            {!isLoadingLog && !errorLog && Object.entries(groupedLogs).length > 0 ? (
-                                (Object.entries(groupedLogs) as [string, LogEntry[]][]).map(([date, logs]) => (
-                                    <div key={date}>
-                                        <div className="sticky top-0 bg-surface-card/80 backdrop-blur-sm z-10 py-2 -ml-4 pl-4 border-b border-border-primary">
-                                            <h4 className="font-bold text-text-primary capitalize">{moment(date).calendar(null, {
-                                                sameDay: '[Hôm nay]',
-                                                lastDay: '[Hôm qua]',
-                                                lastWeek: 'dddd, DD/MM/YYYY',
-                                                sameElse: 'DD/MM/YYYY'
-                                            })}</h4>
-                                        </div>
-                                        <div className="relative border-l-2 border-border-secondary ml-4 mt-4">
-                                            {logs.map((log, index) => {
-                                                const { icon, color } = getActionIcon(log['Hành động']);
-                                                return (
-                                                    <div key={index} className="relative pl-8 pb-6 group last:pb-2">
-                                                        <div className={`absolute top-1 -left-[9px] w-4 h-4 rounded-full bg-surface-card border-2 border-border-secondary group-hover:border-accent-primary transition-colors flex items-center justify-center`}>
-                                                           <i className={`fas ${icon} ${color} text-xs`}></i>
-                                                        </div>
-                                                        <div className="flex-grow min-w-0">
-                                                            <p className="font-semibold text-sm text-text-primary">{log['Hành động']}</p>
-                                                            <p className="text-sm text-text-secondary mt-1 break-words">{log['Chi tiết']}</p>
-                                                            <p className="text-xs text-text-secondary font-mono mt-2">{moment(log['Thời gian']).format('HH:mm:ss')}</p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                !isLoadingLog && <div className="text-center text-text-secondary py-12">
-                                    <i className="fas fa-file-alt fa-3x mb-4"></i>
-                                    <p>Không có hoạt động nào được ghi lại.</p>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 );
             }
@@ -976,7 +964,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 searchPlaceholder="Tìm SĐH, Tên KH...";
                 totalCount = pendingData.length;
                 onRefresh = () => refetchHistory();
-                isLoading = false;
+                isLoading = isLoadingHistory;
                 break;
             case 'paired':
                  currentFilters = pairedFilters;
@@ -987,7 +975,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 searchPlaceholder="Tìm SĐH, Tên KH, VIN...";
                 totalCount = pairedData.length;
                 onRefresh = () => refetchHistory();
-                isLoading = false;
+                isLoading = isLoadingHistory;
                 break;
              case 'vc':
                 currentFilters = vcFilters;
@@ -1035,7 +1023,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             return (
                                 <button
                                     key={view}
-                                    onClick={() => setAdminView(view)}
+                                    onClick={() => handleManualTabChange(view)}
                                     className={`px-2 py-1 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${adminView === view ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                                 >
                                     {labels[view]}
@@ -1069,6 +1057,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             
             {/* FIX: Passed the showToast prop to SuggestionModal to fix a missing property error. */}
             {suggestionModalState && <SuggestionModal isOpen={!!suggestionModalState} onClose={() => setSuggestionModalState(null)} order={suggestionModalState.order} suggestedCars={suggestionModalState.cars} onConfirm={handleConfirmSuggestion} showToast={showToast} />}
+            <MatchingSuggestionsModal 
+                isOpen={showMatchingModal} 
+                onClose={() => setShowMatchingModal(false)} 
+                matches={ordersWithMatches} 
+                onConfirmMatch={handleConfirmSuggestion} 
+            />
             {invoiceModalState && (
                 <>
                     {/* Invoice Actions */}
@@ -1080,8 +1074,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         const base64Data = await fileToBase64(file);
                         return handleAdminSubmit('handleBulkUploadIssuedInvoices', { filesData: JSON.stringify([{ orderNumber: invoiceModalState.order['Số đơn hàng'], base64Data, mimeType: file.type, fileName: file.name }])}, 'Đã tải lên hóa đơn thành công.');
                     }} />
-                    <ActionModal isOpen={invoiceModalState.type === 'cancel'} onClose={() => setInvoiceModalState(null)} title="Hủy Yêu Cầu Xuất Hóa Đơn" description="Hành động này sẽ hủy yêu cầu và thông báo cho TVBH." targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason: data.reason }, 'Đã hủy yêu cầu.')} />
-                    <ActionModal isOpen={invoiceModalState.type === 'unmatch'} onClose={() => setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} inputs={[{ id: 'reason', label: 'Lý do hủy ghép (bắt buộc)', placeholder: 'VD: Sai thông tin xe...', type: 'textarea' }]} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => handleAdminSubmit('unmatchOrder', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason: data.reason }, 'Đã hủy ghép xe.', 'both')} />
+                    <ActionModal isOpen={invoiceModalState.type === 'cancel'} onClose={() => setInvoiceModalState(null)} title="Hủy Yêu Cầu Xuất Hóa Đơn" description="Hành động này sẽ hủy yêu cầu và thông báo cho TVBH." targetId={invoiceModalState.order['Số đơn hàng']} inputs={cancelRequestInputs} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), reason: data.reason }, 'Đã hủy yêu cầu.')} />
+                    <ActionModal isOpen={invoiceModalState.type === 'unmatch'} onClose={() => setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} inputs={unmatchInputs} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => handleAdminSubmit('unmatchOrder', { orderNumber: invoiceModalState.order['Số đơn hàng'], reason: data.reason }, 'Đã hủy ghép xe.', 'both')} />
                     <ActionModal isOpen={invoiceModalState.type === 'resend'} onClose={() => setInvoiceModalState(null)} title="Gửi Lại Email" description="Gửi lại email thông báo cho đơn hàng:" targetId={invoiceModalState.order['Số đơn hàng']} submitText="Gửi Lại" submitColor="primary" icon="fa-paper-plane" onSubmit={() => handleAdminSubmit('resendEmail', { orderNumbers: JSON.stringify([invoiceModalState.order['Số đơn hàng']]), emailType: 'invoice_issued' }, 'Đã gửi lại email.')} />
                     
                     {/* VC Actions */}
@@ -1096,7 +1090,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <ActionModal isOpen={bulkActionModal.type === 'approve'} onClose={handleCloseBulkActionModal} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={handleBulkApproveSubmit} />
                     <ActionModal isOpen={bulkActionModal.type === 'pendingSignature'} onClose={handleCloseBulkActionModal} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={handleBulkPendingSignatureSubmit} />
                     <RequestWithImageModal isOpen={bulkActionModal.type === 'supplement'} onClose={handleCloseBulkActionModal} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={handleBulkSupplementSubmit} />
-                    <ActionModal isOpen={bulkActionModal.type === 'cancel'} onClose={handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={[{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'Nhập lý do chung cho tất cả...', type: 'textarea' }]} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={handleBulkCancelSubmit} />
+                    <ActionModal isOpen={bulkActionModal.type === 'cancel'} onClose={handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={cancelRequestInputs} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={handleBulkCancelSubmit} />
                 </>
             )}
 
@@ -1119,6 +1113,15 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     refetchXuathoadon(true);
                 }}
             />
+            <EditOrderModal
+                isOpen={!!editingOrder}
+                onClose={() => setEditingOrder(null)}
+                onSuccess={handleEditSuccess}
+                order={editingOrder}
+                showToast={showToast}
+                existingOrderNumbers={allOrders.map(o => o['Số đơn hàng'])}
+            />
+            
             <TeamEditorModal
                 isOpen={!!editingTeam || isAddingNewTeam}
                 onClose={() => {

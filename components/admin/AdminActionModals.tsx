@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import { compressImage } from '../../services/ocrService';
@@ -183,6 +183,104 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
                     <div onClick={!isSubmitting && file ? handleSubmit : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isSubmitting || !file) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
+                    </div>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
+
+// --- Modal 3: Edit Specific Invoice Details (No/Policy/PO) ---
+
+interface EditInvoiceDetailsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    order: Order;
+    onSubmit: (data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+}
+
+export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = ({ isOpen, onClose, order, onSubmit }) => {
+    const [engineNumber, setEngineNumber] = useState('');
+    const [policy, setPolicy] = useState('');
+    const [po, setPo] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
+
+    useEffect(() => {
+        if (isOpen && order) {
+            setEngineNumber(order["Số động cơ"] || '');
+            setPolicy(order["CHÍNH SÁCH"] || '');
+            setPo(order["PO PIN"] || '');
+        }
+    }, [isOpen, order]);
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        const success = await onSubmit({ engineNumber, policy, po });
+        if (success) {
+            onClose();
+        } else {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
+            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-2xl bg-accent-secondary"></div>
+                <header className="flex items-start justify-between p-3">
+                    <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
+                            <i className="fas fa-edit text-2xl text-accent-secondary"></i>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">Cập Nhật Thông Tin Hóa Đơn</h2>
+                            <p className="text-sm text-text-secondary mt-1">SĐH: <strong className="font-mono">{order['Số đơn hàng']}</strong></p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
+                </header>
+                <main className="px-3 pb-3 space-y-3">
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Số Máy (Số Động Cơ)</label>
+                        <input 
+                            type="text" 
+                            value={engineNumber} 
+                            onChange={e => setEngineNumber(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập số máy..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Chính Sách</label>
+                        <input 
+                            type="text" 
+                            value={policy} 
+                            onChange={e => setPolicy(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập chính sách..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">PO PIN</label>
+                        <input 
+                            type="text" 
+                            value={po} 
+                            onChange={e => setPo(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập PO..."
+                        />
+                    </div>
+                </main>
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
+                    </div>
+                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Lưu Thay Đổi" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
                 </footer>

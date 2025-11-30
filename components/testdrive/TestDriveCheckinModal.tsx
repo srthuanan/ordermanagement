@@ -3,6 +3,7 @@ import { TestDriveBooking } from '../../types';
 import { normalizeName } from '../../services/authService';
 import { compressImage } from '../../services/ocrService';
 import { toEmbeddableUrl } from '../../utils/imageUtils';
+import { useModalBackground } from '../../utils/styleUtils';
 
 interface ImageSource {
     src: string;
@@ -189,6 +190,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     const [odoAfter, setOdoAfter] = useState(booking.odoAfter || '');
     const [imagesAfter, setImagesAfter] = useState<File[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
 
     const canUpdate = useMemo(() => isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan), [isAdmin, currentUser, booking.tenTuVan]);
     const isViewOnly = mode === 'view' || !canUpdate;
@@ -256,7 +258,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-5xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-surface-card w-full max-w-5xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">
                         {mode === 'view' ? 'Xem Thông Tin Lái Thử' : 'Cập Nhật Thông Tin Lái Thử'}

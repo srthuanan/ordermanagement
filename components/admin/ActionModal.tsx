@@ -34,13 +34,26 @@ const ActionModal: React.FC<ActionModalProps> = ({
 
     useEffect(() => {
         if (isOpen) {
-            const initialData = inputs.reduce((acc, input) => {
-                acc[input.id] = '';
-                return acc;
-            }, {} as Record<string, string>);
-            setFormData(initialData);
+            setFormData(prev => {
+                // If inputs array reference changes but isOpen is still true, do not wipe data if we have some.
+                // This prevents background refreshes in parent component from clearing user input.
+                if (Object.keys(prev).length > 0 && inputs.length > 0) {
+                    return prev;
+                }
+                
+                return inputs.reduce((acc, input) => {
+                    acc[input.id] = '';
+                    return acc;
+                }, {} as Record<string, string>);
+            });
+        } else {
+            // Optional: Clear form data when modal closes to save memory, 
+            // though not strictly necessary as it will be reset on next open.
+            setFormData({});
         }
-    }, [isOpen, inputs]);
+        // Removing 'inputs' from dependency array is intentional to prevent form reset
+        // when parent re-renders and passes a new inputs array reference.
+    }, [isOpen]); 
 
     if (!isOpen) return null;
 

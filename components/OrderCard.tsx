@@ -23,15 +23,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, onCancel, o
 
     return (
         <div
-            className="relative overflow-hidden rounded-xl bg-white p-3 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer flex flex-col"
+            className="relative overflow-hidden rounded-xl bg-white p-3 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer flex flex-col group"
             onClick={() => onViewDetails(order)}
         >
-            {/* Background Image - clearer */}
-            <div className="absolute -right-10 -bottom-6 w-48 opacity-60 transform -rotate-12 pointer-events-none z-0">
+            {/* Background Image - clearer with animation */}
+            <div className="absolute -right-10 -bottom-6 w-48 z-0 transition-all duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:-translate-y-2 group-hover:opacity-100 group-hover:rotate-0 opacity-60 transform -rotate-12 animate-drive-in-right origin-bottom-right">
                 <CarImage 
                     model={order['Dòng xe']} 
                     exteriorColor={order['Ngoại thất']} 
-                    className="w-full h-auto object-contain" 
+                    className="w-full h-auto object-contain drop-shadow-xl" 
                     alt=""
                 />
             </div>

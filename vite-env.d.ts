@@ -1,8 +1,4 @@
-/// <reference types="vite/client" />
-
 import React from 'react';
-
-export {};
 
 declare global {
   const PDFLib: any;
@@ -17,7 +13,33 @@ declare global {
     stop(): void;
     getLottie(): any;
   }
+}
 
+// Augment React's JSX namespace (for React 18+ or specific configurations)
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        background?: string;
+        speed?: string | number;
+        style?: React.CSSProperties;
+        loop?: boolean;
+        autoplay?: boolean;
+        mode?: string;
+        direction?: string | number;
+        hover?: boolean;
+        controls?: boolean;
+        ref?: any;
+        class?: string;
+        [key: string]: any;
+      };
+    }
+  }
+}
+
+// Augment global JSX namespace (fallback)
+declare global {
   namespace JSX {
     interface IntrinsicElements {
       'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {

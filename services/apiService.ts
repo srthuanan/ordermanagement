@@ -203,7 +203,7 @@ export const cancelRequest = async (orderNumber: string, reason: string) => {
     return postApi(payload);
 };
 
-export const requestInvoice = async (orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string) => {
+export const requestInvoice = async (orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string, vpoint: string) => {
     const [contractBase64, proposalBase64] = await Promise.all([
         fileToBase64(contractFile),
         fileToBase64(proposalFile)
@@ -221,6 +221,7 @@ export const requestInvoice = async (orderNumber: string, contractFile: File, pr
         denghi_xhd_file_type: proposalFile.type,
         selectedPolicies: policy,
         commissionAmount: commission,
+        vpointAmount: vpoint,
     };
     
     return postApi(payload);

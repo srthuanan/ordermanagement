@@ -484,13 +484,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     };
     
-    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string) => {
+    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => {
         setProcessingOrder(order["Số đơn hàng"]);
         setOrderToRequestInvoice(null);
         showToast('Đang Gửi Chứng Từ', 'Quá trình này có thể mất một lúc. Vui lòng không đóng trang.', 'loading');
 
         try {
-            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, JSON.stringify(policy), commission);
+            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, JSON.stringify(policy), commission, vpoint);
             await refetchHistory();
             hideToast();
             showToast('Gửi Thành Công', result.message, 'success', 3000);
@@ -1145,6 +1145,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             refetchXuathoadon={refetchXuathoadon}
                             stockData={stockData}
                             isLoadingXuathoadon={isLoadingXuathoadon}
+                            isLoadingHistory={isLoadingHistory}
                             errorXuathoadon={errorXuathoadon}
                             onOpenImagePreview={openImagePreviewModal}
                             onOpenFilePreview={openFilePreviewModal}

@@ -4,7 +4,9 @@ import App from './App';
 import LoginScreen from './components/LoginScreen';
 import Toast from './components/ui/Toast';
 import SuccessAnimation from './components/ui/SuccessAnimation';
+import SnowEffect from './components/ui/SnowEffect';
 import * as apiService from './services/apiService';
+import onggiaGif from './pictures/onggia.gif';
 
 type ToastState = {
     show: boolean;
@@ -71,6 +73,12 @@ const Root = () => {
 
     return (
         <>
+            <SnowEffect />
+            <img 
+                src={onggiaGif} 
+                className="fixed bottom-0 right-0 z-[55] w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56 h-auto pointer-events-none select-none transition-all duration-1000 ease-in-out animate-float" 
+                alt="Santa Claus Decoration" 
+            />
             {isAuthenticated ? (
                 <App onLogout={handleLogout} showToast={showToast} hideToast={hideToast} />
             ) : (

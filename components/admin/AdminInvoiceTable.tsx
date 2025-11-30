@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import moment from 'moment';
-// FIX: Imported ActionType from the central types file.
 import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
-
-// FIX: Removed local ActionType definition, as it's now imported from types.ts.
 
 interface AdminInvoiceTableProps {
     orders: Order[];
@@ -19,6 +16,8 @@ interface AdminInvoiceTableProps {
     suggestions?: Map<string, StockVehicle[]>;
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
     onOpenFilePreview: (url: string, label: string) => void;
+    // New prop for inline editing
+    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
 }
 
 const SortableHeader: React.FC<{ colKey: keyof Order, title: string, sortConfig: SortConfig | null, onSort: (key: keyof Order) => void }> = ({ colKey, title, sortConfig, onSort }) => {
@@ -68,8 +67,6 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
 
     const s = status.toLowerCase();
     
-    // FIX: Refactored action list generation to be a single expression, which helps TypeScript
-    // correctly infer the types of the array and its items, resolving assignment errors.
     const actions = (
         viewType === 'invoices'
             ? [
@@ -131,20 +128,83 @@ const AdminInvoiceTableRow: React.FC<{
     suggestions?: Map<string, StockVehicle[]>;
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
     onOpenFilePreview: (url: string, label: string) => void;
-}> = ({ order, index, viewType, selectedRows, onToggleRow, onAction, showToast, suggestions, onShowSuggestions, onOpenFilePreview }) => {
+    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+}> = ({ order, index, viewType, selectedRows, onToggleRow, onAction, showToast, suggestions, onShowSuggestions, onOpenFilePreview, onUpdateInvoiceDetails }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editData, setEditData] = useState({
+        engineNumber: order["Số động cơ"] || '',
+        policy: order["CHÍNH SÁCH"] || '',
+        po: order["PO PIN"] || ''
+    });
+
     const orderNumber = order['Số đơn hàng'];
     const status = (order as any)['Trạng thái xử lý'] || order['Kết quả'] || 'N/A';
     const matchingCars = suggestions?.get(orderNumber);
 
+    // Sync edit data when order prop changes (if not editing)
+    useEffect(() => {
+        if (!isEditing) {
+            setEditData({
+                engineNumber: order["Số động cơ"] || '',
+                policy: order["CHÍNH SÁCH"] || '',
+                po: order["PO PIN"] || ''
+            });
+        }
+    }, [order, isEditing]);
+
+    const handleActionInternal = (type: ActionType) => {
+        if (type === 'edit' && viewType === 'invoices') {
+            setIsEditing(true);
+        } else {
+            onAction(type, order);
+        }
+    };
+
+    const handleSaveEdit = async () => {
+        if (!onUpdateInvoiceDetails) return;
+        setIsSaving(true);
+        const success = await onUpdateInvoiceDetails(orderNumber, editData);
+        setIsSaving(false);
+        if (success) {
+            setIsEditing(false);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setEditData({
+            engineNumber: order["Số động cơ"] || '',
+            policy: order["CHÍNH SÁCH"] || '',
+            po: order["PO PIN"] || ''
+        });
+    };
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+        if (viewType === 'invoices' && !isEditing) {
+            e.preventDefault(); // Prevent text selection
+            const s = status.toLowerCase();
+            // Prevent editing if status is finalized or cancelled (matching menu logic)
+            if (s !== 'đã xuất hóa đơn' && s !== 'đã hủy') {
+                setIsEditing(true);
+            } else {
+                showToast('Không thể sửa', 'Đơn hàng đã hoàn tất hoặc đã hủy không thể chỉnh sửa.', 'warning');
+            }
+        }
+    };
+
     return (
-        <tr className={`hover:bg-surface-hover transition-colors ${isMenuOpen ? 'relative z-20' : ''}`}>
+        <tr 
+            className={`hover:bg-surface-hover transition-colors ${isMenuOpen || isEditing ? 'relative z-20 bg-surface-accent/30' : ''}`}
+            onDoubleClick={handleDoubleClick}
+        >
             <td data-label="checkbox" className="pl-2 w-12 sm:pl-3" onClick={e => e.stopPropagation()}>
-                <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} />
+                <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} disabled={isEditing} />
             </td>
             <td data-label="#" className="px-1.5 py-2 text-sm text-center text-text-secondary">{index + 1}</td>
             
-            {/* Customer/Order Info */}
+            {/* Customer/Order Info - Not Editable Inline */}
             <td data-label="Khách Hàng / SĐH" className="px-1.5 py-2 text-sm">
                 <CopyableField text={order["Tên khách hàng"]} showToast={showToast} className="font-semibold text-text-primary" wrap={true} />
                 <CopyableField text={orderNumber} showToast={showToast} className="text-text-secondary font-mono text-xs" />
@@ -158,7 +218,21 @@ const AdminInvoiceTableRow: React.FC<{
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
                         <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                         <CopyableField text={order.VIN || ''} showToast={showToast} className="font-bold text-accent-primary text-sm font-mono mt-1 hover:text-accent-primary-hover hover:underline" label="VIN" />
-                        <CopyableField text={order["Số động cơ"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="S.MÁY" />
+                        
+                        {/* Engine Number Editing */}
+                        {isEditing ? (
+                             <div className="mt-1" onClick={e => e.stopPropagation()}>
+                                <input 
+                                    type="text" 
+                                    value={editData.engineNumber}
+                                    onChange={e => setEditData({...editData, engineNumber: e.target.value})}
+                                    className="w-full text-xs font-mono border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white"
+                                    placeholder="Số máy..."
+                                />
+                            </div>
+                        ) : (
+                            <CopyableField text={order["Số động cơ"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="S.MÁY" />
+                        )}
                     </td>
                     <td data-label="Ngày YC / XHĐ" className="px-1.5 py-2 text-sm">
                         <div className="text-text-primary" title={`Yêu cầu: ${order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('HH:mm DD/MM/YYYY') : 'N/A'}`}>
@@ -168,9 +242,31 @@ const AdminInvoiceTableRow: React.FC<{
                             {order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"]).format('DD/MM/YYYY') : 'Chưa XHĐ'}
                         </div>
                     </td>
-                    <td data-label="Chính Sách / PO" className="px-1.5 py-2 text-sm">
-                        <div className="text-xs font-medium text-text-primary" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
-                        <CopyableField text={order["PO PIN"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="PO" />
+                    <td data-label="Chính Sách / PO" className="px-1.5 py-2 text-sm min-w-[150px]">
+                         {/* Policy & PO Editing */}
+                         {isEditing ? (
+                             <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
+                                <textarea 
+                                    value={editData.policy}
+                                    onChange={e => setEditData({...editData, policy: e.target.value})}
+                                    className="w-full text-xs border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white resize-y min-h-[40px]"
+                                    placeholder="Chính sách..."
+                                    rows={2}
+                                />
+                                <input 
+                                    type="text" 
+                                    value={editData.po}
+                                    onChange={e => setEditData({...editData, po: e.target.value})}
+                                    className="w-full text-xs font-mono border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white"
+                                    placeholder="PO PIN..."
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-xs font-medium text-text-primary line-clamp-3" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
+                                <CopyableField text={order["PO PIN"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="PO" />
+                            </>
+                        )}
                     </td>
                     <td data-label="Hồ Sơ" className="px-1.5 py-2 text-sm">
                         <div className="flex items-center gap-1.5">
@@ -236,20 +332,43 @@ const AdminInvoiceTableRow: React.FC<{
             
             {/* Actions */}
             <td data-label="Hành Động" className="px-1.5 py-2 text-center">
-                <div className="flex items-center justify-center gap-2">
-                    {viewType === 'pending' && matchingCars && matchingCars.length > 0 && onShowSuggestions && (
-                        <button onClick={(e) => { e.stopPropagation(); onShowSuggestions(order, matchingCars); }} className="action-btn hold-action" title={`Có ${matchingCars.length} xe gợi ý`}>
-                            <i className="fas fa-lightbulb"></i>
-                        </button>
+                <div className="flex items-center justify-center gap-2" onClick={e => e.stopPropagation()}>
+                    {isEditing ? (
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={handleSaveEdit} 
+                                disabled={isSaving}
+                                className="w-8 h-8 rounded-full bg-success/10 text-success hover:bg-success hover:text-white flex items-center justify-center transition-colors"
+                                title="Lưu"
+                            >
+                                {isSaving ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
+                            </button>
+                            <button 
+                                onClick={handleCancelEdit}
+                                disabled={isSaving} 
+                                className="w-8 h-8 rounded-full bg-danger/10 text-danger hover:bg-danger hover:text-white flex items-center justify-center transition-colors"
+                                title="Hủy"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            {viewType === 'pending' && matchingCars && matchingCars.length > 0 && onShowSuggestions && (
+                                <button onClick={(e) => { e.stopPropagation(); onShowSuggestions(order, matchingCars); }} className="action-btn hold-action" title={`Có ${matchingCars.length} xe gợi ý`}>
+                                    <i className="fas fa-lightbulb"></i>
+                                </button>
+                            )}
+                            <AdminActionMenu status={status} viewType={viewType} onAction={handleActionInternal} onToggle={setIsMenuOpen} />
+                        </>
                     )}
-                    <AdminActionMenu status={status} viewType={viewType} onAction={(type) => onAction(type, order)} onToggle={setIsMenuOpen} />
                 </div>
             </td>
         </tr>
     );
 };
 
-const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, showToast, suggestions, onShowSuggestions, onOpenFilePreview }) => {
+const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, showToast, suggestions, onShowSuggestions, onOpenFilePreview, onUpdateInvoiceDetails }) => {
     const isAllSelected = orders.length > 0 && selectedRows.size === orders.length;
 
     const headersConfig = {
@@ -303,6 +422,7 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
                         suggestions={suggestions}
                         onShowSuggestions={onShowSuggestions}
                         onOpenFilePreview={onOpenFilePreview}
+                        onUpdateInvoiceDetails={onUpdateInvoiceDetails}
                     />
                 ))}
             </tbody>

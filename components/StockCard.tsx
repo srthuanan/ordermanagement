@@ -154,18 +154,29 @@ const StockCard: React.FC<StockCardProps> = ({
     };
 
     return (
-        <div className="relative flex flex-col gap-2 rounded-xl bg-white p-2 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98]">
+        <div className="relative flex flex-col gap-2 rounded-xl bg-white p-2 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98] group">
             <div className="cursor-pointer" onClick={() => onShowDetails(vehicle)}>
-                <div className="car-image-container">
-                    <CarImage 
-                        model={vehicle['Dòng xe']} 
-                        exteriorColor={vehicle['Ngoại thất']} 
-                        className="car-image" 
-                        alt={`VinFast ${vehicle['Dòng xe']}`}
-                    />
+                {/* Car Image with Animation and Glow */}
+                <div className="car-image-container relative flex items-center justify-center py-2 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-white">
+                    {/* Floor Glow */}
+                    <div className="absolute bottom-0 w-3/4 h-4 bg-black/10 rounded-[100%] blur-sm animate-shadow-pulse transform translate-y-1"></div>
+                    
+                    {/* Animated Car */}
+                    <div className="relative z-10 w-full h-full flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1 animate-float">
+                        <CarImage 
+                            model={vehicle['Dòng xe']} 
+                            exteriorColor={vehicle['Ngoại thất']} 
+                            className="car-image object-contain max-h-full drop-shadow-xl" 
+                            alt={`VinFast ${vehicle['Dòng xe']}`}
+                        />
+                    </div>
+
+                    {/* Shine Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-15deg] w-full h-full animate-shine opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </div>
-                <div className="flex flex-col gap-1">
-                    <p className="text-light-text-primary text-sm font-semibold leading-tight truncate pt-1" title={`${vehicle['Dòng xe']} ${vehicle['Phiên bản']}`}>
+
+                <div className="flex flex-col gap-1 mt-1">
+                    <p className="text-light-text-primary text-sm font-semibold leading-tight truncate pt-1 group-hover:text-accent-primary transition-colors" title={`${vehicle['Dòng xe']} ${vehicle['Phiên bản']}`}>
                         {vehicle['Dòng xe']} {vehicle['Phiên bản'] !== 'Base' && vehicle['Phiên bản'] !== 'Plus' ? vehicle['Phiên bản'] : ''}
                     </p>
                     <div

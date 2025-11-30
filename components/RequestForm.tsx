@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import { AnalyticsData, Order, StockVehicle } from '../types';
 import { extractDateFromImageTesseract } from '../services/ocrService';
@@ -210,9 +211,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     const warningClasses = { hot: 'bg-warning-bg border-warning/50 text-warning', slow: 'bg-success-bg border-success/50 text-success' };
 
     return (
-        <form onSubmit={handleConfirmSubmit} className="flex flex-col h-full">
+        <form onSubmit={handleConfirmSubmit} className="flex flex-col h-full relative">
+            
+            {/* Added Snow Overlay for "Icy" feel on the form itself */}
+            <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-2xl opacity-20" aria-hidden="true">
+                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/snow.png')]"></div>
+            </div>
+
             {isPreFilled && (
-                <div className="p-3 mb-4 rounded-lg border border-accent-primary/50 bg-surface-accent flex items-start gap-3 shadow-sm">
+                <div className="p-3 mb-4 rounded-lg border border-accent-primary/50 bg-surface-accent flex items-start gap-3 shadow-sm relative z-10">
                     <i className="fas fa-lock text-accent-primary text-xl mt-1"></i>
                     <div>
                         <h4 className="font-bold text-text-primary text-sm">Yêu cầu cho xe đã giữ</h4>
@@ -223,7 +230,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 </div>
             )}
 
-            <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-x-6 xl:gap-x-8 gap-y-8">
+            <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-x-6 xl:gap-x-8 gap-y-8 relative z-10">
                 {/* Column 1: Vehicle Config */}
                 <section>
                     <SectionHeader icon="fa-cogs" title="1. Cấu hình Xe" />
@@ -267,17 +274,17 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 {/* Column 3: Preview & Verification */}
                 <section>
                     <SectionHeader icon="fa-eye" title="3. Xem trước & Xác thực" />
-                    <div className="relative h-52 bg-surface-ground rounded-xl flex items-center justify-center p-4 border border-border-primary text-center">
+                    <div className="relative h-52 bg-surface-ground rounded-xl flex items-center justify-center p-4 border border-border-primary text-center shadow-inner-sm">
                         {(formData.dong_xe && formData.ngoai_that) ? (
                             <CarImage
                                 model={formData.dong_xe}
                                 exteriorColor={formData.ngoai_that}
-                                className="max-w-full max-h-full object-contain"
+                                className="max-w-full max-h-full object-contain drop-shadow-lg"
                                 alt="Cấu hình xe"
                             />
                         ) : (
                             <div className="text-text-placeholder transition-all duration-300">
-                                <i className="fas fa-car text-5xl text-slate-400 mb-3"></i>
+                                <i className="fas fa-car text-5xl text-slate-400 mb-3 opacity-50"></i>
                                 <p className="font-semibold text-sm text-slate-500">Xem trước xe của bạn</p>
                                 <p className="text-xs mt-1">Chọn cấu hình xe để xem trước</p>
                             </div>
@@ -296,7 +303,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 </section>
             </div>
 
-            <div className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end items-center gap-3 pt-4 mt-4 sm:pt-6 sm:mt-6 border-t border-border-primary">
+            <div className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end items-center gap-3 pt-4 mt-4 sm:pt-6 sm:mt-6 border-t border-border-primary relative z-10">
                 <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-1 px-4 py-2.5 text-sm font-semibold text-text-primary bg-white border border-border-primary rounded-md shadow-sm transition-all duration-150 hover:bg-surface-hover hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
                     <i className="fas fa-eraser mr-2"></i><span>Xóa Nháp</span>
                 </button>
