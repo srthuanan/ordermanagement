@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Order, VcRequest, StockVehicle, SortConfig, VcSortConfig, AdminSubView, ActiveUser } from '../types';
+import { Order, VcRequest, StockVehicle, SortConfig, VcSortConfig, AdminSubView } from '../types';
 import * as apiService from '../services/apiService';
 
 interface UseAdminDataProps {
@@ -33,10 +33,6 @@ export const useAdminData = ({
     const [isLoadingVc, setIsLoadingVc] = useState(true);
     const [errorVc, setErrorVc] = useState<string | null>(null);
 
-    // Active Users State
-    const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
-    const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-    const [errorUsers, setErrorUsers] = useState<string | null>(null);
 
     // Selection State
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -55,28 +51,12 @@ export const useAdminData = ({
         }
     }, []);
 
-    const fetchActiveUsers = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingUsers(true);
-        setErrorUsers(null);
-        try {
-            const result = await apiService.getActiveUsers();
-            setActiveUsers(result.users || []);
-        } catch (err) {
-            setErrorUsers(err instanceof Error ? err.message : 'Lỗi tải danh sách người dùng hoạt động.');
-        } finally {
-            if (!isSilent) setIsLoadingUsers(false);
-        }
-    }, []);
 
     useEffect(() => {
         if (adminView === 'vc') {
             fetchVcData();
-        } else if (adminView === 'activeUsers') {
-            fetchActiveUsers();
-            const intervalId = setInterval(() => fetchActiveUsers(true), 30000);
-            return () => clearInterval(intervalId);
         }
-    }, [adminView, fetchVcData, fetchActiveUsers]);
+    }, [adminView, fetchVcData]);
 
     // Heartbeat
     useEffect(() => {
@@ -290,9 +270,9 @@ export const useAdminData = ({
         pairedSortConfig, setPairedSortConfig,
         vcSortConfig, setVcSortConfig,
         currentPage, setCurrentPage,
-        vcRequestsData, activeUsers, isLoadingVc, errorVc, isLoadingUsers, errorUsers,
+        vcRequestsData, isLoadingVc, errorVc,
         selectedRows, setSelectedRows, handleToggleAll,
-        fetchVcData, fetchActiveUsers,
+        fetchVcData,
         processedInvoices, invoiceRequests, pendingData, pairedData, vcRequests,
         suggestionsMap, filterOptions, ordersWithMatches,
         paginatedInvoices, totalInvoicePages,

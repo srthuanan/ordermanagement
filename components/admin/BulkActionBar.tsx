@@ -22,8 +22,6 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     paired: [],
     vc: [],
     phongkd: [],
-    activityLog: [],
-    activeUsers: [],
 };
 
 const BulkActionBar: React.FC<BulkActionBarProps> = ({ view, selectedRows, setSelectedRows, setBulkActionModal }) => {

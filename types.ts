@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd' | 'activityLog' | 'activeUsers';
+export type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'vc' | 'phongkd';
 
 export interface Order {
   "Số đơn hàng": string;

@@ -17,8 +17,6 @@ import { useAdminData } from '../../hooks/useAdminData';
 import AdminFilterPanel from './AdminFilterPanel';
 import { TeamManagementComponent, TeamEditorModal } from './TeamManagement';
 import BulkActionBar from './BulkActionBar';
-import moment from 'moment';
-import Avatar from '../ui/Avatar';
 
 type User = { name: string, role: string, username: string };
 
@@ -72,9 +70,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         pairedSortConfig, setPairedSortConfig,
         vcSortConfig, setVcSortConfig,
         currentPage, setCurrentPage,
-        vcRequestsData, activeUsers, isLoadingVc, errorVc, isLoadingUsers, errorUsers,
+        vcRequestsData, isLoadingVc, errorVc,
         selectedRows, setSelectedRows, handleToggleAll,
-        fetchVcData, fetchActiveUsers,
+        fetchVcData,
         processedInvoices, invoiceRequests, pendingData, pairedData, vcRequests,
         suggestionsMap, filterOptions, ordersWithMatches,
         paginatedInvoices, totalInvoicePages,
@@ -227,61 +225,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
                 );
             }
-            case 'activeUsers': {
-                return (
-                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
-                        <div className="p-3 border-b border-border-primary flex justify-between items-center">
-                            <h3 className="font-bold text-base">Người Dùng Đang Hoạt Động ({activeUsers.length})</h3>
-                            <button onClick={() => fetchActiveUsers()} disabled={isLoadingUsers} className="btn-secondary !text-xs !py-1 !px-3">
-                                <i className={`fas fa-sync-alt ${isLoadingUsers ? 'animate-spin' : ''} mr-2`}></i>Làm mới
-                            </button>
-                        </div>
-                        <div className="flex-grow overflow-auto p-3 hidden-scrollbar">
-                            {isLoadingUsers && <div className="flex items-center justify-center h-full"><i className="fas fa-spinner fa-spin text-3xl text-accent-primary"></i></div>}
-                            {errorUsers && <div className="text-center p-8 text-danger">{errorUsers}</div>}
-                            {!isLoadingUsers && !errorUsers && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                                    {activeUsers.length > 0 ? activeUsers
-                                        .sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())
-                                        .map(user => (
-                                            <div key={user.email} className="flex flex-col gap-3 p-3 bg-surface-ground rounded-lg border border-border-primary hover:shadow-md transition-shadow">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="relative flex-shrink-0">
-                                                        <Avatar name={user.fullName || user.email} size="md" />
-                                                        <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success ring-2 ring-surface-ground" title="Online"></div>
-                                                    </div>
-                                                    <div className="flex-grow min-w-0">
-                                                        <p className="font-semibold text-text-primary text-sm truncate" title={user.fullName || user.email}>{user.fullName || user.email}</p>
-                                                        <p className="text-xs text-text-secondary truncate" title={user.email}>{user.email}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="text-xs text-text-secondary border-t border-border-secondary pt-2 space-y-1">
-                                                    <p className="font-semibold">Hoạt động lần cuối:</p>
-                                                    <div>
-                                                        <p className="font-mono text-text-primary">{moment(user.lastSeen).format('HH:mm:ss [ngày] DD/MM/YYYY')}</p>
-                                                        <p>({moment(user.lastSeen).fromNow()})</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )) : (
-                                        <div className="sm:col-span-2 md:col-span-3 xl:col-span-4 text-center text-text-secondary py-12">
-                                            <i className="fas fa-ghost fa-3x mb-4"></i>
-                                            <p>Không có người dùng nào đang hoạt động.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            }
             default: return null;
         }
     };
 
-    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd', 'activityLog', 'activeUsers'];
-    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD', activityLog: 'Nhật Ký', activeUsers: 'Đang Truy Cập' };
-    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length, activityLog: null, activeUsers: activeUsers.length };
+    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
 
     // Modal Inputs
     const addCarInputs = [{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }];
