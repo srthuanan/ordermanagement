@@ -6,3 +6,4 @@ export default defineConfig({
   plugins: [react()],
   base: '/ordermanagement/', // IMPORTANT: Replace with your repository name
 })
+
