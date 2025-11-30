@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Order, StockVehicle, AdminSubView } from '../../types';
-import Pagination from '../ui/Pagination';
 import AdminInvoiceTable from './AdminInvoiceTable';
+import InvoiceInboxView from './InvoiceInboxView';
+import MatchingCockpitView from './MatchingCockpitView';
 import AdminVcRequestTable from './AdminVcRequestTable';
 import TotalViewDashboard from './TotalViewDashboard';
 import ActionModal from './ActionModal';
@@ -58,25 +59,22 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     // 1. Filters Hook
     const {
         adminView, setAdminView,
-        invoiceFilters, pendingFilters, pairedFilters, vcFilters,
+        invoiceFilters, pendingFilters, pairedFilters, vcFilters, matchingFilters,
         handleFilterChange, handleReset,
         setInvoiceFilters, setPendingFilters, setPairedFilters
     } = useAdminFilters({ initialState, clearInitialState });
 
     // 2. Data Hook
     const {
-        sortConfig, setSortConfig,
         pendingSortConfig, setPendingSortConfig,
         pairedSortConfig, setPairedSortConfig,
         vcSortConfig, setVcSortConfig,
-        currentPage, setCurrentPage,
         vcRequestsData, isLoadingVc, errorVc,
         selectedRows, setSelectedRows, handleToggleAll,
         fetchVcData,
         processedInvoices, invoiceRequests, pendingData, pairedData, vcRequests,
         suggestionsMap, filterOptions, ordersWithMatches,
-        paginatedInvoices, totalInvoicePages,
-        allInvoiceOrderNumbers, allPendingOrderNumbers, allPairedOrderNumbers, allVcOrderNumbers
+        allPendingOrderNumbers, allPairedOrderNumbers, allVcOrderNumbers
     } = useAdminData({
         allOrders, xuathoadonData, stockData,
         invoiceFilters, pendingFilters, pairedFilters, vcFilters,
@@ -160,13 +158,38 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     />
                 );
             }
-            case 'invoices':
+            case 'invoices': {
+                return (
+                    <div key="invoices" className="flex-1 flex flex-col min-h-0 animate-fade-in">
+                        <InvoiceInboxView
+                            orders={invoiceRequests}
+                            onAction={actions.handleAction}
+                            showToast={showToast}
+                            onOpenFilePreview={onOpenFilePreview}
+                            onUpdateInvoiceDetails={actions.handleEditInvoiceDetails}
+                        />
+                    </div>
+                );
+            }
+            case 'matching': {
+                return (
+                    <div key="matching" className="flex-1 flex flex-col min-h-0 animate-fade-in">
+                        <MatchingCockpitView
+                            pendingOrders={pendingData}
+                            pairedOrders={pairedData}
+                            stockData={stockData}
+                            onAction={actions.handleAction}
+                            filters={matchingFilters}
+                        />
+                    </div>
+                );
+            }
             case 'pending':
             case 'paired': {
-                const data = adminView === 'invoices' ? paginatedInvoices : adminView === 'pending' ? pendingData : pairedData;
-                const allIds = adminView === 'invoices' ? allInvoiceOrderNumbers : adminView === 'pending' ? allPendingOrderNumbers : allPairedOrderNumbers;
-                const sortConf = adminView === 'invoices' ? sortConfig : adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
-                const onSortHandler = adminView === 'invoices' ? setSortConfig : adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
+                const data = adminView === 'pending' ? pendingData : pairedData;
+                const allIds = adminView === 'pending' ? allPendingOrderNumbers : allPairedOrderNumbers;
+                const sortConf = adminView === 'pending' ? pendingSortConfig : pairedSortConfig;
+                const onSortHandler = adminView === 'pending' ? setPendingSortConfig : setPairedSortConfig;
 
                 return (
                     <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
@@ -188,7 +211,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 onUpdateInvoiceDetails={actions.handleEditInvoiceDetails}
                             />
                         </div>
-                        {adminView === 'invoices' && totalInvoicePages > 0 && <Pagination currentPage={currentPage} totalPages={totalInvoicePages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 );
             }
@@ -229,9 +251,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
 
-    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'pending', 'paired', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
-    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
+    const tabs: AdminSubView[] = ['dashboard', 'invoices', 'matching', 'vc', 'phongkd'];
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', matching: 'Ghép Xe', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, matching: pendingData.length + pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
 
     // Modal Inputs
     const addCarInputs = [{ id: 'vin', label: 'Số VIN (17 ký tự)', placeholder: 'Nhập 17 ký tự VIN...', isVIN: true }];
@@ -290,6 +312,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     pendingFilters={pendingFilters}
                     pairedFilters={pairedFilters}
                     vcFilters={vcFilters}
+                    matchingFilters={matchingFilters}
                     handleFilterChange={handleFilterChange}
                     handleReset={handleReset}
                     filterOptions={filterOptions}

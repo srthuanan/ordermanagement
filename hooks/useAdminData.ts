@@ -235,7 +235,7 @@ export const useAdminData = ({
             ordersWithMatches: ordersWithMatches,
             filterOptions: {
                 invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Kết quả']),
-                pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe']),
+                pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe', 'Ngoại thất', 'Nội thất']),
                 paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe']),
                 vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
             }

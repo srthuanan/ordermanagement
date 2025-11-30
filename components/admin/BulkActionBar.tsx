@@ -20,6 +20,7 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
         { type: 'cancel', label: 'Hủy Yêu cầu (Xóa)', icon: 'fa-trash-alt', isDanger: true },
     ],
     paired: [],
+    matching: [],
     vc: [],
     phongkd: [],
 };

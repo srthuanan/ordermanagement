@@ -13,6 +13,7 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
     const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [] });
     const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [] });
     const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', nguoiyc: [], trangthai: [] });
+    const [matchingFilters, setMatchingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], ngoaiThat: string[], noiThat: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
 
     useEffect(() => {
         if (initialState) {
@@ -40,6 +41,7 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
                 setPendingFilters({ keyword: '', tvbh: [], dongXe: [] });
                 setPairedFilters({ keyword: '', tvbh: [], dongXe: [] });
                 setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
+                setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
 
                 const keyword = order['Số đơn hàng'];
                 if (targetTab === 'invoices') {
@@ -48,6 +50,8 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
                     setPendingFilters(prev => ({ ...prev, keyword }));
                 } else if (targetTab === 'paired') {
                     setPairedFilters(prev => ({ ...prev, keyword }));
+                } else if (targetTab === 'matching') {
+                    setMatchingFilters(prev => ({ ...prev, keyword }));
                 }
             }
             clearInitialState();
@@ -63,6 +67,8 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
             setPairedFilters(prev => ({ ...prev, ...newFilters }));
         } else if (adminView === 'vc') {
             setVcFilters(prev => ({ ...prev, ...newFilters }));
+        } else if (adminView === 'matching') {
+            setMatchingFilters(prev => ({ ...prev, ...newFilters }));
         }
     }, [adminView]);
 
@@ -75,6 +81,8 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
             setPairedFilters({ keyword: '', tvbh: [], dongXe: [] });
         } else if (adminView === 'vc') {
             setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
+        } else if (adminView === 'matching') {
+            setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
         }
     }, [adminView]);
 
@@ -85,11 +93,13 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
         pendingFilters,
         pairedFilters,
         vcFilters,
+        matchingFilters,
         handleFilterChange,
         handleReset,
         setInvoiceFilters,
         setPendingFilters,
         setPairedFilters,
-        setVcFilters
+        setVcFilters,
+        setMatchingFilters
     };
 };

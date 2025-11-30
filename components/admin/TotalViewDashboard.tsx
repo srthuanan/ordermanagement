@@ -22,32 +22,32 @@ interface TotalViewDashboardProps {
     onShowOrderDetails: (order: Order) => void;
 }
 
-const StatListCard: React.FC<{ title: string; icon: string; children: React.ReactNode; emptyText?: string; itemCount: number }> = 
-({ title, icon, children, emptyText = "Không có dữ liệu", itemCount }) => (
-    <div className="bg-surface-card p-1.5 rounded-xl border border-border-primary shadow-md flex flex-col h-64">
-        <h3 className="font-bold text-text-primary text-sm mb-2 flex items-center gap-2 flex-shrink-0">
-            <i className={`fas ${icon} text-accent-primary`}></i>
-            {title}
-        </h3>
-        <div className="flex-grow min-h-0 overflow-y-auto pr-2 hidden-scrollbar">
-            {itemCount > 0 ? (
-                <div className="space-y-1">
-                    {children}
-                </div>
-            ) : (
-                <div className="text-center text-text-secondary py-4 flex flex-col items-center justify-center h-full">
-                    <div className="w-48 h-32 relative">
-                        <img src="/pictures/teachers-day-empty.png" alt="Empty data" className="absolute inset-0 w-full h-full object-contain" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <i className="fas fa-box-open fa-2x text-slate-400 opacity-50"></i>
-                        </div>
+const StatListCard: React.FC<{ title: string; icon: string; children: React.ReactNode; emptyText?: string; itemCount: number }> =
+    ({ title, icon, children, emptyText = "Không có dữ liệu", itemCount }) => (
+        <div className="bg-surface-card p-1.5 rounded-xl border border-border-primary shadow-md flex flex-col h-64">
+            <h3 className="font-bold text-text-primary text-sm mb-2 flex items-center gap-2 flex-shrink-0">
+                <i className={`fas ${icon} text-accent-primary`}></i>
+                {title}
+            </h3>
+            <div className="flex-grow min-h-0 overflow-y-auto pr-2 hidden-scrollbar">
+                {itemCount > 0 ? (
+                    <div className="space-y-1">
+                        {children}
                     </div>
-                    <p className="mt-2">{emptyText}</p>
-                </div>
-            )}
+                ) : (
+                    <div className="text-center text-text-secondary py-4 flex flex-col items-center justify-center h-full">
+                        <div className="w-48 h-32 relative">
+                            <img src="/pictures/teachers-day-empty.png" alt="Empty data" className="absolute inset-0 w-full h-full object-contain" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <i className="fas fa-box-open fa-2x text-slate-400 opacity-50"></i>
+                            </div>
+                        </div>
+                        <p className="mt-2">{emptyText}</p>
+                    </div>
+                )}
+            </div>
         </div>
-    </div>
-);
+    );
 
 
 const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stockData, soldData, invoiceData, teamData, allUsers, onTabChange, onNavigateTo, onShowOrderDetails }) => {
@@ -66,22 +66,22 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
             choKyHD: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'chờ ký hóa đơn').length,
             daXuatHD: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'đã xuất hóa đơn').length,
         };
-        
+
         const oldestPendingRequests = [...pendingRequests]
             .sort((a, b) => new Date(a['Thời gian nhập']).getTime() - new Date(b['Thời gian nhập']).getTime())
             .slice(0, 10);
 
         const pairedButNotSold: Order[] = allOrders
             .filter(o => ['đã ghép', 'chờ phê duyệt', 'đã phê duyệt', 'chờ ký hóa đơn', 'yêu cầu bổ sung'].includes(o['Kết quả']?.toLowerCase() ?? ''))
-            .sort((a,b) => new Date(a['Thời gian ghép'] || a['Thời gian nhập']).getTime() - new Date(b['Thời gian ghép'] || b['Thời gian nhập']).getTime())
+            .sort((a, b) => new Date(a['Thời gian ghép'] || a['Thời gian nhập']).getTime() - new Date(b['Thời gian ghép'] || b['Thời gian nhập']).getTime())
             .slice(0, 10);
-        
+
         const pendingRequestGroups: Record<string, number> = {};
         pendingRequests.forEach(order => {
-                const key = `${order['Dòng xe'] || 'N/A'}|${order['Phiên bản'] || 'N/A'}|${order['Ngoại thất'] || 'N/A'}|${order['Nội thất'] || 'N/A'}`;
-                pendingRequestGroups[key] = (pendingRequestGroups[key] || 0) + 1;
-            });
-    
+            const key = `${order['Dòng xe'] || 'N/A'}|${order['Phiên bản'] || 'N/A'}|${order['Ngoại thất'] || 'N/A'}|${order['Nội thất'] || 'N/A'}`;
+            pendingRequestGroups[key] = (pendingRequestGroups[key] || 0) + 1;
+        });
+
         const pendingRequestsByModel = Object.entries(pendingRequestGroups)
             .map(([key, count]) => {
                 const [dongXe, phienBan, ngoaiThat, noiThat] = key.split('|');
@@ -93,7 +93,7 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
             })
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
-            
+
         const currentMonth = moment().month();
         const currentYear = moment().year();
 
@@ -180,16 +180,16 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
                     <div className="flex items-center justify-start lg:justify-center">
                         <PipelineStep title="Chờ Ghép" count={stats.pipeline.choGhep} onClick={() => onTabChange('pending')} />
                         <PipelineStep title="Đã Ghép" count={stats.pipeline.daGhep} onClick={() => onTabChange('paired')} />
-                        <PipelineStep title="Chờ Phê Duyệt" count={stats.pipeline.choPheDuyet} onClick={() => onTabChange('invoices', { trangThai: ['Chờ phê duyệt']})} />
-                        <PipelineStep title="Chờ Ký HĐ" count={stats.pipeline.choKyHD} onClick={() => onTabChange('invoices', { trangThai: ['Chờ ký hóa đơn']})} />
-                        <PipelineStep title="Đã Xuất HĐ" count={stats.pipeline.daXuatHD} isLast onClick={() => onTabChange('invoices', { trangThai: ['Đã xuất hóa đơn']})} />
+                        <PipelineStep title="Chờ Phê Duyệt" count={stats.pipeline.choPheDuyet} onClick={() => onTabChange('invoices', { trangThai: ['Chờ phê duyệt'] })} />
+                        <PipelineStep title="Chờ Ký HĐ" count={stats.pipeline.choKyHD} onClick={() => onTabChange('invoices', { trangThai: ['Chờ ký hóa đơn'] })} />
+                        <PipelineStep title="Đã Xuất HĐ" count={stats.pipeline.daXuatHD} isLast onClick={() => onTabChange('invoices', { trangThai: ['Đã xuất hóa đơn'] })} />
                     </div>
                 </div>
             </div>
 
             {/* Detailed Stat Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                 <StatListCard title="Yêu Cầu Chờ Lâu Nhất" icon="fa-hourglass-start" itemCount={stats.oldestPendingRequests.length}>
+                <StatListCard title="Yêu Cầu Chờ Lâu Nhất" icon="fa-hourglass-start" itemCount={stats.oldestPendingRequests.length}>
                     {stats.oldestPendingRequests.map(order => (
                         <button key={order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
                             <div className="flex justify-between items-center text-xs">
@@ -201,9 +201,9 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
                     ))}
                 </StatListCard>
                 <StatListCard title="Xe 'Kẹt' Lâu Nhất (Chờ XHĐ)" icon="fa-hourglass-end" itemCount={stats.pairedButNotSold.length} emptyText="Không có xe nào đang chờ XHĐ.">
-                     {stats.pairedButNotSold.map(order => {
-                         const waitingSince = order['Thời gian ghép'] || order['Thời gian nhập'];
-                         return (
+                    {stats.pairedButNotSold.map(order => {
+                        const waitingSince = order['Thời gian ghép'] || order['Thời gian nhập'];
+                        return (
                             <button key={order.VIN || order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
                                 <div className="flex justify-between items-center text-xs">
                                     <span className="font-semibold font-mono text-text-primary truncate pr-2" title={order.VIN}>{order.VIN}</span>
@@ -212,10 +212,10 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
                                 <p className="text-[11px] text-text-secondary truncate mt-0.5">{order['Dòng xe']} - {order['Tên khách hàng']}</p>
                                 <p className="text-[11px] font-medium text-amber-600 truncate">Trạng thái: {order['Kết quả']}</p>
                             </button>
-                         );
-                     })}
+                        );
+                    })}
                 </StatListCard>
-                 <StatListCard title="Thống Kê Xe Chờ Ghép" icon="fa-car-side" itemCount={stats.pendingRequestsByModel.length} emptyText="Không có yêu cầu nào đang chờ.">
+                <StatListCard title="Thống Kê Xe Chờ Ghép" icon="fa-car-side" itemCount={stats.pendingRequestsByModel.length} emptyText="Không có yêu cầu nào đang chờ.">
                     {stats.pendingRequestsByModel.map((item, index) => (
                         <div key={index} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
                             <div className="flex justify-between items-start text-xs">

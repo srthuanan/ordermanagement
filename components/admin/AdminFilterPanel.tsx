@@ -8,6 +8,7 @@ interface AdminFilterPanelProps {
     pendingFilters: any;
     pairedFilters: any;
     vcFilters: any;
+    matchingFilters: any;
     handleFilterChange: (newFilters: any) => void;
     handleReset: () => void;
     filterOptions: {
@@ -29,7 +30,7 @@ interface AdminFilterPanelProps {
 }
 
 const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
-    adminView, invoiceFilters, pendingFilters, pairedFilters, vcFilters,
+    adminView, invoiceFilters, pendingFilters, pairedFilters, vcFilters, matchingFilters,
     handleFilterChange, handleReset, filterOptions,
     invoiceRequests, pendingData, pairedData, vcRequests,
     refetchXuathoadon, refetchHistory, fetchVcData,
@@ -78,6 +79,19 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH, VIN...";
             totalCount = pairedData.length;
+            onRefresh = () => refetchHistory();
+            isLoading = isLoadingHistory;
+            break;
+        case 'matching':
+            currentFilters = matchingFilters;
+            dropdownConfigs = [
+                { id: 'admin-filter-tvbh-matching', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
+                { id: 'admin-filter-dongxe-matching', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-ngoaithat-matching', key: 'ngoaiThat', label: 'Ngoại Thất', options: filterOptions.pending['Ngoại thất'], icon: 'fa-palette' },
+                { id: 'admin-filter-noithat-matching', key: 'noiThat', label: 'Nội Thất', options: filterOptions.pending['Nội thất'], icon: 'fa-couch' }
+            ];
+            searchPlaceholder = "Tìm SĐH, Tên KH...";
+            totalCount = pendingData.length; // Or combined count if needed
             onRefresh = () => refetchHistory();
             isLoading = isLoadingHistory;
             break;

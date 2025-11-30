@@ -119,10 +119,13 @@ export const useAdminActions = ({
         return success;
     }, [selectedRows, handleAdminSubmit, showToast, setSelectedRows]);
 
-    const handleAction = (type: ActionType, order: Order | VcRequest) => {
+    const handleAction = (type: ActionType, order: Order | VcRequest, data?: any) => {
         if (type === 'manualMatch') {
             const suggestedCars = suggestionsMap.get(order['Số đơn hàng']) || [];
             setSuggestionModalState({ order: order as Order, cars: suggestedCars });
+        } else if (type === 'pair' && data?.vin) {
+            // Direct pair action from Matching Cockpit - No confirmation needed as per user request
+            handleConfirmSuggestion(order['Số đơn hàng'], data.vin);
         } else if (type === 'requestInvoice') {
             const orderToRequest = allOrders.find(o => o['Số đơn hàng'] === order['Số đơn hàng']);
             if (orderToRequest) {
