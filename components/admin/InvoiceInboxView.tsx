@@ -110,15 +110,30 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
         ].filter(a => a.condition);
     };
 
+
+    // Mobile View State
+    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+
+    // Update mobile view when folder or order changes
+    const handleFolderChange = (folder: string) => {
+        onFolderChange(folder);
+        setMobileView('list');
+    };
+
+    const handleOrderSelect = (orderId: string | null) => {
+        onOrderSelect(orderId);
+        if (orderId) setMobileView('detail');
+    };
+
     return (
-        <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in">
+        <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative">
             {/* Column 1: Folders */}
-            <div className="w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground flex flex-col">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground flex flex-col ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {folders.map(folder => (
                         <button
                             key={folder.id}
-                            onClick={() => onFolderChange(folder.id)}
+                            onClick={() => handleFolderChange(folder.id)}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
@@ -132,8 +147,15 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             </div>
 
             {/* Column 2: List */}
-            <div className="w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white">
-                {/* Search removed as it's handled globally */}
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+                {/* Mobile Back Button */}
+                <div className="md:hidden p-2 border-b border-border-secondary flex items-center gap-2">
+                    <button onClick={() => setMobileView('folders')} className="p-2 hover:bg-surface-ground rounded-full">
+                        <i className="fas fa-arrow-left text-text-secondary"></i>
+                    </button>
+                    <span className="font-bold text-sm">Danh sách</span>
+                </div>
+
                 <div className="flex-1 overflow-y-auto">
                     {filteredOrders.length === 0 ? (
                         <div className="p-8 text-center text-text-placeholder text-sm">Không tìm thấy đơn hàng nào.</div>
@@ -142,7 +164,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                             {filteredOrders.map(order => (
                                 <div
                                     key={order['Số đơn hàng']}
-                                    onClick={() => onOrderSelect(order['Số đơn hàng'])}
+                                    onClick={() => handleOrderSelect(order['Số đơn hàng'])}
                                     className={`p-3 cursor-pointer hover:bg-surface-hover transition-colors group ${selectedOrderId === order['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
                                 >
                                     <div className="flex items-center justify-between">
@@ -166,19 +188,24 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             </div>
 
             {/* Column 3: Detail */}
-            <div className="flex-1 flex flex-col bg-surface-ground min-w-0">
+            <div className={`flex-1 flex flex-col bg-surface-ground min-w-0 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}>
                 {
                     selectedOrder ? (
                         <>
                             {/* Header Actions - Compact */}
-                            < div className="px-4 py-3 bg-white border-b border-border-primary flex justify-between items-center shadow-sm z-10" >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold text-base">
+                            < div className="px-4 py-3 bg-white border-b border-border-primary flex flex-col md:flex-row justify-between items-start md:items-center shadow-sm z-10 gap-3 md:gap-0" >
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    {/* Mobile Back Button */}
+                                    <button onClick={() => setMobileView('list')} className="md:hidden p-1 hover:bg-surface-ground rounded-full mr-1">
+                                        <i className="fas fa-arrow-left text-text-secondary"></i>
+                                    </button>
+
+                                    <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold text-base flex-shrink-0">
                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                     </div>
-                                    <div>
+                                    <div className="min-w-0 flex-1">
                                         <h2
-                                            className="text-base font-bold text-text-primary leading-tight cursor-pointer hover:text-accent-primary transition-colors"
+                                            className="text-base font-bold text-text-primary leading-tight cursor-pointer hover:text-accent-primary transition-colors truncate"
                                             title="Click để sao chép tên khách hàng"
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -190,7 +217,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                         </h2>
                                         <div className="text-xs text-text-secondary flex items-center gap-2 mt-0.5">
                                             <span
-                                                className="font-mono cursor-pointer hover:text-accent-primary border-b border-dashed border-transparent hover:border-accent-primary transition-all"
+                                                className="font-mono cursor-pointer hover:text-accent-primary border-b border-dashed border-transparent hover:border-accent-primary transition-all truncate"
                                                 title="Click để sao chép số đơn hàng"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -201,19 +228,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                 {selectedOrder['Số đơn hàng']}
                                             </span>
                                             <span>•</span>
-                                            <span>{selectedOrder['Tên tư vấn bán hàng']}</span>
+                                            <span className="truncate">{selectedOrder['Tên tư vấn bán hàng']}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
                                     {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => (
                                         <button
                                             key={action.type}
                                             onClick={() => onAction(action.type as any, selectedOrder)}
-                                            className={`btn ${action.className} px-2.5 py-1 text-xs flex items-center gap-1.5 rounded`}
+                                            className={`btn ${action.className} px-2.5 py-1 text-xs flex items-center gap-1.5 rounded whitespace-nowrap`}
                                         >
                                             <i className={`fas ${action.icon}`}></i>
-                                            <span className="hidden xl:inline">{action.label}</span>
+                                            <span className="">{action.label}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -270,7 +297,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                 </div>
 
                                 {/* Policy & PO & Documents Grid */}
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-2 mt-2">
                                     {/* Top Row: Policy & PO */}
                                     {/* Combined Policy & PO Card */}
                                     {/* Combined Policy & PO Card */}
@@ -336,7 +363,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                         <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary">
                                             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Hồ Sơ Đính Kèm</h3>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 p-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
                                             {[{ key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Đã Xuất', icon: 'fa-file-invoice-dollar' }].map(file => {
                                                 const url = selectedOrder[file.key] as string | undefined;
 
@@ -371,7 +398,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                         onClick={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
                                                     >
                                                         {/* Thumbnail Area */}
-                                                        <div className={`w-full h-40 flex items-center justify-center overflow-hidden border-b border-border-secondary ${url ? 'bg-white' : 'bg-gray-100'}`}>
+                                                        <div className={`w-full h-24 md:h-40 flex items-center justify-center overflow-hidden border-b border-border-secondary ${url ? 'bg-white' : 'bg-gray-100'}`}>
                                                             {isImage ? (
                                                                 <img src={url} alt={file.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                                             ) : driveThumbnail ? (
@@ -392,8 +419,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                         </div>
 
                                                         {/* Info Area */}
-                                                        <div className="p-3">
-                                                            <div className="font-bold text-sm text-text-primary truncate mb-1" title={file.label}>{file.label}</div>
+                                                        <div className="p-2 md:p-3">
+                                                            <div className="font-bold text-xs md:text-sm text-text-primary truncate mb-1" title={file.label}>{file.label}</div>
                                                             <div className="flex items-center justify-between">
                                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                                                                     {url ? 'Đã có file' : 'Chưa có'}

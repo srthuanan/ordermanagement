@@ -307,9 +307,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex-shrink-0 bg-white border-b border-border-primary shadow-sm z-20">
                 {/* Row 1: Navigation & Actions */}
-                <div className="flex items-center justify-between px-6 py-3 border-b border-border-secondary/50">
+                <div className="flex flex-col md:flex-row md:items-center justify-between px-4 md:px-6 py-3 border-b border-border-secondary/50 gap-3 md:gap-0">
                     {/* Tabs (Segmented Control Style) */}
-                    <div className="flex p-1 bg-surface-ground rounded-lg border border-border-secondary/50">
+                    <div className="flex p-1 bg-surface-ground rounded-lg border border-border-secondary/50 overflow-x-auto no-scrollbar w-full md:w-auto">
                         {tabs.map(view => {
                             const count = counts[view];
                             const isActive = adminView === view;
@@ -317,7 +317,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <button
                                     key={view}
                                     onClick={() => handleManualTabChange(view)}
-                                    className={`relative px-4 py-1.5 text-xs uppercase transition-all rounded-md flex items-center gap-2 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
+                                    className={`relative px-4 py-1.5 text-xs uppercase transition-all rounded-md flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
                                 >
                                     {labels[view]}
                                     {count !== null && (
@@ -330,56 +330,59 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         })}
                     </div>
 
-                    {/* Divider */}
-                    <div className="h-8 w-px bg-border-secondary/50 mx-6"></div>
+                    {/* Divider - Hidden on mobile */}
+                    <div className="hidden md:block h-8 w-px bg-border-secondary/50 mx-6"></div>
 
-                    {/* Filters (Right) */}
-                    <div className="flex-grow flex justify-end items-center min-w-0 mr-4">
-                        <AdminFilterPanel
-                            adminView={adminView}
-                            invoiceFilters={invoiceFilters}
-                            pendingFilters={pendingFilters}
-                            pairedFilters={pairedFilters}
-                            vcFilters={vcFilters}
-                            matchingFilters={matchingFilters}
-                            handleFilterChange={handleFilterChange}
-                            handleReset={handleReset}
+                    {/* Controls Row for Mobile */}
+                    <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-3">
+                        {/* Filters (Right) */}
+                        <div className="flex-grow md:flex-grow-0 flex justify-end items-center min-w-0 md:mr-4">
+                            <AdminFilterPanel
+                                adminView={adminView}
+                                invoiceFilters={invoiceFilters}
+                                pendingFilters={pendingFilters}
+                                pairedFilters={pairedFilters}
+                                vcFilters={vcFilters}
+                                matchingFilters={matchingFilters}
+                                handleFilterChange={handleFilterChange}
+                                handleReset={handleReset}
 
-                            filterOptions={filterOptions}
-                            invoiceRequests={invoiceRequests}
-                            pendingData={pendingData}
-                            pairedData={pairedData}
-                            vcRequests={vcRequests}
-                            refetchXuathoadon={refetchXuathoadon}
-                            refetchHistory={refetchHistory}
-                            fetchVcData={fetchVcData}
-                            isLoadingXuathoadon={isLoadingXuathoadon}
-                            isLoadingHistory={isLoadingHistory}
-                            isLoadingVc={isLoadingVc}
-                        />
-                    </div>
+                                filterOptions={filterOptions}
+                                invoiceRequests={invoiceRequests}
+                                pendingData={pendingData}
+                                pairedData={pairedData}
+                                vcRequests={vcRequests}
+                                refetchXuathoadon={refetchXuathoadon}
+                                refetchHistory={refetchHistory}
+                                fetchVcData={fetchVcData}
+                                isLoadingXuathoadon={isLoadingXuathoadon}
+                                isLoadingHistory={isLoadingHistory}
+                                isLoadingVc={isLoadingVc}
+                            />
+                        </div>
 
-                    {/* Action Menu (Right) */}
-                    <div className="relative" ref={actionMenuRef}>
-                        <button
-                            onClick={() => setIsActionMenuOpen(prev => !prev)}
-                            title="Thao Tác Nhanh"
-                            className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${isActionMenuOpen ? 'bg-accent-primary text-white shadow-md' : 'bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent border border-transparent hover:border-border-secondary'}`}
-                        >
-                            <i className="fas fa-bolt text-sm"></i>
-                        </button>
-                        {isActionMenuOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-border-primary shadow-xl rounded-xl z-30 p-1 animate-fade-in-scale-up origin-top-right">
-                                {adminTools.map(tool => (
-                                    <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-lg text-text-primary hover:bg-surface-hover transition-colors">
-                                        <div className="w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-accent-secondary">
-                                            <i className={`fas ${tool.icon} text-xs`}></i>
-                                        </div>
-                                        <span className="font-medium">{tool.title}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        {/* Action Menu (Right) */}
+                        <div className="relative" ref={actionMenuRef}>
+                            <button
+                                onClick={() => setIsActionMenuOpen(prev => !prev)}
+                                title="Thao Tác Nhanh"
+                                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${isActionMenuOpen ? 'bg-accent-primary text-white shadow-md' : 'bg-surface-ground text-text-secondary hover:text-accent-primary hover:bg-surface-accent border border-transparent hover:border-border-secondary'}`}
+                            >
+                                <i className="fas fa-bolt text-sm"></i>
+                            </button>
+                            {isActionMenuOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-64 bg-white border border-border-primary shadow-xl rounded-xl z-30 p-1 animate-fade-in-scale-up origin-top-right">
+                                    {adminTools.map(tool => (
+                                        <button key={tool.title} onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex items-center gap-3 w-full text-left px-3 py-2.5 text-sm rounded-lg text-text-primary hover:bg-surface-hover transition-colors">
+                                            <div className="w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-accent-secondary">
+                                                <i className={`fas ${tool.icon} text-xs`}></i>
+                                            </div>
+                                            <span className="font-medium">{tool.title}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

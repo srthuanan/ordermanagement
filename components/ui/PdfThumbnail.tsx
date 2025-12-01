@@ -16,12 +16,11 @@ interface PdfThumbnailProps {
 }
 
 const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className }) => {
-    const [numPages, setNumPages] = useState<number>();
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
-    function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-        setNumPages(numPages);
+    function onDocumentLoadSuccess() {
         setLoading(false);
     }
 

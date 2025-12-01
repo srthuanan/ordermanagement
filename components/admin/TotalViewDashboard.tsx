@@ -303,10 +303,10 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
                 </div>
 
                 {/* BOTTOM: Insights Area (Split 50/50) */}
-                <div className="flex-grow flex min-h-0 gap-4">
+                <div className="flex-grow flex flex-col md:flex-row min-h-0 gap-4">
 
                     {/* Demand (Grid Layout) */}
-                    <div className="w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                    <div className="w-full md:w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
                         <SectionHeader title="Nhu Cầu" icon="fa-chart-bar" color="text-teal-600" />
                         <div className="flex-grow overflow-y-auto hidden-scrollbar pr-1 p-4">
                             <div className="grid grid-cols-2 gap-3">
@@ -330,7 +330,7 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
                     </div>
 
                     {/* Leaderboard (Podium + List) */}
-                    <div className="w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                    <div className="w-full md:w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
                         <SectionHeader title="Top Sales" icon="fa-trophy" color="text-yellow-500" />
                         <div className="flex-grow overflow-y-auto hidden-scrollbar pr-2 p-4">
 

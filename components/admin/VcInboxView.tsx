@@ -87,6 +87,9 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
 
 const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast, onOpenImagePreview, onDownloadAll, selectedFolder, selectedRequestId, onFolderChange, onRequestSelect }) => {
 
+    // Mobile View State
+    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+
     // 1. Filter Requests by Folder
     const filteredRequests = useMemo(() => {
         return requests.filter(req => {
@@ -154,15 +157,28 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
         return { docEntries, allImageSources, fileUrls };
     };
 
+    const handleFolderClick = (folderId: string) => {
+        onFolderChange(folderId);
+        setMobileView('list');
+    };
+
+    const handleRequestClick = (requestId: string) => {
+        onRequestSelect(requestId);
+        setMobileView('detail');
+    };
+
     return (
-        <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in">
+        <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative">
             {/* Column 1: Folders */}
-            <div className="w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground flex flex-col">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground flex flex-col absolute md:relative inset-0 z-20 md:z-auto transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                <div className="p-4 border-b border-border-primary md:hidden flex items-center justify-between bg-white">
+                    <span className="font-bold text-lg">Danh Mục</span>
+                </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {folders.map(folder => (
                         <button
                             key={folder.id}
-                            onClick={() => onFolderChange(folder.id)}
+                            onClick={() => handleFolderClick(folder.id)}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
@@ -176,7 +192,15 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
             </div>
 
             {/* Column 2: List */}
-            <div className="w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white">
+            <div className={`w-full md:w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white absolute md:relative inset-0 z-20 md:z-auto transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
+                {/* Mobile Header */}
+                <div className="p-3 border-b border-border-primary md:hidden flex items-center gap-3 bg-white shadow-sm">
+                    <button onClick={() => setMobileView('folders')} className="w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-text-secondary hover:bg-surface-hover">
+                        <i className="fas fa-arrow-left"></i>
+                    </button>
+                    <span className="font-bold text-text-primary">{folders.find(f => f.id === selectedFolder)?.label}</span>
+                </div>
+
                 <div className="flex-1 overflow-y-auto">
                     {filteredRequests.length === 0 ? (
                         <div className="p-8 text-center text-text-placeholder text-sm">Không tìm thấy yêu cầu nào.</div>
@@ -185,7 +209,7 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
                             {filteredRequests.map(req => (
                                 <div
                                     key={req['Số đơn hàng']}
-                                    onClick={() => onRequestSelect(req['Số đơn hàng'])}
+                                    onClick={() => handleRequestClick(req['Số đơn hàng'])}
                                     className={`px-3 py-2 cursor-pointer hover:bg-surface-hover transition-colors flex items-center justify-between ${selectedRequestId === req['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
                                 >
                                     <span className="text-text-primary text-sm truncate pr-2">{req['Tên khách hàng']}</span>
@@ -206,18 +230,23 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
             </div>
 
             {/* Column 3: Detail */}
-            <div className="flex-1 flex flex-col bg-surface-ground min-w-0">
+            <div className={`w-full flex-1 flex flex-col bg-surface-ground min-w-0 absolute md:relative inset-0 z-30 md:z-auto transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 {selectedRequest ? (
                     <>
                         {/* Header Actions - Compact */}
                         <div className="px-4 py-3 bg-white border-b border-border-primary flex justify-between items-center shadow-sm z-10">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold text-base">
+                                {/* Mobile Back Button */}
+                                <button onClick={() => setMobileView('list')} className="md:hidden w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-text-secondary hover:bg-surface-hover">
+                                    <i className="fas fa-arrow-left"></i>
+                                </button>
+
+                                <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary font-bold text-base hidden sm:flex">
                                     {selectedRequest['Tên khách hàng'].charAt(0)}
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <h2
-                                        className="text-base font-bold text-text-primary leading-tight cursor-pointer hover:text-accent-primary transition-colors"
+                                        className="text-base font-bold text-text-primary leading-tight cursor-pointer hover:text-accent-primary transition-colors truncate"
                                         title="Click để sao chép tên khách hàng"
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -239,8 +268,8 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
                                         >
                                             {selectedRequest['Số đơn hàng']}
                                         </span>
-                                        <span>•</span>
-                                        <span>{selectedRequest['Người YC']}</span>
+                                        <span className="hidden sm:inline">•</span>
+                                        <span className="hidden sm:inline">{selectedRequest['Người YC']}</span>
                                     </div>
                                 </div>
                             </div>
