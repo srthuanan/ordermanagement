@@ -132,7 +132,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             </div>
 
             {/* Column 2: List */}
-            <div className="w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white">
+            <div className="w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white">
                 {/* Search removed as it's handled globally */}
                 <div className="flex-1 overflow-y-auto">
                     {filteredOrders.length === 0 ? (
@@ -239,7 +239,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                         <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary">
                                             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thông Tin Xe</h3>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3">
                                             <div>
                                                 <label className="text-[10px] text-text-secondary block mb-0.5 uppercase">Dòng xe / Phiên bản</label>
                                                 <div className="text-sm font-medium truncate" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>{selectedOrder['Dòng xe']} - {selectedOrder['Phiên bản']}</div>
@@ -276,7 +276,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                     {/* Combined Policy & PO Card */}
                                     {/* Combined Policy & PO Card */}
                                     <div className="bg-white rounded-lg border border-border-primary shadow-sm">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-100 px-3 py-2 border-b border-border-secondary items-center rounded-t-lg">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gray-100 px-3 py-2 border-b border-border-secondary items-center rounded-t-lg">
                                             <div className="md:col-span-2">
                                                 <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thanh Toán & Chính Sách</h3>
                                             </div>
@@ -298,7 +298,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3">
                                             {/* Policy Content */}
                                             <div className="md:col-span-2">
                                                 {isEditing ? (
