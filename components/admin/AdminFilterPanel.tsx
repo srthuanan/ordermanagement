@@ -88,7 +88,7 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
                 { id: 'admin-filter-tvbh-matching', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
                 { id: 'admin-filter-dongxe-matching', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' },
                 { id: 'admin-filter-ngoaithat-matching', key: 'ngoaiThat', label: 'Ngoại Thất', options: filterOptions.pending['Ngoại thất'], icon: 'fa-palette' },
-                { id: 'admin-filter-noithat-matching', key: 'noiThat', label: 'Nội Thất', options: filterOptions.pending['Nội thất'], icon: 'fa-couch' }
+
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH...";
             totalCount = pendingData.length; // Or combined count if needed
@@ -122,7 +122,7 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             isLoading={isLoading}
             hideSearch={false}
             size="compact"
-            plain={true}
+            variant="modern"
         />
     );
 };

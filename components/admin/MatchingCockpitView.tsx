@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import moment from 'moment';
 import { Order, StockVehicle, ActionType } from '../../types';
+import CarImage from '../ui/CarImage';
 
 interface MatchingCockpitViewProps {
     pendingOrders: Order[];
@@ -14,11 +15,14 @@ interface MatchingCockpitViewProps {
         ngoaiThat: string[];
         noiThat: string[];
     };
+    showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    activeTab: 'pending' | 'paired';
+    selectedOrderId: string | null;
+    onTabChange: (tab: 'pending' | 'paired') => void;
+    onOrderSelect: (orderId: string | null) => void;
 }
 
-const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders, pairedOrders, stockData, onAction, filters }) => {
-    const [activeTab, setActiveTab] = useState<'pending' | 'paired'>('pending');
-    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders, pairedOrders, stockData, onAction, filters, showToast, activeTab, selectedOrderId, onTabChange, onOrderSelect }) => {
 
     // Helper to check if order is pending
     const isPendingOrder = (order: Order) => {
@@ -62,9 +66,10 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
     // Auto-select first order
     useEffect(() => {
         if (!selectedOrderId && filteredOrders.length > 0) {
-            setSelectedOrderId(filteredOrders[0]['Số đơn hàng']);
+            const firstId = filteredOrders[0]['Số đơn hàng'];
+            if (firstId) onOrderSelect(firstId);
         }
-    }, [filteredOrders, selectedOrderId]);
+    }, [filteredOrders, selectedOrderId, onOrderSelect]);
 
     // 2. Smart Matching Logic (For Pending Orders)
     const matchingSuggestions = useMemo(() => {
@@ -106,6 +111,12 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
         return 'danger'; // Red
     };
 
+    const handleCopy = (text: string, label: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        showToast('Đã sao chép!', `${label} đã được sao chép.`, 'success', 2000);
+    };
+
     return (
         <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in">
             {/* Left Column: Request Stream (40%) */}
@@ -113,14 +124,14 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                 {/* Tabs */}
                 <div className="flex border-b border-border-primary bg-surface-ground">
                     <button
-                        onClick={() => setActiveTab('pending')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'pending' && !filters?.keyword ? 'bg-white text-accent-primary border-t-2 border-t-accent-primary' : 'text-text-secondary hover:bg-surface-hover border-t-2 border-t-transparent'}`}
+                        onClick={() => onTabChange('pending')}
+                        className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'pending' && !filters?.keyword ? 'bg-white text-accent-primary border-t-2 border-t-accent-primary' : 'text-text-secondary hover:bg-surface-hover border-t-2 border-t-transparent'}`}
                     >
                         Chờ Ghép <span className="ml-2 bg-accent-primary text-white text-xs px-2 py-0.5 rounded-full">{pendingOrders.length}</span>
                     </button>
                     <button
-                        onClick={() => setActiveTab('paired')}
-                        className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'paired' && !filters?.keyword ? 'bg-white text-success border-t-2 border-t-success' : 'text-text-secondary hover:bg-surface-hover border-t-2 border-t-transparent'}`}
+                        onClick={() => onTabChange('paired')}
+                        className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'paired' && !filters?.keyword ? 'bg-white text-success border-t-2 border-t-success' : 'text-text-secondary hover:bg-surface-hover border-t-2 border-t-transparent'}`}
                     >
                         Đã Ghép <span className="ml-2 bg-success text-white text-xs px-2 py-0.5 rounded-full">{pairedOrders.length}</span>
                     </button>
@@ -146,7 +157,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                             return (
                                 <div
                                     key={order['Số đơn hàng']}
-                                    onClick={() => setSelectedOrderId(order['Số đơn hàng'])}
+                                    onClick={() => onOrderSelect(order['Số đơn hàng'])}
                                     className={`p-3 cursor-pointer transition-all relative group ${isSelected ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'hover:bg-surface-hover border-l-4 border-transparent'}`}
                                 >
                                     {isPending ? (
@@ -155,7 +166,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                             <div className={`absolute right-2 top-2 w-2 h-2 rounded-full ${stockStatus === 'success' ? 'bg-success' : stockStatus === 'warning' ? 'bg-warning' : 'bg-danger'}`}></div>
                                             <div className="pr-4">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-accent-primary' : 'text-text-primary'}`}>{order['Tên khách hàng']}</h3>
+                                                    <h3 className={`text-sm truncate ${isSelected ? 'text-accent-primary' : 'text-text-primary'}`}>{order['Tên khách hàng']}</h3>
                                                 </div>
                                                 <div className="text-xs text-text-secondary mb-0.5">
                                                     <span className="font-medium text-text-primary">{order['Dòng xe']} {order['Phiên bản']}</span>
@@ -166,7 +177,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
 
                                                 {exactMatchesCount > 0 && (
                                                     <div className="mt-1 inline-block">
-                                                        <span className="bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border border-success/20">
+                                                        <span className="bg-success/10 text-success text-[10px] px-2 py-0.5 rounded-full shadow-sm border border-success/20">
                                                             {exactMatchesCount} xe phù hợp
                                                         </span>
                                                     </div>
@@ -194,46 +205,31 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                     ) : (
                                         // PAIRED ORDER LAYOUT
                                         <div className="">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h3 className={`font-bold text-sm truncate ${isSelected ? 'text-accent-primary' : 'text-text-primary'}`}>{order['Tên khách hàng']}</h3>
-                                                <span className="text-[10px] font-bold text-white bg-success px-2 py-0.5 rounded shadow-sm font-mono">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h3 className={`text-sm truncate ${isSelected ? 'text-accent-primary' : 'text-text-primary'}`}>{order['Tên khách hàng']}</h3>
+                                                <span className="text-[10px] text-white bg-success px-1.5 py-0.5 rounded shadow-sm font-mono">
                                                     {order.VIN?.slice(-7)}
                                                 </span>
                                             </div>
-                                            <div className="text-xs text-text-secondary mb-0.5">
-                                                <span className="font-medium text-text-primary">{order['Dòng xe']} {order['Phiên bản']}</span>
-                                            </div>
-                                            <div className="text-xs text-text-secondary mb-1">
-                                                {order['Ngoại thất']} / {order['Nội thất']}
+
+                                            <div className="text-xs text-text-secondary mb-1.5 truncate">
+                                                <span className="font-medium text-text-primary">{order['Dòng xe']}</span>
+                                                <span className="mx-1">•</span>
+                                                <span>{order['Ngoại thất']}/{order['Nội thất']}</span>
                                             </div>
 
-                                            {/* Detailed Info for Paired */}
-                                            <div className="mt-2 pt-2 border-t border-border-secondary/50 text-[10px] text-text-secondary space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <i className="fas fa-user-tie text-text-placeholder w-3"></i>
+                                            {/* Compact Footer */}
+                                            <div className="flex justify-between items-center text-[10px] text-text-secondary pt-1.5 border-t border-border-secondary/50">
+                                                <div className="flex items-center gap-1.5 truncate max-w-[60%]">
+                                                    <i className="fas fa-user-tie text-text-placeholder"></i>
                                                     <span className="truncate">{order['Tên tư vấn bán hàng']}</span>
                                                 </div>
-                                                <div className="flex justify-between">
-                                                    <div title="Ngày cọc">
-                                                        <i className="fas fa-money-bill-wave text-text-placeholder w-3"></i>
-                                                        {order['Ngày cọc'] ? moment(order['Ngày cọc']).format('DD/MM') : '--'}
+                                                {order['Thời gian ghép'] && (
+                                                    <div className="flex items-center gap-1 text-accent-primary font-medium whitespace-nowrap">
+                                                        <i className="fas fa-clock text-[9px]"></i>
+                                                        <span>{moment().diff(moment(order['Thời gian ghép']), 'days')} ngày</span>
                                                     </div>
-                                                    <div title="Ngày yêu cầu">
-                                                        <i className="fas fa-clock text-text-placeholder w-3"></i>
-                                                        {moment(order['Thời gian nhập']).format('DD/MM')}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between bg-surface-ground/50 rounded px-1 py-0.5">
-                                                    <div title="Ngày ghép">
-                                                        <i className="fas fa-link text-text-placeholder w-3"></i>
-                                                        {order['Thời gian ghép'] ? moment(order['Thời gian ghép']).format('DD/MM') : '--'}
-                                                    </div>
-                                                    {order['Thời gian ghép'] && (
-                                                        <div className="font-bold text-accent-primary">
-                                                            {moment().diff(moment(order['Thời gian ghép']), 'days')} ngày
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -254,9 +250,21 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                         {/* Header */}
                         <div className="px-6 py-4 bg-white border-b border-border-primary flex justify-between items-start shadow-sm z-10">
                             <div>
-                                <h2 className="text-xl font-bold text-text-primary mb-1">{selectedOrder['Tên khách hàng']}</h2>
+                                <h2
+                                    onClick={() => handleCopy(selectedOrder['Tên khách hàng'], 'Tên khách hàng')}
+                                    className="text-xl font-bold text-text-primary mb-1 cursor-pointer hover:text-accent-primary transition-colors"
+                                    title="Click để sao chép tên khách hàng"
+                                >
+                                    {selectedOrder['Tên khách hàng']}
+                                </h2>
                                 <div className="flex items-center gap-3 text-sm text-text-secondary">
-                                    <span className="font-mono bg-surface-ground px-2 py-0.5 rounded border border-border-secondary">{selectedOrder['Số đơn hàng']}</span>
+                                    <span
+                                        onClick={() => handleCopy(selectedOrder['Số đơn hàng'], 'Số đơn hàng')}
+                                        className="font-mono bg-surface-ground px-2 py-0.5 rounded border border-border-secondary cursor-pointer hover:bg-accent-primary/10 hover:border-accent-primary/30 transition-colors"
+                                        title="Click để sao chép số đơn hàng"
+                                    >
+                                        {selectedOrder['Số đơn hàng']}
+                                    </span>
                                     <span><i className="fas fa-user-tie mr-1"></i>{selectedOrder['Tên tư vấn bán hàng']}</span>
                                 </div>
                             </div>
@@ -273,27 +281,6 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                 {/* Detailed Order Info Section */}
                                 <div className="bg-white p-4 rounded-xl border border-border-primary shadow-sm">
                                     <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 border-b border-border-secondary pb-2">Thông Tin Chi Tiết</h3>
-
-                                    {/* Highlighted VIN for Paired Orders */}
-                                    {!isPendingOrder(selectedOrder) && selectedOrder.VIN && (
-                                        <div className="mb-4 bg-success/10 border border-success/30 rounded-lg p-3 flex items-center justify-between">
-                                            <div>
-                                                <div className="text-xs text-success font-semibold uppercase">Số VIN Đã Ghép</div>
-                                                <div className="text-2xl font-mono font-bold text-success">{selectedOrder.VIN}</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs text-success font-semibold uppercase">Thời Gian Ghép</div>
-                                                <div className="font-medium text-success-dark">
-                                                    {selectedOrder['Thời gian ghép'] ? moment(selectedOrder['Thời gian ghép']).format('HH:mm DD/MM/YYYY') : 'N/A'}
-                                                </div>
-                                                {selectedOrder['Thời gian ghép'] && (
-                                                    <div className="text-xs text-success mt-1">
-                                                        Đã ghép <span className="font-bold">{moment().diff(moment(selectedOrder['Thời gian ghép']), 'days')}</span> ngày
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                         <div>
@@ -364,21 +351,80 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                         )}
                                     </>
                                 ) : (
-                                    // Paired View Actions
-                                    <div className="bg-white p-6 rounded-xl border border-border-primary shadow-sm text-center">
-                                        <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                                            <i className="fas fa-check"></i>
+                                    // Paired View Actions (Compact Horizontal Layout)
+                                    <div className="bg-white rounded-xl border border-border-primary shadow-sm overflow-hidden animate-fade-in-up flex flex-col md:flex-row">
+                                        {/* Left: Car Image & Visuals (35%) */}
+                                        <div className="md:w-5/12 bg-gradient-to-br from-surface-ground to-white relative flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-border-secondary/50">
+                                            <div className="absolute inset-0 bg-gradient-radial from-success/5 to-transparent opacity-50 rounded-full blur-2xl transform scale-75"></div>
+                                            <CarImage
+                                                model={selectedOrder['Dòng xe']}
+                                                exteriorColor={selectedOrder['Ngoại thất']}
+                                                className="w-full max-h-40 object-contain relative z-10 drop-shadow-lg hover:scale-105 transition-transform duration-500"
+                                            />
                                         </div>
-                                        <h3 className="text-xl font-bold text-text-primary mb-2">Đã Ghép Xe Thành Công</h3>
-                                        <div className="text-sm text-text-secondary mb-6">Đơn hàng này đã được gán số VIN</div>
 
-                                        <div className="mt-4">
-                                            <button
-                                                onClick={() => onAction('unmatch', selectedOrder)}
-                                                className="btn-danger px-6 py-2 rounded-lg shadow-sm"
-                                            >
-                                                <i className="fas fa-unlink mr-2"></i> Hủy Ghép Xe
-                                            </button>
+                                        {/* Right: Info & Actions (65%) */}
+                                        <div className="flex-1 p-4 flex flex-col justify-center relative overflow-hidden">
+                                            {/* Decorative Background */}
+                                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-success/5 rounded-full blur-2xl"></div>
+
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <span className="bg-success/10 text-success px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1.5 border border-success/20 shadow-sm">
+                                                        <i className="fas fa-check-circle"></i> Ghép Xe Thành Công
+                                                    </span>
+                                                </div>
+
+                                                {/* VIN - Highlighted */}
+                                                <div className="mb-4">
+                                                    <label className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-2 block opacity-70">Số VIN Đã Gán</label>
+                                                    <div
+                                                        onClick={() => handleCopy(selectedOrder.VIN, 'Số VIN')}
+                                                        className="inline-block px-5 py-2 rounded-xl bg-accent-primary/10 border border-accent-primary/20 shadow-sm cursor-pointer hover:bg-accent-primary/20 transition-colors group/vin"
+                                                        title="Click để sao chép số VIN"
+                                                    >
+                                                        <div className="text-3xl font-black text-accent-primary tracking-widest flex items-center gap-3">
+                                                            {selectedOrder.VIN}
+                                                            <i className="fas fa-copy text-lg opacity-0 group-hover/vin:opacity-50 transition-opacity"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Stats Row */}
+                                                <div className="flex items-start gap-8 mb-4 border-t border-b border-border-secondary/30 py-3">
+                                                    <div>
+                                                        <span className="text-text-secondary block text-[10px] font-bold uppercase tracking-wider mb-0.5">Thời gian ghép</span>
+                                                        <div className="flex items-center gap-1.5 text-text-primary">
+                                                            <i className="fas fa-calendar-alt text-text-placeholder text-[10px]"></i>
+                                                            <span className="font-medium text-base">
+                                                                {selectedOrder['Thời gian ghép'] ? moment(selectedOrder['Thời gian ghép']).format('HH:mm DD/MM') : '--'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-text-secondary block text-[10px] font-bold uppercase tracking-wider mb-0.5">Đã ghép được</span>
+                                                        <div className="flex items-center gap-1.5 text-accent-primary">
+                                                            <i className="fas fa-hourglass-half text-[10px]"></i>
+                                                            <span className="font-bold text-base">
+                                                                {selectedOrder['Thời gian ghép'] ? `${moment().diff(moment(selectedOrder['Thời gian ghép']), 'days')} ngày` : '--'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Action */}
+                                                <div>
+                                                    <button
+                                                        onClick={() => onAction('unmatch', selectedOrder)}
+                                                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-danger/20 text-danger text-xs font-medium shadow-sm hover:bg-danger hover:text-white hover:shadow-md hover:border-transparent transition-all duration-300 group"
+                                                    >
+                                                        <div className="w-5 h-5 rounded-full bg-danger/10 text-danger flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors">
+                                                            <i className="fas fa-unlink text-[10px]"></i>
+                                                        </div>
+                                                        <span>Hủy Ghép Xe</span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}

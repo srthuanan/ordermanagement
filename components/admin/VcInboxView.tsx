@@ -16,6 +16,10 @@ interface VcInboxViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     onDownloadAll: (request: VcRequest) => void;
+    selectedFolder: string;
+    selectedRequestId: string | null;
+    onFolderChange: (folder: string) => void;
+    onRequestSelect: (requestId: string | null) => void;
 }
 
 const CopyableField: React.FC<{ text: string; showToast: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, showToast, className, label, wrap = false }) => {
@@ -81,9 +85,7 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
     );
 };
 
-const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast, onOpenImagePreview, onDownloadAll }) => {
-    const [selectedFolder, setSelectedFolder] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-    const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast, onOpenImagePreview, onDownloadAll, selectedFolder, selectedRequestId, onFolderChange, onRequestSelect }) => {
 
     // 1. Filter Requests by Folder
     const filteredRequests = useMemo(() => {
@@ -104,9 +106,9 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
     // Auto-select first request if none selected
     useEffect(() => {
         if (!selectedRequestId && filteredRequests.length > 0) {
-            setSelectedRequestId(filteredRequests[0]['Số đơn hàng']);
+            onRequestSelect(filteredRequests[0]['Số đơn hàng']);
         }
-    }, [filteredRequests, selectedRequestId]);
+    }, [filteredRequests, selectedRequestId, onRequestSelect]);
 
     const folders = [
         { id: 'pending', label: 'Chờ Duyệt', icon: 'fa-clock', count: requests.filter(r => (r['Trạng thái xử lý'] || '').toLowerCase() === 'chờ duyệt ycvc').length },
@@ -160,8 +162,8 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
                     {folders.map(folder => (
                         <button
                             key={folder.id}
-                            onClick={() => setSelectedFolder(folder.id as any)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            onClick={() => onFolderChange(folder.id)}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <i className={`fas ${folder.icon} w-5 text-center`}></i>
@@ -183,17 +185,18 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
                             {filteredRequests.map(req => (
                                 <div
                                     key={req['Số đơn hàng']}
-                                    onClick={() => setSelectedRequestId(req['Số đơn hàng'])}
-                                    className={`p-3 cursor-pointer hover:bg-surface-hover transition-colors ${selectedRequestId === req['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
+                                    onClick={() => onRequestSelect(req['Số đơn hàng'])}
+                                    className={`px-3 py-2 cursor-pointer hover:bg-surface-hover transition-colors flex items-center justify-between ${selectedRequestId === req['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
                                 >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="font-semibold text-text-primary text-sm truncate flex-1 pr-2">{req['Tên khách hàng']}</span>
-                                        <span className="text-xs text-text-secondary whitespace-nowrap">{moment(req['Thời gian YC']).format('DD/MM')}</span>
-                                    </div>
-                                    <div className="text-xs text-text-secondary mb-1 truncate">Người YC: {req['Người YC']}</div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-mono text-text-placeholder">{req['Số đơn hàng'].slice(-6)}</span>
-                                        <StatusBadge status={req['Trạng thái xử lý'] || ''} size="sm" />
+                                    <span className="text-text-primary text-sm truncate pr-2">{req['Tên khách hàng']}</span>
+                                    <div className="flex-shrink-0">
+                                        {(() => {
+                                            const status = (req['Trạng thái xử lý'] || '').toLowerCase();
+                                            if (status.includes('chờ')) return <i className="fas fa-clock text-warning text-base" title={req['Trạng thái xử lý']}></i>;
+                                            if (status.includes('đã duyệt') || status.includes('hoàn thành') || status.includes('phê duyệt')) return <i className="fas fa-check-circle text-blue-400 text-sm" title={req['Trạng thái xử lý']}></i>;
+                                            if (status.includes('từ chối')) return <i className="fas fa-ban text-danger text-base" title={req['Trạng thái xử lý']}></i>;
+                                            return <i className="fas fa-question-circle text-text-secondary text-base" title={req['Trạng thái xử lý']}></i>;
+                                        })()}
                                     </div>
                                 </div>
                             ))}

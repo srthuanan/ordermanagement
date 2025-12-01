@@ -127,6 +127,7 @@ export const useAdminData = ({
             return {
                 ...vcReq,
                 VIN: correspondingOrder?.VIN,
+                "Dòng xe": correspondingOrder?.['Dòng xe'],
             };
         });
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));

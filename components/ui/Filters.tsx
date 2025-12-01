@@ -32,41 +32,42 @@ interface FiltersProps {
   activeView?: 'table' | 'grid';
   onViewChange?: (view: 'table' | 'grid') => void;
   extraActionButton?: React.ReactNode;
+  variant?: 'default' | 'modern';
 }
 
 const DatePicker: React.FC<{
-    label: string,
-    value: string,
-    onChange: (date: string) => void
+  label: string,
+  value: string,
+  onChange: (date: string) => void
 }> = ({ label, value, onChange }) => (
-    <div>
-        <label className="block text-xs font-medium text-text-secondary mb-1">{label}</label>
-        <input
-            type="date"
-            value={value}
-            onChange={e => onChange(e.target.value)}
-            className="w-full bg-surface-input border border-border-primary rounded-md p-2 text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary futuristic-input"
-        />
-    </div>
+  <div>
+    <label className="block text-xs font-medium text-text-secondary mb-1">{label}</label>
+    <input
+      type="date"
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full bg-surface-input border border-border-primary rounded-md p-2 text-sm focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary futuristic-input"
+    />
+  </div>
 );
 
 
-const Filters: React.FC<FiltersProps> = ({ 
-    filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading, 
-    hideSearch = false, size = 'default', plain = false, dateRangeEnabled = false, dateFilterEnabled = false,
-    viewSwitcherEnabled = false, activeView = 'table', onViewChange, extraActionButton
+const Filters: React.FC<FiltersProps> = ({
+  filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading,
+  hideSearch = false, size = 'default', plain = false, dateRangeEnabled = false, dateFilterEnabled = false,
+  viewSwitcherEnabled = false, activeView = 'table', onViewChange, extraActionButton, variant = 'default'
 }) => {
   const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
-  
+
   const dateValue = filters.dateRange || { start: '', end: '' };
-  
+
   const handleDateChange = (part: 'start' | 'end', value: string) => {
-      onFilterChange({ dateRange: { ...dateValue, [part]: value }});
+    onFilterChange({ dateRange: { ...dateValue, [part]: value } });
   }
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
@@ -91,24 +92,24 @@ const Filters: React.FC<FiltersProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [localKeyword, filters.keyword, onFilterChange]);
-  
+
   const activeDropdownFilters = dropdowns.flatMap(d => {
-      const selected = (filters[d.key] || []) as string[];
-      return selected.map(value => ({
-          key: `${d.key}-${value}`,
-          label: d.label,
-          value: value,
-          onRemove: () => {
-              onFilterChange({ [d.key]: selected.filter(v => v !== value) });
-          }
-      }));
+    const selected = (filters[d.key] || []) as string[];
+    return selected.map(value => ({
+      key: `${d.key}-${value}`,
+      label: d.label,
+      value: value,
+      onRemove: () => {
+        onFilterChange({ [d.key]: selected.filter(v => v !== value) });
+      }
+    }));
   });
 
   const activeDateFilter = dateValue.start && dateValue.end ? {
-        key: `date-range-${dateValue.start}-${dateValue.end}`,
-        label: 'Date Range',
-        value: `${new Date(dateValue.start).toLocaleDateString('vi-VN')} - ${new Date(dateValue.end).toLocaleDateString('vi-VN')}`,
-        onRemove: () => onFilterChange({ dateRange: { start: '', end: '' }})
+    key: `date-range-${dateValue.start}-${dateValue.end}`,
+    label: 'Date Range',
+    value: `${new Date(dateValue.start).toLocaleDateString('vi-VN')} - ${new Date(dateValue.end).toLocaleDateString('vi-VN')}`,
+    onRemove: () => onFilterChange({ dateRange: { start: '', end: '' } })
   } : null;
 
   const activeFilters = [...activeDropdownFilters];
@@ -126,149 +127,161 @@ const Filters: React.FC<FiltersProps> = ({
       icon={dropdown.icon}
       displayMode={dropdown.displayMode || 'count'}
       size={size}
+      variant={variant}
     />
   ));
 
- const desktopContent = (
-    <div className={`filter-bar-neumorphic ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}>
-        {!hideSearch && (
-            <div className="relative flex-grow flex items-center min-w-[200px] lg:min-w-[300px]">
-                <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
-                <input
-                    type="text"
-                    id="search-input-desktop"
-                    placeholder={searchPlaceholder}
-                    value={localKeyword}
-                    onChange={(e) => setLocalKeyword(e.target.value)}
-                    className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
-                />
-            </div>
-        )}
-        
-        {dropdownControls}
-  
-        {dateRangeEnabled && (
-          <div className="relative" ref={datePickerRef}>
-            <button
-              type="button"
-              onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
-              className={`btn-filter h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'active' : ''}`}
-            >
-              <i className="fas fa-calendar-alt text-text-placeholder text-xs mr-2"></i>
-              <span className={`${dateValue.start && dateValue.end ? 'font-semibold' : ''}`}>
-                {dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Chọn ngày'}
-              </span>
-            </button>
-            {isDatePopoverOpen && (
-              <div className="absolute top-full mt-2 right-0 z-20 bg-surface-card p-4 rounded-lg shadow-lg border border-border-primary date-range-picker-popover">
-                <div className="space-y-3">
-                  <DatePicker label="Từ ngày" value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
-                  <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+  const desktopContent = (
+    <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `filter-bar-neumorphic ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
+      {!hideSearch && (
+        <div className={`relative flex items-center ${variant === 'modern' ? 'w-60 flex-shrink-0' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
+          <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
+          <input
+            type="text"
+            id="search-input-desktop"
+            placeholder={searchPlaceholder}
+            value={localKeyword}
+            onChange={(e) => setLocalKeyword(e.target.value)}
+            className={`w-full h-8 pl-9 pr-4 py-1.5 focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm ${variant === 'modern' ? 'bg-white border border-border-secondary rounded-full shadow-sm focus:border-accent-primary' : 'relative'}`}
+          />
+        </div>
+      )}
 
-        <span className="text-sm font-medium text-text-secondary px-3 whitespace-nowrap border-l border-border-primary/50 ml-auto">
-          {totalCount} kết quả
-        </span>
-        
-        {viewSwitcherEnabled && (
-          <div className="view-switcher-group">
-              <button onClick={() => onViewChange?.('table')} className={`btn-filter ${activeView === 'table' ? 'active' : ''}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
-              <button onClick={() => onViewChange?.('grid')} className={`btn-filter ${activeView === 'grid' ? 'active' : ''}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
-          </div>
-        )}
-  
-        {extraActionButton}
-  
-        <button onClick={onRefresh} disabled={isLoading} className="btn-filter w-9 h-9 flex-shrink-0" aria-label="Làm mới" title="Làm mới">
-              <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+      {dropdownControls}
+
+      <div className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${variant === 'modern' ? '' : 'ml-2'}`}>
+        <button
+          onClick={onReset}
+          className={`flex items-center justify-center w-8 h-8 text-red-500 bg-red-50 hover:bg-red-100 rounded-full transition-all duration-200 ${hasActiveFilters ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
+          title="Xóa tất cả bộ lọc"
+          tabIndex={hasActiveFilters ? 0 : -1}
+        >
+          <i className="fas fa-times"></i>
         </button>
+      </div>
+
+      {dateRangeEnabled && (
+        <div className="relative" ref={datePickerRef}>
+          <button
+            type="button"
+            onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+            className={`btn-filter h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'active' : ''}`}
+          >
+            <i className="fas fa-calendar-alt text-text-placeholder text-xs mr-2"></i>
+            <span className={`${dateValue.start && dateValue.end ? 'font-semibold' : ''}`}>
+              {dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Chọn ngày'}
+            </span>
+          </button>
+          {isDatePopoverOpen && (
+            <div className="absolute top-full mt-2 right-0 z-20 bg-surface-card p-4 rounded-lg shadow-lg border border-border-primary date-range-picker-popover">
+              <div className="space-y-3">
+                <DatePicker label="Từ ngày" value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
+                <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <span className="text-sm font-medium text-text-secondary px-3 whitespace-nowrap border-l border-border-primary/50 ml-auto">
+        {totalCount} kết quả
+      </span>
+
+      {viewSwitcherEnabled && (
+        <div className="view-switcher-group">
+          <button onClick={() => onViewChange?.('table')} className={`btn-filter ${activeView === 'table' ? 'active' : ''}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
+          <button onClick={() => onViewChange?.('grid')} className={`btn-filter ${activeView === 'grid' ? 'active' : ''}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
+        </div>
+      )}
+
+      {extraActionButton}
+
+      <button onClick={onRefresh} disabled={isLoading} className={`btn-filter w-9 h-9 flex-shrink-0 ${variant === 'modern' ? '!rounded-full !bg-gray-50 hover:!bg-gray-100 !border-transparent' : ''}`} aria-label="Làm mới" title="Làm mới">
+        <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+      </button>
     </div>
   );
-  
+
   const finalDesktopContent = (
-    <div className={`hidden md:block flex-shrink-0 ${!plain && 'p-2'}`}>
+    <div className={`hidden md:block flex-shrink-0 ${!plain && variant !== 'modern' && 'p-2'}`}>
       {desktopContent}
     </div>
   );
 
   return (
-      <>
-          {/* --- Mobile View --- */}
-          <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : 'filter-bar-neumorphic'}`}>
-              {!hideSearch && (
-                <div className="relative flex-grow flex items-center min-w-0">
-                  <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
-                  <input
-                    type="text"
-                    id="search-input-mobile"
-                    placeholder={searchPlaceholder}
-                    value={localKeyword}
-                    onChange={(e) => setLocalKeyword(e.target.value)}
-                    className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
-                  />
+    <>
+      {/* --- Mobile View --- */}
+      <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : 'filter-bar-neumorphic'}`}>
+        {!hideSearch && (
+          <div className="relative flex-grow flex items-center min-w-0">
+            <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
+            <input
+              type="text"
+              id="search-input-mobile"
+              placeholder={searchPlaceholder}
+              value={localKeyword}
+              onChange={(e) => setLocalKeyword(e.target.value)}
+              className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
+            />
+          </div>
+        )}
+        <button onClick={() => setIsMobilePanelOpen(true)} className="btn-filter flex-shrink-0 w-9 h-9 relative">
+          <i className="fas fa-filter text-accent-primary"></i>
+          {activeFilters.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-surface-ground">{activeFilters.length}</span>
+          )}
+        </button>
+        <button onClick={onRefresh} disabled={isLoading} className={`btn-filter flex-shrink-0 w-9 h-9`} aria-label="Làm mới" title="Làm mới">
+          <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+        </button>
+      </div>
+
+      {/* --- Mobile Filter Panel (Modal) --- */}
+      {isMobilePanelOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
+          <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary">
+              <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
+              <button onClick={() => setIsMobilePanelOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+            </div>
+
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 -mr-2">
+              {(dateRangeEnabled || dateFilterEnabled) && (
+                <div>
+                  <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dateRangeEnabled ? 'Phạm vi Ngày' : 'Chọn ngày'}</label>
+                  <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
+                    <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
+                    {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
+                  </div>
                 </div>
               )}
-              <button onClick={() => setIsMobilePanelOpen(true)} className="btn-filter flex-shrink-0 w-9 h-9 relative">
-                  <i className="fas fa-filter text-accent-primary"></i>
-                  {activeFilters.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-surface-ground">{activeFilters.length}</span>
-                  )}
-              </button>
-               <button onClick={onRefresh} disabled={isLoading} className={`btn-filter flex-shrink-0 w-9 h-9`} aria-label="Làm mới" title="Làm mới">
-                  <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-              </button>
+              {dropdowns.map(dropdown => (
+                <div key={'mobile-' + dropdown.id}>
+                  <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dropdown.label}</label>
+                  <MultiSelectDropdown
+                    id={'mobile-' + dropdown.id}
+                    label={dropdown.label}
+                    options={dropdown.options}
+                    selectedOptions={(filters[dropdown.key] || []) as string[]}
+                    onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+                    icon={dropdown.icon}
+                    displayMode={dropdown.displayMode}
+                    size="default" // Force default size in modal for better readability
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button onClick={() => { onReset(); }} disabled={!hasActiveFilters} className="btn-secondary w-full">Xóa Lọc</button>
+              <button onClick={() => setIsMobilePanelOpen(false)} className="btn-primary w-full">Xem {totalCount} kết quả</button>
+            </div>
           </div>
+        </div>
+      )}
 
-          {/* --- Mobile Filter Panel (Modal) --- */}
-          {isMobilePanelOpen && (
-              <div className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
-                  <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up" style={{animationDuration: '300ms'}} onClick={e => e.stopPropagation()}>
-                      <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary">
-                          <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
-                          <button onClick={() => setIsMobilePanelOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
-                      </div>
-                      
-                      <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 -mr-2">
-                        {(dateRangeEnabled || dateFilterEnabled) && (
-                             <div>
-                                <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dateRangeEnabled ? 'Phạm vi Ngày' : 'Chọn ngày'}</label>
-                                <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
-                                    <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
-                                    {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
-                                </div>
-                            </div>
-                        )}
-                          {dropdowns.map(dropdown => (
-                              <div key={'mobile-' + dropdown.id}>
-                                  <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dropdown.label}</label>
-                                  <MultiSelectDropdown 
-                                    id={'mobile-' + dropdown.id} 
-                                    label={dropdown.label}
-                                    options={dropdown.options}
-                                    selectedOptions={(filters[dropdown.key] || []) as string[]}
-                                    onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-                                    icon={dropdown.icon}
-                                    displayMode={dropdown.displayMode}
-                                    size="default" // Force default size in modal for better readability
-                                  />
-                              </div>
-                          ))}
-                      </div>
-                      <div className="mt-6 grid grid-cols-2 gap-3">
-                          <button onClick={() => { onReset(); }} disabled={!hasActiveFilters} className="btn-secondary w-full">Xóa Lọc</button>
-                          <button onClick={() => setIsMobilePanelOpen(false)} className="btn-primary w-full">Xem {totalCount} kết quả</button>
-                      </div>
-                  </div>
-              </div>
-          )}
-
-          {/* --- Desktop View --- */}
-          {finalDesktopContent}
-      </>
+      {/* --- Desktop View --- */}
+      {finalDesktopContent}
+    </>
   );
 };
 

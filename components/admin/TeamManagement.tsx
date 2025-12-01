@@ -52,7 +52,7 @@ export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamDat
                         <button
                             key={folder.id}
                             onClick={() => setSelectedFolder(folder.id as any)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
                                 <i className={`fas ${folder.icon} w-5 text-center`}></i>
