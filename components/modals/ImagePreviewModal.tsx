@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { toEmbeddableUrl, toDownloadableUrl, getSanitizedFilename } from '../../utils/imageUtils';
+import { toEmbeddableUrl, toDownloadableUrl, toViewableUrl, getDriveFileId, getSanitizedFilename } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -20,6 +20,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [displayUrl, setDisplayUrl] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const [isIframeMode, setIsIframeMode] = useState(false);
     const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0, rotate: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -50,6 +52,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         setIsLoading(true);
         setError(null);
         setDisplayUrl(null);
+        setRetryCount(0);
+        setIsIframeMode(false);
 
         const currentImage = images[currentIndex];
         if (!currentImage) return; // Safeguard against race conditions
@@ -79,7 +83,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         const { deltaY } = e;
         const newScale = transform.scale - (deltaY > 0 ? zoomFactor : -zoomFactor);
         const clampedScale = Math.max(0.2, Math.min(newScale, 10));
-        
+
         // If zooming out makes it smaller than original, reset pan
         if (clampedScale <= 1) {
             setTransform(prev => ({ ...prev, scale: clampedScale, x: 0, y: 0 }));
@@ -87,7 +91,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
             setTransform(prev => ({ ...prev, scale: clampedScale }));
         }
     };
-    
+
     const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
         if (transform.scale <= 1) return;
         e.preventDefault();
@@ -110,14 +114,26 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         const newScale = transform.scale + (direction === 'in' ? 0.2 : -0.2);
         const clampedScale = Math.max(0.2, Math.min(newScale, 10));
         if (clampedScale <= 1) {
-             setTransform(prev => ({ ...prev, scale: clampedScale, x: 0, y: 0 }));
+            setTransform(prev => ({ ...prev, scale: clampedScale, x: 0, y: 0 }));
         } else {
-             setTransform(prev => ({ ...prev, scale: clampedScale }));
+            setTransform(prev => ({ ...prev, scale: clampedScale }));
         }
     };
 
     const handleRotate = (direction: 'left' | 'right') => {
         setTransform(prev => ({ ...prev, rotate: prev.rotate + (direction === 'right' ? 90 : -90) }));
+    };
+
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
     };
 
     const handleDownload = () => {
@@ -174,7 +190,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                             <p className="font-semibold text-red-100">{error}</p>
                         )}
                         {currentImage?.originalUrl && (
-                            <a 
+                            <a
                                 href={currentImage.originalUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -185,11 +201,11 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                         )}
                     </div>
                 )}
-                {displayUrl && !error && (
-                    <img 
+                {displayUrl && !error && !isIframeMode && (
+                    <img
                         ref={imageRef}
-                        src={displayUrl} 
-                        alt={currentImage?.label} 
+                        src={displayUrl}
+                        alt={currentImage?.label}
                         className={`max-w-[95vw] max-h-[95vh] object-contain transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
                         style={{
                             transform: `scale(${transform.scale}) translate(${transform.x / transform.scale}px, ${transform.y / transform.scale}px) rotate(${transform.rotate}deg)`,
@@ -198,17 +214,55 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                             willChange: 'transform',
                         }}
                         onLoad={() => setIsLoading(false)}
-                        onError={() => { setIsLoading(false); setError('IMAGE_LOAD_FAILED'); }}
+                        onError={() => {
+                            if (currentImage) {
+                                // 1. Try fallback URL (view endpoint)
+                                if (retryCount === 0) {
+                                    setRetryCount(1);
+                                    const fallback = toViewableUrl(currentImage.src);
+                                    if (fallback !== displayUrl) {
+                                        console.log('Retrying with fallback URL:', fallback);
+                                        setDisplayUrl(fallback);
+                                        return;
+                                    }
+                                }
+                                // 2. If still fails, and it's a Drive file, switch to Iframe mode
+                                const fileId = getDriveFileId(currentImage.src);
+                                if (fileId && !isIframeMode) {
+                                    console.log('Switching to Iframe mode for file:', fileId);
+                                    setIsIframeMode(true);
+                                    setDisplayUrl(`https://drive.google.com/file/d/${fileId}/preview`);
+                                    setIsLoading(false); // Iframe handles its own loading state visually usually, or we can keep it.
+                                    return;
+                                }
+                            }
+                            setIsLoading(false);
+                            setError('IMAGE_LOAD_FAILED');
+                        }}
                         onMouseDown={handleMouseDown}
                         onClick={e => e.stopPropagation()}
+                        onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            toggleFullScreen();
+                        }}
                     />
                 )}
-                
+
+                {isIframeMode && displayUrl && (
+                    <iframe
+                        src={displayUrl}
+                        title="File Preview"
+                        className="w-full h-full max-w-[95vw] max-h-[90vh] bg-white rounded-lg shadow-lg"
+                        allow="autoplay"
+                        onLoad={() => setIsLoading(false)}
+                    />
+                )}
+
                 {/* Prev/Next buttons */}
                 {images.length > 1 && (
                     <>
-                    <button onClick={(e) => { e.stopPropagation(); goTo(currentIndex - 1); }} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 text-white rounded-full flex items-center justify-center text-2xl hover:bg-black/50 transition-colors"><i className="fas fa-chevron-left"></i></button>
-                    <button onClick={(e) => { e.stopPropagation(); goTo(currentIndex + 1); }} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 text-white rounded-full flex items-center justify-center text-2xl hover:bg-black/50 transition-colors"><i className="fas fa-chevron-right"></i></button>
+                        <button onClick={(e) => { e.stopPropagation(); goTo(currentIndex - 1); }} className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 text-white rounded-full flex items-center justify-center text-2xl hover:bg-black/50 transition-colors"><i className="fas fa-chevron-left"></i></button>
+                        <button onClick={(e) => { e.stopPropagation(); goTo(currentIndex + 1); }} className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/30 text-white rounded-full flex items-center justify-center text-2xl hover:bg-black/50 transition-colors"><i className="fas fa-chevron-right"></i></button>
                     </>
                 )}
             </main>
@@ -223,14 +277,16 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                     <div className="w-px h-6 bg-white/20 mx-2"></div>
                     <button onClick={() => handleRotate('left')} title="Xoay trái" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-undo"></i></button>
                     <button onClick={() => handleRotate('right')} title="Xoay phải" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-redo"></i></button>
-                    <button onClick={resetTransform} title="Reset tất cả" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-expand"></i></button>
+                    <div className="w-px h-6 bg-white/20 mx-2"></div>
+                    <button onClick={resetTransform} title="Reset tất cả" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-compress-arrows-alt"></i></button>
+                    <button onClick={toggleFullScreen} title="Toàn màn hình" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"><i className="fas fa-expand"></i></button>
                 </div>
                 {/* Thumbnail strip */}
                 {images.length > 1 && (
                     <div className="w-full max-w-2xl overflow-x-auto p-2">
                         <div className="flex justify-center gap-2">
                             {images.map((img, index) => (
-                                <button 
+                                <button
                                     key={index}
                                     onClick={() => goTo(index)}
                                     className={`w-16 h-16 flex-shrink-0 rounded-md border-2 bg-black/20 transition-all duration-200 ${currentIndex === index ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}

@@ -46,6 +46,20 @@ export const toEmbeddableUrl = (url: string, size?: number): string => {
 };
 
 /**
+ * Transforms a Google Drive URL into a direct view link (uc?export=view).
+ * This can be used as a fallback if the thumbnail endpoint fails.
+ * @param url The original Google Drive URL.
+ * @returns A direct view URL.
+ */
+export const toViewableUrl = (url: string): string => {
+    const fileId = getDriveFileId(url);
+    if (fileId) {
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    return url;
+};
+
+/**
  * Transforms a Google Drive URL into a direct download link.
  * @param url The original Google Drive URL.
  * @returns A direct download URL.

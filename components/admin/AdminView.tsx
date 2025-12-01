@@ -3,7 +3,7 @@ import { Order, StockVehicle, AdminSubView } from '../../types';
 import AdminInvoiceTable from './AdminInvoiceTable';
 import InvoiceInboxView from './InvoiceInboxView';
 import MatchingCockpitView from './MatchingCockpitView';
-import AdminVcRequestTable from './AdminVcRequestTable';
+import VcInboxView from './VcInboxView';
 import TotalViewDashboard from './TotalViewDashboard';
 import ActionModal from './ActionModal';
 import { RequestWithImageModal, UploadInvoiceModal } from './AdminActionModals';
@@ -68,13 +68,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const {
         pendingSortConfig, setPendingSortConfig,
         pairedSortConfig, setPairedSortConfig,
-        vcSortConfig, setVcSortConfig,
         vcRequestsData, isLoadingVc, errorVc,
         selectedRows, setSelectedRows, handleToggleAll,
         fetchVcData,
         processedInvoices, invoiceRequests, pendingData, pairedData, vcRequests,
         suggestionsMap, filterOptions, ordersWithMatches,
-        allPendingOrderNumbers, allPairedOrderNumbers, allVcOrderNumbers
+        allPendingOrderNumbers, allPairedOrderNumbers
     } = useAdminData({
         allOrders, xuathoadonData, stockData,
         invoiceFilters, pendingFilters, pairedFilters, vcFilters,
@@ -216,28 +215,20 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
             case 'vc': {
                 return (
-                    <div key={adminView} className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in">
-                        {selectedRows.size > 0 && <BulkActionBar view={adminView} selectedRows={selectedRows} setSelectedRows={setSelectedRows} setBulkActionModal={actions.setBulkActionModal} />}
-                        <div className="flex-grow overflow-auto relative hidden-scrollbar">
-                            <AdminVcRequestTable
-                                requests={vcRequests}
-                                sortConfig={vcSortConfig}
-                                onSort={(key: any) => setVcSortConfig((p: any) => ({ key, direction: p?.key === key && p.direction === 'asc' ? 'desc' : 'asc' }))}
-                                selectedRows={selectedRows}
-                                onToggleRow={(id: string) => setSelectedRows(p => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; })}
-                                onToggleAllRows={() => handleToggleAll(allVcOrderNumbers)}
-                                onAction={actions.handleAction}
-                                showToast={showToast}
-                                onOpenImagePreview={onOpenImagePreview}
-                                onDownloadAll={actions.handleDownloadAllVcImages}
-                            />
-                        </div>
+                    <div key="vc" className="flex-1 flex flex-col min-h-0 animate-fade-in">
+                        <VcInboxView
+                            requests={vcRequests}
+                            onAction={actions.handleAction}
+                            showToast={showToast}
+                            onOpenImagePreview={onOpenImagePreview}
+                            onDownloadAll={actions.handleDownloadAllVcImages}
+                        />
                     </div>
                 );
             }
             case 'phongkd': {
                 return (
-                    <div key={adminView} className="animate-fade-in">
+                    <div key={adminView} className="flex-1 flex flex-col min-h-0 animate-fade-in">
                         <TeamManagementComponent
                             teamData={teamData}
                             onEditTeam={(leader, members) => actions.setEditingTeam({ leader, members })}
