@@ -1084,13 +1084,7 @@
     div.flex-grow[class*="overflow-"] {
       position: relative;
       overflow: auto;
-      /* Use linear-gradient to create a semi-transparent white overlay on top of the image */
-      background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('/pictures/hinhnen.png') !important;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: scroll;
-      /* Keeps background fixed relative to container */
+      background-color: transparent !important;
     }
 
     /* Remove the pseudo-element approach as it causes stacking/scrolling issues */

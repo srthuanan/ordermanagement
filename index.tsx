@@ -6,7 +6,6 @@ import Toast from './components/ui/Toast';
 import SuccessAnimation from './components/ui/SuccessAnimation';
 import SnowEffect from './components/ui/SnowEffect';
 import * as apiService from './services/apiService';
-import onggiaGif from './pictures/onggia.gif';
 
 type ToastState = {
     show: boolean;
@@ -30,7 +29,7 @@ const Root = () => {
     const [successInfo, setSuccessInfo] = useState<SuccessInfo>(null);
 
     useEffect(() => {
-        
+
         const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
         setIsAuthenticated(loggedIn);
         setIsLoading(false);
@@ -55,7 +54,7 @@ const Root = () => {
             setToast({ show: true, title, message, type, duration: toastDuration });
         }
     }, []);
-    
+
     const hideToast = useCallback(() => setToast(null), []);
     const hideSuccess = useCallback(() => setSuccessInfo(null), []);
 
@@ -65,7 +64,7 @@ const Root = () => {
         setIsAuthenticated(false);
         showToast('Đăng Xuất Thành Công', 'Bạn đã đăng xuất khỏi hệ thống.', 'info', 3000);
     }, [showToast]);
-    
+
     if (isLoading) {
         // You can return a loading spinner here if needed
         return null;
@@ -73,12 +72,6 @@ const Root = () => {
 
     return (
         <>
-            <SnowEffect />
-            <img 
-                src={onggiaGif} 
-                className="fixed bottom-0 right-0 z-[55] w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56 h-auto pointer-events-none select-none transition-all duration-1000 ease-in-out animate-float" 
-                alt="Santa Claus Decoration" 
-            />
             {isAuthenticated ? (
                 <App onLogout={handleLogout} showToast={showToast} hideToast={hideToast} />
             ) : (
@@ -86,18 +79,19 @@ const Root = () => {
             )}
             {toast && <Toast {...toast} onClose={hideToast} />}
             {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={hideSuccess} duration={3000} />}
+            <SnowEffect />
         </>
     );
 };
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+    throw new Error("Could not find root element to mount to");
 }
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <Root />
-  </React.StrictMode>
+    <React.StrictMode>
+        <Root />
+    </React.StrictMode>
 );

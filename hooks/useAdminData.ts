@@ -15,7 +15,7 @@ interface UseAdminDataProps {
 }
 
 export const useAdminData = ({
-    allOrders, xuathoadonData, stockData, invoiceFilters, pendingFilters, pairedFilters, vcFilters, adminView, isSidebarCollapsed
+    allOrders, xuathoadonData, stockData, invoiceFilters, pendingFilters, pairedFilters, vcFilters, isSidebarCollapsed
 }: UseAdminDataProps) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
@@ -53,10 +53,8 @@ export const useAdminData = ({
 
 
     useEffect(() => {
-        if (adminView === 'vc') {
-            fetchVcData();
-        }
-    }, [adminView, fetchVcData]);
+        fetchVcData();
+    }, [fetchVcData]);
 
     // Heartbeat
     useEffect(() => {

@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
 import { Order, StockVehicle, AdminSubView } from '../../types';
-import SummaryCard from '../ui/SummaryCard';
 import { normalizeName } from '../../services/authService';
+
 
 moment.locale('vi');
 
@@ -22,35 +22,52 @@ interface TotalViewDashboardProps {
     onShowOrderDetails: (order: Order) => void;
 }
 
-const StatListCard: React.FC<{ title: string; icon: string; children: React.ReactNode; emptyText?: string; itemCount: number }> =
-    ({ title, icon, children, emptyText = "Không có dữ liệu", itemCount }) => (
-        <div className="bg-surface-card p-1.5 rounded-xl border border-border-primary shadow-md flex flex-col h-64">
-            <h3 className="font-bold text-text-primary text-sm mb-2 flex items-center gap-2 flex-shrink-0">
-                <i className={`fas ${icon} text-accent-primary`}></i>
-                {title}
-            </h3>
-            <div className="flex-grow min-h-0 overflow-y-auto pr-2 hidden-scrollbar">
-                {itemCount > 0 ? (
-                    <div className="space-y-1">
-                        {children}
-                    </div>
-                ) : (
-                    <div className="text-center text-text-secondary py-4 flex flex-col items-center justify-center h-full">
-                        <div className="w-48 h-32 relative">
-                            <img src="/pictures/teachers-day-empty.png" alt="Empty data" className="absolute inset-0 w-full h-full object-contain" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <i className="fas fa-box-open fa-2x text-slate-400 opacity-50"></i>
-                            </div>
-                        </div>
-                        <p className="mt-2">{emptyText}</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+// --- Enhanced Components ---
 
+const SectionHeader: React.FC<{ title: string; icon?: string; color?: string; action?: React.ReactNode }> = ({ title, icon, color = 'text-gray-800', action }) => (
+    <div className="flex justify-between items-center mb-0 p-3 bg-gray-100 border-b border-gray-200 rounded-t-xl">
+        <div className="flex items-center gap-2">
+            {icon && <i className={`fas ${icon} ${color} text-sm`}></i>}
+            <h3 className={`font-bold text-sm tracking-widest uppercase ${color}`}>{title}</h3>
+        </div>
+        {action}
+    </div>
+);
+
+const StatRow: React.FC<{ label: string; value: number; icon: string; color: string; onClick?: () => void }> = ({ label, value, icon, color, onClick }) => (
+    <div
+        onClick={onClick}
+        className={`flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group cursor-pointer`}
+    >
+        <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-lg ${color} bg-opacity-10 flex items-center justify-center`}>
+                <i className={`fas ${icon} ${color} text-sm`}></i>
+            </div>
+            <span className="text-sm text-gray-600 font-medium group-hover:text-gray-900 transition-colors">{label}</span>
+        </div>
+        <span className="text-xl font-bold text-gray-900">{value}</span>
+    </div>
+);
+
+const PipelineRow: React.FC<{ title: string; count: number; icon: string; color: string; onClick?: () => void }> = ({ title, count, icon, color, onClick }) => (
+    <div
+        onClick={onClick}
+        className="flex items-center justify-between py-2.5 px-3 rounded-lg cursor-pointer hover:bg-white hover:shadow-sm transition-all group"
+    >
+        <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${count > 0 ? `${color} text-white shadow-md` : 'bg-gray-200 text-gray-400'}`}>
+                <i className={`fas ${icon} text-xs`}></i>
+            </div>
+            <span className={`text-sm font-bold ${count > 0 ? 'text-gray-800' : 'text-gray-400'}`}>{title}</span>
+        </div>
+        <span className={`text-sm font-mono font-bold px-2 py-0.5 rounded-md ${count > 0 ? 'bg-white text-gray-900 shadow-sm border border-gray-100' : 'text-gray-300'}`}>{count}</span>
+    </div>
+);
+
+// --- Main Component ---
 
 const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stockData, soldData, invoiceData, teamData, allUsers, onTabChange, onNavigateTo, onShowOrderDetails }) => {
+    const [activeAlertTab, setActiveAlertTab] = useState<'pending' | 'stuck'>('pending');
 
     const stats = useMemo(() => {
         const pendingRequests = allOrders.filter(o => o['Kết quả']?.toLowerCase().includes('chưa'));
@@ -59,13 +76,13 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
         const totalTeams = Object.keys(teamData).length;
         const totalTVBH = allUsers.filter(u => u.role === 'Tư vấn bán hàng').length;
 
-        const pipeline = {
-            choGhep: pendingRequests.length,
-            daGhep: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'đã ghép').length,
-            choPheDuyet: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'chờ phê duyệt').length,
-            choKyHD: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'chờ ký hóa đơn').length,
-            daXuatHD: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'đã xuất hóa đơn').length,
-        };
+        const pipeline = [
+            { title: 'Chờ Ghép', count: pendingRequests.length, icon: 'fa-hourglass-start', color: 'bg-amber-500', action: () => onTabChange('pending') },
+            { title: 'Đã Ghép', count: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'đã ghép').length, icon: 'fa-link', color: 'bg-blue-500', action: () => onTabChange('paired') },
+            { title: 'Chờ Duyệt', count: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'chờ phê duyệt').length, icon: 'fa-user-check', color: 'bg-indigo-500', action: () => onTabChange('invoices', { trangThai: ['Chờ phê duyệt'] }) },
+            { title: 'Chờ Ký', count: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'chờ ký hóa đơn').length, icon: 'fa-file-signature', color: 'bg-purple-500', action: () => onTabChange('invoices', { trangThai: ['Chờ ký hóa đơn'] }) },
+            { title: 'Đã Xuất', count: allOrders.filter(o => o['Kết quả']?.toLowerCase() === 'đã xuất hóa đơn').length, icon: 'fa-check-circle', color: 'bg-emerald-500', action: () => onTabChange('invoices', { trangThai: ['Đã xuất hóa đơn'] }) },
+        ];
 
         const oldestPendingRequests = [...pendingRequests]
             .sort((a, b) => new Date(a['Thời gian nhập']).getTime() - new Date(b['Thời gian nhập']).getTime())
@@ -93,6 +110,8 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
             })
             .sort((a, b) => b.count - a.count)
             .slice(0, 10);
+
+        const maxPendingCount = Math.max(...pendingRequestsByModel.map(i => i.count), 1);
 
         const currentMonth = moment().month();
         const currentYear = moment().year();
@@ -137,120 +156,245 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
             oldestPendingRequests,
             pairedButNotSold,
             pendingRequestsByModel,
+            maxPendingCount,
             monthlySalesData,
         };
     }, [allOrders, stockData, soldData, teamData, allUsers, invoiceData]);
 
-    const PipelineStep: React.FC<{ title: string; count: number; isLast?: boolean; onClick?: () => void }> = ({ title, count, isLast, onClick }) => (
-        <div className="flex items-center">
-            <button onClick={onClick} className="flex-shrink-0 text-center px-1.5 py-0.5 rounded-lg hover:bg-surface-accent transition-colors disabled:cursor-default group" disabled={!onClick}>
-                <div className="flex items-baseline gap-1 text-xs text-text-secondary group-hover:text-text-primary transition-colors whitespace-nowrap">
-                    <span>{title}</span>
-                    <span className="font-bold text-accent-primary text-base tabular-nums">{count}</span>
-                </div>
-            </button>
-            {!isLast && <i className="fas fa-chevron-right text-xs text-border-secondary mx-0.5 sm:mx-1"></i>}
-        </div>
-    );
-
     return (
-        <div className="space-y-3 animate-fade-in-up">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-                <div onClick={() => onTabChange('pending')} className="cursor-pointer">
-                    <SummaryCard icon="fa-hourglass-half" title="Yêu cầu chờ ghép" value={stats.pendingRequests} colorClass="text-amber-500" iconBgClass="bg-amber-500/10" size="compact" />
-                </div>
-                <div onClick={() => onNavigateTo?.('stock')} className="cursor-pointer">
-                    <SummaryCard icon="fa-warehouse" title="Xe có sẵn trong kho" value={stats.availableStock} colorClass="text-sky-500" iconBgClass="bg-sky-500/10" size="compact" />
-                </div>
-                <SummaryCard icon="fa-receipt" title="Tổng xe đã bán (năm)" value={stats.totalSold} colorClass="text-emerald-500" iconBgClass="bg-emerald-500/10" size="compact" />
-                <div onClick={() => onTabChange('phongkd')} className="cursor-pointer">
-                    <SummaryCard icon="fa-users" title="Số Phòng Kinh Doanh" value={stats.totalTeams} colorClass="text-violet-500" iconBgClass="bg-violet-500/10" size="compact" />
-                </div>
-                <SummaryCard icon="fa-user-tie" title="Tổng số TVBH" value={stats.totalTVBH} colorClass="text-pink-500" iconBgClass="bg-pink-500/10" size="compact" />
-            </div>
+        <div className="h-[calc(100vh-140px)] min-h-[500px] animate-fade-in flex gap-4 p-4 rounded-xl shadow-xl overflow-hidden relative bg-white"
 
-            {/* Order Pipeline */}
-            <div className="bg-surface-card p-2 rounded-xl border border-border-primary shadow-md">
-                <h3 className="font-bold text-text-primary text-base mb-1.5 flex items-center gap-3">
-                    <i className="fas fa-stream text-accent-primary"></i>
-                    Luồng Xử Lý Đơn Hàng
-                </h3>
-                <div className="overflow-x-auto pb-2 -mb-2">
-                    <div className="flex items-center justify-start lg:justify-center">
-                        <PipelineStep title="Chờ Ghép" count={stats.pipeline.choGhep} onClick={() => onTabChange('pending')} />
-                        <PipelineStep title="Đã Ghép" count={stats.pipeline.daGhep} onClick={() => onTabChange('paired')} />
-                        <PipelineStep title="Chờ Phê Duyệt" count={stats.pipeline.choPheDuyet} onClick={() => onTabChange('invoices', { trangThai: ['Chờ phê duyệt'] })} />
-                        <PipelineStep title="Chờ Ký HĐ" count={stats.pipeline.choKyHD} onClick={() => onTabChange('invoices', { trangThai: ['Chờ ký hóa đơn'] })} />
-                        <PipelineStep title="Đã Xuất HĐ" count={stats.pipeline.daXuatHD} isLast onClick={() => onTabChange('invoices', { trangThai: ['Đã xuất hóa đơn'] })} />
+        >
+            {/* Overlay for better text readability if needed, though cards are white */}
+            {/* Overlay removed for pure white background */}
+
+            {/* LEFT PANEL: Status Rail (30%) */}
+            <div className="w-[280px] flex-shrink-0 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col relative overflow-hidden z-20" style={{ backgroundColor: '#ffffff' }}>
+
+                {/* Section 1: Pipeline */}
+                <div className="relative z-10">
+                    <SectionHeader title="Quy Trình" icon="fa-stream" color="text-blue-600" />
+                    <div className="space-y-1 p-4 pt-2">
+                        {stats.pipeline.map((step, index) => (
+                            <PipelineRow
+                                key={index}
+                                title={step.title}
+                                count={step.count}
+                                icon={step.icon}
+                                color={step.color}
+                                onClick={step.action}
+                            />
+                        ))}
                     </div>
                 </div>
+
+                {/* Section 2: Quick Stats */}
+                <div className="flex-grow relative z-10">
+                    <SectionHeader title="Chỉ Số" icon="fa-chart-pie" color="text-purple-600" />
+                    <div className="space-y-2 p-4 pt-2">
+                        <StatRow label="Kho Xe" value={stats.availableStock} icon="fa-warehouse" color="text-indigo-600" onClick={() => onNavigateTo?.('stock')} />
+                        <StatRow label="Đã Bán (Năm)" value={stats.totalSold} icon="fa-hand-holding-dollar" color="text-emerald-600" />
+                        <StatRow label="Nhân Sự" value={stats.totalTVBH} icon="fa-users" color="text-blue-600" />
+                        <StatRow label="Phòng KD" value={stats.totalTeams} icon="fa-briefcase" color="text-amber-600" onClick={() => onTabChange('phongkd')} />
+                    </div>
+                </div>
+
+                {/* Footer Info */}
+                <div className="mt-auto pt-4 border-t border-gray-100 relative z-10">
+                    <p className="text-[10px] text-gray-400 text-center flex items-center justify-center gap-1">
+                        <i className="fas fa-clock"></i>
+                        Cập nhật: {moment().format('HH:mm')}
+                    </p>
+                </div>
             </div>
 
-            {/* Detailed Stat Lists */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <StatListCard title="Yêu Cầu Chờ Lâu Nhất" icon="fa-hourglass-start" itemCount={stats.oldestPendingRequests.length}>
-                    {stats.oldestPendingRequests.map(order => (
-                        <button key={order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="font-semibold text-text-primary truncate pr-2" title={order['Số đơn hàng']}>{order['Số đơn hàng']}</span>
-                                <span className="flex-shrink-0 font-bold text-amber-600 text-[11px]">{moment(order['Thời gian nhập']).fromNow(true)}</span>
+            {/* RIGHT PANEL: Workspace (70%) */}
+            <div className="flex-grow flex flex-col min-w-0 gap-4 relative z-10">
+
+                {/* TOP: Attention Area */}
+                <div className="h-[45%] !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                    <SectionHeader
+                        title="Cần Xử Lý"
+                        icon="fa-bell"
+                        color="text-red-500"
+                        action={
+                            <div className="flex bg-gray-100 p-1 rounded-lg">
+                                <button
+                                    onClick={() => setActiveAlertTab('pending')}
+                                    className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md transition-all flex items-center gap-2 ${activeAlertTab === 'pending' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <i className="fas fa-clock"></i> Chờ Lâu
+                                </button>
+                                <button
+                                    onClick={() => setActiveAlertTab('stuck')}
+                                    className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-md transition-all flex items-center gap-2 ${activeAlertTab === 'stuck' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    <i className="fas fa-exclamation-triangle"></i> Kẹt Xe
+                                </button>
                             </div>
-                            <p className="text-[11px] text-text-secondary truncate mt-0.5">{order['Dòng xe']} - {order['Tên khách hàng']}</p>
-                        </button>
-                    ))}
-                </StatListCard>
-                <StatListCard title="Xe 'Kẹt' Lâu Nhất (Chờ XHĐ)" icon="fa-hourglass-end" itemCount={stats.pairedButNotSold.length} emptyText="Không có xe nào đang chờ XHĐ.">
-                    {stats.pairedButNotSold.map(order => {
-                        const waitingSince = order['Thời gian ghép'] || order['Thời gian nhập'];
-                        return (
-                            <button key={order.VIN || order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="font-semibold font-mono text-text-primary truncate pr-2" title={order.VIN}>{order.VIN}</span>
-                                    <span className="text-[11px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full">{moment(waitingSince).fromNow(true)}</span>
-                                </div>
-                                <p className="text-[11px] text-text-secondary truncate mt-0.5">{order['Dòng xe']} - {order['Tên khách hàng']}</p>
-                                <p className="text-[11px] font-medium text-amber-600 truncate">Trạng thái: {order['Kết quả']}</p>
-                            </button>
-                        );
-                    })}
-                </StatListCard>
-                <StatListCard title="Thống Kê Xe Chờ Ghép" icon="fa-car-side" itemCount={stats.pendingRequestsByModel.length} emptyText="Không có yêu cầu nào đang chờ.">
-                    {stats.pendingRequestsByModel.map((item, index) => (
-                        <div key={index} className="w-full text-left p-1 rounded-md hover:bg-surface-hover transition-colors">
-                            <div className="flex justify-between items-start text-xs">
-                                <span className="font-semibold text-text-primary truncate pr-2 leading-tight" title={item.model}>{item.model}</span>
-                                <span className="flex-shrink-0 font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full text-[11px]">{item.count}</span>
-                            </div>
-                            <p className="text-[11px] text-text-secondary truncate mt-0.5" title={item.colors}>{item.colors}</p>
+                        }
+                    />
+
+                    <div className="flex-grow overflow-x-auto hidden-scrollbar pb-2 p-4">
+                        <div className="flex gap-3 h-full">
+                            {activeAlertTab === 'pending' ? (
+                                <>
+                                    {stats.oldestPendingRequests.map(order => (
+                                        <div key={order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="min-w-[200px] w-[200px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group flex flex-col relative overflow-hidden">
+
+                                            <div className="p-3 flex-grow flex flex-col relative z-10">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-wider">{order['Số đơn hàng']}</span>
+                                                    <i className="fas fa-clock text-red-400 text-sm"></i>
+                                                </div>
+
+                                                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1" title={order['Tên khách hàng']}>{order['Tên khách hàng']}</h4>
+                                                <p className="text-xs text-gray-500 mb-2">{order['Dòng xe']}</p>
+
+                                                <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
+                                                    <span className="text-[10px] text-gray-400">Chờ đợi</span>
+                                                    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                                                        {moment(order['Thời gian nhập']).fromNow(true)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {stats.oldestPendingRequests.length === 0 && (
+                                        <div className="w-full flex flex-col items-center justify-center text-gray-400">
+                                            <i className="fas fa-check-circle text-3xl text-green-100 mb-2"></i>
+                                            <span className="text-xs">Không có yêu cầu chờ lâu</span>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {stats.pairedButNotSold.map(order => (
+                                        <div key={order.VIN || order['Số đơn hàng']} onClick={() => onShowOrderDetails(order)} className="min-w-[200px] w-[200px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group flex flex-col relative overflow-hidden">
+
+                                            <div className="p-3 flex-grow flex flex-col relative z-10">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="text-xs font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-mono">{order.VIN || 'N/A'}</span>
+                                                    <i className="fas fa-car-crash text-orange-400 text-sm"></i>
+                                                </div>
+
+                                                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1" title={order['Kết quả']}>{order['Kết quả']}</h4>
+                                                <p className="text-xs text-gray-500 mb-2">{order['Dòng xe']}</p>
+
+                                                <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
+                                                    <span className="text-[10px] text-gray-400">Tồn đọng</span>
+                                                    <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
+                                                        {moment(order['Thời gian ghép'] || order['Thời gian nhập']).fromNow(true)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {stats.pairedButNotSold.length === 0 && (
+                                        <div className="w-full flex flex-col items-center justify-center text-gray-400">
+                                            <i className="fas fa-check-circle text-3xl text-green-100 mb-2"></i>
+                                            <span className="text-xs">Không có xe bị kẹt</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
-                    ))}
-                </StatListCard>
-                <StatListCard title="Top TVBH Theo Doanh Số (Tháng Này)" icon="fa-crown" itemCount={stats.monthlySalesData.length} emptyText="Chưa có dữ liệu doanh số tháng này.">
-                    <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-surface-hover z-10">
-                            <tr>
-                                <th className="p-1 text-left font-semibold text-xs text-text-secondary uppercase w-10">#</th>
-                                <th className="p-1 text-left font-semibold text-xs text-text-secondary uppercase">Tên TVBH</th>
-                                <th className="p-1 text-right font-semibold text-xs text-text-secondary uppercase">Số Lượng</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {stats.monthlySalesData.map((tvbh, index) => (
-                                <tr key={tvbh.name} className="border-b border-border-primary/50 last:border-b-0 hover:bg-surface-hover">
-                                    <td className="p-1 text-center">
-                                        {index === 0 && <i className="fas fa-crown text-amber-400" title="Hạng 1"></i>}
-                                        {index === 1 && <i className="fas fa-medal text-slate-400" title="Hạng 2"></i>}
-                                        {index === 2 && <i className="fas fa-medal text-yellow-600" title="Hạng 3"></i>}
-                                        {index > 2 && <span className="font-medium text-text-secondary text-xs">{index + 1}</span>}
-                                    </td>
-                                    <td className="p-1 font-semibold text-text-primary truncate" title={tvbh.name}>{tvbh.name}</td>
-                                    <td className="p-1 font-bold text-accent-primary text-right font-mono">{tvbh.count}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </StatListCard>
+                    </div>
+                </div>
+
+                {/* BOTTOM: Insights Area (Split 50/50) */}
+                <div className="flex-grow flex min-h-0 gap-4">
+
+                    {/* Demand (Grid Layout) */}
+                    <div className="w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                        <SectionHeader title="Nhu Cầu" icon="fa-chart-bar" color="text-teal-600" />
+                        <div className="flex-grow overflow-y-auto hidden-scrollbar pr-1 p-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                {stats.pendingRequestsByModel.map((item, index) => (
+                                    <div key={index} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden group">
+                                        <div className="relative z-10">
+                                            <h4 className="font-bold text-gray-800 text-xs uppercase truncate pr-2" title={item.model}>{item.model}</h4>
+                                            <p className="text-[10px] text-gray-400 mt-0.5 truncate" title={item.colors}>{item.colors}</p>
+                                            <div className="mt-3 flex items-end justify-between">
+                                                <div className="h-1 w-12 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-teal-500" style={{ width: `${(item.count / stats.maxPendingCount) * 100}%` }}></div>
+                                                </div>
+                                                <span className="text-xl font-bold text-teal-600 leading-none">{item.count}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {stats.pendingRequestsByModel.length === 0 && <div className="text-center text-gray-400 text-xs py-8">Chưa có yêu cầu</div>}
+                        </div>
+                    </div>
+
+                    {/* Leaderboard (Podium + List) */}
+                    <div className="w-1/2 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                        <SectionHeader title="Top Sales" icon="fa-trophy" color="text-yellow-500" />
+                        <div className="flex-grow overflow-y-auto hidden-scrollbar pr-2 p-4">
+
+                            {/* Podium for Top 3 */}
+                            {stats.monthlySalesData.length > 0 && (
+                                <div className="flex items-end justify-center gap-2 mb-6 mt-2">
+                                    {/* Rank 2 */}
+                                    {stats.monthlySalesData[1] && (
+                                        <div className="flex flex-col items-center w-1/3">
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center mb-2 shadow-sm relative z-10">
+                                                <span className="font-bold text-gray-500 text-xs">2</span>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-center w-full relative -mt-4 pt-5">
+                                                <p className="text-[10px] font-bold truncate text-gray-700">{stats.monthlySalesData[1].name}</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">{stats.monthlySalesData[1].count}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Rank 1 */}
+                                    {stats.monthlySalesData[0] && (
+                                        <div className="flex flex-col items-center w-1/3 -mb-1">
+                                            <div className="w-10 h-10 rounded-full bg-yellow-100 border-2 border-yellow-400 flex items-center justify-center mb-2 shadow-md relative z-10">
+                                                <i className="fas fa-crown text-yellow-500 text-sm"></i>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-lg shadow-md border border-yellow-200 text-center w-full relative -mt-4 pt-6">
+                                                <p className="text-[10px] font-bold truncate text-yellow-900">{stats.monthlySalesData[0].name}</p>
+                                                <p className="text-base font-bold text-yellow-600 mt-0.5">{stats.monthlySalesData[0].count}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Rank 3 */}
+                                    {stats.monthlySalesData[2] && (
+                                        <div className="flex flex-col items-center w-1/3">
+                                            <div className="w-8 h-8 rounded-full bg-orange-50 border-2 border-orange-200 flex items-center justify-center mb-2 shadow-sm relative z-10">
+                                                <span className="font-bold text-orange-400 text-xs">3</span>
+                                            </div>
+                                            <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-center w-full relative -mt-4 pt-5">
+                                                <p className="text-[10px] font-bold truncate text-gray-700">{stats.monthlySalesData[2].name}</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">{stats.monthlySalesData[2].count}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* List for Rank 4+ */}
+                            <div className="space-y-1.5">
+                                {stats.monthlySalesData.slice(3).map((tvbh, index) => (
+                                    <div key={tvbh.name} className="flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+                                        <span className="text-xs font-bold text-gray-400 w-4 text-center">{index + 4}</span>
+                                        <div className="flex-grow min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{tvbh.name}</p>
+                                        </div>
+                                        <span className="text-xs font-mono font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded">{tvbh.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {stats.monthlySalesData.length === 0 && <div className="text-center text-gray-400 text-xs py-8">Chưa có dữ liệu</div>}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
