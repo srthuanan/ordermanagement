@@ -624,22 +624,17 @@
       color: #0F172A;
     }
 
+    /* Hide scrollbar for Chrome, Safari and Opera */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      display: none;
     }
 
-    ::-webkit-scrollbar-track {
-      background: #F1F5F9;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
+    /* Hide scrollbar for IE, Edge and Firefox */
+    * {
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: none;
+      /* Firefox */
     }
 
     .text-gradient {
@@ -1084,13 +1079,7 @@
     div.flex-grow[class*="overflow-"] {
       position: relative;
       overflow: auto;
-      /* Use linear-gradient to create a semi-transparent white overlay on top of the image */
-      background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('/ordermanagement/assets/hinhnen-Rd0TYcbe.png') !important;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: scroll;
-      /* Keeps background fixed relative to container */
+      background-color: transparent !important;
     }
 
     /* Remove the pseudo-element approach as it causes stacking/scrolling issues */
@@ -2229,7 +2218,8 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-CmjJs_I2.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-BkWUxVCq.js"></script>
+  <link rel="stylesheet" crossorigin href="/ordermanagement/assets/index-D2lL5mX7.css">
 </head>
 
 <body class="text-text-primary font-sans">
