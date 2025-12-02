@@ -9,19 +9,19 @@ import noAnimationUrl from '../pictures/no-animation.json?url';
 import yesAnimationUrl from '../pictures/yes.json?url';
 
 interface StockCardProps {
-  vehicle: StockVehicle;
-  onHoldCar: (vin: string) => void;
-  onReleaseCar: (vin: string) => void;
-  onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
-  onShowDetails: (vehicle: StockVehicle) => void;
-  currentUser: string;
-  isAdmin: boolean;
-  showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-  highlightedVins: Set<string>;
-  processingVin: string | null;
+    vehicle: StockVehicle;
+    onHoldCar: (vin: string) => void;
+    onReleaseCar: (vin: string) => void;
+    onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
+    onShowDetails: (vehicle: StockVehicle) => void;
+    currentUser: string;
+    isAdmin: boolean;
+    showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    highlightedVins: Set<string>;
+    processingVin: string | null;
 }
 
-const StockCard: React.FC<StockCardProps> = ({ 
+const StockCard: React.FC<StockCardProps> = ({
     vehicle,
     onHoldCar,
     onReleaseCar,
@@ -45,7 +45,7 @@ const StockCard: React.FC<StockCardProps> = ({
     };
 
     const daysInStock = vehicle['Thời gian nhập'] ? moment().diff(moment(vehicle['Thời gian nhập']), 'days') : null;
-    
+
     const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
     const isAvailable = vehicle["Trạng thái"] === 'Chưa ghép';
     const isHeldByOther = vehicle["Trạng thái"] === 'Đang giữ' && !isHeldByCurrentUser;
@@ -67,14 +67,14 @@ const StockCard: React.FC<StockCardProps> = ({
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
                     </div>
                     <div onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirmAction.action === 'hold') {
-                                onHoldCar(vehicle.VIN);
-                            } else {
-                                onReleaseCar(vehicle.VIN);
-                            }
-                            setConfirmAction(null);
-                        }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
+                        e.stopPropagation();
+                        if (confirmAction.action === 'hold') {
+                            onHoldCar(vehicle.VIN);
+                        } else {
+                            onReleaseCar(vehicle.VIN);
+                        }
+                        setConfirmAction(null);
+                    }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
                         <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
                     </div>
                 </div>
@@ -117,7 +117,7 @@ const StockCard: React.FC<StockCardProps> = ({
                             autoplay
                         ></lottie-player>
                     </div>
-                     <div
+                    <div
                         className="cursor-pointer transition-transform hover:scale-110"
                         onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
                         title="Tạo yêu cầu cho xe đã giữ"
@@ -136,7 +136,7 @@ const StockCard: React.FC<StockCardProps> = ({
         }
 
         if (isHeldByOther) {
-             return (
+            return (
                 <>
                     <button disabled className="action-btn" title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}>
                         <i className="fas fa-lock"></i>
@@ -149,24 +149,24 @@ const StockCard: React.FC<StockCardProps> = ({
                 </>
             );
         }
-        
+
         return null;
     };
 
     return (
-        <div className="relative flex flex-col gap-2 rounded-xl bg-white p-2 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98] group">
+        <div className="relative flex flex-col gap-2 rounded-xl bg-white/70 backdrop-blur-sm p-2 shadow-md border border-light-border hover:shadow-lg transition-all duration-200 ease-out active:scale-[0.98] group">
             <div className="cursor-pointer" onClick={() => onShowDetails(vehicle)}>
                 {/* Car Image with Animation and Glow */}
                 <div className="car-image-container relative flex items-center justify-center py-2 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-white">
                     {/* Floor Glow */}
                     <div className="absolute bottom-0 w-3/4 h-4 bg-black/10 rounded-[100%] blur-sm animate-shadow-pulse transform translate-y-1"></div>
-                    
+
                     {/* Animated Car */}
                     <div className="relative z-10 w-full h-full flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1 animate-float">
-                        <CarImage 
-                            model={vehicle['Dòng xe']} 
-                            exteriorColor={vehicle['Ngoại thất']} 
-                            className="car-image object-contain max-h-full drop-shadow-xl" 
+                        <CarImage
+                            model={vehicle['Dòng xe']}
+                            exteriorColor={vehicle['Ngoại thất']}
+                            className="car-image object-contain max-h-full drop-shadow-xl"
                             alt={`VinFast ${vehicle['Dòng xe']}`}
                         />
                     </div>
@@ -203,7 +203,7 @@ const StockCard: React.FC<StockCardProps> = ({
                     </div>
                 </div>
             </div>
-            
+
             <div className="border-t border-dashed border-border-primary mt-auto pt-1.5 flex items-center justify-center gap-2 h-11">
                 {renderActions()}
             </div>

@@ -2,6 +2,8 @@ import React from 'react';
 import { Order } from '../types';
 import OrderCard from './OrderCard';
 
+
+
 interface OrderGridViewProps {
     orders: Order[];
     onViewDetails: (order: Order) => void;
@@ -26,7 +28,7 @@ const OrderGridView: React.FC<OrderGridViewProps> = (props) => {
     }
 
     return (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 p-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
             {props.orders.map((order) => (
                 <OrderCard
                     key={order['Số đơn hàng']}

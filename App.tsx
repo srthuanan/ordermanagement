@@ -276,12 +276,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </div>
             );
         }
+
         if (error) {
             return (<div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fa-solid fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetchHistory()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
+
         return (
             <div className={`flex flex-col h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2 relative z-20">
                     <Filters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -335,7 +337,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     processingOrder={processingOrder}
                                 />
                             </div>
-                            {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
+                            {(totalPages > 0 || !isLastArchive) && (
+                                <div className="relative z-20">
+                                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

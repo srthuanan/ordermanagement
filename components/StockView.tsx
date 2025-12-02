@@ -251,7 +251,7 @@ const StockView: React.FC<StockViewProps> = ({
 
         return (
             <div className={`flex flex-col h-full ${animationClass}`}>
-                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
+                <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2 relative z-20">
                     <Filters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -281,7 +281,11 @@ const StockView: React.FC<StockViewProps> = ({
                             <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
                                 <StockGridView vehicles={paginatedData} {...commonProps} />
                             </div>
-                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
+                            {totalPages > 0 && (
+                                <div className="relative z-20">
+                                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
