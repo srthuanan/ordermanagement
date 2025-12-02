@@ -109,6 +109,11 @@ interface OrderDetailsModalProps {
 }
 const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit }) => {
     const bgStyle = useModalBackground();
+
+    // Swipe Navigation Logic - Must be before early return
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
     if (!order) return null;
 
     const generalStatus = (order["Kết quả"] || "chưa ghép").toLowerCase().trim().normalize('NFC');
@@ -163,8 +168,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
     const btnDownload = `${btnBase} ${btnEffect} text-gray-700 hover:text-gray-800`;
 
     // Swipe Navigation Logic
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const minSwipeDistance = 50;
 
     const onTouchStart = (e: React.TouchEvent) => {

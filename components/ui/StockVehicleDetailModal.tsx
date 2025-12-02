@@ -10,8 +10,8 @@ const InfoRow: React.FC<{ label: string; value?: string | number; isMono?: boole
         <i className={`fas ${icon} text-accent-secondary text-sm w-5 text-center mt-0.5 flex-shrink-0`}></i>
         <div className="flex-1 min-w-0">
             <p className="text-xs text-text-secondary">{label}</p>
-            <p 
-                className={`text-sm font-semibold text-text-primary truncate ${isMono ? 'font-mono' : ''}`} 
+            <p
+                className={`text-sm font-semibold text-text-primary truncate ${isMono ? 'font-mono' : ''}`}
                 title={String(value || '')}
                 style={valueStyle}
             >
@@ -40,7 +40,7 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
         const expiration = moment(expirationTime);
         const now = moment();
         const duration = moment.duration(expiration.diff(now));
-        
+
         if (duration.asSeconds() <= 0) {
             return { total: 0, hours: 0, minutes: 0, seconds: 0 };
         }
@@ -85,16 +85,46 @@ const HoldCountdown: React.FC<{ expirationTime: string }> = ({ expirationTime })
 
 const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpen, onClose, vehicle, onHoldCar, onReleaseCar, onCreateRequestForVehicle, currentUser, isAdmin, processingVin, vehicleList, onNavigate }) => {
     const bgStyle = useModalBackground();
+
+    // Swipe Navigation Logic - Must be before early return
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
     if (!isOpen || !vehicle) return null;
 
     const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
     const isAvailable = vehicle["Trạng thái"] === 'Chưa ghép';
     const isHeldByOther = vehicle["Trạng thái"] === 'Đang giữ' && !isHeldByCurrentUser;
     const isProcessing = processingVin === vehicle.VIN;
-    
+
     const currentIndex = vehicleList.findIndex(v => v.VIN === vehicle.VIN);
     const hasPrev = currentIndex > 0;
     const hasNext = currentIndex < vehicleList.length - 1;
+
+    // Swipe Navigation Logic
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe && hasNext) {
+            onNavigate('next');
+        } else if (isRightSwipe && hasPrev) {
+            onNavigate('prev');
+        }
+    };
 
     const handleHold = () => { onHoldCar(vehicle.VIN); onClose(); };
     const handleRelease = () => { onReleaseCar(vehicle.VIN); onClose(); };
@@ -135,7 +165,14 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                     <i className="fas fa-chevron-left"></i>
                 </button>
             )}
-            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+            <div
+                className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up"
+                onClick={e => e.stopPropagation()}
+                style={bgStyle}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 <header className="flex items-start justify-between p-5 border-b border-border-primary">
                     <div>
                         <h2 className="text-xl font-bold text-text-primary">Chi Tiết Xe</h2>
@@ -148,13 +185,13 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                 <main className="p-6">
                     <div className="flex items-center justify-center h-48 mb-6">
                         <CarImage
-                             model={vehicle['Dòng xe']} 
-                             exteriorColor={vehicle['Ngoại thất']}
-                             className="h-full w-auto object-contain"
-                             alt={vehicle['Dòng xe']}
+                            model={vehicle['Dòng xe']}
+                            exteriorColor={vehicle['Ngoại thất']}
+                            className="h-full w-auto object-contain"
+                            alt={vehicle['Dòng xe']}
                         />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                         <InfoRow label="Dòng xe" value={vehicle['Dòng xe']} icon="fa-car-side" />
                         <InfoRow label="Phiên bản" value={vehicle['Phiên bản']} icon="fa-cogs" />
@@ -164,8 +201,8 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
 
                     <div className="pt-4 mt-4 border-t border-border-primary">
                         <div className="flex items-center justify-between">
-                             <span className="text-sm font-medium text-text-secondary">Trạng thái</span>
-                             <StatusBadge status={vehicle['Trạng thái']} />
+                            <span className="text-sm font-medium text-text-secondary">Trạng thái</span>
+                            <StatusBadge status={vehicle['Trạng thái']} />
                         </div>
                         {vehicle['Trạng thái'] === 'Đang giữ' && (
                             <div className="mt-3 space-y-2 text-sm">
@@ -175,8 +212,8 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-text-secondary">Hết hạn:</span>
-                                    {vehicle['Thời Gian Hết Hạn Giữ'] ? 
-                                        <HoldCountdown expirationTime={vehicle['Thời Gian Hết Hạn Giữ']} /> : 
+                                    {vehicle['Thời Gian Hết Hạn Giữ'] ?
+                                        <HoldCountdown expirationTime={vehicle['Thời Gian Hết Hạn Giữ']} /> :
                                         <span className="font-semibold text-text-primary">N/A</span>
                                     }
                                 </div>
@@ -185,14 +222,14 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
                     </div>
 
                 </main>
-                 <footer className="p-4 border-t flex justify-between items-center gap-3 bg-surface-ground rounded-b-2xl">
+                <footer className="p-4 border-t flex justify-between items-center gap-3 bg-surface-ground rounded-b-2xl">
                     <button onClick={onClose} className="btn-secondary">Đóng</button>
                     <div className="flex items-center gap-3">
                         {renderActions()}
                     </div>
                 </footer>
             </div>
-             {hasNext && (
+            {hasNext && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
