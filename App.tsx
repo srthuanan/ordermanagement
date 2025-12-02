@@ -98,6 +98,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         setIsLastArchive(archivesLoadedFromCache);
     }, [archivesLoadedFromCache]);
 
+    // Redirect admin to admin tab on login/load
+    React.useEffect(() => {
+        if (isCurrentUserAdmin) {
+            setActiveView('admin');
+        }
+    }, [isCurrentUserAdmin, setActiveView]);
+
     const {
         filters, sortConfig, currentPage, setCurrentPage, handleFilterChange, handleResetFilters, handleSort,
         processedData, paginatedData, totalPages, PAGE_SIZE
