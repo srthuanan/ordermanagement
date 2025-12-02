@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
 import { versionsMap } from '../../constants';
 import { useModalBackground } from '../../utils/styleUtils';
@@ -136,7 +137,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[95vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="relative flex-shrink-0 flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <div className="animate-fade-in-down">
@@ -148,164 +149,162 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </button>
                 </header>
 
-                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
-                    <Stepper currentStep={step} />
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
+                    <div className="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                        <Stepper currentStep={step} />
 
-                    <div className="p-3 bg-surface-ground rounded-lg border border-border-primary space-y-2 mb-6">
-                        <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
-                        <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
-                        <InfoRow label="Số VIN" value={order.VIN || 'N/A'} icon="fa-car" isMono />
-                    </div>
-
-                    <div style={{ display: step === 1 ? 'block' : 'none' }}>
-                        <h3 className="font-semibold text-text-primary text-base mb-3">1. Thông tin Bán hàng</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-text-primary mb-2">
-                                    Chính sách bán hàng <span className="text-danger">*</span>
-                                </label>
-                                {isLoadingPolicies ? (
-                                    <div className="flex items-center gap-2 text-sm text-text-secondary p-2 bg-surface-ground rounded-lg">
-                                        <i className="fas fa-spinner fa-spin"></i>
-                                        <span>Đang tải danh sách chính sách...</span>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-wrap gap-2 p-2 bg-surface-ground rounded-lg border border-border-primary">
-                                        {filteredSalesPolicies.length > 0 ? filteredSalesPolicies.map(option => {
-                                            const isSelected = policy.includes(option);
-                                            return (
-                                                <button
-                                                    type="button"
-                                                    key={option}
-                                                    onClick={() => {
-                                                        const newSelection = isSelected
-                                                            ? policy.filter(p => p !== option)
-                                                            : [...policy, option];
-                                                        setPolicy(newSelection);
-                                                    }}
-                                                    className={`group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-primary
-                                                        ${isSelected
-                                                            ? 'bg-accent-primary border-accent-primary text-white shadow-sm hover:bg-accent-primary-hover'
-                                                            : 'bg-white border-border-secondary text-text-secondary hover:border-accent-primary hover:text-accent-primary'
-                                                        }
-                                                    `}
-                                                >
-                                                    <i className={`fas ${isSelected ? 'fa-check-circle' : 'fa-plus-circle'} transition-transform duration-200 ${!isSelected ? 'group-hover:rotate-90' : ''}`}></i>
-                                                    {option}
-                                                </button>
-                                            )
-                                        }) : (
-                                            <p className="text-xs text-text-secondary">Không tìm thấy chính sách nào phù hợp.</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <label htmlFor="commission-amount" className="block text-sm font-medium text-text-primary mb-2">
-                                    Hoa hồng ứng trước (VND) <span className="text-danger">*</span>
-                                </label>
-                                <input id="commission-amount" type="number" value={commission} onChange={(e) => setCommission(e.target.value)}
-                                    className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                    placeholder="Nhập số tiền" min="0" required
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
-                                    Số điểm Vpoint sử dụng (Điểm)
-                                </label>
-                                <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
-                                    className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                    placeholder="Nhập số điểm (nếu có)" min="0"
-                                />
-                            </div>
+                        <div className="p-3 bg-surface-ground rounded-lg border border-border-primary space-y-2 mb-6">
+                            <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
+                            <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
+                            <InfoRow label="Số VIN" value={order.VIN || 'N/A'} icon="fa-car" isMono />
                         </div>
-                    </div>
 
-                    <div style={{ display: step === 2 ? 'block' : 'none' }}>
-                        <h3 className="font-semibold text-text-primary text-base mb-3">2. Tải lên chứng từ</h3>
-                        <div className="space-y-4">
-                            <SimpleFileUpload id="hop_dong_file_input" label="Hợp đồng mua bán" onFileSelect={setContractFile} required accept=".pdf" />
-                            <SimpleFileUpload id="denghi_xhd_file_input" label="Đề nghị xuất hóa đơn" onFileSelect={setProposalFile} required accept=".pdf" />
-                        </div>
-                    </div>
-
-                    <div style={{ display: step === 3 ? 'block' : 'none' }}>
-                        <h3 className="font-semibold text-text-primary text-base mb-3">3. Xác nhận cuối cùng</h3>
-                        <div className="p-4 bg-surface-ground rounded-lg border border-border-primary space-y-3 mb-4">
-                            <div>
-                                <p className="text-xs text-text-secondary">Chính sách bán hàng</p>
-                                <p className="font-semibold text-text-primary">{policy.join(', ') || 'Chưa chọn'}</p>
-                            </div>
-                            <div className="flex justify-between items-start">
+                        <div style={{ display: step === 1 ? 'block' : 'none' }}>
+                            <h3 className="font-semibold text-text-primary text-base mb-3">1. Thông tin Bán hàng</h3>
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="text-xs text-text-secondary">Hoa hồng ứng trước</p>
-                                    <p className="font-semibold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</p>
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
+                                        Chính sách bán hàng <span className="text-danger">*</span>
+                                    </label>
+                                    {isLoadingPolicies ? (
+                                        <div className="flex items-center gap-2 text-sm text-text-secondary p-2 bg-surface-ground rounded-lg">
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            <span>Đang tải danh sách chính sách...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2 p-2 bg-surface-ground rounded-lg border border-border-primary">
+                                            {filteredSalesPolicies.length > 0 ? filteredSalesPolicies.map(option => {
+                                                const isSelected = policy.includes(option);
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={option}
+                                                        onClick={() => {
+                                                            const newSelection = isSelected
+                                                                ? policy.filter(p => p !== option)
+                                                                : [...policy, option];
+                                                            setPolicy(newSelection);
+                                                        }}
+                                                        className={`group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full border cursor-pointer transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-primary
+                                                            ${isSelected
+                                                                ? 'bg-accent-primary border-accent-primary text-white shadow-sm hover:bg-accent-primary-hover'
+                                                                : 'bg-white border-border-secondary text-text-secondary hover:border-accent-primary hover:text-accent-primary'
+                                                            }
+                                                        `}
+                                                    >
+                                                        <i className={`fas ${isSelected ? 'fa-check-circle' : 'fa-plus-circle'} transition-transform duration-200 ${!isSelected ? 'group-hover:rotate-90' : ''}`}></i>
+                                                        {option}
+                                                    </button>
+                                                )
+                                            }) : (
+                                                <p className="text-xs text-text-secondary">Không tìm thấy chính sách nào phù hợp.</p>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                                {vpoint && (
-                                    <div className="text-right">
-                                        <p className="text-xs text-text-secondary">Vpoint sử dụng</p>
-                                        <p className="font-semibold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</p>
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <p className="text-xs text-text-secondary">Tệp đã tải lên</p>
-                                <ul className="list-none text-sm text-text-primary space-y-1 mt-1">
-                                    <li className={contractFile ? 'text-success' : 'text-danger'}>
-                                        <i className={`fas ${contractFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
-                                        Hợp đồng: {contractFile?.name || 'Chưa có'}
-                                    </li>
-                                    <li className={proposalFile ? 'text-success' : 'text-danger'}>
-                                        <i className={`fas ${proposalFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
-                                        Đề nghị XHD: {proposalFile?.name || 'Chưa có'}
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div className="relative p-4 rounded-lg border border-accent-primary/20 bg-surface-accent">
-                            <div className="flex items-start">
-                                <div className="flex items-center h-6">
-                                    <input
-                                        id="vinclub-confirm" type="checkbox" checked={vinClubConfirmed}
-                                        onChange={(e) => setVinClubConfirmed(e.target.checked)}
-                                        className="focus:ring-accent-primary h-5 w-5 text-accent-primary border-border-secondary rounded-md cursor-pointer"
+                                <div>
+                                    <label htmlFor="commission-amount" className="block text-sm font-medium text-text-primary mb-2">
+                                        Hoa hồng ứng trước (VND) <span className="text-danger">*</span>
+                                    </label>
+                                    <input id="commission-amount" type="number" value={commission} onChange={(e) => setCommission(e.target.value)}
+                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                        placeholder="Nhập số tiền" min="0" required
                                     />
                                 </div>
-                                <div className="ml-3 text-sm">
-                                    <label htmlFor="vinclub-confirm" className="font-medium text-text-primary cursor-pointer">
-                                        Tôi xác nhận khách hàng đã tạo tài khoản Vinclub.
+                                <div>
+                                    <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
+                                        Số điểm Vpoint sử dụng (Điểm)
                                     </label>
-                                    <p className="text-accent-primary/80">Đây là điều kiện bắt buộc để tiếp tục.</p>
+                                    <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
+                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                        placeholder="Nhập số điểm (nếu có)" min="0"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: step === 2 ? 'block' : 'none' }}>
+                            <h3 className="font-semibold text-text-primary text-base mb-3">2. Tải lên chứng từ</h3>
+                            <div className="space-y-4">
+                                <SimpleFileUpload id="hop_dong_file_input" label="Hợp đồng mua bán" onFileSelect={setContractFile} required accept=".pdf" />
+                                <SimpleFileUpload id="denghi_xhd_file_input" label="Đề nghị xuất hóa đơn" onFileSelect={setProposalFile} required accept=".pdf" />
+                            </div>
+                        </div>
+
+                        <div style={{ display: step === 3 ? 'block' : 'none' }}>
+                            <h3 className="font-semibold text-text-primary text-base mb-3">3. Xác nhận cuối cùng</h3>
+                            <div className="p-4 bg-surface-ground rounded-lg border border-border-primary space-y-3 mb-4">
+                                <div>
+                                    <p className="text-xs text-text-secondary">Chính sách bán hàng</p>
+                                    <p className="font-semibold text-text-primary">{policy.join(', ') || 'Chưa chọn'}</p>
+                                </div>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="text-xs text-text-secondary">Hoa hồng ứng trước</p>
+                                        <p className="font-semibold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</p>
+                                    </div>
+                                    {vpoint && (
+                                        <div className="text-right">
+                                            <p className="text-xs text-text-secondary">Vpoint sử dụng</p>
+                                            <p className="font-semibold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-text-secondary">Tệp đã tải lên</p>
+                                    <ul className="list-none text-sm text-text-primary space-y-1 mt-1">
+                                        <li className={contractFile ? 'text-success' : 'text-danger'}>
+                                            <i className={`fas ${contractFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
+                                            Hợp đồng: {contractFile?.name || 'Chưa có'}
+                                        </li>
+                                        <li className={proposalFile ? 'text-success' : 'text-danger'}>
+                                            <i className={`fas ${proposalFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
+                                            Đề nghị XHD: {proposalFile?.name || 'Chưa có'}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="relative p-4 rounded-lg border border-accent-primary/20 bg-surface-accent">
+                                <div className="flex items-start">
+                                    <div className="flex items-center h-6">
+                                        <input
+                                            id="vinclub-confirm" type="checkbox" checked={vinClubConfirmed}
+                                            onChange={(e) => setVinClubConfirmed(e.target.checked)}
+                                            className="focus:ring-accent-primary h-5 w-5 text-accent-primary border-border-secondary rounded-md cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="ml-3 text-sm">
+                                        <label htmlFor="vinclub-confirm" className="font-medium text-text-primary cursor-pointer">
+                                            Tôi xác nhận khách hàng đã tạo tài khoản Vinclub.
+                                        </label>
+                                        <p className="text-accent-primary/80">Đây là điều kiện bắt buộc để tiếp tục.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </main>
 
-                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-between items-center bg-surface-ground rounded-b-2xl">
+                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-between items-center bg-surface-card relative z-10">
                     {step > 1 ? (
-                        <button onClick={handleBack} disabled={isSubmitting} className="btn-secondary">
-                            <i className="fas fa-arrow-left mr-2"></i> Quay lại
-                        </button>
+                        <Button onClick={handleBack} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-arrow-left"></i>}>
+                            Quay lại
+                        </Button>
                     ) : (
-                        <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">
+                        <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="sm">
                             Hủy
-                        </button>
+                        </Button>
                     )}
 
                     {step < 3 ? (
-                        <button onClick={handleNext} disabled={isSubmitting || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)} className="btn-primary">
-                            Tiếp theo <i className="fas fa-arrow-right ml-2"></i>
-                        </button>
+                        <Button onClick={handleNext} disabled={isSubmitting || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)} variant="primary" size="sm" rightIcon={<i className="fas fa-arrow-right"></i>}>
+                            Tiếp theo
+                        </Button>
                     ) : (
-                        <button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} className="btn-primary bg-success text-white hover:bg-green-700">
-                            {isSubmitting ? (
-                                <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</>
-                            ) : (
-                                <><i className="fas fa-paper-plane mr-2"></i> Gửi Yêu Cầu</>
-                            )}
-                        </button>
+                        <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} variant="success" size="sm" isLoading={isSubmitting} leftIcon={!isSubmitting ? <i className="fas fa-paper-plane"></i> : undefined}>
+                            Gửi Yêu Cầu
+                        </Button>
                     )}
                 </footer>
             </div>

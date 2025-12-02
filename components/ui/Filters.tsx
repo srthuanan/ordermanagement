@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import MultiSelectDropdown, { DropdownFilterConfig } from './MultiSelectDropdown';
 import moment from 'moment';
 import Button from './Button';
@@ -239,8 +240,8 @@ const Filters: React.FC<FiltersProps> = ({
       </div>
 
       {/* --- Mobile Filter Panel (Modal) --- */}
-      {isMobilePanelOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
+      {isMobilePanelOpen && createPortal(
+        <div className="fixed inset-0 bg-black/60 z-[60] flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
           <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary">
               <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
@@ -278,7 +279,8 @@ const Filters: React.FC<FiltersProps> = ({
               <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth>Xem {totalCount} kết quả</Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* --- Desktop View --- */}

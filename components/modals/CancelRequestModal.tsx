@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Order } from '../../types';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
+import Button from '../ui/Button';
 import { useModalBackground } from '../../utils/styleUtils';
 
 interface CancelRequestModalProps {
@@ -25,7 +24,7 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
                 className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
@@ -39,31 +38,33 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
-                    <p className="text-sm text-text-secondary">
-                        Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <strong className="font-mono text-text-primary">{order["Số đơn hàng"]}</strong> của khách hàng <strong className="text-text-primary">{order["Tên khách hàng"]}</strong>?
-                    </p>
-                    <div>
-                        <label htmlFor="cancel-reason" className="block text-sm font-medium text-text-primary mb-2">
-                            Lý do hủy (bắt buộc)
-                        </label>
-                        <textarea
-                            id="cancel-reason"
-                            rows={3}
-                            value={reason}
-                            onChange={(e) => setReason(e.target.value)}
-                            className="w-full bg-surface-card border-border-primary rounded-lg shadow-sm p-2 focus:border-accent-primary transition focus:shadow-glow-accent focus:outline-none"
-                            placeholder="VD: Khách hàng đổi ý, sai thông tin..."
-                        />
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
+                    <div className="flex-grow overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
+                        <p className="text-sm text-text-secondary">
+                            Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <strong className="font-mono text-text-primary">{order["Số đơn hàng"]}</strong> của khách hàng <strong className="text-text-primary">{order["Tên khách hàng"]}</strong>?
+                        </p>
+                        <div>
+                            <label htmlFor="cancel-reason" className="block text-sm font-medium text-text-primary mb-2">
+                                Lý do hủy (bắt buộc)
+                            </label>
+                            <textarea
+                                id="cancel-reason"
+                                rows={3}
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                className="w-full bg-surface-card border-border-primary rounded-lg shadow-sm p-2 focus:border-accent-primary transition focus:shadow-glow-accent focus:outline-none"
+                                placeholder="VD: Khách hàng đổi ý, sai thông tin..."
+                            />
+                        </div>
                     </div>
                 </main>
-                <footer className="p-4 border-t border-border-primary flex justify-end gap-3 items-center bg-surface-ground rounded-b-2xl">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Xác Nhận Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
-                    </div>
+                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-card relative z-10">
+                    <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-times"></i>}>
+                        Hủy
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={isSubmitting} variant="danger" size="sm" isLoading={isSubmitting} leftIcon={<i className="fas fa-trash-alt"></i>}>
+                        Xác Nhận Hủy
+                    </Button>
                 </footer>
             </div>
         </div>

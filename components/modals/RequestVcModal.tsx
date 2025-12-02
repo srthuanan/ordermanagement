@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import Button from '../ui/Button';
 import { useModalBackground } from '../../utils/styleUtils';
 
 interface VcRequestPayload {
@@ -89,7 +90,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 relative flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <h2 className="text-xl font-bold text-gradient">Yêu Cầu Cấp VinClub</h2>
@@ -99,56 +100,60 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
                     </button>
                 </header>
 
-                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
-                    <div className="p-4 bg-surface-ground rounded-lg border border-border-primary text-sm">
-                        Đang yêu cầu cho SĐH: <strong className="font-mono">{order["Số đơn hàng"]}</strong> - KH: <strong>{order["Tên khách hàng"]}</strong>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Loại khách hàng</label>
-                        <div className="flex gap-4 p-1 bg-surface-ground rounded-lg border border-border-primary w-fit">
-                            <button onClick={() => setCustomerType('personal')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${customerType === 'personal' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}>
-                                <i className="fas fa-user mr-2"></i>Cá Nhân
-                            </button>
-                            <button onClick={() => setCustomerType('company')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${customerType === 'company' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}>
-                                <i className="fas fa-building mr-2"></i>Công Ty
-                            </button>
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
+                    <div className="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                        <div className="p-4 bg-surface-ground rounded-lg border border-border-primary text-sm mb-4">
+                            Đang yêu cầu cho SĐH: <strong className="font-mono">{order["Số đơn hàng"]}</strong> - KH: <strong>{order["Tên khách hàng"]}</strong>
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                        {customerType === 'personal' ? (
-                            <>
-                                <SimpleFileUpload id="cccd-front" label="CCCD Mặt Trước" onFileSelect={setIdCardFront} required accept="image/*" />
-                                <SimpleFileUpload id="cccd-back" label="CCCD Mặt Sau" onFileSelect={setIdCardBack} required accept="image/*" />
-                            </>
-                        ) : (
-                            <>
-                                <SimpleFileUpload id="biz-license" label="Giấy Phép Kinh Doanh" onFileSelect={setBusinessLicense} required accept="image/*" />
-                                <div>
-                                    <label htmlFor="dms-code" className="block text-sm font-medium text-text-primary mb-2">Mã KH DMS <span className="text-danger">*</span></label>
-                                    <input
-                                        id="dms-code"
-                                        type="text"
-                                        value={dmsCode}
-                                        onChange={e => setDmsCode(e.target.value)}
-                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                        placeholder="Nhập mã khách hàng DMS"
-                                        required
-                                    />
-                                </div>
-                            </>
-                        )}
-                        <SimpleFileUpload id="reg-front" label="Cavet Xe Mặt Trước" onFileSelect={setRegFront} required accept="image/*" />
-                        <SimpleFileUpload id="reg-back" label="Cavet Xe Mặt Sau" onFileSelect={setRegBack} required accept="image/*" />
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-text-primary mb-2">Loại khách hàng</label>
+                            <div className="flex gap-4 p-1 bg-surface-ground rounded-lg border border-border-primary w-fit">
+                                <button onClick={() => setCustomerType('personal')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${customerType === 'personal' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}>
+                                    <i className="fas fa-user mr-2"></i>Cá Nhân
+                                </button>
+                                <button onClick={() => setCustomerType('company')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-all ${customerType === 'company' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}>
+                                    <i className="fas fa-building mr-2"></i>Công Ty
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                            {customerType === 'personal' ? (
+                                <>
+                                    <SimpleFileUpload id="cccd-front" label="CCCD Mặt Trước" onFileSelect={setIdCardFront} required accept="image/*" />
+                                    <SimpleFileUpload id="cccd-back" label="CCCD Mặt Sau" onFileSelect={setIdCardBack} required accept="image/*" />
+                                </>
+                            ) : (
+                                <>
+                                    <SimpleFileUpload id="biz-license" label="Giấy Phép Kinh Doanh" onFileSelect={setBusinessLicense} required accept="image/*" />
+                                    <div>
+                                        <label htmlFor="dms-code" className="block text-sm font-medium text-text-primary mb-2">Mã KH DMS <span className="text-danger">*</span></label>
+                                        <input
+                                            id="dms-code"
+                                            type="text"
+                                            value={dmsCode}
+                                            onChange={e => setDmsCode(e.target.value)}
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                            placeholder="Nhập mã khách hàng DMS"
+                                            required
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <SimpleFileUpload id="reg-front" label="Cavet Xe Mặt Trước" onFileSelect={setRegFront} required accept="image/*" />
+                            <SimpleFileUpload id="reg-back" label="Cavet Xe Mặt Sau" onFileSelect={setRegBack} required accept="image/*" />
+                        </div>
                     </div>
                 </main>
 
-                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                    <button onClick={handleSubmit} disabled={!isFormValid() || isSubmitting} className="btn-primary">
-                        {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</> : <><i className="fas fa-paper-plane mr-2"></i> Gửi Yêu Cầu</>}
-                    </button>
+                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-3 bg-surface-card relative z-10">
+                    <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-times"></i>}>
+                        Hủy
+                    </Button>
+                    <Button onClick={handleSubmit} disabled={!isFormValid() || isSubmitting} variant="primary" size="sm" isLoading={isSubmitting} leftIcon={!isSubmitting ? <i className="fas fa-paper-plane"></i> : undefined}>
+                        Gửi Yêu Cầu
+                    </Button>
                 </footer>
             </div>
         </div>
