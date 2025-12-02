@@ -249,56 +249,76 @@ const Filters: React.FC<FiltersProps> = ({
       {/* --- Mobile Filter Panel (Modal) --- */}
       {isMobilePanelOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 z-[60] flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
-          <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary">
+          <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up flex flex-col max-h-[85vh]" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary flex-shrink-0">
               <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
               <Button onClick={() => setIsMobilePanelOpen(false)} variant="ghost" className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
             </div>
 
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 -mr-2">
+            <div className="space-y-3 overflow-y-auto pr-2 -mr-2 custom-scrollbar py-2 flex-grow">
               {(dateRangeEnabled || dateFilterEnabled) && (
-                <div>
-                  <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dateRangeEnabled ? 'Phạm vi Ngày' : 'Chọn ngày'}</label>
+                <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">{dateRangeEnabled ? 'Thời gian' : 'Ngày'}</label>
                   <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
                     <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
                     {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
                   </div>
                 </div>
               )}
+
               {dropdowns.map(dropdown => {
                 const isExpanded = expandedMobileFilters.includes(dropdown.id);
+                const hasSelection = (filters[dropdown.key] as string[])?.length > 0;
+
                 return (
-                  <div key={'mobile-' + dropdown.id} className="border-b border-border-primary/50 last:border-0 pb-3 last:pb-0">
+                  <div key={'mobile-' + dropdown.id} className={`border rounded-xl transition-all duration-300 overflow-hidden ${isExpanded ? 'bg-white border-accent-primary/30 shadow-sm' : 'bg-white border-gray-100'}`}>
                     <button
                       type="button"
                       onClick={() => toggleMobileFilter(dropdown.id)}
-                      className="flex items-center justify-between w-full py-2 text-left group"
+                      className="flex items-center justify-between w-full p-3 text-left group"
                     >
-                      <span className="text-sm font-medium text-text-primary group-hover:text-accent-primary transition-colors">{dropdown.label}</span>
-                      <i className={`fas fa-chevron-down text-xs text-text-secondary transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}></i>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${hasSelection ? 'bg-accent-primary text-white shadow-sm shadow-accent-primary/30' : 'bg-gray-100 text-gray-400 group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
+                          <i className={`fas ${dropdown.icon} text-xs`}></i>
+                        </div>
+                        <div>
+                          <span className={`text-sm font-semibold transition-colors ${hasSelection ? 'text-accent-primary' : 'text-gray-700 group-hover:text-gray-900'}`}>{dropdown.label}</span>
+                          {hasSelection && (
+                            <div className="text-[10px] text-gray-500 font-medium">Đã chọn {(filters[dropdown.key] as string[]).length}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-gray-100 text-gray-600' : 'text-gray-300'}`}>
+                        <i className="fas fa-chevron-down text-xs"></i>
+                      </div>
                     </button>
-                    <div className={`grid transition-all duration-200 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
+
+                    <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                       <div className="overflow-hidden">
-                        <MultiSelectDropdown
-                          id={'mobile-' + dropdown.id}
-                          label={dropdown.label}
-                          options={dropdown.options}
-                          selectedOptions={(filters[dropdown.key] || []) as string[]}
-                          onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-                          icon={dropdown.icon}
-                          displayMode={dropdown.displayMode}
-                          size="default"
-                          mode={dropdown.mode || (dropdown.options.length > 6 ? 'inline' : 'chips')}
-                        />
+                        <div className="p-3 pt-0 border-t border-gray-50">
+                          <div className="mt-3">
+                            <MultiSelectDropdown
+                              id={'mobile-' + dropdown.id}
+                              label={dropdown.label}
+                              options={dropdown.options}
+                              selectedOptions={(filters[dropdown.key] || []) as string[]}
+                              onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+                              icon={dropdown.icon}
+                              displayMode={dropdown.displayMode}
+                              size="default"
+                              mode={dropdown.mode || (dropdown.options.length > 6 ? 'inline' : 'chips')}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth>Xóa Lọc</Button>
-              <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth>Xem {totalCount} kết quả</Button>
+            <div className="mt-4 grid grid-cols-2 gap-3 pt-3 border-t border-border-primary flex-shrink-0">
+              <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth className="rounded-xl">Xóa Lọc</Button>
+              <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth className="rounded-xl shadow-lg shadow-accent-primary/20">Xem {totalCount} kết quả</Button>
             </div>
           </div>
         </div>,

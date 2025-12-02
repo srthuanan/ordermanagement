@@ -9,6 +9,8 @@ export interface DropdownFilterConfig {
   icon: string;
   displayMode?: 'count' | 'selection';
   mode?: 'dropdown' | 'chips' | 'inline';
+  selectionMode?: 'single' | 'multiple';
+  searchable?: boolean;
 }
 
 interface MultiSelectDropdownProps {
@@ -22,9 +24,18 @@ interface MultiSelectDropdownProps {
   size?: 'default' | 'compact';
   variant?: 'default' | 'modern';
   mode?: 'dropdown' | 'chips' | 'inline';
+  selectionMode?: 'single' | 'multiple';
+  placeholder?: string;
+  disabled?: boolean;
+  searchable?: boolean;
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count', size = 'default', variant = 'default', mode = 'dropdown' }) => {
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+  label, options, selectedOptions, onChange, icon,
+  displayMode = 'count', size = 'default', variant = 'default',
+  mode = 'dropdown', selectionMode = 'multiple', placeholder, disabled = false,
+  searchable = true
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,57 +57,71 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
   );
 
   const handleOptionToggle = (option: string) => {
-    const newSelected = selectedOptions.includes(option)
-      ? selectedOptions.filter(item => item !== option)
-      : [...selectedOptions, option];
-    onChange(newSelected);
+    if (selectionMode === 'single') {
+      onChange([option]);
+      setIsOpen(false);
+    } else {
+      const newSelected = selectedOptions.includes(option)
+        ? selectedOptions.filter(item => item !== option)
+        : [...selectedOptions, option];
+      onChange(newSelected);
+    }
   };
 
   const handleSelectAll = () => {
-    // Select only the currently filtered options
     onChange(Array.from(new Set([...selectedOptions, ...filteredOptions])));
   };
 
   const handleClearAll = () => {
     onChange([]);
-  }
+  };
 
   const handleClearFiltered = () => {
     onChange(selectedOptions.filter(opt => !filteredOptions.includes(opt)));
-  }
+  };
 
   const displayLabel = useMemo(() => {
-    if (selectedOptions.length === 0) return label;
+    if (selectedOptions.length === 0) return placeholder || label;
+
+    if (selectionMode === 'single') {
+      return selectedOptions[0];
+    }
 
     if (displayMode === 'selection') {
       if (selectedOptions.length <= 2) return selectedOptions.join(', ');
       return `${selectedOptions.length} lựa chọn`;
     }
 
-    // default 'count' mode
     return `${label} (${selectedOptions.length})`;
-  }, [selectedOptions, label, displayMode]);
+  }, [selectedOptions, label, displayMode, selectionMode, placeholder]);
 
   const isCompact = size === 'compact';
-  const areAllFilteredSelected = filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
+  const areAllFilteredSelected = selectionMode === 'multiple' && filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
 
+  // --- STYLES ---
   const buttonClasses = useMemo(() => {
+    const base = 'flex items-center justify-between transition-all duration-200 border outline-none focus:ring-2 focus:ring-accent-primary/20';
+    const rounded = 'rounded-xl'; // More rounded for modern look
+    const disabledClass = disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer';
+
     if (variant === 'modern') {
-      const base = 'flex-shrink-0 flex items-center justify-between transition-all duration-200 border';
-      const sizeClass = isCompact ? 'w-28 px-3 h-8 text-xs rounded-full flex-shrink' : 'w-40 px-4 h-9 text-sm rounded-full';
-      const activeState = isOpen || selectedOptions.length > 0
-        ? 'bg-accent-primary/10 border-accent-primary text-accent-primary shadow-sm'
-        : 'bg-white border-border-secondary text-text-secondary hover:border-accent-primary/50 hover:text-text-primary shadow-sm';
-      return `${base} ${sizeClass} ${activeState}`;
+      const sizeClass = isCompact ? 'px-3 h-8 text-xs' : 'px-4 h-10 text-sm';
+      const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
+        ? 'bg-accent-primary/5 border-accent-primary text-accent-primary shadow-sm'
+        : 'bg-white border-gray-200 text-gray-600 hover:border-accent-primary/50 hover:text-gray-900 hover:shadow-sm';
+      return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full md:w-auto min-w-[160px]`;
     }
 
-    const base = 'btn-filter justify-between';
-    const sizeClass = isCompact ? 'px-3 h-9 text-xs' : 'w-full pl-3 pr-2.5 text-sm md:w-52 h-11 !rounded-lg';
-    const activeState = isOpen || selectedOptions.length > 0 ? 'active' : '';
-    return `${base} ${sizeClass} ${activeState}`;
-  }, [isCompact, isOpen, selectedOptions.length, variant]);
+    // Default variant
+    const sizeClass = isCompact ? 'px-3 h-9 text-xs' : 'px-4 h-11 text-sm';
+    const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
+      ? 'bg-white border-accent-primary text-accent-primary ring-1 ring-accent-primary/10'
+      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50';
+    return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full md:w-56`;
+  }, [isCompact, isOpen, selectedOptions.length, variant, selectionMode, disabled]);
 
 
+  // --- RENDER: CHIPS MODE ---
   if (mode === 'chips') {
     return (
       <div className="flex flex-wrap gap-2">
@@ -106,11 +131,16 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
             <button
               key={option}
               type="button"
-              onClick={() => handleOptionToggle(option)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ease-in-out flex items-center gap-1.5 ${isSelected
-                ? 'bg-accent-primary text-white border-accent-primary shadow-sm'
-                : 'bg-white text-text-secondary border-border-secondary hover:border-accent-primary/50 hover:text-text-primary'
-                }`}
+              onClick={() => !disabled && handleOptionToggle(option)}
+              disabled={disabled}
+              className={`
+                px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ease-out flex items-center gap-1.5
+                ${isSelected
+                  ? 'bg-accent-primary text-white border-accent-primary shadow-md shadow-accent-primary/20 transform scale-105'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-accent-primary/50 hover:text-accent-primary hover:bg-accent-primary/5'
+                }
+                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
             >
               {isSelected && <i className="fas fa-check text-[10px]"></i>}
               {option}
@@ -121,120 +151,161 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
     );
   }
 
+  // --- RENDER: INLINE MODE ---
   if (mode === 'inline') {
     return (
-      <div className="w-full">
-        {options.length > 5 && (
+      <div className={`w-full bg-gray-50/50 rounded-xl border border-gray-100 p-2 ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
+        {searchable && options.length > 5 && (
           <div className="relative mb-2">
-            <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder text-sm"></i>
+            <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 text-xs"></i>
             <input
               type="text"
               placeholder="Tìm kiếm..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow futuristic-input text-sm"
+              disabled={disabled}
+              className="w-full pl-9 pr-3 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all text-sm placeholder:text-gray-400"
             />
           </div>
         )}
-        <ul className="max-h-60 overflow-y-auto p-1 space-y-1">
-          {/* Select All option for inline mode */}
-          {filteredOptions.length > 0 && (
+        <ul className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar pr-1">
+          {selectionMode === 'multiple' && filteredOptions.length > 0 && (
             <li>
-              <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+              <label className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-white hover:shadow-sm transition-all cursor-pointer group">
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${areAllFilteredSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
+                  {areAllFilteredSelected && <i className="fas fa-check text-white text-[10px]"></i>}
+                </div>
                 <input
                   type="checkbox"
                   checked={areAllFilteredSelected}
                   onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
-                  className="custom-checkbox"
+                  className="hidden"
                 />
-                <span className="font-semibold italic">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
+                <span className="font-semibold italic text-xs text-gray-500 group-hover:text-accent-primary transition-colors">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
               </label>
             </li>
           )}
-          {filteredOptions.length > 0 ? filteredOptions.map(option => (
-            <li key={option}>
-              <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => handleOptionToggle(option)}
-                  className="custom-checkbox"
-                />
-                <span>{option}</span>
-              </label>
-            </li>
-          )) : (
-            <li className="px-2 py-2 text-sm text-text-secondary text-center">Không có kết quả.</li>
+          {filteredOptions.length > 0 ? filteredOptions.map(option => {
+            const isSelected = selectedOptions.includes(option);
+            return (
+              <li key={option}>
+                <label className={`flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg transition-all cursor-pointer group ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-gray-700 hover:bg-white hover:shadow-sm'}`}>
+                  {selectionMode === 'multiple' && (
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
+                      {isSelected && <i className="fas fa-check text-white text-[10px]"></i>}
+                    </div>
+                  )}
+                  <input
+                    type={selectionMode === 'single' ? 'radio' : 'checkbox'}
+                    checked={isSelected}
+                    onChange={() => handleOptionToggle(option)}
+                    className="hidden"
+                  />
+                  <span>{option}</span>
+                  {selectionMode === 'single' && isSelected && <i className="fas fa-check text-accent-primary ml-auto text-xs"></i>}
+                </label>
+              </li>
+            );
+          }) : (
+            <li className="px-3 py-4 text-sm text-gray-400 text-center italic">Không tìm thấy kết quả.</li>
           )}
         </ul>
       </div>
     );
   }
 
+  // --- RENDER: DROPDOWN MODE (Desktop Default) ---
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button */}
+    <div className="relative w-full" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={buttonClasses}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
-          <i className={`fas ${icon} text-text-placeholder text-xs`}></i>
-          <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold' : ''}`}>{displayLabel}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-gray-100 text-gray-400'}`}>
+            <i className={`fas ${icon} text-xs`}></i>
+          </div>
+          <span className={`truncate ${selectedOptions.length > 0 ? 'font-semibold text-gray-900' : ''}`}>{displayLabel}</span>
         </div>
-        <i className={`fas fa-chevron-down text-text-placeholder text-xs transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`}></i>
+        <i className={`fas fa-chevron-down text-xs transition-transform duration-300 ${isOpen ? 'rotate-180 text-accent-primary' : 'text-gray-400'}`}></i>
       </button>
 
-      {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute top-full mt-2 w-72 bg-surface-card border border-border-secondary rounded-lg shadow-lg z-20 animate-fade-in-down flex flex-col" style={{ animationDuration: '0.2s' }}>
-          <div className="p-2 border-b border-border-primary">
-            <div className="relative">
-              <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder text-sm"></i>
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                autoFocus
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow futuristic-input"
-              />
-            </div>
-          </div>
-          <ul className="flex-grow max-h-60 overflow-y-auto p-1">
-            <li key="select-all">
-              <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+        <div className="absolute top-full mt-2 w-full min-w-[200px] bg-white border border-gray-100 rounded-xl shadow-xl shadow-gray-200/50 z-50 animate-in fade-in zoom-in-95 duration-200 flex flex-col overflow-hidden ring-1 ring-black/5">
+          {searchable && options.length > 5 && (
+            <div className="p-3 border-b border-gray-50 bg-gray-50/30">
+              <div className="relative">
+                <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 text-xs"></i>
                 <input
-                  type="checkbox"
-                  checked={areAllFilteredSelected}
-                  onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
-                  className="custom-checkbox"
+                  type="text"
+                  placeholder="Tìm kiếm..."
+                  autoFocus
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all text-sm placeholder:text-gray-400"
                 />
-                <span className="font-semibold italic">{areAllFilteredSelected ? 'Bỏ chọn tất cả (đã lọc)' : 'Chọn tất cả (đã lọc)'}</span>
-              </label>
-            </li>
-            <div className="h-px bg-border-primary my-1"></div>
-            {filteredOptions.length > 0 ? filteredOptions.map(option => (
-              <li key={option}>
-                <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+              </div>
+            </div>
+          )}
+
+          <ul className="flex-grow max-h-64 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
+            {selectionMode === 'multiple' && filteredOptions.length > 0 && (
+              <li>
+                <label className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-all cursor-pointer group">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${areAllFilteredSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
+                    {areAllFilteredSelected && <i className="fas fa-check text-white text-[10px]"></i>}
+                  </div>
                   <input
                     type="checkbox"
-                    checked={selectedOptions.includes(option)}
-                    onChange={() => handleOptionToggle(option)}
-                    className="custom-checkbox"
+                    checked={areAllFilteredSelected}
+                    onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
+                    className="hidden"
                   />
-                  <span>{option}</span>
+                  <span className="font-semibold italic text-xs text-gray-500 group-hover:text-accent-primary transition-colors">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
                 </label>
               </li>
-            )) : (
-              <li className="px-2 py-2 text-sm text-text-secondary text-center">Không có kết quả.</li>
+            )}
+            {filteredOptions.length > 0 ? filteredOptions.map(option => {
+              const isSelected = selectedOptions.includes(option);
+              return (
+                <li key={option}>
+                  <label className={`flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg transition-all cursor-pointer group ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                    {selectionMode === 'multiple' && (
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
+                        {isSelected && <i className="fas fa-check text-white text-[10px]"></i>}
+                      </div>
+                    )}
+                    <input
+                      type={selectionMode === 'single' ? 'radio' : 'checkbox'}
+                      checked={isSelected}
+                      onChange={() => handleOptionToggle(option)}
+                      className="hidden"
+                    />
+                    <span>{option}</span>
+                    {selectionMode === 'single' && isSelected && <i className="fas fa-check text-accent-primary ml-auto text-xs"></i>}
+                  </label>
+                </li>
+              );
+            }) : (
+              <li className="px-3 py-8 text-sm text-gray-400 text-center flex flex-col items-center gap-2">
+                <i className="fas fa-search text-2xl opacity-20"></i>
+                <span>Không tìm thấy kết quả</span>
+              </li>
             )}
           </ul>
-          <div className="p-2 border-t border-border-primary flex justify-between">
-            <Button onClick={handleClearAll} variant="ghost" size="sm" className="text-xs font-semibold text-danger hover:underline !p-0 !h-auto">Xóa tất cả</Button>
-            <Button onClick={() => setIsOpen(false)} variant="primary" size="sm" className="px-3 py-1 text-xs font-bold">Áp dụng</Button>
-          </div>
+
+          {selectionMode === 'multiple' && (
+            <div className="p-3 border-t border-gray-50 bg-gray-50/50 flex justify-between items-center">
+              <Button onClick={handleClearAll} variant="ghost" size="sm" className="text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 !px-2 h-8">
+                Xóa chọn ({selectedOptions.length})
+              </Button>
+              <Button onClick={() => setIsOpen(false)} variant="primary" size="sm" className="px-4 py-1.5 text-xs font-bold rounded-lg shadow-sm shadow-accent-primary/30">
+                Áp dụng
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

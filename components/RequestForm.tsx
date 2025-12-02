@@ -7,6 +7,7 @@ import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
 import Button from './ui/Button';
+import MultiSelectDropdown from './ui/MultiSelectDropdown';
 
 
 interface ImageSource {
@@ -237,10 +238,66 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                     <section>
                         <SectionHeader icon="fa-cogs" title="1. Cấu hình Xe" />
                         <div className="space-y-3 md:space-y-4">
-                            <InputGroup icon="fa-car" label="Dòng xe" htmlFor="dong_xe"><select id="dong_xe" name="dong_xe" value={formData.dong_xe} onChange={handleInputChange} required className={`${inputClass} futuristic-select disabled:opacity-50`} disabled={isPreFilled}><option value="" disabled>Chọn dòng xe</option>{Object.keys(versionsMap).map(car => <option key={car} value={car}>{car}</option>)}</select></InputGroup>
-                            <InputGroup icon="fa-sitemap" label="Phiên bản" htmlFor="phien_ban"><select id="phien_ban" name="phien_ban" value={formData.phien_ban} onChange={handleInputChange} required disabled={!formData.dong_xe || isPreFilled} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn phiên bản</option>{availableVersions.map(v => <option key={v} value={v}>{v}</option>)}</select></InputGroup>
-                            <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="ngoai_that"><select id="ngoai_that" name="ngoai_that" value={formData.ngoai_that} onChange={handleInputChange} required disabled={!formData.phien_ban || isPreFilled} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn màu ngoại thất</option>{availableExteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
-                            <InputGroup icon="fa-chair" label="Nội thất" htmlFor="noi_that"><select id="noi_that" name="noi_that" value={formData.noi_that} onChange={handleInputChange} required disabled={!formData.phien_ban || isPreFilled} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn nội thất</option>{availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
+                            <InputGroup icon="fa-car" label="Dòng xe" htmlFor="dong_xe">
+                                <MultiSelectDropdown
+                                    id="dong_xe"
+                                    label="Dòng xe"
+                                    placeholder="Chọn dòng xe"
+                                    options={Object.keys(versionsMap)}
+                                    selectedOptions={formData.dong_xe ? [formData.dong_xe] : []}
+                                    onChange={(selected) => handleInputChange({ target: { name: 'dong_xe', value: selected[0] || '' } } as any)}
+                                    icon="fa-car"
+                                    selectionMode="single"
+                                    variant="modern"
+                                    disabled={isPreFilled}
+                                    searchable={false}
+                                />
+                            </InputGroup>
+                            <InputGroup icon="fa-sitemap" label="Phiên bản" htmlFor="phien_ban">
+                                <MultiSelectDropdown
+                                    id="phien_ban"
+                                    label="Phiên bản"
+                                    placeholder="Chọn phiên bản"
+                                    options={availableVersions}
+                                    selectedOptions={formData.phien_ban ? [formData.phien_ban] : []}
+                                    onChange={(selected) => handleInputChange({ target: { name: 'phien_ban', value: selected[0] || '' } } as any)}
+                                    icon="fa-code-branch"
+                                    selectionMode="single"
+                                    variant="modern"
+                                    disabled={!formData.dong_xe || isPreFilled}
+                                    searchable={false}
+                                />
+                            </InputGroup>
+                            <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="ngoai_that">
+                                <MultiSelectDropdown
+                                    id="ngoai_that"
+                                    label="Ngoại thất"
+                                    placeholder="Chọn màu ngoại thất"
+                                    options={availableExteriors}
+                                    selectedOptions={formData.ngoai_that ? [formData.ngoai_that] : []}
+                                    onChange={(selected) => handleInputChange({ target: { name: 'ngoai_that', value: selected[0] || '' } } as any)}
+                                    icon="fa-fill-drip"
+                                    selectionMode="single"
+                                    variant="modern"
+                                    disabled={!formData.phien_ban || isPreFilled}
+                                    searchable={false}
+                                />
+                            </InputGroup>
+                            <InputGroup icon="fa-chair" label="Nội thất" htmlFor="noi_that">
+                                <MultiSelectDropdown
+                                    id="noi_that"
+                                    label="Nội thất"
+                                    placeholder="Chọn nội thất"
+                                    options={availableInteriors}
+                                    selectedOptions={formData.noi_that ? [formData.noi_that] : []}
+                                    onChange={(selected) => handleInputChange({ target: { name: 'noi_that', value: selected[0] || '' } } as any)}
+                                    icon="fa-couch"
+                                    selectionMode="single"
+                                    variant="modern"
+                                    disabled={!formData.phien_ban || isPreFilled}
+                                    searchable={false}
+                                />
+                            </InputGroup>
                         </div>
                         {warningMessage && warningType && (
                             <div className={`p-3 mt-4 rounded-lg border text-sm flex items-start ${warningClasses[warningType]}`}>
