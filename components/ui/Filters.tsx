@@ -62,6 +62,7 @@ const Filters: React.FC<FiltersProps> = ({
   const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [expandedMobileFilters, setExpandedMobileFilters] = useState<string[]>([]);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
   const dateValue = filters.dateRange || { start: '', end: '' };
@@ -69,6 +70,12 @@ const Filters: React.FC<FiltersProps> = ({
   const handleDateChange = (part: 'start' | 'end', value: string) => {
     onFilterChange({ dateRange: { ...dateValue, [part]: value } });
   }
+
+  const toggleMobileFilter = (id: string) => {
+    setExpandedMobileFilters(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -258,21 +265,36 @@ const Filters: React.FC<FiltersProps> = ({
                   </div>
                 </div>
               )}
-              {dropdowns.map(dropdown => (
-                <div key={'mobile-' + dropdown.id}>
-                  <label className="text-sm font-medium text-text-secondary mb-1.5 block">{dropdown.label}</label>
-                  <MultiSelectDropdown
-                    id={'mobile-' + dropdown.id}
-                    label={dropdown.label}
-                    options={dropdown.options}
-                    selectedOptions={(filters[dropdown.key] || []) as string[]}
-                    onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-                    icon={dropdown.icon}
-                    displayMode={dropdown.displayMode}
-                    size="default" // Force default size in modal for better readability
-                  />
-                </div>
-              ))}
+              {dropdowns.map(dropdown => {
+                const isExpanded = expandedMobileFilters.includes(dropdown.id);
+                return (
+                  <div key={'mobile-' + dropdown.id} className="border-b border-border-primary/50 last:border-0 pb-3 last:pb-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleMobileFilter(dropdown.id)}
+                      className="flex items-center justify-between w-full py-2 text-left group"
+                    >
+                      <span className="text-sm font-medium text-text-primary group-hover:text-accent-primary transition-colors">{dropdown.label}</span>
+                      <i className={`fas fa-chevron-down text-xs text-text-secondary transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}></i>
+                    </button>
+                    <div className={`grid transition-all duration-200 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'}`}>
+                      <div className="overflow-hidden">
+                        <MultiSelectDropdown
+                          id={'mobile-' + dropdown.id}
+                          label={dropdown.label}
+                          options={dropdown.options}
+                          selectedOptions={(filters[dropdown.key] || []) as string[]}
+                          onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+                          icon={dropdown.icon}
+                          displayMode={dropdown.displayMode}
+                          size="default"
+                          mode={dropdown.mode || (dropdown.options.length > 6 ? 'inline' : 'chips')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth>Xóa Lọc</Button>

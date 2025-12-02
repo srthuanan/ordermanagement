@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Button from './Button';
 
-// FIX: Added and exported DropdownFilterConfig interface to be used by other components.
 export interface DropdownFilterConfig {
   id: string;
   key: string;
@@ -9,6 +8,7 @@ export interface DropdownFilterConfig {
   options: string[];
   icon: string;
   displayMode?: 'count' | 'selection';
+  mode?: 'dropdown' | 'chips' | 'inline';
 }
 
 interface MultiSelectDropdownProps {
@@ -21,9 +21,10 @@ interface MultiSelectDropdownProps {
   displayMode?: 'count' | 'selection';
   size?: 'default' | 'compact';
   variant?: 'default' | 'modern';
+  mode?: 'dropdown' | 'chips' | 'inline';
 }
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count', size = 'default', variant = 'default' }) => {
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, options, selectedOptions, onChange, icon, displayMode = 'count', size = 'default', variant = 'default', mode = 'dropdown' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -95,6 +96,80 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
     return `${base} ${sizeClass} ${activeState}`;
   }, [isCompact, isOpen, selectedOptions.length, variant]);
 
+
+  if (mode === 'chips') {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {options.map(option => {
+          const isSelected = selectedOptions.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => handleOptionToggle(option)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ease-in-out flex items-center gap-1.5 ${isSelected
+                ? 'bg-accent-primary text-white border-accent-primary shadow-sm'
+                : 'bg-white text-text-secondary border-border-secondary hover:border-accent-primary/50 hover:text-text-primary'
+                }`}
+            >
+              {isSelected && <i className="fas fa-check text-[10px]"></i>}
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (mode === 'inline') {
+    return (
+      <div className="w-full">
+        {options.length > 5 && (
+          <div className="relative mb-2">
+            <i className="fas fa-search absolute top-1/2 left-3 -translate-y-1/2 text-text-placeholder text-sm"></i>
+            <input
+              type="text"
+              placeholder="Tìm kiếm..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-surface-input text-text-primary border border-border-primary rounded-md focus:outline-none focus:border-accent-primary transition-shadow futuristic-input text-sm"
+            />
+          </div>
+        )}
+        <ul className="max-h-60 overflow-y-auto p-1 space-y-1">
+          {/* Select All option for inline mode */}
+          {filteredOptions.length > 0 && (
+            <li>
+              <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={areAllFilteredSelected}
+                  onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
+                  className="custom-checkbox"
+                />
+                <span className="font-semibold italic">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
+              </label>
+            </li>
+          )}
+          {filteredOptions.length > 0 ? filteredOptions.map(option => (
+            <li key={option}>
+              <label className="flex items-center gap-3 w-full px-2 py-2 text-sm font-medium text-text-primary rounded-md hover:bg-surface-hover cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedOptions.includes(option)}
+                  onChange={() => handleOptionToggle(option)}
+                  className="custom-checkbox"
+                />
+                <span>{option}</span>
+              </label>
+            </li>
+          )) : (
+            <li className="px-2 py-2 text-sm text-text-secondary text-center">Không có kết quả.</li>
+          )}
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
