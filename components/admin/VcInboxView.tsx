@@ -167,6 +167,40 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
         setMobileView('detail');
     };
 
+    // Swipe Navigation Logic
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe || isRightSwipe) {
+            const currentIndex = filteredRequests.findIndex(r => r['Số đơn hàng'] === selectedRequestId);
+            if (currentIndex === -1) return;
+
+            if (isLeftSwipe && currentIndex < filteredRequests.length - 1) {
+                // Next Request
+                handleRequestClick(filteredRequests[currentIndex + 1]['Số đơn hàng']);
+            } else if (isRightSwipe && currentIndex > 0) {
+                // Previous Request
+                handleRequestClick(filteredRequests[currentIndex - 1]['Số đơn hàng']);
+            }
+        }
+    };
+
     return (
         <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative">
             {/* Column 1: Folders */}
@@ -230,7 +264,12 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
             </div>
 
             {/* Column 3: Detail */}
-            <div className={`w-full flex-1 flex flex-col bg-surface-ground min-w-0 absolute md:relative inset-0 z-30 md:z-auto transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+            <div
+                className={`w-full flex-1 flex flex-col bg-surface-ground min-w-0 absolute md:relative inset-0 z-30 md:z-auto transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 {selectedRequest ? (
                     <>
                         {/* Header Actions - Compact */}

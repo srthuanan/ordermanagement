@@ -36,9 +36,7 @@ const Header: React.FC<HeaderProps> = ({
     return (
         <header className={`relative sticky top-0 w-full z-20 h-14 bg-surface-card/70 backdrop-blur-xl border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6`}>
             <div className="flex items-center gap-4">
-                <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-text-secondary hover:text-text-primary text-xl">
-                    <i className="fa-solid fa-bars"></i>
-                </button>
+
             </div>
 
             <div className={`absolute -translate-x-1/2 hidden sm:flex items-center left-1/2 ${isSidebarCollapsed ? 'lg:left-[calc(50%-3rem)]' : 'lg:left-[calc(50%-9rem)]'}`}>

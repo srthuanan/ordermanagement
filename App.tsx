@@ -31,6 +31,7 @@ import { useOrderFiltering } from './hooks/useOrderFiltering';
 
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
+import BottomNav from './components/layout/BottomNav';
 import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
 import { AnalyticsData } from './types';
@@ -343,21 +344,23 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <div className="scanline"></div>
             <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 
-            <Sidebar
-                isSidebarCollapsed={isSidebarCollapsed}
-                isMobileMenuOpen={isMobileMenuOpen}
-                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                activeView={activeView}
-                setActiveView={setActiveView}
-                toggleSidebar={toggleSidebar}
-                currentUser={currentUser}
-                userRole={userRole}
-                isCurrentUserAdmin={isCurrentUserAdmin}
-                onLogout={onLogout}
-                setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
-            />
+            <div className="hidden lg:block">
+                <Sidebar
+                    isSidebarCollapsed={isSidebarCollapsed}
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    setIsMobileMenuOpen={setIsMobileMenuOpen}
+                    activeView={activeView}
+                    setActiveView={setActiveView}
+                    toggleSidebar={toggleSidebar}
+                    currentUser={currentUser}
+                    userRole={userRole}
+                    isCurrentUserAdmin={isCurrentUserAdmin}
+                    onLogout={onLogout}
+                    setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
+                />
+            </div>
 
-            <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out ${mainContentPadding} ${isMobileMenuOpen ? 'translate-x-64' : ''}`}>
+            <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out ${mainContentPadding} ${isMobileMenuOpen ? 'translate-x-64' : ''} pb-16 lg:pb-0`}>
                 <Header
                     isSidebarCollapsed={isSidebarCollapsed}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -446,7 +449,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         />}
                     </div>
                 </main>
-                <footer className="flex-shrink-0 h-8 bg-surface-card/70 backdrop-blur-xl border-t border-border-primary/50 flex items-center justify-center px-4 sm:px-6">
+                <footer className="hidden lg:flex flex-shrink-0 h-8 bg-surface-card/70 backdrop-blur-xl border-t border-border-primary/50 items-center justify-center px-4 sm:px-6">
                     <p className="text-xs text-text-secondary">&copy; {new Date().getFullYear()} Order Management</p>
                 </footer>
             </div>
@@ -526,7 +529,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <img
                 src={onggiaGif}
                 alt="Ong Gia Noel"
-                className="fixed bottom-0 right-0 w-24 md:w-32 z-50 pointer-events-none"
+                className="fixed bottom-20 lg:bottom-0 right-0 w-24 md:w-32 z-50 pointer-events-none"
+            />
+            <BottomNav
+                activeView={activeView}
+                setActiveView={setActiveView}
+                isCurrentUserAdmin={isCurrentUserAdmin}
             />
         </>
     );

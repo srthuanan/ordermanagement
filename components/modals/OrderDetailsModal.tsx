@@ -82,7 +82,7 @@ const VINDisplay: React.FC<{ vin: string }> = ({ vin }) => {
                 <p className="text-xs text-blue-200 uppercase tracking-widest">Số Khung (VIN)</p>
                 <p className="text-white font-mono tracking-wider text-2xl break-all text-shadow-md font-bold">{vin}</p>
             </div>
-            
+
             <button
                 onClick={handleCopy}
                 className="absolute top-3 right-3 w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-blue-200 hover:bg-white/20 hover:text-white transition-all duration-200 z-20"
@@ -155,12 +155,39 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
     // --- NEUMORPHIC BUTTON STYLES ---
     const btnBase = "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 ease-in-out bg-surface-ground";
     const btnEffect = "shadow-[4px_4px_8px_#d1d9e6,-4px_-4px_8px_#ffffff] hover:shadow-[6px_6px_12px_#d1d9e6,-6px_-6px_12px_#ffffff] hover:-translate-y-px active:shadow-[inset_2px_2px_5px_#d1d9e6,inset_-2px_-2px_5px_#ffffff] active:translate-y-0.5";
-    
+
     const btnClose = `${btnBase} ${btnEffect} text-text-secondary hover:text-text-primary`;
     const btnEdit = `${btnBase} ${btnEffect} text-blue-700 hover:text-blue-800`;
     const btnCancel = `${btnBase} ${btnEffect} text-red-700 hover:text-red-800`;
     const btnPrimary = `${btnBase} ${btnEffect} text-accent-primary hover:text-accent-primary-hover font-bold`;
     const btnDownload = `${btnBase} ${btnEffect} text-gray-700 hover:text-gray-800`;
+
+    // Swipe Navigation Logic
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe && hasNext) {
+            onNavigate('next');
+        } else if (isRightSwipe && hasPrev) {
+            onNavigate('prev');
+        }
+    };
 
     return (
         <div
@@ -180,12 +207,15 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                 className="bg-surface-ground w-full max-w-4xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
             >
                 <header className="flex-shrink-0 flex items-start justify-between p-5 border-b border-border-primary">
                     <div>
                         <h2 className="text-xl font-bold text-gradient">Chi Tiết Yêu Cầu</h2>
                         <p className="text-sm text-text-secondary mt-1 font-mono">
-                           {order["Số đơn hàng"]}
+                            {order["Số đơn hàng"]}
                         </p>
                     </div>
                     <div className="flex items-center gap-4">
@@ -208,18 +238,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                             <InfoItem icon="fa-user-tie" label="Tư vấn bán hàng" value={order["Tên tư vấn bán hàng"]} />
                         </div>
                         <div className="border-t border-border-primary pt-6">
-                           <h4 className="font-semibold text-text-primary mb-4">Mốc Thời Gian</h4>
-                           <div className="flex flex-col">
+                            <h4 className="font-semibold text-text-primary mb-4">Mốc Thời Gian</h4>
+                            <div className="flex flex-col">
                                 <TimelineStep icon="fa-file-invoice-dollar" label="Ngày cọc" value={formatDateTime(order["Ngày cọc"])} />
                                 <TimelineStep icon="fa-paper-plane" label="Ngày yêu cầu" value={formatDateTime(order["Thời gian nhập"])} />
                                 <TimelineStep icon="fa-link" label="Ngày ghép VIN" value={formatDateTime(order["Thời gian ghép"])} />
                                 <TimelineStep icon="fa-hourglass-half" label="Số ngày đã ghép" value={daysSincePairedText} isLast />
-                           </div>
+                            </div>
                         </div>
                     </div>
                     {/* Right Column */}
                     <div className="md:col-span-2 space-y-6">
-                         {isCancelled && order["Ghi chú hủy"] && (
+                        {isCancelled && order["Ghi chú hủy"] && (
                             <div className="p-4 rounded-lg bg-danger-bg border border-danger/30">
                                 <div className="flex items-start">
                                     <i className="fas fa-exclamation-triangle text-danger text-xl mr-4 mt-1"></i>
@@ -249,7 +279,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                         </div>
                     </div>
                 </main>
-                
+
                 <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-4 p-5 border-t border-border-primary bg-surface-ground rounded-b-2xl">
                     <button onClick={onClose} className={btnClose}>Đóng</button>
                     {canDownloadInvoice && (
@@ -263,7 +293,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                     {canConfirmVC && (<button onClick={() => handleAction(onConfirmVC)} className={btnPrimary}><i className="fas fa-check"></i>Xác Thực UNC VC</button>)}
                 </footer>
             </div>
-             {hasNext && (
+            {hasNext && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"

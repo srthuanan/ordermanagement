@@ -43,7 +43,7 @@ const SnowEffect: React.FC = () => {
     }, []);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden" aria-hidden="true">
+        <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden" aria-hidden="true">
             <style>{`
                 @keyframes accumulate {
                     0% { transform: translateY(100%); opacity: 0; }
