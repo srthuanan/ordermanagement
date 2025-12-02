@@ -33,11 +33,12 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
             onClick={onClose}
         >
             <div
-                className="bg-surface-card w-full h-[100dvh] md:h-auto md:max-h-[95vh] md:max-w-7xl flex flex-col md:rounded-2xl shadow-2xl animate-fade-in-scale-up"
+                className="bg-[image:var(--modal-bg-image)] bg-cover bg-center w-full h-[100dvh] md:h-[90vh] md:max-w-7xl flex flex-col md:rounded-2xl shadow-2xl animate-fade-in-scale-up border border-white/20"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
-                <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative">
+                <div className="absolute inset-0 bg-white/75 backdrop-blur-[3px] z-0 md:rounded-2xl"></div>
+                <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative z-10">
                     <div className="text-center animate-fade-in-down">
                         <h2 className="text-xl sm:text-2xl font-bold text-gradient">
                             Yêu Cầu Ghép Xe
@@ -53,7 +54,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                     </Button>
                 </header>
 
-                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10">
                     <RequestForm
                         onSuccess={onSuccess}
                         showToast={showToast}

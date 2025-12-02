@@ -109,7 +109,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
         ? 'bg-accent-primary/5 border-accent-primary text-accent-primary shadow-sm'
         : 'bg-white border-gray-200 text-gray-600 hover:border-accent-primary/50 hover:text-gray-900 hover:shadow-sm';
-      return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full md:w-auto min-w-[160px]`;
+      return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full`;
     }
 
     // Default variant
@@ -117,7 +117,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
       ? 'bg-white border-accent-primary text-accent-primary ring-1 ring-accent-primary/10'
       : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50';
-    return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full md:w-56`;
+    return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full`;
   }, [isCompact, isOpen, selectedOptions.length, variant, selectionMode, disabled]);
 
 

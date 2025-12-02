@@ -109,7 +109,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
         onChange={handleChange}
       />
       <div
-        className={`relative w-full h-24 md:h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
+        className={`relative w-full h-24 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
                     ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}
                     ${selectedFile ? 'border-solid border-accent-primary/50' : ''}`}
         onClick={onButtonClick}
@@ -119,9 +119,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
       >
         {!selectedFile && (
           <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
-            <i className="fas fa-cloud-upload-alt fa-lg md:fa-3x mb-1 md:mb-2 group-hover:text-accent-primary"></i>
-            <p className="font-semibold text-text-primary text-xs md:text-base">Nhấn để tải ảnh</p>
-            <p className="text-xs hidden md:block">Chấp nhận file ảnh (tối đa 10MB)</p>
+            <i className="fas fa-cloud-upload-alt fa-lg mb-1 group-hover:text-accent-primary"></i>
+            <p className="font-semibold text-text-primary text-xs">Nhấn để tải ảnh</p>
+            <p className="text-[10px] hidden md:block opacity-70">Tối đa 10MB</p>
           </div>
         )}
 
