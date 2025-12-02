@@ -52,3 +52,16 @@ export const interiorColorRules = [
     { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["eco tiêu chuẩn", "eco nâng cấp", "eco", "eco_hud", "eco_3zones", "eco tiêu chuẩn 1", "eco tiêu chuẩn 2", "eco_hud tiêu chuẩn 1", "eco_hud tiêu chuẩn 2"], colors: ["Black"] },
     { models: ["herio", "nerio", "limo", "minio", "ec van"], colors: ["Black"] }
 ];
+
+export const VALID_IMAGES_BY_MODEL: Record<string, string[]> = {
+    "vf3": ["181u", "181y", "1821", "ce18", "ce1j", "ce1m", "ce1v", "ce1w", "ce1x"],
+    "vf5": ["111u", "181y", "ce11", "ce14", "ce18", "ce1m", "ce1v", "ce1w", "ce1x"],
+    "vf6": ["ce11", "ce14", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w"],
+    "vf7": ["ce11", "ce14", "ce17", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w"],
+    "vf8": ["ce11", "ce14", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w", "ce22"],
+    "vf9": ["ce11", "ce14", "ce17", "ce18", "ce1h", "ce1m", "ce1n", "ce1w", "ce22"],
+    "ecvan": ["ce18", "ce1m", "ce1u", "ce1w"],
+    "herio": ["ce11", "ce17", "ce1m", "ce1u"],
+    "limo": ["ce11", "ce17", "ce18", "ce1m", "ce1u"],
+    "nerio": ["ce11", "ce17", "ce1m", "ce1u"],
+};

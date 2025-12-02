@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import { AnalyticsData, Order, StockVehicle } from '../types';
 import { extractDateFromImageTesseract } from '../services/ocrService';
-import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../constants';
+import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules, VALID_IMAGES_BY_MODEL } from '../constants';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
@@ -65,7 +65,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [availableExteriors] = useState<string[]>(defaultExteriors);
+    const [availableExteriors, setAvailableExteriors] = useState<string[]>(defaultExteriors);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
 
     const inputClass = "peer w-full pl-10 md:pl-11 pr-3 md:pr-4 py-2 md:py-2.5 text-sm md:text-base rounded-lg focus:outline-none transition-all placeholder:text-text-placeholder futuristic-input";
@@ -81,6 +81,22 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 noi_that: initialVehicle['Nội thất'] || '',
                 vin: initialVehicle.VIN || '',
             }));
+
+            // Filter exteriors for initial vehicle
+            const model = initialVehicle['Dòng xe'];
+            if (model) {
+                const modelKey = model.toLowerCase().replace(/\s+/g, '');
+                const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
+                if (validCodes) {
+                    const filteredExteriors = defaultExteriors.filter(color => {
+                        const match = color.match(/\(([^)]+)\)/);
+                        return match && match[1] && validCodes.includes(match[1].toLowerCase());
+                    });
+                    setAvailableExteriors(filteredExteriors);
+                } else {
+                    setAvailableExteriors(defaultExteriors);
+                }
+            }
         }
     }, [initialVehicle]);
 
@@ -95,6 +111,19 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                 newState.noi_that = '';
                 if (value === 'VF 3') newState.phien_ban = 'Base';
                 else if (value === 'VF 5') newState.phien_ban = 'Plus';
+
+                // Filter available exteriors based on model
+                const modelKey = value.toLowerCase().replace(/\s+/g, '');
+                const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
+                if (validCodes) {
+                    const filteredExteriors = defaultExteriors.filter(color => {
+                        const match = color.match(/\(([^)]+)\)/);
+                        return match && match[1] && validCodes.includes(match[1].toLowerCase());
+                    });
+                    setAvailableExteriors(filteredExteriors);
+                } else {
+                    setAvailableExteriors(defaultExteriors);
+                }
             }
             if (name === 'phien_ban') {
                 newState.ngoai_that = '';
