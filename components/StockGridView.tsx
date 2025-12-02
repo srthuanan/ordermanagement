@@ -30,7 +30,7 @@ const StockGridView: React.FC<StockGridViewProps> = (props) => {
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2">
       {props.vehicles.map((vehicle) => (
         <StockCard
           key={vehicle.VIN}

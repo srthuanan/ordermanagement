@@ -5,7 +5,7 @@ import Button from './ui/Button';
 import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
-import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
+
 
 interface StockViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -44,7 +44,7 @@ const StockView: React.FC<StockViewProps> = ({
     showOrderInAdmin,
     showAdminTab
 }) => {
-    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+    const PAGE_SIZE = isSidebarCollapsed ? 16 : 14;
 
     const [filters, setFilters] = useState({
         keyword: '',
@@ -57,7 +57,7 @@ const StockView: React.FC<StockViewProps> = ({
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [view, setView] = useState<'table' | 'grid'>('grid');
-    const [stockVehicleToView, setStockVehicleToView] = useState<StockVehicle | null>(null);
+
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -102,7 +102,7 @@ const StockView: React.FC<StockViewProps> = ({
             }
         } else {
             // Default behavior for "Chưa ghép" or non-admins
-            setStockVehicleToView(vehicle);
+            // setStockVehicleToView(vehicle); // Modal removed
         }
     };
 
@@ -161,23 +161,7 @@ const StockView: React.FC<StockViewProps> = ({
         return filteredVehicles;
     }, [stockData, filters, sortConfig]);
 
-    const handleVehicleNavigation = (direction: 'prev' | 'next') => {
-        if (!stockVehicleToView) return;
 
-        const currentIndex = processedData.findIndex(v => v.VIN === stockVehicleToView.VIN);
-        if (currentIndex === -1) return;
-
-        let nextIndex;
-        if (direction === 'prev') {
-            nextIndex = currentIndex - 1;
-        } else {
-            nextIndex = currentIndex + 1;
-        }
-
-        if (nextIndex >= 0 && nextIndex < processedData.length) {
-            setStockVehicleToView(processedData[nextIndex]);
-        }
-    };
 
     const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
 
@@ -297,19 +281,7 @@ const StockView: React.FC<StockViewProps> = ({
     return (
         <>
             {renderContent()}
-            <StockVehicleDetailModal
-                isOpen={!!stockVehicleToView}
-                onClose={() => setStockVehicleToView(null)}
-                vehicle={stockVehicleToView}
-                onHoldCar={onHoldCar}
-                onReleaseCar={onReleaseCar}
-                onCreateRequestForVehicle={onCreateRequestForVehicle}
-                currentUser={currentUser}
-                isAdmin={isAdmin}
-                processingVin={processingVin}
-                vehicleList={processedData}
-                onNavigate={handleVehicleNavigation}
-            />
+
         </>
     );
 }

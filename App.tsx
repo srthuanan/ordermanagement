@@ -303,7 +303,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 </div>
                 <div className="flex-1 flex flex-col min-h-0">
                     {orderView === 'table' ? (
-                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
                             <div className="overflow-auto relative hidden-scrollbar">
                                 <HistoryTable
                                     orders={paginatedData}
@@ -323,8 +323,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             {(totalPages > 0 || !isLastArchive) && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />}
                         </div>
                     ) : (
-                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
-                            <div className="overflow-y-auto hidden-scrollbar p-1">
+                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+                            <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
                                 <OrderGridView
                                     orders={paginatedData}
                                     onViewDetails={handleViewDetails}

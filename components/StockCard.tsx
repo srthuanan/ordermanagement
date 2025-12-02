@@ -65,7 +65,7 @@ const StockCard: React.FC<StockCardProps> = ({
             return (
                 <div className="flex justify-center items-center gap-2 w-full animate-fade-in" style={{ animationDuration: '150ms' }}>
                     <div onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }} className="cursor-pointer hover:scale-110 transition-transform" title="Hủy">
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
+                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '28px', height: '28px' }} loop autoplay />
                     </div>
                     <div onClick={(e) => {
                         e.stopPropagation();
@@ -76,7 +76,7 @@ const StockCard: React.FC<StockCardProps> = ({
                         }
                         setConfirmAction(null);
                     }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
+                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '28px', height: '28px' }} loop autoplay />
                     </div>
                 </div>
             );
@@ -93,7 +93,7 @@ const StockCard: React.FC<StockCardProps> = ({
                         src={sandTimerAnimationUrl}
                         background="transparent"
                         speed="1"
-                        style={{ width: '40px', height: '40px' }}
+                        style={{ width: '28px', height: '28px' }}
                         loop
                         autoplay
                     ></lottie-player>
@@ -113,7 +113,7 @@ const StockCard: React.FC<StockCardProps> = ({
                             src={noAnimationUrl}
                             background="transparent"
                             speed="1"
-                            style={{ width: '40px', height: '40px' }}
+                            style={{ width: '28px', height: '28px' }}
                             loop
                             autoplay
                         ></lottie-player>
@@ -127,7 +127,7 @@ const StockCard: React.FC<StockCardProps> = ({
                             src={pairCarAnimationUrl}
                             background="transparent"
                             speed="1"
-                            style={{ width: '40px', height: '40px' }}
+                            style={{ width: '28px', height: '28px' }}
                             loop
                             autoplay
                         ></lottie-player>
@@ -139,12 +139,12 @@ const StockCard: React.FC<StockCardProps> = ({
         if (isHeldByOther) {
             return (
                 <>
-                    <Button disabled variant="ghost" className="action-btn !p-0 w-8 h-8 rounded-full" title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}>
-                        <i className="fas fa-lock"></i>
+                    <Button disabled variant="ghost" className="action-btn !p-0 w-7 h-7 rounded-full" title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}>
+                        <i className="fas fa-lock text-xs"></i>
                     </Button>
                     {isAdmin && (
-                        <Button variant="danger" className="action-btn admin-release-action !p-0 w-8 h-8 rounded-full" onClick={(e) => { e.stopPropagation(); setConfirmAction({ action: 'release' }); }} title="Admin Hủy Giữ">
-                            <i className="fas fa-user-shield"></i>
+                        <Button variant="danger" className="action-btn admin-release-action !p-0 w-7 h-7 rounded-full" onClick={(e) => { e.stopPropagation(); setConfirmAction({ action: 'release' }); }} title="Admin Hủy Giữ">
+                            <i className="fas fa-user-shield text-xs"></i>
                         </Button>
                     )}
                 </>
@@ -177,9 +177,14 @@ const StockCard: React.FC<StockCardProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-1 mt-1">
-                    <p className="text-light-text-primary text-sm font-semibold leading-tight truncate pt-1 group-hover:text-accent-primary transition-colors" title={`${vehicle['Dòng xe']} ${vehicle['Phiên bản']}`}>
-                        {vehicle['Dòng xe']} {vehicle['Phiên bản'] !== 'Base' && vehicle['Phiên bản'] !== 'Plus' ? vehicle['Phiên bản'] : ''}
-                    </p>
+                    <div className="flex items-baseline gap-1.5 overflow-hidden">
+                        <span className="text-light-text-primary text-base font-bold whitespace-nowrap group-hover:text-accent-primary transition-colors">
+                            {vehicle['Dòng xe']}
+                        </span>
+                        <span className="text-light-text-secondary text-sm font-medium truncate" title={vehicle['Phiên bản']}>
+                            {vehicle['Phiên bản']}
+                        </span>
+                    </div>
                     <div
                         className="cursor-pointer"
                         title="Click để sao chép VIN"
@@ -189,9 +194,15 @@ const StockCard: React.FC<StockCardProps> = ({
                             VIN: <span className="text-sm font-bold text-accent-primary hover:text-accent-primary-hover hover:underline transition-colors">{vehicle.VIN}</span>
                         </p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-light-text-secondary">
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>water_drop</span>
-                        <p className="text-xs truncate">{vehicle['Ngoại thất']}</p>
+                    <div className="flex items-center gap-3 mt-1 text-light-text-secondary">
+                        <div className="flex items-center gap-1.5 min-w-0 max-w-[50%]" title={`Ngoại thất: ${vehicle['Ngoại thất']}`}>
+                            <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>palette</span>
+                            <p className="text-xs truncate">{vehicle['Ngoại thất']}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0 max-w-[50%]" title={`Nội thất: ${vehicle['Nội thất']}`}>
+                            <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>chair</span>
+                            <p className="text-xs truncate">{vehicle['Nội thất']}</p>
+                        </div>
                     </div>
                     <div className="flex items-center justify-between mt-1">
                         <StatusBadge status={vehicle['Trạng thái']} />
@@ -205,7 +216,7 @@ const StockCard: React.FC<StockCardProps> = ({
                 </div>
             </div>
 
-            <div className="border-t border-dashed border-border-primary mt-auto pt-1.5 flex items-center justify-center gap-2 h-11">
+            <div className="border-t border-dashed border-border-primary mt-auto pt-1 flex items-center justify-center gap-2 h-8">
                 {renderActions()}
             </div>
         </div>

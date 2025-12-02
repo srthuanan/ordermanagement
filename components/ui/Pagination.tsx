@@ -54,16 +54,10 @@ const Pagination: React.FC<PaginationProps> = ({
   const baseButtonClass = "flex items-center justify-center text-xs font-medium rounded-md transition-colors duration-200";
   // Lớp CSS cho nút điều hướng (mũi tên) - Nhỏ hơn
   const arrowButtonClass = `${baseButtonClass} w-7 h-7 text-gray-500 hover:bg-gray-100 hover:text-gray-700`;
-  // Lớp CSS cho nút số (trạng thái bình thường) - Nhỏ hơn
-  const numberButtonClass = `${baseButtonClass} w-7 h-7 text-gray-500 hover:bg-gray-50 hover:text-gray-700`;
-  // Lớp CSS cho nút số (trạng thái active) - "Gradient xanh nhạt"
-  const activeNumberClass = `${baseButtonClass} w-7 h-7 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-semibold shadow-sm hover:from-blue-500 hover:to-blue-600`;
   // Lớp CSS cho nút "Tải thêm" - Nhỏ hơn
   const loadMoreButtonClass = `${baseButtonClass} px-2.5 py-1 text-blue-600 bg-blue-50 hover:bg-blue-100 font-semibold`;
   // Lớp CSS cho trạng thái bị vô hiệu hóa
   const disabledClass = "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-500";
-  // Lớp CSS cho dấu "..." - Nhỏ hơn
-  const ellipsisClass = "w-7 h-7 flex items-center justify-center text-sm font-medium text-gray-400";
 
   // Biến cờ kiểm tra khi nào hiển thị nút "Tải thêm"
   const showLoadMore = (totalPages === 0 || currentPage === totalPages) && !isLastArchive;
@@ -87,9 +81,7 @@ const Pagination: React.FC<PaginationProps> = ({
       {/* Dấu '...' và số 1 (nếu cần) */}
       {totalPages > 1 && startPage > 1 && (
         <>
-          <button onClick={() => onPageChange(1)} className={numberButtonClass}>1</button>
-          {startPage > 2 && <span className={ellipsisClass}>...</span>}
-          <Button onClick={() => onPageChange(1)} variant={currentPage === 1 ? 'primary' : 'ghost'} className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === 1 ? '' : 'hover:bg-surface-hover'}`}>1</Button>
+          <Button onClick={() => onPageChange(1)} variant="ghost" className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === 1 ? 'bg-blue-100 text-blue-700 font-bold' : 'hover:bg-surface-hover'}`}>1</Button>
           {startPage > 2 && (
             <Button
               disabled
@@ -107,8 +99,8 @@ const Pagination: React.FC<PaginationProps> = ({
         <Button
           key={number}
           onClick={() => onPageChange(number)}
-          variant={currentPage === number ? 'primary' : 'ghost'}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === number ? '' : 'hover:bg-surface-hover'}`}
+          variant="ghost"
+          className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === number ? 'bg-blue-100 text-blue-700 font-bold' : 'hover:bg-surface-hover'}`}
         >
           {number}
         </Button>
@@ -126,7 +118,7 @@ const Pagination: React.FC<PaginationProps> = ({
               ...
             </Button>
           )}
-          <Button onClick={() => onPageChange(totalPages)} variant={currentPage === totalPages ? 'primary' : 'ghost'} className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === totalPages ? '' : 'hover:bg-surface-hover'}`}>{totalPages}</Button>
+          <Button onClick={() => onPageChange(totalPages)} variant="ghost" className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors !p-0 ${currentPage === totalPages ? 'bg-blue-100 text-blue-700 font-bold' : 'hover:bg-surface-hover'}`}>{totalPages}</Button>
         </>
       )}
 
