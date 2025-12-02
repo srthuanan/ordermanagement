@@ -162,14 +162,14 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
     }, [allOrders, stockData, soldData, teamData, allUsers, invoiceData]);
 
     return (
-        <div className="h-[calc(100vh-140px)] min-h-[500px] animate-fade-in flex gap-4 p-4 rounded-xl shadow-xl overflow-hidden relative bg-white"
+        <div className="h-auto md:h-[calc(100vh-140px)] min-h-[500px] animate-fade-in flex flex-col md:flex-row gap-4 p-4 rounded-xl shadow-xl overflow-y-auto md:overflow-hidden relative bg-white"
 
         >
             {/* Overlay for better text readability if needed, though cards are white */}
             {/* Overlay removed for pure white background */}
 
             {/* LEFT PANEL: Status Rail (30%) */}
-            <div className="w-[280px] flex-shrink-0 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col relative overflow-hidden z-20" style={{ backgroundColor: '#ffffff' }}>
+            <div className="w-full md:w-[280px] h-auto md:h-full flex-shrink-0 !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col relative overflow-hidden z-20" style={{ backgroundColor: '#ffffff' }}>
 
                 {/* Section 1: Pipeline */}
                 <div className="relative z-10">
@@ -212,7 +212,7 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
             <div className="flex-grow flex flex-col min-w-0 gap-4 relative z-10">
 
                 {/* TOP: Attention Area */}
-                <div className="h-[45%] !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
+                <div className="h-auto min-h-[250px] md:h-[45%] !bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col z-20 relative" style={{ backgroundColor: '#ffffff' }}>
                     <SectionHeader
                         title="Cần Xử Lý"
                         icon="fa-bell"
