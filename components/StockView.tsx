@@ -94,7 +94,7 @@ const StockView: React.FC<StockViewProps> = ({
                 } else {
                     showToast('Không Tìm Thấy', `Không tìm thấy đơn hàng đã ghép với xe VIN ${vehicle.VIN}.`, 'warning', 4000);
                     // Fallback to showing stock details if order not found
-                    setStockVehicleToView(vehicle);
+                    // setStockVehicleToView(vehicle);
                 }
             } else if (status === 'Đang giữ') {
                 // Navigate to the "Pending" tab in Admin view

@@ -259,8 +259,8 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-5xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">
                         {mode === 'view' ? 'Xem Thông Tin Lái Thử' : 'Cập Nhật Thông Tin Lái Thử'}
@@ -268,7 +268,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     <Button onClick={onClose} variant="ghost" className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
                 </header>
 
-                <main className="p-6 flex-grow overflow-y-auto">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     <div className="p-3 bg-surface-ground rounded-lg border border-border-primary text-sm mb-6">
                         <span className="font-semibold">Số phiếu:</span> <span className="font-mono text-accent-primary">{booking.soPhieu}</span> | <span className="font-semibold">KH:</span> {booking.tenKhachHang}
                     </div>

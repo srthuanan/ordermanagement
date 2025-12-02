@@ -29,11 +29,11 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
 
     return (
         <div
-            className="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-0 sm:p-4 animate-fade-in"
+            className="fixed inset-0 bg-slate-900/80 z-[60] flex items-center justify-center p-0 md:p-4 animate-fade-in"
             onClick={onClose}
         >
             <div
-                className="bg-surface-card w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-7xl flex flex-col sm:rounded-2xl shadow-2xl animate-fade-in-scale-up"
+                className="bg-surface-card w-full h-[100dvh] md:h-auto md:max-h-[95vh] md:max-w-7xl flex flex-col md:rounded-2xl shadow-2xl animate-fade-in-scale-up"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
@@ -47,13 +47,13 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                     <Button
                         onClick={onClose}
                         variant="ghost"
-                        className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors !p-0"
+                        className="absolute top-3 right-3 md:top-4 md:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors !p-0"
                     >
                         <i className="fas fa-times text-lg"></i>
                     </Button>
                 </header>
 
-                <main className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
                     <RequestForm
                         onSuccess={onSuccess}
                         showToast={showToast}

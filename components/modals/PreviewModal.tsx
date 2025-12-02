@@ -35,35 +35,35 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, onConfirm,
     if (!isOpen) return null;
 
     return (
-         <div 
-            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        <div
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4"
             onClick={onClose}
         >
-            <div 
-                className="bg-surface-card w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl shadow-xl animate-fade-in-scale-up"
+            <div
+                className="bg-surface-card w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
                 <header className="flex items-center justify-between p-5 border-b border-border-primary">
                     <h2 className="text-xl font-bold text-text-primary">Xác Nhận Thông Tin</h2>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"
                     >
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                <main className="overflow-y-auto p-6">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     <p className="text-sm text-text-secondary mb-4 p-3 bg-surface-ground rounded-lg">Vui lòng kiểm tra kỹ các thông tin dưới đây trước khi gửi yêu cầu.</p>
                     <div className="space-y-2">
                         {Object.entries(data).map(([key, value]) => (
-                             <div key={key} className="flex justify-between items-start text-sm py-2.5 border-b border-dashed border-border-primary">
+                            <div key={key} className="flex justify-between items-start text-sm py-2.5 border-b border-dashed border-border-primary">
                                 <span className="text-text-secondary">{labelMap[key] || key}</span>
                                 <span className="font-semibold text-right text-text-primary">{key === 'ngay_coc' ? formatDateTime(String(value)) : (String(value) || 'N/A')}</span>
                             </div>
                         ))}
                         {fileName && (
-                             <div className="flex justify-between items-start text-sm py-2.5">
+                            <div className="flex justify-between items-start text-sm py-2.5">
                                 <span className="text-text-secondary">Ảnh Ủy nhiệm chi</span>
                                 <span className="font-semibold text-right truncate text-text-primary" title={fileName}>{fileName}</span>
                             </div>
@@ -71,7 +71,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, onConfirm,
                     </div>
                 </main>
                 <footer className="p-4 border-t border-border-primary flex justify-end items-center gap-4 bg-surface-ground rounded-b-2xl">
-                    <button 
+                    <button
                         onClick={onClose}
                         disabled={isSubmitting}
                         className="btn-secondary"

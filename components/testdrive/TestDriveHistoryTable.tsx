@@ -50,7 +50,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
         <div className="flex-grow overflow-auto">
             {/* Mobile View: Cards */}
             <div className="md:hidden space-y-3 pb-4">
-                {bookings.map((booking, index) => {
+                {bookings.map((booking) => {
                     const canUpdate = isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan);
                     const status = getStatus(booking);
                     const isMyRequest = normalizeName(currentUser) === normalizeName(booking.tenTuVan);

@@ -68,7 +68,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     if (!isOpen) return null;
 
-     const themeClasses = {
+    const themeClasses = {
         primary: { iconBg: 'bg-blue-100', iconText: 'text-accent-primary', btn: 'btn-primary', barBg: 'bg-accent-primary' },
         danger: { iconBg: 'bg-danger-bg', iconText: 'text-danger', btn: 'btn-danger', barBg: 'bg-danger' },
         warning: { iconBg: 'bg-warning-bg', iconText: 'text-warning', btn: 'btn-primary', barBg: 'bg-warning' }, // Primary button for warning action
@@ -76,8 +76,8 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     const currentTheme = themeClasses[theme] || themeClasses.primary;
 
     return (
-         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className={`h-1.5 rounded-t-2xl ${currentTheme.barBg}`}></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
@@ -91,7 +91,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                     </div>
                     <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="px-3 pb-3 space-y-2 max-h-[60vh] overflow-y-auto">
+                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
                     <div>
                         <label htmlFor="modal-reason-input" className="block text-sm font-medium text-text-primary mb-1.5">{reasonLabel}</label>
                         <textarea id="modal-reason-input" value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input" />
@@ -150,14 +150,14 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
             setIsSubmitting(false); // Re-enable button on failure
         }
     };
-    
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
-                 <div className="h-1.5 rounded-t-2xl bg-success"></div>
-                 <header className="flex items-start justify-between p-3">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-2xl bg-success"></div>
+                <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-success-bg">
                             <i className="fas fa-upload text-2xl text-success"></i>
@@ -229,8 +229,8 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className="h-1.5 rounded-t-2xl bg-accent-secondary"></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
@@ -247,9 +247,9 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                 <main className="px-3 pb-3 space-y-3">
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-1">Số Máy (Số Động Cơ)</label>
-                        <input 
-                            type="text" 
-                            value={engineNumber} 
+                        <input
+                            type="text"
+                            value={engineNumber}
                             onChange={e => setEngineNumber(e.target.value)}
                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
                             placeholder="Nhập số máy..."
@@ -257,9 +257,9 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-1">Chính Sách</label>
-                        <input 
-                            type="text" 
-                            value={policy} 
+                        <input
+                            type="text"
+                            value={policy}
                             onChange={e => setPolicy(e.target.value)}
                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
                             placeholder="Nhập chính sách..."
@@ -267,9 +267,9 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-1">PO PIN</label>
-                        <input 
-                            type="text" 
-                            value={po} 
+                        <input
+                            type="text"
+                            value={po}
                             onChange={e => setPo(e.target.value)}
                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
                             placeholder="Nhập PO..."

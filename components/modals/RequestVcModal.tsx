@@ -89,8 +89,8 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-3xl rounded-2xl shadow-xl animate-fade-in-scale-up max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 relative flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <h2 className="text-xl font-bold text-gradient">Yêu Cầu Cấp VinClub</h2>
                     <p className="text-sm text-text-secondary mt-1">Cung cấp chứng từ để tạo tài khoản VinClub cho khách hàng.</p>
@@ -98,8 +98,8 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                
-                <main className="p-6 space-y-6 flex-grow overflow-y-auto">
+
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     <div className="p-4 bg-surface-ground rounded-lg border border-border-primary text-sm">
                         Đang yêu cầu cho SĐH: <strong className="font-mono">{order["Số đơn hàng"]}</strong> - KH: <strong>{order["Tên khách hàng"]}</strong>
                     </div>
@@ -127,7 +127,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
                                 <SimpleFileUpload id="biz-license" label="Giấy Phép Kinh Doanh" onFileSelect={setBusinessLicense} required accept="image/*" />
                                 <div>
                                     <label htmlFor="dms-code" className="block text-sm font-medium text-text-primary mb-2">Mã KH DMS <span className="text-danger">*</span></label>
-                                    <input 
+                                    <input
                                         id="dms-code"
                                         type="text"
                                         value={dmsCode}
@@ -143,7 +143,7 @@ const RequestVcModal: React.FC<RequestVcModalProps> = ({ order, onClose, onSubmi
                         <SimpleFileUpload id="reg-back" label="Cavet Xe Mặt Sau" onFileSelect={setRegBack} required accept="image/*" />
                     </div>
                 </main>
-                
+
                 <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
                     <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                     <button onClick={handleSubmit} disabled={!isFormValid() || isSubmitting} className="btn-primary">

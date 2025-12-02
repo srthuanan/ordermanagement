@@ -25,9 +25,9 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div 
-                className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up"
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div
+                className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
@@ -35,15 +35,15 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({ order, onClose,
                     <div className="animate-fade-in-down">
                         <h2 className="text-xl font-bold text-danger">Xác Nhận Hủy Yêu Cầu</h2>
                     </div>
-                     <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
+                    <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                <main className="p-6 space-y-4">
+                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
                     <p className="text-sm text-text-secondary">
                         Bạn có chắc chắn muốn hủy yêu cầu cho đơn hàng <strong className="font-mono text-text-primary">{order["Số đơn hàng"]}</strong> của khách hàng <strong className="text-text-primary">{order["Tên khách hàng"]}</strong>?
                     </p>
-                     <div>
+                    <div>
                         <label htmlFor="cancel-reason" className="block text-sm font-medium text-text-primary mb-2">
                             Lý do hủy (bắt buộc)
                         </label>

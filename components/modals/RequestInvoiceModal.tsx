@@ -55,7 +55,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [policy, setPolicy] = useState<string[]>([]);
     const [commission, setCommission] = useState('');
     const [vpoint, setVpoint] = useState('');
-    
+
     const [salesPoliciesOptions, setSalesPoliciesOptions] = useState<string[]>([]);
     const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
     const bgStyle = useModalBackground();
@@ -80,7 +80,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         };
         fetchPolicies();
     }, []);
-    
+
     const filteredSalesPolicies = useMemo(() => {
         if (!order || !order["Dòng xe"] || salesPoliciesOptions.length === 0) {
             return salesPoliciesOptions.sort();
@@ -93,7 +93,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             const lowerPolicy = policy.toLowerCase().replace(/\s+/g, '');
             return lowerPolicy.includes(currentCarModel);
         });
-        
+
         const genericPolicies = salesPoliciesOptions.filter(policy => {
             const lowerPolicy = policy.toLowerCase().replace(/\s+/g, '');
             // A policy is generic if it does NOT contain ANY of the main car model names.
@@ -101,7 +101,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         });
 
         const result = [...new Set([...specificPolicies, ...genericPolicies])];
-        
+
         // If filtering provides at least one result, use it. Otherwise, fallback to all policies.
         if (result.length > 0) {
             return result.sort();
@@ -136,8 +136,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[95vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="relative flex-shrink-0 flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
                     <div className="animate-fade-in-down">
                         <h2 className="text-xl font-bold text-gradient">Yêu Cầu Xuất Hóa Đơn</h2>
@@ -147,10 +147,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                
-                <main className="p-6 flex-grow overflow-y-auto">
+
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     <Stepper currentStep={step} />
-                    
+
                     <div className="p-3 bg-surface-ground rounded-lg border border-border-primary space-y-2 mb-6">
                         <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
                         <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
@@ -222,7 +222,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </div>
 
                     <div style={{ display: step === 2 ? 'block' : 'none' }}>
-                         <h3 className="font-semibold text-text-primary text-base mb-3">2. Tải lên chứng từ</h3>
+                        <h3 className="font-semibold text-text-primary text-base mb-3">2. Tải lên chứng từ</h3>
                         <div className="space-y-4">
                             <SimpleFileUpload id="hop_dong_file_input" label="Hợp đồng mua bán" onFileSelect={setContractFile} required accept=".pdf" />
                             <SimpleFileUpload id="denghi_xhd_file_input" label="Đề nghị xuất hóa đơn" onFileSelect={setProposalFile} required accept=".pdf" />
@@ -282,7 +282,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         </div>
                     </div>
                 </main>
-                
+
                 <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-between items-center bg-surface-ground rounded-b-2xl">
                     {step > 1 ? (
                         <button onClick={handleBack} disabled={isSubmitting} className="btn-secondary">

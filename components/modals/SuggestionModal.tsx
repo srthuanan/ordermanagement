@@ -31,15 +31,15 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
         if (!selectedVin) return;
         setIsSubmitting(true);
         // The parent's handleAdminSubmit will handle closing the modal on success
-// FIX: Use the order number passed into the component directly, not a potentially stale closure version.
+        // FIX: Use the order number passed into the component directly, not a potentially stale closure version.
         await onConfirm(order["Số đơn hàng"], selectedVin);
         // Only set submitting to false if the action fails, allowing retry
         setIsSubmitting(false);
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="h-1.5 rounded-t-2xl bg-warning"></div>
                 <header className="flex-shrink-0 flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
@@ -53,8 +53,8 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                     </div>
                     <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-2 -mr-2"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-3 space-y-2 overflow-y-auto">
-                     <div className="p-2 bg-surface-ground rounded-lg border border-border-primary space-y-1">
+                <main className="p-3 space-y-2 overflow-y-auto flex-grow min-h-0">
+                    <div className="p-2 bg-surface-ground rounded-lg border border-border-primary space-y-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                             <div><span className="text-text-secondary">Khách hàng:</span> <strong className="text-text-primary">{order["Tên khách hàng"]}</strong></div>
                             <div><span className="text-text-secondary">Số ĐH:</span> <strong className="text-text-primary font-mono">{order["Số đơn hàng"]}</strong></div>

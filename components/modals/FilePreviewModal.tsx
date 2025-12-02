@@ -71,28 +71,32 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col p-2 sm:p-4 animate-fade-in" onClick={onClose}>
-            <header className="flex-shrink-0 text-white flex items-center justify-between p-2 sm:p-4">
-                <h3 className="font-bold text-lg truncate">{fileLabel}</h3>
-                <div className="flex items-center gap-2 sm:gap-4">
-                    <button onClick={handleDownload} title="Tải về" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
-                        <i className="fas fa-download"></i>
-                    </button>
-                    <a href={fileUrl} target="_blank" rel="noopener noreferrer" title="Mở trong tab mới" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
-                        <i className="fas fa-external-link-alt"></i>
-                    </a>
-                    <button onClick={onClose} title="Đóng (Esc)" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-xl">
-                        <i className="fas fa-times"></i>
-                    </button>
-                </div>
-            </header>
-            <main className="flex-grow flex items-center justify-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
-                <iframe
-                    src={embedUrl}
-                    className="w-full h-full bg-white rounded-lg border-none"
-                    title={fileLabel}
-                ></iframe>
-            </main>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col p-0 md:p-4 animate-fade-in" onClick={onClose}>
+            <div className="bg-surface-card w-full h-full md:rounded-2xl shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                <header className="flex-shrink-0 text-white flex items-center justify-between p-4">
+                    <div className="min-w-0">
+                        <h3 className="font-bold text-lg truncate">{fileLabel}</h3>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <button onClick={handleDownload} title="Tải về" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i className="fas fa-download"></i>
+                        </button>
+                        <a href={fileUrl} target="_blank" rel="noopener noreferrer" title="Mở trong tab mới" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i className="fas fa-external-link-alt"></i>
+                        </a>
+                        <button onClick={onClose} title="Đóng (Esc)" className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-xl">
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                </header>
+                <main className="flex-grow flex items-center justify-center relative overflow-hidden">
+                    <iframe
+                        src={embedUrl}
+                        className="w-full h-full bg-white rounded-lg border-none"
+                        title={fileLabel}
+                    ></iframe>
+                </main>
+            </div>
         </div>
     );
 };

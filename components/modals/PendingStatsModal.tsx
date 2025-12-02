@@ -33,10 +33,10 @@ const RankIndicator: React.FC<{ rank: number }> = ({ rank }) => {
 
 const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, stats }) => {
     const bgStyle = useModalBackground();
-    
+
     const flattenedStats = useMemo(() => {
         return stats
-            .flatMap(group => 
+            .flatMap(group =>
                 group.variants.map(variant => {
                     const [phienBanNgoaiThat, noiThat] = variant.variant.split(' / ');
                     const parts = phienBanNgoaiThat.split(' - ');
@@ -59,9 +59,9 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[80vh]"
+                className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
@@ -77,7 +77,7 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
                     </button>
                 </header>
 
-                <main className="flex-grow p-4 overflow-y-auto bg-surface-ground">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground">
                     {flattenedStats.length > 0 ? (
                         <div className="bg-surface-card border border-border-primary rounded-lg shadow-sm">
                             <header className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-4 px-4 py-2 border-b border-border-primary text-xs font-bold text-text-secondary uppercase">
@@ -85,7 +85,7 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
                                 <span>Cấu hình xe</span>
                                 <span className="text-right">Số Lượng</span>
                             </header>
-                             <div className="divide-y divide-border-primary/70">
+                            <div className="divide-y divide-border-primary/70">
                                 {flattenedStats.map((item, index) => (
                                     <div key={index} className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-4 px-4 py-3 hover:bg-surface-hover transition-colors">
                                         <div className="flex justify-center">

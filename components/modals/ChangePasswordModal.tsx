@@ -46,7 +46,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
             showToast('Thất Bại', result.message || 'Đổi mật khẩu không thành công.', 'error');
         }
     };
-    
+
     // Reset state when modal is closed
     const handleClose = () => {
         setOldPassword('');
@@ -61,8 +61,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     const inputClass = "peer w-full pl-12 pr-4 py-3 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent";
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={handleClose}>
+            <div className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <form onSubmit={handleSubmit}>
                     <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                         <div className="animate-fade-in-down">
@@ -73,8 +73,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                             <i className="fas fa-times"></i>
                         </button>
                     </header>
-                    
-                    <main className="p-6 space-y-5">
+
+                    <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
                         <div className="relative">
                             <i className="fas fa-shield-alt absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
                             <input
@@ -86,7 +86,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                                 className={inputClass}
                             />
                         </div>
-                         <div className="relative">
+                        <div className="relative">
                             <i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
                             <input
                                 type="password"
@@ -97,7 +97,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                                 className={inputClass}
                             />
                         </div>
-                         <div className="relative">
+                        <div className="relative">
                             <i className="fas fa-check-circle absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
                             <input
                                 type="password"
@@ -109,7 +109,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                             />
                         </div>
                     </main>
-                    
+
                     <footer className="p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
                         <button type="button" onClick={handleClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
                         <button type="submit" disabled={isSubmitting} className="btn-primary">

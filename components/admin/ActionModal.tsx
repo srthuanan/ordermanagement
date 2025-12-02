@@ -40,7 +40,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                 if (Object.keys(prev).length > 0 && inputs.length > 0) {
                     return prev;
                 }
-                
+
                 return inputs.reduce((acc, input) => {
                     acc[input.id] = '';
                     return acc;
@@ -53,7 +53,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
         }
         // Removing 'inputs' from dependency array is intentional to prevent form reset
         // when parent re-renders and passes a new inputs array reference.
-    }, [isOpen]); 
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -77,7 +77,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
 
     const handleSubmit = async () => {
         if (inputs.length > 0 && !isFormValid()) {
-             // Let's use a toast for better UX
+            // Let's use a toast for better UX
             // This assumes a global toast function is available or passed via props if this was a larger app.
             // For now, an alert will suffice.
             alert('Vui lòng điền đầy đủ và chính xác thông tin.');
@@ -111,10 +111,10 @@ const ActionModal: React.FC<ActionModalProps> = ({
     const selectedColor = colorMap[submitColor] || colorMap.primary;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
-                onClick={(e) => e.stopPropagation()}
+                className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
+                onClick={e => e.stopPropagation()}
                 style={bgStyle}
             >
                 <div className={`h-1.5 rounded-t-2xl ${selectedColor.bg}`}></div>
@@ -129,7 +129,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                     </div>
                 </header>
 
-                <main className="px-3 pb-3 space-y-2">
+                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
                     {targetId && (
                         <div className="bg-surface-ground border border-border-primary rounded-md p-1.5 text-center">
                             <p className="text-xs text-text-secondary">Thực hiện cho:</p>

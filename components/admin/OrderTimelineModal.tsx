@@ -72,10 +72,10 @@ const OrderTimelineModal: React.FC<OrderTimelineModalProps> = ({ isOpen, onClose
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-3xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-center justify-between p-2.5 border-b border-border-primary flex-shrink-0">
-                     <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100">
                             <i className="fas fa-history text-lg text-accent-primary"></i>
                         </div>
@@ -83,7 +83,7 @@ const OrderTimelineModal: React.FC<OrderTimelineModalProps> = ({ isOpen, onClose
                     </div>
                     <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-3 space-y-2 overflow-y-auto hidden-scrollbar">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0 hidden-scrollbar">
                     <div className="flex items-center gap-1.5">
                         <input
                             type="text"

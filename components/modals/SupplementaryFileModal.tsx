@@ -37,8 +37,8 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
     const isFormValid = contractFile || proposalFile;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
                     <div className="animate-fade-in-down">
                         <h2 className="text-xl font-bold text-gradient">Bổ Sung Chứng Từ</h2>
@@ -49,10 +49,10 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                     </button>
                 </header>
 
-                <main className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     {/* Order Summary */}
                     <div className="p-4 bg-surface-ground rounded-lg border border-border-primary space-y-2">
-                         <h3 className="font-semibold text-text-primary text-base mb-2">Tóm tắt yêu cầu</h3>
+                        <h3 className="font-semibold text-text-primary text-base mb-2">Tóm tắt yêu cầu</h3>
                         <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
                         <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
                     </div>
@@ -61,12 +61,12 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                     <div className="flex items-start gap-3 p-3 text-sm bg-warning-bg rounded-lg border border-warning/30 text-yellow-800">
                         <i className="fas fa-info-circle mt-0.5"></i>
                         <p>
-                           <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn thay thế. Các tệp không được tải lên sẽ được giữ nguyên.
+                            <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn thay thế. Các tệp không được tải lên sẽ được giữ nguyên.
                         </p>
                     </div>
 
                     {/* File Uploads */}
-                     <div>
+                    <div>
                         <h3 className="font-semibold text-text-primary text-base mb-3">Tải lên tệp mới</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <SimpleFileUpload id="supp_hop_dong_file_input" label="Hợp đồng mua bán (Mới)" onFileSelect={setContractFile} accept=".pdf" />

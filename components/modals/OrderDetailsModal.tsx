@@ -22,7 +22,7 @@ const formatDateTime = (dateString?: string) => {
 };
 
 const InfoItem: React.FC<{ icon: string; label: string; value?: string | number; children?: React.ReactNode; valueClassName?: string; valueStyle?: React.CSSProperties }> = ({ icon, label, value, children, valueClassName = '', valueStyle }) => (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-3 md:gap-4">
         <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-surface-accent">
             <i className={`fas ${icon} text-accent-primary text-lg`}></i>
         </div>
@@ -35,16 +35,16 @@ const InfoItem: React.FC<{ icon: string; label: string; value?: string | number;
 );
 
 const TimelineStep: React.FC<{ icon: string; label: string; value?: string; isLast?: boolean }> = ({ icon, label, value, isLast }) => (
-    <div className="relative pl-10">
-        <div className="absolute top-0 left-0 flex items-center">
+    <div className="relative pl-0 md:pl-10 flex flex-row md:block items-center md:items-start gap-3 md:gap-0">
+        <div className="relative md:absolute top-0 left-0 flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-surface-accent flex items-center justify-center">
                 <i className={`fas ${icon} text-accent-primary`}></i>
             </div>
         </div>
-        {!isLast && <div className="absolute top-8 left-[15px] h-full w-px bg-border-secondary"></div>}
-        <div className="flex flex-col pb-8">
+        {!isLast && <div className="hidden md:block absolute top-8 left-[15px] h-full w-px bg-border-secondary"></div>}
+        <div className="flex flex-col pb-0 md:pb-8">
             <p className="text-xs text-text-secondary">{label}</p>
-            <p className="text-sm font-semibold text-text-primary">{value || '—'}</p>
+            <p className="text-sm font-semibold text-text-primary break-words">{value || '—'}</p>
         </div>
     </div>
 );
@@ -72,7 +72,7 @@ const VINDisplay: React.FC<{ vin: string }> = ({ vin }) => {
 
     return (
         <div
-            className="relative p-4 rounded-xl bg-gradient-to-br from-[#CBBACC] to-[#2580B3] shadow-lg group overflow-hidden cursor-pointer"
+            className="relative p-3 md:p-4 rounded-xl bg-gradient-to-br from-[#CBBACC] to-[#2580B3] shadow-lg group overflow-hidden cursor-pointer"
             onClick={handleCopy}
             title="Click để sao chép VIN"
         >
@@ -81,7 +81,7 @@ const VINDisplay: React.FC<{ vin: string }> = ({ vin }) => {
 
             <div className="relative z-10 text-center">
                 <p className="text-xs text-blue-200 uppercase tracking-widest">Số Khung (VIN)</p>
-                <p className="text-white font-mono tracking-wider text-2xl break-all text-shadow-md font-bold">{vin}</p>
+                <p className="text-white font-mono tracking-wider text-xl md:text-2xl break-all text-shadow-md font-bold">{vin}</p>
             </div>
 
             <button
@@ -187,7 +187,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
 
     return (
         <div
-            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 transition-opacity duration-300"
+            className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-0 md:p-4 transition-opacity duration-300"
             onClick={onClose}
         >
             {hasPrev && (
@@ -200,14 +200,14 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                 </button>
             )}
             <div
-                className="bg-surface-ground w-full max-w-4xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl animate-fade-in-scale-up"
+                className="bg-surface-ground w-full md:max-w-5xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-none md:rounded-2xl shadow-2xl flex flex-col transition-all duration-300 transform scale-100 opacity-100"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
-                <header className="flex-shrink-0 flex items-start justify-between p-5 border-b border-border-primary">
+                <header className="flex-shrink-0 flex items-start justify-between p-3 md:p-5 border-b border-border-primary">
                     <div>
                         <h2 className="text-xl font-bold text-gradient">Chi Tiết Yêu Cầu</h2>
                         <p className="text-sm text-text-secondary mt-1 font-mono">
@@ -226,16 +226,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                     </div>
                 </header>
 
-                <main className="overflow-y-auto flex-grow p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <main className="overflow-y-auto flex-grow min-h-0 p-3 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     {/* Left Column */}
                     <div className="md:col-span-1 bg-surface-card p-5 rounded-lg border border-border-primary shadow-sm flex flex-col gap-6">
-                        <div className="space-y-4">
-                            <InfoItem icon="fa-user-circle" label="Tên khách hàng" value={order["Tên khách hàng"]} valueClassName="uppercase" />
-                            <InfoItem icon="fa-user-tie" label="Tư vấn bán hàng" value={order["Tên tư vấn bán hàng"]} />
+                        <div className="grid grid-cols-2 gap-4 md:block md:space-y-4">
+                            <InfoItem icon="fa-user-circle" label="Tên khách hàng" value={order["Tên khách hàng"]} valueClassName="uppercase text-xs md:text-base" />
+                            <InfoItem icon="fa-user-tie" label="Tư vấn bán hàng" value={order["Tên tư vấn bán hàng"]} valueClassName="text-xs md:text-base" />
                         </div>
                         <div className="border-t border-border-primary pt-6">
                             <h4 className="font-semibold text-text-primary mb-4">Mốc Thời Gian</h4>
-                            <div className="flex flex-col">
+                            <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-0">
                                 <TimelineStep icon="fa-file-invoice-dollar" label="Ngày cọc" value={formatDateTime(order["Ngày cọc"])} />
                                 <TimelineStep icon="fa-paper-plane" label="Ngày yêu cầu" value={formatDateTime(order["Thời gian nhập"])} />
                                 <TimelineStep icon="fa-link" label="Ngày ghép VIN" value={formatDateTime(order["Thời gian ghép"])} />
@@ -259,7 +259,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                         {order.VIN && <VINDisplay vin={order.VIN} />}
                         <div className="bg-surface-card p-5 rounded-lg border border-border-primary shadow-sm">
                             <h3 className="font-bold text-lg text-text-primary mb-4">Thông Tin Xe</h3>
-                            <div className="flex items-center justify-center h-48 mb-4 rounded-lg p-2">
+                            <div className="flex items-center justify-center h-24 md:h-48 mb-4 rounded-lg p-2">
                                 <CarImage
                                     model={order['Dòng xe']}
                                     exteriorColor={order['Ngoại thất']}
@@ -267,26 +267,26 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                                     alt={order['Dòng xe']}
                                 />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <InfoItem icon="fa-car-side" label="Dòng xe & Phiên bản" value={`${order["Dòng xe"]} - ${order["Phiên bản"]}`} />
-                                <InfoItem icon="fa-palette" label="Ngoại thất" value={order["Ngoại thất"]} valueStyle={getExteriorColorStyle(order["Ngoại thất"])} />
-                                <InfoItem icon="fa-chair" label="Nội thất" value={order["Nội thất"]} valueStyle={getInteriorColorStyle(order["Nội thất"])} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <InfoItem icon="fa-car-side" label="Dòng xe & Phiên bản" value={`${order["Dòng xe"]} - ${order["Phiên bản"]}`} valueClassName="text-xs md:text-base" />
+                                <InfoItem icon="fa-palette" label="Ngoại thất" value={order["Ngoại thất"]} valueStyle={getExteriorColorStyle(order["Ngoại thất"])} valueClassName="text-xs md:text-base" />
+                                <InfoItem icon="fa-chair" label="Nội thất" value={order["Nội thất"]} valueStyle={getInteriorColorStyle(order["Nội thất"])} valueClassName="text-xs md:text-base" />
                             </div>
                         </div>
                     </div>
                 </main>
 
-                <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-4 p-5 border-t border-border-primary bg-surface-ground rounded-b-2xl">
-                    <Button onClick={onClose} variant="secondary">Đóng</Button>
+                <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-2 md:gap-4 p-3 md:p-5 border-t border-border-primary bg-surface-ground rounded-b-2xl">
+                    <Button onClick={onClose} variant="secondary" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5">Đóng</Button>
                     {canDownloadInvoice && (
-                        <Button onClick={() => window.open(order.LinkHoaDonDaXuat, '_blank')} variant="secondary" className="text-gray-700 hover:text-gray-800" leftIcon={<i className="fas fa-download"></i>}>Tải Hóa Đơn</Button>
+                        <Button onClick={() => window.open(order.LinkHoaDonDaXuat, '_blank')} variant="secondary" className="text-gray-700 hover:text-gray-800 max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-download"></i>}>Tải Hóa Đơn</Button>
                     )}
-                    {canEdit && (<Button onClick={() => handleAction(onEdit!)} variant="secondary" className="text-blue-700 hover:text-blue-800" leftIcon={<i className="fas fa-pencil-alt"></i>}>Chỉnh Sửa</Button>)}
-                    {canCancel && (<Button onClick={() => handleAction(onCancel)} variant="danger" leftIcon={<i className="fas fa-trash-alt"></i>}>Hủy Yêu Cầu</Button>)}
-                    {canRequestInvoice && (<Button onClick={() => handleAction(onRequestInvoice)} variant="primary" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Y/C Xuất Hóa Đơn</Button>)}
-                    {canAddSupplement && (<Button onClick={() => handleAction(onSupplement)} variant="primary" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung File</Button>)}
-                    {canRequestVC && (<Button onClick={() => handleAction(onRequestVC)} variant="primary" leftIcon={<i className="fas fa-id-card"></i>}>Y/C Cấp VC</Button>)}
-                    {canConfirmVC && (<Button onClick={() => handleAction(onConfirmVC)} variant="primary" leftIcon={<i className="fas fa-check"></i>}>Xác Thực UNC VC</Button>)}
+                    {canEdit && (<Button onClick={() => handleAction(onEdit!)} variant="secondary" className="text-blue-700 hover:text-blue-800 max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-pencil-alt"></i>}>Chỉnh Sửa</Button>)}
+                    {canCancel && (<Button onClick={() => handleAction(onCancel)} variant="danger" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-trash-alt"></i>}>Hủy Yêu Cầu</Button>)}
+                    {canRequestInvoice && (<Button onClick={() => handleAction(onRequestInvoice)} variant="primary" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Y/C Xuất Hóa Đơn</Button>)}
+                    {canAddSupplement && (<Button onClick={() => handleAction(onSupplement)} variant="primary" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung File</Button>)}
+                    {canRequestVC && (<Button onClick={() => handleAction(onRequestVC)} variant="primary" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-id-card"></i>}>Y/C Cấp VC</Button>)}
+                    {canConfirmVC && (<Button onClick={() => handleAction(onConfirmVC)} variant="primary" className="max-md:text-xs max-md:px-3 max-md:py-1.5 max-md:h-8 max-md:gap-1.5" leftIcon={<i className="fas fa-check"></i>}>Xác Thực UNC VC</Button>)}
                 </footer>
             </div>
             {hasNext && (

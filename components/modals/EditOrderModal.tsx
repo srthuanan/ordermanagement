@@ -7,9 +7,8 @@ import moment from 'moment';
 import { useModalBackground } from '../../utils/styleUtils';
 import Button from '../ui/Button';
 
-const InputGroup: React.FC<{ icon: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children, label, htmlFor }) => (
+const InputGroup: React.FC<{ icon: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children }) => (
     <div>
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-1.5">{label}</label>
         <div className="relative">
             <i className={`fas ${icon} absolute top-1/2 left-4 -translate-y-1/2 text-slate-500 peer-focus:text-accent-primary transition-colors text-base z-10`}></i>
             {children}
@@ -147,42 +146,44 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
     const availableVersions = formData['Dòng xe'] ? (versionsMap[formData['Dòng xe'] as keyof typeof versionsMap] || allPossibleVersions) : [];
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <form onSubmit={handleSubmit} className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <form onSubmit={handleSubmit} className="bg-surface-card w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-center justify-between p-5 border-b border-border-primary">
                     <h2 className="text-xl font-bold text-text-primary">Chỉnh Sửa Đơn Hàng</h2>
                     <button type="button" onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
 
-                <main className="p-6 space-y-4 overflow-y-auto">
-                    {isPaired && (
-                        <div className="p-3 mb-4 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-start gap-3 shadow-sm">
-                            <i className="fas fa-info-circle text-amber-500 text-lg mt-1"></i>
-                            <div>
-                                <h4 className="font-bold text-amber-700 text-sm">Đơn hàng đã ghép xe</h4>
-                                <p className="text-xs text-amber-600 mt-1">
-                                    Thông tin xe (Dòng xe, Phiên bản, Màu sắc) không thể thay đổi. Vui lòng "Hủy ghép" nếu muốn thay đổi.
-                                </p>
+                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
+                    <div className="flex-grow overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
+                        {isPaired && (
+                            <div className="p-3 mb-4 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-start gap-3 shadow-sm">
+                                <i className="fas fa-info-circle text-amber-500 text-lg mt-1"></i>
+                                <div>
+                                    <h4 className="font-bold text-amber-700 text-sm">Đơn hàng đã ghép xe</h4>
+                                    <p className="text-xs text-amber-600 mt-1">
+                                        Thông tin xe (Dòng xe, Phiên bản, Màu sắc) không thể thay đổi. Vui lòng "Hủy ghép" nếu muốn thay đổi.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InputGroup icon="fa-user-tie" label="Tên khách hàng" htmlFor="Tên khách hàng"><input id="Tên khách hàng" type="text" name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" /></InputGroup>
-                        <InputGroup icon="fa-barcode" label="Số đơn hàng" htmlFor="Số đơn hàng"><input id="Số đơn hàng" type="text" name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng.')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="VD: N12345-VSO-24-01-0001" /></InputGroup>
-                        <InputGroup icon="fa-car" label="Dòng xe" htmlFor="Dòng xe"><select id="Dòng xe" name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} required className={`${inputClass} futuristic-select disabled:opacity-50`} disabled={isPaired}><option value="" disabled>Chọn dòng xe</option>{Object.keys(versionsMap).map(car => <option key={car} value={car}>{car}</option>)}</select></InputGroup>
-                        <InputGroup icon="fa-sitemap" label="Phiên bản" htmlFor="Phiên bản"><select id="Phiên bản" name="Phiên bản" value={formData["Phiên bản"] || ''} onChange={handleInputChange} required disabled={!formData["Dòng xe"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn phiên bản</option>{availableVersions.map(v => <option key={v} value={v}>{v}</option>)}</select></InputGroup>
-                        <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="Ngoại thất"><select id="Ngoại thất" name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn màu ngoại thất</option>{defaultExteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
-                        <InputGroup icon="fa-chair" label="Nội thất" htmlFor="Nội thất"><select id="Nội thất" name="Nội thất" value={formData["Nội thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn nội thất</option>{availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
-                        <div className="md:col-span-2">
-                            <InputGroup icon="fa-calendar-alt" label="Ngày cọc" htmlFor="Ngày cọc">
-                                <input id="Ngày cọc" name="Ngày cọc" type="datetime-local" value={formData["Ngày cọc"] || ''} onChange={handleInputChange} required className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} disabled />
-                            </InputGroup>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <InputGroup icon="fa-user-tie" label="Tên khách hàng" htmlFor="Tên khách hàng"><input id="Tên khách hàng" type="text" name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" /></InputGroup>
+                            <InputGroup icon="fa-barcode" label="Số đơn hàng" htmlFor="Số đơn hàng"><input id="Số đơn hàng" type="text" name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng.')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="VD: N12345-VSO-24-01-0001" /></InputGroup>
+                            <InputGroup icon="fa-car" label="Dòng xe" htmlFor="Dòng xe"><select id="Dòng xe" name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} required className={`${inputClass} futuristic-select disabled:opacity-50`} disabled={isPaired}><option value="" disabled>Chọn dòng xe</option>{Object.keys(versionsMap).map(car => <option key={car} value={car}>{car}</option>)}</select></InputGroup>
+                            <InputGroup icon="fa-sitemap" label="Phiên bản" htmlFor="Phiên bản"><select id="Phiên bản" name="Phiên bản" value={formData["Phiên bản"] || ''} onChange={handleInputChange} required disabled={!formData["Dòng xe"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn phiên bản</option>{availableVersions.map(v => <option key={v} value={v}>{v}</option>)}</select></InputGroup>
+                            <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="Ngoại thất"><select id="Ngoại thất" name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn màu ngoại thất</option>{defaultExteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
+                            <InputGroup icon="fa-chair" label="Nội thất" htmlFor="Nội thất"><select id="Nội thất" name="Nội thất" value={formData["Nội thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn nội thất</option>{availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
+                            <div className="md:col-span-2">
+                                <InputGroup icon="fa-calendar-alt" label="Ngày cọc" htmlFor="Ngày cọc">
+                                    <input id="Ngày cọc" name="Ngày cọc" type="datetime-local" value={formData["Ngày cọc"] || ''} onChange={handleInputChange} required className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} disabled />
+                                </InputGroup>
+                            </div>
                         </div>
                     </div>
                 </main>
-                <footer className="p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl">
-                    <Button onClick={onClose} variant="secondary" disabled={isSubmitting} leftIcon={<i className="fas fa-times"></i>}>Hủy</Button>
-                    <Button onClick={handleSubmit} variant="primary" isLoading={isSubmitting} leftIcon={<i className="fas fa-save"></i>}>Lưu Thay Đổi</Button>
+                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-card relative z-10">
+                    <Button onClick={onClose} variant="secondary" size="sm" disabled={isSubmitting} leftIcon={<i className="fas fa-times"></i>}>Hủy</Button>
+                    <Button onClick={handleSubmit} variant="primary" size="sm" isLoading={isSubmitting} leftIcon={<i className="fas fa-save"></i>}>Lưu Thay Đổi</Button>
                 </footer>
             </form>
         </div>

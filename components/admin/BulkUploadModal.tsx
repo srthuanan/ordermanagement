@@ -60,7 +60,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
             if (file.type === 'application/pdf') {
                 try {
                     return await compressPdf(file);
-                } catch(e) {
+                } catch (e) {
                     console.error('Lỗi nén PDF cho:', file.name, e);
                     showToast('Lỗi Nén PDF', `Không thể nén tệp ${file.name}.`, 'warning');
                     return file;
@@ -90,11 +90,11 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const handleDrag = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
     const handleDrop = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); };
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => { e.preventDefault(); if (e.target.files) handleFiles(e.target.files); };
-    
+
     const handleRemoveFile = (fileName: string) => {
         setFiles(prev => prev.filter(f => f.file.name !== fileName));
     };
-    
+
     const handleUpload = async () => {
         const validFiles = files.filter(f => f.status === 'valid');
         if (validFiles.length === 0) {
@@ -136,19 +136,18 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const validFiles = files.filter(f => f.status === 'valid');
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-2xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex-shrink-0 p-2.5 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
                     <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
                 </header>
-                <main className="p-3 flex-grow overflow-y-auto hidden-scrollbar">
-                    <div onDragEnter={handleDrag} className="w-full">
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
+                    <div onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop} className="w-full">
                         <input ref={inputRef} type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={handleChange} />
-                        <div 
+                        <div
                             className={`relative w-full h-40 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}`}
                             onClick={() => inputRef.current?.click()}
-                            onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
                         >
                             <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
                                 <i className="fas fa-file-upload fa-3x mb-2 group-hover:text-accent-primary"></i>

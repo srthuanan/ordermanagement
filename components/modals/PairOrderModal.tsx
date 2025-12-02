@@ -67,9 +67,9 @@ const PairOrderModal: React.FC<PairOrderModalProps> = ({ vin, pendingOrders, onC
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div 
-                className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up"
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div
+                className="bg-surface-card w-full md:max-w-lg h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
                 style={bgStyle}
             >
@@ -82,12 +82,12 @@ const PairOrderModal: React.FC<PairOrderModalProps> = ({ vin, pendingOrders, onC
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
-                <main className="p-6 space-y-4">
+                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
                     <div className="p-4 bg-surface-ground rounded-lg border border-border-primary text-center">
                         <p className="text-sm text-text-secondary">Bạn đang ghép xe có số VIN:</p>
                         <p className="font-bold font-mono text-lg text-accent-primary">{vin}</p>
                     </div>
-                    
+
                     {pendingOrders.length > 0 ? (
                         <div>
                             <label htmlFor="order-select" className="block text-sm font-medium text-text-primary mb-2">
@@ -105,8 +105,8 @@ const PairOrderModal: React.FC<PairOrderModalProps> = ({ vin, pendingOrders, onC
                         </div>
                     ) : (
                         <div className="p-4 bg-warning-bg text-yellow-800 rounded-lg text-sm flex items-center gap-3">
-                           <i className="fas fa-exclamation-triangle"></i>
-                           <span>Bạn không có đơn hàng nào phù hợp đang ở trạng thái "Chưa ghép".</span>
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <span>Bạn không có đơn hàng nào phù hợp đang ở trạng thái "Chưa ghép".</span>
                         </div>
                     )}
                 </main>

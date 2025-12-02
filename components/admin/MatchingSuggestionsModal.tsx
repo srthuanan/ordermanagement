@@ -29,10 +29,10 @@ const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isO
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
-            <div 
-                className="bg-surface-card w-full max-w-3xl rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col max-h-[85vh]" 
-                onClick={e => e.stopPropagation()} 
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div
+                className="bg-surface-card w-full md:max-w-3xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
+                onClick={e => e.stopPropagation()}
                 style={bgStyle}
             >
                 <header className="flex-shrink-0 flex items-center justify-between p-3 border-b border-border-primary bg-surface-card/80 backdrop-blur-sm rounded-t-2xl">
@@ -50,7 +50,7 @@ const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isO
                     </button>
                 </header>
 
-                <main className="flex-grow overflow-y-auto p-2 bg-surface-ground/50 hidden-scrollbar">
+                <main className="flex-grow min-h-0 overflow-y-auto p-2 bg-surface-ground/50 hidden-scrollbar">
                     <div className="space-y-2">
                         {sortedMatches.map(({ order, cars }, index) => {
                             const bestCar = cars[0]; // Assume the first one is the best match (e.g. oldest stock)
@@ -89,7 +89,7 @@ const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isO
                                             </div>
                                             <p className="font-mono font-bold text-base text-text-primary tracking-wide">{bestCar.VIN}</p>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => onConfirmMatch(order['Số đơn hàng'], bestCar.VIN)}
                                             className="btn-primary !px-3 !py-1.5 !text-xs !h-auto shadow-sm hover:shadow transition-all active:scale-95 flex-shrink-0 whitespace-nowrap"
                                         >
