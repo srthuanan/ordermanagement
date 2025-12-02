@@ -363,7 +363,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out ${mainContentPadding} ${isMobileMenuOpen ? 'translate-x-64' : ''} pb-16 lg:pb-0`}>
                 <Header
                     isSidebarCollapsed={isSidebarCollapsed}
-                    setIsMobileMenuOpen={setIsMobileMenuOpen}
                     setCreateRequestData={setCreateRequestData}
                     toggleNotificationPanel={toggleNotificationPanel}
                     unreadCount={unreadCount}
@@ -448,11 +447,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             onShowOrderDetails={setSelectedOrder}
                         />}
                     </div>
-                </main>
+                </main >
                 <footer className="hidden lg:flex flex-shrink-0 h-8 bg-surface-card/70 backdrop-blur-xl border-t border-border-primary/50 items-center justify-center px-4 sm:px-6">
                     <p className="text-xs text-text-secondary">&copy; {new Date().getFullYear()} Order Management</p>
                 </footer>
-            </div>
+            </div >
 
             <CreateRequestModal
                 isOpen={createRequestData.isOpen}
@@ -511,14 +510,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 startIndex={imagePreview?.startIndex}
                 customerName={imagePreview?.customerName}
             />
-            {filePreview && (
-                <FilePreviewModal
-                    isOpen={!!filePreview}
-                    onClose={() => setFilePreview(null)}
-                    fileUrl={filePreview.url}
-                    fileLabel={filePreview.label}
-                />
-            )}
+            {
+                filePreview && (
+                    <FilePreviewModal
+                        isOpen={!!filePreview}
+                        onClose={() => setFilePreview(null)}
+                        fileUrl={filePreview.url}
+                        fileLabel={filePreview.label}
+                    />
+                )
+            }
             <PendingStatsModal
                 isOpen={isPendingStatsModalOpen}
                 onClose={() => setIsPendingStatsModalOpen(false)}

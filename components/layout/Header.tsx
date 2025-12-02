@@ -6,7 +6,6 @@ import yeucauAnimationUrl from '../../pictures/yeucau.json?url';
 
 interface HeaderProps {
     isSidebarCollapsed: boolean;
-    setIsMobileMenuOpen: (isOpen: boolean) => void;
     setCreateRequestData: (data: { isOpen: boolean }) => void;
     toggleNotificationPanel: () => void;
     unreadCount: number;
@@ -20,7 +19,6 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
     isSidebarCollapsed,
-    setIsMobileMenuOpen,
     setCreateRequestData,
     toggleNotificationPanel,
     unreadCount,

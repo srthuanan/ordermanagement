@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
 import Pagination from './ui/Pagination';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
 import SummaryCard from './ui/SummaryCard';
-import Leaderboard from './ui/Leaderboard';
 
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import DateFilter from './ui/DateFilter';
