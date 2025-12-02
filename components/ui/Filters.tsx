@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MultiSelectDropdown, { DropdownFilterConfig } from './MultiSelectDropdown';
 import moment from 'moment';
+import Button from './Button';
 
 // FIX: Re-export DropdownFilterConfig to make it available to other components that import Filters.
 export type { DropdownFilterConfig };
@@ -150,28 +151,29 @@ const Filters: React.FC<FiltersProps> = ({
       {dropdownControls}
 
       <div className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${variant === 'modern' ? '' : 'ml-2'}`}>
-        <button
+        <Button
           onClick={onReset}
-          className={`flex items-center justify-center w-8 h-8 text-red-500 bg-red-50 hover:bg-red-100 rounded-full transition-all duration-200 ${hasActiveFilters ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
+          variant="danger"
+          className={`!p-0 w-8 h-8 rounded-full transition-all duration-200 ${hasActiveFilters ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
           title="Xóa tất cả bộ lọc"
           tabIndex={hasActiveFilters ? 0 : -1}
         >
           <i className="fas fa-times"></i>
-        </button>
+        </Button>
       </div>
 
       {dateRangeEnabled && (
         <div className="relative" ref={datePickerRef}>
-          <button
-            type="button"
+          <Button
             onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
-            className={`btn-filter h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'active' : ''}`}
+            variant="ghost"
+            className={`h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'bg-surface-hover text-accent-primary' : ''}`}
+            leftIcon={<i className="fas fa-calendar-alt text-text-placeholder text-xs"></i>}
           >
-            <i className="fas fa-calendar-alt text-text-placeholder text-xs mr-2"></i>
             <span className={`${dateValue.start && dateValue.end ? 'font-semibold' : ''}`}>
               {dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Chọn ngày'}
             </span>
-          </button>
+          </Button>
           {isDatePopoverOpen && (
             <div className="absolute top-full mt-2 right-0 z-20 bg-surface-card p-4 rounded-lg shadow-lg border border-border-primary date-range-picker-popover">
               <div className="space-y-3">
@@ -188,17 +190,17 @@ const Filters: React.FC<FiltersProps> = ({
       </span>
 
       {viewSwitcherEnabled && (
-        <div className="view-switcher-group">
-          <button onClick={() => onViewChange?.('table')} className={`btn-filter ${activeView === 'table' ? 'active' : ''}`} title="Xem dạng danh sách"><i className="fas fa-list"></i></button>
-          <button onClick={() => onViewChange?.('grid')} className={`btn-filter ${activeView === 'grid' ? 'active' : ''}`} title="Xem dạng lưới"><i className="fas fa-th-large"></i></button>
+        <div className="view-switcher-group flex gap-1">
+          <Button onClick={() => onViewChange?.('table')} variant={activeView === 'table' ? 'primary' : 'ghost'} size="sm" className="!p-2" title="Xem dạng danh sách"><i className="fas fa-list"></i></Button>
+          <Button onClick={() => onViewChange?.('grid')} variant={activeView === 'grid' ? 'primary' : 'ghost'} size="sm" className="!p-2" title="Xem dạng lưới"><i className="fas fa-th-large"></i></Button>
         </div>
       )}
 
       {extraActionButton}
 
-      <button onClick={onRefresh} disabled={isLoading} className={`btn-filter w-9 h-9 flex-shrink-0 ${variant === 'modern' ? '!rounded-full !bg-gray-50 hover:!bg-gray-100 !border-transparent' : ''}`} aria-label="Làm mới" title="Làm mới">
+      <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className={`w-9 h-9 flex-shrink-0 ${variant === 'modern' ? '!rounded-full !bg-gray-50 hover:!bg-gray-100 !border-transparent' : ''}`} aria-label="Làm mới" title="Làm mới">
         <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-      </button>
+      </Button>
     </div>
   );
 
@@ -225,15 +227,15 @@ const Filters: React.FC<FiltersProps> = ({
             />
           </div>
         )}
-        <button onClick={() => setIsMobilePanelOpen(true)} className="btn-filter flex-shrink-0 w-9 h-9 relative">
+        <Button onClick={() => setIsMobilePanelOpen(true)} variant="ghost" className="flex-shrink-0 w-9 h-9 relative !p-0">
           <i className="fas fa-filter text-accent-primary"></i>
           {activeFilters.length > 0 && (
             <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-surface-ground">{activeFilters.length}</span>
           )}
-        </button>
-        <button onClick={onRefresh} disabled={isLoading} className={`btn-filter flex-shrink-0 w-9 h-9`} aria-label="Làm mới" title="Làm mới">
+        </Button>
+        <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className="flex-shrink-0 w-9 h-9 !p-0" aria-label="Làm mới" title="Làm mới">
           <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-        </button>
+        </Button>
       </div>
 
       {/* --- Mobile Filter Panel (Modal) --- */}
@@ -242,7 +244,7 @@ const Filters: React.FC<FiltersProps> = ({
           <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary">
               <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
-              <button onClick={() => setIsMobilePanelOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+              <Button onClick={() => setIsMobilePanelOpen(false)} variant="ghost" className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
             </div>
 
             <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 -mr-2">
@@ -272,8 +274,8 @@ const Filters: React.FC<FiltersProps> = ({
               ))}
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <button onClick={() => { onReset(); }} disabled={!hasActiveFilters} className="btn-secondary w-full">Xóa Lọc</button>
-              <button onClick={() => setIsMobilePanelOpen(false)} className="btn-primary w-full">Xem {totalCount} kết quả</button>
+              <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth>Xóa Lọc</Button>
+              <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth>Xem {totalCount} kết quả</Button>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { TestDriveBooking, TestDriveSortConfig } from '../../types';
 import moment from 'moment';
 import { normalizeName } from '../../services/authService';
 import StatusBadge from '../ui/StatusBadge';
+import Button from '../ui/Button';
 
 interface TestDriveHistoryTableProps {
     bookings: TestDriveBooking[];
@@ -76,7 +77,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                     Số Phiếu: <span className="text-gray-700 font-medium">{booking.soPhieu}</span>
                                 </div>
                                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                    <button
+                                    <Button
                                         onClick={(e) => {
                                             if (canUpdate) {
                                                 e.stopPropagation();
@@ -87,24 +88,27 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                                 }
                                             }
                                         }}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-full bg-surface-ground shadow-sm text-gray-600 hover:text-accent-primary transition-colors ${!canUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        variant="secondary"
+                                        className={`!p-0 w-8 h-8 rounded-full flex items-center justify-center ${!canUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         disabled={!canUpdate}
                                     >
                                         <i className={`fas ${status === 'Đã hoàn tất' ? 'fa-plus-circle' : 'fa-camera'}`}></i>
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         onClick={(e) => { e.stopPropagation(); onSelectBooking(booking); }}
-                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-surface-ground shadow-sm text-gray-600 hover:text-accent-primary transition-colors"
+                                        variant="secondary"
+                                        className="!p-0 w-8 h-8 rounded-full flex items-center justify-center"
                                     >
                                         <i className="fas fa-print"></i>
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                         onClick={(e) => { e.stopPropagation(); onDelete(booking); }}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-full bg-surface-ground shadow-sm text-gray-600 hover:text-danger transition-colors ${(!canUpdate || status !== 'Chờ Check-in') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        variant="danger"
+                                        className={`!p-0 w-8 h-8 rounded-full flex items-center justify-center ${(!canUpdate || status !== 'Chờ Check-in') ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         disabled={!canUpdate || status !== 'Chờ Check-in'}
                                     >
                                         <i className="fas fa-trash-alt"></i>
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
 
@@ -217,7 +221,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                 <td data-label="Trạng Thái" className="px-3 py-3 text-sm"><StatusBadge status={status} /></td>
                                 <td data-label="Hành động" className="px-3 py-3 text-sm text-center">
                                     <div className="flex items-center justify-center gap-2">
-                                        <button
+                                        <Button
                                             onClick={(e) => {
                                                 if (canUpdate) {
                                                     e.stopPropagation();
@@ -228,25 +232,34 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                                     }
                                                 }
                                             }}
-                                            className={`action-btn ${status === 'Đã hoàn tất' ? 'pair-action' : 'hold-action'}`}
+                                            variant="secondary"
+                                            className={`!p-0 w-8 h-8 rounded-full flex items-center justify-center ${!canUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             disabled={!canUpdate}
                                             title={!canUpdate
                                                 ? "Chỉ người tạo phiếu hoặc admin mới có thể cập nhật."
                                                 : (status === 'Đã hoàn tất'
                                                     ? "Cập nhật hình ảnh"
                                                     : "Cập nhật thông tin check-in/out")}
-                                        ><i className={`fas ${status === 'Đã hoàn tất' ? 'fa-plus-circle' : 'fa-camera'}`}></i></button>
-                                        <button onClick={(e) => { e.stopPropagation(); onSelectBooking(booking); }} className="action-btn pair-action" title="Xem & In phiếu">
+                                        >
+                                            <i className={`fas ${status === 'Đã hoàn tất' ? 'fa-plus-circle' : 'fa-camera'}`}></i>
+                                        </Button>
+                                        <Button
+                                            onClick={(e) => { e.stopPropagation(); onSelectBooking(booking); }}
+                                            variant="secondary"
+                                            className="!p-0 w-8 h-8 rounded-full flex items-center justify-center"
+                                            title="Xem & In phiếu"
+                                        >
                                             <i className="fas fa-print"></i>
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
                                             onClick={(e) => { e.stopPropagation(); onDelete(booking); }}
-                                            className="action-btn release-action"
+                                            variant="danger"
+                                            className={`!p-0 w-8 h-8 rounded-full flex items-center justify-center ${(!canUpdate || status !== 'Chờ Check-in') ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             disabled={!canUpdate || status !== 'Chờ Check-in'}
                                             title={!canUpdate ? "Chỉ người tạo phiếu hoặc admin mới có thể xóa." : (status !== 'Chờ Check-in' ? 'Không thể xóa phiếu đã check-in' : 'Xóa phiếu lái thử')}
                                         >
                                             <i className="fas fa-trash-alt"></i>
-                                        </button>
+                                        </Button>
                                     </div>
                                 </td>
                             </tr>

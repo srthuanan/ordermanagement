@@ -3,11 +3,11 @@ import { Order } from '../../types';
 import { versionsMap, allPossibleVersions, defaultExteriors, interiorColorRules } from '../../constants';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
-import { useModalBackground } from '../../utils/styleUtils';
 
-const InputGroup: React.FC<{icon: string; children: React.ReactNode; label: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
+import { useModalBackground } from '../../utils/styleUtils';
+import Button from '../ui/Button';
+
+const InputGroup: React.FC<{ icon: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children, label, htmlFor }) => (
     <div>
         <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-1.5">{label}</label>
         <div className="relative">
@@ -45,10 +45,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
             });
         }
     }, [order]);
-    
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        
+
         setFormData(prev => {
             const newState: Partial<Order> = { ...prev, [name]: value };
             if (name === 'Dòng xe') {
@@ -79,7 +79,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
         }
         setAvailableInteriors(interiors);
         if (interiors.length === 1 && formData['Nội thất'] !== interiors[0]) {
-             setFormData(prev => ({...prev, 'Nội thất': interiors[0]}));
+            setFormData(prev => ({ ...prev, 'Nội thất': interiors[0] }));
         }
     }, [formData['Dòng xe'], formData['Phiên bản']]);
 
@@ -88,10 +88,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
     const isPaired = order['Kết quả']?.toLowerCase().includes('đã ghép');
     const inputClass = "peer w-full pl-11 pr-4 py-2.5 rounded-lg focus:outline-none transition-all placeholder:text-text-placeholder futuristic-input";
-    
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        
+
         const requiredFields: (keyof Order)[] = ['Tên khách hàng', 'Số đơn hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Nội thất', 'Ngày cọc'];
         if (requiredFields.some(field => !formData[field])) {
             showToast('Thiếu Thông Tin', 'Vui lòng điền đầy đủ thông tin.', 'warning'); return;
@@ -107,7 +107,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
         setIsSubmitting(true);
         showToast('Đang cập nhật...', 'Vui lòng chờ trong giây lát.', 'loading');
-        
+
         try {
             const changes: Partial<Order> = {};
             // Compare formData with the original order prop to find what changed
@@ -115,7 +115,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                 const formKey = key as keyof Order;
                 const originalValue = order[formKey];
                 const newValue = formData[formKey];
-                
+
                 if (formKey === 'Ngày cọc') {
                     const oldDate = originalValue ? moment(originalValue).format('YYYY-MM-DDTHH:mm') : '';
                     const newDate = newValue ? moment(newValue as string).format('YYYY-MM-DDTHH:mm') : '';
@@ -132,7 +132,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                 onClose();
                 return;
             }
-            
+
             const result = await apiService.updateOrderDetails(order['Số đơn hàng'], changes);
             onSuccess(result.message);
 
@@ -143,7 +143,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
             setIsSubmitting(false);
         }
     };
-    
+
     const availableVersions = formData['Dòng xe'] ? (versionsMap[formData['Dòng xe'] as keyof typeof versionsMap] || allPossibleVersions) : [];
 
     return (
@@ -156,7 +156,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
                 <main className="p-6 space-y-4 overflow-y-auto">
                     {isPaired && (
-                         <div className="p-3 mb-4 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-start gap-3 shadow-sm">
+                        <div className="p-3 mb-4 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-start gap-3 shadow-sm">
                             <i className="fas fa-info-circle text-amber-500 text-lg mt-1"></i>
                             <div>
                                 <h4 className="font-bold text-amber-700 text-sm">Đơn hàng đã ghép xe</h4>
@@ -174,19 +174,15 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                         <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="Ngoại thất"><select id="Ngoại thất" name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn màu ngoại thất</option>{defaultExteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
                         <InputGroup icon="fa-chair" label="Nội thất" htmlFor="Nội thất"><select id="Nội thất" name="Nội thất" value={formData["Nội thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"] || isPaired} className={`${inputClass} futuristic-select disabled:opacity-50`}><option value="" disabled>Chọn nội thất</option>{availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}</select></InputGroup>
                         <div className="md:col-span-2">
-                           <InputGroup icon="fa-calendar-alt" label="Ngày cọc" htmlFor="Ngày cọc">
+                            <InputGroup icon="fa-calendar-alt" label="Ngày cọc" htmlFor="Ngày cọc">
                                 <input id="Ngày cọc" name="Ngày cọc" type="datetime-local" value={formData["Ngày cọc"] || ''} onChange={handleInputChange} required className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} disabled />
-                           </InputGroup>
+                            </InputGroup>
                         </div>
                     </div>
                 </main>
-                 <footer className="p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Lưu Thay Đổi" className={`cursor-pointer ${(isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '60px', height: '60px' }} loop autoplay />
-                    </div>
+                <footer className="p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-ground rounded-b-2xl">
+                    <Button onClick={onClose} variant="secondary" disabled={isSubmitting} leftIcon={<i className="fas fa-times"></i>}>Hủy</Button>
+                    <Button onClick={handleSubmit} variant="primary" isLoading={isSubmitting} leftIcon={<i className="fas fa-save"></i>}>Lưu Thay Đổi</Button>
                 </footer>
             </form>
         </div>

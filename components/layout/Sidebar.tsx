@@ -4,6 +4,7 @@ import Avatar from '../ui/Avatar';
 import slidebarnoelImg from '../../pictures/slidebarnoel.png';
 import noel1Gif from '../../pictures/noel1.gif';
 import noel2Gif from '../../pictures/noel2.gif';
+import Button from '../ui/Button';
 
 interface SidebarProps {
     isSidebarCollapsed: boolean;
@@ -66,9 +67,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <a href="#" onClick={(e) => e.preventDefault()} className="flex items-center justify-center h-full group">
                     <img src={slidebarnoelImg} alt="Order Management Logo" className={`object-contain transition-all duration-300 group-hover:scale-105 ${isSidebarCollapsed ? 'h-10' : 'h-13'}`} />
                 </a>
-                <button onClick={toggleSidebar} className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-surface-hover text-text-secondary hover:text-text-primary ml-auto">
+                <Button onClick={toggleSidebar} variant="ghost" className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg !p-0 ml-auto">
                     <i className={`fa-solid fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
-                </button>
+                </Button>
             </div>
 
             <nav className="p-2 flex flex-col flex-grow overflow-y-auto relative">
@@ -121,40 +122,46 @@ const Sidebar: React.FC<SidebarProps> = ({
                             <p className="font-bold text-sm text-text-primary truncate">{currentUser}</p>
                             <p className="text-xs text-text-secondary capitalize">{userRole}</p>
                         </div>
-                        <button
+                        <Button
                             onClick={() => { setIsChangePasswordModalOpen(true); setIsProfileMenuOpen(false); }}
-                            className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm rounded-md text-text-primary hover:bg-surface-hover"
+                            variant="ghost"
+                            fullWidth
+                            className="justify-start gap-3 px-3 py-2 text-sm rounded-md text-text-primary hover:bg-surface-hover"
                         >
                             <i className="fas fa-key fa-fw text-text-secondary"></i>
                             <span>Đổi mật khẩu</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={() => { onLogout(); setIsProfileMenuOpen(false); }}
-                            className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm rounded-md text-danger hover:bg-danger-bg"
+                            variant="ghost"
+                            fullWidth
+                            className="justify-start gap-3 px-3 py-2 text-sm rounded-md text-danger hover:bg-danger-bg hover:text-danger"
                         >
                             <i className="fas fa-sign-out-alt fa-fw"></i>
                             <span>Đăng xuất</span>
-                        </button>
+                        </Button>
                     </div>
                 )}
 
                 <div className="p-2">
-                    <button
+                    <Button
                         onClick={() => setIsProfileMenuOpen(prev => !prev)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors hover:bg-surface-hover ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}
+                        variant="ghost"
+                        fullWidth
+                        className={`justify-start gap-3 p-2 rounded-lg transition-colors hover:bg-surface-hover ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}
                     >
                         <div className="relative flex-shrink-0">
                             <Avatar name={currentUser} size="md" />
                             <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-success ring-2 ring-white"></span>
                         </div>
-                        <div className={`transition-opacity duration-200 min-w-0 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+                        <div className={`transition-opacity duration-200 min-w-0 flex flex-col items-start ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
                             <p className="text-sm font-bold text-text-primary whitespace-nowrap truncate">{currentUser}</p>
                             <p className="text-xs text-text-secondary capitalize truncate">{userRole}</p>
                         </div>
                         {!isSidebarCollapsed && (
                             <i className={`fas fa-chevron-up text-xs text-text-secondary ml-auto transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''} ${isSidebarCollapsed ? 'lg:hidden' : ''}`}></i>
                         )}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </aside>

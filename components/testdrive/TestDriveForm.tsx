@@ -8,6 +8,7 @@ import TestDriveHistoryTable from './TestDriveHistoryTable';
 import TestDriveCheckinModal from './TestDriveCheckinModal';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import ActionModal from '../admin/ActionModal';
+import Button from '../ui/Button';
 
 
 interface ImageSource {
@@ -493,8 +494,12 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                 <header className="print-hidden flex-shrink-0 flex items-center justify-between border-b border-border-primary mb-4 pb-3 gap-2">
                     <h2 className="text-lg font-bold text-text-primary">Xem Lại Phiếu Lái Thử</h2>
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setSelectedBookingForPreview(null)} className="btn-secondary !py-2 !px-3"><i className="fas fa-arrow-left mr-2"></i>Quay Lại Danh Sách</button>
-                        <button onClick={handleReprint} className="btn-primary !py-2 !px-3"><i className="fas fa-print mr-2"></i>In Lại</button>
+                        <Button onClick={() => setSelectedBookingForPreview(null)} variant="secondary" size="sm" leftIcon={<i className="fas fa-arrow-left"></i>}>
+                            Quay Lại Danh Sách
+                        </Button>
+                        <Button onClick={handleReprint} variant="primary" size="sm" leftIcon={<i className="fas fa-print"></i>}>
+                            In Lại
+                        </Button>
                     </div>
                 </header>
                 <TestDrivePreview data={selectedBookingForPreview} />
@@ -514,22 +519,48 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden animate-fade-in-up">
             <header className="print-hidden flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between mb-4 pb-3 gap-3 border-b border-border-primary/50">
                 <div className="w-full md:w-auto flex items-center border border-border-primary rounded-lg bg-surface-ground p-1">
-                    <button onClick={() => setActiveTab('create')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'create' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>
-                        <i className="fas fa-edit mr-2"></i>Tạo Phiếu Mới
-                    </button>
-                    <button onClick={() => setActiveTab('history')} className={`flex-1 md:flex-none px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'history' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}>
-                        <i className="fas fa-list-alt mr-2"></i>Danh sách Lái thử
-                    </button>
+                    <Button
+                        onClick={() => setActiveTab('create')}
+                        variant={activeTab === 'create' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className={`flex-1 md:flex-none whitespace-nowrap ${activeTab === 'create' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                        leftIcon={<i className="fas fa-edit"></i>}
+                    >
+                        Tạo Phiếu Mới
+                    </Button>
+                    <Button
+                        onClick={() => setActiveTab('history')}
+                        variant={activeTab === 'history' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        className={`flex-1 md:flex-none whitespace-nowrap ${activeTab === 'history' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                        leftIcon={<i className="fas fa-list-alt"></i>}
+                    >
+                        Danh sách Lái thử
+                    </Button>
                 </div>
                 <div className="w-full md:w-auto flex items-center justify-end gap-2">
                     {activeTab === 'create' && (
                         <>
-                            <button onClick={handleReset} className="px-3 py-2 rounded-lg text-xs font-semibold bg-white border border-border-primary text-text-secondary shadow-sm hover:bg-surface-hover hover:text-text-primary transition-all active:scale-95" title="Xóa toàn bộ thông tin đã nhập">
-                                <i className="fas fa-eraser mr-2"></i><span className="whitespace-nowrap">Làm Mới</span>
-                            </button>
-                            <button onClick={handleSaveAndPrint} disabled={!!conflictError || isSubmitting} className="px-3 py-2 rounded-lg text-xs font-semibold bg-accent-primary text-white shadow-md hover:bg-accent-primary-hover hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" title="Lưu & In văn bản">
-                                {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang lưu...</> : <><i className="fas fa-print mr-2"></i><span className="whitespace-nowrap">Lưu & In</span></>}
-                            </button>
+                            <Button
+                                onClick={handleReset}
+                                variant="secondary"
+                                size="md"
+                                title="Xóa toàn bộ thông tin đã nhập"
+                                leftIcon={<i className="fas fa-eraser"></i>}
+                            >
+                                Làm Mới
+                            </Button>
+                            <Button
+                                onClick={handleSaveAndPrint}
+                                disabled={!!conflictError || isSubmitting}
+                                isLoading={isSubmitting}
+                                variant="primary"
+                                size="md"
+                                title="Lưu & In văn bản"
+                                leftIcon={!isSubmitting ? <i className="fas fa-print"></i> : undefined}
+                            >
+                                Lưu & In
+                            </Button>
                         </>
                     )}
                 </div>

@@ -2,6 +2,7 @@ import React, { useState, FormEvent, useMemo } from 'react';
 import * as authService from '../services/authService';
 import bgVideo from '../pictures/nennoel.mp4';
 import logoNoel from '../pictures/logonoel.png';
+import Button from './ui/Button';
 
 interface LoginScreenProps {
     onLoginSuccess: () => void;
@@ -112,20 +113,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             >
                 <source src={bgVideo} type="video/mp4" />
             </video>
-            
+
             {/* Animated Snowflakes Overlay */}
             <div id="snowflakes" aria-hidden="true">{snowflakes}</div>
 
             <div className="relative z-20 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-8 items-center">
-                
+
                 <div className="hidden lg:col-span-1 lg:flex flex-col items-center justify-center text-center p-8 text-shadow">
                     <p className="text-5xl italic text-white/90 leading-tight font-serif drop-shadow-lg">
-                        "The future is forged in <br/> <span className="text-blue-300">winter's heart</span>."
+                        "The future is forged in <br /> <span className="text-blue-300">winter's heart</span>."
                     </p>
                     <div className="w-24 h-1 bg-blue-400/50 my-6 rounded-full"></div>
                     <p className="text-xl text-white/70 tracking-widest uppercase font-light">- Frost & Co. -</p>
                 </div>
-                
+
                 <div className="form-panel-frosty w-full max-w-[300px] mx-auto lg:max-w-[300px] lg:mx-0 rounded-xl flex flex-col justify-center p-5 relative overflow-hidden">
                     {/* Decorative ice glint */}
                     <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -133,27 +134,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     {viewMode === 'login' && (
                         <div className="w-full animate-fade-in-up">
                             <div className="text-center mb-2 animate-fade-in-down flex justify-center">
-                                <img 
-                                    src={logoNoel} 
-                                    alt="Logo Noel" 
+                                <img
+                                    src={logoNoel}
+                                    alt="Logo Noel"
                                     className="max-h-28 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
                                 />
                             </div>
                             <form onSubmit={handleLoginSubmit} className="space-y-3">
                                 <div className="frosty-input-container">
                                     <i className="fas fa-user frosty-input-icon text-xs"></i>
-                                    <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Username" autoComplete="username" className="frosty-input text-sm h-10"/>
+                                    <input value={username} onChange={e => setUsername(e.target.value)} type="text" placeholder="Username" autoComplete="username" className="frosty-input text-sm h-10" />
                                 </div>
                                 <div className="frosty-input-container">
                                     <i className="fas fa-key frosty-input-icon text-xs"></i>
-                                    <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" autoComplete="current-password" className="frosty-input text-sm h-10"/>
+                                    <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" autoComplete="current-password" className="frosty-input text-sm h-10" />
                                 </div>
                                 <div className="flex items-center justify-end pt-0.5">
                                     <button type="button" onClick={() => setViewMode('forgot')} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors hover:underline focus:outline-none">Forgot password?</button>
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">
-                                    {isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Wait...</> : 'Log In'}
-                                </button>
+                                <Button type="submit" isLoading={isSubmitting} fullWidth className="frosty-button mt-1">
+                                    Log In
+                                </Button>
                             </form>
                         </div>
                     )}
@@ -168,15 +169,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             <form onSubmit={handleForgotPasswordSubmit} className="space-y-3">
                                 <div className="frosty-input-container">
                                     <i className="fas fa-envelope frosty-input-icon text-xs"></i>
-                                    <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Registered Email" required className="frosty-input text-sm h-10"/>
+                                    <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Registered Email" required className="frosty-input text-sm h-10" />
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Sending...</> : 'Send OTP'}</button>
+                                <Button type="submit" isLoading={isSubmitting} fullWidth className="frosty-button mt-1">
+                                    Send OTP
+                                </Button>
                                 <div className="text-center mt-3"><button type="button" onClick={handleBackToLogin} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors"><i className="fas fa-arrow-left mr-1"></i>Back to Login</button></div>
                             </form>
                         </div>
                     )}
 
-                     {viewMode === 'reset' && (
+                    {viewMode === 'reset' && (
                         <div className="w-full animate-fade-in-up">
                             <div className="text-center mb-4">
                                 <i className="fas fa-shield-alt text-2xl text-blue-200 mb-2 opacity-80"></i>
@@ -186,17 +189,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                             <form onSubmit={handleResetPasswordSubmit} className="space-y-3">
                                 <div className="frosty-input-container">
                                     <i className="fas fa-key frosty-input-icon text-xs"></i>
-                                    <input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="OTP Code" required className="frosty-input text-sm h-10"/>
+                                    <input value={otp} onChange={e => setOtp(e.target.value)} type="text" placeholder="OTP Code" required className="frosty-input text-sm h-10" />
                                 </div>
                                 <div className="frosty-input-container">
                                     <i className="fas fa-lock frosty-input-icon text-xs"></i>
-                                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New Password" required className="frosty-input text-sm h-10"/>
+                                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type="password" placeholder="New Password" required className="frosty-input text-sm h-10" />
                                 </div>
                                 <div className="frosty-input-container">
                                     <i className="fas fa-check-circle frosty-input-icon text-xs"></i>
-                                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Confirm Password" required className="frosty-input text-sm h-10"/>
+                                    <input value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} type="password" placeholder="Confirm Password" required className="frosty-input text-sm h-10" />
                                 </div>
-                                <button type="submit" disabled={isSubmitting} className="frosty-button w-full mt-1 text-sm h-10">{isSubmitting ? <><i className="fas fa-spinner animate-spin mr-2"></i>Confirming...</> : 'Confirm Reset'}</button>
+                                <Button type="submit" isLoading={isSubmitting} fullWidth className="frosty-button mt-1">
+                                    Confirm Reset
+                                </Button>
                                 <div className="text-center mt-3"><button type="button" onClick={handleBackToLogin} className="text-[10px] font-medium text-blue-200 hover:text-white transition-colors"><i className="fas fa-arrow-left mr-1"></i>Back to Login</button></div>
                             </form>
                         </div>

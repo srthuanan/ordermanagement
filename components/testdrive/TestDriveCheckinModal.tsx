@@ -4,6 +4,7 @@ import { normalizeName } from '../../services/authService';
 import { compressImage } from '../../services/ocrService';
 import { toEmbeddableUrl } from '../../utils/imageUtils';
 import { useModalBackground } from '../../utils/styleUtils';
+import Button from '../ui/Button';
 
 interface ImageSource {
     src: string;
@@ -23,131 +24,132 @@ interface TestDriveCheckinModalProps {
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        const base64String = reader.result.split(',')[1];
-        if (base64String) {
-          resolve(base64String);
-        } else {
-          reject(new Error('Không thể chuyển đổi file thành base64.'));
-        }
-      } else {
-        reject(new Error('Không thể đọc tệp.'));
-      }
-    };
-    reader.onerror = error => reject(error);
-  });
-};
-
-
-const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label: string }> = 
-({ onFilesChange, label }) => {
-    const [files, setFiles] = useState<File[]>([]);
-    const [previews, setPreviews] = useState<string[]>([]);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const cameraInputRef = React.useRef<HTMLInputElement>(null);
-
-    React.useEffect(() => {
-        // Cleanup object URLs on unmount
-        return () => {
-            previews.forEach(url => URL.revokeObjectURL(url));
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            if (typeof reader.result === 'string') {
+                const base64String = reader.result.split(',')[1];
+                if (base64String) {
+                    resolve(base64String);
+                } else {
+                    reject(new Error('Không thể chuyển đổi file thành base64.'));
+                }
+            } else {
+                reject(new Error('Không thể đọc tệp.'));
+            }
         };
-    }, [previews]);
-    
-    const handleFiles = async (newFilesList: FileList | null) => {
-        if (!newFilesList) return;
-
-        const newFilesArray = Array.from(newFilesList);
-        // Prevent duplicates by checking name, size, and last modified date
-        const uniqueNewFiles = newFilesArray.filter(nf => !files.some(f => f.name === nf.name && f.size === nf.size && f.lastModified === nf.lastModified));
-        
-        if (uniqueNewFiles.length === 0) return;
-
-        try {
-            const compressedFiles = await Promise.all(uniqueNewFiles.map(file => compressImage(file)));
-
-            const allFiles = [...files, ...compressedFiles];
-            setFiles(allFiles);
-    
-            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-            setPreviews(prev => [...prev, ...newPreviews]);
-    
-            onFilesChange(allFiles);
-        } catch (error) {
-            console.error("Lỗi nén ảnh:", error);
-            alert('Một hoặc nhiều ảnh không thể được xử lý. Vui lòng thử lại.');
-        }
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        handleFiles(event.target.files);
-        // Reset the input value to allow selecting/capturing the same file again in some browsers
-        if (event.target) event.target.value = '';
-    };
-
-    const handleRemoveImage = (index: number) => {
-        const newFiles = files.filter((_, i) => i !== index);
-        const newPreviews = previews.filter((_, i) => i !== index);
-
-        URL.revokeObjectURL(previews[index]); // Revoke the object URL of the removed image
-
-        setFiles(newFiles);
-        setPreviews(newPreviews);
-        onFilesChange(newFiles);
-    };
-
-    const handleRemoveAll = () => {
-        previews.forEach(url => URL.revokeObjectURL(url));
-        setFiles([]);
-        setPreviews([]);
-        onFilesChange([]);
-    };
-
-    return (
-        <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">{label} <span className="text-danger">*</span></label>
-            {/* Hidden Inputs */}
-            <input type="file" multiple accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" />
-            <input type="file" accept="image/*" capture onChange={handleFileChange} ref={cameraInputRef} className="hidden" />
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2 mb-2">
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 btn-secondary !py-2 !text-xs">
-                    <i className="fas fa-images mr-2"></i>Chọn từ thư viện
-                </button>
-                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 btn-secondary !py-2 !text-xs">
-                    <i className="fas fa-camera mr-2"></i>Chụp ảnh
-                </button>
-            </div>
-            
-            {previews.length > 0 && (
-                <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {previews.map((src, index) => (
-                        <div key={index} className="relative group aspect-square">
-                            <img src={src} alt={`Preview ${index}`} className="w-full h-full object-cover rounded-md border border-border-primary"/>
-                            <button 
-                                type="button" 
-                                onClick={() => handleRemoveImage(index)} 
-                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
-                                title="Xóa ảnh này"
-                            >
-                                <i className="fas fa-times"></i>
-                            </button>
-                        </div>
-                    ))}
-                    <div className="relative group aspect-square">
-                        <button onClick={handleRemoveAll} className="w-full h-full bg-surface-hover rounded-md flex items-center justify-center text-text-secondary hover:bg-danger-bg hover:text-danger-hover transition-colors" title="Xóa tất cả ảnh đã chọn">
-                            <i className="fas fa-trash-alt text-2xl"></i>
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+        reader.onerror = error => reject(error);
+    });
 };
+
+
+const MultiImageUpload: React.FC<{ onFilesChange: (files: File[]) => void, label: string }> =
+    ({ onFilesChange, label }) => {
+        const [files, setFiles] = useState<File[]>([]);
+        const [previews, setPreviews] = useState<string[]>([]);
+        const fileInputRef = React.useRef<HTMLInputElement>(null);
+        const cameraInputRef = React.useRef<HTMLInputElement>(null);
+
+        React.useEffect(() => {
+            // Cleanup object URLs on unmount
+            return () => {
+                previews.forEach(url => URL.revokeObjectURL(url));
+            };
+        }, [previews]);
+
+        const handleFiles = async (newFilesList: FileList | null) => {
+            if (!newFilesList) return;
+
+            const newFilesArray = Array.from(newFilesList);
+            // Prevent duplicates by checking name, size, and last modified date
+            const uniqueNewFiles = newFilesArray.filter(nf => !files.some(f => f.name === nf.name && f.size === nf.size && f.lastModified === nf.lastModified));
+
+            if (uniqueNewFiles.length === 0) return;
+
+            try {
+                const compressedFiles = await Promise.all(uniqueNewFiles.map(file => compressImage(file)));
+
+                const allFiles = [...files, ...compressedFiles];
+                setFiles(allFiles);
+
+                const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+                setPreviews(prev => [...prev, ...newPreviews]);
+
+                onFilesChange(allFiles);
+            } catch (error) {
+                console.error("Lỗi nén ảnh:", error);
+                alert('Một hoặc nhiều ảnh không thể được xử lý. Vui lòng thử lại.');
+            }
+        };
+
+        const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            handleFiles(event.target.files);
+            // Reset the input value to allow selecting/capturing the same file again in some browsers
+            if (event.target) event.target.value = '';
+        };
+
+        const handleRemoveImage = (index: number) => {
+            const newFiles = files.filter((_, i) => i !== index);
+            const newPreviews = previews.filter((_, i) => i !== index);
+
+            URL.revokeObjectURL(previews[index]); // Revoke the object URL of the removed image
+
+            setFiles(newFiles);
+            setPreviews(newPreviews);
+            onFilesChange(newFiles);
+        };
+
+        const handleRemoveAll = () => {
+            previews.forEach(url => URL.revokeObjectURL(url));
+            setFiles([]);
+            setPreviews([]);
+            onFilesChange([]);
+        };
+
+        return (
+            <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">{label} <span className="text-danger">*</span></label>
+                {/* Hidden Inputs */}
+                <input type="file" multiple accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="hidden" />
+                <input type="file" accept="image/*" capture onChange={handleFileChange} ref={cameraInputRef} className="hidden" />
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 mb-2">
+                    <Button type="button" onClick={() => fileInputRef.current?.click()} variant="secondary" className="flex-1 !py-2 !text-xs" leftIcon={<i className="fas fa-images"></i>}>
+                        Chọn từ thư viện
+                    </Button>
+                    <Button type="button" onClick={() => cameraInputRef.current?.click()} variant="secondary" className="flex-1 !py-2 !text-xs" leftIcon={<i className="fas fa-camera"></i>}>
+                        Chụp ảnh
+                    </Button>
+                </div>
+
+                {previews.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {previews.map((src, index) => (
+                            <div key={index} className="relative group aspect-square">
+                                <img src={src} alt={`Preview ${index}`} className="w-full h-full object-cover rounded-md border border-border-primary" />
+                                <Button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(index)}
+                                    variant="ghost"
+                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 !p-0"
+                                    title="Xóa ảnh này"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </Button>
+                            </div>
+                        ))}
+                        <div className="relative group aspect-square">
+                            <Button onClick={handleRemoveAll} variant="ghost" className="w-full h-full bg-surface-hover rounded-md flex items-center justify-center text-text-secondary hover:bg-danger-bg hover:text-danger-hover transition-colors !p-0" title="Xóa tất cả ảnh đã chọn">
+                                <i className="fas fa-trash-alt text-2xl"></i>
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
 const ImageGallery: React.FC<{
     images: string[];
@@ -197,12 +199,12 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
 
     const existingImagesBefore = useMemo(() => parseImageData(booking.imagesBefore), [booking.imagesBefore]);
     const existingImagesAfter = useMemo(() => parseImageData(booking.imagesAfter), [booking.imagesAfter]);
-    
+
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
             const payload: any = { soPhieu: booking.soPhieu };
-            
+
             if (mode === 'checkin') {
                 if (!odoBefore.trim() || imagesBefore.length === 0) {
                     showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh trước khi đi.', 'warning');
@@ -215,11 +217,11 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                 }));
             } else if (mode === 'checkout') {
                 if (!odoAfter.trim() || imagesAfter.length === 0) {
-                     showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh sau khi về.', 'warning');
-                     setIsSubmitting(false);
+                    showToast('Thiếu thông tin', 'Vui lòng nhập ODO và tải lên ít nhất 1 ảnh sau khi về.', 'warning');
+                    setIsSubmitting(false);
                     return;
                 }
-                 if (parseFloat(odoAfter) <= parseFloat(odoBefore || booking.odoBefore || '0')) {
+                if (parseFloat(odoAfter) <= parseFloat(odoBefore || booking.odoBefore || '0')) {
                     showToast('Lỗi ODO', 'ODO sau khi về phải lớn hơn ODO trước khi đi.', 'error');
                     setIsSubmitting(false);
                     return;
@@ -263,7 +265,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     <h2 className="text-xl font-bold text-text-primary">
                         {mode === 'view' ? 'Xem Thông Tin Lái Thử' : 'Cập Nhật Thông Tin Lái Thử'}
                     </h2>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+                    <Button onClick={onClose} variant="ghost" className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
                 </header>
 
                 <main className="p-6 flex-grow overflow-y-auto">
@@ -279,7 +281,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                                 <label htmlFor="odoBefore" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkin' && <span className="text-danger">*</span>}</label>
                                 <input type="number" id="odoBefore" value={odoBefore} readOnly={mode !== 'checkin' || isViewOnly} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km hiện tại" />
                             </div>
-                            
+
                             {existingImagesBefore.length > 0 && (
                                 <ImageGallery
                                     images={existingImagesBefore}
@@ -298,13 +300,13 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                         </div>
 
                         {/* AFTER SECTION */}
-                         <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
+                        <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
                             <legend className="font-bold text-lg text-text-primary px-2 -mx-2">Sau Khi Về</legend>
-                             <div>
+                            <div>
                                 <label htmlFor="odoAfter" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkout' && <span className="text-danger">*</span>}</label>
-                                <input type="number" id="odoAfter" value={odoAfter} readOnly={mode !== 'checkout' || isViewOnly} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km sau khi lái thử"/>
+                                <input type="number" id="odoAfter" value={odoAfter} readOnly={mode !== 'checkout' || isViewOnly} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km sau khi lái thử" />
                             </div>
-                             {existingImagesAfter.length > 0 && (
+                            {existingImagesAfter.length > 0 && (
                                 <ImageGallery
                                     images={existingImagesAfter}
                                     label="Hình ảnh đã tải lên"
@@ -323,14 +325,14 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                     </div>
                 </main>
 
-                 {mode !== 'view' && canUpdate && (
+                {mode !== 'view' && canUpdate && (
                     <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                        <button onClick={onClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                        <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">
-                            {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang lưu...</> : <><i className="fas fa-save mr-2"></i> {mode === 'update' ? 'Cập Nhật Ảnh' : 'Lưu Thông Tin'}</>}
-                        </button>
+                        <Button onClick={onClose} disabled={isSubmitting} variant="secondary">Hủy</Button>
+                        <Button onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting} variant="primary" leftIcon={!isSubmitting ? <i className="fas fa-save"></i> : undefined}>
+                            {mode === 'update' ? 'Cập Nhật Ảnh' : 'Lưu Thông Tin'}
+                        </Button>
                     </footer>
-                 )}
+                )}
             </div>
         </div>
     );

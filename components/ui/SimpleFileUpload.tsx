@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import Button from './Button';
 import { compressImage, compressPdf } from '../../services/ocrService';
 
 interface SimpleFileUploadProps {
@@ -74,11 +75,11 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleFile(event.target.files?.[0] || null);
   };
-  
+
   const handleRemoveFile = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      handleFile(null);
-      if (inputRef.current) inputRef.current.value = '';
+    e.stopPropagation();
+    handleFile(null);
+    if (inputRef.current) inputRef.current.value = '';
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -114,42 +115,42 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
         {required && <span className="text-danger ml-1">*</span>}
       </label>
       {selectedFile ? (
-            <div className="flex items-center gap-3 p-2 bg-surface-accent border border-accent-primary/20 rounded-lg">
-                <i className="fas fa-file-alt text-accent-primary text-xl flex-shrink-0 ml-2"></i>
-                <div className="flex-grow min-w-0">
-                    <p className="text-sm font-semibold text-text-primary truncate" title={selectedFile.name}>{selectedFile.name}</p>
-                    <p className="text-xs text-text-secondary">{(selectedFile.size / 1024).toFixed(1)} KB</p>
-                </div>
-                <button type="button" onClick={handleRemoveFile} disabled={isProcessing} className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors disabled:opacity-50"><i className="fas fa-times"></i></button>
-            </div>
-      ) : (
-          <div 
-            onClick={() => inputRef.current?.click()}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary hover:border-accent-primary'}`}
-          >
-            <div className="space-y-1 text-center">
-              <i className="fas fa-folder-open text-text-placeholder text-3xl"></i>
-              <div className="flex text-sm text-text-secondary">
-                <span
-                  className="relative rounded-md font-semibold text-accent-primary hover:text-accent-primary-hover"
-                >
-                  <span>Tải lên một file</span>
-                  <input ref={inputRef} id={id} name={id} type="file" className="sr-only" onChange={handleFileChange} accept={accept} />
-                </span>
-                <p className="pl-1">hoặc kéo và thả</p>
-              </div>
-              <p className="text-xs text-text-placeholder">{getAcceptHint()}</p>
-            </div>
+        <div className="flex items-center gap-3 p-2 bg-surface-accent border border-accent-primary/20 rounded-lg">
+          <i className="fas fa-file-alt text-accent-primary text-xl flex-shrink-0 ml-2"></i>
+          <div className="flex-grow min-w-0">
+            <p className="text-sm font-semibold text-text-primary truncate" title={selectedFile.name}>{selectedFile.name}</p>
+            <p className="text-xs text-text-secondary">{(selectedFile.size / 1024).toFixed(1)} KB</p>
           </div>
+          <Button type="button" onClick={handleRemoveFile} disabled={isProcessing} variant="ghost" className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors disabled:opacity-50 !p-0"><i className="fas fa-times"></i></Button>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary hover:border-accent-primary'}`}
+        >
+          <div className="space-y-1 text-center">
+            <i className="fas fa-folder-open text-text-placeholder text-3xl"></i>
+            <div className="flex text-sm text-text-secondary">
+              <span
+                className="relative rounded-md font-semibold text-accent-primary hover:text-accent-primary-hover"
+              >
+                <span>Tải lên một file</span>
+                <input ref={inputRef} id={id} name={id} type="file" className="sr-only" onChange={handleFileChange} accept={accept} />
+              </span>
+              <p className="pl-1">hoặc kéo và thả</p>
+            </div>
+            <p className="text-xs text-text-placeholder">{getAcceptHint()}</p>
+          </div>
+        </div>
       )}
       {isProcessing && (
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-20">
-            <i className="fas fa-spinner fa-spin text-2xl text-accent-primary"></i>
-            <p className="text-sm font-semibold text-accent-primary mt-2">Đang xử lý...</p>
+          <i className="fas fa-spinner fa-spin text-2xl text-accent-primary"></i>
+          <p className="text-sm font-semibold text-accent-primary mt-2">Đang xử lý...</p>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { Order, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import PdfThumbnail from '../ui/PdfThumbnail';
+import Button from '../ui/Button';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -101,12 +102,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
     const getActions = (status: string) => {
         const s = status.toLowerCase();
         return [
-            { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', className: 'btn-primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
-            { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', className: 'btn-warning', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
-            { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', className: 'btn-primary', condition: s === 'đã phê duyệt' },
-            { type: 'uploadInvoice', label: 'Tải Lên Hóa Đơn', icon: 'fa-upload', className: 'btn-success', condition: s === 'chờ ký hóa đơn' },
-            { type: 'resend', label: 'Gửi Lại Email', icon: 'fa-paper-plane', className: 'btn-secondary', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
-            { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', className: 'btn-danger', condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
+            { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', variant: 'primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
+            { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', variant: 'secondary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
+            { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', variant: 'primary', condition: s === 'đã phê duyệt' },
+            { type: 'uploadInvoice', label: 'Tải Lên Hóa Đơn', icon: 'fa-upload', variant: 'success', condition: s === 'chờ ký hóa đơn' },
+            { type: 'resend', label: 'Gửi Lại Email', icon: 'fa-paper-plane', variant: 'secondary', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
+            { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', variant: 'danger', condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
         ].filter(a => a.condition);
     };
 
@@ -273,14 +274,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                 </div>
                                 <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
                                     {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => (
-                                        <button
+                                        <Button
                                             key={action.type}
                                             onClick={() => onAction(action.type as any, selectedOrder)}
-                                            className={`btn ${action.className} px-2.5 py-1 text-xs flex items-center gap-1.5 rounded whitespace-nowrap`}
+                                            variant={action.variant as any}
+                                            size="sm"
+                                            leftIcon={<i className={`fas ${action.icon}`}></i>}
+                                            className="whitespace-nowrap"
                                         >
-                                            <i className={`fas ${action.icon}`}></i>
-                                            <span className="">{action.label}</span>
-                                        </button>
+                                            {action.label}
+                                        </Button>
                                     ))}
                                 </div>
                             </div >
@@ -349,17 +352,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">PO PIN</h3>
                                                 {!isEditing ? (
-                                                    <button onClick={() => setIsEditing(true)} className="text-accent-primary hover:text-accent-primary-hover text-xs font-medium">
-                                                        <i className="fas fa-edit mr-1"></i> Sửa
-                                                    </button>
+                                                    <Button onClick={() => setIsEditing(true)} variant="ghost" size="sm" className="!p-1 h-auto text-accent-primary hover:text-accent-primary-hover" leftIcon={<i className="fas fa-edit"></i>}>
+                                                        Sửa
+                                                    </Button>
                                                 ) : (
                                                     <div className="flex gap-2">
-                                                        <button onClick={handleSaveEdit} disabled={isSaving} className="text-success hover:text-success-hover text-xs font-medium">
-                                                            <i className="fas fa-save mr-1"></i> Lưu
-                                                        </button>
-                                                        <button onClick={() => setIsEditing(false)} disabled={isSaving} className="text-danger hover:text-danger-hover text-xs font-medium">
-                                                            <i className="fas fa-times mr-1"></i> Hủy
-                                                        </button>
+                                                        <Button onClick={handleSaveEdit} disabled={isSaving} variant="success" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-save"></i>}>
+                                                            Lưu
+                                                        </Button>
+                                                        <Button onClick={() => setIsEditing(false)} disabled={isSaving} variant="danger" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-times"></i>}>
+                                                            Hủy
+                                                        </Button>
                                                     </div>
                                                 )}
                                             </div>

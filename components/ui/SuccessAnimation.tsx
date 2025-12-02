@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import Button from './Button';
 import animationDataUrl from '../../pictures/message_sent.json?url';
 
 interface SuccessAnimationProps {
@@ -45,7 +46,7 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ title, message, onC
     const animationClass = isExiting ? 'toast-hidden' : 'toast-visible';
 
     return (
-        <div 
+        <div
             className={`toast-container ${animationClass}`}
             role="alert"
             aria-live="assertive"
@@ -69,9 +70,7 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ title, message, onC
                     {message && <p className="toast-message">{message}</p>}
                 </div>
                 <div className="toast-close">
-                    <button onClick={handleClose}>
-                        <i className="fas fa-times"></i>
-                    </button>
+                    <Button onClick={handleClose} variant="ghost" className="text-white/80 hover:text-white !p-0 w-8 h-8 rounded-full flex items-center justify-center"><i className="fas fa-times text-xl"></i></Button>
                 </div>
             </div>
         </div>

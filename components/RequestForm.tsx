@@ -6,6 +6,7 @@ import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, i
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
+import Button from './ui/Button';
 
 
 interface ImageSource {
@@ -25,7 +26,7 @@ interface RequestFormProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
-const InputGroup: React.FC<{icon: string; children: React.ReactNode; label: string; htmlFor: string;}> = ({ icon, children, label, htmlFor }) => (
+const InputGroup: React.FC<{ icon: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children, label, htmlFor }) => (
     <div>
         <label htmlFor={htmlFor} className="block text-sm font-medium text-text-secondary mb-1.5">{label}</label>
         <div className="relative">
@@ -35,7 +36,7 @@ const InputGroup: React.FC<{icon: string; children: React.ReactNode; label: stri
     </div>
 );
 
-const SectionHeader: React.FC<{icon: string, title: string}> = ({ icon, title }) => (
+const SectionHeader: React.FC<{ icon: string, title: string }> = ({ icon, title }) => (
     <div className="flex items-center gap-3 mb-4 border-b border-border-primary pb-2">
         <i className={`fas ${icon} text-accent-secondary text-lg`}></i>
         <h3 className="text-base font-bold text-text-primary">{title}</h3>
@@ -62,10 +63,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
     const [warningMessage, setWarningMessage] = useState('');
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     const [availableExteriors] = useState<string[]>(defaultExteriors);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
-    
+
     const inputClass = "peer w-full pl-11 pr-4 py-2.5 rounded-lg focus:outline-none transition-all placeholder:text-text-placeholder futuristic-input";
     const isPreFilled = !!initialVehicle;
 
@@ -84,7 +85,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        
+
         setFormData(prev => {
             const newState = { ...prev, [name]: value };
             if (name === 'dong_xe') {
@@ -114,7 +115,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
             }
         }
         setAvailableInteriors(interiors);
-        if (interiors.length === 1) setFormData(prev => ({...prev, noi_that: interiors[0]}));
+        if (interiors.length === 1) setFormData(prev => ({ ...prev, noi_that: interiors[0] }));
     }, [formData.dong_xe, formData.phien_ban]);
 
     const handleFileSelect = useCallback(async (file: File | null) => {
@@ -139,7 +140,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
             } finally { setIsProcessingOcr(false); }
         }
     }, [showToast]);
-    
+
     const handleClearForm = () => {
         setFormData({
             ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', vin: '',
@@ -165,7 +166,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
 
     const handleConfirmSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        
+
         // --- Full Form Validation ---
         const requiredFields: (keyof typeof formData)[] = ['ten_khach_hang', 'so_don_hang', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'];
         if (requiredFields.some(field => !formData[field])) {
@@ -212,10 +213,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
 
     return (
         <form onSubmit={handleConfirmSubmit} className="flex flex-col h-full relative">
-            
+
             {/* Added Snow Overlay for "Icy" feel on the form itself */}
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-2xl opacity-20" aria-hidden="true">
-                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/snow.png')]"></div>
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/snow.png')]"></div>
             </div>
 
             {isPreFilled && (
@@ -247,30 +248,32 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                         </div>
                     )}
                 </section>
-                
+
                 {/* Column 2: Customer Info & Docs */}
                 <section className="lg:border-l lg:border-r border-border-primary/50 lg:px-6 xl:px-8">
                     <SectionHeader icon="fa-user-circle" title="2. Thông tin & Chứng từ" />
                     <div className="space-y-4">
-                       <InputGroup icon="fa-user-tie" label="Tên khách hàng" htmlFor="ten_khach_hang"><input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" /></InputGroup>
-                       <InputGroup icon="fa-barcode" label="Số đơn hàng" htmlFor="so_don_hang"><input id="so_don_hang" type="text" name="so_don_hang" value={formData.so_don_hang} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng. Yêu cầu định dạng: Nxxxxx-XXX-yy-mm-zzzz')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="VD: N12345-VSO-24-01-0001" /></InputGroup>
+                        <InputGroup icon="fa-user-tie" label="Tên khách hàng" htmlFor="ten_khach_hang"><input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" /></InputGroup>
+                        <InputGroup icon="fa-barcode" label="Số đơn hàng" htmlFor="so_don_hang"><input id="so_don_hang" type="text" name="so_don_hang" value={formData.so_don_hang} onChange={handleInputChange} required pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$" title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz" onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Số đơn hàng không đúng định dạng. Yêu cầu định dạng: Nxxxxx-XXX-yy-mm-zzzz')} onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')} className={inputClass} placeholder="VD: N12345-VSO-24-01-0001" /></InputGroup>
                     </div>
                     <div className="mt-4">
                         <div className="flex justify-between items-center mb-1.5">
                             <label className="block text-sm font-medium text-text-secondary">Ủy nhiệm chi</label>
-                            <button
+                            <Button
                                 type="button"
                                 onClick={handleShowSample}
-                                className="text-xs text-accent-secondary hover:underline hover:text-accent-primary-hover focus:outline-none"
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-accent-secondary hover:underline hover:text-accent-primary-hover !p-0 !h-auto"
                             >
                                 <i className="fas fa-info-circle mr-1"></i>
                                 Xem mẫu
-                            </button>
+                            </Button>
                         </div>
                         <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus} showToast={showToast} />
                     </div>
                 </section>
-                
+
                 {/* Column 3: Preview & Verification */}
                 <section>
                     <SectionHeader icon="fa-eye" title="3. Xem trước & Xác thực" />
@@ -304,12 +307,26 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
             </div>
 
             <div className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-end items-center gap-3 pt-4 mt-4 sm:pt-6 sm:mt-6 border-t border-border-primary relative z-10">
-                <button type="button" onClick={handleClearForm} disabled={isSubmitting || isPreFilled} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-1 px-4 py-2.5 text-sm font-semibold text-text-primary bg-white border border-border-primary rounded-md shadow-sm transition-all duration-150 hover:bg-surface-hover hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
-                    <i className="fas fa-eraser mr-2"></i><span>Xóa Nháp</span>
-                </button>
-                <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-2 px-4 py-2.5 text-sm font-semibold text-text-primary bg-white border border-border-primary rounded-md shadow-sm transition-all duration-150 hover:bg-surface-accent hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed">
-                    {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang gửi...</> : <><i className="fas fa-paper-plane mr-2"></i> Xác nhận & Gửi</>}
-                </button>
+                <Button
+                    type="button"
+                    onClick={handleClearForm}
+                    disabled={isSubmitting || isPreFilled}
+                    variant="secondary"
+                    className="w-full sm:w-auto order-2 sm:order-1"
+                    leftIcon={<i className="fas fa-eraser"></i>}
+                >
+                    Xóa Nháp
+                </Button>
+                <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    isLoading={isSubmitting}
+                    variant="primary"
+                    className="w-full sm:w-auto order-1 sm:order-2"
+                    leftIcon={!isSubmitting ? <i className="fas fa-paper-plane"></i> : undefined}
+                >
+                    Xác nhận & Gửi
+                </Button>
             </div>
         </form>
     );

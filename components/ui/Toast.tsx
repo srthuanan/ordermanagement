@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import Button from './Button';
 
 interface ToastProps {
     show: boolean; // This prop is always true when the component is mounted
@@ -53,7 +54,7 @@ const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }
     const animationClass = isExiting ? 'toast-hidden' : 'toast-visible';
 
     return (
-        <div 
+        <div
             className={`toast-container ${animationClass}`}
             role="alert"
             aria-live="assertive"
@@ -68,10 +69,8 @@ const Toast: React.FC<ToastProps> = ({ title, message, type, onClose, duration }
                     {message && <p className="toast-message">{message}</p>}
                 </div>
                 {type !== 'loading' && (
-                     <div className="toast-close">
-                        <button onClick={handleClose}>
-                            <i className="fas fa-times"></i>
-                        </button>
+                    <div className="toast-close">
+                        <Button onClick={handleClose} variant="ghost" className="text-white/80 hover:text-white !p-0 w-6 h-6 rounded-full flex items-center justify-center"><i className="fas fa-times"></i></Button>
                     </div>
                 )}
             </div>

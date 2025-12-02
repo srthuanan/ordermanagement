@@ -3,6 +3,7 @@ import moment from 'moment';
 import { Notification, NotificationType } from '../../types';
 import logoxmasImg from '../../pictures/logoxmas.png';
 import yeucauAnimationUrl from '../../pictures/yeucau.json?url';
+import Button from '../ui/Button';
 
 interface HeaderProps {
     isSidebarCollapsed: boolean;
@@ -62,14 +63,14 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 <div ref={notificationContainerRef} className="relative notification-bell-container">
-                    <button onClick={toggleNotificationPanel} className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-accent-primary transition-colors" title="Thông báo">
+                    <Button onClick={toggleNotificationPanel} variant="ghost" className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center !p-0" title="Thông báo">
                         <i className="fa-solid fa-bell"></i>
                         {unreadCount > 0 && (<span id="notification-badge" className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>)}
-                    </button>
+                    </Button>
                     <div className={`notification-panel ${isNotificationPanelOpen ? 'visible' : ''}`}>
                         <div className="notification-panel-header flex justify-between items-center">
                             <span>Thông Báo</span>
-                            {unreadCount > 0 && <button onClick={handleMarkAllAsRead} className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover transition-colors">Đánh dấu đã đọc tất cả</button>}
+                            {unreadCount > 0 && <Button onClick={handleMarkAllAsRead} variant="ghost" size="sm" className="text-xs font-medium text-accent-secondary hover:text-accent-primary-hover transition-colors !h-auto !p-0">Đánh dấu đã đọc tất cả</Button>}
                         </div>
                         <div className="notification-list">
                             {notifications.length > 0 ? (
@@ -90,9 +91,9 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                     </div>
                 </div>
-                <button onClick={onLogout} className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-danger transition-colors" title="Đăng xuất">
+                <Button onClick={onLogout} variant="ghost" className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:text-danger !p-0" title="Đăng xuất">
                     <i className="fa-solid fa-sign-out-alt"></i>
-                </button>
+                </Button>
             </div>
         </header>
     );

@@ -3,6 +3,7 @@ import { StockVehicle } from '../../types';
 import moment from 'moment';
 import CarImage from './CarImage'; // Import the new component
 import StatusBadge from './StatusBadge';
+import Button from './Button';
 import { getExteriorColorStyle, getInteriorColorStyle, useModalBackground } from '../../utils/styleUtils';
 
 const InfoRow: React.FC<{ label: string; value?: string | number; isMono?: boolean, icon: string, valueStyle?: React.CSSProperties }> = ({ label, value, isMono, icon, valueStyle }) => (
@@ -130,113 +131,195 @@ const StockVehicleDetailModal: React.FC<StockVehicleDetailModalProps> = ({ isOpe
     const handleRelease = () => { onReleaseCar(vehicle.VIN); onClose(); };
     const handleCreateRequest = () => { onCreateRequestForVehicle(vehicle); onClose(); };
 
-    const renderActions = () => {
+    const getActions = () => {
         if (isProcessing) {
             return <div className="flex-grow flex items-center justify-center"><i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i></div>;
         }
-        if (isAvailable) {
+        if (vehicle["Trạng thái"] === 'Chưa ghép') {
             return (
-                <button onClick={handleHold} className="btn-primary"><i className="fas fa-stopwatch-20 mr-2"></i>Giữ Xe</button>
+                <Button onClick={handleHold} variant="primary" leftIcon={<i className="fas fa-stopwatch-20"></i>}>
+                    Giữ Xe
+                </Button>
             );
         }
-        if (isHeldByCurrentUser) {
-            return (
-                <>
-                    <button onClick={handleRelease} className="btn-danger"><i className="fas fa-undo mr-2"></i>Hủy Giữ</button>
-                    <button onClick={handleCreateRequest} className="btn-primary"><i className="fas fa-link mr-2"></i>Tạo Yêu Cầu</button>
-                </>
-            );
+
+        if (vehicle["Trạng thái"] === 'Đang giữ') {
+            const isHeldByCurrentUser = vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
+            if (isHeldByCurrentUser) {
+                return (
+                    <div className="flex gap-2">
+                        <Button onClick={handleRelease} variant="danger" leftIcon={<i className="fas fa-undo"></i>}>
+                            Hủy Giữ
+                        </Button>
+                        <Button onClick={handleCreateRequest} variant="primary" leftIcon={<i className="fas fa-link"></i>}>
+                            Tạo Yêu Cầu
+                        </Button>
+                    </div>
+                );
+            } else if (isAdmin) {
+                return <Button onClick={handleRelease} variant="danger" leftIcon={<i className="fas fa-user-shield"></i>}>Admin Hủy Giữ</Button>;
+            }
         }
-        if (isHeldByOther && isAdmin) {
-            return <button onClick={handleRelease} className="btn-danger"><i className="fas fa-user-shield mr-2"></i>Admin Hủy Giữ</button>;
+
+        if (vehicle["Trạng thái"] === 'Đã ghép') {
+            if (isAdmin) {
+                return <Button onClick={handleRelease} variant="danger" leftIcon={<i className="fas fa-user-shield"></i>}>Admin Hủy Giữ</Button>;
+            }
         }
+
         return null;
     };
 
-
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            {hasPrev && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); onNavigate('prev'); }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
-                    title="Xe trước"
-                >
-                    <i className="fas fa-chevron-left"></i>
-                </button>
-            )}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
             <div
-                className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl animate-fade-in-scale-up"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-up"
                 onClick={e => e.stopPropagation()}
-                style={bgStyle}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
-                <header className="flex items-start justify-between p-5 border-b border-border-primary">
-                    <div>
-                        <h2 className="text-xl font-bold text-text-primary">Chi Tiết Xe</h2>
-                        <p className="text-sm font-semibold text-accent-secondary mt-0.5">{vehicle.VIN}</p>
-                    </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
-                        <i className="fas fa-times"></i>
-                    </button>
-                </header>
-                <main className="p-6">
-                    <div className="flex items-center justify-center h-48 mb-6">
-                        <CarImage
-                            model={vehicle['Dòng xe']}
-                            exteriorColor={vehicle['Ngoại thất']}
-                            className="h-full w-auto object-contain"
-                            alt={vehicle['Dòng xe']}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                        <InfoRow label="Dòng xe" value={vehicle['Dòng xe']} icon="fa-car-side" />
-                        <InfoRow label="Phiên bản" value={vehicle['Phiên bản']} icon="fa-cogs" />
-                        <InfoRow label="Ngoại thất" value={vehicle['Ngoại thất']} icon="fa-palette" valueStyle={getExteriorColorStyle(vehicle['Ngoại thất'])} />
-                        <InfoRow label="Nội thất" value={vehicle['Nội thất']} icon="fa-chair" valueStyle={getInteriorColorStyle(vehicle['Nội thất'])} />
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t border-border-primary">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-text-secondary">Trạng thái</span>
-                            <StatusBadge status={vehicle['Trạng thái']} />
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-border-secondary bg-surface-ground">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-accent-primary/10 flex items-center justify-center text-accent-primary">
+                            <i className="fas fa-car text-xl"></i>
                         </div>
-                        {vehicle['Trạng thái'] === 'Đang giữ' && (
-                            <div className="mt-3 space-y-2 text-sm">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-text-secondary">Người giữ:</span>
-                                    <span className="font-semibold text-text-primary">{vehicle['Người Giữ Xe']}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-text-secondary">Hết hạn:</span>
-                                    {vehicle['Thời Gian Hết Hạn Giữ'] ?
-                                        <HoldCountdown expirationTime={vehicle['Thời Gian Hết Hạn Giữ']} /> :
-                                        <span className="font-semibold text-text-primary">N/A</span>
-                                    }
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">Chi Tiết Xe Kho</h2>
+                            <div className="flex items-center gap-2 text-xs text-text-secondary">
+                                <span className="font-mono font-bold text-accent-primary">{vehicle.VIN}</span>
+                                <span>•</span>
+                                <span>{vehicle['Dòng xe']}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <Button onClick={onClose} variant="ghost" className="!p-0 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
+                        <i className="fas fa-times text-lg"></i>
+                    </Button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Left Column: Image & Basic Info */}
+                        <div className="space-y-6">
+                            {/* Car Image */}
+                            <div className="bg-gradient-to-br from-surface-ground to-white rounded-xl p-4 border border-border-secondary flex items-center justify-center relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                                <CarImage
+                                    model={vehicle['Dòng xe']}
+                                    exteriorColor={vehicle['Ngoại thất']}
+                                    className="w-full h-48 object-contain relative z-10 transform group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute bottom-2 right-2">
+                                    <StatusBadge status={vehicle["Trạng thái"]} />
                                 </div>
                             </div>
-                        )}
-                    </div>
 
-                </main>
-                <footer className="p-4 border-t flex justify-between items-center gap-3 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} className="btn-secondary">Đóng</button>
-                    <div className="flex items-center gap-3">
-                        {renderActions()}
+                            {/* Basic Specs */}
+                            <div className="bg-white rounded-xl border border-border-secondary p-4 shadow-sm">
+                                <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+                                    <i className="fas fa-info-circle text-accent-primary"></i>
+                                    Thông Tin Cơ Bản
+                                </h3>
+                                <div className="space-y-3">
+                                    <InfoRow label="Dòng xe" value={vehicle['Dòng xe']} icon="fa-car-side" />
+                                    <InfoRow label="Phiên bản" value={vehicle['Phiên bản']} icon="fa-code-branch" />
+                                    <InfoRow label="Năm SX" value={vehicle['Năm sản xuất']} icon="fa-calendar" />
+                                    <InfoRow label="Màu Ngoại thất" value={vehicle['Ngoại thất']} icon="fa-palette" valueStyle={getExteriorColorStyle(vehicle['Ngoại thất'])} />
+                                    <InfoRow label="Màu Nội thất" value={vehicle['Nội thất']} icon="fa-chair" valueStyle={getInteriorColorStyle(vehicle['Nội thất'])} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Detailed Info & History */}
+                        <div className="space-y-6">
+                            {/* Technical Details */}
+                            <div className="bg-white rounded-xl border border-border-secondary p-4 shadow-sm">
+                                <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+                                    <i className="fas fa-cogs text-accent-primary"></i>
+                                    Thông Số Kỹ Thuật
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <InfoRow label="Số VIN" value={vehicle.VIN} icon="fa-fingerprint" isMono />
+                                        <InfoRow label="Số Máy" value={vehicle['Số máy']} icon="fa-cogs" isMono />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <InfoRow label="Kho xe" value={vehicle['Kho xe']} icon="fa-warehouse" />
+                                        <InfoRow label="Vị trí" value={vehicle['Vị trí']} icon="fa-map-marker-alt" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status & History */}
+                            <div className="bg-white rounded-xl border border-border-secondary p-4 shadow-sm">
+                                <h3 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
+                                    <i className="fas fa-history text-accent-primary"></i>
+                                    Trạng Thái & Lịch Sử
+                                </h3>
+                                <div className="space-y-3">
+                                    <InfoRow label="Ngày nhập kho" value={moment(vehicle['Ngày nhập kho']).format('DD/MM/YYYY')} icon="fa-calendar-check" />
+                                    <InfoRow label="Tuổi kho" value={`${moment().diff(moment(vehicle['Ngày nhập kho']), 'days')} ngày`} icon="fa-hourglass-half" />
+                                    {vehicle["Trạng thái"] === 'Đang giữ' && (
+                                        <>
+                                            <div className="flex items-center justify-between text-sm py-2">
+                                                <span className="text-text-secondary">Người giữ:</span>
+                                                <span className="font-semibold text-text-primary">{vehicle['Người Giữ Xe']}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm py-2">
+                                                <span className="text-text-secondary">Hết hạn:</span>
+                                                {vehicle['Thời Gian Hết Hạn Giữ'] ?
+                                                    <HoldCountdown expirationTime={vehicle['Thời Gian Hết Hạn Giữ']} /> :
+                                                    <span className="font-semibold text-text-primary">N/A</span>
+                                                }
+                                            </div>
+                                        </>
+                                    )}
+                                    {vehicle['Ghi chú'] && (
+                                        <div className="mt-2 pt-2 border-t border-border-secondary/50">
+                                            <label className="text-xs text-text-secondary block mb-1">Ghi chú</label>
+                                            <p className="text-sm text-text-primary bg-surface-ground p-2 rounded-lg italic">
+                                                "{vehicle['Ghi chú']}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </footer>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-border-secondary bg-surface-ground flex justify-between items-center">
+                    <Button onClick={onClose} variant="secondary">
+                        Đóng
+                    </Button>
+                    <div className="flex gap-2">
+                        {getActions()}
+                    </div>
+                </div>
             </div>
             {hasNext && (
-                <button
+                <Button
                     onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
+                    variant="ghost"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex !p-0"
                     title="Xe tiếp theo"
                 >
                     <i className="fas fa-chevron-right"></i>
-                </button>
+                </Button>
+            )}
+            {hasPrev && (
+                <Button
+                    onClick={(e) => { e.stopPropagation(); onNavigate('prev'); }}
+                    variant="ghost"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex !p-0"
+                    title="Xe trước"
+                >
+                    <i className="fas fa-chevron-left"></i>
+                </Button>
             )}
         </div>
     );

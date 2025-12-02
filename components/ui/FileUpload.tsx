@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import Button from './Button';
 import { compressImage } from '../../services/ocrService';
 
 interface FileUploadProps {
@@ -31,16 +32,16 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
       setIsCompressing(true);
       try {
         const compressedFile = await compressImage(file);
-        
+
         setSelectedFile(compressedFile);
         onFileSelect(compressedFile); // This triggers the OCR in the parent component
-        
+
         const reader = new FileReader();
         reader.onloadend = () => {
           setPreviewUrl(reader.result as string);
         };
         reader.readAsDataURL(compressedFile);
-        
+
       } catch (error) {
         console.error("Image compression failed:", error);
         showToast('Lỗi Nén Ảnh', 'Không thể xử lý ảnh của bạn. Vui lòng thử ảnh khác.', 'error');
@@ -80,20 +81,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
     inputRef.current?.click();
   };
 
-    const handleRemove = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        handleFile(null);
-    }
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFile(null);
+  }
 
-    const getOcrStatusClass = () => {
-        if (ocrStatus.includes('Lỗi') || ocrStatus.includes('Không tìm thấy')) {
-            return 'text-danger';
-        }
-        if (ocrStatus.includes('Đã điền')) {
-            return 'text-success font-medium';
-        }
-        return 'text-accent-secondary';
+  const getOcrStatusClass = () => {
+    if (ocrStatus.includes('Lỗi') || ocrStatus.includes('Không tìm thấy')) {
+      return 'text-danger';
     }
+    if (ocrStatus.includes('Đã điền')) {
+      return 'text-success font-medium';
+    }
+    return 'text-accent-secondary';
+  }
 
   return (
     <div
@@ -110,42 +111,43 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
       <div
         className={`relative w-full h-48 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
                     ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}
-                    ${selectedFile ? 'border-solid border-accent-primary/50' : ''}
-                  `}
+                    ${selectedFile ? 'border-solid border-accent-primary/50' : ''}`}
         onClick={onButtonClick}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
         {!selectedFile && (
-             <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
-                <i className="fas fa-cloud-upload-alt fa-3x mb-2 group-hover:text-accent-primary"></i>
-                <p className="font-semibold text-text-primary">Kéo & thả hoặc nhấn để tải ảnh</p>
-                <p className="text-xs">Chấp nhận file ảnh (tối đa 10MB)</p>
-            </div>
+          <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
+            <i className="fas fa-cloud-upload-alt fa-3x mb-2 group-hover:text-accent-primary"></i>
+            <p className="font-semibold text-text-primary">Kéo & thả hoặc nhấn để tải ảnh</p>
+            <p className="text-xs">Chấp nhận file ảnh (tối đa 10MB)</p>
+          </div>
         )}
 
         {selectedFile && previewUrl && (
-            <>
+          <>
             <div className="absolute inset-0 p-2 z-0">
-                 <img src={previewUrl} alt="Preview" className="w-full h-full object-contain rounded-md" />
+              <img src={previewUrl} alt="Preview" className="w-full h-full object-contain rounded-md" />
             </div>
             <div className="absolute inset-0 bg-black/40 hover:bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-lg cursor-pointer z-10">
-                <span className="text-white font-bold">Thay đổi ảnh</span>
-            </div>
-             <button
+              <span className="text-white font-bold">Thay đổi ảnh</span>
+              <Button
+                type="button"
                 onClick={handleRemove}
-                className="absolute top-2 right-2 z-20 w-8 h-8 bg-danger/80 text-white rounded-full flex items-center justify-center hover:bg-danger transition-all duration-200 hover:scale-110"
-                title="Xóa ảnh"
-            >
+                disabled={isProcessing}
+                variant="ghost"
+                className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors disabled:opacity-50 !p-0"
+              >
                 <i className="fas fa-times"></i>
-            </button>
-            </>
+              </Button>
+            </div>
+          </>
         )}
       </div>
       {(isCompressing || isProcessing || ocrStatus) && (
-        <p className={`mt-2 text-sm text-center italic ${getOcrStatusClass()}`}>
-            {isCompressing ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang nén ảnh...</> : (isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>{ocrStatus}</> : ocrStatus)}
+        <p className={`mt-2 text-sm text-center italic ${getOcrStatusClass()} `}>
+          {isCompressing ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang nén ảnh...</> : (isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>{ocrStatus}</> : ocrStatus)}
         </p>
       )}
     </div>

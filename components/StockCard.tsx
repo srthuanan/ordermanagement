@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
+import Button from './ui/Button';
 import CarImage from './ui/CarImage'; // Import the new component
 import StatusBadge from './ui/StatusBadge';
 import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
@@ -138,13 +139,13 @@ const StockCard: React.FC<StockCardProps> = ({
         if (isHeldByOther) {
             return (
                 <>
-                    <button disabled className="action-btn" title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}>
+                    <Button disabled variant="ghost" className="action-btn !p-0 w-8 h-8 rounded-full" title={`Đang được giữ bởi ${vehicle["Người Giữ Xe"]}`}>
                         <i className="fas fa-lock"></i>
-                    </button>
+                    </Button>
                     {isAdmin && (
-                        <button className="action-btn admin-release-action" onClick={(e) => { e.stopPropagation(); setConfirmAction({ action: 'release' }); }} title="Admin Hủy Giữ">
+                        <Button variant="danger" className="action-btn admin-release-action !p-0 w-8 h-8 rounded-full" onClick={(e) => { e.stopPropagation(); setConfirmAction({ action: 'release' }); }} title="Admin Hủy Giữ">
                             <i className="fas fa-user-shield"></i>
-                        </button>
+                        </Button>
                     )}
                 </>
             );

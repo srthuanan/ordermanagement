@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Order } from '../../types';
 import animationDataUrl from '../../pictures/loading-animation.json?url';
+import Button from './Button';
 
 interface ActionMenuProps {
   order: Order;
@@ -38,7 +39,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   const generalStatus = (order["Kết quả"] || "chưa ghép").toLowerCase().trim().normalize('NFC');
   const vcStatus = (order["Trạng thái VC"] || "").toLowerCase().trim().normalize('NFC');
   const status = vcStatus || generalStatus;
-  
+
   const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(generalStatus);
   const canRequestInvoice = generalStatus === 'đã ghép';
   const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
@@ -63,57 +64,61 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
     { label: 'Bổ Sung File', icon: 'fa-edit text-orange-500', action: onSupplement, condition: canAddSupplement, title: 'Bổ sung hoặc thay thế tệp đã gửi' },
     { label: 'Yêu Cầu Cấp VC', icon: 'fa-id-card text-blue-500', action: onRequestVC!, condition: !!onRequestVC && canRequestVC, title: 'Yêu cầu cấp tài khoản VinClub' },
     { label: 'Xác Thực UNC VC', icon: 'fa-check text-teal-500', action: onConfirmVC!, condition: !!onConfirmVC && canConfirmVC, title: 'Xác thực đã nhận UNC cho VinClub' },
-    { label: 'Tải Hóa Đơn', icon: 'fa-download text-sky-500', action: (o: Order) => { if(o.LinkHoaDonDaXuat) window.open(o.LinkHoaDonDaXuat, '_blank'); }, condition: !!order.LinkHoaDonDaXuat, title: 'Tải về hóa đơn đã xuất' },
+    { label: 'Tải Hóa Đơn', icon: 'fa-download text-sky-500', action: (o: Order) => { if (o.LinkHoaDonDaXuat) window.open(o.LinkHoaDonDaXuat, '_blank'); }, condition: !!order.LinkHoaDonDaXuat, title: 'Tải về hóa đơn đã xuất' },
     { label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt text-danger', action: onCancel, condition: canCancel, isDanger: true, title: 'Hủy yêu cầu ghép xe này' }
   ].filter(item => item.condition);
 
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
-      <button
+      <Button
         onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen); }}
-        className={`group w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50
-                   ${isOpen 
-                     ? 'bg-accent-primary/10' 
-                     : 'bg-transparent hover:bg-surface-hover'}`}
+        variant="ghost"
+        className={`group w-9 h-9 flex items-center justify-center rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-card focus-visible:ring-accent-primary/50 !p-0
+                   ${isOpen
+            ? 'bg-accent-primary/10'
+            : 'bg-transparent hover:bg-surface-hover'}`}
         aria-haspopup="true"
         aria-expanded={isOpen}
         aria-controls="action-menu"
         title="Tùy chọn"
       >
         <lottie-player
-            src={animationDataUrl}
-            background="transparent"
-            speed="1"
-            style={{ width: '28px', height: '28px' }}
-            loop
-            autoplay
-            className={`transition-all duration-300 group-hover:scale-110 group-hover:[filter:drop-shadow(0_0_4px_rgba(66,165,245,0.7))] ${isOpen ? 'scale-105 [filter:drop-shadow(0_0_2px_rgba(66,165,245,0.7))]' : ''}`}
+          src={animationDataUrl}
+          background="transparent"
+          speed="1"
+          style={{ width: '28px', height: '28px' }}
+          loop
+          autoplay
+          className={`transition-all duration-300 group-hover:scale-110 group-hover:[filter:drop-shadow(0_0_4px_rgba(66,165,245,0.7))] ${isOpen ? 'scale-105 [filter:drop-shadow(0_0_2px_rgba(66,165,245,0.7))]' : ''}`}
         >
         </lottie-player>
-      </button>
+      </Button>
 
       {isOpen && (
-        <div 
-            id="action-menu"
-            className="origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-2xl bg-surface-overlay border border-border-primary/70 z-30 focus:outline-none animate-fade-in-scale-up" 
-            style={{animationDuration: '0.15s'}}
+        <div
+          id="action-menu"
+          className="origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-2xl bg-surface-overlay border border-border-primary/70 z-30 focus:outline-none animate-fade-in-scale-up"
+          style={{ animationDuration: '0.15s' }}
         >
           <div className="p-1.5" role="menu" aria-orientation="vertical">
             {menuItems.map((item) => (
-                <React.Fragment key={item.label}>
-                    {item.isDanger && menuItems.some(i => !i.isDanger && i.condition) && <div className="border-t border-border-primary/70 my-1 mx-1.5"></div>}
-                    <button
-                      onClick={(e) => handleAction(item.action, e)}
-                      title={item.title}
-                      className={`flex items-center w-full text-left px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 
-                                ${item.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
-                      role="menuitem"
-                    >
-                        <i className={`fas ${item.icon} fa-fw mr-3 w-5 text-center text-base`}></i>
-                        <span>{item.label}</span>
-                    </button>
-                </React.Fragment>
+              <React.Fragment key={item.label}>
+                {item.isDanger && menuItems.some(i => !i.isDanger && i.condition) && <div className="border-t border-border-primary/70 my-1 mx-1.5"></div>}
+                {item.isDanger && menuItems.some(i => !i.isDanger && i.condition) && <div className="border-t border-border-primary/70 my-1 mx-1.5"></div>}
+                <Button
+                  onClick={(e) => handleAction(item.action, e)}
+                  title={item.title}
+                  variant={item.isDanger ? 'danger' : 'ghost'}
+                  fullWidth
+                  className={`justify-start px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 
+                                ${item.isDanger ? 'hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
+                  role="menuitem"
+                  leftIcon={<i className={`fas ${item.icon} fa-fw w-5 text-center text-base mr-1`}></i>}
+                >
+                  <span>{item.label}</span>
+                </Button>
+              </React.Fragment>
             ))}
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import moment from 'moment';
 import { Order, StockVehicle, ActionType } from '../../types';
 import CarImage from '../ui/CarImage';
+import Button from '../ui/Button';
 
 
 interface MatchingCockpitViewProps {
@@ -400,12 +401,14 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <button
+                                                            <Button
                                                                 onClick={() => onAction('pair', selectedOrder, { vin: car.VIN })}
-                                                                className="btn-primary px-4 py-2 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0"
+                                                                variant="primary"
+                                                                className="opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 shadow-sm"
+                                                                rightIcon={<i className="fas fa-link"></i>}
                                                             >
-                                                                Ghép Ngay <i className="fas fa-link ml-1"></i>
-                                                            </button>
+                                                                Ghép Ngay
+                                                            </Button>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -480,15 +483,14 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
 
                                                     {/* Action */}
                                                     <div>
-                                                        <button
+                                                        <Button
                                                             onClick={() => onAction('unmatch', selectedOrder)}
-                                                            className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded-lg bg-white border border-danger/20 text-danger text-[10px] md:text-xs font-medium shadow-sm hover:bg-danger hover:text-white hover:shadow-md hover:border-transparent transition-all duration-300 group"
+                                                            variant="danger"
+                                                            size="sm"
+                                                            leftIcon={<div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center"><i className="fas fa-unlink text-[10px]"></i></div>}
                                                         >
-                                                            <div className="w-5 h-5 rounded-full bg-danger/10 text-danger flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors">
-                                                                <i className="fas fa-unlink text-[10px]"></i>
-                                                            </div>
-                                                            <span>Hủy Ghép Xe</span>
-                                                        </button>
+                                                            Hủy Ghép Xe
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             </div>

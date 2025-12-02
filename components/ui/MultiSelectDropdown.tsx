@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import Button from './Button';
 
 // FIX: Added and exported DropdownFilterConfig interface to be used by other components.
 export interface DropdownFilterConfig {
@@ -156,12 +157,13 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
             )}
           </ul>
           <div className="p-2 border-t border-border-primary flex justify-between">
-            <button onClick={handleClearAll} className="text-xs font-semibold text-danger hover:underline">Xóa tất cả</button>
-            <button onClick={() => setIsOpen(false)} className="px-3 py-1 bg-accent-primary text-white text-xs font-bold rounded-md hover:bg-accent-primary-hover">Áp dụng</button>
+            <Button onClick={handleClearAll} variant="ghost" size="sm" className="text-xs font-semibold text-danger hover:underline !p-0 !h-auto">Xóa tất cả</Button>
+            <Button onClick={() => setIsOpen(false)} variant="primary" size="sm" className="px-3 py-1 text-xs font-bold">Áp dụng</Button>
           </div>
         </div>
       )}
     </div>
   );
 };
+
 export default MultiSelectDropdown;

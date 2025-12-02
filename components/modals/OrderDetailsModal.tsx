@@ -5,6 +5,7 @@ import { Order } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import { getExteriorColorStyle, getInteriorColorStyle, useModalBackground } from '../../utils/styleUtils';
+import Button from '../ui/Button';
 
 moment.locale('vi');
 
@@ -157,15 +158,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
         }
     }
 
-    // --- NEUMORPHIC BUTTON STYLES ---
-    const btnBase = "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all duration-200 ease-in-out bg-surface-ground";
-    const btnEffect = "shadow-[4px_4px_8px_#d1d9e6,-4px_-4px_8px_#ffffff] hover:shadow-[6px_6px_12px_#d1d9e6,-6px_-6px_12px_#ffffff] hover:-translate-y-px active:shadow-[inset_2px_2px_5px_#d1d9e6,inset_-2px_-2px_5px_#ffffff] active:translate-y-0.5";
 
-    const btnClose = `${btnBase} ${btnEffect} text-text-secondary hover:text-text-primary`;
-    const btnEdit = `${btnBase} ${btnEffect} text-blue-700 hover:text-blue-800`;
-    const btnCancel = `${btnBase} ${btnEffect} text-red-700 hover:text-red-800`;
-    const btnPrimary = `${btnBase} ${btnEffect} text-accent-primary hover:text-accent-primary-hover font-bold`;
-    const btnDownload = `${btnBase} ${btnEffect} text-gray-700 hover:text-gray-800`;
 
     // Swipe Navigation Logic
     const minSwipeDistance = 50;
@@ -284,26 +277,27 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, o
                 </main>
 
                 <footer className="flex-shrink-0 flex items-center justify-end flex-wrap gap-4 p-5 border-t border-border-primary bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} className={btnClose}>Đóng</button>
+                    <Button onClick={onClose} variant="secondary">Đóng</Button>
                     {canDownloadInvoice && (
-                        <a href={order.LinkHoaDonDaXuat} target="_blank" rel="noopener noreferrer" className={btnDownload}><i className="fas fa-download"></i>Tải Hóa Đơn</a>
+                        <Button onClick={() => window.open(order.LinkHoaDonDaXuat, '_blank')} variant="secondary" className="text-gray-700 hover:text-gray-800" leftIcon={<i className="fas fa-download"></i>}>Tải Hóa Đơn</Button>
                     )}
-                    {canEdit && (<button onClick={() => handleAction(onEdit!)} className={btnEdit}><i className="fas fa-pencil-alt"></i>Chỉnh Sửa</button>)}
-                    {canCancel && (<button onClick={() => handleAction(onCancel)} className={btnCancel}><i className="fas fa-trash-alt"></i>Hủy Yêu Cầu</button>)}
-                    {canRequestInvoice && (<button onClick={() => handleAction(onRequestInvoice)} className={btnPrimary}><i className="fas fa-file-invoice-dollar"></i>Y/C Xuất Hóa Đơn</button>)}
-                    {canAddSupplement && (<button onClick={() => handleAction(onSupplement)} className={btnPrimary}><i className="fas fa-edit"></i>Bổ Sung File</button>)}
-                    {canRequestVC && (<button onClick={() => handleAction(onRequestVC)} className={btnPrimary}><i className="fas fa-id-card"></i>Y/C Cấp VC</button>)}
-                    {canConfirmVC && (<button onClick={() => handleAction(onConfirmVC)} className={btnPrimary}><i className="fas fa-check"></i>Xác Thực UNC VC</button>)}
+                    {canEdit && (<Button onClick={() => handleAction(onEdit!)} variant="secondary" className="text-blue-700 hover:text-blue-800" leftIcon={<i className="fas fa-pencil-alt"></i>}>Chỉnh Sửa</Button>)}
+                    {canCancel && (<Button onClick={() => handleAction(onCancel)} variant="danger" leftIcon={<i className="fas fa-trash-alt"></i>}>Hủy Yêu Cầu</Button>)}
+                    {canRequestInvoice && (<Button onClick={() => handleAction(onRequestInvoice)} variant="primary" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Y/C Xuất Hóa Đơn</Button>)}
+                    {canAddSupplement && (<Button onClick={() => handleAction(onSupplement)} variant="primary" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung File</Button>)}
+                    {canRequestVC && (<Button onClick={() => handleAction(onRequestVC)} variant="primary" leftIcon={<i className="fas fa-id-card"></i>}>Y/C Cấp VC</Button>)}
+                    {canConfirmVC && (<Button onClick={() => handleAction(onConfirmVC)} variant="primary" leftIcon={<i className="fas fa-check"></i>}>Xác Thực UNC VC</Button>)}
                 </footer>
             </div>
             {hasNext && (
-                <button
+                <Button
                     onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex"
+                    variant="ghost"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center text-2xl hover:bg-white/40 transition-colors z-10 hidden md:flex !p-0"
                     title="Yêu cầu tiếp theo"
                 >
                     <i className="fas fa-chevron-right"></i>
-                </button>
+                </Button>
             )}
         </div>
     );

@@ -2,6 +2,7 @@ import React from 'react';
 import RequestForm from '../RequestForm';
 import { AnalyticsData, Order, StockVehicle } from '../../types';
 import { useModalBackground } from '../../utils/styleUtils';
+import Button from '../ui/Button';
 
 interface ImageSource {
     src: string;
@@ -43,12 +44,13 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">Điền thông tin và tải lên Ủy nhiệm chi để gửi yêu cầu.</p>
                     </div>
-                    <button
+                    <Button
                         onClick={onClose}
-                        className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                        variant="ghost"
+                        className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors !p-0"
                     >
                         <i className="fas fa-times text-lg"></i>
-                    </button>
+                    </Button>
                 </header>
 
                 <main className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
