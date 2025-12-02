@@ -7,28 +7,28 @@ import Pagination from './ui/Pagination';
 import StockVehicleDetailModal from './ui/StockVehicleDetailModal';
 
 interface StockViewProps {
-  showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-  currentUser: string;
-  isAdmin: boolean;
-  onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
-  stockData: StockVehicle[];
-  isLoading: boolean;
-  error: string | null;
-  refetchStock: (isSilent?: boolean) => void;
-  highlightedVins: Set<string>;
-  onHoldCar: (vin: string) => void;
-  onReleaseCar: (vin: string) => void;
-  processingVin: string | null;
-  isSidebarCollapsed: boolean;
-  allOrders: Order[];
-  showOrderInAdmin: (order: Order, targetTab: AdminSubView) => void;
-  showAdminTab: (targetTab: AdminSubView) => void;
+    showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    currentUser: string;
+    isAdmin: boolean;
+    onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
+    stockData: StockVehicle[];
+    isLoading: boolean;
+    error: string | null;
+    refetchStock: (isSilent?: boolean) => void;
+    highlightedVins: Set<string>;
+    onHoldCar: (vin: string) => void;
+    onReleaseCar: (vin: string) => void;
+    processingVin: string | null;
+    isSidebarCollapsed: boolean;
+    allOrders: Order[];
+    showOrderInAdmin: (order: Order, targetTab: AdminSubView) => void;
+    showAdminTab: (targetTab: AdminSubView) => void;
 }
 
-const StockView: React.FC<StockViewProps> = ({ 
-    showToast, 
-    currentUser, 
-    isAdmin, 
+const StockView: React.FC<StockViewProps> = ({
+    showToast,
+    currentUser,
+    isAdmin,
     onCreateRequestForVehicle,
     stockData,
     isLoading,
@@ -84,7 +84,7 @@ const StockView: React.FC<StockViewProps> = ({
 
     const handleShowDetails = (vehicle: StockVehicle) => {
         const status = vehicle['Trạng thái'];
-    
+
         if (isAdmin && status !== 'Chưa ghép') {
             if (status === 'Đã ghép') {
                 const order = allOrders.find(o => o.VIN === vehicle.VIN);
@@ -122,7 +122,7 @@ const StockView: React.FC<StockViewProps> = ({
         if (filters.carModel.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.carModel.includes(vehicle["Dòng xe"]));
         }
-         if (filters.version.length > 0) {
+        if (filters.version.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
         }
         if (filters.status.length > 0) {
@@ -131,29 +131,29 @@ const StockView: React.FC<StockViewProps> = ({
         if (filters.exterior.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.exterior.includes(vehicle["Ngoại thất"]));
         }
-         if (filters.interior.length > 0) {
+        if (filters.interior.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.interior.includes(vehicle["Nội thất"]));
         }
-        
+
         // Sort: "Đang giữ" on top, then by user-selected column
         filteredVehicles.sort((a, b) => {
             const aIsHeld = a['Trạng thái'] === 'Đang giữ';
             const bIsHeld = b['Trạng thái'] === 'Đang giữ';
-    
+
             if (aIsHeld && !bIsHeld) return -1;
             if (!aIsHeld && bIsHeld) return 1;
-    
+
             if (sortConfig) {
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
-                
+
                 if (aValue === null || aValue === undefined || aValue === '') return 1;
                 if (bValue === null || bValue === undefined || bValue === '') return -1;
-    
+
                 if (aValue < bValue) { return sortConfig.direction === 'asc' ? -1 : 1; }
                 if (aValue > bValue) { return sortConfig.direction === 'asc' ? 1 : -1; }
             }
-            
+
             return 0; // if no sortConfig or values are equal
         });
 
@@ -162,22 +162,22 @@ const StockView: React.FC<StockViewProps> = ({
 
     const handleVehicleNavigation = (direction: 'prev' | 'next') => {
         if (!stockVehicleToView) return;
-    
+
         const currentIndex = processedData.findIndex(v => v.VIN === stockVehicleToView.VIN);
         if (currentIndex === -1) return;
-    
+
         let nextIndex;
         if (direction === 'prev') {
             nextIndex = currentIndex - 1;
         } else {
             nextIndex = currentIndex + 1;
         }
-    
+
         if (nextIndex >= 0 && nextIndex < processedData.length) {
             setStockVehicleToView(processedData[nextIndex]);
         }
     };
-    
+
     const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
 
     useEffect(() => {
@@ -190,12 +190,12 @@ const StockView: React.FC<StockViewProps> = ({
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return processedData.slice(startIndex, startIndex + PAGE_SIZE);
     }, [processedData, currentPage, PAGE_SIZE]);
-    
-    const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]))].sort(), [stockData]);
-    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]))].sort(), [stockData]);
-    const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]))].sort(), [stockData]);
-    const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]))].sort(), [stockData]);
-    const uniqueInteriors = useMemo(() => [...new Set(stockData.map(v => v["Nội thất"]))].sort(), [stockData]);
+
+    const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter(v => v))].sort(), [stockData]);
+    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
+    const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter(v => v))].sort(), [stockData]);
+    const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter(v => v))].sort(), [stockData]);
+    const uniqueInteriors = useMemo(() => [...new Set(stockData.map(v => v["Nội thất"]).filter(v => v))].sort(), [stockData]);
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
@@ -208,19 +208,19 @@ const StockView: React.FC<StockViewProps> = ({
     const renderContent = () => {
         const animationClass = 'animate-fade-in-up';
         if (isLoading && stockData.length === 0) {
-            return ( 
-                 <div className={`flex flex-col h-full ${animationClass}`}>
+            return (
+                <div className={`flex flex-col h-full ${animationClass}`}>
                     <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
                         <div className="flex flex-wrap items-center gap-2">
-                            <div className="skeleton-item h-12 rounded-full" style={{flexBasis: '320px', flexGrow: 1}}></div>
+                            <div className="skeleton-item h-12 rounded-full" style={{ flexBasis: '320px', flexGrow: 1 }}></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
                             <div className="skeleton-item h-12 w-32 rounded-full"></div>
                             <div className="skeleton-item h-12 w-12 !rounded-full ml-auto"></div>
                         </div>
                     </div>
-                     <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
+                    <div className="flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0">
                         <div className="flex-grow overflow-auto">
-                           <div className="p-4 space-y-2">
+                            <div className="p-4 space-y-2">
                                 {Array.from({ length: 7 }).map((_, i) => (
                                     <div key={i} className="skeleton-item h-12 w-full"></div>
                                 ))}
@@ -231,9 +231,9 @@ const StockView: React.FC<StockViewProps> = ({
             );
         }
         if (error) {
-            return ( <div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetchStock()} className="mt-6 btn-primary">Thử lại</button></div></div>);
+            return (<div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={() => refetchStock()} className="mt-6 btn-primary">Thử lại</button></div></div>);
         }
-        
+
         const commonProps = {
             sortConfig,
             onSort: handleSort,
@@ -248,14 +248,14 @@ const StockView: React.FC<StockViewProps> = ({
             highlightedVins,
             processingVin: processingVin
         };
-        
-        return ( 
+
+        return (
             <div className={`flex flex-col h-full ${animationClass}`}>
                 <div className="flex-shrink-0 bg-surface-card rounded-xl shadow-md border border-border-primary p-3 mb-2">
-                    <Filters 
-                        filters={filters} 
-                        onFilterChange={handleFilterChange} 
-                        onReset={handleResetFilters} 
+                    <Filters
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onReset={handleResetFilters}
                         dropdowns={dropdownConfigs}
                         searchPlaceholder="Tìm VIN, dòng xe, phiên bản, màu sắc..."
                         totalCount={processedData.length}
@@ -274,14 +274,14 @@ const StockView: React.FC<StockViewProps> = ({
                             <div className="flex-grow overflow-auto relative hidden-scrollbar">
                                 <StockTable vehicles={paginatedData} {...commonProps} />
                             </div>
-                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
                         </div>
                     ) : (
                         <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
                             <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
                                 <StockGridView vehicles={paginatedData} {...commonProps} />
                             </div>
-                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => {}} isLoadingArchives={false} isLastArchive={true} />}
+                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
                         </div>
                     )}
                 </div>

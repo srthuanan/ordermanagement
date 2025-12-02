@@ -307,9 +307,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         <div className="flex flex-col h-full animate-fade-in-up">
             <div className="flex-shrink-0 bg-white border-b border-border-primary shadow-sm z-20">
                 {/* Row 1: Navigation & Actions */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between px-4 md:px-6 py-3 border-b border-border-secondary/50 gap-3 md:gap-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between px-2 md:px-4 py-2 border-b border-border-secondary/50 gap-2 md:gap-0">
                     {/* Tabs (Segmented Control Style) */}
-                    <div className="flex p-1 bg-surface-ground rounded-lg border border-border-secondary/50 overflow-x-auto no-scrollbar w-full md:w-auto">
+                    <div className="flex p-1 bg-surface-ground rounded-lg border border-border-secondary/50 overflow-x-auto md:overflow-hidden no-scrollbar w-full md:w-auto">
                         {tabs.map(view => {
                             const count = counts[view];
                             const isActive = adminView === view;
@@ -317,7 +317,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <button
                                     key={view}
                                     onClick={() => handleManualTabChange(view)}
-                                    className={`relative px-4 py-1.5 text-xs uppercase transition-all rounded-md flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
+                                    className={`relative px-3 py-1.5 text-xs uppercase transition-all rounded-md flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
                                 >
                                     {labels[view]}
                                     {count !== null && (
@@ -331,7 +331,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
 
                     {/* Divider - Hidden on mobile */}
-                    <div className="hidden md:block h-8 w-px bg-border-secondary/50 mx-6"></div>
+                    <div className="hidden md:block h-8 w-px bg-border-secondary/50 mx-2"></div>
 
                     {/* Controls Row for Mobile */}
                     <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-3">

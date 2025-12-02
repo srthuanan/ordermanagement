@@ -624,22 +624,17 @@
       color: #0F172A;
     }
 
+    /* Hide scrollbar for Chrome, Safari and Opera */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      display: none;
     }
 
-    ::-webkit-scrollbar-track {
-      background: #F1F5F9;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
+    /* Hide scrollbar for IE, Edge and Firefox */
+    * {
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: none;
+      /* Firefox */
     }
 
     .text-gradient {

@@ -274,16 +274,16 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                     {selectedOrder ? (
                         <div className="flex-1 flex flex-col">
                             {/* Header */}
-                            <div className="px-6 py-4 bg-white border-b border-border-primary flex justify-between items-start shadow-sm z-10 flex-shrink-0">
+                            <div className="px-4 py-2 bg-white border-b border-border-primary flex justify-between items-start shadow-sm z-10 flex-shrink-0">
                                 <div>
                                     <h2
                                         onClick={() => handleCopy(selectedOrder['Tên khách hàng'], 'Tên khách hàng')}
-                                        className="text-xl font-bold text-text-primary mb-1 cursor-pointer hover:text-accent-primary transition-colors"
+                                        className="text-base font-bold text-text-primary mb-1 cursor-pointer hover:text-accent-primary transition-colors"
                                         title="Click để sao chép tên khách hàng"
                                     >
                                         {selectedOrder['Tên khách hàng']}
                                     </h2>
-                                    <div className="flex items-center gap-3 text-sm text-text-secondary">
+                                    <div className="flex items-center gap-2 text-[10px] md:text-sm text-text-secondary">
                                         <span
                                             onClick={() => handleCopy(selectedOrder['Số đơn hàng'], 'Số đơn hàng')}
                                             className="font-mono bg-surface-ground px-2 py-0.5 rounded border border-border-secondary cursor-pointer hover:bg-accent-primary/10 hover:border-accent-primary/30 transition-colors"
@@ -295,9 +295,9 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-lg font-bold text-accent-primary">{selectedOrder['Dòng xe']}</div>
-                                    <div className="text-sm text-text-secondary">{selectedOrder['Ngoại thất']} / {selectedOrder['Nội thất']}</div>
-                                    <div className="text-xs text-text-secondary mt-0.5">{selectedOrder['Phiên bản']}</div>
+                                    <div className="text-sm md:text-lg font-bold text-accent-primary">{selectedOrder['Dòng xe']}</div>
+                                    <div className="text-[10px] md:text-sm text-text-secondary">{selectedOrder['Ngoại thất']} / {selectedOrder['Nội thất']}</div>
+                                    <div className="text-[10px] md:text-xs text-text-secondary mt-0.5">{selectedOrder['Phiên bản']}</div>
                                 </div>
                             </div>
 
@@ -305,17 +305,17 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                                 <div className="max-w-4xl mx-auto space-y-4">
                                     {/* Detailed Order Info Section */}
-                                    <div className="bg-white p-4 rounded-xl border border-border-primary shadow-sm">
-                                        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 border-b border-border-secondary pb-2">Thông Tin Chi Tiết</h3>
+                                    <div className="bg-white p-2 md:p-3 rounded-xl border border-border-primary shadow-sm">
+                                        <h3 className="text-[10px] md:text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 border-b border-border-secondary pb-1.5">Thông Tin Chi Tiết</h3>
 
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-3">
                                             <div>
-                                                <label className="text-[10px] text-text-secondary block mb-0.5 uppercase">Ngày Yêu Cầu</label>
-                                                <div className="text-sm font-medium text-text-primary">{moment(selectedOrder['Thời gian nhập']).format('DD/MM/YYYY')}</div>
+                                                <label className="text-[9px] md:text-[10px] text-text-secondary block mb-0.5 uppercase">Ngày Yêu Cầu</label>
+                                                <div className="text-xs md:text-sm font-medium text-text-primary">{moment(selectedOrder['Thời gian nhập']).format('DD/MM/YYYY')}</div>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] text-text-secondary block mb-0.5 uppercase">Ngày Cọc</label>
-                                                <div className="text-sm font-medium text-text-primary">{selectedOrder['Ngày cọc'] ? moment(selectedOrder['Ngày cọc']).format('DD/MM/YYYY') : 'N/A'}</div>
+                                                <label className="text-[9px] md:text-[10px] text-text-secondary block mb-0.5 uppercase">Ngày Cọc</label>
+                                                <div className="text-xs md:text-sm font-medium text-text-primary">{selectedOrder['Ngày cọc'] ? moment(selectedOrder['Ngày cọc']).format('DD/MM/YYYY') : 'N/A'}</div>
                                             </div>
                                         </div>
 
@@ -325,7 +325,8 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                                 const url = selectedOrder[doc.key];
                                                 if (!url) return null;
                                                 return (
-                                                    <a key={doc.key} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-1.5 bg-surface-ground border border-border-secondary rounded-lg hover:bg-surface-hover transition-colors text-xs text-text-primary">
+
+                                                    <a key={doc.key} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-1.5 bg-surface-ground border border-border-secondary rounded-lg hover:bg-surface-hover transition-colors text-xs text-text-primary">
                                                         <i className={`fas ${doc.icon} text-accent-primary`}></i>
                                                         <span>{doc.label}</span>
                                                         <i className="fas fa-external-link-alt text-[10px] text-text-placeholder ml-1"></i>
@@ -380,17 +381,17 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                         // Paired View Actions (Compact Horizontal Layout)
                                         <div className="bg-white rounded-xl border border-border-primary shadow-sm overflow-hidden animate-fade-in-up flex flex-col md:flex-row">
                                             {/* Left: Car Image & Visuals (35%) */}
-                                            <div className="md:w-5/12 bg-gradient-to-br from-surface-ground to-white relative flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-border-secondary/50">
+                                            <div className="md:w-5/12 bg-gradient-to-br from-surface-ground to-white relative flex items-center justify-center p-2 md:p-3 border-b md:border-b-0 md:border-r border-border-secondary/50">
                                                 <div className="absolute inset-0 bg-gradient-radial from-success/5 to-transparent opacity-50 rounded-full blur-2xl transform scale-75"></div>
                                                 <CarImage
                                                     model={selectedOrder['Dòng xe']}
                                                     exteriorColor={selectedOrder['Ngoại thất']}
-                                                    className="w-full max-h-40 object-contain relative z-10 drop-shadow-lg hover:scale-105 transition-transform duration-500"
+                                                    className="w-full max-h-24 md:max-h-40 object-contain relative z-10 drop-shadow-lg hover:scale-105 transition-transform duration-500"
                                                 />
                                             </div>
 
                                             {/* Right: Info & Actions (65%) */}
-                                            <div className="flex-1 p-4 flex flex-col justify-center relative overflow-hidden">
+                                            <div className="flex-1 p-2 md:p-3 flex flex-col justify-center relative overflow-hidden">
                                                 {/* Decorative Background */}
                                                 <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-success/5 rounded-full blur-2xl"></div>
 
@@ -402,22 +403,22 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                                     </div>
 
                                                     {/* VIN - Highlighted */}
-                                                    <div className="mb-4">
-                                                        <label className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-2 block opacity-70">Số VIN Đã Gán</label>
+                                                    <div className="mb-2 md:mb-3">
+                                                        <label className="text-[9px] md:text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-1 block opacity-70">Số VIN Đã Gán</label>
                                                         <div
                                                             onClick={() => handleCopy(selectedOrder.VIN || '', 'Số VIN')}
-                                                            className="inline-block px-5 py-2 rounded-xl bg-accent-primary/10 border border-accent-primary/20 shadow-sm cursor-pointer hover:bg-accent-primary/20 transition-colors group/vin"
+                                                            className="inline-block px-2 py-1 md:px-3 md:py-1.5 rounded-xl bg-accent-primary/10 border border-accent-primary/20 shadow-sm cursor-pointer hover:bg-accent-primary/20 transition-colors group/vin"
                                                             title="Click để sao chép số VIN"
                                                         >
-                                                            <div className="text-3xl font-black text-accent-primary tracking-widest flex items-center gap-3">
+                                                            <div className="text-lg md:text-3xl font-black text-accent-primary tracking-widest flex items-center gap-2 md:gap-3">
                                                                 {selectedOrder.VIN}
-                                                                <i className="fas fa-copy text-lg opacity-0 group-hover/vin:opacity-50 transition-opacity"></i>
+                                                                <i className="fas fa-copy text-sm md:text-lg opacity-0 group-hover/vin:opacity-50 transition-opacity"></i>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     {/* Stats Row */}
-                                                    <div className="flex items-start gap-8 mb-4 border-t border-b border-border-secondary/30 py-3">
+                                                    <div className="flex items-start gap-2 md:gap-4 md:gap-8 mb-2 md:mb-3 border-t border-b border-border-secondary/30 py-2">
                                                         <div>
                                                             <span className="text-text-secondary block text-[10px] font-bold uppercase tracking-wider mb-0.5">Thời gian ghép</span>
                                                             <div className="flex items-center gap-1.5 text-text-primary">
@@ -442,7 +443,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                                     <div>
                                                         <button
                                                             onClick={() => onAction('unmatch', selectedOrder)}
-                                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-danger/20 text-danger text-xs font-medium shadow-sm hover:bg-danger hover:text-white hover:shadow-md hover:border-transparent transition-all duration-300 group"
+                                                            className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded-lg bg-white border border-danger/20 text-danger text-[10px] md:text-xs font-medium shadow-sm hover:bg-danger hover:text-white hover:shadow-md hover:border-transparent transition-all duration-300 group"
                                                         >
                                                             <div className="w-5 h-5 rounded-full bg-danger/10 text-danger flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors">
                                                                 <i className="fas fa-unlink text-[10px]"></i>

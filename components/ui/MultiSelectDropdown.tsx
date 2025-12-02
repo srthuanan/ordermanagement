@@ -38,7 +38,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
   }, []);
 
   const filteredOptions = options.filter(option =>
-    option.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(
+    option && option.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(
       searchTerm.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     )
   );
@@ -81,7 +81,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ label, option
   const buttonClasses = useMemo(() => {
     if (variant === 'modern') {
       const base = 'flex-shrink-0 flex items-center justify-between transition-all duration-200 border';
-      const sizeClass = isCompact ? 'w-28 px-3 h-8 text-xs rounded-full' : 'w-40 px-4 h-9 text-sm rounded-full';
+      const sizeClass = isCompact ? 'w-28 px-3 h-8 text-xs rounded-full flex-shrink' : 'w-40 px-4 h-9 text-sm rounded-full';
       const activeState = isOpen || selectedOptions.length > 0
         ? 'bg-accent-primary/10 border-accent-primary text-accent-primary shadow-sm'
         : 'bg-white border-border-secondary text-text-secondary hover:border-accent-primary/50 hover:text-text-primary shadow-sm';

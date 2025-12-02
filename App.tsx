@@ -34,6 +34,7 @@ import Header from './components/layout/Header';
 import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
 import { AnalyticsData } from './types';
+import onggiaGif from './pictures/onggia.gif';
 
 moment.locale('vi');
 
@@ -519,6 +520,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 isOpen={isPendingStatsModalOpen}
                 onClose={() => setIsPendingStatsModalOpen(false)}
                 stats={groupedPendingStats}
+            />
+
+            {/* Decorative Image - Global */}
+            <img
+                src={onggiaGif}
+                alt="Ong Gia Noel"
+                className="fixed bottom-0 right-0 w-24 md:w-32 z-50 pointer-events-none"
             />
         </>
     );

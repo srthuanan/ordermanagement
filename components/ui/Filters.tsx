@@ -134,7 +134,7 @@ const Filters: React.FC<FiltersProps> = ({
   const desktopContent = (
     <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `filter-bar-neumorphic ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
       {!hideSearch && (
-        <div className={`relative flex items-center ${variant === 'modern' ? 'w-60 flex-shrink-0' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
+        <div className={`relative flex items-center ${variant === 'modern' ? 'w-40 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
           <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
           <input
             type="text"
