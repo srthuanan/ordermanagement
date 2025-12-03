@@ -4,7 +4,7 @@ import moment from 'moment';
 import { normalizeName } from '../../services/authService';
 import StatusBadge from '../ui/StatusBadge';
 import Button from '../ui/Button';
-import { toEmbeddableUrl } from '../../utils/imageUtils';
+import { toEmbeddableUrl, toViewableUrl } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -46,6 +46,15 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
         setHasError(false);
     }, [url]);
 
+    const handleError = () => {
+        const thumbnailUrl = toEmbeddableUrl(url, 320);
+        if (imgSrc === thumbnailUrl) {
+            setImgSrc(toViewableUrl(url));
+        } else {
+            setHasError(true);
+        }
+    };
+
     return (
         <div
             className="flex flex-col rounded border border-border-secondary bg-surface-ground cursor-pointer hover:bg-surface-hover transition-all overflow-hidden group"
@@ -60,7 +69,7 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
                         src={imgSrc}
                         alt={label}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={() => setHasError(true)}
+                        onError={handleError}
                     />
                 ) : (
                     <div className="w-10 h-10 rounded-full bg-surface-ground shadow-sm flex items-center justify-center text-accent-primary">
