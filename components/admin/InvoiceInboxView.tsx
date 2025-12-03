@@ -5,6 +5,7 @@ import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
+import { toEmbeddableUrl, toViewableUrl, getDriveFileId } from '../../utils/imageUtils';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -34,6 +35,118 @@ const CopyableField: React.FC<{ text: string; showToast: Function; className?: s
         <div className={`cursor-pointer ${className}`} title={`Click để sao chép: ${text}`} onClick={handleCopy}>
             <span>{label ? `${label}: ` : ''}</span>
             <span className={wrap ? 'break-words' : 'truncate'}>{text}</span>
+        </div>
+    );
+};
+
+const DocumentThumbnail: React.FC<{
+    url?: string;
+    label: string;
+    icon: string;
+    onPreview: () => void;
+}> = ({ url, label, icon, onPreview }) => {
+    const [imgSrc, setImgSrc] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
+    const [retryStage, setRetryStage] = useState(0);
+    const [useIframe, setUseIframe] = useState(false);
+
+    const fileType = useMemo(() => {
+        if (!url) return 'unknown';
+        const lowerUrl = url.toLowerCase();
+        if (lowerUrl.includes('drive.google.com')) return 'drive';
+        if (lowerUrl.includes('.pdf')) return 'pdf';
+        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)/.test(lowerUrl)) return 'image';
+        return 'other';
+    }, [url]);
+
+    useEffect(() => {
+        setHasError(false);
+        setRetryStage(0);
+        setUseIframe(false);
+        if (fileType === 'drive' && url) {
+            setImgSrc(toEmbeddableUrl(url, 500));
+        } else if (fileType === 'image' && url) {
+            setImgSrc(url);
+        } else {
+            setImgSrc(null);
+        }
+    }, [url, fileType]);
+
+    const handleError = () => {
+        if (fileType !== 'drive' || !url) {
+            setHasError(true);
+            return;
+        }
+
+        const fileId = getDriveFileId(url);
+        if (!fileId) {
+            setHasError(true);
+            return;
+        }
+
+        // Fallback Strategy
+        if (retryStage === 0) {
+            // Stage 1: Try lh3.googleusercontent.com
+            setRetryStage(1);
+            setImgSrc(`https://lh3.googleusercontent.com/d/${fileId}=w500`);
+        } else if (retryStage === 1) {
+            // Stage 2: Try iframe preview (most robust for PDFs)
+            setRetryStage(2);
+            setUseIframe(true);
+        } else {
+            // Give up
+            setHasError(true);
+        }
+    };
+
+    const drivePreviewUrl = useMemo(() => {
+        if (fileType === 'drive' && url) {
+            const fileId = getDriveFileId(url);
+            if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
+        }
+        return null;
+    }, [url, fileType]);
+
+    return (
+        <div
+            className={`flex flex-col rounded-lg border transition-all overflow-hidden group ${url ? 'border-border-secondary bg-surface-ground cursor-pointer hover:shadow-md hover:border-accent-primary' : 'border-border-secondary/50 bg-surface-ground/50 opacity-60'}`}
+            onClick={() => url && onPreview()}
+        >
+            <div className={`w-full h-24 md:h-40 flex items-center justify-center overflow-hidden border-b border-border-secondary relative ${url ? 'bg-white' : 'bg-gray-100'}`}>
+                {fileType === 'pdf' && url ? (
+                    <PdfThumbnail url={url} width={200} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                ) : useIframe && drivePreviewUrl ? (
+                    <>
+                        <iframe
+                            src={drivePreviewUrl}
+                            className="w-full h-full border-0 pointer-events-none scale-[1.5] origin-top-left"
+                            title={label}
+                            tabIndex={-1}
+                        />
+                        {/* Overlay to capture clicks */}
+                        <div className="absolute inset-0 bg-transparent z-10"></div>
+                    </>
+                ) : imgSrc && !hasError ? (
+                    <img
+                        src={imgSrc}
+                        alt={label}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={handleError}
+                    />
+                ) : (
+                    <i className={`fas ${fileType === 'pdf' ? 'fa-file-pdf text-red-500' : icon + (url ? ' text-accent-primary' : ' text-gray-400')} text-5xl`}></i>
+                )}
+            </div>
+
+            <div className="p-2 md:p-3">
+                <div className="font-bold text-xs md:text-sm text-text-primary truncate mb-1" title={label}>{label}</div>
+                <div className="flex items-center justify-between">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                        {url ? 'Đã có file' : 'Chưa có'}
+                    </span>
+                    {url && <i className="fas fa-external-link-alt text-xs text-text-placeholder group-hover:text-accent-primary transition-colors"></i>}
+                </div>
+            </div>
         </div>
     );
 };
@@ -408,69 +521,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
                                             {[{ key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Đã Xuất', icon: 'fa-file-invoice-dollar' }].map(file => {
                                                 const url = selectedOrder[file.key] as string | undefined;
-
-                                                // Helper to detect file type
-                                                const getFileType = (url?: string) => {
-                                                    if (!url) return 'unknown';
-                                                    const lowerUrl = url.toLowerCase();
-                                                    if (lowerUrl.includes('drive.google.com')) return 'drive';
-                                                    if (lowerUrl.includes('.pdf')) return 'pdf';
-                                                    if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)/.test(lowerUrl)) return 'image';
-                                                    return 'other';
-                                                };
-
-                                                const getDriveThumbnailUrl = (url: string) => {
-                                                    const match = url.match(/\/d\/([^/]+)/);
-                                                    if (match && match[1]) {
-                                                        // Request a thumbnail with width 500 (large enough for high DPI)
-                                                        return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w500`;
-                                                    }
-                                                    return null;
-                                                };
-
-                                                const fileType = getFileType(url);
-                                                const isImage = fileType === 'image';
-                                                const isPdf = fileType === 'pdf';
-                                                const isDrive = fileType === 'drive';
-
-                                                const driveThumbnail = isDrive && url ? getDriveThumbnailUrl(url) : null;
-
                                                 return (
-                                                    <div key={file.key} className={`flex flex-col rounded-lg border transition-all overflow-hidden group ${url ? 'border-border-secondary bg-surface-ground cursor-pointer hover:shadow-md hover:border-accent-primary' : 'border-border-secondary/50 bg-surface-ground/50 opacity-60'}`}
-                                                        onClick={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
-                                                    >
-                                                        {/* Thumbnail Area */}
-                                                        <div className={`w-full h-24 md:h-40 flex items-center justify-center overflow-hidden border-b border-border-secondary ${url ? 'bg-white' : 'bg-gray-100'}`}>
-                                                            {isImage ? (
-                                                                <img src={url} alt={file.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                            ) : driveThumbnail ? (
-                                                                <img src={driveThumbnail} alt={file.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onError={(e) => {
-                                                                    // Fallback if thumbnail fails to load
-                                                                    e.currentTarget.style.display = 'none';
-                                                                    e.currentTarget.parentElement?.classList.add('fallback-icon-visible');
-                                                                }} />
-                                                            ) : isPdf && url ? (
-                                                                <PdfThumbnail url={url} width={200} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                            ) : (
-                                                                <i className={`fas ${isPdf ? 'fa-file-pdf text-red-500' : file.icon + (url ? ' text-accent-primary' : ' text-gray-400')} text-5xl`}></i>
-                                                            )}
-                                                            {/* Fallback icon for when drive thumbnail fails (hidden by default) */}
-                                                            {driveThumbnail && (
-                                                                <i className={`fas fa-file-pdf text-red-500 text-5xl hidden fallback-icon`}></i>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Info Area */}
-                                                        <div className="p-2 md:p-3">
-                                                            <div className="font-bold text-xs md:text-sm text-text-primary truncate mb-1" title={file.label}>{file.label}</div>
-                                                            <div className="flex items-center justify-between">
-                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                                                                    {url ? 'Đã có file' : 'Chưa có'}
-                                                                </span>
-                                                                {url && <i className="fas fa-external-link-alt text-xs text-text-placeholder group-hover:text-accent-primary transition-colors"></i>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <DocumentThumbnail
+                                                        key={file.key}
+                                                        url={url}
+                                                        label={file.label}
+                                                        icon={file.icon}
+                                                        onPreview={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
+                                                    />
                                                 );
                                             })}
                                         </div>
