@@ -882,6 +882,19 @@
       pointer-events: none;
     }
 
+    @media (max-width: 640px) {
+      .notification-panel {
+        position: fixed;
+        top: 60px;
+        /* Below header */
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: calc(100vh - 80px);
+        transform-origin: top right;
+      }
+    }
+
     .notification-panel.visible {
       opacity: 1;
       transform: translateY(0) scale(1);

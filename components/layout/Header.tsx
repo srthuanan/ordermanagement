@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 <div ref={notificationContainerRef} className="relative notification-bell-container">
-                    <Button onClick={toggleNotificationPanel} variant="ghost" className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center !p-0" title="Thông báo">
+                    <Button onClick={toggleNotificationPanel} variant="ghost" className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center !p-0 action-btn" title="Thông báo">
                         <i className="fa-solid fa-bell"></i>
                         {unreadCount > 0 && (<span id="notification-badge" className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>)}
                     </Button>
