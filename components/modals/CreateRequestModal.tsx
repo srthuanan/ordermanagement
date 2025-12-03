@@ -41,7 +41,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose
                 <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative z-10">
                     <div className="text-center animate-fade-in-down">
                         <h2 className="text-xl sm:text-2xl font-bold text-gradient">
-                            Yêu Cầu Ghép Xe
+                            YÊU CẦU GHÉP XE
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">Điền thông tin và tải lên Ủy nhiệm chi để gửi yêu cầu.</p>
                     </div>

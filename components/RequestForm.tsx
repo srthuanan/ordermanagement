@@ -27,11 +27,11 @@ interface RequestFormProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
-const InputGroup: React.FC<{ icon: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children, label, htmlFor }) => (
+const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: string; htmlFor: string; }> = ({ icon, children, label, htmlFor }) => (
     <div>
         <label htmlFor={htmlFor} className="hidden md:block text-sm font-medium text-text-secondary mb-1 md:mb-1.5">{label}</label>
         <div className="relative">
-            <i className={`fas ${icon} absolute top-1/2 left-3 md:left-4 -translate-y-1/2 text-slate-500 peer-focus:text-accent-primary transition-colors text-base z-10`}></i>
+            {icon && <i className={`fas ${icon} absolute top-1/2 left-3 md:left-4 -translate-y-1/2 text-slate-500 peer-focus:text-accent-primary transition-colors text-base z-10`}></i>}
             {children}
         </div>
     </div>
@@ -264,7 +264,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                     <section className="bg-white/60 backdrop-blur-md rounded-2xl p-0 border border-white/40 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full overflow-hidden">
                         <SectionHeader icon="fa-cogs" title="1. Cấu hình Xe" />
                         <div className="p-3 md:p-4 space-y-2 md:space-y-3 flex-grow overflow-y-auto custom-scrollbar">
-                            <InputGroup icon="fa-car" label="Dòng xe" htmlFor="dong_xe">
+                            <InputGroup label="Dòng xe" htmlFor="dong_xe">
                                 <MultiSelectDropdown
                                     id="dong_xe"
                                     label="Dòng xe"
@@ -279,7 +279,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                                     searchable={false}
                                 />
                             </InputGroup>
-                            <InputGroup icon="fa-sitemap" label="Phiên bản" htmlFor="phien_ban">
+                            <InputGroup label="Phiên bản" htmlFor="phien_ban">
                                 <MultiSelectDropdown
                                     id="phien_ban"
                                     label="Phiên bản"
@@ -294,7 +294,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                                     searchable={false}
                                 />
                             </InputGroup>
-                            <InputGroup icon="fa-palette" label="Ngoại thất" htmlFor="ngoai_that">
+                            <InputGroup label="Ngoại thất" htmlFor="ngoai_that">
                                 <MultiSelectDropdown
                                     id="ngoai_that"
                                     label="Ngoại thất"
@@ -309,7 +309,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, hideToa
                                     searchable={false}
                                 />
                             </InputGroup>
-                            <InputGroup icon="fa-chair" label="Nội thất" htmlFor="noi_that">
+                            <InputGroup label="Nội thất" htmlFor="noi_that">
                                 <MultiSelectDropdown
                                     id="noi_that"
                                     label="Nội thất"
